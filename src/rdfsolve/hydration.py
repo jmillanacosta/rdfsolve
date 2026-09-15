@@ -138,6 +138,7 @@ class Hydrator:
         if not name.strip():
             raise ValueError("Supply a step name")
         start = len(self._records())
+        started = time.perf_counter()
         item: dict[str, Any] = {
             "name": name,
             "started_at": datetime.now(timezone.utc).isoformat(),
@@ -149,10 +150,19 @@ class Hydrator:
             item["status"] = "complete"
         except Exception as error:
             item["error"] = type(error).__name__
+            item["message"] = str(error)
             raise
         finally:
             item["query_ids"] = list(range(start + 1, len(self._records()) + 1))
             item["finished_at"] = datetime.now(timezone.utc).isoformat()
+            item["seconds"] = round(time.perf_counter() - started, 4)
+            logger.info(
+                "%s: %s; queries=%s; %.3fs",
+                name,
+                item["status"],
+                item["query_ids"],
+                item["seconds"],
+            )
 
     def session_metadata(self, *, include_results: bool = True) -> dict[str, Any]:
         """Return all retained helper queries and named steps.

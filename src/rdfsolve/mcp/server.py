@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from time import perf_counter
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -42,24 +41,48 @@ class SchemaArgs(Args):
 
 
 class FindArgs(Args):
-    """Ground a name within a discovered class."""
+    """Search typed resources with Client.find/search.
+
+    Optional target evaluates paths for the whole matching set in the same call.
+    A selection reference preserves all matches; an entity reference selects one.
+    """
 
     text: str = Field(min_length=1, max_length=200)
-    kind: str = Field(
-        description="Exact discovered class reference, such as a field target's ref. This selects the dataset class to search."
+    kind: str | None = Field(
+        default=None,
+        description="Optional class name or discovered class reference; omission searches across typed classes.",
     )
+    target: str | None = Field(
+        default=None,
+        description="Optional target class to evaluate paths from the whole matching set in the same call.",
+    )
+    max_hops: int = Field(default=2, ge=1, le=6)
     fields: list[str] = Field(default_factory=list, max_length=12)
     offset: int = Field(default=0, ge=0)
 
 
 class PathsArgs(Args):
-    """Retrieve bounded paths between grounded endpoints."""
+    """Use Client.paths_between on classes or retained selections.
 
-    source: str = Field(description="Discovered source class or retained entity reference.")
+    Class endpoints read the schema; selected resources evaluate the generated
+    paths. Returns evidence summaries with exact scope and query references.
+    """
+
+    source: str = Field(description="Source class, retained entity or entire selection reference.")
     target: str = Field(
-        description="Discovered target class or retained entity reference. Field references already supply their own insertable path."
+        description="Target class, retained entity or entire selection reference. Field references already supply their own insertable path."
     )
     max_hops: int = Field(default=3, ge=1, le=6)
+    offset: int = Field(default=0, ge=0)
+
+
+class FollowArgs(Args):
+    """Follow a named generated field from a retained set of records."""
+
+    source: str
+    target: str
+    via: str | None = None
+    value: str | None = None
     offset: int = Field(default=0, ge=0)
 
 
@@ -90,10 +113,15 @@ class Grounding(Args):
 
 
 class PrepareArgs(Args):
-    """Compose a retrieval query and check every declared clause."""
+    """Prepare ordinary SELECT using discovered paths and typed field constraints.
+
+    The package checks every declared goal, binding ownership and source scope.
+    Grounding is inferred where unambiguous. Preparation makes no data request.
+    """
 
     grounding: dict[str, Grounding] = Field(
-        description="One entry per active goal ID: selected schema evidence, requested output variables, and entity reference where required."
+        default_factory=dict,
+        description="Usually omit: the package resolves goal witnesses from the query and generated models. Only unresolved choices need a goal ID with selected evidence or entity.",
     )
     sparql: str = Field(
         description="One complete ordinary SELECT. Use the returned insert strings for retained paths and terms. Preserve the declared requirements; the package checks bindings, scope and field constraints."
@@ -108,47 +136,24 @@ class ProbeArgs(Args):
 
 
 class FinishArgs(Args):
-    """Explicitly execute the selected artifact."""
+    """Execute the current prepared query once through Client/SparqlHelper.
+
+    Returns a receipt, strategy, warnings and trace; data stays in caller artifacts.
+    Report those facts briefly, preserving unresolved interpretation warnings.
+    """
 
     query_ref: str
 
 
 CONTRACTS = {
-    "rdf_schema": (
-        SchemaArgs,
-        "schema",
-        "Start with the original question, all its clauses as goals, and separate concepts. Retrieve connected retained schema. Use owners and targets for structural lookup; zero endpoint requests.",
-    ),
-    "rdf_find": (
-        FindArgs,
-        "find",
-        "Find typed entities with Client.find/search. Returns a few distinguishable identities. Use the selected identity on its actual relationship.",
-    ),
-    "rdf_paths": (
-        PathsArgs,
-        "paths",
-        "Let the package find full SHACL and mined paths between discovered classes or entities. Retains alternatives and exact entity anchors.",
-    ),
-    "rdf_inspect": (
-        InspectArgs,
-        "inspect",
-        "Read a retained field/path definition or query checks. Optional text searches one field for grounding candidates. Returns summaries; complete data stays in Python artifacts.",
-    ),
-    "rdf_prepare": (
-        PrepareArgs,
-        "prepare",
-        "Submit one ordinary SELECT and its goal evidence. Package expands retained paths and checks outputs, entity restrictions, owners and scopes. Preparation makes no data request.",
-    ),
-    "rdf_probe": (
-        ProbeArgs,
-        "probe",
-        "Profile an explicit uncertainty using a bounded prepared query through Client/SparqlHelper. A successful sample does not establish completeness or correct meaning.",
-    ),
-    "rdf_finish": (
-        FinishArgs,
-        "finish",
-        "Execute the final validated artifact once through Client/SparqlHelper. Returns row count, strategy and warnings. Summarize those facts briefly for the user; complete RDF data stays outside model context.",
-    ),
+    "rdf_schema": (SchemaArgs, "schema"),
+    "rdf_find": (FindArgs, "find"),
+    "rdf_paths": (PathsArgs, "paths"),
+    "rdf_follow": (FollowArgs, "follow"),
+    "rdf_inspect": (InspectArgs, "inspect"),
+    "rdf_prepare": (PrepareArgs, "prepare"),
+    "rdf_probe": (ProbeArgs, "probe"),
+    "rdf_finish": (FinishArgs, "finish"),
 }
 
 
@@ -163,11 +168,11 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
         }
     if name not in CONTRACTS:
         return {"error": {"code": "unknown_tool", "message": name}}
-    model, method, _ = CONTRACTS[name]
-    started, before = perf_counter(), len(session.client.queries)
+    model, method = CONTRACTS[name]
+    step_index = len(session.client._steps)
     try:
-        args = model.model_validate(arguments).model_dump(exclude_none=True)
-        with session.lock:
+        with session.lock, session.client.step(f"MCP {method}"):
+            args = model.model_validate(arguments).model_dump(exclude_none=True)
             value = getattr(session, method)(**args)
     except ValidationError as exc:
         value = {
@@ -198,7 +203,7 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
                 "retry": "The shared helper exhausted its recovery strategy.",
             }
         }
-    except (ValueError, LookupError) as exc:
+    except ValueError as exc:
         value = {"error": {"code": "invalid_request", "message": str(exc)}}
     except Exception:
         logging.getLogger(__name__).exception("Package operation %s failed", method)
@@ -224,9 +229,9 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
         value["repair"] = (
             "Use each field's exact insert with your subject/object variables. Use rdf_schema with the goal concept and owner if this evidence means something else."
         )
-        if value["error"]["code"] == "goal_owner":
+        if value["error"]["code"] in {"goal_owner", "goal_availability"}:
             value["repair"] = (
-                "Before preparation, use rdf_schema to correct the affected goal's owner while retaining all original clause texts. Then use the selected field insert in your SELECT."
+                "Use rdf_schema to correct the affected goal's owner or availability while retaining the original clauses and value restrictions. Preserve the intended OPTIONAL scope."
             )
             value["retained_requirements"] = {
                 key: requirement.model_dump() for key, requirement in session.requirements.items()
@@ -243,14 +248,28 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
                 "message": "Refine the selected concepts or owners. Full evidence is retained.",
             }
         }
-    session.events.append(
-        {
+    if len(session.client._steps) > step_index:
+        step = session.client._steps[step_index]
+        if "error" in value or value.get("state") == "failed":
+            step["status"] = "failed"
+        value["trace"] = {
+            "step": step_index + 1,
             "operation": method,
-            "seconds": perf_counter() - started,
-            "source_queries": len(session.client.queries) - before,
-            "status": value.get("state", "error" if "error" in value else "complete"),
+            "query_ids": step["query_ids"],
+            "status": step["status"],
+        }
+    session.client._tool_calls.append(
+        {
+            "id": len(session.client._tool_calls) + 1,
+            "tool": name,
+            "arguments": arguments,
+            "status": value.get("state", "failed" if "error" in value else "complete"),
+            "query_ids": value.get("trace", {}).get("query_ids", []),
         }
     )
+    if session.log_path:
+        session.log_path.parent.mkdir(parents=True, exist_ok=True)
+        session.client.save_session(session.log_path, incremental=True)
     return value
 
 
@@ -271,8 +290,8 @@ def create_server(client, source_id="rdf", **kwargs):
     async def list_tools(ctx, params):
         return ListToolsResult(
             tools=[
-                Tool(name=n, description=d, input_schema=m.model_json_schema())
-                for n, (m, _, d) in CONTRACTS.items()
+                Tool(name=n, description=m.__doc__, input_schema=m.model_json_schema())
+                for n, (m, _) in CONTRACTS.items()
             ]
         )
 

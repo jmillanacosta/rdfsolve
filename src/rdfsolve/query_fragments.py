@@ -107,7 +107,7 @@ class Fragment:
     field_name: str | None = None
 
     steps: list[tuple[str, str, str, bool]] = field(default_factory=list)
-    anchors: dict[int, RdfTerm] = field(default_factory=dict)
+    anchors: dict[int, RdfTerm | list[RdfTerm]] = field(default_factory=dict)
     endpoint_types: dict[int, str] = field(default_factory=dict)
     term: RdfTerm | None = None
     basis: str = "saved schema"
@@ -144,13 +144,11 @@ class Fragment:
             lines = []
             for i, (s, p, o, back) in enumerate(self.steps):
                 left, right = (nodes[i + 1], nodes[i]) if back else (nodes[i], nodes[i + 1])
-                lines.extend(
-                    [
-                        f"{left} {_iri(p)} {right} .",
-                        f"{nodes[i]} a {_iri(s)} .",
-                        f"{nodes[i + 1]} a {_iri(o)} .",
-                    ]
-                )
+                lines.append(f"{left} {_iri(p)} {right} .")
+                if s:
+                    lines.append(f"{nodes[i]} a {_iri(s)} .")
+                if o:
+                    lines.append(f"{nodes[i + 1]} a {_iri(o)} .")
         elif len(args) == 2:
             nodes = args
             lines = [f"{args[0]} {path_to_sparql(self.path)} {args[1]} ."]
@@ -170,9 +168,12 @@ class Fragment:
         for position, cls in self.endpoint_types.items():
             lines.insert(0, f"{nodes[position]} a {_iri(cls)} .")
         for position, term in self.anchors.items():
-            if term.kind != "uri":
+            terms = term if isinstance(term, list) else [term]
+            if any(t.kind != "uri" for t in terms):
                 raise ValueError("A resource path anchor must be an IRI.")
-            lines.insert(0, f"VALUES {nodes[position]} {{ {term.to_rdf().n3()} }}")
+            lines.insert(
+                0, f"VALUES {nodes[position]} {{ {' '.join(t.to_rdf().n3() for t in terms)} }}"
+            )
         return "\n".join(dict.fromkeys(lines))
 
 

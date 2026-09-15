@@ -55,7 +55,7 @@ def test_missing_goal_never_becomes_ready(session):
 
 
 def test_optional_parent_cannot_bind_an_unrelated_chemical(session):
-    declare(session, "Pathways and available chemical names")
+    declare(session, "Pathways and available chemical names", concept="Adverse Outcome Pathway")
     parent = field(session, E.AOP, E.chemical, "a", "c")
     name = field(session, E.Chemical, "http://www.w3.org/2000/01/rdf-schema#label", "c", "name")
     root = insert(session.catalogue.type_refs[str(E.AOP)], "a")
@@ -85,7 +85,7 @@ def test_optional_parent_cannot_bind_an_unrelated_chemical(session):
     ],
 )
 def test_field_and_retrieval_constraints(session, pattern, code):
-    declare(session, "Return a")
+    declare(session, "Return a", concept="Adverse Outcome Pathway")
     with pytest.raises(QueryValidationError) as error:
         prepare(session, {"g1": {"pattern": pattern, "project": ["a"]}})
     assert error.value.code == code
@@ -100,7 +100,7 @@ def test_field_and_retrieval_constraints(session, pattern, code):
     ],
 )
 def test_source_scope_cannot_be_overridden(session, pattern):
-    declare(session, "Return a")
+    declare(session, "Return a", concept="Adverse Outcome Pathway")
     with pytest.raises(ValueError):
         prepare(session, {"g1": {"pattern": pattern, "project": ["a"]}})
     assert not session.client.queries
@@ -140,7 +140,7 @@ def test_same_record_constraint_and_repeated_class_roles():
         ],
     )
     s = Session(Client(schema, graph, graph_uris=[]))
-    declare(s, "People whose same job is at X during 2020")
+    declare(s, "People whose same job is at X during 2020", concept="Person")
     pattern = "?person a <urn:jobs:Person>; <urn:jobs:job> ?job . ?job a <urn:jobs:Job>; <urn:jobs:employer> ?company; <urn:jobs:year> 2020 . ?company a <urn:jobs:Company> ."
     # Register the actual company through typed package retrieval.
     record = s.client.get(s.client.model("urn:jobs:Company"), "urn:jobs:X", fields=[])
@@ -368,3 +368,106 @@ def test_text_conditions_match_literals_and_preserve_the_requested_word(session)
     query = query.replace("FILTER(CONTAINS", "FILTER(isLiteral(?text) && CONTAINS")
     rows = values(session, session.prepare(query, {"g1": {"evidence": [ref]}}))
     assert rows == [{"a": {"type": "uri", "value": str(E.mouseAOP)}}]
+
+
+def test_query_witnesses_are_derived_without_model_bookkeeping(session):
+    session.schema(
+        question="Key Events and available methods for Human AOPs",
+        goals=[
+            {"clause": "Return Key Events", "kind": "output", "concept": "Key Event"},
+            {
+                "clause": "Human AOPs",
+                "kind": "entity_filter",
+                "concept": "Taxon",
+                "owner": "Adverse Outcome Pathway",
+                "value": "Human",
+            },
+            {
+                "clause": "Available methods",
+                "kind": "output",
+                "concept": "measurement method",
+                "owner": "Key Event",
+                "required": False,
+            },
+        ],
+    )
+    human = session.find("Human", str(E.Taxon))["items"][0]["ref"]
+    mouse = session.find("Mouse", str(E.Taxon))["items"][0]["ref"]
+    query = "SELECT ?event ?method WHERE { " + field(session, E.AOP, E.event, "aop", "event")
+    query += insert(session.catalogue.type_refs[str(E.Event)], "event")
+    query += field(session, E.AOP, E.taxon, "aop", "tax") + " VALUES ?tax { " + insert(human) + " }"
+    query += " OPTIONAL { " + field(session, E.Event, E.method, "event", "method") + " } }"
+    ready = session.prepare(query)
+    assert {
+        (r["event"]["value"], r.get("method", {}).get("value")) for r in values(session, ready)
+    } == {(str(E.ke1), "Assay A"), (str(E.ke1), "Assay B"), (str(E.ke3), None)}
+    for incorrect in (
+        query.replace(human, mouse),
+        query.replace("SELECT ?event", "SELECT ?aop"),
+        query.replace("OPTIONAL", ""),
+    ):
+        with pytest.raises(QueryValidationError):
+            session.prepare(incorrect)
+
+
+def test_optional_relationship_cannot_become_mandatory_to_satisfy_an_output(session):
+    goals = [
+        {"clause": "Return pathways", "kind": "output", "concept": "Adverse Outcome Pathway"},
+        {
+            "clause": "Return their events when available",
+            "kind": "output",
+            "concept": "Key Event",
+            "required": True,
+        },
+        {
+            "clause": "Keep pathways without events",
+            "kind": "relation",
+            "concept": "has Key Event",
+            "owner": "Adverse Outcome Pathway",
+            "required": False,
+        },
+    ]
+    session.schema(question="Pathways with available events", goals=goals)
+    root = insert(session.catalogue.type_refs[str(E.AOP)], "a")
+    child = field(session, E.AOP, E.event, "a", "event") + insert(
+        session.catalogue.type_refs[str(E.Event)], "event"
+    )
+    optional = "SELECT ?a ?event WHERE { " + root + " OPTIONAL { " + child + " } }"
+    with pytest.raises(QueryValidationError, match="required=false"):
+        session.prepare(optional)
+    with pytest.raises(QueryValidationError, match="optional"):
+        session.prepare("SELECT ?a ?event WHERE { " + root + child + " }")
+    goals[1]["required"] = False
+    session.schema(question="Pathways with available events", goals=goals)
+    ready = session.prepare(optional)
+    assert len(values(session, ready)) == 4
+    session.prepare(optional)
+    with pytest.raises(ValueError):
+        session.prepare("SELECT ?a WHERE { unknown }")
+    assert not session.prepared
+    with pytest.raises(ValueError, match="superseded"):
+        session.probe(ready["query_ref"])
+
+
+def test_explicit_choice_cannot_turn_missing_meaning_into_success(session):
+    goal = {
+        "clause": "Restrict pathways to human taxon",
+        "kind": "text_filter",
+        "concept": "human taxon",
+        "value": "human",
+        "owner": "Adverse Outcome Pathway",
+    }
+    session.schema(question=goal["clause"], goals=[goal])
+    ref = session.catalogue.field_refs[(str(E.AOP), "context")]
+    query = (
+        "SELECT ?a WHERE { "
+        + insert(ref, "a", "text")
+        + ' FILTER(isLiteral(?text) && CONTAINS(LCASE(STR(?text)), "human")) }'
+    )
+    with pytest.raises(QueryValidationError, match="does not explain"):
+        session.prepare(query, {"g1": {"evidence": [ref]}})
+    assert not session.prepared
+    with pytest.raises(ValueError, match="Preserve the requested concept"):
+        session.schema(question=goal["clause"], goals=[{**goal, "concept": "context"}])
+    with pytest.raises(ValueError):
+        session.schema(question=goal["clause"], goals=[goal["clause"]])

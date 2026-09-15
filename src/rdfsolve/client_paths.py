@@ -6,7 +6,7 @@ import logging
 import re
 import warnings
 from collections import defaultdict, deque
-from itertools import product
+from itertools import pairwise, product
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -14,6 +14,8 @@ from pydantic import BaseModel
 from rdflib import RDF, Literal
 
 from rdfsolve.hydration import HydrationLimitError, _iri
+from rdfsolve.query_fragments import Fragment, linear_steps
+from rdfsolve.schema_models.paths import PropertyPath
 
 if TYPE_CHECKING:
     from rdfsolve.client_api import Client
@@ -57,26 +59,38 @@ def class_paths(
     models = {str(getattr(model, "rdf_class_iri", "")): model for model in client.models.values()}
     edges: dict[str, set[tuple[str, str, bool]]] = defaultdict(set)
     reverse: dict[str, set[str]] = defaultdict(set)
-    for pattern in client._schema.patterns:
-        s, p, o = pattern.subject_class, pattern.property_uri, pattern.object_class
-        if s not in models or o not in models:
-            continue
-        edges[s].add((p, o, False))
-        reverse[o].add(s)
-        if both_directions:
-            edges[o].add((p, s, True))
-            reverse[s].add(o)
+    unsupported = []
+    for cls, model in models.items():
+        for link in client.links(model).itertuples(index=False):
+            target_iri = str(client.model(link.target).rdf_class_iri)
+            try:
+                steps = linear_steps(link.path)
+            except ValueError:
+                unsupported.append(
+                    f"{client.type_name(model)}.{link.field}: use this field directly for alternatives or repeated paths"
+                )
+                continue
+            nodes = [
+                cls,
+                *[(cls, link.field, target_iri, i) for i in range(1, len(steps))],
+                target_iri,
+            ]
+            for (left, right), (predicate, backward) in zip(pairwise(nodes), steps, strict=True):
+                edges[left].add((predicate, right, backward))
+                reverse[right].add(left)
+                if both_directions:
+                    edges[right].add((predicate, left, not backward))
+                    reverse[left].add(right)
     distances = {last: 0}
     pending = deque([last])
     while pending:
         node = pending.popleft()
-        for previous in sorted(reverse[node]):
+        for previous in sorted(reverse[node], key=str):
             if previous not in distances:
                 distances[previous] = distances[node] + 1
                 pending.append(previous)
     routes: list[list[tuple[str, str, str, bool]]] = []
 
-    # Repeated classes represent distinct binding roles within the search budget.
     queue = deque([(first, {first}, [])])
     truncated, expansions = False, 0
     expansion_limit = max(1000, max_paths * 100)
@@ -85,7 +99,12 @@ def class_paths(
         if len(route) + distances.get(node, max_hops + 1) > max_hops:
             continue
         if node == last and route:
-            routes.append(route)
+            routes.append(
+                [
+                    (s if s in models else None, p, o if o in models else None, back)
+                    for s, p, o, back in route
+                ]
+            )
             if len(routes) > max_paths:
                 truncated = True
                 routes.pop()
@@ -97,7 +116,7 @@ def class_paths(
         if expansions > expansion_limit or len(queue) > expansion_limit:
             truncated = True
             break
-        for predicate, next_node, backward in sorted(edges[node]):
+        for predicate, next_node, backward in sorted(edges[node], key=str):
             if allow_repeated_classes or next_node not in seen:
                 queue.append(
                     (
@@ -108,15 +127,15 @@ def class_paths(
                 )
     if truncated and not allow_partial:
         raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
-    routes.sort(key=lambda route: (len(route), route))
+    routes.sort(key=lambda route: (len(route), str(route)))
     rows = [
         [
             number,
             step,
-            client.type_name(models[s]),
+            client.type_name(models[s]) if s else "Intermediate resource",
             _label(client, p),
             "←" if backward else "→",
-            client.type_name(models[o]),
+            client.type_name(models[o]) if o else "Intermediate resource",
         ]
         for number, route in enumerate(routes, 1)
         for step, (s, p, o, backward) in enumerate(route, 1)
@@ -124,13 +143,31 @@ def class_paths(
     table = pd.DataFrame(rows, columns=COLUMNS)
     table.attrs.update(
         routes=routes,
-        basis="mined class patterns",
+        fragments=[route_fragment(client, route) for route in routes],
+        warnings=list(dict.fromkeys(unsupported)),
+        basis="generated field paths",
         max_hops=max_hops,
         truncated=truncated,
         expansions=expansions,
         status="partial" if truncated else "complete",
     )
     return table
+
+
+def route_fragment(client: Client, route) -> Fragment:
+    """Compile a generated-model route, retaining its intermediate class constraints."""
+    paths = [PropertyPath(operator="predicate", iri=p) for _, p, _, _ in route]
+    paths = [
+        PropertyPath(operator="inverse", items=[p]) if edge[3] else p
+        for edge, p in zip(route, paths, strict=True)
+    ]
+    return Fragment(
+        "path",
+        " / ".join(("inverse " if back else "") + _label(client, p) for _, p, _, back in route),
+        path=paths[0] if len(paths) == 1 else PropertyPath(operator="sequence", items=paths),
+        steps=route,
+        basis="generated model paths",
+    )
 
 
 def connection_query(source: str, target: str | None, hops: int, both_directions: bool) -> str:

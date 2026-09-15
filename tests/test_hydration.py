@@ -146,7 +146,7 @@ def test_exploration_follows_real_links_in_both_directions():
         assert set(client.table(subsets, ["description"])["uri"]) == expected
         with pytest.raises(ValueError, match="Unknown fields"):
             client.table(subsets, ["misspelt"])
-        with pytest.raises(ValueError, match="No RDF path"):
+        with pytest.raises(ValueError, match="Unknown or ambiguous field.*Available fields"):
             client.follow([root], "misspelt", model)
 
 

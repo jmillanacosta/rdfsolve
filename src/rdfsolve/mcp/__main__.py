@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--related-registry", type=Path, action="append", default=[])
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
+    logging.getLogger("rdfsolve.hydration").setLevel(logging.INFO)
     from rdfsolve.registry import Registry
 
     mappings = []
@@ -36,6 +37,7 @@ def main():
         mappings = Mapping.from_jsonld(args.mapping).edges
     peers = [Registry.read(path) for path in args.related_registry]
     artifacts = args.artifact_dir or Path(mkdtemp(prefix="rdfsolve-results-"))
+    log = args.log or artifacts / "investigation.json"
     scope = {} if args.graphs is None else {"graph_uris": args.graphs}
     with Client.open(
         args.schema, source=args.endpoint, data_file=args.data_file, timeout=args.timeout, **scope
@@ -47,14 +49,14 @@ def main():
                     args.source_id,
                     max_paths=args.max_paths,
                     artifact_dir=artifacts,
+                    log_path=log,
                     class_mappings=mappings,
                     related_registries=peers,
                 )
             )
         finally:
-            if args.log:
-                args.log.parent.mkdir(parents=True, exist_ok=True)
-                client.save_session(args.log)
+            log.parent.mkdir(parents=True, exist_ok=True)
+            client.save_session(log, incremental=True)
 
 
 if __name__ == "__main__":

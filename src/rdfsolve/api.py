@@ -23,7 +23,10 @@ from .void_discover import VoidParser
 
 logger = logging.getLogger(__name__)
 
+from rdfsolve.client_api import Client
+
 __all__ = [
+    "Client",
     "ask_rdf",
     "discover_void_graphs",
     "discover_void_source",

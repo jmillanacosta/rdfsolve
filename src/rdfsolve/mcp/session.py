@@ -46,6 +46,7 @@ class Session:
         source_id="rdf",
         *,
         artifact_dir=None,
+        log_path=None,
         max_paths=100,
         class_mappings=(),
         related_registries=(),
@@ -60,15 +61,15 @@ class Session:
         self.goals = {}
         self.requirements = {}
         self.interpretation_warnings = []
-        self.grounding = {}
         self.prepared = {}
         self.results = {}
         self.executions = {}
         self.records = {}
+        self.selections = {}
         self.cache = {}
         self.max_paths = max_paths
         self.artifact_dir = Path(artifact_dir).resolve() if artifact_dir else None
-        self.events = []
+        self.log_path = Path(log_path).resolve() if log_path else None
 
     def _card(self, ref):
         c = self.catalogue
@@ -92,6 +93,8 @@ class Session:
                 if t in c.type_refs
             ]
             card["value_kinds"] = m.get("node_kinds", [])
+        if f.kind == "path":
+            card["evidence"] = c.metadata.get(ref, {"status": "schema_only"})
         if f.term:
             card["identity"] = ref
             card["term_kind"] = f.term.kind
@@ -111,10 +114,12 @@ class Session:
         card["insert"] = "{{" + ref + arguments + "}}"
         return {k: v for k, v in card.items() if v not in (None, [], "")}
 
-    def _page(self, refs, offset=0, budget=5500, limit=None):
+    def _page(self, refs, offset=0, budget=5500, limit=None, *, brief=False):
         cards = []
         for ref in refs[offset:]:
             card = self._card(ref)
+            if brief:
+                card = {k: card[k] for k in ("ref", "label", "targets") if k in card}
             if (limit is not None and len(cards) >= limit) or len(
                 json.dumps([*cards, card]).encode()
             ) > budget:
@@ -127,25 +132,6 @@ class Session:
             "next_offset": offset + len(cards),
         }
 
-    def _field_index(self, refs, offset, budget):
-        c, rows = self.catalogue, []
-        for ref in refs[offset:]:
-            targets = [
-                c.fragments[c.type_refs[t]].label
-                for t in c.metadata[ref].get("targets", [])
-                if t in c.type_refs
-            ]
-            row = [ref, short(c.fragments[ref].label, 80), targets]
-            if len(json.dumps([*rows, row]).encode()) > budget:
-                break
-            rows.append(row)
-        return {
-            "columns": ["field reference", "label", "target classes"],
-            "fields": rows,
-            "more": offset + len(rows) < len(refs),
-            "next_offset": offset + len(rows),
-        }
-
     def schema(
         self, concepts=None, owners=None, targets=None, *, question="", goals=None, offset=0
     ):
@@ -155,11 +141,11 @@ class Session:
                 raise ValueError(
                     "Supply the original question and each requested output or restriction as a clause."
                 )
-            requirements = {
-                f"g{i}": Requirement.model_validate(g)
-                for i, g in enumerate(goals, 1)
-                if isinstance(g, dict)
-            }
+            requirements = {f"g{i}": Requirement.model_validate(g) for i, g in enumerate(goals, 1)}
+
+            def normalize(value):
+                return re.sub(r"[^a-z0-9]", "", value.casefold())
+
             about = self.client._schema.about
             source_names = [
                 self.catalogue.registry.source_id,
@@ -168,64 +154,47 @@ class Session:
             ]
             source_names += [
                 part
-                for url in [about.endpoint, about.homepage]
+                for url in (about.endpoint, about.homepage)
                 if url
                 for part in (urlsplit(url).hostname or "").split(".")
             ]
-
-            def normalize(value):
-                return re.sub(r"[^a-z0-9]", "", value.casefold())
-
-            for key, requirement in requirements.items():
-                if requirement.kind == "scope" or (
-                    requirement.concept.casefold() in {"database", "dataset", "source"}
-                    and normalize(requirement.value) in {normalize(n) for n in source_names if n}
+            source_names = {normalize(name) for name in source_names if name}
+            for key, goal in requirements.items():
+                if goal.kind == "scope" or (
+                    goal.concept.casefold() in {"database", "dataset", "source"}
+                    and normalize(goal.value) in source_names
                 ):
-                    if normalize(requirement.value or requirement.concept) not in {
-                        normalize(n) for n in source_names if n
-                    }:
-                        raise ValueError(
-                            "The requested dataset differs from the configured source. Configure another source outside the model."
-                        )
-                    requirements[key] = requirement.model_copy(update={"kind": "scope"})
-            requested = {
-                f"g{i}": clause if isinstance(clause, str) else clause["clause"]
-                for i, clause in enumerate(goals, 1)
-            }
+                    if normalize(goal.value or goal.concept) not in source_names:
+                        raise ValueError("The requested dataset differs from the configured source")
+                    requirements[key] = goal.model_copy(update={"kind": "scope"})
+            requested = {key: goal.clause for key, goal in requirements.items()}
             if self.goals and (self.question != question or self.goals != requested):
-                raise ValueError(
-                    "Keep the original question and clause texts. Their grounding can be corrected before preparing a query."
-                )
+                raise ValueError("Keep the original question and clause texts across repairs")
             if self.requirements and self.requirements != requirements:
                 if self.prepared:
                     raise ValueError(
-                        "Prepared requirements are retained across probes and query repairs. A data result cannot weaken them."
+                        "Prepared requirements are retained across probes and query repairs"
                     )
-                revisions = []
                 for key, previous in self.requirements.items():
-                    if previous != requirements[key]:
-                        revised = requirements[key]
-                        if previous.kind in {"entity_filter", "text_filter"} and (
-                            previous.value != revised.value
-                            or (
-                                previous.kind == "entity_filter" and revised.kind != "entity_filter"
-                            )
-                            or revised.kind not in {"entity_filter", "text_filter"}
-                        ):
-                            raise ValueError(
-                                f"Preserve the value restriction '{previous.clause}'. Ground its requested value; changing an entity restriction into text or an output would weaken it."
-                            )
-                        changed = [
-                            name
-                            for name, value in previous.model_dump().items()
-                            if value != revised.model_dump()[name]
-                        ]
-                        revisions.append(
-                            f"Interpretation revised for '{previous.clause}': {', '.join(changed)}."
+                    revised = requirements[key]
+                    if previous == revised:
+                        continue
+                    if previous.concept != revised.concept:
+                        raise ValueError(
+                            f"Preserve the requested concept '{previous.concept}'. Select its grounded field separately."
                         )
-                self.interpretation_warnings.extend(revisions)
-            self.question, self.goals = question, requested
-            self.requirements = requirements
+                    if previous.kind in {"entity_filter", "text_filter"} and (
+                        previous.value != revised.value
+                        or revised.kind not in {"entity_filter", "text_filter"}
+                        or (previous.kind == "entity_filter" and revised.kind != previous.kind)
+                    ):
+                        raise ValueError(
+                            f"Preserve the value restriction '{previous.clause}' and its relationship"
+                        )
+                    self.interpretation_warnings.append(
+                        f"Grounding corrected for '{previous.clause}'."
+                    )
+            self.question, self.goals, self.requirements = question, requested, requirements
         c = self.catalogue
         unresolved = []
 
@@ -233,21 +202,17 @@ class Session:
             resolved = set()
             for value in values or []:
                 try:
-                    resolved.add(c._type(value))
+                    if value in self.selections:
+                        resolved.update(str(r.rdf_class_iri) for r in self.selections[value])
+                    elif value in self.records:
+                        resolved.add(str(self.records[value].rdf_class_iri))
+                    else:
+                        resolved.add(c._type(value))
                 except ValueError:
                     unresolved.append(value)
             return resolved
 
         owner_ids, target_ids = resolve_types(owners), resolve_types(targets)
-        refs = list(c.field_refs.values()) if owner_ids else list(c.schema_documents)
-        refs = [
-            r
-            for r in refs
-            if (not owner_ids or c.fragments[r].owner in owner_ids)
-            and (
-                not target_ids or target_ids.intersection(c.metadata.get(r, {}).get("targets", []))
-            )
-        ]
         groups, seeds, fallback = [], set(owner_ids) | target_ids, {}
         searches = dict.fromkeys(concepts or [], None)
         for requirement in self.requirements.values():
@@ -258,23 +223,13 @@ class Session:
         if not searches:
             searches[""] = None
         for concept, requested_owner in searches.items():
-            candidates = refs
             cls = next(iter(owner_ids)) if len(owner_ids) == 1 else None
             if requested_owner:
                 try:
                     cls = c._type(requested_owner)
                 except ValueError:
                     cls = None
-                if cls:
-                    candidates = [r for r in refs if c.fragments[r].owner == cls]
-            ranked = sorted(
-                (r for r in candidates if score(c.schema_documents[r][0], concept)),
-                key=lambda r: (
-                    -score(c.fragments[r].label, concept),
-                    -score(c.schema_documents[r][0], concept),
-                    r,
-                ),
-            )
+            ranked = c.search(concept, owners=[cls] if cls else owner_ids, targets=target_ids)
             exact = [
                 r
                 for r in ranked
@@ -302,7 +257,6 @@ class Session:
             "types": self._page([c.type_refs[cls] for cls in sorted(seeds)], budget=1800),
             "matches": groups,
             "connections": self._page(connections, budget=2500),
-            "goals": self.goals,
             "requirements": {g: r.model_dump() for g, r in self.requirements.items()},
             "source": c.registry.source_id,
             "scope": c.registry.binding,
@@ -311,7 +265,7 @@ class Session:
             "unmatched_field_indexes": {
                 c.type_refs[cls]: {
                     "basis": "No recorded meaning matched the requested concept. Select or clarify a retained field on this owner.",
-                    **self._field_index(fields, offset, 4000 // len(fallback)),
+                    **self._page(fields, offset, 4000 // len(fallback), brief=True),
                 }
                 for cls, fields in fallback.items()
             },
@@ -320,82 +274,112 @@ class Session:
             else None,
         }
 
-    def find(self, text, kind, *, fields=None, offset=0):
-        """Keep typed candidate records; expose only distinguishing identities."""
+    def _retain(self, result, key, offset=0):
+        """Keep a typed Results set and present a few candidate identities."""
+        c, refs = self.catalogue, []
+        self.selections[key] = result
+        for record in result:
+            term = RdfTerm(kind="uri", value=str(record.uri))
+            ref = c._put(
+                Fragment(
+                    "term",
+                    short(self.client.title(record)),
+                    term=term,
+                    basis="typed entity retrieval",
+                ),
+                [record.rdf_class_iri, term.value],
+            )
+            self.records[ref] = record
+            lookups = result.coverage.get("terms", [result.coverage.get("text", "")])
+            c.metadata.setdefault(ref, {}).setdefault("lookups", set()).update(
+                t.casefold() for t in lookups if t
+            )
+            refs.append(ref)
+        summary = result.summary()
+        return {"selection": key, **summary, **self._page(refs, offset, budget=3000, limit=4)}
+
+    def find(self, text, kind=None, *, fields=None, target=None, max_hops=2, offset=0):
+        """Use typed search and optionally evaluate connections for the whole result set."""
         c = self.catalogue
-        cls = c._type(kind)
-        names = c._field_names(cls, fields or [])
-        key = identifier("find", [text, cls, names])
-        if key not in self.cache:
-            result = (
+        cls = c._type(kind) if kind else None
+        names = c._field_names(cls, fields or []) if cls else fields or []
+        key = identifier("selection", [text, cls, names])
+        if key not in self.selections:
+            self.selections[key] = (
                 self.client.search([text], kind=cls, fields=names)
                 if names
                 else self.client.find(text, kind=cls)
             )
-            refs = []
-            for record in result:
-                term = RdfTerm(kind="uri", value=str(record.uri))
-                labels = [
-                    str(x)
-                    for name in ("label", "title")
-                    for x in (getattr(record, name, None) or [])
-                ]
-                ref = c._put(
-                    Fragment(
-                        "term",
-                        short("; ".join(labels) or str(record.uri)),
-                        term=term,
-                        basis="typed entity retrieval",
-                    ),
-                    [cls, term.value],
-                )
-                self.records[ref] = record
-                refs.append(ref)
-            self.cache[key] = refs, result.coverage
-        refs, coverage = self.cache[key]
-        return {
-            **self._page(refs, offset, budget=3000, limit=4),
-            "searched_class": {
+        result = self._retain(self.selections[key], key, offset)
+        if cls:
+            result["searched_class"] = {
                 "ref": c.type_refs[cls],
                 "label": c.fragments[c.type_refs[cls]].label,
-            },
-            "search_limited": coverage.get("status") == "partial",
-            "finding": "No matching name was found. Try a documented alias or a targeted field lookup."
-            if not refs
-            else "Typed candidates retained; choose the intended identity.",
-        }
+            }
+        if target:
+            result["connections"] = self.paths(key, target, max_hops=max_hops)
+        if not result["records"]:
+            result["finding"] = (
+                "No name matched in the searched fields. A documented alias or a targeted field search can provide further evidence."
+            )
+        return result
+
+    def _endpoint(self, ref):
+        if ref in self.selections:
+            return self.selections[ref]
+        if ref in self.records:
+            return self.records[ref]
+        return self.catalogue._type(ref)
 
     def paths(self, source, target, *, max_hops=3, offset=0):
-        """Delegate path generation to the core catalogue and client."""
-        c = self.catalogue
-        src = self.records[source].rdf_class_iri if source in self.records else source
-        dst = self.records[target].rdf_class_iri if target in self.records else target
+        """Evaluate selected records with Client.paths_between; retain schema alternatives."""
         key = identifier("paths", [source, target, max_hops])
         if key not in self.cache:
-            refs, limited = c.paths(src, dst, max_hops, self.max_paths)
-            anchored = []
-            for ref in refs:
-                f = c.fragments[ref]
-                anchors = {
-                    i: c.fragments[r].term
-                    for i, r in ((0, source), (-1, target))
-                    if r in self.records
-                }
-                if anchors:
-                    f = Fragment(**{**vars(f), "anchors": anchors})
-                    ref = c._put(f, [ref, source, target])
-                anchored.append(ref)
-            self.cache[key] = anchored, limited
-        refs, limited = self.cache[key]
+            table = self.client.paths_between(
+                self._endpoint(source),
+                self._endpoint(target),
+                max_hops=max_hops,
+                max_paths=self.max_paths,
+                allow_partial=True,
+                allow_repeated_classes=True,
+            )
+            refs, limited = self.catalogue.retain_paths(table)
+            refs.sort(key=lambda r: self.catalogue.metadata[r].get("status") != "matched")
+            self.cache[key] = refs, limited, table.attrs
+        refs, limited, about = self.cache[key]
         return {
             **self._page(refs, offset, limit=4),
             "search_limited": limited,
-            "basis": "Retained shape paths and mined class routes; instance existence is checked by probes.",
+            "basis": about["basis"],
+            "warnings": about.get("warnings", [])[:3],
+            "scope": "All identities in each selected set; paths stay in the configured graph scope.",
         }
+
+    def follow(self, source, target, *, via=None, value=None, offset=0):
+        """Follow a selected field through Results.related without disclosing its records."""
+        from rdfsolve.client_api import Results
+
+        selected = self._endpoint(source)
+        if not isinstance(selected, Results):
+            if source not in self.records:
+                raise ValueError("Follow requires a retained selection or entity")
+            selected = Results(self.client, [selected])
+        field = self.catalogue.fragments.get(via)
+        if field:
+            if field.kind != "field" or any(r.rdf_class_iri != field.owner for r in selected):
+                raise ValueError("Select a field owned by the source records")
+            via = field.field_name
+        cls = self.catalogue._type(target)
+        key = identifier("selection", [source, cls, via, value])
+        if key not in self.selections:
+            self.selections[key] = selected.related(cls, via=via, value=value)
+        return self._retain(self.selections[key], key, offset)
 
     def inspect(self, ref, *, text=""):
         """Return definitions or a profile of a targeted value lookup."""
         c = self.catalogue
+        if ref in self.selections:
+            return {"selection": ref, **self.selections[ref].summary()}
         if ref in self.prepared:
             p = self.prepared[ref]
             return {
@@ -438,35 +422,41 @@ class Session:
             card.update(candidates=candidates, limited=len(rows) > 4)
         return card
 
-    def prepare(self, sparql, grounding):
+    def prepare(self, sparql, grounding=None):
         """Expand and verify a SELECT against retained semantic commitments."""
+        self.prepared.clear()
         active = {
             g
             for g in self.goals
             if g not in self.requirements or self.requirements[g].kind != "scope"
         }
-        if not self.goals or set(grounding) != active:
+        if not self.goals or (grounding is not None and not set(grounding) <= active):
             raise QueryValidationError(
                 "unresolved_goals",
                 f"Ground every active clause: {sorted(active)}. Source-scope clauses are already enforced by the Client.",
             )
-        query = verify_query(sparql, self.requirements, grounding, self.catalogue)
+        query = verify_query(sparql, self.requirements, grounding or {}, self.catalogue)
         query.warnings = list(dict.fromkeys([*self.interpretation_warnings, *query.warnings]))
-        self.grounding = grounding
         self.prepared = {query.ref: query}
         return {
             "state": "prepared",
             "query_ref": query.ref,
             "variables": query.variables,
-            "goals": self.goals,
             "checks": query.diagnostics,
             "warnings": query.warnings,
             "interpretation": "Declared semantic commitments were checked against their selected schema evidence. The initial interpretation remains a model decision.",
         }
 
+    def _query(self, ref):
+        if ref not in self.prepared:
+            raise ValueError(
+                "Unknown or superseded query. Prepare the current query before probing or finishing."
+            )
+        return self.prepared[ref]
+
     def probe(self, query_ref, *, limit=5):
         """Execute a bounded query and report its RDF term profile."""
-        query = self.prepared[query_ref]
+        query = self._query(query_ref)
         key = identifier("probe", [query_ref, limit])
         if key not in self.results:
             self.results[key] = self.client.select(query.sparql + f"\nLIMIT {limit + 1}")
@@ -484,7 +474,7 @@ class Session:
         """Execute the verified artifact once and retain its full RDF bindings."""
         if query_ref in self.executions:
             return self.executions[query_ref]
-        query = self.prepared[query_ref]
+        query = self._query(query_ref)
         try:
             result = self.client.select(query.sparql, exhaustive=True)
         except Exception as exc:
@@ -501,15 +491,27 @@ class Session:
                 warnings.append(
                     f"{name} contains mixed RDF value kinds ({', '.join(column['kinds'])}); raw values were preserved for inspection."
                 )
+        steps = [s["name"] for s in self.client._steps]
+        actions = [
+            label
+            for prefix, label in (
+                ("Find ", "typed resource search"),
+                ("Search ", "field search"),
+                ("Evaluate generated", "evaluated paths"),
+                ("Read related", "typed field traversal"),
+            )
+            if any(s.startswith(prefix) for s in steps)
+        ]
         receipt = {
             "state": "complete",
             "query_ref": query_ref,
             "result_ref": ref,
             "rows": result.row_count,
             "variables": result.variables,
-            "goals": self.goals,
             "warnings": warnings,
-            "strategy": "Expanded retained paths, checked selected goal witnesses and binding scopes, and retrieved RDF through the shared query helper.",
+            "strategy": "Used "
+            + ", ".join(["generated schema", *actions])
+            + "; checked bindings and source scope before retrieval.",
             "execution": self.client.last_query_execution,
         }
         self.executions[query_ref] = receipt
@@ -540,13 +542,12 @@ class Session:
                     for row in result.rows
                 ],
             }
-        return asdict(self.prepared[ref])
+        return asdict(self._query(ref))
 
     def diagnostics(self):
         """Report query counts and correlated operation outcomes."""
         return {
-            "source_queries": len(self.client.queries),
-            "endpoint_requests": sum(record.attempts for record in self.client._records()),
-            "steps": self.events,
+            **self.client.trace(),
             "schema_revision": self.catalogue.registry.revision,
+            "log": str(self.log_path) if self.log_path else None,
         }

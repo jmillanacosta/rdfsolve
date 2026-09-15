@@ -6,78 +6,13 @@ import json
 import logging
 import os
 import sys
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
-from typing import Any
 from uuid import uuid4
 
-
-@dataclass
-class Answer:
-    """Complete caller-side results and the model-visible investigation journal."""
-
-    text: str = ""
-    state: str = "failed"
-    query: str | None = None
-    bindings: list[dict] = field(default_factory=list)
-    usage: Any = None
-    calls: list[dict] = field(default_factory=list)
-    error: dict | None = None
-    execution: dict = field(default_factory=dict)
-    package: dict = field(default_factory=dict)
-    messages: list = field(default_factory=list)
-    files: dict = field(default_factory=dict)
-    elapsed_seconds: float = 0
-
-    def table(self):
-        """Display values while retaining RDF term metadata in bindings."""
-        if self.state != "complete":
-            raise ValueError(f"No completed answer: {self.error}")
-        import pandas as pd
-
-        return pd.DataFrame(
-            [{name: term["value"] for name, term in row.items()} for row in self.bindings]
-        )
-
-    def diagnostics(self):
-        """Report usage, strategy, recovery and failure facts."""
-        from pydantic_core import to_jsonable_python
-
-        return to_jsonable_python(
-            {
-                "warnings": next(
-                    (
-                        c["result"].get("warnings", [])
-                        for c in reversed(self.calls)
-                        if c["result"].get("state") in {"complete", "prepared"}
-                    ),
-                    [],
-                ),
-                "max_request_input_tokens": max(
-                    (m.usage.input_tokens for m in self.messages if getattr(m, "usage", None)),
-                    default=None,
-                ),
-                **{
-                    k: v
-                    for k, v in vars(self).items()
-                    if k not in {"bindings", "messages", "calls", "query"}
-                },
-            }
-        )
-
-    def save(self, path):
-        """Save exact results, costs and traces for reproduction."""
-        from pydantic_core import to_jsonable_python
-
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(
-            json.dumps(to_jsonable_python(vars(self)), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+from rdfsolve.mcp.agent import Answer
 
 
 def launch_config(
@@ -188,6 +123,7 @@ async def ask_rdf(
         answer.files = {
             "calls": str(folder / (stem + ".calls.jsonl")),
             "answer": str(folder / (stem + ".answer.json")),
+            "package": str(folder / (stem + ".package.json")),
         }
 
     def journal(item):
@@ -210,7 +146,7 @@ async def ask_rdf(
             artifact_dir=artifacts,
         )
         if answer.files:
-            config["args"] += ["--log", str(folder / (stem + ".package.json"))]
+            config["args"] += ["--log", answer.files["package"]]
         try:
             async with MCPClient(
                 StdioServerParameters(**config), read_timeout_seconds=timeout * 4
@@ -223,9 +159,8 @@ async def ask_rdf(
                     usage_limits=usage_limits,
                     calls=answer.calls,
                     on_call=journal,
+                    answer=answer,
                 )
-                answer.state, answer.text, answer.error = run.state, run.text, run.error
-                answer.usage, answer.messages = run.usage, run.messages
                 answer.execution = run.terminal.get("execution", {})
                 if answer.state == "complete":
                     ref = run.terminal["result_ref"]

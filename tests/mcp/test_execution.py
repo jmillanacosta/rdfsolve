@@ -116,7 +116,7 @@ def test_client_execution_recovers_and_replays(session, capped):
     )
     with endpoint(capped=capped) as (helper, calls):
         s = Session(Client(schema, helper, graph_uris=[]))
-        declare(s, "List A resources")
+        declare(s, "List A resources", concept="A")
         prepared = prepare(s, {"g1": {"pattern": f"?a a <{E.A}> .", "project": ["a"]}})
         assert not calls
         probe = s.probe(prepared["query_ref"], limit=1)
@@ -136,7 +136,11 @@ def test_empty_result_is_a_completed_execution(session):
     from conftest import E as W
     from conftest import declare
 
-    declare(session, "Return pathways with an impossible numeric constraint")
+    declare(
+        session,
+        "Return pathways with an impossible numeric constraint",
+        concept="Adverse Outcome Pathway",
+    )
     prepared = prepare(
         session, {"g1": {"pattern": f"?a a <{W.AOP}> . FILTER(1 = 2)", "project": ["a"]}}
     )

@@ -106,8 +106,8 @@ def field(s, owner, predicate, left, right):
     return insert(c.field_refs[(str(owner), name)], left, right)
 
 
-def declare(s, *clauses):
-    s.schema(question="; ".join(clauses), goals=list(clauses))
+def declare(s, clause, *, concept):
+    s.schema(question=clause, goals=[{"clause": clause, "kind": "output", "concept": concept}])
 
 
 def event_goals(s):
@@ -123,9 +123,15 @@ def event_goals(s):
                 "value": "Human",
             },
             {
-                "clause": "Return available species and methods",
+                "clause": "Return available applicability values",
                 "kind": "output",
-                "concept": "species and methods",
+                "concept": "applicable taxon",
+                "required": False,
+            },
+            {
+                "clause": "Return available methods",
+                "kind": "output",
+                "concept": "measurement method",
                 "required": False,
             },
         ],
@@ -151,16 +157,20 @@ def event_goals(s):
             + insert(human)
             + " }",
         },
-        "g3": {
-            "evidence": [
-                s.catalogue.field_refs[
-                    (str(E.Event), s.client.field_name(s.client.model(str(E.Event)), str(p)))
-                ]
-                for p in (E.taxon, E.method)
-            ],
-            "pattern": "OPTIONAL { " + field(s, E.Event, E.taxon, "event", "species") + " } "
-            "OPTIONAL { " + field(s, E.Event, E.method, "event", "method") + " }",
-            "project": ["species", "method"],
+        **{
+            key: {
+                "evidence": [
+                    s.catalogue.field_refs[
+                        (
+                            str(E.Event),
+                            s.client.field_name(s.client.model(str(E.Event)), str(predicate)),
+                        )
+                    ]
+                ],
+                "pattern": "OPTIONAL { " + field(s, E.Event, predicate, "event", variable) + " }",
+                "project": [variable],
+            }
+            for key, predicate, variable in [("g3", E.taxon, "species"), ("g4", E.method, "method")]
         },
     }
 

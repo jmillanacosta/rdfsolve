@@ -32,6 +32,33 @@ def _path(model: type[BaseModel], field: str) -> PropertyPath:
     return PropertyPath.model_validate(extra["rdf_path"])
 
 
+def field_targets(model: type[BaseModel], field: str) -> dict[str, str]:
+    """Read target hints and their basis from generated field metadata."""
+    extra = model.model_fields[field].json_schema_extra or {}
+    targets = {
+        p["object_class"]: "observed class pair"
+        for p in extra.get("rdf_patterns", [])
+        if p["object_class"] not in {"Literal", "Resource", "BlankNode"}
+    }
+    for shape in getattr(model, "rdf_shapes", []):
+        for prop in shape.get("property_shapes", []):
+            if prop.get("deactivated"):
+                continue
+            path = prop["path"]
+            path = (
+                PropertyPath(operator="predicate", iri=path)
+                if isinstance(path, str)
+                else PropertyPath.model_validate(path)
+            )
+            if path != _path(model, field):
+                continue
+            if target := prop.get("class_constraint"):
+                targets.setdefault(target, "SHACL class hint")
+            if target := (prop.get("qualified_shape") or {}).get("class_constraint"):
+                targets.setdefault(target, "SHACL qualified subset")
+    return targets
+
+
 class UnaddressableTargetError(EndpointError):
     """A returned URI cannot be used as an absolute IRI in a later request."""
 
@@ -51,28 +78,22 @@ class DatasetClient(Hydrator):
     """Search typed records and follow recorded links without recursive loading."""
 
     def links(self, model: type[BaseModel]) -> pd.DataFrame:
-        """List outgoing typed links in the schema, not proven instance routes."""
-        rows = []
+        """List generated field paths and their possible target types without querying."""
         names = {getattr(cls, "rdf_class_iri", ""): name for name, cls in self.models.items()}
-        fields = {}
-        for field, info in model.model_fields.items():
-            extra = info.json_schema_extra
-            if isinstance(extra, dict) and extra.get("rdf_property_iri"):
-                fields[extra["rdf_property_iri"]] = field
-        for pattern in self._schema.patterns:
-            if (
-                pattern.subject_class == getattr(model, "rdf_class_iri", "")
-                and pattern.object_class in names
-                and pattern.property_uri in fields
-            ):
-                rows.append(
-                    {
-                        "field": fields[pattern.property_uri],
-                        "target": names[pattern.object_class],
-                        "predicate": pattern.property_uri,
-                    }
-                )
-        return pd.DataFrame(rows, columns=["field", "target", "predicate"]).drop_duplicates()
+        rows = [
+            {
+                "field": name,
+                "target": names[target],
+                "predicate": _path(model, name).iri,
+                "path": _path(model, name),
+                "basis": basis,
+            }
+            for name, info in model.model_fields.items()
+            if isinstance(info.json_schema_extra, dict) and info.json_schema_extra.get("rdf_path")
+            for target, basis in field_targets(model, name).items()
+            if target in names
+        ]
+        return pd.DataFrame(rows, columns=["field", "target", "predicate", "path", "basis"])
 
     def search_names(
         self,
@@ -139,7 +160,9 @@ class DatasetClient(Hydrator):
         source_model = type(records[0])
         if any(type(record) is not source_model for record in records):
             raise ValueError("Use records of one generated model")
-        path = _path(target if inverse else source_model, field)
+        owner = target if inverse else source_model
+        field = self.field_name(owner, field)
+        path = _path(owner, field)
         if inverse:
             path = PropertyPath(operator="inverse", items=[path])
         path_text = path_to_sparql(path)
@@ -173,8 +196,6 @@ class DatasetClient(Hydrator):
                     or target_term.kind != "uri"
                 ):
                     raise EndpointError("Unexpected source or target in link results")
-                # SPARQL JSON type='uri' does not itself validate absoluteness.
-                # Never repair returned data by guessing a base or a blank-node kind.
                 try:
                     _iri(target_term.value)
                 except ValueError as exc:

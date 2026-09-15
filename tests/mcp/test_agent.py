@@ -201,3 +201,30 @@ def test_working_context_retains_goals_and_complete_recent_tool_pairs():
     ]
     next_context = bridge.context(messages)
     assert next_context[:2] == compact[:2] and len(next_context) == len(compact) + 2
+
+
+def test_repeated_blocker_stops_even_when_query_text_changes():
+    from types import SimpleNamespace
+
+    from rdfsolve.mcp.agent import Bridge, NoProgressError
+
+    class Server:
+        async def call_tool(self, name, arguments):
+            return SimpleNamespace(
+                structured_content={
+                    "error": {"code": "goal_owner", "message": "Select the field subject"},
+                    "trace": {"step": arguments["attempt"]},
+                }
+            )
+
+    async def run():
+        bridge = Bridge(Server())
+        for attempt in range(2):
+            await bridge.call(
+                "rdf_prepare", {"sparql": "SELECT " + " " * attempt, "attempt": attempt}
+            )
+        with pytest.raises(NoProgressError, match="Select the field subject"):
+            await bridge.call("rdf_prepare", {"sparql": "Changed query", "attempt": 2})
+        assert len(bridge.calls) == 3
+
+    asyncio.run(run())

@@ -1,17 +1,13 @@
-"""Verify mined class routes against selected records."""
+"""Evaluate generated paths against retained sets of typed resources."""
 
 from __future__ import annotations
 
-import json
-from collections import defaultdict
-from typing import TYPE_CHECKING, Any
-
-import pandas as pd
-from rdflib import RDF, Literal
+from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from rdfsolve.client_paths import _budget, class_paths, resource_path_table
-from rdfsolve.exploration import SEARCH_PREDICATES
 from rdfsolve.hydration import HydrationLimitError, _iri
+from rdfsolve.schema_models.enrichment import RdfTerm
 
 if TYPE_CHECKING:
     from rdfsolve.client_api import Client
@@ -19,140 +15,108 @@ if TYPE_CHECKING:
 
 def value_paths(
     client: Client,
-    source: str,
-    value: str | None,
+    sources,
+    targets,
     *,
-    source_iri: str | None = None,
-    target_class: str | None = None,
     max_hops: int,
     both_directions: bool,
     max_paths: int,
-) -> pd.DataFrame:
-    """Find observed paths along simple mined class routes, within one graph."""
+    allow_partial: bool = False,
+    allow_repeated_classes: bool = False,
+):
+    """Query whole selected sets, preserving path witnesses and graph-local bindings."""
     _budget(max_hops, max_paths)
-    if (value is None) == (target_class is None):
-        raise ValueError("Supply a target name or class")
-    if value is not None and not value.strip():
-        raise ValueError("Enter a word or name for target_value")
-    if source_iri is not None:
-        _iri(source_iri)
-    predicates = " ".join(_iri(p) for p in sorted(SEARCH_PREDICATES))
-    models = {str(getattr(model, "rdf_class_iri", "")) for model in client.models.values()}
-    name_query = (
-        f"{{ SELECT DISTINCT ?target WHERE {{ VALUES ?labelPredicate {{ {predicates} }} "
-        f"?target ?labelPredicate ?label . FILTER(isIRI(?target) && !isBlank(?label) && "
-        f"CONTAINS(LCASE(STR(?label)), LCASE({Literal(value).n3()}))) }} }} ?target a ?class"
-    )
-    routes: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    with client.step(f"Find paths to {value if value is not None else target_class}"):
-        targets: dict[str, set[tuple[str, str]] | None] = {}
-        if target_class is not None:
-            targets[target_class] = None
-        else:
-            found = client._select(
-                "SELECT DISTINCT ?target ?class ?_graph WHERE { "
-                + client._scope(name_query)
-                + f" }} LIMIT {client.max_rows + 1}"
-            )
-            if len(found) > client.max_rows:
-                raise HydrationLimitError("Name lookup exceeded max_rows")
-            matched: dict[str, set[tuple[str, str]]] = defaultdict(set)
-            for row in found:
-                if row["class"]["value"] in models:
-                    matched[row["class"]["value"]].add(
-                        (row["target"]["value"], row.get("_graph", {}).get("value", ""))
-                    )
-            targets.update(matched)
-        candidates: list[tuple[list[tuple[str, str, str, bool]], set[tuple[str, str]] | None]] = []
-        for end_class in sorted(targets):
-            if end_class == source:
+    fragments, observations, routes, warnings = [], [], [], []
+    partial = False
+    for source, source_iris in sources.items():
+        for target, target_iris in targets.items():
+            if source == target and not allow_repeated_classes:
                 continue
             table = class_paths(
                 client,
                 source,
-                end_class,
+                target,
                 max_hops=max_hops,
                 both_directions=both_directions,
                 max_paths=max_paths,
+                allow_partial=allow_partial,
+                allow_repeated_classes=allow_repeated_classes,
             )
-            candidates.extend(
-                (route, targets[end_class])
-                for route in table.attrs["routes"]
-                if all(edge[1] != str(RDF.type) for edge in route)
+            partial |= table.attrs["truncated"]
+            warnings.extend(table.attrs["warnings"])
+            for fragment in table.attrs["fragments"]:
+                anchors = {
+                    i: [RdfTerm(kind="uri", value=iri) for iri in iris]
+                    for i, iris in ((0, source_iris), (-1, target_iris))
+                    if iris is not None
+                }
+                fragments.append(replace(fragment, anchors=anchors))
+    if len(fragments) > max_paths:
+        if not allow_partial:
+            raise HydrationLimitError("Class path budget exhausted; narrow the endpoint classes")
+        fragments = fragments[:max_paths]
+        partial = True
+    observations = [{"status": "not_tested", "matches": 0, "query_ids": []} for _ in fragments]
+    with client.step("Evaluate generated paths for selected resources"):
+        for start in range(0, len(fragments), client.batch_size):
+            bodies = []
+            batch = fragments[start : start + client.batch_size]
+            for index, fragment in enumerate(batch, start):
+                hops = len(fragment.steps)
+                pattern = fragment.render([f"?n{i}" for i in range(hops + 1)], lambda: "?_unused")
+                bindings = [f"BIND({index} AS ?route)"]
+                for i, (_, predicate, _, back) in enumerate(fragment.steps):
+                    bindings += [
+                        f"BIND({_iri(predicate)} AS ?p{i})",
+                        f"BIND({'true' if back else 'false'} AS ?back{i})",
+                    ]
+                distinct = [
+                    f"FILTER(!sameTerm(?n{i}, ?n{j}))" for i in range(hops + 1) for j in range(i)
+                ]
+                bodies.append("{ " + " ".join([pattern, *distinct, *bindings]) + " }")
+            variables = [
+                "?route",
+                "?_graph",
+                *[f"?n{i}" for i in range(max_hops + 1)],
+                *[f"?p{i} ?back{i}" for i in range(max_hops)],
+            ]
+            limit = min(client.max_rows, max_paths - len(routes)) + 1
+            found = client._select(
+                f"SELECT DISTINCT {' '.join(variables)} WHERE {{ {client._scope(' UNION '.join(bodies))} }} LIMIT {limit}"
             )
-            if len(candidates) > max_paths:
+            capped = len(found) >= limit
+            if capped and not allow_partial:
                 raise HydrationLimitError(
-                    "Too many class routes; reduce max_hops or raise max_paths"
+                    "Observed path budget exhausted; narrow endpoints or increase max_paths and max_rows"
                 )
-        queries: dict[int, list[str]] = defaultdict(list)
-        for route, matches in sorted(candidates, key=lambda item: (len(item[0]), item[0])):
-            hops = len(route)
-            body = ""
-            if matches is not None:
-                columns = [f"?n{hops}"]
-                rows = [[_iri(iri)] for iri, _ in sorted(matches)]
-                if client.graph_uris:
-                    columns.append("?_graph")
-                    for terms, (_, graph) in zip(rows, sorted(matches), strict=True):
-                        terms.append(_iri(graph))
-                if source_iri is not None:
-                    columns.insert(0, "?n0")
-                    for terms in rows:
-                        terms.insert(0, _iri(source_iri))
-                values = " ".join("(" + " ".join(row) + ")" for row in rows)
-                body = f"VALUES ({' '.join(columns)}) {{ {values} }} "
-            elif source_iri is not None:
-                body = f"VALUES ?n0 {{ {_iri(source_iri)} }} "
-            for i, (s, p, o, backward) in enumerate(route):
-                left, right = (i + 1, i) if backward else (i, i + 1)
-                body += (
-                    f"?n{left} {_iri(p)} ?n{right} . ?n{i} a {_iri(s)} . ?n{i + 1} a {_iri(o)} . "
+            query_id = len(client._records())
+            for i in range(start, start + len(batch)):
+                observations[i].update(
+                    status="not_observed_in_sample" if capped else "no_match", query_ids=[query_id]
                 )
-            # Keep the connected triple patterns together before adding output fields.
-            for i, (_s, p, _o, backward) in enumerate(route):
-                body += (
-                    f"BIND({_iri(p)} AS ?p{i}) BIND({'true' if backward else 'false'} AS ?back{i}) "
+            for binding in found[: limit - 1]:
+                index = int(binding.pop("route")["value"])
+                hops = len(fragments[index].steps)
+                routes.append(
+                    {"hops": hops, "bindings": binding, "query_id": query_id, "candidate": index}
                 )
-            for i in range(hops + 1):
-                for j in range(i):
-                    body += f"FILTER(!sameTerm(?n{i}, ?n{j})) "
-            queries[hops].append(body)
-        for hops, bodies in sorted(queries.items()):
-            for start in range(0, len(bodies), client.batch_size):
-                body = " UNION ".join(
-                    "{ " + part + " }" for part in bodies[start : start + client.batch_size]
-                )
-                variables = " ".join(
-                    [f"?n{i}" for i in range(hops + 1)] + [f"?p{i} ?back{i}" for i in range(hops)]
-                )
-                bindings = client._select(
-                    f"SELECT DISTINCT {variables} ?_graph WHERE {{ "
-                    + client._scope(body)
-                    + f" }} LIMIT {client.max_rows + 1}"
-                )
-                if len(bindings) > client.max_rows:
-                    raise HydrationLimitError("Path lookup exceeded max_rows")
-                for binding in bindings:
-                    key = json.dumps(binding, sort_keys=True)
-                    if any(term["type"] == "bnode" for term in binding.values()):
-                        key = f"{len(client._records())}:{key}"
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    routes.append(
-                        {"hops": hops, "bindings": binding, "query_id": len(client._records())}
-                    )
-                    if len(routes) > max_paths:
-                        raise HydrationLimitError(
-                            "Too many connections; reduce max_hops or raise max_paths"
-                        )
+                observations[index]["status"] = "matched"
+                observations[index]["matches"] += 1
+            if capped:
+                partial = True
+                break
+        if partial:
+            client._steps[-1]["status"] = "partial"
     table = resource_path_table(client, routes, max_hops)
     table.attrs.update(
-        source_class=source,
-        source_iri=source_iri,
-        target_value=value,
-        target_class=target_class,
-        basis="queried mined class routes",
+        fragments=fragments,
+        observations=observations,
+        warnings=list(dict.fromkeys(warnings)),
+        basis="evaluated generated model paths",
+        truncated=partial,
+        status="partial" if partial else "complete",
+        scope={"sources": sources, "targets": targets, "graphs": list(client.graph_uris)},
+        source_class=next(iter(sources)) if len(sources) == 1 else None,
+        target_class=next(iter(targets)) if len(targets) == 1 else None,
     )
     return table

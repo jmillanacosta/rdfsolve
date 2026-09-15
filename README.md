@@ -155,12 +155,12 @@ schema.to_shacl()  # To SHACL
 
 ### Typed client generation
 
-Use `rdfsolve.client_api` to find names or identifiers, then follow the results.
+Use `Client` to find names or identifiers, then follow the selected records.
 Start from a saved schema. Opening it makes no endpoint requests and does not
 mine the data:
 
 ```python
-from rdfsolve.client_api import Client
+from rdfsolve.api import Client
 
 data = Client.open("aopwikirdf.schema.json")
 matches = data.find("thyroid")
@@ -212,15 +212,30 @@ class instead lists possible class routes without querying the data. Use
 `diagram(paths=paths, path=1)` for the first complete path. Add
 `instances=False` to show its classes instead of its records.
 
-Start from one record to keep the search within its connections:
+Pass the whole selection to evaluate connections for every matching resource:
 
 ```python
-name_paths = data.paths_between(pathways[0], target_value="Phenobarbital", max_hops=3)
-chemical_paths = data.paths_between(pathways[0], "Chemical entity", max_hops=3)
+pathways = data.find("testicular", kind="Adverse Outcome Pathway")
+chemical_paths = data.paths_between(pathways, "Chemical entity", max_hops=2)
+pathways.summary()
+data.trace()
 ```
 
-The first finds matching names; the second finds records of the chosen class.
-Both verify the links from this pathway, not all pathways of its class.
+Record and `Results` inputs retain their exact identities in the path queries.
+The path table contains observed bindings, source query IDs and per-route outcomes
+in its `attrs`. Its coverage distinguishes partial search from no match. A single
+record selects that record's connections. Two class names describe schema routes.
+
+Read the generated types and field paths without endpoint requests:
+
+```python
+data.describe(owners=["Key Events"], targets=["cellular organisms"])
+data.describe("measurement", owners=["Key Events"])
+```
+
+Names resolve within their class. Exact generated names remain usable when human
+labels collide. Missing metadata produces an empty description search; the client
+does not invent vocabulary for an unexplained field.
 
 Press Tab after `pathways.fields.` to discover fields while typing. `show()`
 retrieves only the fields you ask for; displaying results does not send
@@ -470,11 +485,14 @@ ordinary SELECT and checks its outputs, exact entity restrictions, field owners,
 connected bindings, optional scope and retrieval operators against declared
 goals. The initial semantic classification can be corrected before preparation.
 Corrections are recorded; accepted entity restrictions and requested values
-cannot be weakened. Initial interpretation and semantic selection remain model
-decisions.
+cannot be weakened. Requested concepts stay fixed while owners and availability
+can be corrected. Initial interpretation and semantic selection remain model decisions.
+A selected field without explanatory metadata or mapping evidence remains unresolved;
+choosing its handle cannot turn that missing evidence into a successful validation. The package infers witnesses from the query and generated metadata;
+explicit grounding is needed when more than one meaning remains possible.
 
-The seven MCP tools discover schema, ground entities, find paths, inspect
-targeted evidence, prepare a query, probe it and explicitly finish. Complete
+The eight MCP tools discover schema, ground selections, follow fields, evaluate
+paths, inspect evidence, prepare a query, probe it and explicitly finish. Complete
 bindings stay in local caller artifacts. Tools return compact evidence, profiles
 and execution receipts. Endpoint queries use the Client and shared SparqlHelper
 recovery.
@@ -482,8 +500,13 @@ recovery.
 For Claude or another MCP host, configure a stdio server:
 
 ```bash
-python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-database
+python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-database --log /absolute/path/investigation.json
 ```
+
+Each tool response includes its operation, status and source-query IDs. The
+incremental package journal retains complete query evidence for inspection outside
+the model context. `answer.files` identifies the calls, answer and package journals.
+Repeated unchanged failures stop with the unresolved issue recorded.
 
 The server supports SELECT retrieval with joins, optional patterns, alternatives
 and filters. Aggregation, BIND-based output transformations, nested SELECT,
@@ -500,11 +523,13 @@ local-model experiments through `sbatch scripts/slurm_qwen_mcp.sh`. Job logs,
 model logs and saved answers are under `../logs/mcp-test/`.
 
 The development notebooks are `notebooks/mcp/00_mine.ipynb`, `01_small.ipynb`,
-and `test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical
+`02_client.ipynb`, and `test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical
 schemas live in `notebooks/mcp/schemas/`. Run the small evaluation with
 `RDFSOLVE_NOTEBOOK=01_small.ipynb sbatch scripts/slurm_qwen_mcp.sh`. Reference
 answers remain outside the model context. Results include exact tuple
 precision/recall, request counts, inclusive input tokens and cache reads.
+Run the direct-client experiment without a model using
+`RDFSOLVE_NOTEBOOK=02_client.ipynb RDFSOLVE_RUN_KIND=client sbatch scripts/slurm_mcp_mine.sh`.
 
 ## Documentation
 

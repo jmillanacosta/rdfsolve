@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from rdfsolve.query_fragments import Fragment, identifier, path_size
+from rdfsolve.query_fragments import Fragment, identifier
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 
@@ -60,30 +60,6 @@ class Catalogue:
                 self.field_refs[(item.id, f.name)] = fref
                 self.metadata[ref]["fields"].append(fref)
                 self.metadata[fref] = f.model_dump(mode="json")
-
-            for shape in getattr(client.model(item.id), "rdf_shapes", []):
-                for prop in shape.get("property_shapes", []):
-                    if prop.get("deactivated"):
-                        continue
-                    p = prop["path"]
-                    pp = (
-                        PropertyPath(operator="predicate", iri=p)
-                        if isinstance(p, str)
-                        else PropertyPath.model_validate(p)
-                    )
-                    for fr in self.metadata[ref]["fields"]:
-                        if self.fragments[fr].path == pp:
-                            m = self.metadata[fr]
-                            target = prop.get("class_constraint") or (
-                                prop.get("qualified_shape") or {}
-                            ).get("class_constraint")
-                            if target:
-                                m["targets"] = sorted(set(m["targets"] + [target]))
-                                m["target_basis"] = "SHACL target hint"
-                            if prop.get("name"):
-                                self.fragments[fr].label = prop["name"]
-                            if prop.get("description"):
-                                self.fragments[fr].description = prop["description"]
 
         self.retrieval_hints = self._mapping_hints(class_mappings, related_registries)
         self.schema_documents = {
@@ -165,6 +141,27 @@ class Catalogue:
                 hint_refs.append(hint_ref)
         return text, hint_refs
 
+    def search(self, concept="", *, owners=(), targets=()):
+        """Find generated classes or fields by meaning and structural endpoints."""
+        owners = {self._type(o) for o in owners}
+        targets = {self._type(t) for t in targets}
+        refs = self.field_refs.values() if owners else self.schema_documents
+        refs = [
+            r
+            for r in refs
+            if (not owners or self.fragments[r].owner in owners)
+            and (not targets or targets.intersection(self.metadata.get(r, {}).get("targets", [])))
+            and score(self.schema_documents[r][0], concept)
+        ]
+        return sorted(
+            refs,
+            key=lambda r: (
+                -score(self.fragments[r].label, concept),
+                -score(self.schema_documents[r][0], concept),
+                r,
+            ),
+        )
+
     def _put(self, fragment: Fragment, key):
         prefix = {"type": "t", "field": "f", "path": "p", "term": "e"}[fragment.kind]
         ref = identifier(prefix, key)
@@ -174,7 +171,12 @@ class Catalogue:
         if fragment.path:
             self.known_iris.update(x.iri for x in self._paths(fragment.path) if x.iri)
         self.known_iris.update(fragment.endpoint_types.values())
-        self.known_iris.update(t.value for t in fragment.anchors.values() if t.kind == "uri")
+        self.known_iris.update(
+            t.value
+            for anchor in fragment.anchors.values()
+            for t in (anchor if isinstance(anchor, list) else [anchor])
+            if t.kind == "uri"
+        )
         if fragment.term and fragment.term.kind == "uri":
             self.known_iris.add(fragment.term.value)
         return ref
@@ -199,134 +201,43 @@ class Catalogue:
             raise ValueError(
                 f"{value} already describes a path. Use its insert, or select a class endpoint for further search: {choices}."
             )
-        matches = [
-            t.id
-            for t in self.registry.types
-            if t.label.casefold() == str(value).casefold()
-            or t.id == value
-            or score(t.label, str(value)) == 4
-        ]
-        if len(matches) == 1:
-            return matches[0]
-        if len(matches) > 1:
-            raise ValueError("Ambiguous class label; use the retained type reference")
-        try:
-            return str(self.client.model(value).rdf_class_iri)
-        except ValueError as exc:
-            candidates = sorted(
-                (t for t in self.registry.types if score(t.label + " " + t.id, str(value))),
-                key=lambda t: -score(t.label + " " + t.id, str(value)),
-            )[:4]
-            choices = ", ".join(f"{self.type_refs[t.id]} ({t.label})" for t in candidates)
-            raise ValueError(
-                f"Class {value!r} needs grounding. "
-                + (
-                    f"Related retained types: {choices}. Select a type reference."
-                    if choices
-                    else "Search class concepts in the catalogue, then select a type reference."
-                )
-            ) from exc
+        return str(self.client.model(value).rdf_class_iri)
 
     def _field_names(self, owner, fields):
         """Resolve references, names and unique exact labels within one owner."""
-        available = {name: ref for (cls, name), ref in self.field_refs.items() if cls == owner}
         names = []
         for value in fields:
             fragment = self.fragments.get(value)
-            if fragment is not None:
+            if fragment:
                 if fragment.kind != "field" or fragment.owner != owner:
                     raise ValueError("Field reference belongs to a different subject type")
-                name = fragment.field_name
-            elif value in available:
-                name = value
-            else:
-                candidates = [
-                    name
-                    for name, ref in available.items()
-                    if self.fragments[ref].path.operator == "predicate"
-                    and self.fragments[ref].path.iri == value
-                ]
-                if not candidates:
-                    candidates = [
-                        name
-                        for name, ref in available.items()
-                        if self.fragments[ref].label.casefold() == value.casefold()
-                    ]
-                if len(candidates) != 1:
-                    qualifier = "Ambiguous" if candidates else "Unknown"
-                    raise ValueError(
-                        f"{qualifier} field {value!r} for {owner}. "
-                        "Use an exact field name, IRI, or reference from this owner."
-                    )
-                name = candidates[0]
+                value = fragment.field_name
+            name = self.client.field_name(self.client.model(owner), value)
             if name not in names:
                 names.append(name)
         return names
 
     def paths(self, source: str, target: str, max_hops: int = 3, max_paths: int = 50):
         """Build fragments from retained shapes and bounded class paths."""
-        first, last = self._type(source), self._type(target)
-        found = []
-        for ref in self.field_refs.values():
-            fragment, metadata = self.fragments[ref], self.metadata[ref]
-            reverse = fragment.owner == last and first in metadata.get("targets", [])
-            if not ((fragment.owner == first and last in metadata.get("targets", [])) or reverse):
-                continue
-            size = path_size(fragment.path)
-            if size["max_hops"] is None or size["max_hops"] > max_hops:
-                continue
-            path = (
-                PropertyPath(operator="inverse", items=[fragment.path])
-                if reverse
-                else fragment.path
-            )
-            item = Fragment(
-                "path",
-                ("inverse " if reverse else "") + fragment.label,
-                path=path,
-                endpoint_types={0: first, -1: last},
-                description=fragment.description,
-                basis="retained shape",
-            )
-            found.append(self._put(item, [first, last, path.model_dump()]))
         table = self.client.paths_between(
-            first,
-            last,
+            self._type(source),
+            self._type(target),
             max_hops=max_hops,
             max_paths=max_paths,
             allow_partial=True,
             allow_repeated_classes=True,
         )
-        for route in table.attrs["routes"]:
-            parts = [PropertyPath(operator="predicate", iri=p) for _, p, _, _ in route]
-            parts = [
-                PropertyPath(operator="inverse", items=[p]) if edge[3] else p
-                for edge, p in zip(route, parts, strict=True)
-            ]
-            path = parts[0] if len(parts) == 1 else PropertyPath(operator="sequence", items=parts)
-            if any(self.fragments[ref].path == path for ref in found):
-                continue
-            labels = [
-                next(
-                    (
-                        a.text.value
-                        for a in self.client._schema.enrichment.labels
-                        if a.term_iri == p
-                    ),
-                    p.rsplit("/", 1)[-1].rsplit("#", 1)[-1],
-                )
-                for _, p, _, _ in route
-            ]
-            found.append(
-                self._put(
-                    Fragment(
-                        "path",
-                        " / ".join(labels),
-                        path=path,
-                        steps=route,
-                        basis="mined class route",
-                    ),
-                    [first, last, route],
-                )
+        return self.retain_paths(table)
+
+    def retain_paths(self, table):
+        """Index the Client's executable paths without reconstructing them."""
+        refs = []
+        for index, fragment in enumerate(table.attrs["fragments"]):
+            ref = self._put(fragment, vars(fragment))
+            self.metadata[ref] = (
+                table.attrs["observations"][index]
+                if "observations" in table.attrs
+                else {"status": "schema_only"}
             )
-        return found, bool(table.attrs.get("truncated"))
+            refs.append(ref)
+        return refs, bool(table.attrs.get("truncated"))

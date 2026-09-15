@@ -12,7 +12,8 @@ export http_proxy="${http_proxy:-http://proxy.unimaas.nl:3128}"
 export https_proxy="$http_proxy"
 export no_proxy="localhost,127.0.0.1,${no_proxy:-}"
 source "$RDFSOLVE_ROOT/.venv/bin/activate"
-OUTPUT="$RDFSOLVE_ROOT/../logs/mcp-test/mine-$SLURM_JOB_ID"
+OUTPUT="$RDFSOLVE_ROOT/../logs/mcp-test/${RDFSOLVE_RUN_KIND:-mine}-$SLURM_JOB_ID"
+export RDFSOLVE_OUTPUT="$OUTPUT"
 mkdir -p "$OUTPUT"
 cd "$RDFSOLVE_ROOT/notebooks/mcp"
-python -m nbconvert --to notebook --execute 00_mine.ipynb --output-dir "$OUTPUT" --output executed.ipynb --ExecutePreprocessor.kernel_name=rdfsolve --ExecutePreprocessor.timeout=1200
+python -m nbconvert --to notebook --execute "${RDFSOLVE_NOTEBOOK:-00_mine.ipynb}" --output-dir "$OUTPUT" --output executed.ipynb --ExecutePreprocessor.kernel_name=rdfsolve --ExecutePreprocessor.timeout=1200

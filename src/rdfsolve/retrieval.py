@@ -263,9 +263,17 @@ def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
         sparql, catalogue.fragments, catalogue.client._scope, catalogue.known_iris
     )
     query.warnings.extend(validate_retrieval(query, catalogue))
+    resolved = {}
     for key, requirement in requirements.items():
         if requirement.kind != "scope":
-            validate_goal(requirement, grounding[key], query, catalogue)
+            selected = grounding.get(key, {})
+            if not selected.get("evidence") or (
+                requirement.kind == "entity_filter" and not selected.get("entity")
+            ):
+                selected = infer_grounding(requirement, query, catalogue, selected)
+            validate_goal(requirement, selected, query, catalogue)
+            resolved[key] = selected
+    query.diagnostics["grounding"] = resolved
     query.diagnostics["validation"] = [
         "selected goal witnesses",
         "field ownership",
@@ -274,6 +282,96 @@ def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
         "retrieval algebra",
     ]
     return query
+
+
+def infer_grounding(requirement, query, catalogue, choice=None):
+    """Resolve a goal from actual query witnesses and generated metadata."""
+    from rdfsolve.catalogue import score, words
+
+    choice = choice or {}
+    nodes = list(walk(prepareQuery(query.sparql).algebra))
+    iris = {str(n) for n in nodes if isinstance(n, URIRef)}
+    used = {u["ref"] for u in query.uses}
+    candidates = []
+    for ref in catalogue.schema_documents:
+        fragment = catalogue.fragments[ref]
+        present = (
+            ref in used or fragment.iri in iris or (fragment.path and fragment.path.iri in iris)
+        )
+        if not present or (
+            requirement.kind in {"entity_filter", "text_filter"} and fragment.kind != "field"
+        ):
+            continue
+        rank = score(catalogue.schema_documents[ref][0], requirement.concept)
+        if (
+            requirement.kind == "output"
+            and fragment.kind == "type"
+            and words(fragment.label) == words(requirement.concept)
+        ):
+            rank += 5
+        if ref == requirement.concept:
+            rank = 10
+        if choice.get("evidence"):
+            if ref in choice["evidence"]:
+                candidates.append((10, ref))
+        elif rank >= 1:
+            candidates.append((rank, ref))
+    entities = [
+        ref
+        for ref, fragment in catalogue.fragments.items()
+        if fragment.term
+        and (
+            ref == choice.get("entity")
+            or (
+                not choice.get("entity")
+                and (
+                    requirement.value.casefold()
+                    in catalogue.metadata.get(ref, {}).get("lookups", set())
+                    or requirement.value.casefold()
+                    in {fragment.label.casefold(), fragment.term.value.casefold()}
+                )
+            )
+        )
+        and fragment.term.to_rdf() in [n for n in nodes if isinstance(n, (URIRef, Literal))]
+    ]
+    if requirement.kind != "entity_filter":
+        entities = [""]
+    accepted, failures = [], []
+    for rank, ref in sorted(candidates, reverse=True):
+        if accepted and rank < accepted[0][0]:
+            break
+        for entity in entities:
+            selected = {"evidence": [ref], "entity": entity}
+            before = len(query.warnings)
+            try:
+                validate_goal(requirement, selected, query, catalogue)
+                accepted.append((rank, selected))
+            except QueryValidationError as exc:
+                failures.append(exc)
+            finally:
+                del query.warnings[before:]
+    if len(accepted) == 1:
+        return accepted[0][1]
+    if accepted:
+        choices = [item[1] for item in accepted[:4]]
+        raise QueryValidationError(
+            "goal_choice", f"{requirement.clause}: choose the intended retained evidence: {choices}"
+        )
+    if failures and failures[0].code in {
+        "goal_availability",
+        "goal_optional",
+        "goal_owner",
+        "goal_type",
+    }:
+        raise failures[0]
+    detail = (
+        str(failures[0])
+        if failures
+        else "No grounded field or class explains this clause. Inspect its owner and select the relevant evidence."
+    )
+    raise QueryValidationError(
+        "unresolved_goals", f"Ground every active clause. {requirement.clause}: {detail}"
+    )
 
 
 def required_nodes(value):
@@ -321,8 +419,9 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         score(catalogue.schema_documents.get(ref, (f.label, []))[0], requirement.concept) >= 1
         for ref, f in zip(evidence, fragments, strict=True)
     ):
-        expanded.warnings.append(
-            f"'{requirement.concept}' was mapped to {', '.join(f.label for f in fragments)}. The saved metadata does not explain that meaning; verify this interpretation."
+        raise QueryValidationError(
+            "unexplained_grounding",
+            f"{requirement.clause}: the retained metadata for {', '.join(f.label for f in fragments)} does not explain '{requirement.concept}'. Retrieve relevant field definitions or mapping evidence; this choice remains unresolved.",
         )
     algebra = prepareQuery(expanded.sparql).algebra
     nodes = list(required_nodes(algebra) if requirement.required else walk(algebra))
@@ -338,6 +437,15 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         raise QueryValidationError(
             "goal_output",
             f"{requirement.clause}: declared output bindings are missing from SELECT.",
+        )
+    if (
+        requirement.kind == "output"
+        and exact_types
+        and not any(types.get(v, set()).intersection(exact_types) for v in outputs)
+    ):
+        raise QueryValidationError(
+            "goal_output",
+            f"{requirement.clause}: project the actual typed resource identity. A field's target hint does not establish that its values are the requested resource.",
         )
     owner, subject_binding = None, None
     if requirement.owner and any(f.owner for f in fragments):
@@ -414,6 +522,25 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         else:
             matches = []
         if not matches:
+            all_triples = [
+                t
+                for n in walk(algebra)
+                if isinstance(n, CompValue) and n.name == "BGP"
+                for t in n.triples
+            ]
+            available = any(
+                (fragment.kind == "type" and p == RDF.type and str(o) == fragment.iri)
+                or (
+                    fragment.path
+                    and canonical_path(p.n3()) == canonical_path(path_to_sparql(fragment.path))
+                )
+                for _, p, o in all_triples
+            )
+            if requirement.required and available:
+                raise QueryValidationError(
+                    "goal_availability",
+                    f"{requirement.clause}: {fragment.label} occurs only in an optional or alternative branch, but this goal requires it in every row. If it is requested when available, correct this goal to required=false with rdf_schema; preserve the original clause and other restrictions.",
+                )
             raise QueryValidationError(
                 "goal_path",
                 f"{requirement.clause}: the selected schema evidence is absent from its pattern.",
@@ -425,7 +552,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
                     "goal_output",
                     f"{requirement.clause}: project the selected {fragment.label} binding.",
                 )
-        if requirement.kind == "output" and not requirement.required:
+        if requirement.kind in {"output", "relation"} and not requirement.required:
             mandatory = [
                 t
                 for n in required_nodes(algebra)

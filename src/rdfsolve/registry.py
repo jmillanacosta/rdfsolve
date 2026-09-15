@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 from rdflib import Graph
 
-from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.exploration import field_targets
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.version import VERSION
 
@@ -35,6 +35,7 @@ class FieldDescription(Contract):
     examples: list[Any] = Field(default_factory=list)
     node_kinds: list[str] = Field(default_factory=list)
     targets: list[str] = Field(default_factory=list)
+    target_basis: dict[str, str] = Field(default_factory=dict)
     datatypes: list[str] = Field(default_factory=list)
 
 
@@ -113,9 +114,8 @@ def build_registry(client: Client, source_id: str) -> Registry:
                         name=name,
                         label=client.link_name(model, name),
                         binding={"path": extra["rdf_path"]},
-                        description=schema.enrichment.description(
-                            str(extra.get("rdf_property_iri", ""))
-                        ),
+                        description=field.description
+                        or schema.enrichment.description(str(extra.get("rdf_property_iri", ""))),
                         examples=list(field.examples or [])[:1],
                         node_kinds=sorted(
                             {
@@ -127,13 +127,8 @@ def build_registry(client: Client, source_id: str) -> Registry:
                                 for p in patterns
                             }
                         ),
-                        targets=sorted(
-                            {
-                                p.object_class
-                                for p in patterns
-                                if p.object_class not in _SENTINEL_OBJECTS
-                            }
-                        ),
+                        targets=sorted(field_targets(model, name)),
+                        target_basis=field_targets(model, name),
                         datatypes=sorted({p.datatype for p in patterns if p.datatype}),
                     )
                 )

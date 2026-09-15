@@ -116,8 +116,11 @@ def path_diagram(
                 s, o = [value or iri for value, iri in zip(types, (s, o), strict=True)]
         else:
             s, _predicate, o, backward = route[step]
-            labels = (client.type_name(client.model(s)), client.type_name(client.model(o)))
-            keys = [s, o]
+            labels = tuple(
+                client.type_name(client.model(c)) if c else "Intermediate resource" for c in (s, o)
+            )
+            keys = [s or f"path:{row['Path']}:{step}", o or f"path:{row['Path']}:{step + 1}"]
+            s, o = s or "", o or ""
         for key, iri, label in zip(keys, (s, o), labels, strict=True):
             if key not in nodes:
                 nodes[key] = (f"N{len(nodes)}", f"{_text(label)}<br/>{_text(iri)}")

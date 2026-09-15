@@ -99,6 +99,28 @@ class Client(DatasetClient):
 
         return build_registry(self, source_id)
 
+    def describe(self, concept="", *, owners=(), targets=()) -> pd.DataFrame:
+        """Find relevant generated classes and fields without reading instances."""
+        from rdfsolve.catalogue import Catalogue
+        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
+        index = Catalogue(self)
+        return pd.DataFrame(
+            [
+                {
+                    "Kind": f.kind,
+                    "Label": f.label,
+                    "Class": f.iri or f.owner,
+                    "Field": f.field_name,
+                    "Path": path_to_sparql(f.path) if f.path else None,
+                    "Targets": index.metadata[ref].get("targets", []),
+                    "Description": f.description,
+                }
+                for ref in index.search(concept, owners=owners, targets=targets)
+                for f in [index.fragments[ref]]
+            ]
+        )
+
     def select(self, query: str, *, exhaustive: bool = False):
         """Execute SELECT through this client's shared helper and return typed cells.
 
@@ -163,8 +185,8 @@ class Client(DatasetClient):
 
     def paths_between(
         self,
-        source: str | BaseModel,
-        target: str | None = None,
+        source: str | BaseModel | Results,
+        target: str | BaseModel | Results | None = None,
         *,
         target_value: str | None = None,
         max_hops: int = 3,
@@ -173,61 +195,70 @@ class Client(DatasetClient):
         allow_partial: bool = False,
         allow_repeated_classes: bool = False,
     ) -> pd.DataFrame:
-        """List class routes, or query connections to a matching record name.
+        """Discover schema routes or evaluate paths for selected typed records.
 
-        Two class names list schema routes without queries. A source record
-        restricts observed paths to that record's IRI. Use target_value
-        instead to verify mined class routes against records whose names or
-        identifiers contain that text, ignoring case. Paths stay in one graph
-        by default. Class route search accepts repeated classes and partial
-        candidates through explicit options. max_paths bounds its search.
+        Two class names use retained model fields without querying. A record or
+        Results on either side evaluates paths for those exact identities in each
+        configured graph. target_value searches names with find first. Results
+        preserve their whole selected scope; no example record is substituted.
+        allow_partial returns bounded evidence with explicit coverage.
         """
         from rdfsolve.client_paths import class_paths
         from rdfsolve.client_value_paths import value_paths
 
         if (target is None) == (target_value is None):
             raise ValueError("Supply either a target class or target_value")
-        source_resource = None
-        if isinstance(source, BaseModel):
-            source_resource = getattr(source, "uri", None)
-            if not isinstance(source_resource, str):
-                raise ValueError("Use a client record with a resource IRI")
-            _iri(source_resource)
-            source = str(getattr(type(source), "rdf_class_iri", ""))
-        if target_value is not None or source_resource is not None:
-            if allow_partial or allow_repeated_classes:
-                raise ValueError(
-                    "Partial/repeated-class options apply to schema routes, not observed value paths"
-                )
-            source_class = str(getattr(self.model(source), "rdf_class_iri", ""))
-            target_class = (
-                str(getattr(self.model(target), "rdf_class_iri", ""))
-                if target is not None
-                else None
-            )
-            return value_paths(
+        if isinstance(source, str) and isinstance(target, str):
+            return class_paths(
                 self,
-                source_class,
-                target_value,
-                source_iri=source_resource,
-                target_class=target_class,
+                source,
+                target,
                 max_hops=max_hops,
                 both_directions=both_directions,
                 max_paths=max_paths,
+                allow_partial=allow_partial,
+                allow_repeated_classes=allow_repeated_classes,
             )
-        if target is None:
-            raise ValueError("Supply a target class")
 
-        return class_paths(
+        def endpoints(value):
+            if isinstance(value, str):
+                return {str(self.model(value).rdf_class_iri): None}
+            records = Results(self, [value]) if isinstance(value, BaseModel) else value
+            if not isinstance(records, Results) or records.client is not self:
+                raise ValueError(
+                    "Use a class name, a generated record, or Results from this Client"
+                )
+            groups = defaultdict(set)
+            for record in records:
+                if type(record) not in self.models.values():
+                    raise ValueError("Use records generated by this Client")
+                _iri(record.uri)
+                groups[str(record.rdf_class_iri)].add(record.uri)
+            return {cls: sorted(iris) for cls, iris in sorted(groups.items())}
+
+        sources = endpoints(source)
+        target_records = self.find(target_value) if target_value is not None else target
+        table = value_paths(
             self,
-            source,
-            target,
+            sources,
+            endpoints(target_records),
             max_hops=max_hops,
             both_directions=both_directions,
             max_paths=max_paths,
             allow_partial=allow_partial,
             allow_repeated_classes=allow_repeated_classes,
         )
+        table.attrs["target_value"] = target_value
+        selection_partial = any(
+            isinstance(v, Results) and v.coverage.get("status") == "partial"
+            for v in (source, target_records)
+        )
+        if selection_partial:
+            table.attrs.update(status="partial", truncated=True)
+            table.attrs["warnings"].append(
+                "The input selection is partial; connections cover only its retained identities."
+            )
+        return table
 
     def connections(
         self,
@@ -281,21 +312,52 @@ class Client(DatasetClient):
         """Show every session query and its retained response without running it again."""
         return QueryLog(self.session_metadata())
 
+    @staticmethod
+    def title(record: BaseModel) -> str:
+        """Read a loaded title or label, falling back to the exact resource IRI."""
+        return _title(record)
+
+    def trace(self) -> dict[str, Any]:
+        """Explain the investigation using named steps and retained query identifiers."""
+        records = self._records()
+        return {
+            "source": "local RDF" if isinstance(self.source, Graph) else self.source.endpoint_url,
+            "graphs": list(self.graph_uris),
+            "source_queries": len(records),
+            "endpoint_requests": sum(r.attempts for r in records),
+            "steps": [dict(step) for step in self._steps],
+        }
+
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Accept generated names, spaced names, or full class IRIs."""
+        if name_or_iri in self.models:
+            return self.models[name_or_iri]
         matches = [
             model
             for name, model in self.models.items()
             if _key(name_or_iri)
-            in {_key(name), _key(re.split(r"[/#:]", getattr(model, "rdf_class_iri", ""))[-1])}
+            in {
+                _key(name),
+                _key(re.split(r"[/#:]", getattr(model, "rdf_class_iri", ""))[-1]),
+                _key(self.type_name(model)),
+                "".join(w[0] for w in self.type_name(model).split()).casefold(),
+            }
             or getattr(model, "rdf_class_iri", "") == name_or_iri
         ]
+        if not matches:
+            from rdfsolve.catalogue import words
+
+            matches = [
+                model
+                for model in self.models.values()
+                if words(name_or_iri) == words(self.type_name(model))
+            ]
         if len(matches) != 1:
             names = sorted(self.models)
             candidates = [name for name in names if _key(name_or_iri) in _key(name)] or names
             raise ValueError(
                 f"Unknown or ambiguous class {name_or_iri!r}. Use an exact class name or IRI. "
-                f"Available class names: {', '.join(candidates[:20])}"
+                f"Available class names: {', '.join(candidates[:8])}"
             )
         return matches[0]
 
@@ -330,6 +392,8 @@ class Client(DatasetClient):
 
     def field_name(self, model: type[BaseModel], text: str) -> str:
         """Resolve a field by its Python name, source label or exact predicate IRI."""
+        if text in model.model_fields:
+            return text
         matches = [
             name
             for name, field in model.model_fields.items()
@@ -393,50 +457,9 @@ class Client(DatasetClient):
 
     def find(self, text: str, *, kind: str | None = None, field: str | None = None) -> Results:
         """Find names and identifiers across types. Optionally search a chosen field."""
-        if not text.strip():
-            raise ValueError("Enter a word or name to find")
-        models = [self.model(kind)] if kind else list(self.models.values())
-        by_iri = {vars(model)["rdf_class_iri"]: model for model in models}
-        if not by_iri:
-            return Results(self, [])
-        classes = " ".join(_iri(iri) for iri in by_iri)
-        predicates = SEARCH_PREDICATES
-        if field is not None:
-            predicates = {
-                str(info.json_schema_extra["rdf_property_iri"])
-                for model in models
-                for name, info in model.model_fields.items()
-                if _key(name) == _key(field)
-                and isinstance(info.json_schema_extra, dict)
-                and info.json_schema_extra.get("rdf_property_iri")
-            }
-            if not predicates:
-                raise ValueError(f"No searchable field named {field}")
-        labels = " ".join(_iri(iri) for iri in sorted(predicates))
-        body = self._scope(
-            f"VALUES ?type {{ {classes} }} VALUES ?p {{ {labels} }} "
-            f"?s a ?type ; ?p ?label . FILTER(isIRI(?s) && !isBlank(?label) && "
-            f"CONTAINS(LCASE(STR(?label)), LCASE({Literal(text).n3()})))"
-        )
-        groups: dict[str, set[str]] = defaultdict(set)
-        records = []
-        with self.step(f"Find {text}"):
-            rows = self._select(
-                f"SELECT DISTINCT ?s ?type WHERE {{ {body} }} LIMIT {self.max_rows + 1}"
-            )
-            if len(rows) > self.max_rows:
-                raise HydrationLimitError("Too many matches. Enter a more specific name.")
-            for row in rows:
-                subject, cls = _term(row.get("s", {})), _term(row.get("type", {}))
-                if subject.kind != "uri" or cls.kind != "uri" or cls.value not in by_iri:
-                    raise EndpointError("Unexpected search result")
-                groups[cls.value].add(subject.value)
-            if len({iri for group in groups.values() for iri in group}) > self.max_subjects:
-                raise HydrationLimitError("Too many matches. Enter a more specific name.")
-            for iri, subjects in sorted(groups.items()):
-                model = by_iri[iri]
-                records.extend(self.get_many(model, sorted(subjects), fields=_name_fields(model)))
-        return Results(self, records)
+        from rdfsolve.client_search import search_records
+
+        return search_records(self, [text], kind, [field] if field else [], names_only=True)
 
     def search(
         self, terms: list[str], *, kind: str | None = None, fields: list[str] | None = None
@@ -521,6 +544,32 @@ class Results:
             columns=["Name", "Class"],
         )
 
+    def summary(self) -> dict[str, Any]:
+        """Describe the selected set and loaded fields without exposing record values."""
+        counts = defaultdict(int)
+        fields = defaultdict(set)
+        for record in self.records:
+            kind = self.client.type_name(type(record))
+            counts[kind] += 1
+            fields[kind].update(vars(record).get("rdf_loaded_fields", []))
+        return {
+            "records": len(self),
+            "types": [
+                {"class": kind, "records": count, "loaded_fields": sorted(fields[kind])}
+                for kind, count in counts.items()
+            ],
+            "coverage": {
+                k: self.coverage[k]
+                for k in ("status", "basis", "query_ids", "limit_reached")
+                if k in self.coverage
+            },
+            "scope": "All records in this retained selection",
+        }
+
+    def paths_between(self, target, **kwargs) -> pd.DataFrame:
+        """Evaluate paths from every selected record through this set's Client."""
+        return self.client.paths_between(self, target, **kwargs)
+
     def types(self) -> pd.DataFrame:
         """List the types found and their record counts."""
         groups: dict[type[BaseModel], list[BaseModel]] = defaultdict(list)
@@ -571,7 +620,7 @@ class Results:
         for record in self.records:
             for name in names & type(record).model_fields.keys():
                 label = re.sub(
-                    r"\\W+", "_", self.client.link_name(type(record), name).lower()
+                    r"\W+", "_", self.client.link_name(type(record), name).lower()
                 ).strip("_")
                 if label.isidentifier() and label not in aliases:
                     aliases[label] = name
@@ -677,7 +726,22 @@ class Results:
                         value=value,
                     ):
                         found[str(vars(record)["uri"])] = record
-        return Results(self.client, list(found.values()))
+        return Results(
+            self.client,
+            list(found.values()),
+            evidence=[
+                link
+                for link in self.client._matches
+                if link["query_id"] in self.client._steps[-1]["query_ids"]
+            ],
+            coverage={
+                "status": self.coverage.get("status", "complete"),
+                "basis": "Related resources from the whole selected set",
+                "source_records": len(self),
+                "via": via,
+                "query_ids": self.client._steps[-1]["query_ids"],
+            },
+        )
 
     def _load(self, *fields: str) -> None:
         fields = tuple(field for field in fields if field != "uri")

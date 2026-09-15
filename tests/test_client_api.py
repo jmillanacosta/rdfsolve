@@ -291,3 +291,77 @@ def test_table_input_uses_field_definitions_without_querying(tmp_path):
             data.from_table(CHEMICAL, table, id_column="missing", title="Name")
         with pytest.raises(ValueError):
             data.from_table(CHEMICAL, table.assign(ID="not an IRI"), id_column="ID", title="Name")
+
+
+def test_path_sets_preserve_all_sources_and_retained_evidence():
+    from rdfsolve.client_api import Results
+
+    with client() as data:
+        selected = data.get_many(data.model(AOP), [
+            "https://identifiers.org/aop/107", "https://identifiers.org/aop/162"], fields=[])
+        records = Results(data, selected)
+        paths = records.paths_between(CHEMICAL, max_hops=2)
+        assert {r["bindings"]["n0"]["value"] for r in paths.attrs["routes"]} == {r.uri for r in selected}
+        assert {r["bindings"]["n2"]["value"] for r in paths.attrs["routes"]} == {"https://identifiers.org/cas/50-06-6"}
+        assert sum(o["matches"] for o in paths.attrs["observations"]) == 2
+        assert paths.attrs["fragments"][0].anchors[0][1].value == selected[1].uri
+        assert records.summary()["records"] == 2
+        assert "50-06-6" not in str(records.summary())
+        assert all(o["query_ids"] for o in paths.attrs["observations"])
+        before = len(data.queries)
+        assert data.trace()["source_queries"] == before and data.query_log().queries
+        assert len(data.queries) == before
+        limited = records.paths_between(CHEMICAL, max_hops=2, max_paths=1, allow_partial=True)
+        assert limited.attrs["status"] == "partial" and len(limited.attrs["routes"]) == 1
+        assert Results(data, []).paths_between(CHEMICAL).empty
+        with client() as other, pytest.raises(ValueError, match="this Client"):
+            other.paths_between(records, CHEMICAL)
+
+
+def test_shape_navigation_uses_generated_fields_without_pairwise_patterns():
+    from rdfsolve.api import Client
+    from rdfsolve.schema_models.core import MinedSchema
+
+    schema = MinedSchema.from_shacl('''@prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix e: <urn:shape:> . e:AShape a sh:NodeShape; sh:targetClass e:A;
+      sh:property [sh:path (e:link [sh:inversePath e:back]); sh:name "Related resource";
+      sh:qualifiedValueShape [ sh:class e:B ]; sh:qualifiedMinCount 0] .
+    e:BShape a sh:NodeShape; sh:targetClass e:B .''')
+    graph = Graph().parse(data='''@prefix e: <urn:shape:> .
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    e:a a e:A; rdfs:label "root"; e:link e:x . e:b a e:B; e:back e:x .''', format="turtle")
+    with Client(schema, graph, graph_uris=[]) as data:
+        assert not schema.patterns
+        source = data.find("root")
+        assert list(vars(source.fields)) == ["related_resource"]
+        assert source.paths()["To"].tolist() == ["B"]
+        assert [r.uri for r in source.related("B")] == ["urn:shape:b"]
+        assert data.links(type(source[0])).iloc[0].basis == "SHACL qualified subset"
+        schema_paths = data.paths_between("A", "B")
+        assert "Intermediate resource" in data.diagram(paths=schema_paths)
+        observed = source.paths_between("B", max_hops=2)
+        assert observed.attrs["routes"][0]["bindings"]["n2"]["value"] == "urn:shape:b"
+        assert not any("?n1 a" in q for q in data.queries)
+        found = data.search(["urn:shape:b"], kind="A", fields=["Related resource"])
+        assert [r.uri for r in found] == ["urn:shape:a"]
+        assert found.evidence[0]["path"]["operator"] == "sequence"
+        assert found.evidence[0]["predicate"] is None
+        assert all(r["query_ids"] for r in data.trace()["steps"] if r["name"].startswith("Find"))
+
+
+def test_generated_names_disambiguate_equal_display_labels():
+    from rdfsolve.api import Client
+    from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    schema = MinedSchema(about={"dataset_name": "duplicate-labels"}, patterns=[SchemaPattern(subject_class=cls, property_uri="urn:label", object_class="Literal")
+                                   for cls in ("urn:one:DataNode", "urn:two:DataNode")])
+    with Client(schema, Graph(), graph_uris=[]) as data:
+        for name, model in data.models.items():
+            assert data.model(name) is model
+        with pytest.raises(ValueError, match="ambiguous"):
+            data.model("Data node")
+        with pytest.raises(ValueError, match="ambiguous"):
+            data.model("Data nodes")
+    with client() as data:
+        assert data.model("Key Events") is data.model("Key Event")

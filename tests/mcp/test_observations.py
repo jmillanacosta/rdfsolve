@@ -12,7 +12,7 @@ from rdfsolve.mcp.server import CONTRACTS, dispatch
 def test_long_values_never_enter_probe_or_final_observations(session):
     sentinel = "PRIVATE_LITERAL_" + "x" * 100000
     session.client.source.add((E.ke1, E.method, Literal(sentinel, lang="en")))
-    declare(session, "Return event methods")
+    declare(session, "Return event methods", concept="measurement method")
     prepared = prepare(
         session,
         {"g1": {"pattern": field(session, E.Event, E.method, "e", "m"), "project": ["e", "m"]}},
@@ -33,7 +33,7 @@ def test_errors_are_actionable_and_serializable(session):
     bad = dispatch(session, "rdf_probe", {"query_ref": "missing", "limit": "2"})
     assert bad["error"]["code"] == "invalid_arguments"
     json.dumps(bad)
-    declare(session, "Return pathways")
+    declare(session, "Return pathways", concept="Adverse Outcome Pathway")
     bad = dispatch(
         session,
         "rdf_prepare",
