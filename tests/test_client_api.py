@@ -30,22 +30,6 @@ def client(data_file=DATA):
     return Client(MinedSchema(about={"dataset_name": "aopwikirdf"}, patterns=list(patterns.values())), graph, graph_uris=[])
 
 
-def test_workspace_keeps_typed_records_and_query_evidence():
-    with client() as data:
-        workspace = data.workspace()
-        matches = workspace.find("Phenobarbital", kind=CHEMICAL)
-        records = [workspace.records[item['ref']] for item in matches['records']]
-        assert records and all(record.rdf_class_iri == CHEMICAL for record in records)
-        assert all(record.to_graph() for record in records)
-        session = data.session_metadata()
-        assert session['queries'] and all(q['result_retained'] for q in session['queries'])
-        before = len(session['queries'])
-        assert workspace.find("Phenobarbital", kind=CHEMICAL) == matches
-        with pytest.raises(ValueError, match="Unknown"):
-            workspace.inspect("nonexistent-reference")
-        assert len(data.session_metadata()['queries']) == before
-
-
 def test_find_follow_values_and_saved_links(tmp_path):
     with client() as data:
         matches = data.find("Phenobarbital")

@@ -223,6 +223,22 @@ class SchemaMiner:
         """
         return self._helper
 
+    @classmethod
+    def from_graph(cls, graph, *, endpoint_url="urn:rdfsolve:local", **kwargs):
+        """Mine a bounded RDF snapshot using the existing SPARQL mining strategy."""
+        from rdflib import Dataset
+
+        from rdfsolve.mining.local_graph import LocalGraphHelper
+
+        dataset = graph if isinstance(graph, Dataset) else Dataset()
+        if dataset is not graph:
+            for triple in graph:
+                dataset.default_graph.add(triple)
+        miner = cls(endpoint_url, **kwargs)
+        miner._helper.close()
+        miner._helper = LocalGraphHelper(endpoint_url, dataset)
+        return miner
+
     def close(self) -> None:
         """Release the HTTP session."""
         self._helper.close()

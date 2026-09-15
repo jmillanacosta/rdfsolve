@@ -28,10 +28,11 @@
     /></a>
 </p>
 
-Tools to retrieve RDF metadata, test endpoint availability, run batched SPARQL
+Tools and MCP to retrieve RDF metadata, test endpoint availability, run batched SPARQL
 queries and maintain source registries. Extract and convert schemas, generate
 typed Python clients, follow links between records and derive mappings across
-datasets. Keep the queries and results behind each exploration.
+datasets. Keep the queries and results behind each exploration, and export back into RDF, allowing to generate RDF subsets.
+
 
 ## Installation
 
@@ -436,131 +437,69 @@ Create graphs showing dataset relationships via shared classes and mappings:
 python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
-### Package-first exploration and MCP
+### Grounded retrieval through MCP
 
-The MCP folder contains transport and the PydanticAI scaffold. Discovery, typed
-records, field/path fragments and execution are performed with `rdfsolve`:
-
-```python
-from rdfsolve.client_api import Client
-
-client = Client.open("notebooks/data/aopwikirdf.schema.json")
-work = client.workspace()
-print(work.schema(["Key Event", "taxon"]))
-# Use the returned type/field references for work.find(), work.paths(),
-# work.inspect(), work.follow(), and work.prepare(). No model is needed here.
-```
-
-`Workspace.find` delegates to `Client.find` / `Client.search`. Records are the
-existing generated Pydantic models. `paths` delegates to `Client.paths_between`
-(including value-grounded search) or `Client.connections`, supplemented by retained
-full SHACL field paths. `inspect` and `follow` use core hydration and field readers.
-The workspace does not substitute prose matching for an entity relationship.
-
-Composition uses ordinary SELECT syntax, optionally inserting retained paths:
-`{{path_ref ?source ?target}}` and exact observed terms: `{{entity_ref}}`.
-The package expands its own PropertyPath objects, allocates internal variables,
-checks static vocabulary, and applies the Client graph scope. It does not require
-a second executable-intent language. `prepare` never executes. `probe` is a bounded
-sample; only `finish` executes a final artifact. Execution uses `Client.select`
-and the shared SPARQL helper, including its pagination and transport recovery.
-
-Install the existing pinned `rdfsolve[agents,mcp]` extras and start stdio:
-
-```bash
-python -m rdfsolve.mcp --schema notebooks/data/aopwikirdf.schema.json
-```
-
-For local RDF, add `--data-file subset.ttl`. There are eight tools:
-`rdf_schema`, `rdf_find`, `rdf_paths`, `rdf_inspect`, `rdf_follow`, `rdf_prepare`,
-`rdf_probe`, and `rdf_finish`. Full artifacts are read through resource references;
-normal observations are bounded. There are no reviewer/extractor agents and no
-model-managed operation IDs. The agent implementation is `rdfsolve.mcp.agent`.
-
+Install `rdfsolve[agents,mcp]`. The same workflow supports any saved schema:
 
 ```python
-from rdfsolve.openai import ask_aopwiki
+from rdfsolve.api import ask_rdf
 
-answer = await ask_aopwiki("Return Key Events with their applicable species and measurement methods for all Adverse outcome pathways in human taxon")
+answer = await ask_rdf(
+    "Return pathways and their linked chemicals",
+    schema="notebooks/mcp/schemas/aopwikirdf.schema.json",
+    source_id="aopwikirdf",
+    base_url="http://127.0.0.1:8080/v1",
+    model_name="qwen36-35b-a3b",
+)
 print(answer.text)
 print(answer.diagnostics())
 if answer.state == "complete":
     display(answer.table())
-else:
-    print(answer.error)
 ```
 
-The model must still interpret the question and choose the correct scope and
-SPARQL operators.
+`model=` accepts another PydanticAI model. `endpoint=`, `graph_uris=`,
+`data_file=` and `output_dir=` configure the source and artifacts explicitly.
+`mapping_file=` loads the existing mapping JSON-LD format; `related_registries=`
+loads source registry snapshots used for explanatory class metadata. Source IDs
+must agree with the mapping records.
 
-The host does not
-finalize an exploratory query automatically. It stops after explicit `rdf_finish`.
+All model integration lives in `rdfsolve.mcp`. The core `Catalogue` indexes
+classes, mappings and full field paths. `retrieval.verify_query` expands one
+ordinary SELECT and checks its outputs, exact entity restrictions, field owners,
+connected bindings, optional scope and retrieval operators against declared goals.
+The initial semantic classification can be corrected before preparation. Corrections
+are recorded; probes cannot weaken the requirements. Initial interpretation and
+semantic selection remain model decisions.
 
-### Save what a client can do
+The seven MCP tools discover schema, ground entities, find paths, inspect targeted
+evidence, prepare a query, probe it and explicitly finish. Complete bindings stay
+in local caller artifacts. Tools return compact evidence, profiles and execution
+receipts. Endpoint queries use the Client and shared SparqlHelper recovery.
 
-Export its operations, argument types, available fields and source evidence:
+For Claude or another MCP host, configure a stdio server:
 
-```python
-session = data.session(source_id="aopwikirdf")
-session.registry.write("aopwikirdf.registry.json")
-
-print(session.registry.find("identifier"))
-print(session.registry.describe("read"))
+```bash
+python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-database
 ```
 
-This makes no source requests. The file records supported operations, not a
-promise that the endpoint is online. Its content revision, file format version
-and source dataset version are separate. The source version stays unset if it
-is unknown.
+The server supports SELECT retrieval with joins, optional patterns, alternatives
+and filters. Aggregation, BIND-based output transformations, final LIMIT/OFFSET, federation and
+model-selected source scope are rejected. Ordinary SPARQL expressions inside
+filters preserve their declared scope. Schema evidence is approximate; unsupported
+target-class evidence produces a warning. Full natural-language equivalence is
+not something a schema check proves.
 
-Use the same operations from a script:
+Run deterministic tests with `uvx tox -e mcp`. The six files in `tests/mcp`
+contain exact RDF answer tests and real MCP/PydanticAI integration checks.
+Run local-model experiments through `sbatch scripts/slurm_qwen_mcp.sh`.
+Job logs, model logs and saved answers are under `../logs/mcp-test/`.
 
-```python
-matches = session.search(["thyroxine", "thyroid hormone"])
-routes = session.paths(matches["reference"], "Adverse Outcome Pathway")
-print(routes["paths"])  # Inspect before choosing a route.
-
-page = session.read(
-    matches["reference"],
-    paths=[routes["paths"][0]["id"]],
-    fields=["title"],
-)
-print(page["rows"])
-print(page["evidence"])
-data.save_session("session.json")
-```
-
-Each row keeps its identifier, requested type, observed types and RDF values.
-Text searches return candidates, not a chosen identity. `next_offset` gives the
-next page of retained records; `retained_records` is not an endpoint total.
-`status="partial"` reports a reached search or path limit. `complete` means the
-operation finished, not that every scientifically relevant record was found.
-Field reads apply only to the requested page. References belong to this session;
-use `session.release(reference)` to free a result when needed.
-
-Previews shorten long values and show up to three values per field. Use
-`read(..., detail=True)` for full values on that page, or export the retained
-typed records. `next_evidence_offset` pages supporting matches independently of
-records. Full text, RDF terms and query bindings remain in the result and log.
-The saved schema is never shortened to make a tool response smaller.
-
-For direct Python exploration, `data.search(["thyroxine"])` returns typed
-results; `matches.evidence` holds matching passages and `matches.coverage`
-reports the search scope. `data.find("Phenobarbital")` remains a name lookup.
-
-The session log includes each operation, its arguments, outcome, registry
-snapshot and query IDs. No model service is needed for these script calls.
-MCP logs keep query responses and schema context in companion files. Keep them
-beside the main JSON report; `QueryLog.read()` opens them together.
-
-To inspect a saved registry without connecting to its source:
-
-```python
-from rdfsolve.registry import Registry
-
-registry = Registry.read("aopwikirdf.registry.json")
-print(registry.find(types=True))
-```
+The development notebooks are `notebooks/mcp/00_mine.ipynb`, `01_small.ipynb`, and
+`test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical schemas
+live in `notebooks/mcp/schemas/`. Run the small evaluation with
+`RDFSOLVE_NOTEBOOK=01_small.ipynb sbatch scripts/slurm_qwen_mcp.sh`.
+Reference answers remain outside the model context. Results include exact tuple
+precision/recall, request counts, inclusive input tokens and cache reads.
 
 ## Documentation
 

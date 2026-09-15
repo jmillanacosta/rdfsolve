@@ -32,6 +32,20 @@ def _path(model: type[BaseModel], field: str) -> PropertyPath:
     return PropertyPath.model_validate(extra["rdf_path"])
 
 
+class UnaddressableTargetError(EndpointError):
+    """A returned URI cannot be used as an absolute IRI in a later request."""
+
+    def __init__(self, term, field: str, query_id: int):
+        self.observed = term.model_dump(mode="json", exclude_none=True)
+        self.field = field
+        self.query_id = query_id
+        super().__init__(
+            f"Follow returned type={term.kind!r}, value={term.value!r}, which is not "
+            "an addressable absolute IRI. The original link query is retained; "
+            "no target hydration was attempted."
+        )
+
+
 class DatasetClient(Hydrator):
     """Search typed records and follow recorded links without recursive loading."""
 
@@ -159,6 +173,14 @@ class DatasetClient(Hydrator):
                     or target_term.kind != "uri"
                 ):
                     raise EndpointError("Unexpected source or target in link results")
+                # SPARQL JSON type='uri' does not itself validate absoluteness.
+                # Never repair returned data by guessing a base or a blank-node kind.
+                try:
+                    _iri(target_term.value)
+                except ValueError as exc:
+                    raise UnaddressableTargetError(
+                        target_term, field, len(self._records())
+                    ) from exc
                 targets.add(target_term.value)
                 self._matches.append(
                     {

@@ -24,6 +24,7 @@ from .void_discover import VoidParser
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "ask_rdf",
     "discover_void_graphs",
     "discover_void_source",
     "enrich_source",
@@ -644,3 +645,47 @@ def load_mapping_jsonld(path: str) -> dict[str, Any]:
     """Load a mapping JSON-LD file from disk."""
     result: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
     return result
+
+
+async def ask_rdf(
+    question: str,
+    *,
+    schema,
+    source_id="rdf",
+    endpoint=None,
+    data_file=None,
+    graph_uris=None,
+    model=None,
+    base_url=None,
+    model_name=None,
+    api_key=None,
+    model_settings=None,
+    usage_limits=None,
+    timeout=900,
+    max_paths=100,
+    mapping_file=None,
+    related_registries=(),
+    output_dir=None,
+):
+    """Run a grounded RDF investigation with a configured model and saved schema."""
+    from rdfsolve.mcp.openai import ask_rdf as run
+
+    return await run(
+        question,
+        schema=schema,
+        source_id=source_id,
+        endpoint=endpoint,
+        data_file=data_file,
+        graph_uris=graph_uris,
+        model=model,
+        base_url=base_url,
+        model_name=model_name,
+        api_key=api_key,
+        model_settings=model_settings,
+        usage_limits=usage_limits,
+        timeout=timeout,
+        max_paths=max_paths,
+        mapping_file=mapping_file,
+        related_registries=related_registries,
+        output_dir=output_dir,
+    )

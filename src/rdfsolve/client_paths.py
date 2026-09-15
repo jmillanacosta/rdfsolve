@@ -47,7 +47,7 @@ def class_paths(
     allow_partial: bool = False,
     allow_repeated_classes: bool = False,
 ) -> pd.DataFrame:
-    """Enumerate simple routes in the supplied schema, not instance matches."""
+    """Enumerate bounded routes in the supplied empirical schema."""
     _budget(max_hops, max_paths)
     start = client.model(source)
     end = client.model(target)
@@ -59,7 +59,7 @@ def class_paths(
     reverse: dict[str, set[str]] = defaultdict(set)
     for pattern in client._schema.patterns:
         s, p, o = pattern.subject_class, pattern.property_uri, pattern.object_class
-        if pattern.count == 0 or s not in models or o not in models:
+        if s not in models or o not in models:
             continue
         edges[s].add((p, o, False))
         reverse[o].add(s)
@@ -76,8 +76,7 @@ def class_paths(
                 pending.append(previous)
     routes: list[list[tuple[str, str, str, bool]]] = []
 
-    # Breadth-first search permits bounded, explicitly requested repeated-class
-    # roles. Stop with marked partial results, never convert exhaustion to absence.
+    # Repeated classes represent distinct binding roles within the search budget.
     queue = deque([(first, {first}, [])])
     truncated, expansions = False, 0
     expansion_limit = max(1000, max_paths * 100)
@@ -100,7 +99,13 @@ def class_paths(
             break
         for predicate, next_node, backward in sorted(edges[node]):
             if allow_repeated_classes or next_node not in seen:
-                queue.append((next_node, seen | {next_node}, [*route, (node, predicate, next_node, backward)]))
+                queue.append(
+                    (
+                        next_node,
+                        seen | {next_node},
+                        [*route, (node, predicate, next_node, backward)],
+                    )
+                )
     if truncated and not allow_partial:
         raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
     routes.sort(key=lambda route: (len(route), route))
@@ -117,8 +122,14 @@ def class_paths(
         for step, (s, p, o, backward) in enumerate(route, 1)
     ]
     table = pd.DataFrame(rows, columns=COLUMNS)
-    table.attrs.update(routes=routes, basis="mined class patterns", max_hops=max_hops, truncated=truncated, expansions=expansions,
-                       status="partial" if truncated else "complete")
+    table.attrs.update(
+        routes=routes,
+        basis="mined class patterns",
+        max_hops=max_hops,
+        truncated=truncated,
+        expansions=expansions,
+        status="partial" if truncated else "complete",
+    )
     return table
 
 

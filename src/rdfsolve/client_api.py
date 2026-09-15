@@ -25,9 +25,6 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 
-if TYPE_CHECKING:
-    from rdfsolve.client_session import ClientSession
-
 
 def _key(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.casefold())
@@ -98,26 +95,24 @@ class Client(DatasetClient):
 
     def registry(self, *, source_id: str) -> Registry:
         """Build a versioned operation registry without querying the source."""
-        from rdfsolve.rdf_operations import build_registry
+        from rdfsolve.registry import build_registry
 
         return build_registry(self, source_id)
-
-    def workspace(self, *, source_id: str = "rdf", **kwargs):
-        """Open a retained exploration/composition workspace without an agent or MCP."""
-        from rdfsolve.workspace import Workspace
-        return Workspace(self, source_id=source_id, **kwargs)
 
     def select(self, query: str):
         """Execute SELECT through this client's shared helper and return typed cells.
 
-        Scope must already be present in query (Workspace.prepare adds it). The
+        Scope must already be present in the query. The
         returned QueryResult preserves the query's row associations and RDF terms.
         This operation never creates another endpoint connection or bypasses
         SparqlHelper.select_with_fallback.
         """
         from time import perf_counter
+
         from rdflib.plugins.sparql import prepareQuery
+
         from rdfsolve.query import QueryResult, ResultCell
+
         parsed = prepareQuery(query)
         if parsed.algebra.name != "SelectQuery":
             raise ValueError("Client.select requires a SELECT query")
@@ -129,16 +124,22 @@ class Client(DatasetClient):
             row = {}
             for name, cell in binding.items():
                 term = _term(cell)
-                row[name] = ResultCell(value=term.value, type=term.kind,
-                                       lang=term.language, datatype=term.datatype)
+                row[name] = ResultCell(
+                    value=term.value, type=term.kind, lang=term.language, datatype=term.datatype
+                )
             rows.append(row)
-        return QueryResult(query=query,
+        return QueryResult(
+            query=query,
             endpoint="" if isinstance(self.source, Graph) else self.source.endpoint_url,
-            variables=variables, rows=rows, row_count=len(rows),
-            duration_ms=round((perf_counter()-started)*1000))
+            variables=variables,
+            rows=rows,
+            row_count=len(rows),
+            duration_ms=round((perf_counter() - started) * 1000),
+        )
 
-    def field_values(self, kind: str, field: str, *, text: str = "",
-                     limit: int = 8, offset: int = 0) -> list[dict[str, Any]]:
+    def field_values(
+        self, kind: str, field: str, *, text: str = "", limit: int = 8, offset: int = 0
+    ) -> list[dict[str, Any]]:
         """Sample actual subject/value pairs through a generated field's full path.
 
         This is discovery, not a final answer. Request limit+1 to detect another
@@ -146,6 +147,7 @@ class Client(DatasetClient):
         """
         from rdfsolve.exploration import _path
         from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
         if type(limit) is not int or not 1 <= limit <= self.max_rows or offset < 0:
             raise ValueError("Use a positive bounded limit and nonnegative offset")
         model = self.model(kind)
@@ -154,26 +156,9 @@ class Client(DatasetClient):
         pattern = f"?subject a {_iri(model.rdf_class_iri)} ; {path_to_sparql(path)} ?value ."
         if text:
             pattern += f" FILTER(!isBlank(?value) && CONTAINS(LCASE(STR(?value)), LCASE({Literal(text).n3()})))"
-        return self._select(f"SELECT DISTINCT ?subject ?value WHERE {{ {self._scope(pattern)} }} "
-                            f"ORDER BY ?subject ?value LIMIT {limit} OFFSET {offset}")
-
-    def session(
-        self,
-        *,
-        source_id: str,
-        preview_rows: int = 20,
-        max_results: int = 50,
-        max_records: int = 1000,
-    ) -> ClientSession:
-        """Run registered reads with retained results and a shared query log."""
-        from rdfsolve.client_session import ClientSession
-
-        return ClientSession(
-            self,
-            source_id=source_id,
-            preview_rows=preview_rows,
-            max_results=max_results,
-            max_records=max_records,
+        return self._select(
+            f"SELECT DISTINCT ?subject ?value WHERE {{ {self._scope(pattern)} }} "
+            f"ORDER BY ?subject ?value LIMIT {limit} OFFSET {offset}"
         )
 
     def paths_between(
@@ -211,7 +196,9 @@ class Client(DatasetClient):
             source = str(getattr(type(source), "rdf_class_iri", ""))
         if target_value is not None or source_resource is not None:
             if allow_partial or allow_repeated_classes:
-                raise ValueError("Partial/repeated-class options apply to schema routes, not observed value paths")
+                raise ValueError(
+                    "Partial/repeated-class options apply to schema routes, not observed value paths"
+                )
             source_class = str(getattr(self.model(source), "rdf_class_iri", ""))
             target_class = (
                 str(getattr(self.model(target), "rdf_class_iri", ""))

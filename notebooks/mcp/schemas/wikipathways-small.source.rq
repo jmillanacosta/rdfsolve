@@ -1,0 +1,5 @@
+CONSTRUCT { ?s ?p ?o . ?o ?q ?v . ?v a ?type . } WHERE {
+      { SELECT ?s WHERE { ?s a <http://vocabularies.wikipathways.org/wp#Pathway> } ORDER BY ?s LIMIT 8 }
+      ?s ?p ?o .
+      OPTIONAL { FILTER(isIRI(?o)) ?o ?q ?v . OPTIONAL { ?v a ?type } }
+    }

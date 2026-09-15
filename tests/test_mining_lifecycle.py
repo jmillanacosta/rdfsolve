@@ -140,3 +140,12 @@ def test_metadata_export_uses_literal_nodes():
     graph = metadata.to_rdf_graph()
     assert (URIRef("urn:dataset"), DCTERMS.title, Literal("Title")) in graph
     assert (URIRef("urn:dataset"), DCTERMS.description, Literal("Text")) in graph
+
+
+def test_bounded_graph_uses_real_mining_queries():
+    graph = Graph().parse(data="@prefix e: <urn:mine:> . e:a a e:A; e:link e:b. e:b a e:B.", format="turtle")
+    with SchemaMiner.from_graph(graph, counts=False, delay=0, strategy="one-shot") as miner:
+        schema = miner.mine("local-fixture")
+        assert ("urn:mine:A", "urn:mine:link", "urn:mine:B") in {
+            (p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
+        assert miner.last_report.finished_at

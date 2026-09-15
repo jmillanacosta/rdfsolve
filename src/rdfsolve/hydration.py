@@ -25,7 +25,7 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
-from rdfsolve.schema_models.paths import PropertyPath
+from rdfsolve.schema_models.paths import PropertyPath, absolute_iri
 from rdfsolve.sparql_helper import EndpointError, QueryRecord, SparqlHelper
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class HydrationLimitError(ValueError):
 
 def _iri(value: str) -> str:
     """Validate an absolute IRI before placing it in a query."""
-    return path_to_sparql(PropertyPath(operator="predicate", iri=value))
+    return "<" + absolute_iri(value) + ">"
 
 
 def _term(binding: dict[str, Any]) -> RdfTerm:
@@ -290,7 +290,9 @@ class Hydrator:
     def _select(self, query: str) -> list[dict[str, Any]]:
         """Execute one bounded query and retain its text for inspection."""
         self.queries.append(query)
-        self.last_query_execution = {"strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"}
+        self.last_query_execution = {
+            "strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"
+        }
         if isinstance(self.source, Graph):
             record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
             self._local_records.append(record)
@@ -312,7 +314,9 @@ class Hydrator:
             try:
                 result = self.source.select_with_fallback(query, purpose="hydrate")
             finally:
-                self.last_query_execution = deepcopy(getattr(self.source, "last_select_execution", {}))
+                self.last_query_execution = deepcopy(
+                    getattr(self.source, "last_select_execution", {})
+                )
         try:
             rows = result["results"]["bindings"]
         except (KeyError, TypeError) as error:

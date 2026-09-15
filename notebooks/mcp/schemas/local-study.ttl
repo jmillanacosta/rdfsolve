@@ -1,0 +1,26 @@
+@prefix e: <urn:study:> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+e:alice a e:Researcher ;
+    e:employment e:j1,
+        e:j2 .
+
+e:bob a e:Researcher ;
+    e:employment e:j3 .
+
+e:Y a e:Organisation .
+
+e:j1 a e:Employment ;
+    e:organisation e:X ;
+    e:year 2010 .
+
+e:j2 a e:Employment ;
+    e:organisation e:Y ;
+    e:year 2020 .
+
+e:j3 a e:Employment ;
+    e:organisation e:X ;
+    e:year 2020 .
+
+e:X a e:Organisation .
+

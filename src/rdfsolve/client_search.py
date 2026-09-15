@@ -22,10 +22,11 @@ def search_records(
 ) -> Results:
     """Search any supplied phrase across names and mined text fields, in sequence."""
     from rdfsolve.client_api import Results, _name_fields
-    from rdfsolve.rdf_operations import Search
-
-    args = Search(terms=terms, kind=kind, fields=fields)
-    models = [client.model(args.kind)] if args.kind else list(client.models.values())
+    if not 1 <= len(terms) <= 12 or any(not t.strip() or len(t) > 200 for t in terms):
+        raise ValueError("Use 1..12 nonempty search phrases of at most 200 characters")
+    if len(fields) > 12:
+        raise ValueError("Use at most twelve search fields")
+    models = [client.model(kind)] if kind else list(client.models.values())
     if fields and any(
         (model.model_fields[client.field_name(model, name)].json_schema_extra or {}).get("rdf_path", {}).get("operator") not in (None, "predicate")
         for model in models for name in fields
