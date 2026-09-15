@@ -26,6 +26,10 @@ def launch_config(
     max_paths=100,
     mapping_file=None,
     related_registries=(),
+    ontology_grounding=False,
+    ontology_provider="ols",
+    ontology_cache=None,
+    ontology_offline=False,
     artifact_dir=None,
 ):
     """Launch this checkout with the caller's Python and explicit source settings."""
@@ -57,6 +61,12 @@ def launch_config(
         args += ["--mapping", str(Path(mapping_file).resolve(strict=True))]
     for path in related_registries:
         args += ["--related-registry", str(Path(path).resolve(strict=True))]
+    if ontology_grounding:
+        args += ["--ontology-provider", ontology_provider]
+        if ontology_cache:
+            args += ["--ontology-cache", str(Path(ontology_cache).resolve())]
+        if ontology_offline:
+            args += ["--ontology-offline"]
     if graph_uris is not None:
         args += ["--graphs", json.dumps(graph_uris)]
     return {"command": sys.executable, "args": args, "env": env}
@@ -80,6 +90,10 @@ async def ask_rdf(
     max_paths=100,
     mapping_file=None,
     related_registries=(),
+    ontology_grounding=False,
+    ontology_provider="ols",
+    ontology_cache=None,
+    ontology_offline=False,
     output_dir=None,
 ) -> Answer:
     """Discover, ground, compose and execute against a caller-selected database.
@@ -143,6 +157,10 @@ async def ask_rdf(
             max_paths=max_paths,
             mapping_file=mapping_file,
             related_registries=related_registries,
+            ontology_grounding=ontology_grounding,
+            ontology_provider=ontology_provider,
+            ontology_cache=ontology_cache,
+            ontology_offline=ontology_offline,
             artifact_dir=artifacts,
         )
         if answer.files:

@@ -26,6 +26,7 @@ OUTPUT_DIR="$(cd -- "$OUTPUT_DIR" && pwd)"
 export QWEN_MODEL="${RDFSOLVE_MODEL:-${QWEN_MODEL:-qwen36-35b-a3b}}"
 export QWEN_BASE_URL="http://127.0.0.1:${PORT}/v1"
 export RDFSOLVE_MODEL="$QWEN_MODEL" RDFSOLVE_MODEL_BASE_URL="$QWEN_BASE_URL"
+export RDFSOLVE_MODEL_FILE="$MODEL_PATH" RDFSOLVE_MODEL_IMAGE="$IMAGE"
 export RDFSOLVE_ROOT="$REPO"
 export RDFSOLVE_SCHEMA="${RDFSOLVE_SCHEMA:-$REPO/notebooks/mcp/schemas/aopwikirdf.schema.json}"
 export RDFSOLVE_OUTPUT="$OUTPUT_DIR"
@@ -47,15 +48,17 @@ mkdir -p "$OUTPUT_DIR/source"
 cp -a "$REPO/src/rdfsolve" "$OUTPUT_DIR/source/rdfsolve"
 export PYTHONPATH="$OUTPUT_DIR/source${PYTHONPATH:+:$PYTHONPATH}"
 python - <<'PYCODE'
-import hashlib, importlib.metadata, json, os, subprocess
+import hashlib, importlib.metadata, json, os, platform, subprocess
 from pathlib import Path
 root, output = Path(os.environ['RDFSOLVE_ROOT']), Path(os.environ['RDFSOLVE_OUTPUT'])
 files = list((root / 'src/rdfsolve').rglob('*.py')) + list((root / 'notebooks/mcp/schemas').glob('*'))
 manifest = {
     'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
     'source_sha256': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.is_file()},
-    'versions': {name: importlib.metadata.version(name) for name in ['rdfsolve','pydantic-ai-slim','mcp','rdflib','pydantic']},
+    'versions': {name: importlib.metadata.version(name) for name in ['rdfsolve','pydantic-ai-slim','mcp','rdflib','pydantic','bioregistry','numpy','pandas']},
+    'python': platform.python_version(),
     'model': os.environ['RDFSOLVE_MODEL'],
+    'model_files': {os.environ[key]: {'bytes': Path(os.environ[key]).stat().st_size, 'modified_ns': Path(os.environ[key]).stat().st_mtime_ns} for key in ['RDFSOLVE_MODEL_FILE','RDFSOLVE_MODEL_IMAGE']},
     'max_tokens': os.environ['RDFSOLVE_MAX_TOKENS'],
     'notebook': os.environ.get('RDFSOLVE_NOTEBOOK', 'test-mcp.ipynb'),
     'source_snapshot': 'source/rdfsolve',

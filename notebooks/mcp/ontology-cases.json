@@ -1,0 +1,111 @@
+[
+  {
+    "id": "aop-identities",
+    "source": "aopwikirdf-small",
+    "question": "List all Adverse Outcome Pathway resource identities. Use output variables pathway.",
+    "columns": [
+      "pathway"
+    ],
+    "reference": "SELECT DISTINCT ?pathway WHERE { ?pathway a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> . }",
+    "concepts": [
+      "Adverse Outcome Pathway"
+    ]
+  },
+  {
+    "id": "wp-titles",
+    "source": "wikipathways-small",
+    "question": "List every Pathway with its available title. Keep pathways without titles. Use output variables pathway, title.",
+    "columns": [
+      "pathway",
+      "title"
+    ],
+    "reference": "SELECT DISTINCT ?pathway ?title WHERE { ?pathway a <http://vocabularies.wikipathways.org/wp#Pathway> . OPTIONAL { ?pathway <http://purl.org/dc/elements/1.1/title> ?title } }",
+    "concepts": [
+      "Pathway",
+      "title"
+    ]
+  },
+  {
+    "id": "event-methods",
+    "source": "aopwikirdf-small",
+    "question": "Return every Key Event and its available measurement methods. Keep events without methods. Use output variables event, method.",
+    "columns": [
+      "event",
+      "method"
+    ],
+    "reference": "SELECT DISTINCT ?event ?method WHERE { ?event a <http://aopkb.org/aop_ontology#KeyEvent> . OPTIONAL { ?event <http://purl.obolibrary.org/obo/MMO_0000000> ?method } }",
+    "concepts": [
+      "Key Event",
+      "measurement method"
+    ]
+  },
+  {
+    "id": "event-sex",
+    "source": "aopwikirdf-small",
+    "question": "Return every Key Event and its available biological sex applicability values. Keep events without those values. Use output variables event, sex.",
+    "columns": [
+      "event",
+      "sex"
+    ],
+    "reference": "SELECT DISTINCT ?event ?sex WHERE { ?event a <http://aopkb.org/aop_ontology#KeyEvent> . OPTIONAL { ?event <http://purl.obolibrary.org/obo/PATO_0000047> ?sex } }",
+    "concepts": [
+      "Key Event",
+      "biological sex",
+      "sex"
+    ]
+  },
+  {
+    "id": "event-taxa",
+    "source": "aopwikirdf-small",
+    "question": "Return every Key Event and its available applicable taxon values, retaining unresolved raw values. Keep events without applicability values. Use output variables event, taxon.",
+    "columns": [
+      "event",
+      "taxon"
+    ],
+    "reference": "SELECT DISTINCT ?event ?taxon WHERE { ?event a <http://aopkb.org/aop_ontology#KeyEvent> . OPTIONAL { ?event <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?taxon } }",
+    "concepts": [
+      "Key Event",
+      "taxon",
+      "applicable taxon"
+    ]
+  },
+  {
+    "id": "human-aops",
+    "source": "aopwikirdf-human",
+    "question": "Return the identities of Adverse Outcome Pathways applicable to humans. Use the actual applicability relationship. Use output variables pathway.",
+    "columns": [
+      "pathway"
+    ],
+    "reference": "SELECT DISTINCT ?pathway WHERE { ?pathway a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> ; <http://purl.bioontology.org/ontology/NCBITAXON/131567> <http://purl.bioontology.org/ontology/NCBITAXON/9606> . }",
+    "concepts": [
+      "Adverse Outcome Pathway",
+      "human",
+      "taxon"
+    ],
+    "counterexamples": {
+      "omit_human_restriction": "SELECT DISTINCT ?pathway WHERE { ?pathway a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> . }"
+    }
+  },
+  {
+    "id": "human-events",
+    "source": "aopwikirdf-human",
+    "question": "Return each human-applicable Adverse Outcome Pathway and its Key Events linked by has key event, with each event's available applicable taxon values and measurement methods. Preserve pathway and event identities, retain raw applicability values, and keep events without metadata. Use output variables pathway, event, taxon, method.",
+    "columns": [
+      "pathway",
+      "event",
+      "taxon",
+      "method"
+    ],
+    "reference": "SELECT DISTINCT ?pathway ?event ?taxon ?method WHERE { ?pathway a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> ; <http://purl.bioontology.org/ontology/NCBITAXON/131567> <http://purl.bioontology.org/ontology/NCBITAXON/9606> ; <http://aopkb.org/aop_ontology#has_key_event> ?event . ?event a <http://aopkb.org/aop_ontology#KeyEvent> . OPTIONAL { ?event <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?taxon } OPTIONAL { ?event <http://purl.obolibrary.org/obo/MMO_0000000> ?method } }",
+    "concepts": [
+      "Adverse Outcome Pathway",
+      "Key Event",
+      "human",
+      "taxon",
+      "measurement method"
+    ],
+    "counterexamples": {
+      "omit_human_restriction": "SELECT DISTINCT ?pathway ?event ?taxon ?method WHERE { ?pathway a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> ; <http://aopkb.org/aop_ontology#has_key_event> ?event . ?event a <http://aopkb.org/aop_ontology#KeyEvent> . OPTIONAL { ?event <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?taxon } OPTIONAL { ?event <http://purl.obolibrary.org/obo/MMO_0000000> ?method } }"
+    }
+  }
+]

@@ -24,7 +24,9 @@ def score(text: str, query: str) -> float:
     initials = "".join(word[0] for word in re.findall(r"[A-Za-z0-9]+", text)).casefold()
     if len(initials) > 1 and query.casefold() == initials:
         return 4
-    return len(terms & found) / len(terms) + 2 * (query.casefold() in text.casefold())
+    overlap = len(terms & found) / len(terms)
+    phrase = query.casefold() in text.casefold()
+    return overlap + 2 * phrase if terms <= found else max(overlap, 0.25 * phrase)
 
 
 class Catalogue:
@@ -139,13 +141,58 @@ class Catalogue:
             for hint_ref, hint in self.retrieval_hints.get(cls, {}).items():
                 text += f" {hint['label']} {hint['description'] or ''}"
                 hint_refs.append(hint_ref)
+        iris = [f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri]
+        evidence = [
+            self.client.vocabulary_evidence[i]
+            for i in dict.fromkeys([*iris, *classes])
+            if self.client.vocabulary_evidence.get(i)
+        ]
+        self.metadata[ref]["ontology"] = evidence
+        for item in evidence:
+            text += " " + " ".join(
+                [item["label"], *item["description"], *item["synonyms"], *item["namespace"]]
+            )
         return text, hint_refs
+
+    def explain(self, ref):
+        """Resolve a selected vocabulary term through the client's evidence overlay."""
+        f = self.fragments[ref]
+        if f.kind not in {"type", "field"} or not self.client.ontology:
+            return
+        iris = [f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri]
+        for iri in [*iris, *self.metadata[ref].get("targets", [])]:
+            self.client.vocabulary(iri)
+        self.schema_documents[ref] = self._schema_document(ref)
 
     def search(self, concept="", *, owners=(), targets=()):
         """Find generated classes or fields by meaning and structural endpoints."""
         owners = {self._type(o) for o in owners}
         targets = {self._type(t) for t in targets}
         refs = self.field_refs.values() if owners else self.schema_documents
+        refs = list(refs)
+        eligible = [r for r in refs if not owners or self.fragments[r].owner in owners]
+        explained = any(
+            score(self.fragments[r].label + " " + (self.fragments[r].description or ""), concept)
+            >= 1
+            for r in eligible
+        )
+        if concept and self.client.ontology and not explained:
+            from rdfsolve.ontology import term_key
+
+            iris = set()
+            for ref in eligible:
+                f = self.fragments[ref]
+                iris.update([f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri])
+                iris.update(self.metadata[ref].get("targets", []))
+            matches = {term_key(t["iri"]) for t in self.client.ontology.search(concept)}
+            for iri in sorted(iris):
+                if term_key(iri) in matches:
+                    self.client.vocabulary(iri)
+            if owners:
+                opaque = [i for i in sorted(iris) if term_key(i) != i]
+                for iri in opaque[:12]:
+                    self.client.vocabulary(iri)
+            self.schema_documents.update({r: self._schema_document(r) for r in refs})
         refs = [
             r
             for r in refs

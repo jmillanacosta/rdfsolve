@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
-from rdflib import Graph
+from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral
 from typing_extensions import Self
 
@@ -386,17 +386,33 @@ class SparqlHelper:
         return result
 
     def construct_graph(self, query: str) -> Graph:
-        """Execute CONSTRUCT query and return RDFLib Graph."""
-        # construct() calls _execute which handles GET->POST fallback
+        """Parse remote RDF while rejecting identities that lack an explicit base."""
         turtle_data = self.construct(query)
-
         graph = Graph()
-        if turtle_data.strip():
-            try:
-                graph.parse(data=turtle_data, format="turtle")
-            except Exception as error:
-                raise EndpointError("CONSTRUCT returned invalid Turtle RDF") from error
+        if not turtle_data.strip():
+            return graph
 
+        def fail(message, cause=None):
+            error = EndpointError(message)
+            records = self.get_collected_queries()
+            if records and records[-1].query == query:
+                records[-1].success = False
+                records[-1].error_type = type(error).__name__
+                records[-1].error_message = str(error)
+            raise error from cause
+
+        marker = f"rdfsolve-{secrets.token_hex(8)}:"
+        try:
+            graph.parse(data=turtle_data, format="turtle", publicID=marker + "//unresolved/")
+        except Exception as error:
+            fail("CONSTRUCT returned invalid Turtle RDF", error)
+        for triple in graph:
+            for term in triple:
+                iri = term.datatype if isinstance(term, RdfLiteral) else term
+                if isinstance(iri, URIRef) and str(iri).startswith(marker):
+                    fail(
+                        "CONSTRUCT returned relative IRIs without an explicit RDF base. Use anchored SELECT retrieval to preserve the observed terms."
+                    )
         return graph
 
     def ask(self, query: str) -> bool:

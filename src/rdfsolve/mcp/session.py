@@ -110,6 +110,19 @@ class Session:
                 }
                 for h in hints[:2]
             ]
+        evidence = c.metadata.get(ref, {}).get("ontology", [])
+        if evidence:
+            card["ontology_evidence"] = [
+                {
+                    "local_iri": e["local_iri"],
+                    "label": short(e["label"]),
+                    "description": short(" ".join(e["description"])),
+                    "source": e["source"],
+                    "match": e["match"],
+                    "parents": [short(p["label"]) for p in e["parents"][:2]],
+                }
+                for e in evidence[:2]
+            ]
         arguments = " ?s" if f.kind == "type" else " ?s ?o" if f.path else ""
         card["insert"] = "{{" + ref + arguments + "}}"
         return {k: v for k, v in card.items() if v not in (None, [], "")}
@@ -261,6 +274,12 @@ class Session:
             "source": c.registry.source_id,
             "scope": c.registry.binding,
             "mapping_evidence": c.mapping_status,
+            "ontology": self.client.trace()["ontology"],
+            "warnings": [
+                "Some ontology evidence was unavailable. Unresolved meanings still need evidence."
+            ]
+            if self.client.ontology and self.client.ontology.diagnostics()["unavailable"]
+            else [],
             "unresolved_types": unresolved,
             "unmatched_field_indexes": {
                 c.type_refs[cls]: {
@@ -396,6 +415,7 @@ class Session:
             return evidence
         if ref not in c.fragments:
             raise ValueError("Unknown retained reference. Use a reference returned by discovery.")
+        c.explain(ref)
         card = self._card(ref)
         f = c.fragments[ref]
         if text and f.kind == "type":
@@ -502,6 +522,9 @@ class Session:
             )
             if any(s.startswith(prefix) for s in steps)
         ]
+        restrictions = [
+            r for r in self.requirements.values() if r.kind in {"entity_filter", "text_filter"}
+        ]
         receipt = {
             "state": "complete",
             "query_ref": query_ref,
@@ -511,7 +534,8 @@ class Session:
             "warnings": warnings,
             "strategy": "Used "
             + ", ".join(["generated schema", *actions])
-            + "; checked bindings and source scope before retrieval.",
+            + "; checked bindings and source scope before retrieval. "
+            + f"Recorded value restrictions: {len(restrictions)}.",
             "execution": self.client.last_query_execution,
         }
         self.executions[query_ref] = receipt

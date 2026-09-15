@@ -11,96 +11,6 @@
 @prefix ns7: <https://aopwiki.rdf.bigcat-bioinformatics.org/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/142_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/334_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/351_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/360_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/57_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/613_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/616_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/64_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_1> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_2> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/669_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/671_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/672_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/673_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/674_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/675_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/675_bioevent_1> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/678_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/681_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/682_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/687_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/689_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/690_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/691_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/692_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/692_bioevent_1> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/693_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/694_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/695_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/696_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/697_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/697_bioevent_1> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/698_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/699_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/708_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/709_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/710_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_1> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_2> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/714_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/767_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/79_bioevent_0> a aopo:BiologicalEvent .
-
-<file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/79_bioevent_1> a aopo:BiologicalEvent .
-
 ns3:7460 a ns3:131567 .
 
 ns3:9615 a ns3:131567 .
@@ -1191,7 +1101,6 @@ ns3:10090 a ns3:131567 ;
 <https://identifiers.org/aop.events/142> a aopo:KeyEvent ;
     rdfs:label "KE 142" ;
     aopo:OrganContext ns1:UBERON_0002107 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/142_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:GO_0008150 mesh:D006965 ;
     ns1:PATO_0000001 "increased" ;
@@ -1219,7 +1128,6 @@ ns3:10090 a ns3:131567 ;
 <https://identifiers.org/aop.events/334> a aopo:KeyEvent ;
     rdfs:label "KE 334" ;
     aopo:OrganContext ns1:UBERON_0002107 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/334_bioevent_0> ;
     nci:C25664 "Individual" ;
     ns1:GO_0008150 mesh:D006528 ;
     ns1:PATO_0000001 "increased" ;
@@ -1234,7 +1142,6 @@ ns3:10090 a ns3:131567 ;
 <https://identifiers.org/aop.events/351> a aopo:KeyEvent ;
     rdfs:label "KE 351" ;
     aopo:LifeStageContext "All life stages" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/351_bioevent_0> ;
     nci:C17469 """All living things are susceptible to mortality.
 """ ;
     nci:C25664 "Population" ;
@@ -1292,7 +1199,6 @@ Depending on the species and the study setup, mortality can be measured:
 <https://identifiers.org/aop.events/57> a aopo:KeyEvent ;
     rdfs:label "KE 57" ;
     aopo:CellTypeContext ns1:CL_0000255 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/57_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0008283 ;
     ns1:PATO_0000001 "increased" ;
@@ -1307,7 +1213,6 @@ Depending on the species and the study setup, mortality can be measured:
 <https://identifiers.org/aop.events/613> a aopo:KeyEvent ;
     rdfs:label "KE 613" ;
     aopo:LifeStageContext "Adult" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/613_bioevent_0> ;
     nci:C17469 """Substance-induced epileptic seizures have been documented in a&nbsp;wide range of species including invertebrates and vertebrates (see Tingle et al. (2003) and Gunasekara et al. (2007) for reviews on the list of aquatic and terrestrial species affected by fipronil). For instance, fipronil can induce seizures in fruit flies (Stilwell et al. 2006) and house flies (Gao et al. 2007).
 """ ;
     nci:C25664 "Individual" ;
@@ -1339,7 +1244,6 @@ As described in Bromfield et al. (2006), seizure propagation, the process by whi
     rdfs:label "KE 616" ;
     aopo:LifeStageContext "Adult" ;
     aopo:OrganContext ns1:UBERON_0000955 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/616_bioevent_0> ;
     edam:data_1025 <https://identifiers.org/hgnc/1698> ;
     nci:C17469 """Most of the supporting evidence comes from studies on human and rodents. See the reviews of Bromfield (2006) and Lomen-Hoerth and Messing (2010) for examples.
 """ ;
@@ -1370,7 +1274,6 @@ Increased, abnormal neuron firing&nbsp;causes a wave of depolarization throughou
     rdfs:label "KE 64" ;
     aopo:CellTypeContext ns1:CL_0000540 ;
     aopo:OrganContext ns1:UBERON_0000955 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/64_bioevent_0> ;
     edam:data_1025 <https://identifiers.org/hgnc/10760> ;
     nci:C17469 """Banerjee et al. (1999) reported functional modulation of GABAA receptors by Zn2+, pentobarbital, neuroactive steroid alphaxalone, and flunitrazepam in the cerebral cortex and cerebellum of rats undergoing status epilepticus induced by pilocarpine.
 
@@ -1406,9 +1309,6 @@ Grolleau and Sattelle (2000) reported a complete blocking of inward current by 1
     aopo:CellTypeContext ns1:CL_0000540 ;
     aopo:LifeStageContext "Adult" ;
     aopo:OrganContext ns1:UBERON_0000955 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_1>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/667_bioevent_2> ;
     edam:data_1025 <https://identifiers.org/hgnc/10760>,
         <https://identifiers.org/hgnc/1698>,
         <https://identifiers.org/hgnc/24827>,
@@ -1462,7 +1362,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
     rdfs:label "KE 669" ;
     aopo:CellTypeContext ns1:CL_0000540 ;
     aopo:LifeStageContext "Adult" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/669_bioevent_0> ;
     edam:data_1025 <https://identifiers.org/hgnc/10760> ;
     nci:C17469 """See Juarez et al. (2013) for supporting evidence for Guinea pig.&nbsp;For rat, whole-cell in vitro recordings in the rat basolateral amygdala (BLA) showed that RDX reduces the frequency and amplitude of GABAA receptor mediated sIPSCs and the amplitude of GABA-evoked postsynaptic currents, whereas in extracellular field recordings from the BLA, RDX induced prolonged, seizure-like neuronal discharges (Williams et al, 2011).
 """ ;
@@ -1490,7 +1389,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/672> a aopo:KeyEvent ;
     rdfs:label "KE 672" ;
     aopo:OrganContext ns1:UBERON_0000992 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/672_bioevent_0> ;
     nci:C25664 "Organ" ;
     ns1:GO_0008150 ns1:GO_0001516 ;
     ns1:PATO_0000001 "decreased" ;
@@ -1505,7 +1403,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 
 <https://identifiers.org/aop.events/673> a aopo:KeyEvent ;
     rdfs:label "KE 673" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/673_bioevent_0> ;
     nci:C25664 "Individual" ;
     ns1:PATO_0000001 "abnormal" ;
     ns1:PATO_0001241 mesh:D005298 ;
@@ -1519,7 +1416,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 
 <https://identifiers.org/aop.events/678> a aopo:KeyEvent ;
     rdfs:label "KE 678" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/678_bioevent_0> ;
     nci:C25664 "Individual" ;
     ns1:GO_0008150 ns1:GO_0071834 ;
     ns1:PATO_0000001 "decreased" ;
@@ -1535,7 +1431,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/681> a aopo:KeyEvent ;
     rdfs:label "KE 681" ;
     aopo:OrganContext ns1:UBERON_0000992 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/681_bioevent_0> ;
     nci:C25664 "Organ" ;
     ns1:GO_0008150 ns1:GO_0001516 ;
     ns1:PATO_0000001 "decreased" ;
@@ -1552,7 +1447,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
     rdfs:label "KE 682" ;
     aopo:LifeStageContext "Adult" ;
     aopo:OrganContext ns1:UBERON_0000955 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/682_bioevent_0> ;
     edam:data_1025 <https://identifiers.org/hgnc/4070>,
         <https://identifiers.org/hgnc/4584> ;
     nci:C17469 """Miura et al. (1997) reported supporting evidence from guinea pigs whereas Dichter and Ayala (1987) and Bromfield et al. (2006) summarized relevant studies on humans.&nbsp;Acker et al. (2016) perform simultaneous two-photon&nbsp;voltage-sensitive dye&nbsp;recording with two-photon glutamate uncaging in order to measure the characteristics (amplitude and duration) of uncaging-evoked&nbsp;EPSPs in acute mouse brain slices.
@@ -1580,7 +1474,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 
 <https://identifiers.org/aop.events/693> a aopo:KeyEvent ;
     rdfs:label "KE 693" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/693_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "increased" ;
     ns1:PATO_0001241 ns1:CHEBI_58165 ;
@@ -1596,7 +1489,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/694> a aopo:KeyEvent ;
     rdfs:label "KE 694" ;
     aopo:CellTypeContext ns1:CL_0000024 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/694_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0008315 ;
     ns1:PATO_0000001 "decreased" ;
@@ -1611,7 +1503,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/695> a aopo:KeyEvent ;
     rdfs:label "KE 695" ;
     aopo:CellTypeContext ns1:CL_0000023 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/695_bioevent_0> ;
     nci:C25664 "Molecular" ;
     ns1:GO_0008150 ns1:GO_1902426 ;
     ns1:PATO_0000001 "increased" ;
@@ -1627,7 +1518,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/696> a aopo:KeyEvent ;
     rdfs:label "KE 696" ;
     aopo:CellTypeContext ns1:CL_0000025 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/696_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0007059 ;
     ns1:PATO_0000001 "abnormal" ;
@@ -1641,8 +1531,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 
 <https://identifiers.org/aop.events/697> a aopo:KeyEvent ;
     rdfs:label "KE 697" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/697_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/697_bioevent_1> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0005216 ;
     ns1:PATO_0000001 "decreased" ;
@@ -1659,7 +1547,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/698> a aopo:KeyEvent ;
     rdfs:label "KE 698" ;
     aopo:CellTypeContext ns1:CL_0000255 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/698_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0001508 ;
     ns1:PATO_0000001 "abnormal" ;
@@ -1677,7 +1564,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/699> a aopo:KeyEvent ;
     rdfs:label "KE 699" ;
     aopo:OrganContext ns1:UBERON_0000948 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/699_bioevent_0> ;
     nci:C25664 "Organ" ;
     ns1:GO_0008150 mesh:D001145 ;
     ns1:PATO_0000001 "increased" ;
@@ -1692,7 +1578,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/708> a aopo:KeyEvent ;
     rdfs:label "KE 708" ;
     aopo:OrganContext ns1:UBERON_0008404 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/708_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "increased" ;
     ns1:PATO_0001241 ns1:PR_P02761 ;
@@ -1707,7 +1592,6 @@ Mounting evidence indicates that iGABAR chloride channel blockers bind to overla
 <https://identifiers.org/aop.events/709> a aopo:KeyEvent ;
     rdfs:label "KE 709" ;
     aopo:CellTypeContext ns1:CL_1000507 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/709_bioevent_0> ;
     edam:data_1025 <https://identifiers.org/hgnc/1050>,
         <https://identifiers.org/hgnc/11920>,
         <https://identifiers.org/hgnc/11925>,
@@ -1894,7 +1778,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/710> a aopo:KeyEvent ;
     rdfs:label "KE 710" ;
     aopo:CellTypeContext ns1:CL_1000494 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/710_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 ns1:GO_0050673 ;
     ns1:PATO_0000001 "increased" ;
@@ -1911,9 +1794,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/713> a aopo:KeyEvent ;
     rdfs:label "KE 713" ;
     aopo:OrganContext ns1:UBERON_0009773 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_1>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/713_bioevent_2> ;
     nci:C25664 "Tissue" ;
     ns1:GO_0008150 mesh:D002292 ;
     ns1:PATO_0000001 "increased" ;
@@ -1931,7 +1811,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/714> a aopo:KeyEvent ;
     rdfs:label "KE 714" ;
     aopo:OrganContext ns1:UBERON_0001977 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/714_bioevent_0> ;
     nci:C25664 "Molecular" ;
     ns1:GO_0008150 ns1:GO_0005488 ;
     ns1:PATO_0000001 "increased" ;
@@ -1947,7 +1826,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/767> a aopo:KeyEvent ;
     rdfs:label "KE 767" ;
     aopo:CellTypeContext ns1:CL_1000507 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/767_bioevent_0> ;
     nci:C25664 "Cellular" ;
     ns1:GO_0008150 mesh:D006965 ;
     ns1:PATO_0000001 "increased" ;
@@ -1966,7 +1844,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/687> a aopo:KeyEvent ;
     rdfs:label "KE 687" ;
     aopo:OrganContext ns1:UBERON_0001898 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/687_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "decreased" ;
     ns1:PATO_0001241 ns1:CHEBI_15551 ;
@@ -1982,7 +1859,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/689> a aopo:KeyEvent ;
     rdfs:label "KE 689" ;
     aopo:OrganContext ns1:UBERON_0001898 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/689_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "decreased" ;
     ns1:PATO_0001241 mesh:D007987 ;
@@ -1998,7 +1874,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/690> a aopo:KeyEvent ;
     rdfs:label "KE 690" ;
     aopo:OrganContext ns1:UBERON_0001969 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/690_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "decreased" ;
     ns1:PATO_0001241 ns1:CHEBI_81568 ;
@@ -2014,7 +1889,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/691> a aopo:KeyEvent ;
     rdfs:label "KE 691" ;
     aopo:OrganContext ns1:UBERON_0001969 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/691_bioevent_0> ;
     nci:C25664 "Tissue" ;
     ns1:PATO_0000001 "decreased" ;
     ns1:PATO_0001241 ns1:CHEBI_26764 ;
@@ -2044,7 +1918,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 
 <https://identifiers.org/aop.events/674> a aopo:KeyEvent ;
     rdfs:label "KE 674" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/674_bioevent_0> ;
     nci:C25664 "Individual" ;
     ns1:GO_0008150 ns1:NBO_0000280 ;
     ns1:PATO_0000001 "decreased" ;
@@ -2060,8 +1933,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 <https://identifiers.org/aop.events/692> a aopo:KeyEvent ;
     rdfs:label "KE 692" ;
     aopo:CellTypeContext ns1:CL_0000023 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/692_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/692_bioevent_1> ;
     nci:C25664 "Tissue" ;
     ns1:GO_0008150 ns1:GO_0003707,
         ns1:GO_0023052 ;
@@ -2084,7 +1955,6 @@ Necrosis is characterized as passive, accidental cell death resulting from envir
 
 <https://identifiers.org/aop.events/671> a aopo:KeyEvent ;
     rdfs:label "KE 671" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/671_bioevent_0> ;
     nci:C25664 "Individual" ;
     ns1:PATO_0000001 "decreased" ;
     ns1:PATO_0001241 ns1:CHEBI_15553 ;
@@ -2170,7 +2040,6 @@ An oral reference dose (RfD) has been established at 0.03 mg/kg-day, with an ove
 <https://identifiers.org/aop.events/360> a aopo:KeyEvent ;
     rdfs:label "KE 360" ;
     aopo:LifeStageContext "All life stages" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/360_bioevent_0> ;
     nci:C17469 """Consideration of population size and changes in population size over time is potentially relevant to all living organisms.
 """ ;
     nci:C25664 "Population" ;
@@ -2323,8 +2192,6 @@ Population growth rate applies to all organisms, both sexes, and all life stages
 <https://identifiers.org/aop.events/79> a aopo:KeyEvent ;
     rdfs:label "KE 79" ;
     aopo:CellTypeContext ns1:CL_0000255 ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/79_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/79_bioevent_1> ;
     edam:data_1025 <https://identifiers.org/hgnc/2294>,
         <https://identifiers.org/hgnc/2321>,
         <https://identifiers.org/hgnc/26359>,
@@ -2431,8 +2298,6 @@ ns3:10116 a ns3:131567 ;
 
 <https://identifiers.org/aop.events/675> a aopo:KeyEvent ;
     rdfs:label "KE 675" ;
-    aopo:hasBiologicalEvent <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/675_bioevent_0>,
-        <file:///home/javier.millanacosta/rdfsolve/rdfsolve-2/notebooks/mcp/675_bioevent_1> ;
     nci:C25664 "Individual" ;
     ns1:GO_0008150 ns1:GO_0000003,
         ns1:GO_0022414 ;

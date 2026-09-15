@@ -1,4 +1,4 @@
-"""Core API for schema mining, VoID parsing, sources management, and format conversion."""
+"""Public API for RDF discovery, retrieval, schema mining and conversion."""
 
 from __future__ import annotations
 
@@ -24,9 +24,11 @@ from .void_discover import VoidParser
 logger = logging.getLogger(__name__)
 
 from rdfsolve.client_api import Client
+from rdfsolve.ontology import OntologyLookup
 
 __all__ = [
     "Client",
+    "OntologyLookup",
     "ask_rdf",
     "discover_void_graphs",
     "discover_void_source",
@@ -668,6 +670,10 @@ async def ask_rdf(
     max_paths=100,
     mapping_file=None,
     related_registries=(),
+    ontology_grounding=False,
+    ontology_provider="ols",
+    ontology_cache=None,
+    ontology_offline=False,
     output_dir=None,
 ):
     """Run a grounded RDF investigation with a configured model and saved schema."""
@@ -690,5 +696,9 @@ async def ask_rdf(
         max_paths=max_paths,
         mapping_file=mapping_file,
         related_registries=related_registries,
+        ontology_grounding=ontology_grounding,
+        ontology_provider=ontology_provider,
+        ontology_cache=ontology_cache,
+        ontology_offline=ontology_offline,
         output_dir=output_dir,
     )

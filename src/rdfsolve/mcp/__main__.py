@@ -25,9 +25,13 @@ def main():
     parser.add_argument("--log", type=Path)
     parser.add_argument("--mapping", type=Path)
     parser.add_argument("--related-registry", type=Path, action="append", default=[])
+    parser.add_argument("--ontology-provider", choices=["ols", "ontobee"])
+    parser.add_argument("--ontology-cache", type=Path)
+    parser.add_argument("--ontology-offline", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)
     logging.getLogger("rdfsolve.hydration").setLevel(logging.INFO)
+    logging.getLogger("rdfsolve.ontology").setLevel(logging.INFO)
     from rdfsolve.registry import Registry
 
     mappings = []
@@ -39,8 +43,22 @@ def main():
     artifacts = args.artifact_dir or Path(mkdtemp(prefix="rdfsolve-results-"))
     log = args.log or artifacts / "investigation.json"
     scope = {} if args.graphs is None else {"graph_uris": args.graphs}
+    from rdfsolve.ontology import OntologyLookup
+
+    ontology = (
+        OntologyLookup(
+            args.ontology_provider, cache=args.ontology_cache, offline=args.ontology_offline
+        )
+        if args.ontology_provider
+        else False
+    )
     with Client.open(
-        args.schema, source=args.endpoint, data_file=args.data_file, timeout=args.timeout, **scope
+        args.schema,
+        source=args.endpoint,
+        data_file=args.data_file,
+        timeout=args.timeout,
+        ontology_grounding=ontology,
+        **scope,
     ) as client:
         try:
             asyncio.run(

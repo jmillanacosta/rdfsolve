@@ -185,3 +185,51 @@ def test_mcp_chains_whole_client_selections_and_returns_query_trace(session, tmp
     assert len(log.queries) == len(session.client.queries)
     assert all(q["result_retained"] for q in log.queries)
     assert not log.tools().empty
+
+
+def test_ontology_evidence_unlocks_a_local_field_without_changing_scope(monkeypatch):
+    from tests.test_ontology import EVENT, MMO, fixture, provider
+
+    g = Graph().parse(data=f'<urn:event> a <{EVENT}>; <{MMO}> "Assay" .', format="turtle")
+    for enabled in (False, True):
+        with fixture(provider(monkeypatch) if enabled else False) as client:
+            client.source += g
+            s = Session(client)
+            observation = s.schema(question="Return events and available measurement methods", goals=[
+                {"clause": "Return events", "kind": "output", "concept": "Event"},
+                {"clause": "Available measurement methods", "kind": "output", "concept": "measurement method", "owner": EVENT, "required": False},
+            ])
+            query = f'SELECT ?event ?method WHERE {{ ?event a <{EVENT}> . OPTIONAL {{ ?event <{MMO}> ?method }} }}'
+            if not enabled:
+                with pytest.raises(ValueError, match="unresolved|evidence|meaning|explain"):
+                    s.prepare(query)
+            else:
+                cards = [c for match in observation["matches"] for c in match["items"]]
+                assert any(c.get("ontology_evidence") for c in cards)
+                rows = values(s, s.prepare(query))
+                assert rows == [{"event": {"type": "uri", "value": "urn:event"}, "method": {"type": "literal", "value": "Assay"}}]
+                assert "urn:parent" not in query
+                assert "Recorded value restrictions: 0" in next(iter(s.executions.values()))["strategy"]
+
+
+def test_partial_word_match_cannot_ground_a_field(monkeypatch):
+    from rdfsolve.ontology import OntologyLookup, canonical_iri
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    predicate = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C17469"
+    lookup = OntologyLookup()
+    monkeypatch.setattr(lookup, "_json", lambda *a, **k: {"_embedded": {"terms": [{
+        "iri": canonical_iri(predicate), "label": "Taxonomy", "description": ["The science of classification."],
+    }]}})
+    schema = MinedSchema(about={"dataset_name": "test"}, patterns=[
+        SchemaPattern(subject_class=str(E.Event), property_uri=predicate, object_class="Literal")])
+    with Client(schema, Graph(), graph_uris=[], ontology_grounding=lookup) as client:
+        session = Session(client)
+        session.schema(question="Return event taxon values", goals=[
+            {"clause": "Return event taxon values", "kind": "output", "concept": "taxon", "owner": str(E.Event)}])
+        client.vocabulary(predicate)
+        session.catalogue.search("taxon", owners=[str(E.Event)])
+        ref = next(iter(session.catalogue.field_refs.values()))
+        query = f'SELECT ?event ?value WHERE {{ ?event a <{E.Event}> ; <{predicate}> ?value }}'
+        with pytest.raises(ValueError, match="explain"):
+            session.prepare(query, grounding={"g1": {"evidence": [ref]}})

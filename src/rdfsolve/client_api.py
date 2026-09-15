@@ -49,6 +49,52 @@ def _title(record: BaseModel) -> str:
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
 
+    def __init__(self, *args, ontology_grounding=False, **kwargs):
+        """Open typed retrieval with optional, separately retained ontology evidence."""
+        super().__init__(*args, **kwargs)
+        from rdfsolve.ontology import OntologyLookup
+
+        self.ontology = (
+            OntologyLookup() if ontology_grounding is True else ontology_grounding or None
+        )
+        if self.ontology is not None and not isinstance(self.ontology, OntologyLookup):
+            raise TypeError("ontology_grounding must be a boolean or OntologyLookup")
+        self.vocabulary_evidence = {}
+
+    def vocabulary(self, iri: str):
+        """Explain a local vocabulary IRI through the configured ontology provider.
+
+        External labels, definitions and named parents remain an evidence overlay.
+        The mined schema, generated fields and source scope remain authoritative.
+        """
+        if not self.vocabulary_evidence.get(iri) and self.ontology:
+            self.vocabulary_evidence[iri] = self.ontology.lookup(iri)
+        return self.vocabulary_evidence.get(iri)
+
+    def _vocabulary_names(self, iri):
+        term = self.vocabulary_evidence.get(iri)
+        return {v.casefold() for v in [term["label"], *term["synonyms"]]} if term else set()
+
+    def close(self):
+        """Close source and ontology connections."""
+        super().close()
+        if self.ontology:
+            self.ontology.close()
+
+    def session_metadata(self, *, include_results=True):
+        """Retain external evidence separately from the mined schema and source journal."""
+        data = super().session_metadata(include_results=include_results)
+        if self.ontology:
+            data["ontology"] = {
+                **self.ontology.diagnostics(),
+                "events": self.ontology.events,
+                "evidence": self.vocabulary_evidence,
+                "queries": [dict(vars(q)) for q in self.ontology.helper.get_collected_queries()]
+                if self.ontology.helper
+                else [],
+            }
+        return data
+
     @classmethod
     def open(
         cls,
@@ -115,6 +161,7 @@ class Client(DatasetClient):
                     "Path": path_to_sparql(f.path) if f.path else None,
                     "Targets": index.metadata[ref].get("targets", []),
                     "Description": f.description,
+                    "Ontology evidence": index.metadata[ref].get("ontology", []),
                 }
                 for ref in index.search(concept, owners=owners, targets=targets)
                 for f in [index.fragments[ref]]
@@ -326,6 +373,7 @@ class Client(DatasetClient):
             "source_queries": len(records),
             "endpoint_requests": sum(r.attempts for r in records),
             "steps": [dict(step) for step in self._steps],
+            "ontology": self.ontology.diagnostics() if self.ontology else {"enabled": False},
         }
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
@@ -351,6 +399,12 @@ class Client(DatasetClient):
                 model
                 for model in self.models.values()
                 if words(name_or_iri) == words(self.type_name(model))
+            ]
+        if not matches:
+            matches = [
+                model
+                for model in self.models.values()
+                if name_or_iri.casefold() in self._vocabulary_names(str(model.rdf_class_iri))
             ]
         if len(matches) != 1:
             names = sorted(self.models)
@@ -403,6 +457,14 @@ class Client(DatasetClient):
                 and field.json_schema_extra.get("rdf_property_iri") == text
             )
         ]
+        if not matches:
+            matches = [
+                name
+                for name, field in model.model_fields.items()
+                if isinstance(field.json_schema_extra, dict)
+                and text.casefold()
+                in self._vocabulary_names(field.json_schema_extra.get("rdf_property_iri", ""))
+            ]
         if len(matches) != 1:
             names = [
                 name
@@ -459,7 +521,43 @@ class Client(DatasetClient):
         """Find names and identifiers across types. Optionally search a chosen field."""
         from rdfsolve.client_search import search_records
 
-        return search_records(self, [text], kind, [field] if field else [], names_only=True)
+        result = search_records(self, [text], kind, [field] if field else [], names_only=True)
+        if result or not self.ontology or field:
+            return result
+        import bioregistry
+
+        from rdfsolve.ontology import term_key
+
+        prefix = bioregistry.parse_iri(str(self.model(kind).rdf_class_iri))[0] if kind else None
+        ontology = bioregistry.get_ols_prefix(prefix) if prefix else None
+        candidates = [
+            self.vocabulary(c["iri"]) for c in self.ontology.search(text, ontology=ontology)
+        ]
+        candidates = [
+            c
+            for c in candidates
+            if c and text.casefold() in {v.casefold() for v in [c["label"], *c["synonyms"]]}
+        ]
+        aliases = list(dict.fromkeys(c.get("label", "") for c in candidates))
+        aliases = [a for a in aliases if a and len(a) <= 200 and a.casefold() != text.casefold()]
+        if not aliases:
+            return result
+        found = search_records(self, aliases[:12], kind, [], names_only=True)
+        keys = {term_key(c["iri"]) for c in candidates}
+        records = [r for r in found if term_key(str(r.uri)) in keys]
+        identities = {str(r.uri) for r in records}
+        evidence = [e for e in found.evidence if e["id"] in identities]
+        return Results(
+            self,
+            records,
+            evidence=evidence,
+            coverage={
+                **found.coverage,
+                "terms": [text],
+                "ontology_candidates": candidates,
+                "identity_check": "exact IRI or registered namespace and identifier",
+            },
+        )
 
     def search(
         self, terms: list[str], *, kind: str | None = None, fields: list[str] | None = None

@@ -112,3 +112,18 @@ def test_long_queries_use_post_without_first_sending_a_long_url(monkeypatch):
         monkeypatch.setattr(helper, "_post_query", post)
         assert helper.ask("ASK { VALUES ?s { " + "<https://identifiers.org/aop/162> " * 100 + "} }")
         assert post.call_count == 1
+
+
+@pytest.mark.parametrize("term", ['<relative>', '<//example.org/relative>', '"value"^^<relative>'])
+def test_construct_rejects_implicit_identity_resolution(monkeypatch, term):
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
+        helper.enable_query_collection(include_results=True)
+        response = Mock(return_value=f'<urn:s> <urn:p> {term} .')
+        monkeypatch.setattr(helper, "_get_query", response)
+        with pytest.raises(EndpointError, match="relative IRIs"):
+            helper.construct_graph("CONSTRUCT {} WHERE {}")
+        assert not helper.get_collected_queries()[-1].success
+        response.return_value = '@base <https://data.example/> . <subject> <predicate> <object> .'
+        graph = helper.construct_graph("CONSTRUCT {} WHERE {}")
+        assert {str(t) for triple in graph for t in triple} == {
+            'https://data.example/subject', 'https://data.example/predicate', 'https://data.example/object'}

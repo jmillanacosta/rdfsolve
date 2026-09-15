@@ -479,6 +479,31 @@ if answer.state == "complete":
 loads source registry snapshots used for explanatory class metadata. Source IDs
 must agree with the mapping records.
 
+Optional ontology grounding explains opaque vocabulary through OLS or Ontobee:
+
+```python
+from rdfsolve.api import Client, OntologyLookup
+
+lookup = OntologyLookup("ols", cache="ontology-cache.json")
+with Client.open("schema.json", ontology_grounding=lookup) as data:
+    display(data.describe("measurement method", owners=["Key Event"]))
+    print(data.trace()["ontology"])
+```
+
+`Client.open(..., ontology_grounding=True)` uses OLS with an in-memory cache.
+`ask_rdf(..., ontology_grounding=True)` enables the same client behavior in MCP;
+`ontology_provider="ontobee"` selects Ontobee. `ontology_cache=` and
+`ontology_offline=True` support frozen, reproducible experiments. The stdio
+launcher accepts `--ontology-provider ols` and the corresponding cache options.
+
+The default is disabled. External definitions, synonyms and direct named parents
+remain separate evidence with provider, IRI-match basis and fetch time. Mined
+schemas are unchanged. Failed name searches can use an ontology alias only when
+an actual source record has the same IRI or registered namespace/identifier.
+Hierarchy hints explain vocabulary; local field paths and source scope still
+control retrieval. Missing or unavailable evidence remains visible in diagnostics.
+OLS uses its REST API; Ontobee queries use `SparqlHelper`.
+
 All model integration lives in `rdfsolve.mcp`. The core `Catalogue` indexes
 classes, mappings and full field paths. `retrieval.verify_query` expands one
 ordinary SELECT and checks its outputs, exact entity restrictions, field owners,
@@ -530,6 +555,12 @@ answers remain outside the model context. Results include exact tuple
 precision/recall, request counts, inclusive input tokens and cache reads.
 Run the direct-client experiment without a model using
 `RDFSOLVE_NOTEBOOK=02_client.ipynb RDFSOLVE_RUN_KIND=client sbatch scripts/slurm_mcp_mine.sh`.
+
+For the paired ontology experiment, first run
+`RDFSOLVE_NOTEBOOK=03_ontology_cache.ipynb RDFSOLVE_RUN_KIND=ontology-cache sbatch scripts/slurm_mcp_mine.sh`,
+then `RDFSOLVE_NOTEBOOK=04_ontology.ipynb sbatch scripts/slurm_qwen_mcp.sh`.
+The [experiment plan](docs/OPTIMIZATION_PLAN.md) defines cases, budgets, scoring,
+paired repeats and the limits of the development results.
 
 ## Documentation
 
