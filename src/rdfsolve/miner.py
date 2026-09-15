@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import ValidationError
+from rdflib import Graph
 from typing_extensions import Self
 
 from rdfsolve._uri import get_local_name, pick_label
@@ -232,6 +233,8 @@ class SchemaMiner:
 
         dataset = graph if isinstance(graph, Dataset) else Dataset()
         if dataset is not graph:
+            for prefix, namespace in graph.namespaces():
+                dataset.bind(prefix, namespace, replace=True)
             for triple in graph:
                 dataset.default_graph.add(triple)
         miner = cls(endpoint_url, **kwargs)
@@ -648,6 +651,12 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.class_entity_counts = entity_counts
+        dataset = getattr(self._helper, "dataset", None)
+        if isinstance(dataset, Graph):
+            schema.prefixes.update(
+                {prefix: str(namespace) for prefix, namespace in dataset.namespaces()}
+            )
+        schema.prefixes = schema.get_prefixes()
         return schema
 
     def query_enrichment(

@@ -68,6 +68,16 @@ class OntologyLookup:
         if self.helper:
             self.helper.close()
 
+    def cached(self, iri):
+        """Check whether exact vocabulary evidence is already available locally."""
+        key = json.dumps([self.provider, "term", canonical_iri(iri)])
+        stored = self.cache.get(key)
+        return bool(
+            stored
+            and stored["data"]
+            and (self.offline or time.time() - stored["fetched_at"] < 86400)
+        )
+
     def _request(self, operation, value, fetch):
         key = json.dumps([self.provider, operation, value], sort_keys=True)
         started = time.monotonic()

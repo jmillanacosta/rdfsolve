@@ -233,3 +233,17 @@ def test_partial_word_match_cannot_ground_a_field(monkeypatch):
         query = f'SELECT ?event ?value WHERE {{ ?event a <{E.Event}> ; <{predicate}> ?value }}'
         with pytest.raises(ValueError, match="explain"):
             session.prepare(query, grounding={"g1": {"evidence": [ref]}})
+
+
+def test_discovery_retains_goals_and_accepts_an_added_restriction(session):
+    question = 'Pathways with their events, applicable to Human'
+    output = dict(clause='Return pathways', kind='output', concept='Adverse Outcome Pathway')
+    session.schema(question=question, goals=[output])
+    human = dict(clause='Applicable to Human', kind='entity_filter', concept='applicable taxon', value='Human', owner='a')
+    session.schema(question=question, goals=[human])
+    assert [r.clause for r in session.requirements.values()] == ['Return pathways', 'Applicable to Human']
+    session.schema(question=question, goals=[output])
+    assert session.requirements['g2'].value == 'Human'
+    with pytest.raises(ValueError, match='Preserve the value restriction'):
+        session.schema(question=question, goals=[dict(human, value='Mouse')])
+    assert session.requirements['g2'].value == 'Human'
