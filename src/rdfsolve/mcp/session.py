@@ -146,22 +146,57 @@ class Session:
         }
 
     def schema(
-        self, concepts=None, owners=None, targets=None, *, question="", goals=None, offset=0
+        self,
+        concepts=None,
+        owners=None,
+        targets=None,
+        *,
+        question="",
+        goals=None,
+        corrections=None,
+        offset=0,
     ):
         """Declare clauses and retrieve their connected schema region locally."""
-        if goals is not None:
-            if not question.strip() or not goals:
+        corrections = corrections or {}
+        if goals is not None or corrections:
+            if not question.strip() or (not goals and not corrections):
                 raise ValueError(
                     "Supply the original question and each requested output or restriction as a clause."
                 )
             requirements = dict(self.requirements)
-            for item in goals:
+            warnings = []
+            if (
+                self.requirements
+                and len(goals or []) > 1
+                and any(item["clause"] not in self.goals.values() for item in goals)
+            ):
+                raise ValueError(
+                    "Goals are already retained. Use corrections keyed by goal ID to refine them; add a missing goal individually."
+                )
+            for item in goals or []:
                 goal = Requirement.model_validate(item)
                 key = next(
                     (k for k, r in requirements.items() if r.clause == goal.clause),
                     f"g{len(requirements) + 1}",
                 )
                 requirements[key] = goal
+            for key, changes in corrections.items():
+                if key not in self.requirements:
+                    raise ValueError(f"Unknown goal {key}; use a retained requirement ID")
+                if set(changes) - {"concept", "owner", "kind", "required"}:
+                    raise ValueError("Corrections retain the original clause and value restriction")
+                previous = self.requirements[key]
+                revised = Requirement.model_validate({**previous.model_dump(), **changes})
+                if previous.kind != revised.kind and (previous.kind, revised.kind) != (
+                    "text_filter",
+                    "entity_filter",
+                ):
+                    raise ValueError(
+                        f"Preserve the value restriction or output role of '{previous.clause}'"
+                    )
+                if previous.concept != revised.concept:
+                    self._check_concept_correction(previous, revised)
+                requirements[key] = revised
 
             def normalize(value):
                 return re.sub(r"[^a-z0-9]", "", value.casefold())
@@ -191,8 +226,10 @@ class Session:
             if self.goals and self.question != question:
                 raise ValueError("Keep the original question across repairs")
             if self.requirements and self.requirements != requirements:
-                if self.prepared and any(
-                    requirements[k] != r for k, r in self.requirements.items()
+                if (
+                    self.prepared
+                    and not corrections
+                    and any(requirements[k] != r for k, r in self.requirements.items())
                 ):
                     raise ValueError(
                         "Prepared requirements are retained across probes and query repairs"
@@ -201,9 +238,9 @@ class Session:
                     revised = requirements[key]
                     if previous == revised:
                         continue
-                    if previous.concept != revised.concept:
+                    if previous.concept != revised.concept and key not in corrections:
                         raise ValueError(
-                            f"Preserve the requested concept '{previous.concept}'. Select its grounded field separately."
+                            f"Preserve the requested concept in goals; use corrections['{key}'] to replace a vocabulary guess with a discovered concept."
                         )
                     if previous.kind in {"entity_filter", "text_filter"} and (
                         previous.value != revised.value
@@ -213,11 +250,15 @@ class Session:
                         raise ValueError(
                             f"Preserve the value restriction '{previous.clause}' and its relationship"
                         )
-                    self.interpretation_warnings.append(
-                        f"Grounding corrected for '{previous.clause}'."
+                    changes = ", ".join(
+                        f"{name}: {getattr(previous, name)} → {getattr(revised, name)}"
+                        for name in ("concept", "owner", "kind", "required")
+                        if getattr(previous, name) != getattr(revised, name)
                     )
+                    warnings.append(f"Grounding corrected for '{previous.clause}' ({changes}).")
             if self.requirements != requirements:
                 self.prepared.clear()
+            self.interpretation_warnings.extend(warnings)
             self.question, self.goals, self.requirements = question, requested, requirements
         c = self.catalogue
         unresolved = []
@@ -238,22 +279,27 @@ class Session:
 
         owner_ids, target_ids = resolve_types(owners), resolve_types(targets)
         groups, seeds, fallback = [], set(owner_ids) | target_ids, {}
-        searches = dict.fromkeys(concepts or [], None)
-        for requirement in self.requirements.values():
+        searches = dict.fromkeys(((concept, "") for concept in concepts or []), None)
+        for key, requirement in self.requirements.items():
             if requirement.kind != "scope" and (
-                goals is not None or requirement.concept in searches
+                goals is not None or key in corrections or requirement.concept in (concepts or [])
             ):
-                searches[requirement.concept] = requirement.owner or None
+                searches.pop((requirement.concept, ""), None)
+                searches[(requirement.concept, requirement.owner)] = None
         if not searches:
-            searches[""] = None
-        for concept, requested_owner in searches.items():
+            searches[("", "")] = None
+        for concept, requested_owner in searches:
             cls = next(iter(owner_ids)) if len(owner_ids) == 1 else None
             if requested_owner:
                 try:
                     cls = c._type(requested_owner)
                 except ValueError:
                     cls = None
-            ranked = c.search(concept, owners=[cls] if cls else owner_ids, targets=target_ids)
+            ranked = c.search(
+                concept,
+                owners=[cls] if cls else owner_ids,
+                targets=target_ids if not concept else (),
+            )
             exact = [
                 r
                 for r in ranked
@@ -267,6 +313,8 @@ class Session:
             groups.append(
                 {
                     "concept": concept,
+                    "owner": requested_owner
+                    or (next(iter(owner_ids)) if len(owner_ids) == 1 else ""),
                     **self._page(ranked, offset, budget=5000 // len(searches)),
                 }
             )
@@ -303,6 +351,21 @@ class Session:
             if unresolved
             else None,
         }
+
+    def _check_concept_correction(self, previous, revised):
+        """Keep known vocabulary evidence when correcting an initial search term."""
+        c = self.catalogue
+        concept = (
+            " ".join(sorted(words(previous.concept) - words(previous.value))) or previous.concept
+        )
+        known = {r for r in c.schema_documents if c.relevance(r, concept) >= 1}
+        selected = {r for r in c.schema_documents if c.relevance(r, revised.concept) >= 1}
+        if not selected:
+            raise ValueError("Use a discovered class or field label in the correction")
+        if known and not known.intersection(selected):
+            raise ValueError(
+                f"The correction conflicts with retained evidence for '{previous.concept}'"
+            )
 
     def _retain(self, result, key, offset=0):
         """Keep a typed Results set and present a few candidate identities."""

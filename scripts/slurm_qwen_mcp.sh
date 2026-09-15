@@ -35,8 +35,11 @@ export RDFSOLVE_MODEL="$QWEN_MODEL" RDFSOLVE_MODEL_BASE_URL="$QWEN_BASE_URL"
 export RDFSOLVE_ROOT="$REPO"
 export RDFSOLVE_SCHEMA="${RDFSOLVE_SCHEMA:-$REPO/notebooks/mcp/schemas/aopwikirdf.schema.json}"
 export RDFSOLVE_OUTPUT="$OUTPUT_DIR"
-export RDFSOLVE_MAX_TOKENS="${RDFSOLVE_MAX_TOKENS:-65536}"
-export RDFSOLVE_MODEL_TIMEOUT="${RDFSOLVE_MODEL_TIMEOUT:-7200}"
+export RDFSOLVE_MAX_TOKENS="${RDFSOLVE_MAX_TOKENS:-4096}"
+[[ "$RDFSOLVE_MAX_TOKENS" =~ ^[0-9]+$ ]] && (( RDFSOLVE_MAX_TOKENS >= 1 )) || {
+  echo "RDFSOLVE_MAX_TOKENS must be a positive integer" >&2; exit 2;
+}
+export RDFSOLVE_MODEL_TIMEOUT="${RDFSOLVE_MODEL_TIMEOUT:-120}"
 
 export http_proxy="${http_proxy:-${HTTP_PROXY:-http://proxy.unimaas.nl:3128}}"
 export https_proxy="${https_proxy:-${HTTPS_PROXY:-$http_proxy}}"

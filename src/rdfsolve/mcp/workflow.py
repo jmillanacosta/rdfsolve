@@ -1,4 +1,4 @@
-"""Run a configured model against any saved RDF schema."""
+"""Run an RDF investigation with a configured model and MCP client."""
 
 from __future__ import annotations
 
@@ -85,6 +85,7 @@ async def ask_rdf(
     model_name=None,
     api_key=None,
     model_settings=None,
+    max_response_tokens: int | None = 4096,
     usage_limits=None,
     timeout=900,
     max_paths=100,
@@ -100,6 +101,8 @@ async def ask_rdf(
 
     Supply a PydanticAI model or an OpenAI-compatible base URL and model name.
     Full bindings are read directly from the subprocess artifact directory.
+    max_response_tokens caps each response, including reasoning. None disables
+    this ceiling; model_settings.max_tokens and provider limits still apply.
     """
     from mcp import Client as MCPClient
     from mcp import StdioServerParameters
@@ -124,8 +127,7 @@ async def ask_rdf(
         )
     settings = {
         "temperature": 0,
-        "max_tokens": int(os.getenv("RDFSOLVE_MAX_TOKENS", "16384")),
-        "timeout": float(os.getenv("RDFSOLVE_MODEL_TIMEOUT", "900")),
+        "timeout": float(os.getenv("RDFSOLVE_MODEL_TIMEOUT", "120")),
         **(model_settings or {}),
     }
     output = output_dir or os.getenv("RDFSOLVE_OUTPUT")
@@ -174,6 +176,7 @@ async def ask_rdf(
                     question,
                     model=model,
                     model_settings=settings,
+                    max_response_tokens=max_response_tokens,
                     usage_limits=usage_limits,
                     calls=answer.calls,
                     on_call=journal,

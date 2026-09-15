@@ -667,6 +667,7 @@ async def ask_rdf(
     model_name=None,
     api_key=None,
     model_settings=None,
+    max_response_tokens: int | None = 4096,
     usage_limits=None,
     timeout=900,
     max_paths=100,
@@ -678,8 +679,13 @@ async def ask_rdf(
     ontology_offline=False,
     output_dir=None,
 ):
-    """Run a grounded RDF investigation with a configured model and saved schema."""
-    from rdfsolve.mcp.openai import ask_rdf as run
+    """Run a grounded RDF investigation with a configured model and saved schema.
+
+    max_response_tokens limits each response, including reasoning; None disables
+    this ceiling. Explicit model_settings.max_tokens and provider limits still apply.
+    usage_limits controls the whole investigation separately.
+    """
+    from rdfsolve.mcp.workflow import ask_rdf as run
 
     return await run(
         question,
@@ -693,6 +699,7 @@ async def ask_rdf(
         model_name=model_name,
         api_key=api_key,
         model_settings=model_settings,
+        max_response_tokens=max_response_tokens,
         usage_limits=usage_limits,
         timeout=timeout,
         max_paths=max_paths,

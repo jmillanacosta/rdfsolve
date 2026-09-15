@@ -14,7 +14,7 @@ from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 
 from rdfsolve.api import ask_rdf
-from rdfsolve.mcp.openai import launch_config
+from rdfsolve.mcp.workflow import launch_config
 from rdfsolve.mcp.server import CONTRACTS
 
 
@@ -35,7 +35,7 @@ def test_final_receipt_preserves_distinct_semantic_warnings():
     )
     assert text.count("Species mapping") == 1
     assert "gene extraction" in text and "Mixed RDF values" in text
-    from rdfsolve.mcp.openai import Answer
+    from rdfsolve.mcp.workflow import Answer
 
     answer = Answer(calls=[{"result": {"state": "complete", "warnings": ["Review mapping"]}}])
     assert answer.diagnostics()["warnings"] == ["Review mapping"]
@@ -157,10 +157,10 @@ def test_subprocess_paths_use_this_checkout_from_any_directory(tmp_path, monkeyp
     assert config["command"] == sys.executable
     import subprocess
 
-    import rdfsolve.mcp.openai as installed
+    import rdfsolve.mcp.workflow as installed
 
     child = subprocess.check_output(
-        [config["command"], "-c", "import rdfsolve.mcp.openai as m; print(m.__file__)"],
+        [config["command"], "-c", "import rdfsolve.mcp.workflow as m; print(m.__file__)"],
         env=config["env"],
         text=True,
     )
@@ -230,7 +230,10 @@ def test_repeated_blocker_stops_even_when_query_text_changes():
     asyncio.run(run())
 
 
-def test_endpoint_control_has_no_schema_and_logs_failed_queries(session, tmp_path, monkeypatch):
+@pytest.mark.parametrize("truncated", [False, True])
+def test_endpoint_control_has_no_schema_and_logs_failed_queries(
+    session, tmp_path, monkeypatch, truncated
+):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
     from mcp_experiment import ask_endpoint, evaluate, read_query
     from pydantic_ai.usage import UsageLimits
@@ -243,13 +246,17 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(session, tmp_pat
 
     def model(messages, info):
         assert {t.name for t in info.function_tools} == {"sparql_query"}
+        assert info.model_settings["max_tokens"] == 4096
         calls.append(messages)
         if len(calls) == 1:
             assert "schema.json" not in str(messages)
             assert str(E.AOP) not in str(messages)
             return ModelResponse(parts=[ToolCallPart("sparql_query", {"query": "SELECT broken"})])
         assert "query_error" in str(messages)
-        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {"sparql": final})])
+        return ModelResponse(
+            parts=[ToolCallPart(info.output_tools[0].name, {"sparql": final})],
+            finish_reason="length" if truncated else "stop",
+        )
 
     with snapshot_endpoint(data, tmp_path / "endpoint.jsonl") as endpoint:
         answer = asyncio.run(
@@ -257,12 +264,17 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(session, tmp_pat
                 "List pathways.",
                 endpoint=endpoint,
                 model=FunctionModel(model),
-                model_settings={},
+                model_settings={"max_tokens": 65536},
                 usage_limits=UsageLimits(request_limit=5),
                 output_dir=tmp_path,
             )
         )
-    assert answer.state == "complete" and len(answer.bindings) == 3
+    if truncated:
+        assert answer.state == "blocked" and not answer.bindings
+        assert answer.error["code"] == "model_generation_limit"
+        assert answer.package["source_queries"] == 0
+    else:
+        assert answer.state == "complete" and len(answer.bindings) == 3
     assert (
         json.loads((tmp_path / "calls.jsonl").read_text())["arguments"]["query"] == "SELECT broken"
     )
@@ -306,3 +318,64 @@ def test_examples_and_reference_use_typed_shacl(session, tmp_path, monkeypatch):
     assert evaluate(Answer(), expected, ["a"])["f1"] == 0
     assert evaluate(Answer(state="complete", bindings=rows[:1]), expected, ["a"])["f1"] == 0.5
     assert json.loads((tmp_path / "reference.jsonl").read_text())["status"] == "complete"
+
+
+@pytest.mark.parametrize("with_tool", [False, True])
+@pytest.mark.parametrize("limit", [4096, 8192, None])
+def test_generation_limit_stops_before_another_tool(session, tmp_path, with_tool, limit):
+    from pydantic_ai.messages import ThinkingPart
+    from pydantic_ai.usage import RequestUsage, UsageLimits
+
+    schema, data = files(session, tmp_path)
+    expected_limit = limit or 65536
+    seen = []
+
+    def model(messages, info):
+        seen.append(info.model_settings)
+        part = (
+            ToolCallPart("rdf_schema", {"concepts": ["Event"]})
+            if with_tool
+            else ThinkingPart("Unfinished reasoning")
+        )
+        return ModelResponse(
+            parts=[part], finish_reason="length", usage=RequestUsage(output_tokens=expected_limit)
+        )
+
+    answer = asyncio.run(
+        ask_rdf(
+            "List events",
+            schema=schema,
+            data_file=data,
+            model=FunctionModel(model),
+            model_settings={"max_tokens": 65536},
+            max_response_tokens=limit,
+            usage_limits=UsageLimits(request_limit=2),
+            output_dir=tmp_path,
+        )
+    )
+    assert len(seen) == 1 and seen[0]["max_tokens"] == expected_limit
+    assert answer.state == "blocked" and not answer.calls and not answer.bindings
+    assert answer.error["code"] == "model_generation_limit"
+    assert "Increase" not in answer.text and answer.usage.output_tokens == expected_limit
+    assert (
+        json.loads(Path(answer.files["answer"]).read_text())["response_token_limit"]
+        == expected_limit
+    )
+    assert answer.max_response_tokens == limit
+
+
+def test_response_limit_configuration_is_consistent():
+    import inspect
+
+    from rdfsolve.mcp import ask_rdf as mcp_ask
+    from rdfsolve.mcp.agent import ask, bounded_model_settings
+    from rdfsolve.mcp.workflow import ask_rdf as wrapper
+
+    for fn in [ask_rdf, mcp_ask, wrapper, ask]:
+        assert inspect.signature(fn).parameters["max_response_tokens"].default == 4096
+    assert bounded_model_settings(max_response_tokens=8192)["max_tokens"] == 8192
+    assert "max_tokens" not in bounded_model_settings(max_response_tokens=None)
+    assert bounded_model_settings({"max_tokens": 1000}, 4096)["max_tokens"] == 1000
+    for invalid in [0, -1, True, "none"]:
+        with pytest.raises(ValueError):
+            bounded_model_settings(max_response_tokens=invalid)

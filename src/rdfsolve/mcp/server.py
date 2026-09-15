@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_core import to_jsonable_python
@@ -23,6 +23,15 @@ class Args(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
+class GoalCorrection(Args):
+    """Correct grounding while retaining the original clause and named value."""
+
+    concept: str | None = None
+    owner: str | None = None
+    kind: Literal["output", "relation", "entity_filter", "text_filter"] | None = None
+    required: bool | None = None
+
+
 class SchemaArgs(Args):
     """Declare question clauses and retrieve connected schema evidence."""
 
@@ -35,7 +44,12 @@ class SchemaArgs(Args):
     goals: list[Requirement] | None = Field(
         default=None,
         max_length=16,
-        description="First call: atomic outputs, relations, entity restrictions and text conditions. Each needs its own clause and schema-independent concept. owner identifies the subject concept; entity/text goals also declare value. These commitments persist across repairs.",
+        description="Declare outputs and restrictions once. Each needs a clause and a short concept; filters need value. Later discovery omits goals. Add a missing goal individually; use corrections for existing goals.",
+    )
+    corrections: dict[str, GoalCorrection] = Field(
+        default_factory=dict,
+        max_length=16,
+        description="Existing goal ID to changed grounding fields, e.g. {'g2': {'concept': 'applicable taxon', 'kind': 'entity_filter'}}. Original clauses and values remain retained.",
     )
     offset: int = Field(default=0, ge=0)
 

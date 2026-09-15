@@ -100,12 +100,14 @@ class FinalQuery(BaseModel):
     sparql: str = Field(description="Complete SELECT query answering every part of the question")
 
 
-async def ask_endpoint(question, *, endpoint, model, model_settings, usage_limits, output_dir):
+async def ask_endpoint(
+    question, *, endpoint, model, model_settings, usage_limits, output_dir, max_response_tokens=4096
+):
     """Give a model generic SPARQL access without mined or ontology metadata."""
     from pydantic_ai import Agent, capture_run_messages
     from pydantic_ai.usage import RunUsage
 
-    from rdfsolve.mcp.agent import Answer, failure
+    from rdfsolve.mcp.agent import Answer, bounded_model_settings, failure
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -117,6 +119,9 @@ async def ask_endpoint(question, *, endpoint, model, model_settings, usage_limit
             "package": str(output / "helper.json"),
         },
     )
+    model_settings = bounded_model_settings(model_settings, max_response_tokens)
+    answer.max_response_tokens = max_response_tokens
+    answer.response_token_limit = model_settings.get("max_tokens")
     helper = SparqlHelper(endpoint, timeout=65)
     helper.enable_query_collection()
     started = perf_counter()
@@ -174,6 +179,8 @@ async def ask_endpoint(question, *, endpoint, model, model_settings, usage_limit
             result = await agent.run(
                 f"{question}\nEndpoint: {endpoint}", usage=answer.usage, usage_limits=usage_limits
             )
+            if any(getattr(m, "finish_reason", None) == "length" for m in messages):
+                raise ValueError("The model response was truncated")
             answer.query = result.output.sparql
             read_query(answer.query)
             data = helper.select_with_fallback(
@@ -186,6 +193,13 @@ async def ask_endpoint(question, *, endpoint, model, model_settings, usage_limit
             answer.text = f"Retrieved {len(answer.bindings)} rows using endpoint queries."
         except Exception as exc:
             answer.error = failure(exc, "control_error")
+            if any(getattr(m, "finish_reason", None) == "length" for m in messages):
+                answer.state = "blocked"
+                answer.error = {
+                    "code": "model_generation_limit",
+                    "message": f"The model reached its {answer.response_token_limit}-token response limit. No final answer was executed.",
+                    "retryable": False,
+                }
             answer.text = answer.error["message"]
         finally:
             answer.messages = list(messages)
