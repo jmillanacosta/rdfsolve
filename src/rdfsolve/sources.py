@@ -19,6 +19,7 @@ class SourceEntry(TypedDict, total=False):
 
     name: str
     endpoint: str
+    sparql_examples: dict[str, Any]
     dataset_metadata: dict[str, Any] | None
     metadata_graph_uris: list[str] | None
     enrichment: dict[str, Any]
@@ -389,6 +390,7 @@ _SOURCES_JSONLD_CONTEXT: dict[str, Any] = {
     "endpoint": {"@id": "void:sparqlEndpoint", "@type": "@id"},
     "void_iri": {"@id": "void:dataDump", "@type": "@id"},
     "graph_uris": {"@id": "void:inDataset", "@type": "@id", "@container": "@set"},
+    "sparql_examples": {"@id": "rdfsolve:sparqlExamples", "@type": "@json"},
     "domain": "schema:about",
     "license": {"@id": "dcterms:license", "@type": "@id"},
     "keywords": {"@id": "schema:keywords", "@container": "@set"},
@@ -431,6 +433,8 @@ _JSONLD_LIST_BR_FIELDS: list[tuple[str, str]] = [
 def _entry_to_jsonld_node(entry: SourceEntry) -> dict[str, Any]:
     """Build a JSON-LD ``@graph`` node dict for a single source entry."""
     node: dict[str, Any] = {}
+    if entry.get("sparql_examples"):
+        node["sparql_examples"] = entry["sparql_examples"]
 
     src_name: str = entry.get("name", "") or ""
     node["@id"] = f"https://rdfsolve.io/sources/{src_name}"
@@ -578,6 +582,10 @@ def _load_yaml(path: Path) -> list[SourceEntry]:
 def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     """Convert a single YAML mapping to a SourceEntry."""
     e: SourceEntry = {}
+    if node.get("sparql_examples"):
+        from rdfsolve.models.source_model import SparqlExamples
+
+        e["sparql_examples"] = SparqlExamples.model_validate(node["sparql_examples"]).model_dump()
 
     e["name"] = node.get("name", "")
     e["endpoint"] = node.get("endpoint", "")
@@ -638,6 +646,10 @@ def _load_jsonld(path: Path) -> list[SourceEntry]:
 def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
     """Convert a single JSON-LD ``@graph`` node to a SourceEntry."""
     e: SourceEntry = {}
+    if node.get("sparql_examples"):
+        from rdfsolve.models.source_model import SparqlExamples
+
+        e["sparql_examples"] = SparqlExamples.model_validate(node["sparql_examples"]).model_dump()
 
     e["name"] = node.get("name", "")
 

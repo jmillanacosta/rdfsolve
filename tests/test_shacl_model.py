@@ -9,6 +9,60 @@ from rdfsolve.schema_models.shacl_model import (
 )
 
 
+def test_mined_prefixes_survive_json_shacl_and_void():
+    from rdflib import SH, XSD, URIRef
+
+    from rdfsolve.schema_models import MinedSchema
+    from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+
+    schema = MinedSchema(about={}, prefixes={"mine": "https://example.org/vocabulary/"}, patterns=[{
+        "subject_class": "https://example.org/vocabulary/Item",
+        "property_uri": "https://example.org/vocabulary/name",
+        "object_class": "Literal", "datatype": str(XSD.string),
+    }])
+    schema = MinedSchema.from_dict(schema.to_dict())
+    shapes = minedschema_to_shacl(schema, base_uri="urn:shapes")
+    graph = shapes.to_rdf()
+    declarations = {str(graph.value(d, SH.prefix)): graph.value(d, SH.namespace)
+                    for d in graph.objects(URIRef("urn:shapes"), SH.declare)}
+    assert str(declarations["mine"]) == schema.prefixes["mine"]
+    assert declarations["mine"].datatype == XSD.anyURI
+    assert "mine:Item" in schema.to_shacl(base_uri="urn:shapes")
+    restored = MinedSchema.from_shacl(schema.to_shacl(base_uri="urn:shapes"))
+    assert restored.prefixes["mine"] == schema.prefixes["mine"]
+    assert restored.shapes.prefix_declarations["urn:shapes"]
+    restored = MinedSchema.from_void(schema.to_void_graph().serialize(format="turtle"))
+    assert restored.prefixes["mine"] == schema.prefixes["mine"]
+
+
+def test_declarations_without_queries_supply_prefixes_to_source_shapes():
+    from rdfsolve.schema_models import MinedSchema
+
+    schema = MinedSchema.from_shacl('''
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        <urn:shapes> sh:declare [sh:prefix "local"; sh:namespace "urn:local:"^^xsd:anyURI] .
+        <urn:shape> sh:targetClass <urn:local:Item> .
+    ''')
+    assert schema.prefixes["local"] == "urn:local:"
+    assert "local:Item" in schema.to_shacl()
+
+
+def test_derived_prefixes_keep_both_colliding_namespaces():
+    from rdfsolve.schema_models import MinedSchema
+
+    schema = MinedSchema(about={}, prefixes={"terms": "https://one.test/terms/"}, patterns=[{
+        "subject_class": "https://one.test/terms/Item",
+        "property_uri": "https://two.test/terms/link",
+        "object_class": "https://two.test/terms/Other",
+    }])
+    assert schema.get_prefixes() == {
+        "terms": "https://one.test/terms/", "terms_2": "https://two.test/terms/"
+    }
+    graph = Graph().parse(data=schema.to_shacl(), format="turtle")
+    assert set(schema.get_prefixes().values()) <= {str(ns) for _, ns in graph.namespaces()}
+
+
 def test_node_shape_roundtrip():
     """Test ShaclNodeShape serialization and parsing."""
     shape = ShaclNodeShape(

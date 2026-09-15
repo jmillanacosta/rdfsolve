@@ -154,7 +154,14 @@ class Session:
                 raise ValueError(
                     "Supply the original question and each requested output or restriction as a clause."
                 )
-            requirements = {f"g{i}": Requirement.model_validate(g) for i, g in enumerate(goals, 1)}
+            requirements = dict(self.requirements)
+            for item in goals:
+                goal = Requirement.model_validate(item)
+                key = next(
+                    (k for k, r in requirements.items() if r.clause == goal.clause),
+                    f"g{len(requirements) + 1}",
+                )
+                requirements[key] = goal
 
             def normalize(value):
                 return re.sub(r"[^a-z0-9]", "", value.casefold())
@@ -181,10 +188,12 @@ class Session:
                         raise ValueError("The requested dataset differs from the configured source")
                     requirements[key] = goal.model_copy(update={"kind": "scope"})
             requested = {key: goal.clause for key, goal in requirements.items()}
-            if self.goals and (self.question != question or self.goals != requested):
-                raise ValueError("Keep the original question and clause texts across repairs")
+            if self.goals and self.question != question:
+                raise ValueError("Keep the original question across repairs")
             if self.requirements and self.requirements != requirements:
-                if self.prepared:
+                if self.prepared and any(
+                    requirements[k] != r for k, r in self.requirements.items()
+                ):
                     raise ValueError(
                         "Prepared requirements are retained across probes and query repairs"
                     )
@@ -207,6 +216,8 @@ class Session:
                     self.interpretation_warnings.append(
                         f"Grounding corrected for '{previous.clause}'."
                     )
+            if self.requirements != requirements:
+                self.prepared.clear()
             self.question, self.goals, self.requirements = question, requested, requirements
         c = self.catalogue
         unresolved = []
@@ -251,7 +262,7 @@ class Session:
             if exact:
                 ranked = exact
                 seeds.update(c.fragments[r].iri for r in exact)
-            if cls and not any(score(c.schema_documents[r][0], concept) >= 1 for r in ranked):
+            if cls and not any(c.relevance(r, concept) >= 1 for r in ranked):
                 fallback[cls] = [r for r in c.field_refs.values() if c.fragments[r].owner == cls]
             groups.append(
                 {

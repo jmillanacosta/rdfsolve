@@ -1,7 +1,31 @@
 """Compile generated models and check labels, ranges, and metadata."""
 
-from types import ModuleType
 import sys
+from types import ModuleType
+
+
+def test_records_and_client_save_use_schema_prefixes(tmp_path):
+    from rdflib import Graph
+    from rdflib.compare import isomorphic
+
+    from rdfsolve.client_api import Client, Results
+
+    schema = MinedSchema(about={}, prefixes={"item": "urn:item:"}, patterns=[{
+        "subject_class": "urn:item:Item", "subject_label": "Item",
+        "property_uri": "urn:item:name", "object_class": "Literal",
+        "datatype": "http://www.w3.org/2001/XMLSchema#string",
+    }])
+    model = schema.to_pydantic_classes()["Item"]
+    record = model(uri="urn:item:a", name=["Example"])
+    assert "rdf_prefixes" not in model.model_fields
+    graph = record.to_graph()
+    text = graph.serialize(format="turtle")
+    assert "@prefix item: <urn:item:>" in text and "item:name" in text
+    with Client(schema, Graph(), graph_uris=[]) as client:
+        file = tmp_path / "records.ttl"
+        client.save(file, Results(client, [record]))
+    assert "@prefix item: <urn:item:>" in file.read_text()
+    assert isomorphic(graph, Graph().parse(file, format="turtle"))
 
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 

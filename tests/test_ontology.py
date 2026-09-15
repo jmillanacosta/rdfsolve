@@ -164,3 +164,18 @@ def test_ols_nullable_metadata_is_empty_evidence():
     term = OntologyLookup._term({"iri": MMO, "label": "measurement method", "annotation": None,
         "exact_synonyms": None, "obo_synonym": None, "description": None})
     assert term["synonyms"] == term["namespace"] == term["description"] == []
+
+
+def test_cached_terms_remain_reachable_beyond_lookup_budget(monkeypatch):
+    lookup = provider(monkeypatch, max_requests=0, offline=True)
+    iri = canonical_iri(TAXON)
+    lookup.cache[json.dumps(['ols', 'term', iri])] = {
+        'fetched_at': 1, 'data': {'iri': iri, 'label': 'cellular organisms',
+        'description': [], 'synonyms': [], 'namespace': ['ncbi_taxonomy'], 'ontology': 'ncbitaxon'}}
+    with fixture(lookup) as client:
+        index = Catalogue(client)
+        refs = index.search('taxon')
+        assert index.type_refs[TAXON] in refs
+        assert index.relevance(index.type_refs[TAXON], 'taxon') >= 1
+        assert not lookup.requests
+        assert 'cellular organisms' not in json.dumps(client._schema.to_dict())

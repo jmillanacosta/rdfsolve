@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from conftest import E
+from conftest import E, snapshot_endpoint
 from mcp import Client as MCPClient
 from mcp import MCPError, StdioServerParameters
 from pydantic_ai.messages import ModelResponse, ToolCallPart
@@ -228,3 +228,81 @@ def test_repeated_blocker_stops_even_when_query_text_changes():
         assert len(bridge.calls) == 3
 
     asyncio.run(run())
+
+
+def test_endpoint_control_has_no_schema_and_logs_failed_queries(session, tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    from mcp_experiment import ask_endpoint, evaluate, read_query
+    from pydantic_ai.usage import UsageLimits
+
+    from rdfsolve.mcp.agent import Answer
+
+    _, data = files(session, tmp_path)
+    final = "SELECT DISTINCT ?a WHERE { ?a a <" + str(E.AOP) + "> }"
+    calls = []
+
+    def model(messages, info):
+        assert {t.name for t in info.function_tools} == {"sparql_query"}
+        calls.append(messages)
+        if len(calls) == 1:
+            assert "schema.json" not in str(messages)
+            assert str(E.AOP) not in str(messages)
+            return ModelResponse(parts=[ToolCallPart("sparql_query", {"query": "SELECT broken"})])
+        assert "query_error" in str(messages)
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {"sparql": final})])
+
+    with snapshot_endpoint(data, tmp_path / "endpoint.jsonl") as endpoint:
+        answer = asyncio.run(
+            ask_endpoint(
+                "List pathways.",
+                endpoint=endpoint,
+                model=FunctionModel(model),
+                model_settings={},
+                usage_limits=UsageLimits(request_limit=5),
+                output_dir=tmp_path,
+            )
+        )
+    assert answer.state == "complete" and len(answer.bindings) == 3
+    assert (
+        json.loads((tmp_path / "calls.jsonl").read_text())["arguments"]["query"] == "SELECT broken"
+    )
+    assert answer.calls[0]["result"]["error"]["code"] == "query_error"
+    assert (tmp_path / "helper.json").is_file()
+    assert evaluate(Answer(), {("x",)}, ["a"])["f1"] == 0
+    for text in (
+        "SELECT * FROM <http://outside/> WHERE {?s ?p ?o}",
+        "SELECT * WHERE { SERVICE SILENT ?endpoint {?s ?p ?o} }",
+    ):
+        with pytest.raises(ValueError, match="outside"):
+            read_query(text)
+
+
+def test_examples_and_reference_use_typed_shacl(session, tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    from mcp_experiment import evaluate, load_examples, rdf_tuples, reference
+
+    from rdfsolve.api import QueryCollection
+    from rdfsolve.mcp.agent import Answer
+
+    _, data = files(session, tmp_path)
+    examples = QueryCollection()
+    examples.add(
+        "Pathways",
+        "SELECT DISTINCT ?a WHERE { ?a a ex:AOP }",
+        description="List all pathways.",
+        prefixes={"ex": str(E)},
+    )
+    examples.add("Ask", "ASK { ?s ?p ?o }")
+    examples.to_turtle(tmp_path / "examples.ttl")
+    cases, exclusions = load_examples(tmp_path / "examples.ttl")
+    assert len(cases) == len(exclusions) == 1
+    case = cases[0]
+    assert case["question"] == "List all pathways." and case["columns"] == ["a"]
+    with snapshot_endpoint(data, tmp_path / "endpoint.jsonl") as endpoint:
+        rows = reference(case["query"], endpoint, tmp_path / "reference.jsonl")
+    expected = rdf_tuples(rows, ["a"])
+    assert len(expected) == 3
+    assert evaluate(Answer(state="complete", bindings=rows), expected, ["a"])["f1"] == 1
+    assert evaluate(Answer(), expected, ["a"])["f1"] == 0
+    assert evaluate(Answer(state="complete", bindings=rows[:1]), expected, ["a"])["f1"] == 0.5
+    assert json.loads((tmp_path / "reference.jsonl").read_text())["status"] == "complete"

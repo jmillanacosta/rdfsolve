@@ -33,7 +33,7 @@ class Requirement(BaseModel):
         description="output lists resources or field values; entity_filter restricts to a particular named member; text_filter matches literal wording; relation requires a connection; scope names the configured database."
     )
     concept: str = Field(
-        description="Requested class, field or relationship concept in the question's vocabulary."
+        description="Short class, field or relationship name. Keep the full qualification in clause and a named restriction in value."
     )
     owner: str = Field(
         default="",
@@ -286,7 +286,7 @@ def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
 
 def infer_grounding(requirement, query, catalogue, choice=None):
     """Resolve a goal from actual query witnesses and generated metadata."""
-    from rdfsolve.catalogue import score, words
+    from rdfsolve.catalogue import words
 
     choice = choice or {}
     nodes = list(walk(prepareQuery(query.sparql).algebra))
@@ -302,7 +302,7 @@ def infer_grounding(requirement, query, catalogue, choice=None):
             requirement.kind in {"entity_filter", "text_filter"} and fragment.kind != "field"
         ):
             continue
-        rank = score(catalogue.schema_documents[ref][0], requirement.concept)
+        rank = catalogue.relevance(ref, requirement.concept)
         if (
             requirement.kind == "output"
             and fragment.kind == "type"
@@ -399,7 +399,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             "goal_evidence",
             f"{requirement.clause}: select retained class, field or path references as evidence.",
         )
-    from rdfsolve.catalogue import score, words
+    from rdfsolve.catalogue import words
 
     exact_types = {
         f.iri
@@ -416,7 +416,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             f"{requirement.clause}: select evidence for the discovered {requirement.concept} class.",
         )
     if not any(
-        score(catalogue.schema_documents.get(ref, (f.label, []))[0], requirement.concept) >= 1
+        catalogue.relevance(ref, requirement.concept) >= 1
         for ref, f in zip(evidence, fragments, strict=True)
     ):
         raise QueryValidationError(

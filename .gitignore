@@ -940,3 +940,5 @@ notebooks/*.ttl
 *.out
 *.err
 notebooks/mcp/output*
+docs/ARCHITECTURE_DECISION_QLEVER_INSTANCES.md docs/DATASET_DISCOVERY_REPORT.md docs/HEALTH_CHECK_RESULTS.md docs/MULTI_FILE_WORKFLOW_ANALYSIS.md docs/ONTOLOGY_EXPERIMENT.md docs/OPTIMIZATION_PLAN.md docs/package_first_mcp.md docs/SCHEMA_CONTEXT_ANALYSIS.md
+docs/*.md

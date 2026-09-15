@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 _log = logging.getLogger(__name__)
 
@@ -66,6 +66,25 @@ def uri_to_curie(uri: str) -> tuple[str, str, str]:
     pfx = _prefix_from_ns(ns) if ns else ""
     curie = f"{pfx}:{local}" if pfx and local else uri
     return curie, pfx, ns
+
+
+def prefix_map(iris: Iterable[str], retained: dict[str, str]) -> dict[str, str]:
+    """Keep retained names and assign distinct names to additional namespaces."""
+    result = dict(retained)
+    for iri in sorted(set(iris)):
+        if any(iri.startswith(namespace) for namespace in result.values()):
+            continue
+        _, prefix, namespace = uri_to_curie(iri)
+        if not namespace:
+            continue
+        prefix = re.sub(r"[^a-zA-Z0-9_]", "_", prefix) or "ns"
+        if not prefix[0].isalpha():
+            prefix = "ns_" + prefix
+        name, index = prefix, 2
+        while name in result and result[name] != namespace:
+            name, index = f"{prefix}_{index}", index + 1
+        result[name] = namespace
+    return result
 
 
 # Bioregistry prefix map

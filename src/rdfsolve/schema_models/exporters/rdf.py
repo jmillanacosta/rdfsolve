@@ -16,6 +16,7 @@ def annotate_rdf(schema: MinedSchema, graph: Graph, *, include_examples: bool = 
     from rdflib import URIRef
     from rdflib.namespace import DCTERMS, OWL
 
+    schema.bind_prefixes(graph)
     if include_examples:
         graph += schema.enrichment.to_rdf_graph()
     else:

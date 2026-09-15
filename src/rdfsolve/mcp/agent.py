@@ -18,7 +18,9 @@ for every match, or an entity reference only when choosing that particular membe
 Use rdf_follow to traverse a named field, and rdf_paths for connections. These
 operations run in the package and return evidence summaries, never record dumps.
 Use rdf_schema to find relevant fields by concepts, owners and target classes.
-Declare the original question's atomic outputs and restrictions as goals once;
+Declare every output and restriction, including qualifiers attached to class names.
+Use short vocabulary names as concepts and preserve the full clause text.
+Later schema calls may omit goals or add a missing clause; existing goals remain.
 available metadata has required=false. Applicability and membership restrict actual
 entities; a text_filter applies only to wording or topic text. Keep each subject
 and value restriction. Source scope is configured by the caller.

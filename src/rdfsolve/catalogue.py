@@ -11,6 +11,7 @@ from rdfsolve.schema_models.paths import PropertyPath
 
 def words(text: str) -> set[str]:
     """Normalize schema labels for deterministic lexical retrieval."""
+    text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
     text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
     return {word.lower().rstrip("s") for word in re.findall(r"[A-Za-z0-9]+", text)}
 
@@ -150,7 +151,13 @@ class Catalogue:
         self.metadata[ref]["ontology"] = evidence
         for item in evidence:
             text += " " + " ".join(
-                [item["label"], *item["description"], *item["synonyms"], *item["namespace"]]
+                [
+                    item["iri"],
+                    item["label"],
+                    *item["description"],
+                    *item["synonyms"],
+                    *item["namespace"],
+                ]
             )
         return text, hint_refs
 
@@ -171,12 +178,7 @@ class Catalogue:
         refs = self.field_refs.values() if owners else self.schema_documents
         refs = list(refs)
         eligible = [r for r in refs if not owners or self.fragments[r].owner in owners]
-        explained = any(
-            score(self.fragments[r].label + " " + (self.fragments[r].description or ""), concept)
-            >= 1
-            for r in eligible
-        )
-        if concept and self.client.ontology and not explained:
+        if concept and self.client.ontology:
             from rdfsolve.ontology import term_key
 
             iris = set()
@@ -184,30 +186,45 @@ class Catalogue:
                 f = self.fragments[ref]
                 iris.update([f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri])
                 iris.update(self.metadata[ref].get("targets", []))
-            matches = {term_key(t["iri"]) for t in self.client.ontology.search(concept)}
             for iri in sorted(iris):
-                if term_key(iri) in matches:
-                    self.client.vocabulary(iri)
-            if owners:
-                opaque = [i for i in sorted(iris) if term_key(i) != i]
-                for iri in opaque[:12]:
+                if self.client.ontology.cached(iri):
                     self.client.vocabulary(iri)
             self.schema_documents.update({r: self._schema_document(r) for r in refs})
+            if not any(self.relevance(r, concept) >= 1 for r in eligible):
+                matches = {term_key(t["iri"]) for t in self.client.ontology.search(concept)}
+                pending = sorted(
+                    iris, key=lambda i: (term_key(i) not in matches, -score(i, concept), i)
+                )
+                for iri in pending[:12]:
+                    if term_key(iri) != iri:
+                        self.client.vocabulary(iri)
+                self.schema_documents.update({r: self._schema_document(r) for r in refs})
         refs = [
             r
             for r in refs
             if (not owners or self.fragments[r].owner in owners)
             and (not targets or targets.intersection(self.metadata.get(r, {}).get("targets", [])))
-            and score(self.schema_documents[r][0], concept)
+            and self.relevance(r, concept)
         ]
         return sorted(
             refs,
             key=lambda r: (
                 -score(self.fragments[r].label, concept),
-                -score(self.schema_documents[r][0], concept),
+                -self.relevance(r, concept),
                 r,
             ),
         )
+
+    def relevance(self, ref, concept):
+        """Rank a concept using local metadata and exact ontology names."""
+        fragment = self.fragments[ref]
+        rank = score(self.schema_documents.get(ref, (fragment.label, []))[0], concept)
+        names = [fragment.label]
+        for evidence in self.metadata.get(ref, {}).get("ontology", []):
+            names.extend([evidence["label"], *evidence["synonyms"]])
+        if any(len(words(name)) >= 2 and words(name) <= words(concept) for name in names):
+            rank = max(rank, 1)
+        return rank
 
     def _put(self, fragment: Fragment, key):
         prefix = {"type": "t", "field": "f", "path": "p", "term": "e"}[fragment.kind]

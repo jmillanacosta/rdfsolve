@@ -247,7 +247,7 @@ open a client. Show each query and its returned data with `data.query_log()`.
 Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
 
-[Walk through the thyroid investigation](notebooks/pydantic_clients/01_mine_explore.ipynb).
+[Example](notebooks/pydantic_clients/01_mine_explore.ipynb).
 
 ### SparqlHelper
 
@@ -536,31 +536,7 @@ Repeated unchanged failures stop with the unresolved issue recorded.
 The server supports SELECT retrieval with joins, optional patterns, alternatives
 and filters. Aggregation, BIND-based output transformations, nested SELECT,
 negation, final LIMIT/OFFSET, federation and model-selected source scope are
-rejected. Required goals need mandatory witnesses outside alternative-only
-branches. Ordinary SPARQL expressions inside filters preserve their declared
-scope. Schema evidence is approximate; unsupported target-class evidence
-produces a warning. Full natural-language equivalence is not something a schema
-check proves.
-
-Run deterministic tests with `uvx tox -e mcp`. The six files in `tests/mcp`
-contain exact RDF answer tests and real MCP/PydanticAI integration checks. Run
-local-model experiments through `sbatch scripts/slurm_qwen_mcp.sh`. Job logs,
-model logs and saved answers are under `../logs/mcp-test/`.
-
-The development notebooks are `notebooks/mcp/00_mine.ipynb`, `01_small.ipynb`,
-`02_client.ipynb`, and `test-mcp.ipynb`. Their source queries, fixed RDF samples and canonical
-schemas live in `notebooks/mcp/schemas/`. Run the small evaluation with
-`RDFSOLVE_NOTEBOOK=01_small.ipynb sbatch scripts/slurm_qwen_mcp.sh`. Reference
-answers remain outside the model context. Results include exact tuple
-precision/recall, request counts, inclusive input tokens and cache reads.
-Run the direct-client experiment without a model using
-`RDFSOLVE_NOTEBOOK=02_client.ipynb RDFSOLVE_RUN_KIND=client sbatch scripts/slurm_mcp_mine.sh`.
-
-For the paired ontology experiment, first run
-`RDFSOLVE_NOTEBOOK=03_ontology_cache.ipynb RDFSOLVE_RUN_KIND=ontology-cache sbatch scripts/slurm_mcp_mine.sh`,
-then `RDFSOLVE_NOTEBOOK=04_ontology.ipynb sbatch scripts/slurm_qwen_mcp.sh`.
-The [experiment plan](docs/OPTIMIZATION_PLAN.md) defines cases, budgets, scoring,
-paired repeats and the limits of the development results.
+rejected.
 
 ## Documentation
 

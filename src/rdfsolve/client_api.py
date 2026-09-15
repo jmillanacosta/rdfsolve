@@ -577,6 +577,7 @@ class Client(DatasetClient):
         if any(group.client is not self for group in groups):
             raise ValueError("Save results from one client at a time")
         graph = Graph()
+        self._schema.bind_prefixes(graph)
         ids = {str(vars(record)["uri"]) for record in records}
         for record in records:
             graph += model_to_graph(record)

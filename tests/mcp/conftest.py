@@ -1,6 +1,14 @@
 """Small RDF oracles for the public investigation workflow."""
 
+import json
+import multiprocessing
+import signal
 from collections import Counter
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
+from time import perf_counter
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from rdflib import RDF, RDFS, XSD, BNode, Dataset, Graph, Literal, Namespace
@@ -196,3 +204,99 @@ def prepare(session, clauses, *, sparql=None):
     )
     evidence = {key: {k: v for k, v in g.items() if k != "pattern"} for key, g in clauses.items()}
     return session.prepare(sparql or query, evidence)
+
+
+def _serve(data, journal, connection):
+    graph = Graph().parse(data, format="turtle")
+
+    def expired(*_):
+        raise TimeoutError("Snapshot query exceeded 60 seconds")
+
+    signal.signal(signal.SIGALRM, expired)
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *_):
+            pass
+
+        def do_GET(self):
+            self.respond(parse_qs(urlsplit(self.path).query).get("query", [""])[0])
+
+        def do_POST(self):
+            body = self.rfile.read(
+                min(int(self.headers.get("Content-Length", 0)), 200_000)
+            ).decode()
+            query = (
+                body
+                if "application/sparql-query" in self.headers.get("Content-Type", "")
+                else parse_qs(body).get("query", [""])[0]
+            )
+            self.respond(query)
+
+        def respond(self, query):
+            event = {"query": query, "status": "running"}
+            started = perf_counter()
+            status = 200
+            try:
+                signal.alarm(60)
+                from rdflib.plugins.sparql import prepareQuery
+                from rdflib.plugins.sparql.parserutils import CompValue
+
+                from rdfsolve.query_fragments import walk
+
+                parsed = prepareQuery(query)
+                if any(
+                    isinstance(n, CompValue) and n.name in {"ServiceGraphPattern", "DatasetClause"}
+                    for n in walk(parsed.algebra)
+                ):
+                    raise ValueError("Query leaves the local test endpoint")
+                result = graph.query(parsed)
+                payload = result.serialize(format="json")
+                if len(payload) > 64 * 1024 * 1024:
+                    raise ValueError("Snapshot response exceeded 64 MiB")
+                event.update(status="complete", rows=len(result))
+            except Exception as exc:
+                status = 400
+                event.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+                payload = json.dumps({"error": str(exc)[:1500]}).encode()
+            finally:
+                signal.alarm(0)
+                event["seconds"] = perf_counter() - started
+                with Path(journal).open("a") as log:
+                    log.write(json.dumps(event) + "\n")
+            self.send_response(status)
+            self.send_header(
+                "Content-Type",
+                "application/sparql-results+json" if status == 200 else "application/json",
+            )
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            try:
+                self.wfile.write(payload)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    connection.send(f"http://127.0.0.1:{server.server_port}/sparql")
+    connection.close()
+    server.serve_forever()
+
+
+@contextmanager
+def snapshot_endpoint(data, journal):
+    """Serve the identical frozen RDF to each model condition."""
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    process = context.Process(target=_serve, args=(str(data), str(journal), sender))
+    process.start()
+    sender.close()
+    try:
+        if not receiver.poll(60):
+            raise TimeoutError("Snapshot endpoint did not start")
+        yield receiver.recv()
+    finally:
+        receiver.close()
+        process.terminate()
+        process.join(5)
+        if process.is_alive():
+            process.kill()
+            process.join()

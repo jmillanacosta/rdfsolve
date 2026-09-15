@@ -25,10 +25,12 @@ logger = logging.getLogger(__name__)
 
 from rdfsolve.client_api import Client
 from rdfsolve.ontology import OntologyLookup
+from rdfsolve.query_collection import QueryCollection
 
 __all__ = [
     "Client",
     "OntologyLookup",
+    "QueryCollection",
     "ask_rdf",
     "discover_void_graphs",
     "discover_void_source",

@@ -6,7 +6,7 @@ import json as _json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
@@ -53,6 +53,48 @@ class MinedSchema(BaseModel):
         None, description="Original RDF evidence, separate from projected schema fields"
     )
     navigation: NavigationSummary | None = None
+    prefixes: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("prefixes")
+    @classmethod
+    def check_prefixes(cls, prefixes: dict[str, str]) -> dict[str, str]:
+        """Accept namespace declarations that can be used in SHACL and SPARQL."""
+        from rdfsolve.schema_models.shacl_model import ShaclPrefixDeclaration
+
+        for prefix, namespace in prefixes.items():
+            ShaclPrefixDeclaration(uri="_:prefix", prefix=prefix, namespace=namespace)
+        return prefixes
+
+    def get_prefixes(self) -> dict[str, str]:
+        """Return retained prefixes plus names for uncovered schema namespaces."""
+        from rdflib import URIRef
+
+        from rdfsolve._uri import prefix_map
+
+        iris = {
+            iri
+            for pattern in self.patterns
+            for iri in (
+                pattern.subject_class,
+                pattern.property_uri,
+                pattern.object_class,
+                pattern.datatype,
+            )
+            if iri and iri not in _SENTINEL_OBJECTS
+        }
+        if self.shapes is not None:
+            iris.update(
+                str(term)
+                for triple in self.shapes.to_rdf()
+                for term in triple
+                if isinstance(term, URIRef)
+            )
+        return prefix_map(iris, self.prefixes)
+
+    def bind_prefixes(self, graph: Graph) -> None:
+        """Bind schema namespaces for RDF serialization."""
+        for prefix, namespace in self.get_prefixes().items():
+            graph.bind(prefix, namespace, replace=True)
 
     def discover_paths(
         self, *, max_hops: int = 3, max_paths_per_length: int = 100

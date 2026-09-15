@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-__all__ = ["PublicationRef", "SourceModel", "SourcesRegistry"]
+__all__ = ["PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
 
 
 class PublicationRef(BaseModel):
@@ -30,6 +30,36 @@ class PublicationRef(BaseModel):
     doi: str | None = None
     pmc: str | None = None
     title: str | None = None
+
+
+class SparqlExamples(BaseModel):
+    """Locations of published query examples, separate from the data graph."""
+
+    model_config = {"extra": "forbid"}
+    shacl_graph_in_endpoint: list[str] = Field(default_factory=list)
+    shacl_dumps: list[str] = Field(default_factory=list)
+    link_to_repository: str = ""
+
+    @field_validator("shacl_graph_in_endpoint", "shacl_dumps", mode="before")
+    @classmethod
+    def locations(cls, value):
+        """Accept one location or a list without changing their order."""
+        return [value] if isinstance(value, str) else value or []
+
+    @model_validator(mode="after")
+    def validate_locations(self):
+        """Validate graph identities and explicit HTTP repository links."""
+        from rdfsolve.schema_models.paths import absolute_iri
+
+        for iri in self.shacl_graph_in_endpoint:
+            absolute_iri(iri)
+        if any(not item.strip() for item in self.shacl_dumps):
+            raise ValueError("Example dump locations must be nonempty")
+        if self.link_to_repository:
+            absolute_iri(self.link_to_repository)
+            if not self.link_to_repository.startswith(("https://", "http://")):
+                raise ValueError("Use an HTTP repository URL")
+        return self
 
 
 class SourceModel(BaseModel):
@@ -103,6 +133,7 @@ class SourceModel(BaseModel):
 
     name: str
     endpoint: str = ""
+    sparql_examples: SparqlExamples | None = None
     dataset_metadata: dict[str, Any] | None = None
     metadata_graph_uris: list[str] | None = None
     enrichment: dict[str, Any] | None = None
