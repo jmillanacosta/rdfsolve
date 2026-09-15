@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Literal, cast, get_args
 from pydantic import BaseModel, Field, model_validator
 
 from rdfsolve.schema_models._rdf import optional_count
-from rdfsolve.schema_models.paths import PropertyPath
+from rdfsolve.schema_models.enrichment import RdfTerm
+from rdfsolve.schema_models.paths import PropertyPath, absolute_iri
 
 if TYPE_CHECKING:
     from rdflib import BNode, Graph, URIRef
@@ -344,11 +345,236 @@ class ShaclNodeShape(BaseModel):
         )
 
 
+def _node(identity: str):
+    from rdflib import BNode, URIRef
+
+    return BNode(identity[2:]) if identity.startswith("_:") else URIRef(identity)
+
+
+def _identity(node: Node) -> str:
+    from rdflib import BNode
+
+    return ("_:" if isinstance(node, BNode) else "") + str(node)
+
+
+class ShaclPrefixDeclaration(BaseModel):
+    """One SHACL namespace mapping."""
+
+    uri: str
+    prefix: str
+    namespace: str
+
+    @model_validator(mode="after")
+    def check_namespace(self):
+        """Validate the namespace and SPARQL prefix syntax."""
+        from pyparsing import ParseBaseException
+        from rdflib.plugins.sparql.parser import parseQuery
+
+        absolute_iri(self.namespace)
+        try:
+            parsed = parseQuery(f"PREFIX {self.prefix}: <{self.namespace}> ASK {{}}")
+        except ParseBaseException as error:
+            raise ValueError(f"Invalid prefix name: {self.prefix!r}") from error
+        if len(parsed[0]) != 1 or parsed[1].name != "AskQuery":
+            raise ValueError("Invalid prefix declaration")
+        return self
+
+    def to_rdf(self, graph: Graph):
+        """Write sh:prefix and the required xsd:anyURI namespace."""
+        from rdflib import SH, XSD
+        from rdflib import Literal as RdfLiteral
+
+        node = _node(self.uri)
+        graph.add((node, SH.prefix, RdfLiteral(self.prefix)))
+        graph.add((node, SH.namespace, RdfLiteral(self.namespace, datatype=XSD.anyURI)))
+        return node
+
+    @classmethod
+    def from_rdf(cls, graph: Graph, node: Node):
+        """Read exactly one string prefix and one typed namespace."""
+        from rdflib import SH, XSD
+        from rdflib import Literal as RdfLiteral
+
+        prefix = graph.value(node, SH.prefix, any=False)
+        namespace = graph.value(node, SH.namespace, any=False)
+        if (
+            not isinstance(prefix, RdfLiteral)
+            or prefix.language
+            or prefix.datatype not in {None, XSD.string}
+        ):
+            raise ValueError("sh:prefix must be an xsd:string literal")
+        if not isinstance(namespace, RdfLiteral) or namespace.datatype != XSD.anyURI:
+            raise ValueError("sh:namespace must be an xsd:anyURI literal")
+        return cls(uri=_identity(node), prefix=str(prefix), namespace=str(namespace))
+
+
+class ShaclSparqlExecutable(BaseModel):
+    """A SHACL query body, its prefix resources, and retained RDF metadata."""
+
+    uri: str
+    text: str
+    query_type: Literal["SELECT", "ASK", "CONSTRUCT"]
+    prefixes: list[str] = Field(default_factory=list)
+    metadata: dict[str, list[RdfTerm]] = Field(default_factory=dict)
+    requires_context: bool = False
+
+    @property
+    def name(self) -> str:
+        """Choose a stable label for named execution."""
+        from rdflib import RDFS
+
+        labels = self.metadata.get(str(RDFS.label), [])
+        return min(term.value for term in labels) if labels else self.uri
+
+    def to_rdf(self, graph: Graph):
+        """Serialize the query body and references to prefix declarations."""
+        from rdflib import SH, URIRef
+        from rdflib import Literal as RdfLiteral
+
+        node = _node(self.uri)
+        graph.add((node, SH[self.query_type.lower()], RdfLiteral(self.text)))
+        for resource in self.prefixes:
+            graph.add((node, SH.prefixes, _node(resource)))
+        for predicate, values in self.metadata.items():
+            for value in values:
+                graph.add((node, URIRef(predicate), value.to_rdf()))
+        return node
+
+    @classmethod
+    def from_rdf(cls, graph: Graph, node: Node):
+        """Read a query and distinguish validation context from executable examples."""
+        from rdflib import RDF, SH, XSD
+        from rdflib import Literal as RdfLiteral
+
+        texts = [
+            (kind, text)
+            for kind in ("SELECT", "ASK", "CONSTRUCT")
+            for text in graph.objects(node, SH[kind.lower()])
+        ]
+        if len(texts) != 1:
+            raise ValueError("Expected one SHACL query body")
+        kind, text = texts[0]
+        if (
+            not isinstance(text, RdfLiteral)
+            or text.language
+            or text.datatype not in {None, XSD.string}
+        ):
+            raise ValueError("SHACL query bodies must be xsd:string literals")
+        types = set(graph.objects(node, RDF.type))
+        context = not types.intersection(
+            {SH.SPARQLExecutable, SH[f"SPARQL{kind.title()}Executable"]}
+        )
+        context = context or bool(
+            types.intersection({SH.SPARQLConstraint, SH.SPARQLFunction, SH.SPARQLRule})
+        )
+        context = context or any(
+            (None, link, node) in graph
+            for link in (SH.sparql, SH.validator, SH.nodeValidator, SH.propertyValidator, SH.rule)
+        )
+        metadata = {}
+        for predicate, value in graph.predicate_objects(node):
+            if predicate not in {SH.select, SH.ask, SH.construct, SH.prefixes}:
+                metadata.setdefault(str(predicate), []).append(RdfTerm.from_rdf(value))
+        return cls(
+            uri=_identity(node),
+            text=str(text),
+            query_type=kind,
+            prefixes=[_identity(resource) for resource in graph.objects(node, SH.prefixes)],
+            metadata=metadata,
+            requires_context=context,
+        )
+
+
 class ShaclShapesGraph(BaseModel):
     """Collection of SHACL shapes."""
 
     node_shapes: list[ShaclNodeShape] = Field(default_factory=list)
     base_uri: str | None = None
+    queries: list[ShaclSparqlExecutable] = Field(default_factory=list)
+    prefix_declarations: dict[str, list[ShaclPrefixDeclaration]] = Field(default_factory=dict)
+    prefix_imports: dict[str, list[str]] = Field(default_factory=dict)
+
+    def declare_prefixes(self, prefixes: dict[str, str], resource: str | None = None) -> str:
+        """Retain typed declarations on a reusable prefix resource."""
+        import json
+        from hashlib import sha256
+
+        identity = sha256(json.dumps(prefixes, sort_keys=True).encode()).hexdigest()
+        resource = resource or "urn:rdfsolve:prefixes:" + identity
+        existing = {item.prefix: item for item in self.prefix_declarations.get(resource, [])}
+        for prefix, namespace in sorted(prefixes.items()):
+            if prefix in existing and existing[prefix].namespace != namespace:
+                raise ValueError(f"Conflicting namespace for prefix {prefix}")
+            existing[prefix] = ShaclPrefixDeclaration(
+                uri="_:prefix-" + sha256(json.dumps([prefix, namespace]).encode()).hexdigest(),
+                prefix=prefix,
+                namespace=namespace,
+            )
+        self.prefix_declarations[resource] = list(existing.values())
+        return resource
+
+    def compile_query(self, query: ShaclSparqlExecutable) -> str:
+        """Resolve sh:prefixes/owl:imports*/sh:declare from retained declarations."""
+        from rdflib.plugins.sparql.parser import parseQuery
+        from rdflib.plugins.sparql.processor import prepareQuery
+
+        pending, seen, prefixes = list(query.prefixes), set(), {}
+        while pending:
+            resource = pending.pop()
+            if resource in seen:
+                continue
+            seen.add(resource)
+            pending.extend(self.prefix_imports.get(resource, []))
+            for declaration in self.prefix_declarations.get(resource, []):
+                name, namespace = declaration.prefix, declaration.namespace
+                if name in prefixes and prefixes[name] != namespace:
+                    raise ValueError(f"Conflicting namespace for prefix {name}")
+                prefixes[name] = namespace
+        text = (
+            "".join(f"PREFIX {name}: <{iri}>\n" for name, iri in sorted(prefixes.items()))
+            + query.text
+        )
+        if not query.requires_context:
+            if parseQuery(text)[1].name.upper() != query.query_type + "QUERY":
+                raise ValueError("Query type does not match its SHACL property")
+            prepareQuery(text)
+        return text
+
+    def read_queries(self, graph: Graph) -> None:
+        """Read typed executables and prefix declarations, including imported resources."""
+        from rdflib import OWL, SH, BNode, URIRef
+
+        nodes = set().union(
+            *(set(graph.subjects(p, None)) for p in (SH.select, SH.ask, SH.construct))
+        )
+        self.queries = [
+            ShaclSparqlExecutable.from_rdf(graph, node) for node in sorted(nodes, key=str)
+        ]
+        pending = list(graph.subjects(SH.declare, None)) + [
+            resource
+            for query in self.queries
+            for resource in graph.objects(_node(query.uri), SH.prefixes)
+        ]
+        seen = set()
+        while pending:
+            node = pending.pop()
+            if not isinstance(node, (URIRef, BNode)):
+                raise ValueError("Prefix resources must be IRIs or blank nodes")
+            if node in seen:
+                continue
+            seen.add(node)
+            uri = _identity(node)
+            declarations = list(graph.objects(node, SH.declare))
+            if any(not isinstance(d, (URIRef, BNode)) for d in declarations):
+                raise ValueError("sh:declare must identify a prefix declaration")
+            self.prefix_declarations[uri] = [
+                ShaclPrefixDeclaration.from_rdf(graph, d) for d in declarations
+            ]
+            imports = list(graph.objects(node, OWL.imports))
+            self.prefix_imports[uri] = [_identity(value) for value in imports]
+            pending.extend(imports)
+        for query in self.queries:
+            self.compile_query(query)
 
     def to_rdf(self, graph: Graph | None = None) -> Graph:
         """Serialize all shapes to RDF graph."""
@@ -361,9 +587,19 @@ class ShaclShapesGraph(BaseModel):
         sh = Namespace("http://www.w3.org/ns/shacl#")
         graph.bind("sh", sh)
 
+        from rdflib import OWL
+
         for ns in self.node_shapes:
             ns.to_rdf(graph)
-
+        for query in self.queries:
+            query.to_rdf(graph)
+        for resource, declarations in self.prefix_declarations.items():
+            for declaration in declarations:
+                graph.add((_node(resource), sh.declare, declaration.to_rdf(graph)))
+                graph.bind(declaration.prefix, declaration.namespace)
+        for resource, imports in self.prefix_imports.items():
+            for imported in imports:
+                graph.add((_node(resource), OWL.imports, _node(imported)))
         return graph
 
     @classmethod
@@ -377,6 +613,13 @@ class ShaclShapesGraph(BaseModel):
         import logging
 
         supported = {
+            "select",
+            "ask",
+            "construct",
+            "prefixes",
+            "declare",
+            "prefix",
+            "namespace",
             "deactivated",
             "path",
             "datatype",
@@ -421,4 +664,6 @@ class ShaclShapesGraph(BaseModel):
                 continue
             node_shapes.append(ShaclNodeShape.from_rdf(graph, ns_uri))
 
-        return cls(node_shapes=node_shapes)
+        shapes = cls(node_shapes=node_shapes)
+        shapes.read_queries(graph)
+        return shapes
