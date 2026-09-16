@@ -678,7 +678,7 @@ def test_same_named_class_and_field_keep_distinct_outputs():
                 "clause": "CAS registry numbers",
                 "kind": "output",
                 "concept": "CAS registry number",
-                "owner": chemical,
+                "binding": "number",
             }
         ]
         result = client.prepare(
@@ -691,14 +691,8 @@ def test_same_named_class_and_field_keep_distinct_outputs():
             "kind": "output",
             "concept": "CAS registry number",
         }
-        with pytest.raises(ValueError, match="distinguish resource identities"):
-            client.prepare(
-                f"SELECT ?number WHERE {{ ?number a <{number}> }}", requirements=[request]
-            )
         result = client.prepare(
-            f"SELECT ?number WHERE {{ ?number a <{number}> }}",
-            requirements=[request],
-            grounding={"g1": {"evidence": [client.catalogue.type_refs[number]]}},
+            f"SELECT ?number WHERE {{ ?number a <{number}> }}", requirements=[request]
         )
         assert client.select(result).rows[0]["number"].value == "urn:n"
 
@@ -911,3 +905,99 @@ def test_grounded_gene_output_uses_its_owner_and_requested_column():
                 requirements=[relation],
                 grounding={"g1": {"evidence": [data.catalogue.type_refs[base + "Gene"]]}},
             )
+
+
+def test_paths_rank_meaning_keep_mined_routes_and_enforce_via():
+    from rdflib import Graph, RDFS
+    from rdfsolve.api import Client, MinedSchema, QueryPattern
+    from rdfsolve.schema_models.enrichment import RdfTerm, TermAnnotation
+    from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    def edge(s, p, o):
+        return SchemaPattern(
+            subject_class="urn:" + s, property_uri="urn:" + p, object_class="urn:" + o
+        )
+
+    schema = MinedSchema(
+        about={"dataset_name": "routes"},
+        patterns=[
+            edge("Event", "cell", "Cell"),
+            edge("Cell", "gene", "Gene"),
+            edge("Event", "annotatedProtein", "Protein"),
+            edge("Protein", "gene", "Gene"),
+            edge("Event", "other", "Other"),
+            edge("Other", "gene", "Gene"),
+        ],
+    )
+    for iri, label in [
+        ("annotatedProtein", "annotated protein object"),
+        ("Protein", "protein object"),
+    ]:
+        schema.enrichment.labels.append(
+            TermAnnotation(
+                term_iri="urn:" + iri,
+                predicate=str(RDFS.label),
+                text=RdfTerm(kind="literal", value=label),
+            )
+        )
+    route = NavigationPath(
+        steps=[edge("Event", "observed", "Protein"), edge("Protein", "gene", "Gene")],
+        instance_support="matched",
+        source_count=2,
+        matched_sources=1,
+    )
+    schema.navigation = NavigationSummary(
+        max_hops=2, max_paths_per_length=1, edge_count=6, walk_counts={2: 3}, paths=[route]
+    )
+    graph = Graph().parse(
+        data="<urn:e> a <urn:Event>; <urn:observed> <urn:p> . <urn:p> a <urn:Protein>; <urn:gene> <urn:g> . <urn:g> a <urn:Gene> .",
+        format="turtle",
+    )
+    with Client(schema, graph, graph_uris=[]) as data:
+        table = data.paths_between(
+            "urn:Event",
+            "urn:Gene",
+            meaning="annotated protein object",
+            max_paths=1,
+            allow_partial=True,
+        )
+        assert table.attrs["routes"][0][0][1] == "urn:annotatedProtein"
+        assert table.attrs["truncated"]
+        table = data.paths_between(
+            "urn:Event", "urn:Gene", via=("urn:Protein",), max_paths=1, allow_partial=True
+        )
+        assert table.attrs["observations"][0]["basis"] == "mined snapshot"
+        ref = table.attrs["references"][0]
+        query = data.prepare_network(
+            [QueryPattern(reference=ref, bindings=["event", "protein", "gene"])],
+            outputs=["event", "gene"],
+            requirements=[
+                {
+                    "clause": "through a protein",
+                    "kind": "relation",
+                    "concept": "protein",
+                    "owner": "event",
+                    "target": "gene",
+                }
+            ],
+        )
+        assert data.select(query).rows[0]["gene"].value == "urn:g"
+        with pytest.raises(ValueError, match="connect the selected owner"):
+            data.prepare_network(
+                [QueryPattern(reference=ref, bindings=["event", "protein", "gene"])],
+                outputs=["event", "gene"],
+                requirements=[
+                    {
+                        "clause": "through a protein",
+                        "kind": "relation",
+                        "concept": "protein",
+                        "owner": "event",
+                        "target": "wrong",
+                    }
+                ],
+            )
+        assert (
+            data.paths_between("urn:Event", "urn:Gene", via=("urn:Cell",)).attrs["routes"][0][0][2]
+            == "urn:Cell"
+        )

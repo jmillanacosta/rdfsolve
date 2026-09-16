@@ -48,6 +48,8 @@ def class_paths(
     max_paths: int,
     allow_partial: bool = False,
     allow_repeated_classes: bool = False,
+    meaning: str = "",
+    via: tuple[str, ...] = (),
 ) -> pd.DataFrame:
     """Enumerate bounded routes in the supplied empirical schema."""
     _budget(max_hops, max_paths)
@@ -89,7 +91,56 @@ def class_paths(
             if previous not in distances:
                 distances[previous] = distances[node] + 1
                 pending.append(previous)
-    routes: list[list[tuple[str, str, str, bool]]] = []
+    required = [str(client.model(value).rdf_class_iri) for value in via]
+    observed = {}
+    if client._schema.navigation is not None:
+        observed = {
+            tuple((s.subject_class, s.property_uri, s.object_class, False) for s in p.steps): p
+            for p in client._schema.navigation.paths
+            if all(s.subject_class in models and s.object_class in models for s in p.steps)
+        }
+
+    def compatible(route):
+        intermediate = [edge[2] for edge in route[:-1]]
+        position = 0
+        for cls in required:
+            try:
+                position = intermediate.index(cls, position) + 1
+            except ValueError:
+                return False
+        return True
+
+    from rdfsolve.client.catalogue import words
+
+    wanted = words(meaning)
+
+    vocabulary = {}
+
+    def terms(iri):
+        if iri not in vocabulary:
+            vocabulary[iri] = words(_label(client, iri)) if isinstance(iri, str) else set()
+        return vocabulary[iri]
+
+    def relevance(route):
+        predicates, classes = set(), set()
+        for left, predicate, right, _ in route:
+            predicates.update(terms(predicate))
+            classes.update(terms(left) | terms(right))
+        return len(wanted & predicates), len(wanted & classes)
+
+    routes = [
+        list(route)
+        for route in observed
+        if route[0][0] == first
+        and route[-1][2] == last
+        and len(route) <= max_hops
+        and compatible(route)
+        and (
+            allow_repeated_classes
+            or len({route[0][0], *(edge[2] for edge in route)}) == len(route) + 1
+        )
+    ]
+    known = {tuple(route) for route in routes}
 
     queue = deque([(first, {first}, [])])
     truncated, expansions = False, 0
@@ -99,16 +150,13 @@ def class_paths(
         if len(route) + distances.get(node, max_hops + 1) > max_hops:
             continue
         if node == last and route:
-            routes.append(
-                [
-                    (s if s in models else None, p, o if o in models else None, back)
-                    for s, p, o, back in route
-                ]
-            )
-            if len(routes) > max_paths:
-                truncated = True
-                routes.pop()
-                break
+            normalized = [
+                (s if s in models else None, p, o if o in models else None, back)
+                for s, p, o, back in route
+            ]
+            if compatible(normalized) and tuple(normalized) not in known:
+                routes.append(normalized)
+                known.add(tuple(normalized))
             continue
         if len(route) >= max_hops:
             continue
@@ -127,12 +175,6 @@ def class_paths(
                 )
     if truncated and not allow_partial:
         raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
-    observed = {}
-    if client._schema.navigation is not None:
-        observed = {
-            tuple((s.subject_class, s.property_uri, s.object_class, False) for s in p.steps): p
-            for p in client._schema.navigation.paths
-        }
 
     def support(route):
         item = observed.get(tuple(route))
@@ -140,11 +182,16 @@ def class_paths(
 
     routes.sort(
         key=lambda route: (
+            tuple(-value for value in relevance(route)),
             {"matched": 0, "no_match": 2}.get(support(route), 1),
             len(route),
             str(route),
         )
     )
+    truncated |= len(routes) > max_paths
+    if truncated and not allow_partial:
+        raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
+    routes = routes[:max_paths]
     rows = [
         [
             number,
@@ -166,6 +213,14 @@ def class_paths(
             {
                 "status": support(route),
                 "basis": "mined snapshot" if tuple(route) in observed else "schema only",
+                "meaning_matches": relevance(route),
+                "via": required,
+                "sources": observed[tuple(route)].source_count
+                if tuple(route) in observed
+                else None,
+                "matched_sources": observed[tuple(route)].matched_sources
+                if tuple(route) in observed
+                else None,
             }
             for route in routes
         ],
@@ -185,9 +240,16 @@ def route_fragment(client: Client, route) -> Fragment:
         PropertyPath(operator="inverse", items=[p]) if edge[3] else p
         for edge, p in zip(route, paths, strict=True)
     ]
+    labels = [_label(client, route[0][0]) if route[0][0] else "Resource"]
+    labels += [_label(client, o) if o else "Resource" for _, _, o, _ in route]
+    description = f"{labels[0]} → {labels[-1]}"
+    if len(labels) > 2:
+        description += " via " + ", ".join(labels[1:-1])
     return Fragment(
         "path",
-        " / ".join(("inverse " if back else "") + _label(client, p) for _, p, _, back in route),
+        description
+        + ": "
+        + " / ".join(("inverse " if back else "") + _label(client, p) for _, p, _, back in route),
         path=paths[0] if len(paths) == 1 else PropertyPath(operator="sequence", items=paths),
         steps=route,
         basis="generated model paths",

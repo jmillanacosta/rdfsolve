@@ -19,7 +19,11 @@ for every match, or an entity reference only when choosing that particular membe
 Use rdf_follow to traverse a named field, and rdf_paths for connections. These
 operations run in the package and return evidence summaries, never record dumps.
 Use rdf_schema to find relevant fields by concepts, owners and target classes.
-Declare every output and restriction, including qualifiers attached to class names.
+Declare every output, connecting relationship and restriction, including qualifiers attached to class names.
+Keep membership and intermediate-object requirements as separate relation goals,
+even when their resources are not output columns. A list of outputs cannot express them.
+Use rdf_paths with the relationship meaning and required intermediate classes in via.
+Retained paths include shared intermediate ports for composing a connected network.
 Use short vocabulary names as concepts and preserve the full clause text.
 Concepts describe meanings, such as identifier. Each output goal's binding names its result column.
 Declare goals once. Later discovery calls should omit goals.

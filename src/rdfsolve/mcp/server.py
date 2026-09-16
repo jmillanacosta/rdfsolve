@@ -44,7 +44,7 @@ class SchemaArgs(Args):
     goals: list[Requirement] | None = Field(
         default=None,
         max_length=16,
-        description="Declare outputs and restrictions once. Each needs a clause and a short concept; filters need value. Later discovery omits goals. Additional goals are merged with retained clauses; use corrections for existing goals.",
+        description="Declare outputs, connecting relationships and restrictions once. Membership and intermediate objects need separate relation goals even when not projected. Each needs a clause and a short concept; filters need value. Later discovery omits goals. Additional goals are merged with retained clauses; use corrections for existing goals.",
     )
     corrections: dict[str, GoalCorrection] = Field(
         default_factory=dict,
@@ -91,6 +91,16 @@ class PathsArgs(Args):
         description="Target class, retained entity or entire selection reference. Field references already supply their own insertable path."
     )
     max_hops: int = Field(default=3, ge=1, le=6)
+    meaning: str = Field(
+        default="",
+        max_length=300,
+        description="Requested relationship; ranks paths using retained labels.",
+    )
+    via: list[str] = Field(
+        default_factory=list,
+        max_length=5,
+        description="Required intermediate classes in traversal order.",
+    )
     offset: int = Field(default=0, ge=0)
 
 

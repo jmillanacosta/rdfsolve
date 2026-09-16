@@ -61,7 +61,7 @@ def _title(record: BaseModel) -> str:
 
 
 class Client(DatasetClient):
-    """Find records without first choosing their type, then explore their links."""
+    """Find records and types, then explore their links."""
 
     def __init__(
         self,
@@ -460,6 +460,8 @@ class Client(DatasetClient):
         max_paths: int = 1000,
         allow_partial: bool = False,
         allow_repeated_classes: bool = False,
+        meaning: str = "",
+        via: tuple[str, ...] = (),
     ) -> pd.DataFrame:
         """Discover schema routes or evaluate paths for selected typed records.
 
@@ -484,6 +486,8 @@ class Client(DatasetClient):
                 max_paths=max_paths,
                 allow_partial=allow_partial,
                 allow_repeated_classes=allow_repeated_classes,
+                meaning=meaning,
+                via=via,
             )
             self.catalogue.retain_paths(table)
             return table
@@ -515,6 +519,8 @@ class Client(DatasetClient):
             max_paths=max_paths,
             allow_partial=allow_partial,
             allow_repeated_classes=allow_repeated_classes,
+            meaning=meaning,
+            via=via,
         )
         table.attrs["target_value"] = target_value
         selection_partial = any(

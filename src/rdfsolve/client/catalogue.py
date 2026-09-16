@@ -416,6 +416,7 @@ class Catalogue:
                 if "observations" in table.attrs
                 else {"status": "schema_only"}
             )
+            self.schema_documents[ref] = self._schema_document(ref)
             refs.append(ref)
         table.attrs["references"] = refs
         candidates = (

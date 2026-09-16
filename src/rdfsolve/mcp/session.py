@@ -199,6 +199,11 @@ class Session:
                     raise ValueError(
                         f"Preserve the {previous.kind} role of {key} ('{previous.clause}'). Correct only its concept or owner."
                     )
+                if (
+                    previous.kind == "relation"
+                    and changes.get("required", previous.required) != previous.required
+                ):
+                    raise ValueError(f"Preserve the required relationship '{previous.clause}'")
                 revised = Requirement.model_validate({**previous.model_dump(), **changes})
                 if previous.concept != revised.concept:
                     self.catalogue.validate_correction(previous, revised)
@@ -247,6 +252,14 @@ class Session:
                     if previous.concept != revised.concept and key not in corrections:
                         raise ValueError(
                             f"Preserve the requested concept in goals; use corrections['{key}'] to replace a vocabulary guess with a discovered concept."
+                        )
+                    if previous.kind == "relation" and (
+                        revised.kind != "relation"
+                        or previous.required != revised.required
+                        or previous.target != revised.target
+                    ):
+                        raise ValueError(
+                            f"Preserve the relationship '{previous.clause}' and its target"
                         )
                     if previous.kind in {"entity_filter", "text_filter"} and (
                         previous.value != revised.value
@@ -406,9 +419,9 @@ class Session:
             return self.records[ref]
         return self.catalogue._type(ref)
 
-    def paths(self, source, target, *, max_hops=3, offset=0):
+    def paths(self, source, target, *, max_hops=3, meaning="", via=(), offset=0):
         """Evaluate selected records with Client.paths_between; retain schema alternatives."""
-        key = identifier("paths", [source, target, max_hops])
+        key = identifier("paths", [source, target, max_hops, meaning, via])
         if key not in self.cache:
             table = self.client.paths_between(
                 self._endpoint(source),
@@ -417,10 +430,11 @@ class Session:
                 max_paths=self.max_paths,
                 allow_partial=True,
                 allow_repeated_classes=True,
+                meaning=meaning,
+                via=tuple(self.catalogue._type(v) for v in via),
             )
             refs = list(table.attrs["references"])
             limited = bool(table.attrs.get("truncated"))
-            refs.sort(key=lambda r: self.catalogue.metadata[r].get("status") != "matched")
             self.cache[key] = refs, limited, table.attrs
         refs, limited, about = self.cache[key]
         return {

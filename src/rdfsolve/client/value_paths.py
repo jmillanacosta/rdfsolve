@@ -23,6 +23,8 @@ def value_paths(
     max_paths: int,
     allow_partial: bool = False,
     allow_repeated_classes: bool = False,
+    meaning: str = "",
+    via: tuple[str, ...] = (),
 ):
     """Query whole selected sets, preserving path witnesses and graph-local bindings."""
     _budget(max_hops, max_paths)
@@ -41,6 +43,8 @@ def value_paths(
                 max_paths=max_paths,
                 allow_partial=allow_partial,
                 allow_repeated_classes=allow_repeated_classes,
+                meaning=meaning,
+                via=via,
             )
             partial |= table.attrs["truncated"]
             warnings.extend(table.attrs["warnings"])

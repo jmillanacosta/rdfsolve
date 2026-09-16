@@ -42,6 +42,10 @@ class Requirement(BaseModel):
         default="",
         description="Subject variable or class for a field/relationship, e.g. project. Omit for a resource output.",
     )
+    target: str = Field(
+        default="",
+        description="For a relation: its target role or class, including unprojected roles.",
+    )
     value: str = Field(
         default="",
         description="For filters only: the particular name or text requested, such as Alice. Listing all class members requires an output goal with no value.",
@@ -377,34 +381,6 @@ def infer_grounding(requirement, query, catalogue, choice=None):
                 candidates.append(((10, 10), ref))
         elif rank >= 1:
             candidates.append(((score(fragment.label, requirement.concept), rank), ref))
-    if requirement.kind == "output" and not requirement.owner and not choice.get("evidence"):
-        meanings = {
-            ref: fragment
-            for ref, fragment in catalogue.fragments.items()
-            if fragment.kind in {"type", "field"}
-            and words(fragment.label) == words(requirement.concept)
-        }
-        classes = {f.iri for f in meanings.values() if f.kind == "type"}
-        meanings = {
-            ref: f
-            for ref, f in meanings.items()
-            if f.kind == "type"
-            or not classes.intersection(catalogue.metadata.get(ref, {}).get("targets", []))
-        }
-        if {f.kind for f in meanings.values()} == {"type", "field"}:
-            options = [
-                {
-                    "evidence": [ref],
-                    "meaning": "resource identity" if f.kind == "type" else "field value",
-                    "owner": f.owner or f.iri,
-                }
-                for kind in ("type", "field")
-                for ref, f in [(r, f) for r, f in sorted(meanings.items()) if f.kind == kind][:2]
-            ]
-            raise QueryValidationError(
-                "goal_choice",
-                f"{requirement.clause}: distinguish resource identities from field values. Select the intended evidence or field owner: {options}",
-            )
     entities = [
         ref
         for ref, fragment in catalogue.fragments.items()
@@ -558,7 +534,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             f"{requirement.clause}: project the actual typed resource identity. A field's target hint does not establish that its values are the requested resource.",
         )
     owner, subject_binding = None, None
-    if requirement.owner and any(f.owner for f in fragments):
+    if requirement.owner and any(f.path for f in fragments):
         variable = Variable(requirement.owner.lstrip("?$"))
         if variable in {
             s
@@ -639,6 +615,19 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             witnessed += [o for _, o in matches]
         else:
             matches = []
+        if requirement.kind == "relation" and requirement.target:
+            try:
+                target_class = catalogue._type(requirement.target)
+                matches = [(s, o) for s, o in matches if target_class in types.get(o, set())]
+            except ValueError:
+                matches = [
+                    (s, o) for s, o in matches if o == Variable(requirement.target.lstrip("?$"))
+                ]
+            if not matches:
+                raise QueryValidationError(
+                    "goal_target",
+                    f"{requirement.clause}: connect the selected owner to {requirement.target} in the same required pattern.",
+                )
         if not matches:
             all_triples = [
                 t
