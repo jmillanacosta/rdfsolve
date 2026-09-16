@@ -86,6 +86,7 @@ class ShaclPropertyShape(BaseModel):
     deactivated: bool = False
     min_count: int | None = Field(None, description="sh:minCount")
     max_count: int | None = Field(None, description="sh:maxCount")
+    properties: list[ShaclPropertyShape] = Field(default_factory=list)
     qualified_shape: ShaclPropertyShape | None = None
     qualified_min_count: int | None = None
     qualified_max_count: int | None = None
@@ -162,6 +163,8 @@ class ShaclPropertyShape(BaseModel):
             Collection(graph, head, alternatives)
             graph.add((node, sh["or"], head))
 
+        for child in self.properties:
+            graph.add((node, sh.property, child.to_rdf(graph)))
         if self.qualified_shape is not None:
             graph.add((node, sh.qualifiedValueShape, self.qualified_shape.to_rdf(graph)))
         for predicate, count in (
@@ -236,6 +239,9 @@ class ShaclPropertyShape(BaseModel):
             node_kind=node_kind,
             min_count=_count(graph, uri, sh.minCount),
             max_count=_count(graph, uri, sh.maxCount),
+            properties=[
+                cls.from_rdf(graph, child, active) for child in graph.objects(uri, sh.property)
+            ],
             qualified_shape=cls.from_rdf(graph, qualified, active)
             if (qualified := graph.value(uri, sh.qualifiedValueShape, any=False)) is not None
             else None,
@@ -264,8 +270,8 @@ class ShaclNodeShape(BaseModel):
     deactivated: bool = False
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
-    name: str | None = Field(None, description="sh:name")
-    description: str | None = Field(None, description="sh:description")
+    name: str | None = Field(None, description="rdfs:label")
+    description: str | None = Field(None, description="rdfs:comment")
     name_language: str | None = None
     description_language: str | None = None
 
@@ -274,7 +280,7 @@ class ShaclNodeShape(BaseModel):
         from rdflib import Literal as RdfLiteral
         from rdflib import Namespace
         from rdflib import URIRef as Ref
-        from rdflib.namespace import RDF
+        from rdflib.namespace import RDF, RDFS
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
@@ -290,10 +296,10 @@ class ShaclNodeShape(BaseModel):
         if self.closed:
             graph.add((uri, sh.closed, RdfLiteral(True)))
         if self.name is not None:
-            graph.add((uri, sh.name, RdfLiteral(self.name, lang=self.name_language)))
+            graph.add((uri, RDFS.label, RdfLiteral(self.name, lang=self.name_language)))
         if self.description is not None:
             graph.add(
-                (uri, sh.description, RdfLiteral(self.description, lang=self.description_language))
+                (uri, RDFS.comment, RdfLiteral(self.description, lang=self.description_language))
             )
 
         if self.ignored_properties:
@@ -313,15 +319,19 @@ class ShaclNodeShape(BaseModel):
     def from_rdf(cls, graph: Graph, uri: Node) -> ShaclNodeShape:
         """Parse from RDF graph."""
         from rdflib import Namespace
-        from rdflib.namespace import RDF
+        from rdflib.namespace import RDF, RDFS
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 
         from rdflib import BNode
 
         target_class = graph.value(uri, sh.targetClass, any=False)
-        name, name_language = _text(graph, uri, sh.name)
-        description, description_language = _text(graph, uri, sh.description)
+        name, name_language = _text(graph, uri, RDFS.label)
+        if name is None:
+            name, name_language = _text(graph, uri, sh.name)
+        description, description_language = _text(graph, uri, RDFS.comment)
+        if description is None:
+            description, description_language = _text(graph, uri, sh.description)
 
         property_shapes = []
         for ps_uri in graph.objects(uri, sh.property):

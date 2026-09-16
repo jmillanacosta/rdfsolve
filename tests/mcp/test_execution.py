@@ -103,7 +103,7 @@ def test_page_budget_cannot_return_partial_success():
 def test_client_execution_recovers_and_replays(session, capped):
     from conftest import declare
 
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
     from rdfsolve.mcp.session import Session
     from rdfsolve.schema_models.core import MinedSchema
     from rdfsolve.schema_models.pattern import SchemaPattern

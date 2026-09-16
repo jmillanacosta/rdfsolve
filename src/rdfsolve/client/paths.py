@@ -13,12 +13,12 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import RDF, Literal
 
-from rdfsolve.hydration import HydrationLimitError, _iri
-from rdfsolve.query_fragments import Fragment, linear_steps
+from rdfsolve.client.hydration import HydrationLimitError, _iri
+from rdfsolve.client.query_fragments import Fragment, linear_steps
 from rdfsolve.schema_models.paths import PropertyPath
 
 if TYPE_CHECKING:
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
 
 COLUMNS = ["Path", "Step", "From", "Link", "Direction", "To"]
 CLASS_BATCH_SIZE = 200
@@ -127,7 +127,24 @@ def class_paths(
                 )
     if truncated and not allow_partial:
         raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
-    routes.sort(key=lambda route: (len(route), str(route)))
+    observed = {}
+    if client._schema.navigation is not None:
+        observed = {
+            tuple((s.subject_class, s.property_uri, s.object_class, False) for s in p.steps): p
+            for p in client._schema.navigation.paths
+        }
+
+    def support(route):
+        item = observed.get(tuple(route))
+        return item.instance_support if item else "not_checked"
+
+    routes.sort(
+        key=lambda route: (
+            {"matched": 0, "no_match": 2}.get(support(route), 1),
+            len(route),
+            str(route),
+        )
+    )
     rows = [
         [
             number,
@@ -145,6 +162,13 @@ def class_paths(
         routes=routes,
         fragments=[route_fragment(client, route) for route in routes],
         warnings=list(dict.fromkeys(unsupported)),
+        observations=[
+            {
+                "status": support(route),
+                "basis": "mined snapshot" if tuple(route) in observed else "schema only",
+            }
+            for route in routes
+        ],
         basis="generated field paths",
         max_hops=max_hops,
         truncated=truncated,

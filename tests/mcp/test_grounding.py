@@ -7,7 +7,7 @@ from conftest import E, declare, field, insert, prepare, values
 from pydantic import BaseModel
 from rdflib import RDF, Graph, Literal, Namespace
 
-from rdfsolve.client_api import Client
+from rdfsolve.client.api import Client
 from rdfsolve.mcp.session import Session
 from rdfsolve.schema_models.core import MinedSchema
 
@@ -39,7 +39,8 @@ def test_connected_schema_requires_no_endpoint_query(session):
         session.paths(field_card["ref"], target["ref"])
 
 
-def test_typed_entity_and_package_paths_anchor_the_answer(session):
+@pytest.mark.parametrize("bare", [False, True])
+def test_typed_entity_and_package_paths_anchor_the_answer(session, bare):
     found = session.find("Human", str(E.Taxon))
     ref = found["items"][0]["ref"]
     assert isinstance(session.records[ref], BaseModel)
@@ -51,7 +52,17 @@ def test_typed_entity_and_package_paths_anchor_the_answer(session):
     declare(session, "Pathways applicable to Human", concept="Adverse Outcome Pathway")
     rows = values(
         session,
-        prepare(session, {"g1": {"pattern": insert(path["ref"], "a", "tax"), "project": ["a"]}}),
+        prepare(
+            session,
+            {
+                "g1": {
+                    "pattern": f"?a {path['ref']} ?tax"
+                    if bare
+                    else insert(path["ref"], "a", "tax"),
+                    "project": ["a"],
+                }
+            },
+        ),
     )
     assert {r["a"]["value"] for r in rows} == {str(E.humanAOP), str(E.noChemicalAOP)}
 
@@ -74,7 +85,22 @@ def test_candidates_beyond_first_page_remain_usable(session):
     assert session.paths(str(E.AOP), second["items"][-1]["ref"], max_hops=1)["items"]
 
 
-def test_shape_only_sequence_and_inverse_execute():
+def test_related_name_match_is_visible_without_becoming_an_exact_alias(session):
+    from rdflib import URIRef
+
+    predicate = URIRef("http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym")
+    session.client.source.add((E.Human, predicate, Literal("primate")))
+    found = session.find("primate", str(E.Taxon))
+    card = found["items"][0]
+    assert card["iri"] == str(E.Human)
+    assert card["name_matches"] == [
+        {"text": "primate", "predicate": str(predicate), "scope": "broad"}
+    ]
+    assert "primate" not in session.catalogue.metadata[card["ref"]]["lookups"]
+
+
+@pytest.mark.parametrize("bare", [False, True])
+def test_shape_only_sequence_and_inverse_execute(bare):
     schema = MinedSchema.from_shacl("""@prefix sh: <http://www.w3.org/ns/shacl#> .
     @prefix e: <urn:shape:> . e:AShape a sh:NodeShape; sh:targetClass e:A;
       sh:property [sh:path (e:link [sh:inversePath e:back]); sh:name "related"; sh:class e:B] .
@@ -89,7 +115,16 @@ def test_shape_only_sequence_and_inverse_execute():
     assert path["complexity"]["max_hops"] == 2
     declare(s, "Return connected B resources", concept="B")
     rows = values(
-        s, prepare(s, {"g1": {"pattern": insert(path["ref"], "a", "b"), "project": ["b"]}})
+        s,
+        prepare(
+            s,
+            {
+                "g1": {
+                    "pattern": f"?a {path['ref']} ?b" if bare else insert(path["ref"], "a", "b"),
+                    "project": ["b"],
+                }
+            },
+        ),
     )
     assert rows == [{"b": {"type": "uri", "value": "urn:shape:b"}}]
     rows = values(
@@ -102,8 +137,8 @@ def test_shape_only_sequence_and_inverse_execute():
 def test_mapping_evidence_improves_local_class_retrieval(session):
     from rdfsolve.class_derivation import derive_class_mappings
     from rdfsolve.class_index import ClassIndex, EntityClassInfo
+    from rdfsolve.client.registry import TypeDescription
     from rdfsolve.mapping_models.core import MappingEdge
-    from rdfsolve.registry import TypeDescription
 
     index = ClassIndex(
         endpoint_url="urn:local",
@@ -142,7 +177,15 @@ def test_mapping_evidence_improves_local_class_retrieval(session):
             ],
         }
     )
-    mapped = Session(session.client, class_mappings=pairs, related_registries=[peer])
+    mapped = Session(
+        Client(
+            session.client._schema,
+            session.client.source,
+            graph_uris=[],
+            class_mappings=pairs,
+            related_registries=[peer],
+        )
+    )
     result = mapped.schema(["Species"])
     assert any(
         item["ref"] == mapped.catalogue.type_refs[str(E.Taxon)]
@@ -179,7 +222,7 @@ def test_mcp_chains_whole_client_selections_and_returns_query_trace(session, tmp
     assert again["trace"]["query_ids"] == []
     session.log_path = tmp_path / "client.json"
     dispatch(session, "rdf_inspect", {"ref": found["selection"]})
-    from rdfsolve.query_log import QueryLog
+    from rdfsolve.client.query_log import QueryLog
 
     log = QueryLog.read(session.log_path)
     assert len(log.queries) == len(session.client.queries)
@@ -230,7 +273,7 @@ def test_ontology_evidence_unlocks_a_local_field_without_changing_scope(monkeypa
 
 
 def test_partial_word_match_cannot_ground_a_field(monkeypatch):
-    from rdfsolve.ontology import OntologyLookup, canonical_iri
+    from rdfsolve.client.ontology import OntologyLookup, canonical_iri
     from rdfsolve.schema_models.pattern import SchemaPattern
 
     predicate = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C17469"
@@ -290,10 +333,12 @@ def test_discovery_retains_goals_and_accepts_an_added_restriction(session):
         "value": "Human",
         "owner": "a",
     }
-    session.schema(question=question, goals=[human])
+    event = {"clause": "Return events", "kind": "output", "concept": "Key Event"}
+    session.schema(question=question, goals=[human, event])
     assert [r.clause for r in session.requirements.values()] == [
         "Return pathways",
         "Applicable to Human",
+        "Return events",
     ]
     session.schema(question=question, goals=[output])
     assert session.requirements["g2"].value == "Human"
@@ -302,7 +347,8 @@ def test_discovery_retains_goals_and_accepts_an_added_restriction(session):
     assert session.requirements["g2"].value == "Human"
 
 
-def test_goal_correction_keeps_clauses_and_compiles_real_bindings(session):
+@pytest.mark.parametrize("filter_concept", ["Taxon", "Adverse Outcome Pathway"])
+def test_goal_correction_keeps_clauses_and_compiles_real_bindings(session, filter_concept):
     question = "Return Key Events belonging to Human pathways"
     goals = [
         {"clause": "Return Key Events", "kind": "output", "concept": "Key Event"},
@@ -315,17 +361,26 @@ def test_goal_correction_keeps_clauses_and_compiles_real_bindings(session):
         {
             "clause": "Pathways apply to Human",
             "kind": "entity_filter",
-            "concept": "Taxon",
+            "concept": filter_concept,
             "owner": "Adverse Outcome Pathway",
             "value": "Human",
         },
     ]
     session.schema(question=question, goals=goals)
     correction = {"g2": {"concept": "has Key Event", "owner": "Adverse Outcome Pathway"}}
+    session.schema(corrections=correction)
     session.schema(question=question, corrections=correction)
-    session.schema(question=question, corrections=correction)
+    session.schema(
+        question=question, goals=goals, corrections={"g2": {"owner": "Adverse Outcome Pathway"}}
+    )
+    assert session.requirements["g2"].concept == "has Key Event"
+    if filter_concept != "Taxon":
+        session.schema(
+            question=question,
+            corrections={"g3": {"concept": "applicable taxon", "owner": "Adverse Outcome Pathway"}},
+        )
     assert list(session.goals.values()) == [g["clause"] for g in goals]
-    assert len(session.interpretation_warnings) == 1
+    assert any("Grounding corrected" in w for w in session.interpretation_warnings)
     session.find("Human", str(E.Taxon))
     query = f"SELECT ?event WHERE {{ ?a a <{E.AOP}>; <{E.event}> ?event; <{E.taxon}> <{E.Human}> . ?event a <{E.Event}> }}"
     rows = values(session, session.prepare(query))
@@ -334,11 +389,9 @@ def test_goal_correction_keeps_clauses_and_compiles_real_bindings(session):
     for changes in ({"value": "Mouse"}, {"kind": "text_filter"}, {"concept": "context"}):
         with pytest.raises(ValueError):
             session.schema(question=question, corrections={"g3": changes})
-    with pytest.raises(ValueError, match="corrections"):
-        session.schema(
-            question=question, goals=[dict(g, clause=g["clause"] + " again") for g in goals]
-        )
-    assert session.requirements == before
+    session.schema(question=question, goals=[dict(g, clause=g["clause"] + " again") for g in goals])
+    assert all(session.requirements[key] == value for key, value in before.items())
+    assert len(session.requirements) == 6 and not session.prepared
 
 
 def test_schema_keeps_field_owners_and_does_not_hide_literals(session):
@@ -353,6 +406,36 @@ def test_schema_keeps_field_owners_and_does_not_hide_literals(session):
     ]
     result = session.schema(question="Return event and pathway taxa", goals=goals)
     assert {m["owner"] for m in result["matches"]} == {g["owner"] for g in goals}
-    result = session.schema(["measurement method"], owners=["Key Event"], targets=["Taxon"])
+    result = session.schema(["measurement method"], owners=["Key Event"])
     assert any(c["label"] == "measurement method" for m in result["matches"] for c in m["items"])
     assert not session.client.queries
+    result = session.schema(["measurement method"], owners=["Key Event"], targets=["Taxon"])
+    assert not result["matches"][0]["items"]
+    assert {c["label"] for c in result["connections"]["items"]} == {"applicable taxon"}
+
+
+def test_output_alias_and_vocabulary_correction_keep_original_meaning(session):
+    session.output_variables = ["identifier"]
+    goal = {
+        "clause": "measurement method",
+        "kind": "output",
+        "concept": "identifier",
+        "owner": "event",
+    }
+    session.schema(question="Return event measurement methods", goals=[goal])
+    assert session.requirements["g1"].concept == "measurement method"
+    assert session.requirements["g1"].binding == "identifier"
+    ref = session.catalogue.field_refs[(str(E.Event), "method")]
+    query = session.prepare(
+        patterns=[{"reference": ref, "bindings": ["event", "identifier"]}], outputs=["identifier"]
+    )
+    assert {r["identifier"]["value"] for r in values(session, query)} == {
+        "Assay A",
+        "Assay B",
+        "Unrelated assay",
+    }
+    session.output_variables = []
+    session.schema(goals=[dict(goal, clause="available measurement method")])
+    session.schema(corrections={"g2": {"concept": "measurement method"}})
+    assert session.requirements["g2"].clause == "available measurement method"
+    assert session.requirements["g2"].concept == "measurement method"

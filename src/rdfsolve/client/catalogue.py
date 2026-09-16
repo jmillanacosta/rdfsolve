@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import re
 
-from rdfsolve.query_fragments import Fragment, identifier
+from rdfsolve.client.query_fragments import Fragment, identifier
+from rdfsolve.schema_models.enrichment import NAME_PREDICATES, SYNONYM_PREDICATES, RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 
@@ -38,6 +39,7 @@ class Catalogue:
         self.client = client
         self.registry = client.registry(source_id=source_id)
         self.fragments: dict[str, Fragment] = {}
+        self.records = {}
         self.metadata: dict[str, dict] = {}
         self.known_iris: set[str] = set()
         self.type_refs, self.field_refs = {}, {}
@@ -143,6 +145,20 @@ class Catalogue:
                 text += f" {hint['label']} {hint['description'] or ''}"
                 hint_refs.append(hint_ref)
         iris = [f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri]
+        if f.path and f.path.iri in NAME_PREDICATES:
+            text += " name " + self.fragments[self.type_refs[f.owner]].label
+        names = [
+            {
+                "text": item.text.value,
+                "predicate": item.predicate,
+                "scope": SYNONYM_PREDICATES.get(item.predicate, "label"),
+            }
+            for item in self.client._schema.enrichment.labels
+            if item.term_iri in iris
+        ]
+        text += " " + " ".join(
+            n["text"] for n in names if n["scope"] in {"label", "exact", "alternative"}
+        )
         evidence = [
             self.client.vocabulary_evidence[i]
             for i in dict.fromkeys([*iris, *classes])
@@ -150,6 +166,7 @@ class Catalogue:
         ]
         self.metadata[ref]["ontology"] = evidence
         for item in evidence:
+            names.extend(item.get("synonym_evidence", []))
             text += " " + " ".join(
                 [
                     item["iri"],
@@ -159,12 +176,13 @@ class Catalogue:
                     *item["namespace"],
                 ]
             )
+        self.metadata[ref]["names"] = names
         return text, hint_refs
 
     def explain(self, ref):
         """Resolve a selected vocabulary term through the client's evidence overlay."""
         f = self.fragments[ref]
-        if f.kind not in {"type", "field"} or not self.client.ontology:
+        if f.kind not in {"type", "field"} or not self.client.ontology or f.description:
             return
         iris = [f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri]
         for iri in [*iris, *self.metadata[ref].get("targets", [])]:
@@ -175,14 +193,19 @@ class Catalogue:
         """Find generated classes or fields by meaning and structural endpoints."""
         owners = {self._type(o) for o in owners}
         targets = {self._type(t) for t in targets}
-        refs = self.field_refs.values() if owners else self.schema_documents
-        refs = list(refs)
-        eligible = [r for r in refs if not owners or self.fragments[r].owner in owners]
+        refs = [
+            r
+            for r in (self.field_refs.values() if owners else self.schema_documents)
+            if (not owners or self.fragments[r].owner in owners)
+            and (not targets or targets.intersection(self.metadata.get(r, {}).get("targets", [])))
+        ]
+        if not refs:
+            return []
         if concept and self.client.ontology:
-            from rdfsolve.ontology import term_key
+            from rdfsolve.client.ontology import term_key
 
             iris = set()
-            for ref in eligible:
+            for ref in refs:
                 f = self.fragments[ref]
                 iris.update([f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri])
                 iris.update(self.metadata[ref].get("targets", []))
@@ -190,22 +213,19 @@ class Catalogue:
                 if self.client.ontology.cached(iri):
                     self.client.vocabulary(iri)
             self.schema_documents.update({r: self._schema_document(r) for r in refs})
-            if not any(self.relevance(r, concept) >= 1 for r in eligible):
+            if not any(self.relevance(r, concept) >= 1 for r in refs):
                 matches = {term_key(t["iri"]) for t in self.client.ontology.search(concept)}
-                pending = sorted(
-                    iris, key=lambda i: (term_key(i) not in matches, -score(i, concept), i)
-                )
-                for iri in pending[:12]:
-                    if term_key(iri) != iri:
+                for iri in sorted(iris):
+                    if term_key(iri) in matches:
                         self.client.vocabulary(iri)
                 self.schema_documents.update({r: self._schema_document(r) for r in refs})
-        refs = [
-            r
-            for r in refs
-            if (not owners or self.fragments[r].owner in owners)
-            and (not targets or targets.intersection(self.metadata.get(r, {}).get("targets", [])))
-            and self.relevance(r, concept)
-        ]
+        refs = [r for r in refs if self.relevance(r, concept)]
+        for ref in refs:
+            self.metadata[ref]["name_matches"] = [
+                n
+                for n in self.metadata[ref].get("names", [])
+                if concept and score(n["text"], concept) >= 1
+            ]
         return sorted(
             refs,
             key=lambda r: (
@@ -218,13 +238,75 @@ class Catalogue:
     def relevance(self, ref, concept):
         """Rank a concept using local metadata and exact ontology names."""
         fragment = self.fragments[ref]
-        rank = score(self.schema_documents.get(ref, (fragment.label, []))[0], concept)
+        document = self.schema_documents.get(ref, (fragment.label, []))[0]
+        rank = score(document, concept)
+        if fragment.owner:
+            owner = self.fragments[self.type_refs[fragment.owner]]
+            qualification = words(owner.label)
+            remainder = words(concept) - qualification
+            if qualification and qualification <= words(concept) and remainder:
+                rank = max(rank, score(document, " ".join(sorted(remainder))))
         names = [fragment.label]
         for evidence in self.metadata.get(ref, {}).get("ontology", []):
             names.extend([evidence["label"], *evidence["synonyms"]])
         if any(len(words(name)) >= 2 and words(name) <= words(concept) for name in names):
             rank = max(rank, 1)
+        related = [
+            n
+            for n in self.metadata.get(ref, {}).get("names", [])
+            if n["scope"] in {"broad", "narrow", "related"}
+        ]
+        if related:
+            rank = max(rank, max(min(score(n["text"], concept), 1) * 0.5 for n in related))
         return rank
+
+    def requirement(self, value, output_variables=()):
+        """Separate requested output bindings from their semantic clauses."""
+        from rdfsolve.client.retrieval import Requirement
+
+        goal = Requirement.model_validate(value)
+        aliases = {v.lstrip("?$") for v in output_variables}
+        if goal.kind == "output" and goal.concept.lstrip("?$") in aliases:
+            goal = goal.model_copy(
+                update={
+                    "concept": goal.concept
+                    if words(goal.concept) <= words(goal.clause)
+                    else goal.clause,
+                    "binding": goal.binding or goal.concept.lstrip("?$"),
+                }
+            )
+        return goal
+
+    def validate_correction(self, previous, revised):
+        """Keep known vocabulary evidence when correcting an initial search term."""
+        c = self
+        concept = (
+            " ".join(sorted(words(previous.concept) - words(previous.value))) or previous.concept
+        )
+        known = {r for r in c.schema_documents if c.relevance(r, concept) >= 1}
+        selected = {r for r in c.schema_documents if c.relevance(r, revised.concept) >= 1}
+        for phrase, candidates in ((concept, known), (revised.concept, selected)):
+            exact = {r for r in candidates if words(c.fragments[r].label) == words(phrase)}
+            if exact:
+                candidates.intersection_update(exact)
+        if not selected:
+            raise ValueError("Use a discovered class or field label in the correction")
+        if previous.kind == "output":
+            return
+        if previous.kind == "entity_filter" and revised.owner:
+            try:
+                owner = c._type(revised.owner)
+                if c._type(previous.concept) == owner and any(
+                    c.fragments[r].kind == "field" and c.fragments[r].owner == owner
+                    for r in selected
+                ):
+                    return
+            except ValueError:
+                pass
+        if known and not known.intersection(selected):
+            raise ValueError(
+                f"The correction conflicts with retained evidence for '{previous.concept}'"
+            )
 
     def _put(self, fragment: Fragment, key):
         prefix = {"type": "t", "field": "f", "path": "p", "term": "e"}[fragment.kind]
@@ -291,7 +373,38 @@ class Catalogue:
             allow_partial=True,
             allow_repeated_classes=True,
         )
-        return self.retain_paths(table)
+        return table.attrs["references"]
+
+    def retain_records(self, result):
+        """Retain typed identities and the names that actually matched their lookup."""
+        refs = []
+        for record in result:
+            term = RdfTerm(kind="uri", value=str(record.uri))
+            ref = self._put(
+                Fragment(
+                    "term", self.client.title(record), term=term, basis="typed entity retrieval"
+                ),
+                [record.rdf_class_iri, term.value],
+            )
+            self.records[ref] = record
+            lookups = result.coverage.get("terms", [result.coverage.get("text", "")])
+            names = [
+                {
+                    "text": e["text"]["value"],
+                    "predicate": e["predicate"],
+                    "scope": e.get("name_scope") or "label",
+                }
+                for e in result.evidence
+                if e.get("id") == str(record.uri) and "text" in e
+            ]
+            self.metadata.setdefault(ref, {})["name_matches"] = names
+            if names and all(n["scope"] in {"broad", "narrow", "related"} for n in names):
+                lookups = []
+            self.metadata[ref].setdefault("lookups", set()).update(
+                t.casefold() for t in lookups if t
+            )
+            refs.append(ref)
+        return refs
 
     def retain_paths(self, table):
         """Index the Client's executable paths without reconstructing them."""
@@ -304,4 +417,11 @@ class Catalogue:
                 else {"status": "schema_only"}
             )
             refs.append(ref)
+        table.attrs["references"] = refs
+        candidates = (
+            [r["candidate"] for r in table.attrs["routes"]]
+            if table.attrs["routes"] and isinstance(table.attrs["routes"][0], dict)
+            else range(len(refs))
+        )
+        table["Reference"] = table["Path"].map({i + 1: refs[j] for i, j in enumerate(candidates)})
         return refs, bool(table.attrs.get("truncated"))

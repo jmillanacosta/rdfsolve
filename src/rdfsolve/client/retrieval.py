@@ -11,7 +11,7 @@ from rdflib.paths import Path
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.parserutils import CompValue
 
-from rdfsolve.query_fragments import PreparedQuery, compile_query, walk
+from rdfsolve.client.query_fragments import PreparedQuery, compile_query, walk
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
 
@@ -34,6 +34,9 @@ class Requirement(BaseModel):
     )
     concept: str = Field(
         description="Short class, field or relationship name. Keep the full qualification in clause and a named restriction in value."
+    )
+    binding: str = Field(
+        default="", description="Requested output column, separate from its meaning."
     )
     owner: str = Field(
         default="",
@@ -127,6 +130,8 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
     edges = []
     for subject, predicate, obj in triples:
         if predicate == RDF.type:
+            if isinstance(obj, Variable) and (subject, predicate, obj) in supported:
+                continue
             if not isinstance(obj, URIRef) or str(obj) not in catalogue.type_refs:
                 raise QueryValidationError(
                     "class_binding", "Use a retained class for each rdf:type constraint."
@@ -257,25 +262,43 @@ def _optional_scope(node) -> tuple[set, set]:
     return _optional_scope(node.get("p")) if "p" in node else (set(), set())
 
 
-def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
+def validate_outputs(variables, expected):
+    """Require the caller's requested columns before final execution."""
+    missing = sorted({str(v).lstrip("?$") for v in expected} - {str(v) for v in variables})
+    if missing:
+        raise QueryValidationError(
+            "missing_outputs", f"Project the requested output variables: {', '.join(missing)}."
+        )
+
+
+def verify_query(
+    sparql, requirements, grounding, catalogue, *, output_variables=()
+) -> PreparedQuery:
     """Expand one SELECT and check its declared semantic witnesses."""
     query = compile_query(
         sparql, catalogue.fragments, catalogue.client._scope, catalogue.known_iris
     )
+    validate_outputs(query.variables, output_variables)
     query.warnings.extend(validate_retrieval(query, catalogue))
     resolved = {}
     for key, requirement in requirements.items():
         if requirement.kind != "scope":
             selected = grounding.get(key, {})
-            if not selected.get("evidence") or (
-                requirement.kind == "entity_filter" and not selected.get("entity")
-            ):
-                selected = infer_grounding(requirement, query, catalogue, selected)
-            validate_goal(requirement, selected, query, catalogue)
+            try:
+                if not selected.get("evidence") or (
+                    requirement.kind == "entity_filter" and not selected.get("entity")
+                ):
+                    selected = infer_grounding(requirement, query, catalogue, selected)
+                validate_goal(requirement, selected, query, catalogue)
+            except QueryValidationError as exc:
+                exc.goal = key
+                exc.requirement = requirement.model_dump()
+                raise
             resolved[key] = selected
     query.diagnostics["grounding"] = resolved
     query.diagnostics["validation"] = [
-        "selected goal witnesses",
+        *(["requested output columns"] if output_variables else []),
+        *(["selected goal witnesses"] if resolved else []),
         "field ownership",
         "binding scope",
         "retained paths",
@@ -286,18 +309,56 @@ def verify_query(sparql, requirements, grounding, catalogue) -> PreparedQuery:
 
 def infer_grounding(requirement, query, catalogue, choice=None):
     """Resolve a goal from actual query witnesses and generated metadata."""
-    from rdfsolve.catalogue import words
+    from rdfsolve.client.catalogue import score, words
 
     choice = choice or {}
     nodes = list(walk(prepareQuery(query.sparql).algebra))
-    iris = {str(n) for n in nodes if isinstance(n, URIRef)}
+    triples = [t for n in nodes if isinstance(n, CompValue) and n.name == "BGP" for t in n.triples]
     used = {u["ref"] for u in query.uses}
+    types = {}
+    for subject, predicate, obj in triples:
+        if predicate == RDF.type:
+            types.setdefault(subject, set()).add(str(obj))
     candidates = []
+    owner, subject_binding = None, None
+    if requirement.owner:
+        try:
+            owner = catalogue._type(requirement.owner)
+        except ValueError:
+            variable = Variable(requirement.owner.lstrip("?$"))
+            subjects = {s for s, _, _ in triples if isinstance(s, Variable)}
+            subject_binding = variable
+            if variable not in subjects:
+                raise QueryValidationError(
+                    "goal_owner",
+                    f"{requirement.clause}: owner '{requirement.owner}' is absent. The query has subject bindings {sorted(str(s) for s in subjects)}. Use the intended subject or correct its retained owner.",
+                ) from None
     for ref in catalogue.schema_documents:
         fragment = catalogue.fragments[ref]
-        present = (
-            ref in used or fragment.iri in iris or (fragment.path and fragment.path.iri in iris)
-        )
+        if requirement.kind == "relation" and fragment.kind == "type":
+            continue
+        if owner and fragment.owner and fragment.owner != owner:
+            continue
+        subjects = [
+            s
+            for s, p, o in triples
+            if (fragment.kind == "type" and p == RDF.type and str(o) == fragment.iri)
+            or (
+                fragment.path
+                and canonical_path(p.n3()) == canonical_path(path_to_sparql(fragment.path))
+            )
+        ]
+        if subject_binding is not None and fragment.kind == "field":
+            subjects = [s for s in subjects if s == subject_binding]
+            if not subjects:
+                continue
+        if (
+            fragment.owner
+            and subjects
+            and all(types.get(s) and fragment.owner not in types[s] for s in subjects)
+        ):
+            continue
+        present = ref in used or bool(subjects)
         if not present or (
             requirement.kind in {"entity_filter", "text_filter"} and fragment.kind != "field"
         ):
@@ -305,7 +366,7 @@ def infer_grounding(requirement, query, catalogue, choice=None):
         rank = catalogue.relevance(ref, requirement.concept)
         if (
             requirement.kind == "output"
-            and fragment.kind == "type"
+            and fragment.kind in {"type", "field"}
             and words(fragment.label) == words(requirement.concept)
         ):
             rank += 5
@@ -313,9 +374,37 @@ def infer_grounding(requirement, query, catalogue, choice=None):
             rank = 10
         if choice.get("evidence"):
             if ref in choice["evidence"]:
-                candidates.append((10, ref))
+                candidates.append(((10, 10), ref))
         elif rank >= 1:
-            candidates.append((rank, ref))
+            candidates.append(((score(fragment.label, requirement.concept), rank), ref))
+    if requirement.kind == "output" and not requirement.owner and not choice.get("evidence"):
+        meanings = {
+            ref: fragment
+            for ref, fragment in catalogue.fragments.items()
+            if fragment.kind in {"type", "field"}
+            and words(fragment.label) == words(requirement.concept)
+        }
+        classes = {f.iri for f in meanings.values() if f.kind == "type"}
+        meanings = {
+            ref: f
+            for ref, f in meanings.items()
+            if f.kind == "type"
+            or not classes.intersection(catalogue.metadata.get(ref, {}).get("targets", []))
+        }
+        if {f.kind for f in meanings.values()} == {"type", "field"}:
+            options = [
+                {
+                    "evidence": [ref],
+                    "meaning": "resource identity" if f.kind == "type" else "field value",
+                    "owner": f.owner or f.iri,
+                }
+                for kind in ("type", "field")
+                for ref, f in [(r, f) for r, f in sorted(meanings.items()) if f.kind == kind][:2]
+            ]
+            raise QueryValidationError(
+                "goal_choice",
+                f"{requirement.clause}: distinguish resource identities from field values. Select the intended evidence or field owner: {options}",
+            )
     entities = [
         ref
         for ref, fragment in catalogue.fragments.items()
@@ -341,12 +430,13 @@ def infer_grounding(requirement, query, catalogue, choice=None):
         if accepted and rank < accepted[0][0]:
             break
         for entity in entities:
-            selected = {"evidence": [ref], "entity": entity}
+            selected = {**choice, "evidence": [ref], "entity": entity}
             before = len(query.warnings)
             try:
                 validate_goal(requirement, selected, query, catalogue)
                 accepted.append((rank, selected))
             except QueryValidationError as exc:
+                exc.evidence = [ref]
                 failures.append(exc)
             finally:
                 del query.warnings[before:]
@@ -399,13 +489,20 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             "goal_evidence",
             f"{requirement.clause}: select retained class, field or path references as evidence.",
         )
-    from rdfsolve.catalogue import words
+    if requirement.kind == "relation" and any(f.kind == "type" for f in fragments):
+        raise QueryValidationError(
+            "goal_evidence",
+            f"{requirement.clause}: select a field or path connecting roles. A class alone does not establish the relationship.",
+        )
+    from rdfsolve.client.catalogue import words
 
     exact_types = {
         f.iri
         for f in catalogue.fragments.values()
         if f.kind == "type" and words(f.label) == words(requirement.concept)
     }
+    if any(f.kind == "field" and words(f.label) == words(requirement.concept) for f in fragments):
+        exact_types = set()
     if exact_types and not any(
         f.iri in exact_types
         or any(t in exact_types for t in catalogue.metadata.get(ref, {}).get("targets", []))
@@ -432,7 +529,20 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             for subject, predicate, obj in n.triples:
                 if predicate == RDF.type:
                     types.setdefault(subject, set()).add(str(obj))
-    outputs = {Variable(v.lstrip("?$")) for v in (grounding.get("project") or expanded.variables)}
+    if (
+        requirement.binding
+        and grounding.get("project")
+        and grounding["project"] != [requirement.binding]
+    ):
+        raise QueryValidationError(
+            "goal_output", f"{requirement.clause}: preserve output binding {requirement.binding}."
+        )
+    selected_outputs = (
+        [requirement.binding]
+        if requirement.binding
+        else (grounding.get("project") or expanded.variables)
+    )
+    outputs = {Variable(v.lstrip("?$")) for v in selected_outputs}
     if not outputs.issubset({Variable(v) for v in expanded.variables}):
         raise QueryValidationError(
             "goal_output",
@@ -449,8 +559,13 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         )
     owner, subject_binding = None, None
     if requirement.owner and any(f.owner for f in fragments):
-        bound = types.get(Variable(requirement.owner.lstrip("?$")), set())
-        if bound:
+        variable = Variable(requirement.owner.lstrip("?$"))
+        if variable in {
+            s
+            for n in walk(algebra)
+            if isinstance(n, CompValue) and n.name == "BGP"
+            for s, _, _ in n.triples
+        }:
             subject_binding = Variable(requirement.owner.lstrip("?$"))
         else:
             try:
@@ -472,7 +587,10 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
         for ref in catalogue.field_refs.values()
         if words(requirement.concept) == words(catalogue.fragments[ref].label)
         and (not owner or catalogue.fragments[ref].owner == owner)
-        and (subject_binding is None or catalogue.fragments[ref].owner in types[subject_binding])
+        and (
+            subject_binding is None
+            or catalogue.fragments[ref].owner in types.get(subject_binding, set())
+        )
     }
     if matching_fields and not matching_fields.intersection(evidence) and not exact_types:
         raise QueryValidationError(
@@ -536,10 +654,24 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
                 )
                 for _, p, o in all_triples
             )
+            if (
+                available
+                and subject_binding is not None
+                and not any(
+                    s == subject_binding
+                    and fragment.path
+                    and canonical_path(p.n3()) == canonical_path(path_to_sparql(fragment.path))
+                    for s, p, _ in all_triples
+                )
+            ):
+                raise QueryValidationError(
+                    "goal_owner",
+                    f"{requirement.clause}: {fragment.label} is not a field on {subject_binding.n3()}. Select evidence owned by that role or correct the goal's owner.",
+                )
             if requirement.required and available:
                 raise QueryValidationError(
                     "goal_availability",
-                    f"{requirement.clause}: {fragment.label} occurs only in an optional or alternative branch, but this goal requires it in every row. If it is requested when available, correct this goal to required=false with rdf_schema; preserve the original clause and other restrictions.",
+                    f"{requirement.clause}: {fragment.label} occurs only in an optional or alternative branch, but this goal requires it in every row. Make the field required in the query. Change the goal to required=false only if the original request asks for optional metadata.",
                 )
             raise QueryValidationError(
                 "goal_path",

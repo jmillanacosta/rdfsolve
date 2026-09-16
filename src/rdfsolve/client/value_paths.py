@@ -5,12 +5,12 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from rdfsolve.client_paths import _budget, class_paths, resource_path_table
-from rdfsolve.hydration import HydrationLimitError, _iri
+from rdfsolve.client.hydration import HydrationLimitError, _iri
+from rdfsolve.client.paths import _budget, class_paths, resource_path_table
 from rdfsolve.schema_models.enrichment import RdfTerm
 
 if TYPE_CHECKING:
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
 
 
 def value_paths(

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier
 
-from rdfsolve.hydration import _iri, _value
+from rdfsolve.client.hydration import _iri, _value
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import PropertyPath
 

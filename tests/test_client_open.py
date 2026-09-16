@@ -4,13 +4,15 @@ import json
 
 import pytest
 
-from rdfsolve.client_api import Client
+from rdfsolve.client.api import Client
 from rdfsolve.schema_models.core import MinedSchema
 from tests.test_client_api import CHEMICAL, DATA, client
 
 
 def test_open_saved_formats_and_mined_schema(tmp_path, monkeypatch):
-    monkeypatch.setattr("rdfsolve.miner.SchemaMiner.mine", lambda *a, **k: pytest.fail("Do not mine"))
+    monkeypatch.setattr(
+        "rdfsolve.miner.SchemaMiner.mine", lambda *a, **k: pytest.fail("Do not mine")
+    )
     with client() as original:
         schema = original._schema
         with schema.client(original.source) as data:
@@ -39,7 +41,9 @@ def test_open_saved_formats_and_mined_schema(tmp_path, monkeypatch):
 
 
 def test_open_keeps_endpoint_scope_without_requests(tmp_path, monkeypatch):
-    monkeypatch.setattr("rdfsolve.sparql_helper.SparqlHelper.select", lambda *a, **k: pytest.fail("Do not query"))
+    monkeypatch.setattr(
+        "rdfsolve.sparql_helper.SparqlHelper.select", lambda *a, **k: pytest.fail("Do not query")
+    )
     with client() as original:
         schema = original._schema.model_copy(deep=True)
         schema.about.endpoint = "https://example.org/sparql"
@@ -51,3 +55,33 @@ def test_open_keeps_endpoint_scope_without_requests(tmp_path, monkeypatch):
             assert data.graph_uris == ["urn:source"]
         with Client.open(path, "https://example.org/other", graph_uris=[]) as data:
             assert data.source.endpoint_url.endswith("/other") and data.graph_uris == []
+
+
+def test_client_public_imports_need_no_agent_dependencies():
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            """
+import importlib.abc
+import sys
+class NoAgents(importlib.abc.MetaPathFinder):
+    def find_spec(self, name, path=None, target=None):
+        if name.startswith(('mcp', 'pydantic_ai', 'rdfsolve.mcp')):
+            raise ImportError(name)
+sys.meta_path.insert(0, NoAgents())
+from rdfsolve.client import Client, Hydrator, PreparedQuery, Requirement, QueryResult
+from rdfsolve.api import Client as PublicClient
+from rdfsolve import Hydrator as PublicHydrator, MinedSchema
+assert Client is PublicClient and Hydrator is PublicHydrator
+assert Client.__module__ == 'rdfsolve.client.api'
+assert 'rdfsolve.mcp' not in sys.modules
+""",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr

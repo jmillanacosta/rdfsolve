@@ -23,7 +23,7 @@ def record_table(
     Context holds session evidence, not a claim that every query produced every row.
     This function reads retained terms only and never sends queries.
     """
-    from rdfsolve.client_api import _title
+    from rdfsolve.client.api import _title
 
     names = (
         fields

@@ -9,13 +9,14 @@ from dataclasses import dataclass, field
 from hashlib import sha256
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field
 from pyparsing import ParseBaseException, ParseResults
 from rdflib import RDF, URIRef, Variable
 from rdflib.paths import Path as RDFPath
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.plugins.sparql.parserutils import CompValue
 
-from rdfsolve.hydration import _iri
+from rdfsolve.client.hydration import _iri
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
@@ -109,6 +110,7 @@ class Fragment:
     steps: list[tuple[str, str, str, bool]] = field(default_factory=list)
     anchors: dict[int, RdfTerm | list[RdfTerm]] = field(default_factory=dict)
     endpoint_types: dict[int, str] = field(default_factory=dict)
+    term_kinds: dict[int, tuple[str, str | None]] = field(default_factory=dict)
     term: RdfTerm | None = None
     basis: str = "saved schema"
     description: str | None = None
@@ -167,6 +169,13 @@ class Fragment:
             lines.insert(0, f"{nodes[0]} a {_iri(self.owner)} .")
         for position, cls in self.endpoint_types.items():
             lines.insert(0, f"{nodes[position]} a {_iri(cls)} .")
+        for position, (kind, datatype) in self.term_kinds.items():
+            variable = nodes[position]
+            function = {"Literal": "isLiteral", "Resource": "isIRI", "BlankNode": "isBlank"}[kind]
+            test = f"{function}({variable})"
+            if datatype:
+                test += f" && datatype({variable}) = {_iri(datatype)}"
+            lines.append(f"FILTER({test})")
         for position, term in self.anchors.items():
             terms = term if isinstance(term, list) else [term]
             if any(t.kind != "uri" for t in terms):
@@ -175,6 +184,139 @@ class Fragment:
                 0, f"VALUES {nodes[position]} {{ {' '.join(t.to_rdf().n3() for t in terms)} }}"
             )
         return "\n".join(dict.fromkeys(lines))
+
+
+class QueryPattern(BaseModel):
+    """A retained class, field or route attached to named result roles."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    reference: str = Field(
+        description="Exact ref returned by discovery, never a label or guessed IRI."
+    )
+    bindings: list[str] = Field(
+        min_length=1,
+        max_length=7,
+        description="Named roles: one for a class, source and value for a field or route. Reuse a role to join the same resource.",
+    )
+    optional: bool = False
+
+
+def network_query(catalogue, patterns, outputs, *, values=None, text=None, distinct=True):
+    """Join retained fragments and nest optional descendants under their parent."""
+    patterns = [
+        p if isinstance(p, QueryPattern) else QueryPattern.model_validate(p) for p in patterns
+    ]
+    if not patterns or not outputs or len(set(outputs)) != len(outputs):
+        raise ValueError("Supply connected patterns and unique output roles")
+    names = [*outputs, *(v for p in patterns for v in p.bindings)]
+    if not all(VAR.fullmatch("?" + v) for v in names):
+        raise ValueError("Roles must be simple column names")
+    blocks, scopes = {0: []}, {}
+    pending = sorted(patterns, key=lambda p: p.optional)
+    while pending:
+        progressed = False
+        for pattern in pending[:]:
+            bound = [v for v in pattern.bindings if v in scopes]
+            if scopes and not bound:
+                continue
+            if not scopes and pattern.optional:
+                raise ValueError("Start the network with a required class or route")
+            ref = pattern.reference
+            fragment = catalogue.fragments.get(ref)
+            if fragment is None or fragment.kind not in {"type", "field", "path"}:
+                raise ValueError(f"Select a retained class, field or path: {ref}")
+            scope_ids = {scopes[v] for v in bound} - {0}
+            if len(scope_ids) > 1:
+                raise ValueError("Resolve a join between separate optional branches explicitly")
+            parent = next(iter(scope_ids), 0)
+            if parent and not pattern.optional:
+                raise ValueError("A required relationship cannot depend on optional metadata")
+            scope = len(blocks) if pattern.optional else parent
+            if pattern.optional:
+                if not set(pattern.bindings) - scopes.keys():
+                    raise ValueError("An optional pattern must introduce a metadata role")
+                blocks[scope] = []
+                blocks[parent].append(scope)
+            args = ["?" + v for v in pattern.bindings]
+            # Render once here to validate the ports; compilation owns variable allocation.
+            fragment.render(args, lambda: "?internal")
+            blocks[scope].append("{{" + ref + " " + " ".join(args) + "}}")
+            for v in pattern.bindings:
+                scopes.setdefault(v, scope)
+            pending.remove(pattern)
+            progressed = True
+        if not progressed:
+            raise ValueError("Every required role must connect to the same network")
+    if set(outputs) - scopes.keys():
+        raise ValueError(
+            f"Unbound output roles: {sorted(set(outputs) - scopes.keys())}. "
+            f"Available roles: {sorted(scopes)}. Add field patterns binding the requested outputs."
+        )
+    for variable, ref in (values or {}).items():
+        if variable not in scopes or scopes[variable]:
+            raise ValueError("An exact restriction needs a required role")
+        fragment = catalogue.fragments.get(ref)
+        if fragment is None or fragment.kind != "term":
+            raise ValueError("Select an exact retained RDF term for a value restriction")
+        blocks[0].append("VALUES ?" + variable + " { {{" + ref + "}} }")
+    from rdflib import Literal
+
+    for variable, value in (text or {}).items():
+        if variable not in scopes or scopes[variable]:
+            raise ValueError("A text restriction needs a required field role")
+        term = Literal(value).n3()
+        blocks[0].append(
+            f"FILTER(isLiteral(?{variable}) && CONTAINS(LCASE(STR(?{variable})), LCASE({term})))"
+        )
+
+    def render(scope):
+        return "\n".join(
+            "OPTIONAL {\n" + render(item) + "\n}" if isinstance(item, int) else item
+            for item in blocks[scope]
+        )
+
+    return (
+        "SELECT "
+        + ("DISTINCT " if distinct else "")
+        + " ".join("?" + v for v in outputs)
+        + " WHERE {\n"
+        + render(0)
+        + "\n}"
+    )
+
+
+def path_query(catalogue, ref, source, target, fields):
+    """Compose endpoint retrieval through the shared network builder."""
+    fragment = catalogue.fragments.get(ref)
+    if fragment is None or fragment.kind not in {"path", "field"}:
+        raise ValueError("Select a retained path or field reference from this client")
+    if source == target or set(fields) - {source, target}:
+        raise ValueError("Use distinct endpoints and fields owned by their source or target column")
+    owners = {
+        source: fragment.owner or fragment.endpoint_types.get(0),
+        target: fragment.endpoint_types.get(-1),
+    }
+    if fragment.steps:
+        owners.update({source: fragment.steps[0][0], target: fragment.steps[-1][2]})
+    if fragment.kind == "field":
+        targets = catalogue.metadata[ref].get("targets", [])
+        owners[target] = targets[0] if len(targets) == 1 else None
+    patterns = [QueryPattern(reference=ref, bindings=[source, target])]
+    outputs = [source, target]
+    for role, names in fields.items():
+        if not owners[role]:
+            raise ValueError(f"Choose a typed route before selecting fields on {role}")
+        for name in catalogue._field_names(owners[role], names):
+            output = role + "_" + name
+            patterns.append(
+                QueryPattern(
+                    reference=catalogue.field_refs[(owners[role], name)],
+                    bindings=[role, output],
+                    optional=True,
+                )
+            )
+            outputs.append(output)
+    return network_query(catalogue, patterns, outputs)
 
 
 class QuerySyntaxError(ValueError):
@@ -209,6 +351,41 @@ def _syntax_hints(text, fragments):
     classes = {f.iri for f in fragments.values() if f.kind == "type"}
     pattern = r"([?$][A-Za-z_][\w]*)\s+(<[^<>\s]+>|(?:[A-Za-z_][\w-]*|):[\w-]+)\s*\.(?=\s|$|})"
     hints = []
+    bare = PROTECTED.sub(lambda m: " " * len(m.group()), text)
+    for match in re.finditer(r"https?://[^\s{};,()]+", bare):
+        hints.append(
+            {
+                "code": "iri_brackets",
+                "found": match.group()[:240],
+                "message": "Put absolute IRIs inside <...>.",
+            }
+        )
+    if re.search(r"(?i)(?<![\w:])strcontains\s*\(", bare):
+        hints.append(
+            {
+                "code": "function_name",
+                "message": "Use CONTAINS(string, substring); STRCONTAINS is not a SPARQL function.",
+            }
+        )
+    stack = []
+    for match in re.finditer(r"[{}]|(?i:\bLIMIT\b)", bare):
+        word = match.group().upper()
+        if word == "{":
+            stack.append(match.end())
+        elif word == "}" and stack:
+            stack.pop()
+        elif (
+            word == "LIMIT"
+            and stack
+            and not re.search(r"(?i)\bSELECT\b", bare[stack[-1] : match.start()])
+        ):
+            hints.append(
+                {
+                    "code": "limit_placement",
+                    "message": "Place LIMIT after the closing brace of WHERE.",
+                }
+            )
+    hints = hints[:4]
     for match in re.finditer(pattern, visible):
         var, token = match.groups()
         iri = (
@@ -229,7 +406,7 @@ def _syntax_hints(text, fragments):
         )
         if len(hints) == 4:
             break
-    return hints
+    return hints[:4]
 
 
 def _parse(text, fragments, *, phase):
@@ -259,6 +436,93 @@ class PreparedQuery:
     diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
+def _expand_references(template, fragments, expand):
+    tokens = [
+        m
+        for m in re.finditer(
+            MACRO.pattern + "|" + PROTECTED.pattern + r"|[?$][A-Za-z_]\w*|[A-Za-z_][\w:-]*|[^\s]",
+            template,
+        )
+        if not m.group().startswith("#")
+    ]
+    values = [m.group() for m in tokens]
+    chunks, end, i = [], 0, 0
+    while i < len(tokens):
+        value = values[i]
+        macro = MACRO.fullmatch(value)
+        if macro:
+            rendered = expand(macro[1], macro[2].split())
+            first, last = i, i
+        elif value in fragments or re.fullmatch(r"[tfpe]_[a-f0-9]{12}", value):
+            if value not in fragments:
+                raise ValueError(
+                    f"Unknown fragment {value}; discover a retained class, field or entity."
+                )
+            fragment = fragments[value]
+            first, last, args = i, i, []
+            before = values[i - 1] if i else ""
+            after = values[i + 1 : i + 3]
+            if fragment.kind == "term":
+                rendered = expand(value, [])
+            else:
+                if (
+                    fragment.kind == "type"
+                    and i >= 2
+                    and before == "a"
+                    and VAR.fullmatch(values[i - 2])
+                ):
+                    first, args = i - 2, [values[i - 2]]
+                elif after and VAR.fullmatch(after[0]) and before in {"{", ".", "}"}:
+                    count = 1 if fragment.kind == "type" else 2
+                    args, last = after[:count], i + count
+                elif VAR.fullmatch(before) and fragment.path and after and VAR.fullmatch(after[0]):
+                    first, last, args = i - 1, i + 1, [before, after[0]]
+                elif before == ";" and fragment.path and after and VAR.fullmatch(after[0]):
+                    start = i - 2
+                    while start >= 0 and values[start] not in {"{", ".", "}"}:
+                        start -= 1
+                    subject = start + 1
+                    if values[subject] in fragments:
+                        subject += 1
+                    first, last, args = i - 1, i + 1, [values[subject], after[0]]
+                if not args or not all(VAR.fullmatch(a) for a in args):
+                    raise ValueError(
+                        f"Use {value} with its binding variables, or copy its returned SPARQL pattern."
+                    )
+                following = values[last + 1] if last + 1 < len(values) else ""
+                if following.upper() not in {
+                    ".",
+                    "}",
+                    ";",
+                    "OPTIONAL",
+                    "FILTER",
+                    "VALUES",
+                    "UNION",
+                    "",
+                }:
+                    raise ValueError(
+                        f"Use a complete pattern for {value}; keep path bindings explicit."
+                    )
+                rendered = expand(value, args)
+                if values[first] == ";":
+                    rendered = ". " + rendered
+                if following == ";":
+                    next_predicate = values[last + 2] if last + 2 < len(values) else ""
+                    if next_predicate in fragments:
+                        rendered = rendered.rstrip().removesuffix(".")
+                    else:
+                        rendered += " " + args[0] + " "
+                        last += 1
+                elif following == ".":
+                    last += 1
+        else:
+            i += 1
+            continue
+        chunks.extend([template[end : tokens[first].start()], rendered])
+        end, i = tokens[last].end(), last + 1
+    return "".join([*chunks, template[end:]])
+
+
 def compile_query(
     template: str, fragments: dict[str, Fragment], scope: Callable[[str], str], known_iris: set[str]
 ) -> PreparedQuery:
@@ -279,13 +543,9 @@ def compile_query(
 
     uses = []
 
-    def expand(match):
-        ref, names = match.groups()
+    def expand(ref, args):
         if ref not in fragments:
-            raise ValueError(
-                f"Unknown fragment {ref}; discover or inspect a retained fragment first."
-            )
-        args = names.split()
+            raise ValueError(f"Unknown fragment {ref}; discover a retained class, field or entity.")
         text = fragments[ref].render(args, allocate)
         uses.append(
             {
@@ -296,12 +556,7 @@ def compile_query(
         )
         return text
 
-    chunks, last = [], 0
-    for match in PROTECTED.finditer(template):
-        chunks.extend([MACRO.sub(expand, template[last : match.start()]), match.group()])
-        last = match.end()
-    chunks.append(MACRO.sub(expand, template[last:]))
-    text = "".join(chunks)
+    text = _expand_references(template, fragments, expand)
     parsed = _parse(text, fragments, phase="expanded_query")
     if parsed.algebra.name != "SelectQuery":
         raise ValueError(

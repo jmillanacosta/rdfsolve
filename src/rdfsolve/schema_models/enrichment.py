@@ -31,6 +31,16 @@ LABEL_PREDICATES = (
     "http://purl.org/dc/elements/1.1/title",
 )
 
+SYNONYM_PREDICATES = {
+    "http://purl.obolibrary.org/obo/IAO_0000118": "alternative",
+    "http://www.w3.org/2004/02/skos/core#altLabel": "alternative",
+    "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym": "exact",
+    "http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym": "broad",
+    "http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym": "narrow",
+    "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym": "related",
+}
+NAME_PREDICATES = LABEL_PREDICATES + tuple(SYNONYM_PREDICATES)
+
 
 class RdfTerm(BaseModel):
     """An RDF term with its lexical form, datatype, and language."""
@@ -180,11 +190,11 @@ class SchemaEnrichment(BaseModel):
         """Read annotations and linked examples, not query completion claims."""
         result = cls()
         for iri in set(classes) | set(properties):
-            for predicate in DEFINITION_PREDICATES + LABEL_PREDICATES:
+            for predicate in DEFINITION_PREDICATES + NAME_PREDICATES:
                 for text in graph.objects(URIRef(iri), URIRef(predicate)):
                     if isinstance(text, Literal):
                         destination = (
-                            result.labels if predicate in LABEL_PREDICATES else result.definitions
+                            result.labels if predicate in NAME_PREDICATES else result.definitions
                         )
                         destination.append(
                             TermAnnotation(

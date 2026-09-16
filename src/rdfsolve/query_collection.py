@@ -127,10 +127,12 @@ class QueryCollection:
         executable = ShaclSparqlExecutable(
             uri=uri, text=query, query_type=kind, prefixes=resources, metadata=metadata
         )
-        shapes.compile_query(executable)
+        compiled = shapes.compile_query(executable)
         self.shacl.prefix_declarations.update(shapes.prefix_declarations)
         self.shacl.queries.append(executable)
-        return self.queries[name]
+        from rdfsolve.schema_models.shacl_model import _node
+
+        return SavedQuery(name, compiled, kind, _node(uri), executable.requires_context)
 
     def load_shacl(self, source: str | Path | Graph) -> list[str]:
         """Read queries through the typed SHACL model; retain all other RDF."""

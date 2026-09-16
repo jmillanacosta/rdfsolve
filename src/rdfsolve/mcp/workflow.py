@@ -21,6 +21,7 @@ def launch_config(
     endpoint=None,
     data_file=None,
     graph_uris=None,
+    output_variables=(),
     source_id="rdf",
     timeout=900,
     max_paths=100,
@@ -67,6 +68,8 @@ def launch_config(
             args += ["--ontology-cache", str(Path(ontology_cache).resolve())]
         if ontology_offline:
             args += ["--ontology-offline"]
+    if output_variables:
+        args += ["--output-variables", json.dumps(list(output_variables))]
     if graph_uris is not None:
         args += ["--graphs", json.dumps(graph_uris)]
     return {"command": sys.executable, "args": args, "env": env}
@@ -80,6 +83,7 @@ async def ask_rdf(
     endpoint=None,
     data_file=None,
     graph_uris=None,
+    output_variables=(),
     model=None,
     base_url=None,
     model_name=None,
@@ -101,6 +105,7 @@ async def ask_rdf(
 
     Supply a PydanticAI model or an OpenAI-compatible base URL and model name.
     Full bindings are read directly from the subprocess artifact directory.
+    output_variables requires named columns in the final projection.
     max_response_tokens caps each response, including reasoning. None disables
     this ceiling; model_settings.max_tokens and provider limits still apply.
     """
@@ -154,6 +159,7 @@ async def ask_rdf(
             endpoint=endpoint,
             data_file=data_file,
             graph_uris=graph_uris,
+            output_variables=output_variables,
             source_id=source_id,
             timeout=timeout,
             max_paths=max_paths,

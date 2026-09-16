@@ -20,8 +20,8 @@ from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 if TYPE_CHECKING:
     from rdflib import Graph
 
-    from rdfsolve.client_api import Client
-    from rdfsolve.hydration import Hydrator
+    from rdfsolve.client.api import Client
+    from rdfsolve.client.hydration import Hydrator
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.sparql_helper import SparqlHelper
 
@@ -97,13 +97,22 @@ class MinedSchema(BaseModel):
             graph.bind(prefix, namespace, replace=True)
 
     def discover_paths(
-        self, *, max_hops: int = 3, max_paths_per_length: int = 100
+        self,
+        *,
+        max_hops: int = 3,
+        max_paths_per_length: int = 100,
+        helper=None,
+        probe_limit: int = 0,
     ) -> NavigationSummary:
-        """Compose candidate routes locally; do not verify instance joins."""
+        """Compose bounded routes and optionally measure their joined source support."""
         from rdfsolve.navigation import discover_paths
 
         self.navigation = discover_paths(
-            self, max_hops=max_hops, max_paths_per_length=max_paths_per_length
+            self,
+            max_hops=max_hops,
+            max_paths_per_length=max_paths_per_length,
+            helper=helper,
+            probe_limit=probe_limit,
         )
         return self.navigation
 
@@ -370,13 +379,13 @@ class MinedSchema(BaseModel):
 
     def client(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Client:
         """Open the exploratory client without mining or querying the source."""
-        from rdfsolve.client_api import Client
+        from rdfsolve.client.api import Client
 
         return Client(self, source, **kwargs)
 
     def hydrator(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Hydrator:
         """Read generated model fields from a source. See Hydrator for request budgets."""
-        from rdfsolve.hydration import Hydrator
+        from rdfsolve.client.hydration import Hydrator
 
         return Hydrator(self, source, **kwargs)
 

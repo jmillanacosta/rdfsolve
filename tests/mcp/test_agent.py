@@ -14,8 +14,8 @@ from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 
 from rdfsolve.api import ask_rdf
-from rdfsolve.mcp.workflow import launch_config
 from rdfsolve.mcp.server import CONTRACTS
+from rdfsolve.mcp.workflow import launch_config
 
 
 def test_final_receipt_preserves_distinct_semantic_warnings():
@@ -76,7 +76,8 @@ def test_generic_api_and_real_stdio_preserve_data_boundary(session, tmp_path):
             name, args = (
                 "rdf_prepare",
                 {
-                    "sparql": f"SELECT DISTINCT ?a WHERE {{ ?a a <{E.AOP}> . }}",
+                    "patterns": [{"reference": session.catalogue.type_refs[str(E.AOP)], "bindings": ["a"]}],
+                    "outputs": ["a"],
                     "grounding": {
                         "g1": {
                             "project": ["a"],
@@ -103,6 +104,7 @@ def test_generic_api_and_real_stdio_preserve_data_boundary(session, tmp_path):
             schema=schema,
             data_file=data,
             source_id="independent-local-database",
+            output_variables=["a"],
             model=FunctionModel(model),
             output_dir=tmp_path,
         )
@@ -235,6 +237,9 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
     session, tmp_path, monkeypatch, truncated
 ):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    import time
+
+    import mcp_experiment
     from mcp_experiment import ask_endpoint, evaluate, read_query
     from pydantic_ai.usage import UsageLimits
 
@@ -243,6 +248,19 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
     _, data = files(session, tmp_path)
     final = "SELECT DISTINCT ?a WHERE { ?a a <" + str(E.AOP) + "> }"
     calls = []
+    active, peak = 0, 0
+
+    def checked(query):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        try:
+            time.sleep(0.03)
+            return read_query(query)
+        finally:
+            active -= 1
+
+    monkeypatch.setattr(mcp_experiment, "read_query", checked)
 
     def model(messages, info):
         assert {t.name for t in info.function_tools} == {"sparql_query"}
@@ -251,8 +269,33 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
         if len(calls) == 1:
             assert "schema.json" not in str(messages)
             assert str(E.AOP) not in str(messages)
-            return ModelResponse(parts=[ToolCallPart("sparql_query", {"query": "SELECT broken"})])
-        assert "query_error" in str(messages)
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("sparql_query", {"query": "SELECT broken"}, tool_call_id="bad"),
+                    ToolCallPart(
+                        "sparql_query",
+                        {"query": "SELECT ?type WHERE {?s a ?type} LIMIT 2"},
+                        tool_call_id="types",
+                    ),
+                    ToolCallPart(
+                        "sparql_query",
+                        {"query": "SELECT ?p WHERE {?s ?p ?o} LIMIT 2"},
+                        tool_call_id="predicates",
+                    ),
+                ]
+            )
+        assert "sparql_syntax" in str(messages)
+        if len(calls) == 2 and not truncated:
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        info.output_tools[0].name,
+                        {"sparql": final.replace("?a WHERE", "?missing WHERE")},
+                    )
+                ]
+            )
+        if not truncated:
+            assert "missing_outputs" in str(messages)
         return ModelResponse(
             parts=[ToolCallPart(info.output_tools[0].name, {"sparql": final})],
             finish_reason="length" if truncated else "stop",
@@ -267,18 +310,24 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
                 model_settings={"max_tokens": 65536},
                 usage_limits=UsageLimits(request_limit=5),
                 output_dir=tmp_path,
+                output_variables=["a"],
             )
         )
     if truncated:
         assert answer.state == "blocked" and not answer.bindings
         assert answer.error["code"] == "model_generation_limit"
-        assert answer.package["source_queries"] == 0
+        assert answer.package["source_queries"] == 2
     else:
         assert answer.state == "complete" and len(answer.bindings) == 3
-    assert (
-        json.loads((tmp_path / "calls.jsonl").read_text())["arguments"]["query"] == "SELECT broken"
-    )
-    assert answer.calls[0]["result"]["error"]["code"] == "query_error"
+    assert peak == 1
+    journal = [json.loads(line) for line in (tmp_path / "calls.jsonl").read_text().splitlines()]
+    assert journal[0]["arguments"]["query"] == "SELECT broken"
+    assert len(journal) == (3 if truncated else 4)
+    assert all("error" not in c["result"] for c in journal[1:3])
+    if not truncated:
+        assert journal[-1]["name"] == "final_query"
+        assert journal[-1]["result"]["error"]["code"] == "missing_outputs"
+    assert answer.calls[0]["result"]["error"]["code"] == "sparql_syntax"
     assert (tmp_path / "helper.json").is_file()
     assert evaluate(Answer(), {("x",)}, ["a"])["f1"] == 0
     for text in (
@@ -291,7 +340,7 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
 
 def test_examples_and_reference_use_typed_shacl(session, tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
-    from mcp_experiment import evaluate, load_examples, rdf_tuples, reference
+    from mcp_experiment import evaluate, load_examples, rdf_tuples, run_reference
 
     from rdfsolve.api import QueryCollection
     from rdfsolve.mcp.agent import Answer
@@ -311,7 +360,15 @@ def test_examples_and_reference_use_typed_shacl(session, tmp_path, monkeypatch):
     case = cases[0]
     assert case["question"] == "List all pathways." and case["columns"] == ["a"]
     with snapshot_endpoint(data, tmp_path / "endpoint.jsonl") as endpoint:
-        rows = reference(case["query"], endpoint, tmp_path / "reference.jsonl")
+        rows = asyncio.run(
+            run_reference(
+                case["query"],
+                endpoint,
+                tmp_path / "reference.jsonl",
+                tmp_path / "reference",
+                max_seconds=20,
+            )
+        )
     expected = rdf_tuples(rows, ["a"])
     assert len(expected) == 3
     assert evaluate(Answer(state="complete", bindings=rows), expected, ["a"])["f1"] == 1
@@ -379,3 +436,88 @@ def test_response_limit_configuration_is_consistent():
     for invalid in [0, -1, True, "none"]:
         with pytest.raises(ValueError):
             bounded_model_settings(max_response_tokens=invalid)
+
+
+def test_attempt_deadline_stops_blocking_worker_and_detached_children(tmp_path, monkeypatch):
+    from time import monotonic
+
+    import psutil
+
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    from mcp_experiment import run_worker
+
+    pid_file = tmp_path / "child.pid"
+    code = """import subprocess, sys, time
+from pathlib import Path
+child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'], start_new_session=True)
+Path(sys.argv[1]).write_text(str(child.pid))
+time.sleep(60)
+"""
+    started = monotonic()
+    result = asyncio.run(run_worker([sys.executable, "-c", code, str(pid_file)], {}, tmp_path, 2))
+    assert monotonic() - started < 8
+    assert result["state"] == "failed" and result["error"]["code"] == "attempt_timeout"
+    assert not result["bindings"]
+    pid = int(pid_file.read_text())
+    assert not psutil.pid_exists(pid) or psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
+    assert json.loads((tmp_path / "result.json").read_text())["error"] == result["error"]
+
+
+def test_trials_start_with_the_same_private_ontology_cache(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.setenv("RDFSOLVE_MODEL", "fixture")
+    monkeypatch.setenv("RDFSOLVE_MODEL_BASE_URL", "http://127.0.0.1:1/v1")
+    from mcp_experiment import _attempt
+
+    from rdfsolve.mcp.agent import Answer
+
+    seed = tmp_path / "seed.json"
+    seed.write_text('{"initial": 1}')
+    seen = []
+
+    async def investigate(**kwargs):
+        cache = kwargs["ontology_cache"]
+        seen.append(json.loads(cache.read_text()))
+        cache.write_text('{"learned": 2}')
+        return Answer(state="complete")
+
+    monkeypatch.setattr("rdfsolve.api.ask_rdf", investigate)
+    for index in range(2):
+        directory = tmp_path / str(index)
+        directory.mkdir()
+        asyncio.run(
+            _attempt(
+                dict(
+                    condition="rdfsolve_ols",
+                    question="Fixture",
+                    schema="schema.json",
+                    output_dir=str(directory),
+                    ontology_seed=str(seed),
+                    usage_limits={},
+                )
+            )
+        )
+    assert seen == [{"initial": 1}, {"initial": 1}]
+    assert json.loads(seed.read_text()) == {"initial": 1}
+
+
+def test_control_final_execution_failure_is_in_the_call_report(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    from mcp_experiment import ask_endpoint
+    from rdfsolve.sparql_helper import PaginationTruncatedError, SparqlHelper
+
+    query = "SELECT ?s WHERE { ?s a <urn:Type> }"
+    def model(messages, info):
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {"sparql": query})])
+    def fail(helper, text, **kwargs):
+        assert text == query and kwargs["exhaustive"]
+        helper.last_select_execution = {"status": "failed", "rows": 10000}
+        raise PaginationTruncatedError("Endpoint sort limit", offset=10000)
+    monkeypatch.setattr(SparqlHelper, "select_with_fallback", fail)
+    answer = asyncio.run(ask_endpoint("List resources", endpoint="https://example.invalid/sparql",
+        model=FunctionModel(model), model_settings={}, usage_limits=None, output_dir=tmp_path))
+    assert answer.state == "failed" and not answer.bindings
+    failed = json.loads((tmp_path / "calls.jsonl").read_text())
+    assert failed["name"] == "final_execution"
+    assert failed["result"]["error"]["type"] == "PaginationTruncatedError"
+    assert answer.execution == {"status": "failed", "rows": 10000}

@@ -16,10 +16,51 @@ from rdfsolve.mining.enrichment import (
 )
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 from rdfsolve.schema_models.enrichment import RdfTerm
+from rdfsolve.schema_models.enrichment import SYNONYM_PREDICATES
 from rdfsolve.sparql_helper import EndpointError
 
 EX = Namespace("urn:test:")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+
+
+def test_mined_synonyms_remain_scoped_and_searchable():
+    from rdfsolve.api import Client
+    from rdfsolve.client.catalogue import Catalogue
+    from rdfsolve.schema_models.enrichment import SchemaEnrichment
+
+    graph = Graph()
+    for predicate, scope in SYNONYM_PREDICATES.items():
+        graph.add((EX.A, URIRef(predicate), Literal(f"{scope} name", lang="en")))
+    graph.add((EX.A, SKOS.prefLabel, Literal("Primary name", lang="en")))
+    schema = MinedSchema(
+        about={"dataset_name": "names"},
+        patterns=[
+            SchemaPattern(subject_class=str(EX.A), property_uri=str(EX.p), object_class="Literal")
+        ],
+    )
+    helper = Mock(endpoint_url="urn:endpoint")
+    helper.select.side_effect = lambda query, **k: json.loads(
+        graph.query(query).serialize(format="json")
+    )
+    schema.enrichment = query_enrichment(schema, helper, examples_per_pattern=0)
+    assert {n.predicate for n in schema.enrichment.labels} == {
+        *SYNONYM_PREDICATES,
+        str(SKOS.prefLabel),
+    }
+    restored = SchemaEnrichment.from_rdf_graph(schema.enrichment.to_rdf_graph(), [str(EX.A)], [])
+    assert set(n.predicate for n in restored.labels) == set(
+        n.predicate for n in schema.enrichment.labels
+    )
+    with Client(schema, graph, graph_uris=[]) as client:
+        catalogue = Catalogue(client)
+        ref = catalogue.type_refs[str(EX.A)]
+        assert client.type_name(client.model(str(EX.A))) == "Primary name"
+        assert ref in catalogue.search("broad name")
+        assert 0 < catalogue.relevance(ref, "broad name") < 1
+        assert catalogue.metadata[ref]["name_matches"][0]["scope"] == "broad"
+        assert client.model("exact name") == client.model(str(EX.A))
+        with pytest.raises(ValueError):
+            client.model("broad name")
 
 
 @pytest.fixture
@@ -80,8 +121,12 @@ def test_enrichment_keeps_language_and_scope(source):
     graph = schema.to_void_graph(trim_descriptions=4)
     assert (EX.one, EX.p, Literal("hello", lang="en")) in graph
     assert (EX.A, SKOS.definition, Literal('A "u', lang="en")) in graph
-    assert all(not item.text.value for item in
-               MinedSchema.from_dict(schema.to_dict(trim_descriptions=0)).enrichment.definitions)
+    assert all(
+        not item.text.value
+        for item in MinedSchema.from_dict(
+            schema.to_dict(trim_descriptions=0)
+        ).enrichment.definitions
+    )
     with pytest.raises(ValueError, match="trim_descriptions"):
         schema.to_shacl(trim_descriptions=-1)
 

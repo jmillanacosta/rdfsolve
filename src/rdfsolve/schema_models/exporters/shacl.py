@@ -147,7 +147,7 @@ def _complete_shapes(
                 value = step.datatype or step.object_class
                 count = str(step.count) if step.count is not None else "unknown"
                 steps.append(
-                    f"{step.subject_class} --{step.property_uri}--> {value} (edge triples: {count})"
+                    f"{step.subject_label or step.subject_class} --{step.property_label or step.property_uri}--> {step.object_label or value} (edge triples: {count})"
                 )
             descriptions.append("; ".join(steps))
         identifier = sha256(repr((start, predicates)).encode()).hexdigest()[:20]
@@ -155,9 +155,7 @@ def _complete_shapes(
             ShaclPropertyShape(
                 uri=f"{base_uri}route-{identifier}",
                 path=routes[0].property_path(),
-                name=" / ".join(
-                    step.property_label or step.property_uri for step in routes[0].steps
-                ),
+                name="; ".join(sorted({route.label() for route in routes})),
                 description="Candidate class-qualified routes: "
                 + " | ".join(sorted(set(descriptions))),
             )
@@ -175,7 +173,12 @@ def _complete_shapes(
             ShaclNodeShape(
                 uri=uri,
                 target_class=class_iri,
-                name=f"Candidate navigation: {class_iri}",
+                name="Paths from "
+                + next(
+                    (r.steps[0].subject_label or class_iri)
+                    for r in schema.navigation.paths
+                    if r.steps[0].subject_class == class_iri
+                ),
                 description=(
                     "Schema-composed paths. Instance support and coverage are unknown. "
                     "Edge triple counts are not joined counts or per-entity cardinalities. "
@@ -185,8 +188,41 @@ def _complete_shapes(
                 property_shapes=properties,
             )
         )
+    for route in schema.navigation.paths:
+        if route.instance_support != "matched":
+            continue
+        child = None
+        for step in reversed(route.steps):
+            value = ShaclPropertyShape(path="")
+            if step.object_class == "Literal":
+                value.node_kind, value.datatype = "Literal", step.datatype
+            elif step.object_class in {"Resource", "BlankNode"}:
+                value.node_kind = "IRI" if step.object_class == "Resource" else "BlankNode"
+            else:
+                value.class_constraint = step.object_class
+            if child is not None:
+                value.properties = [child]
+            child = ShaclPropertyShape(
+                path=step.property_uri,
+                qualified_shape=value,
+                qualified_min_count=1,
+                name=step.property_label or step.property_uri,
+            )
+        identifier = sha256(repr(route.signature()).encode()).hexdigest()[:20]
+        shapes.node_shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}observed-route-{identifier}",
+                target_class=route.steps[0].subject_class,
+                deactivated=True,
+                property_shapes=[child],
+                name=route.label(),
+                description=f"Candidate query profile; {route.matched_sources}/{route.source_count} focus entries matched. "
+                f"Observed endpoint degree {route.min_count}..{route.max_count}; {route.observed_at}. "
+                "Qualified existence describes this route. It is not a dataset-wide requirement.",
+            )
+        )
     logging.getLogger(__name__).warning(
-        "SHACL navigation describes class routes and edge counts as text. "
+        "SHACL exports candidate paths and observed nested profiles. "
         "Keep canonical JSON for machine-readable filters, statistics, and route provenance."
     )
     return shapes

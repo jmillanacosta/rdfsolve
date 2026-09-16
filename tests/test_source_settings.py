@@ -317,7 +317,7 @@ def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, mo
     constructor = Mock()
     constructor.return_value.last_report.completion_state = "complete"
     monkeypatch.setattr("rdfsolve.SchemaMiner", constructor)
-    monkeypatch.setattr(pipeline.Stage, "_save_schema_outputs", lambda *args: None)
+    monkeypatch.setattr(pipeline.Stage, "_save_schema_outputs", lambda *args, **kwargs: None)
     if mode == "remote":
         pipeline.RemoteMiningStage(config)._mine_single_source(source)
     elif mode == "local":

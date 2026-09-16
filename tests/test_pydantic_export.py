@@ -8,7 +8,7 @@ def test_records_and_client_save_use_schema_prefixes(tmp_path):
     from rdflib import Graph
     from rdflib.compare import isomorphic
 
-    from rdfsolve.client_api import Client, Results
+    from rdfsolve.client.api import Client, Results
 
     schema = MinedSchema(about={}, prefixes={"item": "urn:item:"}, patterns=[{
         "subject_class": "urn:item:Item", "subject_label": "Item",

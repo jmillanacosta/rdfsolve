@@ -6,6 +6,8 @@ import json
 import re
 from collections import defaultdict
 from collections.abc import Iterator
+from dataclasses import asdict
+from functools import cached_property
 from html import escape
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,12 +18,13 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import Graph, Literal, URIRef
 
-from rdfsolve.exploration import SEARCH_PREDICATES, DatasetClient
-from rdfsolve.hydration import HydrationLimitError, _iri, _term
-from rdfsolve.model_rdf import model_to_graph
-from rdfsolve.query_log import QueryLog
-from rdfsolve.registry import Registry
+from rdfsolve.client.exploration import SEARCH_PREDICATES, DatasetClient
+from rdfsolve.client.hydration import HydrationLimitError, _iri, _term
+from rdfsolve.client.model_rdf import model_to_graph
+from rdfsolve.client.query_log import QueryLog
+from rdfsolve.client.registry import Registry
 from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 
@@ -35,11 +38,22 @@ def _name(name: str) -> str:
 
 
 def _name_fields(model: type[BaseModel]) -> list[str]:
-    return [name for name in ("title", "label") if name in model.model_fields]
+    priority = [*LABEL_PREDICATES[2:], *LABEL_PREDICATES[:2], *SYNONYM_PREDICATES]
+    fields = {
+        name: (info.json_schema_extra or {}).get("rdf_property_iri")
+        for name, info in model.model_fields.items()
+    }
+    return sorted(
+        (name for name, iri in fields.items() if iri in NAME_PREDICATES),
+        key=lambda name: priority.index(fields[name]),
+    )
 
 
 def _title(record: BaseModel) -> str:
     for field in _name_fields(type(record)):
+        iri = (type(record).model_fields[field].json_schema_extra or {}).get("rdf_property_iri")
+        if SYNONYM_PREDICATES.get(iri) in {"broad", "narrow", "related"}:
+            continue
         value = getattr(record, field)
         if value:
             return str(value[0] if isinstance(value, list) else value)
@@ -49,10 +63,18 @@ def _title(record: BaseModel) -> str:
 class Client(DatasetClient):
     """Find records without first choosing their type, then explore their links."""
 
-    def __init__(self, *args, ontology_grounding=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        ontology_grounding=False,
+        source_id="rdf",
+        class_mappings=(),
+        related_registries=(),
+        **kwargs,
+    ):
         """Open typed retrieval with optional, separately retained ontology evidence."""
         super().__init__(*args, **kwargs)
-        from rdfsolve.ontology import OntologyLookup
+        from rdfsolve.client.ontology import OntologyLookup
 
         self.ontology = (
             OntologyLookup() if ontology_grounding is True else ontology_grounding or None
@@ -60,6 +82,22 @@ class Client(DatasetClient):
         if self.ontology is not None and not isinstance(self.ontology, OntologyLookup):
             raise TypeError("ontology_grounding must be a boolean or OntologyLookup")
         self.vocabulary_evidence = {}
+        self.source_id = source_id
+        self.class_mappings = tuple(class_mappings)
+        self.related_registries = tuple(related_registries)
+        self._prepared = {}
+
+    @cached_property
+    def catalogue(self):
+        """Retain this client's schema, mappings, entities and executable paths."""
+        from rdfsolve.client.catalogue import Catalogue
+
+        return Catalogue(
+            self,
+            self.source_id,
+            class_mappings=self.class_mappings,
+            related_registries=self.related_registries,
+        )
 
     def vocabulary(self, iri: str):
         """Explain a local vocabulary IRI through the configured ontology provider.
@@ -67,13 +105,24 @@ class Client(DatasetClient):
         External labels, definitions and named parents remain an evidence overlay.
         The mined schema, generated fields and source scope remain authoritative.
         """
-        if not self.vocabulary_evidence.get(iri) and self.ontology:
-            self.vocabulary_evidence[iri] = self.ontology.lookup(iri)
+        if iri not in self.vocabulary_evidence and self.ontology:
+            evidence = self.ontology.lookup(iri)
+            if evidence is not None or self.ontology.events[-1]["status"] == "not_found":
+                self.vocabulary_evidence[iri] = evidence
         return self.vocabulary_evidence.get(iri)
 
     def _vocabulary_names(self, iri):
         term = self.vocabulary_evidence.get(iri)
-        return {v.casefold() for v in [term["label"], *term["synonyms"]]} if term else set()
+        names = {v.casefold() for v in [term["label"], *term["synonyms"]]} if term else set()
+        return names | {
+            item.text.value.casefold()
+            for item in self._schema.enrichment.labels
+            if item.term_iri == iri
+            and (
+                item.predicate in LABEL_PREDICATES
+                or SYNONYM_PREDICATES.get(item.predicate) in {"exact", "alternative"}
+            )
+        }
 
     def close(self):
         """Close source and ontology connections."""
@@ -93,6 +142,7 @@ class Client(DatasetClient):
                 if self.ontology.helper
                 else [],
             }
+        data["prepared_queries"] = {ref: asdict(q) for ref, (q, _, _) in self._prepared.items()}
         return data
 
     @classmethod
@@ -141,19 +191,19 @@ class Client(DatasetClient):
 
     def registry(self, *, source_id: str) -> Registry:
         """Describe generated classes and source bindings from retained metadata."""
-        from rdfsolve.registry import build_registry
+        from rdfsolve.client.registry import build_registry
 
         return build_registry(self, source_id)
 
     def describe(self, concept="", *, owners=(), targets=()) -> pd.DataFrame:
         """Find relevant generated classes and fields without reading instances."""
-        from rdfsolve.catalogue import Catalogue
         from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
-        index = Catalogue(self)
+        index = self.catalogue
         return pd.DataFrame(
             [
                 {
+                    "Reference": ref,
                     "Kind": f.kind,
                     "Label": f.label,
                     "Class": f.iri or f.owner,
@@ -168,20 +218,189 @@ class Client(DatasetClient):
             ]
         )
 
-    def select(self, query: str, *, exhaustive: bool = False):
+    def prepare(self, sparql: str, *, requirements=(), grounding=None, output_variables=()):
+        """Prepare a scoped retrieval query using this client's retained evidence.
+
+        Class, field, path and entity references returned by discovery expand
+        here. Optional requirements describe outputs, relationships and filters;
+        all queries are checked for source scope, field ownership and joins.
+        output_variables requires the specified column names. Preparation makes
+        no source request. Pass the artifact to select().
+        """
+        from rdfsolve.client.retrieval import verify_query
+
+        entries = (
+            requirements.items()
+            if isinstance(requirements, dict)
+            else ((f"g{i}", value) for i, value in enumerate(requirements, 1))
+        )
+        requirements = {
+            key: self.catalogue.requirement(value, output_variables) for key, value in entries
+        }
+        if grounding and not set(grounding) <= requirements.keys():
+            raise ValueError("Grounding must refer to a supplied requirement")
+        with self.step("Prepare retrieval query"):
+            query = verify_query(
+                sparql,
+                requirements,
+                grounding or {},
+                self.catalogue,
+                output_variables=output_variables,
+            )
+        self._prepared[query.ref] = query, self.source, tuple(self.graph_uris)
+        return query
+
+    def navigation(self, *, max_hops=6, observed_only=False):
+        """Retrieve retained elongated routes and their snapshot support summaries."""
+        from rdfsolve.client.query_fragments import Fragment
+
+        summary = self._schema.navigation
+        rows = []
+        for route in summary.paths if summary else []:
+            if len(route.steps) > max_hops or (
+                observed_only and route.instance_support != "matched"
+            ):
+                continue
+            fragment = Fragment(
+                "path",
+                route.label(),
+                path=route.property_path(),
+                basis="mined joined path",
+            )
+            for i, step in enumerate(route.steps):
+                target = step.object_class
+                if target in {"Literal", "Resource", "BlankNode"}:
+                    fragment.term_kinds[i + 1] = (target, step.datatype)
+                    target = None
+                fragment.steps.append((step.subject_class, step.property_uri, target, False))
+            ref = self.catalogue._put(fragment, route.signature())
+            self.catalogue.metadata[ref] = {
+                "status": route.instance_support,
+                "source_count": route.source_count,
+                "matched_sources": route.matched_sources,
+                "observed_at": route.observed_at,
+            }
+            rows.append(
+                {
+                    "Reference": ref,
+                    "Label": route.label(),
+                    "Hops": len(route.steps),
+                    "Source": route.steps[0].subject_class,
+                    "Target": route.steps[-1].object_class,
+                    "Support": route.instance_support,
+                    "Sources": route.source_count,
+                    "Matched": route.matched_sources,
+                }
+            )
+        return pd.DataFrame(
+            rows,
+            columns=[
+                "Reference",
+                "Label",
+                "Hops",
+                "Source",
+                "Target",
+                "Support",
+                "Sources",
+                "Matched",
+            ],
+        )
+
+    def prepare_network(
+        self,
+        patterns,
+        *,
+        outputs,
+        values=None,
+        text=None,
+        distinct=True,
+        requirements=(),
+        grounding=None,
+    ):
+        """Compose connected class, field and path selections into one verified query.
+
+        Each QueryPattern names retained evidence and its roles. Reuse a role to
+        share a node; expose every path port to constrain an intermediate record.
+        Optional descendants remain inside their parent's optional scope.
+        """
+        from rdfsolve.client.query_fragments import network_query
+
+        query = network_query(
+            self.catalogue, patterns, outputs, values=values, text=text, distinct=distinct
+        )
+        return self.prepare(
+            query, requirements=requirements, grounding=grounding, output_variables=outputs
+        )
+
+    def prepare_path(
+        self,
+        path,
+        *,
+        source="source",
+        target="target",
+        fields=None,
+        requirements=(),
+        grounding=None,
+        output_variables=(),
+    ):
+        """Prepare a retained route, with optional fields on either endpoint.
+
+        source and target name the result columns. fields maps either column to
+        generated field names or unique labels. Entity anchors and graph scope
+        come from the selected route. Preparation makes no source request.
+        """
+        from rdfsolve.client.query_fragments import path_query
+
+        text = path_query(self.catalogue, path, source, target, fields or {})
+        return self.prepare(
+            text,
+            requirements=requirements,
+            grounding=grounding,
+            output_variables=output_variables,
+        )
+
+    def retrieve(self, path, *, source="source", target="target", fields=None, limit=None):
+        """Retrieve a retained route and its available endpoint fields.
+
+        Return exact RDF cells with their row associations. Supply limit for a
+        bounded sample; the default retrieves all rows through the shared helper.
+        """
+        query = self.prepare_path(path, source=source, target=target, fields=fields)
+        return self.select(query, exhaustive=limit is None, limit=limit)
+
+    def select(self, query, *, exhaustive: bool = False, limit: int | None = None):
         """Execute SELECT through this client's shared helper and return typed cells.
 
-        Scope must already be present in the query. The
-        returned QueryResult preserves the query's row associations and RDF terms.
+        Accept a prepared artifact from this client, or ordinary SPARQL with
+        its scope already present. The returned QueryResult preserves the query's row associations and RDF terms.
         exhaustive=True uses the helper's adaptive pager until an empty page.
+        limit bounds a probe without changing the prepared artifact.
         Endpoint execution uses the existing SparqlHelper.select_with_fallback.
         """
         from time import perf_counter
 
         from rdflib.plugins.sparql import prepareQuery
 
-        from rdfsolve.query import QueryResult, ResultCell
+        from rdfsolve.client.query import QueryResult, ResultCell
+        from rdfsolve.client.query_fragments import PreparedQuery, identifier
 
+        if isinstance(query, PreparedQuery):
+            retained = self._prepared.get(query.ref)
+            if (
+                retained is None
+                or retained[0] is not query
+                or retained[1] is not self.source
+                or retained[2] != tuple(self.graph_uris)
+                or query.ref != identifier("q", query.sparql)
+            ):
+                raise ValueError(
+                    "Prepare this query with the current client and source scope before execution"
+                )
+            query = query.sparql
+        if limit is not None:
+            if type(limit) is not int or limit < 1:
+                raise ValueError("Use a positive integer probe limit")
+            query += f"\nLIMIT {limit}"
         parsed = prepareQuery(query)
         if parsed.algebra.name != "SelectQuery":
             raise ValueError("Client.select requires a SELECT query")
@@ -214,7 +433,7 @@ class Client(DatasetClient):
         Request limit+1 to detect another page. Blank-node identifiers belong
         to the response that supplied them.
         """
-        from rdfsolve.exploration import _path
+        from rdfsolve.client.exploration import _path
         from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
         if type(limit) is not int or not 1 <= limit <= self.max_rows or offset < 0:
@@ -250,13 +469,13 @@ class Client(DatasetClient):
         preserve their whole selected scope; no example record is substituted.
         allow_partial returns bounded evidence with explicit coverage.
         """
-        from rdfsolve.client_paths import class_paths
-        from rdfsolve.client_value_paths import value_paths
+        from rdfsolve.client.paths import class_paths
+        from rdfsolve.client.value_paths import value_paths
 
         if (target is None) == (target_value is None):
             raise ValueError("Supply either a target class or target_value")
         if isinstance(source, str) and isinstance(target, str):
-            return class_paths(
+            table = class_paths(
                 self,
                 source,
                 target,
@@ -266,6 +485,8 @@ class Client(DatasetClient):
                 allow_partial=allow_partial,
                 allow_repeated_classes=allow_repeated_classes,
             )
+            self.catalogue.retain_paths(table)
+            return table
 
         def endpoints(value):
             if isinstance(value, str):
@@ -305,6 +526,7 @@ class Client(DatasetClient):
             table.attrs["warnings"].append(
                 "The input selection is partial; connections cover only its retained identities."
             )
+        self.catalogue.retain_paths(table)
         return table
 
     def connections(
@@ -326,7 +548,7 @@ class Client(DatasetClient):
         Without a target, return linked resources within max_hops. Do not follow
         rdf:type links or literal values; show classes as node annotations.
         """
-        from rdfsolve.client_paths import resource_paths
+        from rdfsolve.client.paths import resource_paths
 
         return resource_paths(
             self,
@@ -345,7 +567,7 @@ class Client(DatasetClient):
         instances: bool = True,
     ) -> str:
         """Draw selected models or the selected rows of a paths table, without queries."""
-        from rdfsolve.client_diagram import model_diagram, path_diagram
+        from rdfsolve.client.diagram import model_diagram, path_diagram
 
         if paths is not None:
             if kinds:
@@ -393,7 +615,7 @@ class Client(DatasetClient):
             or getattr(model, "rdf_class_iri", "") == name_or_iri
         ]
         if not matches:
-            from rdfsolve.catalogue import words
+            from rdfsolve.client.catalogue import words
 
             matches = [
                 model
@@ -421,7 +643,9 @@ class Client(DatasetClient):
         labels = [
             item.text.value
             for item in self._schema.enrichment.labels
-            if item.term_iri == iri and item.text.language in (None, "en")
+            if item.term_iri == iri
+            and item.text.language in (None, "en")
+            and item.predicate in LABEL_PREDICATES
         ]
         if labels:
             return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", min(labels))
@@ -436,7 +660,9 @@ class Client(DatasetClient):
             labels = [
                 item.text.value
                 for item in self._schema.enrichment.labels
-                if item.term_iri == iri and item.text.language in (None, "en")
+                if item.term_iri == iri
+                and item.text.language in (None, "en")
+                and item.predicate in LABEL_PREDICATES
             ]
             if labels:
                 return min(labels)
@@ -517,16 +743,25 @@ class Client(DatasetClient):
             kwargs["graph_uris"] = []
         return cls(MinedSchema.from_dict(session["schema"]), **kwargs)
 
-    def find(self, text: str, *, kind: str | None = None, field: str | None = None) -> Results:
-        """Find names and identifiers across types. Optionally search a chosen field."""
-        from rdfsolve.client_search import search_records
+    def find(
+        self, text: str, *, kind: str | None = None, field: str | None = None, allow_partial=False
+    ) -> Results:
+        """Find names and identifiers, optionally retaining a marked partial selection."""
+        from rdfsolve.client.search import search_records
 
-        result = search_records(self, [text], kind, [field] if field else [], names_only=True)
+        result = search_records(
+            self,
+            [text],
+            kind,
+            [field] if field else [],
+            names_only=True,
+            allow_partial=allow_partial,
+        )
         if result or not self.ontology or field:
             return result
         import bioregistry
 
-        from rdfsolve.ontology import term_key
+        from rdfsolve.client.ontology import term_key
 
         prefix = bioregistry.parse_iri(str(self.model(kind).rdf_class_iri))[0] if kind else None
         ontology = bioregistry.get_ols_prefix(prefix) if prefix else None
@@ -542,7 +777,9 @@ class Client(DatasetClient):
         aliases = [a for a in aliases if a and len(a) <= 200 and a.casefold() != text.casefold()]
         if not aliases:
             return result
-        found = search_records(self, aliases[:12], kind, [], names_only=True)
+        found = search_records(
+            self, aliases[:12], kind, [], names_only=True, allow_partial=allow_partial
+        )
         keys = {term_key(c["iri"]) for c in candidates}
         records = [r for r in found if term_key(str(r.uri)) in keys]
         identities = {str(r.uri) for r in records}
@@ -567,7 +804,7 @@ class Client(DatasetClient):
         Search any phrase in names, identifiers and mined text fields. Supply fields
         to narrow the search. This does not infer synonyms or scientific relevance.
         """
-        from rdfsolve.client_search import search_records
+        from rdfsolve.client.search import search_records
 
         return search_records(self, terms, kind, fields or [])
 
@@ -611,6 +848,7 @@ class Results:
         self.records = records
         self.evidence = evidence or []
         self.coverage = coverage or {"status": "complete", "basis": "Retrieved records"}
+        self.references = client.catalogue.retain_records(self)
 
     def __len__(self) -> int:
         """Return the number of typed records."""
@@ -898,7 +1136,7 @@ class Results:
         an empty list means the field was read but no value was returned.
         attrs retains records, session queries with original bindings, and links.
         """
-        from rdfsolve.client_table import record_table
+        from rdfsolve.client.table import record_table
 
         self._load(*fields)
         models = {type(record) for record in self.records}

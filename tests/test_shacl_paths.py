@@ -1,7 +1,7 @@
 """Check paths against RDF and SPARQL, not just serialized strings."""
 
 import pytest
-from rdflib import BNode, Graph, RDF, SH, URIRef
+from rdflib import RDF, RDFS, SH, BNode, Graph, URIRef
 from rdflib.plugins.sparql.parser import parseQuery
 
 from rdfsolve.schema_models import MinedSchema
@@ -34,19 +34,28 @@ def test_path_and_cardinality_survive_canonical_storage():
     prop = output.value(URIRef("urn:S"), SH.property)
     path = read_path(output, output.value(prop, SH.path))
     assert path == shape.path
-    assert output.value(URIRef("urn:S"), SH.name).language == "en"
-    assert list(output.items(output.value(URIRef("urn:S"), SH.ignoredProperties))) == [URIRef("urn:type")]
+    assert output.value(URIRef("urn:S"), RDFS.label).language == "en"
+    assert list(output.items(output.value(URIRef("urn:S"), SH.ignoredProperties))) == [
+        URIRef("urn:type")
+    ]
     expression = path_to_sparql(path)
     query = f"SELECT ?value WHERE {{ <urn:one> {expression} ?value }}"
     parseQuery(query)
-    data = Graph().parse(data="<urn:one> <urn:p> <urn:middle> . <urn:result> <urn:q> <urn:middle> .", format="turtle")
+    data = Graph().parse(
+        data="<urn:one> <urn:p> <urn:middle> . <urn:result> <urn:q> <urn:middle> .", format="turtle"
+    )
     assert list(data.query(query))[0][0] == URIRef("urn:result")
 
 
-@pytest.mark.parametrize("operator", ["alternativePath", "zeroOrMorePath", "oneOrMorePath", "zeroOrOnePath"])
+@pytest.mark.parametrize(
+    "operator", ["alternativePath", "zeroOrMorePath", "oneOrMorePath", "zeroOrOnePath"]
+)
 def test_remaining_path_operators_parse(operator):
     obj = "(<urn:p> <urn:q>)" if operator == "alternativePath" else "<urn:p>"
-    graph = Graph().parse(data=f"@prefix sh: <http://www.w3.org/ns/shacl#> . <urn:s> sh:path [sh:{operator} {obj}].", format="turtle")
+    graph = Graph().parse(
+        data=f"@prefix sh: <http://www.w3.org/ns/shacl#> . <urn:s> sh:path [sh:{operator} {obj}].",
+        format="turtle",
+    )
     path = read_path(graph, graph.value(URIRef("urn:s"), SH.path))
     parseQuery(f"SELECT * WHERE {{ ?s {path_to_sparql(path)} ?o }}")
 
@@ -63,10 +72,18 @@ def test_path_cycles_and_query_injection_are_rejected():
 
 def test_shacl_count_is_not_a_dataset_triple_count():
     from rdfsolve.schema_models import AboutMetadata, SchemaPattern
+
     schema = MinedSchema(
         about=AboutMetadata.build(dataset_name="test", source_version_iri="urn:release"),
-        patterns=[SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="Literal",
-                                datatype="http://www.w3.org/2001/XMLSchema#string", count=37)],
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri="urn:p",
+                object_class="Literal",
+                datatype="http://www.w3.org/2001/XMLSchema#string",
+                count=37,
+            )
+        ],
     )
     output = schema.to_shacl()
     graph = Graph().parse(data=output, format="turtle")

@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 from rdflib import RDF, RDFS, XSD, BNode, Dataset, Graph, Literal, Namespace
 
-from rdfsolve.client_api import Client
+from rdfsolve.client.api import Client
 from rdfsolve.mcp.session import Session
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import RdfTerm, TermAnnotation
@@ -241,7 +241,7 @@ def _serve(data, journal, connection):
                 from rdflib.plugins.sparql import prepareQuery
                 from rdflib.plugins.sparql.parserutils import CompValue
 
-                from rdfsolve.query_fragments import walk
+                from rdfsolve.client.query_fragments import walk
 
                 parsed = prepareQuery(query)
                 if any(

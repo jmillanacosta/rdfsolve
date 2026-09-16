@@ -214,15 +214,17 @@ class SparqlHelper:
         """Collect a query execution."""
         if self._collect_queries:
             self._query_registry.append(record)
-            if not any(saved.query == record.query for saved in self.queries.queries.values()):
-                name = record.query_id()
-                if name not in self.queries.queries:
-                    try:
-                        self.queries.add(name, record.query, endpoint=record.endpoint_url)
-                    except Exception as export_error:
-                        logger.warning(
-                            "Cannot save query %s as a portable example: %s", name, export_error
-                        )
+            name = record.query_id()
+            if not any(
+                q.name == name or (not q.prefixes and q.text == record.query)
+                for q in self.queries.shacl.queries
+            ):
+                try:
+                    self.queries.add(name, record.query, endpoint=record.endpoint_url)
+                except Exception as export_error:
+                    logger.warning(
+                        "Cannot save query %s as a portable example: %s", name, export_error
+                    )
 
     def add_query(self, name: str, query: str, *, description: str = "") -> SavedQuery:
         """Save a named read query without executing it."""
@@ -592,9 +594,9 @@ class SparqlHelper:
             record.error_message = str(error)
             raise
         finally:
-            record.elapsed_seconds = time.monotonic() - started
             _active_record.reset(token)
             self._record_query(record)
+            record.elapsed_seconds = time.monotonic() - started
 
     def _execute_request(
         self,

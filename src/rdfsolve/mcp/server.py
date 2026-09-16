@@ -7,13 +7,13 @@ import json
 import logging
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from pydantic_core import to_jsonable_python
 
-from rdfsolve.hydration import HydrationLimitError
+from rdfsolve.client.hydration import HydrationLimitError
+from rdfsolve.client.query_fragments import QueryPattern, QuerySyntaxError
+from rdfsolve.client.retrieval import QueryValidationError, Requirement
 from rdfsolve.mcp.session import Session
-from rdfsolve.query_fragments import QuerySyntaxError
-from rdfsolve.retrieval import QueryValidationError, Requirement
 from rdfsolve.sparql_helper import EndpointError
 
 
@@ -44,7 +44,7 @@ class SchemaArgs(Args):
     goals: list[Requirement] | None = Field(
         default=None,
         max_length=16,
-        description="Declare outputs and restrictions once. Each needs a clause and a short concept; filters need value. Later discovery omits goals. Add a missing goal individually; use corrections for existing goals.",
+        description="Declare outputs and restrictions once. Each needs a clause and a short concept; filters need value. Later discovery omits goals. Additional goals are merged with retained clauses; use corrections for existing goals.",
     )
     corrections: dict[str, GoalCorrection] = Field(
         default_factory=dict,
@@ -61,7 +61,11 @@ class FindArgs(Args):
     A selection reference preserves all matches; an entity reference selects one.
     """
 
-    text: str = Field(min_length=1, max_length=200)
+    text: str = Field(
+        min_length=1,
+        max_length=200,
+        description="A particular name or phrase to find. To list all members, use rdf_schema and prepare a SELECT; no name search is needed.",
+    )
     kind: str | None = Field(
         default=None,
         description="Optional class name or discovered class reference; omission searches across typed classes.",
@@ -127,18 +131,32 @@ class Grounding(Args):
 
 
 class PrepareArgs(Args):
-    """Prepare ordinary SELECT using discovered paths and typed field constraints.
+    """Compile one connected retrieval from discovered references.
 
-    The package checks every declared goal, binding ownership and source scope.
-    Grounding is inferred where unambiguous. Preparation makes no data request.
+    Every class, route and field is a pattern. For example a class uses
+    {reference: type_ref, bindings: [record]}, and its name field uses
+    {reference: field_ref, bindings: [record, Name], optional: true}.
+    outputs=[record, Name] returns both. The client writes all SPARQL.
     """
 
+    patterns: list[QueryPattern] = Field(min_length=1, max_length=30)
+    outputs: list[str] = Field(
+        min_length=1,
+        max_length=30,
+        description="Requested column names. Each must appear in a pattern's bindings.",
+    )
+    values: dict[str, str] = Field(
+        default_factory=dict,
+        description="Required role to an exact retained RDF term reference; use patterns for fields.",
+    )
+    text: dict[str, str] = Field(
+        default_factory=dict,
+        description="Required literal field role to text explicitly requested in that field.",
+    )
+    distinct: bool = True
     grounding: dict[str, Grounding] = Field(
         default_factory=dict,
-        description="Usually omit: the package resolves goal witnesses from the query and generated models. Only unresolved choices need a goal ID with selected evidence or entity.",
-    )
-    sparql: str = Field(
-        description="One complete ordinary SELECT. Use the returned insert strings for retained paths and terms. Preserve the declared requirements; the package checks bindings, scope and field constraints."
+        description="Usually omit. Select evidence here only to resolve a reported semantic ambiguity.",
     )
 
 
@@ -197,16 +215,25 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
                 ),
             }
         }
+        if name == "rdf_find" and arguments.get("text") == "":
+            value["repair"] = (
+                "To list every member, use rdf_schema to select its class and fields, then rdf_prepare with their references and result roles. Entity discovery needs a particular name."
+            )
     except QuerySyntaxError as exc:
         value = {"error": exc.detail}
     except QueryValidationError as exc:
         value = {"error": {"code": exc.code, "message": str(exc)}}
+        if hasattr(exc, "goal"):
+            value.update(goal=exc.goal, requirement=exc.requirement)
+        value["selected_evidence"] = session._page(getattr(exc, "evidence", []), budget=2500)
     except HydrationLimitError as exc:
         value = {
             "error": {
                 "code": "search_budget",
                 "message": str(exc),
-                "retry": "Narrow endpoints or increase path budget.",
+                "retry": "Choose a discovered class and a more specific name."
+                if name == "rdf_find"
+                else "Narrow endpoints or increase path budget.",
             }
         }
     except EndpointError as exc:
@@ -239,13 +266,14 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
                 if isinstance(ref, str) and ref in session.catalogue.fragments
             )
         )
-        value["selected_evidence"] = session._page(refs, budget=2500)
+        if refs or "selected_evidence" not in value:
+            value["selected_evidence"] = session._page(refs, budget=2500)
         value["repair"] = (
-            "Use each field's exact insert with your subject/object variables. Use rdf_schema with the goal concept and owner if this evidence means something else."
+            "Select the returned class, field or path references with consistent result roles. Use rdf_schema with the goal concept and owner if this evidence means something else."
         )
-        if value["error"]["code"] in {"goal_owner", "goal_availability"}:
+        if value["error"]["code"] in {"goal_owner", "goal_type", "unresolved_goals"}:
             value["repair"] = (
-                "Use rdf_schema to correct the affected goal's owner or availability while retaining the original clauses and value restrictions. Preserve the intended OPTIONAL scope."
+                "Use the selected field's typed pattern. If its meaning or owner is wrong, send rdf_schema corrections for the returned goal ID, with only changed fields; omit goals. Preserve the original clause and value restriction."
             )
             value["retained_requirements"] = {
                 key: requirement.model_dump() for key, requirement in session.requirements.items()
@@ -287,7 +315,7 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
     return value
 
 
-def create_server(client, source_id="rdf", **kwargs):
+def create_server(client, **kwargs):
     """Register tools and bounded diagnostic resources."""
     from mcp.server import Server
     from mcp.types import (
@@ -299,7 +327,7 @@ def create_server(client, source_id="rdf", **kwargs):
         Tool,
     )
 
-    session = Session(client, source_id, **kwargs)
+    session = Session(client, **kwargs)
 
     async def list_tools(ctx, params):
         return ListToolsResult(
@@ -339,10 +367,10 @@ def create_server(client, source_id="rdf", **kwargs):
     )
 
 
-async def run_server(client, source_id="rdf", **kwargs):
+async def run_server(client, **kwargs):
     """Run a dedicated stdio investigation."""
     from mcp.server.stdio import stdio_server
 
-    server = create_server(client, source_id, **kwargs)
+    server = create_server(client, **kwargs)
     async with stdio_server() as (read, write):
         await server.run(read, write, server.create_initialization_options())

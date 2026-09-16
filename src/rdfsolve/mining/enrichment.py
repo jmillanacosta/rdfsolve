@@ -14,7 +14,7 @@ from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import (
     DEFINITION_PREDICATES,
-    LABEL_PREDICATES,
+    NAME_PREDICATES,
     PatternExample,
     RdfTerm,
     SchemaEnrichment,
@@ -37,7 +37,7 @@ def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
     opening, closing = _graph_clause(graph_uris)
     return f"""SELECT DISTINCT ?term ?predicate ?text WHERE {{
       VALUES ?term {{ {" ".join(map(_iri, iris))} }}
-      VALUES ?predicate {{ {" ".join(map(_iri, DEFINITION_PREDICATES + LABEL_PREDICATES))} }}
+      VALUES ?predicate {{ {" ".join(map(_iri, DEFINITION_PREDICATES + NAME_PREDICATES))} }}
       {opening} ?term ?predicate ?text . FILTER(isLiteral(?text)) {closing}
     }}"""
 
@@ -165,9 +165,7 @@ def query_enrichment(
                     text=_term(row["text"], result.query_count),
                 )
                 destination = (
-                    result.labels
-                    if definition.predicate in LABEL_PREDICATES
-                    else result.definitions
+                    result.labels if definition.predicate in NAME_PREDICATES else result.definitions
                 )
                 if definition not in destination:
                     destination.append(definition)

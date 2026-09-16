@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 from rdflib import Graph
 
-from rdfsolve.exploration import field_targets
+from rdfsolve.client.exploration import field_targets
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
 from typing_extensions import Self
 
 
@@ -51,7 +51,7 @@ class TypeDescription(Contract):
 class Registry(Contract):
     """A source-scoped snapshot of types and their evidence."""
 
-    format: Literal["rdfsolve.registry"] = "rdfsolve.registry"
+    format: Literal["rdfsolve.client.registry"] = "rdfsolve.client.registry"
     format_version: Literal[3] = 3
     producer: str
     source_id: str = Field(min_length=1)

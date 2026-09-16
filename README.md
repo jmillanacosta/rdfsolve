@@ -81,6 +81,20 @@ Use `schema.to_dict()` with `json.dump()` for saved rdfsolve files.
 `MinedSchema.model_json_schema()` describes the internal model;
 `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
 
+#### Probe for SHACL NodeShapes
+To measure joined support for longer paths, use `navigation_hops`,
+`navigation_limit` and `navigation_probes` in the mining API:
+
+```python
+from rdfsolve.api import mine_schema
+
+schema = mine_schema(endpoint, navigation_hops=3, navigation_limit=50, navigation_probes=20)
+```
+
+The `MinedSchema` JSON retains the queries and observations and its SHACL
+exports include deactivated, nested query profiles for observed routes. See
+[the local QLever comparison](notebooks/mcp/05_path_mining.ipynb).
+
 ### Discover existing VoID descriptions
 
 VoID is a published dataset description. It may contain metadata without any
@@ -215,16 +229,29 @@ class instead lists possible class routes without querying the data. Use
 Pass the whole selection to evaluate connections for every matching resource:
 
 ```python
-pathways = data.find("testicular", kind="Adverse Outcome Pathway")
+pathways = data.find("lung", kind="Adverse Outcome Pathway")
 chemical_paths = data.paths_between(pathways, "Chemical entity", max_hops=2)
 pathways.summary()
 data.trace()
 ```
 
 Record and `Results` inputs retain their exact identities in the path queries.
-The path table contains observed bindings, source query IDs and per-route outcomes
-in its `attrs`. Its coverage distinguishes partial search from no match. A single
-record selects that record's connections. Two class names describe schema routes.
+The path table contains observed bindings, source query IDs and per-route
+outcomes in its `attrs`. Its coverage distinguishes partial search from no
+match. A single record selects that record's connections. Two class names
+describe schema routes.
+
+Retrieve a discovered route and its available fields:
+
+```python
+route = chemical_paths.iloc[0]["Reference"]
+result = data.retrieve(route, source="pathway", target="chemical", fields={"chemical": ["title"]})
+result.table()
+data.query_log()
+```
+
+Missing optional fields preserve the linked records. Exact RDF terms remain in
+`result.rows`; `data.query_log()` shows the queries and their results.
 
 Read the generated types and field paths without endpoint requests:
 
@@ -234,8 +261,8 @@ data.describe("measurement", owners=["Key Events"])
 ```
 
 Names resolve within their class. Exact generated names remain usable when human
-labels collide. Missing metadata produces an empty description search; the client
-does not invent vocabulary for an unexplained field.
+labels collide. Missing metadata produces an empty description search; the
+client does not invent vocabulary for an unexplained field.
 
 Press Tab after `pathways.fields.` to discover fields while typing. `show()`
 retrieves only the fields you ask for; displaying results does not send
@@ -248,6 +275,9 @@ Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
 
 [Example](notebooks/pydantic_clients/01_mine_explore.ipynb).
+
+Client operations live under `rdfsolve.client`; model workflows live under
+`rdfsolve.mcp`. `rdfsolve.api` exposes both for notebook use.
 
 ### SparqlHelper
 
@@ -501,8 +531,8 @@ remain separate evidence with provider, IRI-match basis and fetch time. Mined
 schemas are unchanged. Failed name searches can use an ontology alias only when
 an actual source record has the same IRI or registered namespace/identifier.
 Hierarchy hints explain vocabulary; local field paths and source scope still
-control retrieval. Missing or unavailable evidence remains visible in diagnostics.
-OLS uses its REST API; Ontobee queries use `SparqlHelper`.
+control retrieval. Missing or unavailable evidence remains visible in
+diagnostics. OLS uses its REST API; Ontobee queries use `SparqlHelper`.
 
 All model integration lives in `rdfsolve.mcp`. The core `Catalogue` indexes
 classes, mappings and full field paths. `retrieval.verify_query` expands one
@@ -511,16 +541,18 @@ connected bindings, optional scope and retrieval operators against declared
 goals. The initial semantic classification can be corrected before preparation.
 Corrections are recorded; accepted entity restrictions and requested values
 cannot be weakened. Requested concepts stay fixed while owners and availability
-can be corrected. Initial interpretation and semantic selection remain model decisions.
-A selected field without explanatory metadata or mapping evidence remains unresolved;
-choosing its handle cannot turn that missing evidence into a successful validation. The package infers witnesses from the query and generated metadata;
-explicit grounding is needed when more than one meaning remains possible.
+can be corrected. Initial interpretation and semantic selection remain model
+decisions. A selected field without explanatory metadata or mapping evidence
+remains unresolved; choosing its handle cannot turn that missing evidence into a
+successful validation. The package infers witnesses from the query and generated
+metadata; explicit grounding is needed when more than one meaning remains
+possible.
 
 The eight MCP tools discover schema, ground selections, follow fields, evaluate
-paths, inspect evidence, prepare a query, probe it and explicitly finish. Complete
-bindings stay in local caller artifacts. Tools return compact evidence, profiles
-and execution receipts. Endpoint queries use the Client and shared SparqlHelper
-recovery.
+paths, inspect evidence, prepare a query, probe it and explicitly finish.
+Complete bindings stay in local caller artifacts. Tools return compact evidence,
+profiles and execution receipts. Endpoint queries use the Client and shared
+SparqlHelper recovery.
 
 For Claude or another MCP host, configure a stdio server:
 
@@ -529,9 +561,10 @@ python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-databa
 ```
 
 Each tool response includes its operation, status and source-query IDs. The
-incremental package journal retains complete query evidence for inspection outside
-the model context. `answer.files` identifies the calls, answer and package journals.
-Repeated unchanged failures stop with the unresolved issue recorded.
+incremental package journal retains complete query evidence for inspection
+outside the model context. `answer.files` identifies the calls, answer and
+package journals. Repeated unchanged failures stop with the unresolved issue
+recorded.
 
 The server supports SELECT retrieval with joins, optional patterns, alternatives
 and filters. Aggregation, BIND-based output transformations, nested SELECT,
@@ -545,3 +578,33 @@ Full docs: [rdfsolve.readthedocs.io](https://rdfsolve.readthedocs.io)
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+### Query catalogues
+
+The [WikiPathways catalogue](notebooks/sparql_helper/01_sparql_examples.ipynb)
+and [AOPWiki queries to SHACL](notebooks/sparql_helper/02_aopwiki_catalog.ipynb)
+examples to load, name and save queries through `QueryCollection`.
+
+### Retrieve a connected network
+
+Use references returned by `describe()` and `paths_between()` with named roles.
+Reusing a role joins the same resource. Available child fields remain optional.
+
+```python
+from rdfsolve.api import QueryPattern
+
+query = data.prepare_network(
+    [
+        QueryPattern(reference=route, bindings=["pathway", "chemical"]),
+        QueryPattern(reference=name_field, bindings=["chemical", "name"], optional=True),
+    ],
+    outputs=["pathway", "chemical", "name"],
+)
+result = data.select(query, exhaustive=True)
+result.table()
+```
+
+`route` and `name_field` are selected discovery references. An exact restriction
+uses `values={role: term_reference}`. MCP uses these client operations to
+construct queries and returns summaries; custom SPARQL remains available through
+Python.

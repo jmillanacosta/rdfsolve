@@ -13,6 +13,7 @@ import bioregistry
 import requests
 from rdflib import Literal
 
+from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
 
@@ -26,10 +27,31 @@ DEFINITIONS = (
     "http://purl.obolibrary.org/obo/IAO_0000115",
     "http://www.w3.org/2004/02/skos/core#definition",
 )
-SYNONYMS = (
-    "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym",
-    "http://www.w3.org/2004/02/skos/core#altLabel",
-)
+
+
+def synonym_evidence(value):
+    """Retain declared synonym scope from OLS annotations and OBO metadata."""
+    annotations = value.get("annotation") or {}
+    evidence = []
+    for predicate, scope in SYNONYM_PREDICATES.items():
+        local = predicate.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        keys = [predicate, local]
+        if local == "IAO_0000118":
+            keys += ["alternative term", "alternative_term"]
+        texts = [text for key in keys for text in annotations.get(key) or []]
+        texts += [
+            s["name"]
+            for s in value.get("obo_synonym") or []
+            if s.get("scope") in {predicate, local}
+        ]
+        if scope == "exact":
+            texts += value.get("exact_synonyms") or []
+        evidence.extend(
+            {"text": text, "predicate": predicate, "scope": scope}
+            for text in dict.fromkeys(texts)
+            if isinstance(text, str)
+        )
+    return evidence
 
 
 def term_key(iri):
@@ -106,7 +128,15 @@ class OntologyLookup:
                 event.update(status="unavailable", error=f"{type(exc).__name__}: {exc}")
         event["seconds"] = round(time.monotonic() - started, 4)
         self.events.append(event)
-        logger.info("Ontology %s %s: %s", operation, value, event["status"])
+        log = logger.debug if event["cached"] else logger.info
+        log(
+            "Ontology %s %s: %s; cached=%s; %.3fs",
+            operation,
+            value,
+            event["status"],
+            event["cached"],
+            event["seconds"],
+        )
         return data
 
     def _json(self, path, **params):
@@ -123,21 +153,15 @@ class OntologyLookup:
 
     @staticmethod
     def _term(value):
+        names = synonym_evidence(value)
         return {
             "iri": value["iri"],
             "label": value.get("label") or "",
             "description": value.get("description") or [],
             "synonyms": list(
-                dict.fromkeys(
-                    (value.get("exact_synonyms") or [])
-                    + [
-                        item["name"]
-                        for item in (value.get("obo_synonym") or [])
-                        if item.get("scope") == "hasExactSynonym"
-                    ]
-                )
+                dict.fromkeys(n["text"] for n in names if n["scope"] in {"exact", "alternative"})
             ),
-            "synonym_policy": "exact",
+            "synonym_evidence": names,
             "ontology": value.get("ontology_name") or "",
             "namespace": (value.get("annotation") or {}).get("has_obo_namespace") or [],
             "obsolete": value.get("is_obsolete", False),
@@ -163,7 +187,7 @@ class OntologyLookup:
 
             def fetch():
                 predicates = " ".join(
-                    f"<{p}>" for p in [LABEL, *DEFINITIONS, *SYNONYMS, DEPRECATED]
+                    f"<{p}>" for p in [*NAME_PREDICATES, *DEFINITIONS, DEPRECATED]
                 )
                 values = self._sparql(
                     f'SELECT DISTINCT ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} <{canonical}> ?p ?value . FILTER(isLiteral(?value) && (LANG(?value) = "" || LANGMATCHES(LANG(?value), "en"))) }} LIMIT 100'
@@ -173,18 +197,34 @@ class OntologyLookup:
                     for r in values
                 ):
                     return None
-                labels = [r["value"]["value"] for r in values if r["p"]["value"] == LABEL]
+                labels = [
+                    r["value"]["value"]
+                    for p in LABEL_PREDICATES
+                    for r in values
+                    if r["p"]["value"] == p
+                ]
+                names = [
+                    {
+                        "text": r["value"]["value"],
+                        "predicate": r["p"]["value"],
+                        "scope": SYNONYM_PREDICATES[r["p"]["value"]],
+                    }
+                    for r in values
+                    if r["p"]["value"] in SYNONYM_PREDICATES
+                ]
+                aliases = [n["text"] for n in names if n["scope"] in {"exact", "alternative"}]
                 if not labels:
+                    labels = aliases
+                if not labels and not names:
                     return None
                 return {
                     "iri": canonical,
-                    "label": labels[0],
+                    "label": labels[0] if labels else "",
                     "description": [
                         r["value"]["value"] for r in values if r["p"]["value"] in DEFINITIONS
                     ],
-                    "synonyms": [
-                        r["value"]["value"] for r in values if r["p"]["value"] in SYNONYMS
-                    ],
+                    "synonyms": aliases,
+                    "synonym_evidence": names,
                     "ontology": "",
                     "namespace": [],
                     "obsolete": False,
@@ -215,6 +255,7 @@ class OntologyLookup:
         """Return ontology candidates; membership in a dataset requires client verification."""
         if not text.strip() or len(text) > 200:
             raise ValueError("Use a vocabulary phrase of at most 200 characters")
+        text = " ".join(text.split()).casefold()
 
         matches = [
             entry["data"]
@@ -224,7 +265,14 @@ class OntologyLookup:
             and (self.offline or time.time() - entry["fetched_at"] < 86400)
             and (not ontology or entry["data"].get("ontology") == ontology)
             and text.casefold()
-            in {v.casefold() for v in [entry["data"]["label"], *entry["data"]["synonyms"]]}
+            in {
+                v.casefold()
+                for v in [
+                    entry["data"]["label"],
+                    *entry["data"]["synonyms"],
+                    *[n["text"] for n in entry["data"].get("synonym_evidence", [])],
+                ]
+            }
         ]
         if matches:
             self.events.append(
@@ -234,11 +282,11 @@ class OntologyLookup:
                     "value": [text, ontology],
                     "cached": True,
                     "status": "matched",
-                    "basis": "retained exact names",
+                    "basis": "retained names and scoped synonyms",
                     "seconds": 0,
                 }
             )
-            logger.info("Ontology search %s: retained exact names", text)
+            logger.debug("Ontology search %s: retained names", text)
             return matches[:8]
 
         def fetch():
@@ -257,10 +305,22 @@ class OntologyLookup:
                 docs = self._json("/search", **params).get("response", {}).get("docs", [])
                 return [self._term(t) for t in docs]
             literal = Literal(text).n3()
+            predicates = " ".join(f"<{p}>" for p in NAME_PREDICATES)
             rows = self._sparql(
-                f"SELECT DISTINCT ?iri ?label WHERE {{ {{ ?iri <{LABEL}> ?label . FILTER(LCASE(STR(?label)) = LCASE({literal})) }} UNION {{ ?iri <{LABEL}> ?label ; <{SYNONYMS[0]}> ?alias . FILTER(LCASE(STR(?alias)) = LCASE({literal})) }} FILTER(isIRI(?iri)) }} LIMIT 8"
+                f"SELECT DISTINCT ?iri ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} ?iri ?p ?value . FILTER(isIRI(?iri) && isLiteral(?value) && LCASE(STR(?value)) = LCASE({literal})) }} LIMIT 8"
             )
-            return [{"iri": r["iri"]["value"], "label": r["label"]["value"]} for r in rows]
+            return [
+                {
+                    "iri": r["iri"]["value"],
+                    "label": r["value"]["value"] if r["p"]["value"] in LABEL_PREDICATES else "",
+                    "name_match": {
+                        "text": r["value"]["value"],
+                        "predicate": r["p"]["value"],
+                        "scope": SYNONYM_PREDICATES.get(r["p"]["value"], "label"),
+                    },
+                }
+                for r in rows
+            ]
 
         return self._request("search_names", [text, ontology], fetch) or []
 
@@ -313,6 +373,7 @@ class OntologyLookup:
                 for e in self.events
             ),
             "cache_hits": sum(e["cached"] for e in self.events),
+            "seconds": round(sum(e["seconds"] for e in self.events), 4),
             "unavailable": sum(
                 e["status"] in {"unavailable", "cache_miss", "budget_exhausted"}
                 for e in self.events

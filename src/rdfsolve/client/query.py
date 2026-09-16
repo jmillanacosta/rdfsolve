@@ -33,6 +33,15 @@ class QueryResult(BaseModel):
     duration_ms: int
     error: str | None = None
 
+    def table(self):
+        """Display values; exact RDF terms remain in rows."""
+        import pandas as pd
+
+        return pd.DataFrame(
+            [{name: term.value for name, term in row.items()} for row in self.rows],
+            columns=self.variables,
+        )
+
 
 # Public helper
 

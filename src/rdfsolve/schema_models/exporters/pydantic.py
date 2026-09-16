@@ -185,7 +185,7 @@ def to_pydantic(
         "",
         "    def to_graph(self, *, fields: list[str] | None = None) -> Graph:",
         '        """Write populated RDF fields. Compound paths need their intermediate triples."""',
-        "        from rdfsolve.model_rdf import model_to_graph",
+        "        from rdfsolve.client.model_rdf import model_to_graph",
         "",
         "        return model_to_graph(self, fields=fields)",
         "",

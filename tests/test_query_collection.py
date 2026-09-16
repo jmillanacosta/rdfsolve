@@ -13,6 +13,32 @@ from rdfsolve.sparql_helper import SparqlHelper
 DATA = Path(__file__).parent / "test_data/aopwikirdf_metadata_excerpt.ttl"
 
 
+def test_page_logging_compiles_only_new_examples(monkeypatch):
+    from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
+    from rdfsolve.sparql_helper import QueryRecord
+
+    compiled = []
+    original = ShaclShapesGraph.compile_query
+
+    def compile_query(self, query):
+        compiled.append(query.text)
+        return original(self, query)
+
+    monkeypatch.setattr(ShaclShapesGraph, "compile_query", compile_query)
+    with SparqlHelper("https://example.org/sparql") as helper:
+        helper.enable_query_collection()
+        for offset in range(20):
+            query = f"SELECT ?x WHERE {{ VALUES ?x {{ 1 2 }} }} LIMIT 1 OFFSET {offset}"
+            record = QueryRecord(query, "SELECT", helper.endpoint_url)
+            helper._record_query(record)
+            helper._record_query(record)
+        assert len(compiled) == 20
+        assert len(helper.get_collected_queries()) == 40
+        exported = Graph().parse(data=helper.export_queries_as_ttl(), format="turtle")
+        assert len(list(exported.subjects(SH.select))) == 20
+        assert set(map(str, exported.objects(None, SH.select))) == set(compiled)
+
+
 def test_named_queries_roundtrip_and_session_isolation(monkeypatch):
     data = Graph().parse(DATA, format="turtle")
     query = "SELECT ?dataset WHERE { ?dataset a <http://rdfs.org/ns/void#Dataset> }"

@@ -10,10 +10,10 @@ from pathlib import Path
 from threading import RLock
 from urllib.parse import urlsplit
 
-from rdfsolve.catalogue import Catalogue, score, words
-from rdfsolve.hydration import _term
-from rdfsolve.query_fragments import Fragment, identifier, path_size
-from rdfsolve.retrieval import QueryValidationError, Requirement, verify_query
+from rdfsolve.client.catalogue import score, words
+from rdfsolve.client.hydration import _term
+from rdfsolve.client.query_fragments import Fragment, identifier, path_size
+from rdfsolve.client.retrieval import QueryValidationError, Requirement
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
@@ -43,19 +43,15 @@ class Session:
     def __init__(
         self,
         client,
-        source_id="rdf",
         *,
         artifact_dir=None,
         log_path=None,
         max_paths=100,
-        class_mappings=(),
-        related_registries=(),
+        output_variables=(),
     ):
         """Attach the source and initialize one investigation."""
         self.client = client
-        self.catalogue = Catalogue(
-            client, source_id, class_mappings=class_mappings, related_registries=related_registries
-        )
+        self.catalogue = client.catalogue
         self.lock = RLock()
         self.question = ""
         self.goals = {}
@@ -64,10 +60,11 @@ class Session:
         self.prepared = {}
         self.results = {}
         self.executions = {}
-        self.records = {}
+        self.records = self.catalogue.records
         self.selections = {}
         self.cache = {}
         self.max_paths = max_paths
+        self.output_variables = tuple(output_variables)
         self.artifact_dir = Path(artifact_dir).resolve() if artifact_dir else None
         self.log_path = Path(log_path).resolve() if log_path else None
 
@@ -79,6 +76,13 @@ class Session:
             card["description"] = short(f.description)
         if f.iri:
             card["iri"] = f.iri
+        if f.kind in {"type", "field", "path"}:
+            card["binding_count"] = 1 if f.kind == "type" else 2
+            if f.steps:
+                card["explicit_path_ports"] = len(f.steps) + 1
+        matches = c.metadata.get(ref, {}).get("name_matches", [])
+        if matches:
+            card["name_matches"] = [{**n, "text": short(n["text"])} for n in matches[:2]]
         if f.path:
             card.update(
                 owner=c.type_refs.get(f.owner),
@@ -123,8 +127,6 @@ class Session:
                 }
                 for e in evidence[:2]
             ]
-        arguments = " ?s" if f.kind == "type" else " ?s ?o" if f.path else ""
-        card["insert"] = "{{" + ref + arguments + "}}"
         return {k: v for k, v in card.items() if v not in (None, [], "")}
 
     def _page(self, refs, offset=0, budget=5500, limit=None, *, brief=False):
@@ -133,6 +135,9 @@ class Session:
             card = self._card(ref)
             if brief:
                 card = {k: card[k] for k in ("ref", "label", "targets") if k in card}
+            if not cards and len(json.dumps([card]).encode()) > budget:
+                card = {k: card[k] for k in ("ref", "label", "kind", "owner") if k in card}
+                card["label"] = short(card["label"], 80)
             if (limit is not None and len(cards) >= limit) or len(
                 json.dumps([*cards, card]).encode()
             ) > budget:
@@ -159,43 +164,44 @@ class Session:
         """Declare clauses and retrieve their connected schema region locally."""
         corrections = corrections or {}
         if goals is not None or corrections:
+            question = question or self.question
             if not question.strip() or (not goals and not corrections):
                 raise ValueError(
                     "Supply the original question and each requested output or restriction as a clause."
                 )
             requirements = dict(self.requirements)
             warnings = []
-            if (
-                self.requirements
-                and len(goals or []) > 1
-                and any(item["clause"] not in self.goals.values() for item in goals)
-            ):
-                raise ValueError(
-                    "Goals are already retained. Use corrections keyed by goal ID to refine them; add a missing goal individually."
-                )
             for item in goals or []:
-                goal = Requirement.model_validate(item)
+                goal = self.catalogue.requirement(item, self.output_variables)
                 key = next(
                     (k for k, r in requirements.items() if r.clause == goal.clause),
                     f"g{len(requirements) + 1}",
                 )
+                if corrections and key in self.requirements:
+                    if goal != self.requirements[key]:
+                        warnings.append(
+                            f"Kept retained {key}; applied only its explicit corrections."
+                        )
+                    continue
                 requirements[key] = goal
             for key, changes in corrections.items():
                 if key not in self.requirements:
                     raise ValueError(f"Unknown goal {key}; use a retained requirement ID")
+                changes = {name: value for name, value in changes.items() if value is not None}
                 if set(changes) - {"concept", "owner", "kind", "required"}:
                     raise ValueError("Corrections retain the original clause and value restriction")
                 previous = self.requirements[key]
-                revised = Requirement.model_validate({**previous.model_dump(), **changes})
-                if previous.kind != revised.kind and (previous.kind, revised.kind) != (
+                kind = changes.get("kind", previous.kind)
+                if previous.kind != kind and (previous.kind, kind) != (
                     "text_filter",
                     "entity_filter",
                 ):
                     raise ValueError(
-                        f"Preserve the value restriction or output role of '{previous.clause}'"
+                        f"Preserve the {previous.kind} role of {key} ('{previous.clause}'). Correct only its concept or owner."
                     )
+                revised = Requirement.model_validate({**previous.model_dump(), **changes})
                 if previous.concept != revised.concept:
-                    self._check_concept_correction(previous, revised)
+                    self.catalogue.validate_correction(previous, revised)
                 requirements[key] = revised
 
             def normalize(value):
@@ -298,7 +304,7 @@ class Session:
             ranked = c.search(
                 concept,
                 owners=[cls] if cls else owner_ids,
-                targets=target_ids if not concept else (),
+                targets=target_ids,
             )
             exact = [
                 r
@@ -318,13 +324,17 @@ class Session:
                     **self._page(ranked, offset, budget=5000 // len(searches)),
                 }
             )
-        connections = [
-            r
-            for r in c.field_refs.values()
-            if c.fragments[r].owner in seeds
-            and seeds.intersection(c.metadata[r].get("targets", []))
-            and (len(seeds) > 1 or target_ids)
-        ]
+        connections = (
+            c.search("", owners=owner_ids, targets=target_ids)
+            if target_ids
+            else [
+                r
+                for r in c.field_refs.values()
+                if c.fragments[r].owner in seeds
+                and seeds.intersection(c.metadata[r].get("targets", []))
+                and len(seeds) > 1
+            ]
+        )
         return {
             "types": self._page([c.type_refs[cls] for cls in sorted(seeds)], budget=1800),
             "matches": groups,
@@ -352,42 +362,10 @@ class Session:
             else None,
         }
 
-    def _check_concept_correction(self, previous, revised):
-        """Keep known vocabulary evidence when correcting an initial search term."""
-        c = self.catalogue
-        concept = (
-            " ".join(sorted(words(previous.concept) - words(previous.value))) or previous.concept
-        )
-        known = {r for r in c.schema_documents if c.relevance(r, concept) >= 1}
-        selected = {r for r in c.schema_documents if c.relevance(r, revised.concept) >= 1}
-        if not selected:
-            raise ValueError("Use a discovered class or field label in the correction")
-        if known and not known.intersection(selected):
-            raise ValueError(
-                f"The correction conflicts with retained evidence for '{previous.concept}'"
-            )
-
     def _retain(self, result, key, offset=0):
         """Keep a typed Results set and present a few candidate identities."""
-        c, refs = self.catalogue, []
         self.selections[key] = result
-        for record in result:
-            term = RdfTerm(kind="uri", value=str(record.uri))
-            ref = c._put(
-                Fragment(
-                    "term",
-                    short(self.client.title(record)),
-                    term=term,
-                    basis="typed entity retrieval",
-                ),
-                [record.rdf_class_iri, term.value],
-            )
-            self.records[ref] = record
-            lookups = result.coverage.get("terms", [result.coverage.get("text", "")])
-            c.metadata.setdefault(ref, {}).setdefault("lookups", set()).update(
-                t.casefold() for t in lookups if t
-            )
-            refs.append(ref)
+        refs = result.references
         summary = result.summary()
         return {"selection": key, **summary, **self._page(refs, offset, budget=3000, limit=4)}
 
@@ -401,9 +379,13 @@ class Session:
             self.selections[key] = (
                 self.client.search([text], kind=cls, fields=names)
                 if names
-                else self.client.find(text, kind=cls)
+                else self.client.find(text, kind=cls, allow_partial=True)
             )
         result = self._retain(self.selections[key], key, offset)
+        if self.selections[key].coverage.get("status") == "partial":
+            result["warning"] = (
+                "Search budget reached. This selection covers only retained matches. Refine the name or class to resolve an individual."
+            )
         if cls:
             result["searched_class"] = {
                 "ref": c.type_refs[cls],
@@ -436,7 +418,8 @@ class Session:
                 allow_partial=True,
                 allow_repeated_classes=True,
             )
-            refs, limited = self.catalogue.retain_paths(table)
+            refs = list(table.attrs["references"])
+            limited = bool(table.attrs.get("truncated"))
             refs.sort(key=lambda r: self.catalogue.metadata[r].get("status") != "matched")
             self.cache[key] = refs, limited, table.attrs
         refs, limited, about = self.cache[key]
@@ -450,7 +433,7 @@ class Session:
 
     def follow(self, source, target, *, via=None, value=None, offset=0):
         """Follow a selected field through Results.related without disclosing its records."""
-        from rdfsolve.client_api import Results
+        from rdfsolve.client.api import Results
 
         selected = self._endpoint(source)
         if not isinstance(selected, Results):
@@ -516,7 +499,21 @@ class Session:
             card.update(candidates=candidates, limited=len(rows) > 4)
         return card
 
-    def prepare(self, sparql, grounding=None):
+    def prepare(
+        self,
+        sparql=None,
+        grounding=None,
+        *,
+        route=None,
+        source="source",
+        target="target",
+        fields=None,
+        patterns=None,
+        values=None,
+        text=None,
+        distinct=True,
+        outputs=(),
+    ):
         """Expand and verify a SELECT against retained semantic commitments."""
         self.prepared.clear()
         active = {
@@ -529,7 +526,30 @@ class Session:
                 "unresolved_goals",
                 f"Ground every active clause: {sorted(active)}. Source-scope clauses are already enforced by the Client.",
             )
-        query = verify_query(sparql, self.requirements, grounding or {}, self.catalogue)
+        options = {"requirements": self.requirements, "grounding": grounding}
+        if patterns:
+            from rdfsolve.client.retrieval import validate_outputs
+
+            selected = (
+                outputs
+                or self.output_variables
+                or list(dict.fromkeys(v for p in patterns for v in p["bindings"]))
+            )
+            validate_outputs(selected, self.output_variables)
+            query = self.client.prepare_network(
+                patterns, outputs=selected, values=values, text=text, distinct=distinct, **options
+            )
+        elif route:
+            query = self.client.prepare_path(
+                route,
+                source=source,
+                target=target,
+                fields=fields,
+                output_variables=self.output_variables,
+                **options,
+            )
+        else:
+            query = self.client.prepare(sparql, output_variables=self.output_variables, **options)
         query.warnings = list(dict.fromkeys([*self.interpretation_warnings, *query.warnings]))
         self.prepared = {query.ref: query}
         return {
@@ -553,7 +573,7 @@ class Session:
         query = self._query(query_ref)
         key = identifier("probe", [query_ref, limit])
         if key not in self.results:
-            self.results[key] = self.client.select(query.sparql + f"\nLIMIT {limit + 1}")
+            self.results[key] = self.client.select(query, limit=limit + 1)
         result = self.results[key]
         return {
             "state": "probed",
@@ -570,7 +590,7 @@ class Session:
             return self.executions[query_ref]
         query = self._query(query_ref)
         try:
-            result = self.client.select(query.sparql, exhaustive=True)
+            result = self.client.select(query, exhaustive=True)
         except Exception as exc:
             return {
                 "state": "failed",

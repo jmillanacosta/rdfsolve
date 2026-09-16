@@ -96,7 +96,8 @@ agents = [
 ]
 mcp = ["mcp==2.2.0"]
 tests = [
-    "pydantic-ai-slim==2.0.0",
+    "psutil>=5.9",
+    "pydantic-ai-slim[openai]==2.0.0",
     "mcp==2.2.0",
     "pytest",
     "coverage",
@@ -127,6 +128,7 @@ web = [
     "gunicorn>=22.0",
 ]
 notebooks = [
+    "psutil>=5.9",
     # Additional packages for notebook development and analysis
     "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization

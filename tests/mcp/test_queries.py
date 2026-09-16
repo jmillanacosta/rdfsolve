@@ -4,7 +4,7 @@ import pytest
 from conftest import E, declare, event_goals, field, insert, prepare, values
 from rdflib import RDF, XSD, Literal, URIRef
 
-from rdfsolve.retrieval import QueryValidationError
+from rdfsolve.client.retrieval import QueryValidationError
 
 
 def test_event_answers_preserve_owner_scope_and_optional_data(session):
@@ -109,7 +109,7 @@ def test_source_scope_cannot_be_overridden(session, pattern):
 def test_same_record_constraint_and_repeated_class_roles():
     from rdflib import Graph
 
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
     from rdfsolve.mcp.session import Session
     from rdfsolve.schema_models.core import MinedSchema
     from rdfsolve.schema_models.pattern import SchemaPattern
@@ -144,7 +144,7 @@ def test_same_record_constraint_and_repeated_class_roles():
     pattern = "?person a <urn:jobs:Person>; <urn:jobs:job> ?job . ?job a <urn:jobs:Job>; <urn:jobs:employer> ?company; <urn:jobs:year> 2020 . ?company a <urn:jobs:Company> ."
     # Register the actual company through typed package retrieval.
     record = s.client.get(s.client.model("urn:jobs:Company"), "urn:jobs:X", fields=[])
-    from rdfsolve.query_fragments import Fragment
+    from rdfsolve.client.query_fragments import Fragment
     from rdfsolve.schema_models.enrichment import RdfTerm
 
     ref = s.catalogue._put(
@@ -171,7 +171,7 @@ def test_graph_scope_does_not_join_different_named_graphs(session):
     from conftest import event_goals
     from rdflib import Dataset
 
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
     from rdfsolve.mcp.session import Session
 
     graphs = Dataset()
@@ -471,3 +471,43 @@ def test_explicit_choice_cannot_turn_missing_meaning_into_success(session):
         session.schema(question=goal["clause"], goals=[{**goal, "concept": "context"}])
     with pytest.raises(ValueError):
         session.schema(question=goal["clause"], goals=[goal["clause"]])
+
+
+@pytest.mark.parametrize("form", ["prefix", "triple", "semicolon", "macro"])
+def test_retained_handles_expand_before_validation(session, form):
+    c = session.catalogue
+    t = c.type_refs[str(E.Chemical)]
+    f = field(session, E.Chemical, E.identifier, "s", "CAS").split()[0][2:]
+    n = field(
+        session, E.Chemical, "http://www.w3.org/2000/01/rdf-schema#label", "s", "name"
+    ).split()[0][2:]
+    declare(session, "Export chemicals", concept="Chemical")
+    root = {
+        "prefix": f"{t} ?s",
+        "triple": f"?s a {t}",
+        "semicolon": f"?s a {t}",
+        "macro": insert(t, "s"),
+    }[form]
+    number = f"{f} ?s ?CAS" if form == "prefix" else f"?s {f} ?CAS"
+    name = f"?s {n} ?name"
+    if form == "macro":
+        number, name = insert(f, "s", "CAS"), insert(n, "s", "name")
+    body = root + " OPTIONAL { " + number + " } OPTIONAL { " + name + " }"
+    if form == "semicolon":
+        body = f"{root}; {f} ?CAS; {n} ?name ."
+    ready = session.prepare("SELECT ?s ?CAS ?name WHERE { " + body + " }")
+    assert {(r["CAS"]["value"], r["name"]["value"]) for r in values(session, ready)} == {
+        (number, name) for number in ("001", "123") for name in ("Name one", "Naam twee")
+    }
+    protected = session.prepare(
+        "SELECT ?s ?CAS ?name WHERE { " + body + f' FILTER(?name != "{f}") # {t}\n' + "}"
+    )
+    assert len(values(session, protected)) == 4
+    assert f'"{f}"' in session.prepared[protected["query_ref"]].sparql
+    assert f"# {t}" in session.prepared[protected["query_ref"]].sparql
+    ready = session.prepare("SELECT ?s ?CAS ?name WHERE { " + body + " }")
+    query = session.prepared[ready["query_ref"]]
+    assert {u["ref"] for u in query.uses} == {t, f, n}
+    assert all(ref not in query.sparql for ref in (t, f, n))
+    with pytest.raises(ValueError, match="Unknown fragment"):
+        session.prepare("SELECT ?s WHERE { ?s a t_000000000000 }")

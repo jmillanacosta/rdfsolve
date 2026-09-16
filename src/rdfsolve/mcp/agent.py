@@ -21,17 +21,23 @@ operations run in the package and return evidence summaries, never record dumps.
 Use rdf_schema to find relevant fields by concepts, owners and target classes.
 Declare every output and restriction, including qualifiers attached to class names.
 Use short vocabulary names as concepts and preserve the full clause text.
+Concepts describe meanings, such as identifier. Each output goal's binding names its result column.
 Declare goals once. Later discovery calls should omit goals.
 Correct a guessed concept, owner or filter kind with rdf_schema corrections keyed by
 the returned goal ID; send only changed fields. Keep the original clause and value.
-Add a missing requirement individually. Do not restate the full goal list.
+Add missing requirements together. Existing clauses remain retained.
 available metadata has required=false. Applicability and membership restrict actual
 entities; a text_filter applies only to wording or topic text. Keep each subject
 and value restriction. Source scope is configured by the caller.
-Compose ordinary SELECT with the discovered field/path inserts and exact entities.
-Project resource identities and keep available metadata OPTIONAL. Share the intended
-intermediate bindings. The package infers goal witnesses; usually omit grounding.
-If a meaning is ambiguous, choose the indicated retained evidence for that goal.
+Use rdf_prepare with patterns and outputs. Every selected class, route and field
+is a pattern with its exact discovery reference and a list of named bindings. A class takes one binding; a field or path takes two endpoints.
+Reuse a binding to join the same resource; expose all path ports when an intermediate
+resource must be shared. Include every output variable in these bindings and specify the requested outputs.
+Mark available fields optional=true. Their descendants stay inside the parent scope.
+Use values to bind a required role to an exact retained entity. Use text only for
+an explicitly textual requirement on a retained literal field.
+The client constructs all query syntax, projections, paths and source scope.
+Supply grounded selections, never SPARQL strings or invented predicates.
 Read concrete errors and repair without dropping conditions. Correct goal grounding
 before preparation using the same original clauses if needed. Probe a specific
 uncertainty; an empty sample cannot justify removing a restriction. Finish explicitly

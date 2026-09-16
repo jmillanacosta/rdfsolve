@@ -199,6 +199,7 @@ class PipelineConfig:
     trim_descriptions: int | None = None
     navigation_hops: int = 2
     navigation_limit: int = 100
+    navigation_probes: int = 0
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     # QLever settings (for local mining)
@@ -400,6 +401,7 @@ class Stage:
         output_dir: Path,
         name: str,
         suffix: str,
+        helper=None,
     ) -> None:
         """Save schema in requested output formats.
 
@@ -415,7 +417,8 @@ class Stage:
                         name, self.config.trim_descriptions)
         if self.config.navigation_hops:
             schema.discover_paths(max_hops=self.config.navigation_hops,
-                                  max_paths_per_length=self.config.navigation_limit)
+                                  max_paths_per_length=self.config.navigation_limit,
+                                  helper=helper, probe_limit=self.config.navigation_probes)
 
         # Keep canonical data for every run. Text trimming, if requested, is lossy.
         path = output_dir / f"{name}{suffix}_schema.json"
@@ -643,7 +646,7 @@ class RemoteMiningStage(Stage):
                 source.endpoint_down = False
 
             # Save schema in requested formats
-            self._save_schema_outputs(schema, source_output_dir, source.name, suffix)
+            self._save_schema_outputs(schema, source_output_dir, source.name, suffix, helper=miner.helper)
             self._require_complete(miner)
 
             if miner.last_report:
@@ -934,7 +937,7 @@ class LocalMiningStage(Stage):
         else:
             schema = miner.mine(dataset_name=source.name)
 
-        self._save_schema_outputs(schema, output_dir, source.name, suffix)
+        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=miner.helper)
         self._require_complete(miner)
 
 
@@ -1334,7 +1337,7 @@ class GroupedMiningStage(LocalMiningStage):
         else:
             schema = miner.mine(dataset_name=group_name)
 
-        self._save_schema_outputs(schema, output_dir, group_name, self.config.output_suffix)
+        self._save_schema_outputs(schema, output_dir, group_name, self.config.output_suffix, helper=miner.helper)
         self._require_complete(miner)
         schema_path = output_dir / f"{group_name}_schema.json"
         log.info(f"  -> Saved grouped schema to {schema_path}")
@@ -1535,7 +1538,7 @@ class LsLodCloudStage(LocalMiningStage):
         verify_named_graphs(miner._helper, graph_uris)
         schema = miner.mine(dataset_name="lslod_cloud")
 
-        self._save_schema_outputs(schema, output_dir, "lslod_cloud", self.config.output_suffix)
+        self._save_schema_outputs(schema, output_dir, "lslod_cloud", self.config.output_suffix, helper=miner.helper)
         self._require_complete(miner)
         schema_path = output_dir / "lslod_cloud_schema.json"
         log.info(f"  -> Saved LSLOD Cloud schema to {schema_path}")
@@ -1955,6 +1958,8 @@ Examples:
     parser.add_argument("--no-enrichment", action="store_true", help="Skip definitions and observed examples")
     parser.add_argument("--navigation-hops", type=int, choices=[0, 2, 3, 4, 5, 6], default=2,
                         help="Compose schema routes locally; 0 disables (no endpoint queries)")
+    parser.add_argument("--navigation-probes", type=int, default=0,
+                        help="Maximum joined-path support queries; zero keeps discovery local")
     parser.add_argument("--navigation-limit", type=int, default=100,
                         help="Maximum saved candidate routes per hop length")
     parser.add_argument("--examples-per-pattern", type=int, default=1, choices=range(0, 21),
@@ -2049,6 +2054,9 @@ Examples:
     config.trim_descriptions = args.trim_descriptions
     if config.trim_descriptions is not None and config.trim_descriptions < 0:
         parser.error("--trim-descriptions must be nonnegative")
+    config.navigation_probes = args.navigation_probes
+    if config.navigation_probes < 0 or (config.navigation_probes and not args.navigation_hops):
+        parser.error("--navigation-probes requires navigation hops and a nonnegative budget")
     config.navigation_hops = args.navigation_hops
     config.navigation_limit = args.navigation_limit
     if config.navigation_limit < 0:

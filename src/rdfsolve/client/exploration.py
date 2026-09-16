@@ -8,18 +8,17 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import Literal
 
-from rdfsolve.hydration import HydrationLimitError, Hydrator, _iri, _term
-from rdfsolve.schema_models.enrichment import LABEL_PREDICATES
+from rdfsolve.client.hydration import HydrationLimitError, Hydrator, _iri, _term
+from rdfsolve.schema_models.enrichment import NAME_PREDICATES
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
 
 Model = TypeVar("Model", bound=BaseModel)
-SEARCH_PREDICATES = set(LABEL_PREDICATES) | {
+SEARCH_PREDICATES = set(NAME_PREDICATES) | {
     "http://purl.org/dc/elements/1.1/identifier",
     "http://purl.org/dc/terms/identifier",
     "http://purl.org/dc/terms/alternative",
-    "http://www.w3.org/2004/02/skos/core#altLabel",
     "http://www.w3.org/2004/02/skos/core#notation",
 }
 
@@ -103,7 +102,7 @@ class DatasetClient(Hydrator):
         fields: list[str] | None = None,
         limit: int = 100,
     ) -> list[Model]:
-        """Find typed IRIs whose label or title contains text, ignoring case.
+        """Find typed IRIs whose name or synonym contains text, ignoring case.
 
         Matching uses literal wording. Raise if the match count exceeds the limit.
         """
@@ -111,7 +110,7 @@ class DatasetClient(Hydrator):
             raise ValueError("Supply search text")
         if type(limit) is not int or not 1 <= limit <= self.max_subjects:
             raise ValueError(f"Use a limit between 1 and {self.max_subjects}")
-        predicates = " ".join(_iri(p) for p in LABEL_PREDICATES)
+        predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
         body = self._scope(
             f"?s a {_iri(getattr(model, 'rdf_class_iri', ''))} . "
             f"VALUES ?labelProperty {{ {predicates} }} ?s ?labelProperty ?label . "

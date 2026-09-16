@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
+    from rdfsolve.mcp.workflow import ask_rdf
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.void_schema import VoidSchema
     from rdfsolve.sources import SourceEntry
@@ -23,14 +24,19 @@ from .void_discover import VoidParser
 
 logger = logging.getLogger(__name__)
 
-from rdfsolve.client_api import Client
-from rdfsolve.ontology import OntologyLookup
+from rdfsolve.client.api import Client
+from rdfsolve.client.ontology import OntologyLookup
+from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
+from rdfsolve.client.retrieval import Requirement
 from rdfsolve.query_collection import QueryCollection
 
 __all__ = [
     "Client",
     "OntologyLookup",
+    "PreparedQuery",
     "QueryCollection",
+    "QueryPattern",
+    "Requirement",
     "ask_rdf",
     "discover_void_graphs",
     "discover_void_source",
@@ -421,6 +427,9 @@ def mine_schema(
     graph_store_dir: str | Path = "graph-store",
     graph_store_max_bytes: int = 64 * 1024 * 1024,
     pagination: Literal["offset", "cursor"] = "offset",
+    navigation_hops: int = 0,
+    navigation_limit: int = 100,
+    navigation_probes: int = 0,
 ) -> MinedSchema:
     """Mine RDF schema from a SPARQL endpoint using SELECT queries.
 
@@ -445,6 +454,9 @@ def mine_schema(
         graph_uris=graph_uris,
         dataset_name=dataset_name,
         chunk_size=chunk_size,
+        navigation_hops=navigation_hops,
+        navigation_limit=navigation_limit,
+        navigation_probes=navigation_probes,
         pagination=pagination,
         class_chunk_size=class_chunk_size,
         class_batch_size=class_batch_size,
@@ -633,7 +645,7 @@ def execute_sparql(
     variable_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Execute a SPARQL query against a remote endpoint."""
-    from rdfsolve.query import execute_sparql as _execute
+    from rdfsolve.client.query import execute_sparql as _execute
 
     qr = _execute(
         query=query,
@@ -654,60 +666,13 @@ def load_mapping_jsonld(path: str) -> dict[str, Any]:
     return result
 
 
-async def ask_rdf(
-    question: str,
-    *,
-    schema,
-    source_id="rdf",
-    endpoint=None,
-    data_file=None,
-    graph_uris=None,
-    model=None,
-    base_url=None,
-    model_name=None,
-    api_key=None,
-    model_settings=None,
-    max_response_tokens: int | None = 4096,
-    usage_limits=None,
-    timeout=900,
-    max_paths=100,
-    mapping_file=None,
-    related_registries=(),
-    ontology_grounding=False,
-    ontology_provider="ols",
-    ontology_cache=None,
-    ontology_offline=False,
-    output_dir=None,
-):
-    """Run a grounded RDF investigation with a configured model and saved schema.
+def __getattr__(name):
+    if name == "ask_rdf":
+        from rdfsolve.mcp.workflow import ask_rdf
 
-    max_response_tokens limits each response, including reasoning; None disables
-    this ceiling. Explicit model_settings.max_tokens and provider limits still apply.
-    usage_limits controls the whole investigation separately.
-    """
-    from rdfsolve.mcp.workflow import ask_rdf as run
+        return ask_rdf
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-    return await run(
-        question,
-        schema=schema,
-        source_id=source_id,
-        endpoint=endpoint,
-        data_file=data_file,
-        graph_uris=graph_uris,
-        model=model,
-        base_url=base_url,
-        model_name=model_name,
-        api_key=api_key,
-        model_settings=model_settings,
-        max_response_tokens=max_response_tokens,
-        usage_limits=usage_limits,
-        timeout=timeout,
-        max_paths=max_paths,
-        mapping_file=mapping_file,
-        related_registries=related_registries,
-        ontology_grounding=ontology_grounding,
-        ontology_provider=ontology_provider,
-        ontology_cache=ontology_cache,
-        ontology_offline=ontology_offline,
-        output_dir=output_dir,
-    )
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))

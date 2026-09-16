@@ -5,9 +5,9 @@ import json
 import pytest
 from rdflib import RDF, Dataset, URIRef
 
-from rdfsolve.client_api import Client
-from rdfsolve.hydration import HydrationLimitError
-from rdfsolve.registry import Registry
+from rdfsolve.client.api import Client
+from rdfsolve.client.hydration import HydrationLimitError
+from rdfsolve.client.registry import Registry
 from tests.test_client_api import AOP, CHEMICAL, DATA, client
 
 

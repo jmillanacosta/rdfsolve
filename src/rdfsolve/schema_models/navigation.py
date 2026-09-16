@@ -15,7 +15,32 @@ class NavigationPath(BaseModel):
 
     steps: list[SchemaPattern] = Field(min_length=2, max_length=6)
     evidence: Literal["schema_composed"] = "schema_composed"
-    instance_support: Literal["not_checked"] = "not_checked"
+    instance_support: Literal["not_checked", "matched", "no_match", "timeout", "error"] = (
+        "not_checked"
+    )
+    source_count: int | None = Field(
+        default=None, ge=0, description="Focus nodes; graph/focus pairs for named graph scope"
+    )
+    matched_sources: int | None = Field(default=None, ge=0)
+    min_count: int | None = Field(default=None, ge=0)
+    max_count: int | None = Field(default=None, ge=0)
+    query: str | None = None
+    observed_at: str | None = None
+    error: str | None = None
+
+    def signature(self) -> tuple:
+        """Identify route structure independently of labels and observed counts."""
+        return tuple(
+            (s.subject_class, s.property_uri, s.object_class, s.datatype) for s in self.steps
+        )
+
+    def label(self) -> str:
+        """Describe the endpoints and intermediate classes using retained labels."""
+        first, last = self.steps[0], self.steps[-1]
+        start = first.subject_label or first.subject_class
+        target = last.object_label or last.datatype or last.object_class
+        via = ", ".join(s.object_label or s.object_class for s in self.steps[:-1])
+        return f"{start} → {target} via {via}"
 
     def property_path(self) -> PropertyPath:
         """Return the predicate sequence, without intermediate class filters."""

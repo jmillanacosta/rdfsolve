@@ -46,7 +46,7 @@ def test_load_sources(tmp_path):
 
 
 def test_execute_sparql():
-    with patch("rdfsolve.query.execute_sparql") as mock_exec:
+    with patch("rdfsolve.client.query.execute_sparql") as mock_exec:
         mock_result = MagicMock()
         mock_result.model_dump.return_value = {"bindings": []}
         mock_exec.return_value = mock_result

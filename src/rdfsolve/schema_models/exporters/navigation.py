@@ -36,8 +36,8 @@ def navigation_metadata(route: NavigationPath) -> dict[str, Any]:
         "triples": triples,
         "bindings": bindings,
         "class_matching": "explicit_rdf_type",
-        "result_cardinality": "unknown",
-        "execution": "not_implemented",
+        "result_cardinality": {"min": route.min_count, "max": route.max_count},
+        "execution": route.instance_support,
         "repeated_predicates": sorted(p for p, count in predicates.items() if count > 1),
         "revisited_classes": sorted(c for c, count in classes.items() if count > 1),
     }

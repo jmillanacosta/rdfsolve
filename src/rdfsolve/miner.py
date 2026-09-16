@@ -871,6 +871,9 @@ def mine_schema(
     graph_store_dir: str | Path = "graph-store",
     graph_store_max_bytes: int = 64 * 1024 * 1024,
     pagination: Literal["offset", "cursor"] = "offset",
+    navigation_hops: int = 0,
+    navigation_limit: int = 100,
+    navigation_probes: int = 0,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`.
 
@@ -944,6 +947,16 @@ def mine_schema(
         graph_store_max_bytes=graph_store_max_bytes,
     )
     try:
-        return miner.mine(dataset_name=dataset_name)
+        schema = miner.mine(dataset_name=dataset_name)
+        if navigation_probes and not navigation_hops:
+            raise ValueError("navigation_probes requires navigation_hops")
+        if navigation_hops:
+            schema.discover_paths(
+                max_hops=navigation_hops,
+                max_paths_per_length=navigation_limit,
+                helper=miner.helper,
+                probe_limit=navigation_probes,
+            )
+        return schema
     finally:
         miner.close()

@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from rdfsolve.query_log import QueryLog
+from rdfsolve.client.query_log import QueryLog
 from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 
 

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     import pandas as pd
 
-    from rdfsolve.client_api import Client
+    from rdfsolve.client.api import Client
 
 
 def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:

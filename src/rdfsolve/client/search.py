@@ -6,16 +6,16 @@ from collections import defaultdict
 
 from rdflib import Literal
 
-from rdfsolve.exploration import SEARCH_PREDICATES, _path
-from rdfsolve.hydration import HydrationLimitError, _iri, _term
-from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES
+from rdfsolve.client.exploration import SEARCH_PREDICATES, _path
+from rdfsolve.client.hydration import HydrationLimitError, _iri, _term
+from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 
 
-def search_records(client, terms, kind, fields, *, names_only=False):
+def search_records(client, terms, kind, fields, *, names_only=False, allow_partial=False):
     """Search generated fields in one bounded request, keeping full RDF evidence."""
-    from rdfsolve.client_api import Results, _name_fields
+    from rdfsolve.client.api import Results, _name_fields
 
     if not 1 <= len(terms) <= 12 or any(not t.strip() or len(t) > 200 for t in terms):
         raise ValueError("Use 1..12 nonempty search phrases of at most 200 characters")
@@ -103,18 +103,21 @@ def search_records(client, terms, kind, fields, *, names_only=False):
                     "type": cls.value,
                     "field": name,
                     "predicate": path.iri,
+                    "name_scope": SYNONYM_PREDICATES.get(path.iri),
                     "path": path.model_dump(mode="json"),
                     "text": _term(row["text"]).model_dump(mode="json"),
                     "graph": row.get("_graph", {}).get("value"),
                     "query_id": query_id,
                 }
             )
-        if partial and names_only:
+        if partial and names_only and not allow_partial:
             raise HydrationLimitError("Too many name matches; narrow the text or choose a class")
         records = []
         for cls, ids in sorted(groups.items()):
             model = client.model(cls)
-            records.extend(client.get_many(model, sorted(ids), fields=_name_fields(model)))
+            records.extend(
+                client.get_many(model, sorted(ids), fields=[] if partial else _name_fields(model))
+            )
     return Results(
         client,
         records,

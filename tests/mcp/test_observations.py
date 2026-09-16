@@ -33,24 +33,30 @@ def test_errors_are_actionable_and_serializable(session):
     bad = dispatch(session, "rdf_probe", {"query_ref": "missing", "limit": "2"})
     assert bad["error"]["code"] == "invalid_arguments"
     json.dumps(bad)
+    empty = dispatch(session, "rdf_find", {"text": ""})
+    assert "rdf_prepare" in empty["repair"] and not session.client.queries
     declare(session, "Return pathways", concept="Adverse Outcome Pathway")
-    bad = dispatch(
-        session,
-        "rdf_prepare",
-        {
-            "sparql": f"SELECT ?a WHERE {{ ?a <{E.AOP}> . }}",
-            "grounding": {"g1": {"project": ["a"]}},
-        },
-    )
-    assert bad["error"]["code"] == "sparql_syntax"
-    assert bad["error"]["line"] and bad["error"]["hints"]
+    bad = dispatch(session, "rdf_prepare", {"sparql": "SELECT broken"})
+    assert bad["error"]["code"] == "invalid_arguments"
     ref = session.catalogue.type_refs[str(E.AOP)]
-    bad = dispatch(
-        session,
-        "rdf_prepare",
-        {
-            "sparql": f"SELECT ?a WHERE {{ ?a {ref} }}",
-            "grounding": {"g1": {"evidence": [ref]}},
-        },
-    )
-    assert bad["selected_evidence"]["items"][0]["insert"] == "{{" + ref + " ?s}}"
+    bad = dispatch(session, "rdf_prepare", {"patterns": [{"reference": ref, "bindings": ["a", "b"]}], "outputs": ["a"]})
+    assert "one variable" in bad["error"]["message"]
+    repaired = dispatch(session, "rdf_prepare", {"patterns": [{"reference": ref, "bindings": ["a"]}], "outputs": ["a"]})
+    assert repaired["state"] == "prepared" and not session.client.queries
+
+
+def test_small_schema_pages_keep_usable_references(session):
+    refs = list(session.catalogue.field_refs.values())
+    page = session._page(refs, budget=240)
+    assert page["items"] and page["next_offset"] == 1
+    assert len(json.dumps(page["items"]).encode()) <= 240
+    assert session.inspect(page["items"][0]["ref"])["binding_count"] == 2
+
+
+def test_route_tool_compiles_and_executes_the_client_path(session):
+    declare(session, "Return Key Events", concept="Key Event")
+    route = session.paths(str(E.AOP), str(E.Event), max_hops=1)["items"][0]["ref"]
+    prepared = dispatch(session, "rdf_prepare", {"patterns": [{"reference": route, "bindings": ["source", "event"]}], "outputs": ["source", "event"]})
+    final = dispatch(session, "rdf_finish", {"query_ref": prepared["query_ref"]})
+    assert final["rows"] == 3 and final["trace"]["query_ids"]
+    assert "bindings" not in final
