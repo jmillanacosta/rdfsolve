@@ -8,6 +8,8 @@ sssom library.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from itertools import product
+from math import isnan
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -110,3 +112,53 @@ def write_sssom_rdf(msdf: MappingSetDataFrame, output_path: Path, format: str = 
         format: RDF serialization format (turtle, xml, nt, etc.)
     """
     write_rdf(msdf, output_path, serialisation=format)
+
+
+def project_mappings(path, identities):
+    """Expand SSSOM identifiers and project assertions onto matching dataset inventories."""
+    from sssom.parsers import parse_sssom_table
+
+    from rdfsolve.mappings.models.core import MappingEdge
+
+    table = parse_sssom_table(Path(path))
+
+    def expand(value):
+        if not isinstance(value, str) or not value:
+            raise ValueError("SSSOM identifiers and predicates must be nonempty")
+        prefix, separator, local = value.partition(":")
+        if separator and prefix in table.prefix_map:
+            return table.prefix_map[prefix] + local
+        if value.startswith(("http://", "https://", "urn:")):
+            return value
+        raise ValueError(f"SSSOM prefix is not declared: {value}")
+
+    edges, unmatched = [], 0
+    for row in table.df.to_dict("records"):
+        source, target = expand(row["subject_id"]), expand(row["object_id"])
+        predicate = expand(row["predicate_id"])
+        left = [name for name, terms in identities.items() if source in terms]
+        right = [name for name, terms in identities.items() if target in terms]
+        if not left or not right:
+            unmatched += 1
+            continue
+        confidence = row.get("confidence")
+        if confidence is not None and isnan(float(confidence)):
+            confidence = None
+        for a, b in product(left, right):
+            edges.append(
+                MappingEdge(
+                    source_class=source,
+                    target_class=target,
+                    predicate=predicate,
+                    source_dataset=a,
+                    target_dataset=b,
+                    confidence=confidence,
+                    mapping_justification=expand(row["mapping_justification"]),
+                    mapping_source=str(table.metadata.get("mapping_set_id") or Path(path).name),
+                )
+            )
+    return edges, {
+        "rows": len(table.df),
+        "unrepresented_rows": unmatched,
+        "projected_edges": len(edges),
+    }

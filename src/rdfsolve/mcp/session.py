@@ -10,11 +10,10 @@ from pathlib import Path
 from threading import RLock
 from urllib.parse import urlsplit
 
-from rdfsolve.client.catalogue import score, words
+from rdfsolve.client.catalogue import words
 from rdfsolve.client.hydration import _term
 from rdfsolve.client.query_fragments import Fragment, identifier, path_size
 from rdfsolve.client.retrieval import QueryValidationError, Requirement
-from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
 
@@ -207,6 +206,20 @@ class Session:
                 revised = Requirement.model_validate({**previous.model_dump(), **changes})
                 if previous.concept != revised.concept:
                     self.catalogue.validate_correction(previous, revised)
+                    if previous.kind == "output" and not any(
+                        max(
+                            self.catalogue.relevance(ref, previous.concept),
+                            self.catalogue.relevance(ref, previous.clause),
+                        )
+                        >= 1
+                        for ref in self.catalogue.search(revised.concept)
+                        if self.catalogue.relevance(ref, revised.concept) >= 1
+                    ):
+                        raise QueryValidationError(
+                            "meaning_changed",
+                            f"'{revised.concept}' does not explain '{previous.concept}'. "
+                            "Keep the requested output meaning and discover its owner's fields.",
+                        )
                 requirements[key] = revised
 
             def normalize(value):
@@ -370,7 +383,7 @@ class Session:
                 }
                 for cls, fields in fallback.items()
             },
-            "next_step": "Use rdf_find for named members of a discovered class."
+            "next_step": "Resolve class vocabulary with rdf_schema; use rdf_find only for a named instance."
             if unresolved
             else None,
         }
@@ -421,6 +434,9 @@ class Session:
 
     def paths(self, source, target, *, max_hops=3, meaning="", via=(), offset=0):
         """Evaluate selected records with Client.paths_between; retain schema alternatives."""
+        meaning = meaning or " ".join(
+            r.concept for r in self.requirements.values() if r.kind == "relation"
+        )
         key = identifier("paths", [source, target, max_hops, meaning, via])
         if key not in self.cache:
             table = self.client.paths_between(
@@ -437,6 +453,24 @@ class Session:
             limited = bool(table.attrs.get("truncated"))
             self.cache[key] = refs, limited, table.attrs
         refs, limited, about = self.cache[key]
+        for ref in refs[offset : offset + 4]:
+            evidence = self.catalogue.metadata[ref]
+            if evidence.get("status") not in {"not_checked", "schema_only"}:
+                continue
+            try:
+                query = self.client.prepare_path(ref)
+                result = self.client.select(query, limit=1)
+                evidence.update(
+                    status="matched" if result.row_count else "no_match",
+                    basis="bounded existence probe",
+                    query_ref=query.ref,
+                )
+            except Exception as exc:
+                evidence.update(
+                    status="probe_error",
+                    basis="bounded existence probe",
+                    error=short(f"{type(exc).__name__}: {exc}"),
+                )
         return {
             **self._page(refs, offset, limit=4),
             "search_limited": limited,

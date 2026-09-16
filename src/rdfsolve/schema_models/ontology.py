@@ -8,8 +8,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from pydantic import BaseModel, Field
-from rdflib import OWL, RDF, RDFS, Graph, Namespace, URIRef
-from rdflib import Literal as RDFLiteral
+from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
 from rdfsolve.schema_models.enrichment import TermAnnotation
 

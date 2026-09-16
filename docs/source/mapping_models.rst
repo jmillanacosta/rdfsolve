@@ -1,13 +1,13 @@
 Mapping Models
 ==============
 
-.. automodule:: rdfsolve.mapping_models
+.. automodule:: rdfsolve.mappings.models
    :no-members:
 
 Core
 ----
 
-.. automodule:: rdfsolve.mapping_models.core
+.. automodule:: rdfsolve.mappings.models.core
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ Core
 Instance Mapping
 ----------------
 
-.. automodule:: rdfsolve.mapping_models.instance
+.. automodule:: rdfsolve.mappings.models.instance
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,12 +23,12 @@ Instance Mapping
 SSSOM Mapping
 -------------
 
-.. automodule:: rdfsolve.mapping_models.sssom
+.. automodule:: rdfsolve.mappings.models.sssom
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: rdfsolve.mapping_models.semra
+.. automodule:: rdfsolve.mappings.models.semra
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +36,7 @@ SSSOM Mapping
 Inference Mapping
 -----------------
 
-.. automodule:: rdfsolve.mapping_models.inference
+.. automodule:: rdfsolve.mappings.models.inference
    :members:
    :undoc-members:
    :show-inheritance:

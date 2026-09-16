@@ -12,7 +12,7 @@ from rdfsolve._uri import (
 )
 
 # Mapping models
-from rdfsolve.mapping_models import *  # noqa: F403
+from rdfsolve.mappings.models import *  # noqa: F403
 
 # Endpoint models
 from rdfsolve.models.endpoint import (

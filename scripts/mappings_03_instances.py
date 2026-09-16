@@ -69,7 +69,9 @@ def dump_instances(source_name, port):
         }
         """
 
-        results = helper.select(query)
+        results = helper.select_with_fallback(query, exhaustive=True, purpose="instance_index")
+        if helper.last_select_execution.get("status") != "complete":
+            raise ValueError("Instance extraction was incomplete")
 
         sys.stderr.write(f"  Writing output...\n")
         sys.stderr.flush()

@@ -127,3 +127,32 @@ def test_construct_rejects_implicit_identity_resolution(monkeypatch, term):
         graph = helper.construct_graph("CONSTRUCT {} WHERE {}")
         assert {str(t) for triple in graph for t in triple} == {
             'https://data.example/subject', 'https://data.example/predicate', 'https://data.example/object'}
+
+
+@pytest.mark.parametrize("query,recover", [
+    ("SELECT DISTINCT ?s WHERE { ?s <urn:p> ?o }", True),
+    ("SELECT ?s WHERE { ?s <urn:p> ?o }", False),
+    ("SELECT DISTINCT ?s WHERE { ?s <urn:p> ?o } ORDER BY ?s", False),
+    ("SELECT DISTINCT ?s WHERE { ?s <urn:p> ?o } LIMIT 3", False),
+])
+def test_virtuoso_sort_limit_recovery_preserves_query_semantics(monkeypatch, query, recover):
+    import json
+    from rdfsolve.sparql_helper import PaginationTruncatedError
+    graph = Graph().parse(data='@prefix e: <urn:> . e:a e:p 1 . e:b e:p 2 . e:c e:p 3 .', format='turtle')
+    with SparqlHelper("https://example.invalid", inter_request_delay=0) as helper:
+        helper.select_page_size = 1
+        monkeypatch.setattr(helper, "select", lambda q, **kw: json.loads(graph.query(q).serialize(format="json")))
+        chunked = helper.select_chunked
+        def pages(q, **kw):
+            if kw.get("pagination") != "cursor":
+                yield [{"s": {"type": "uri", "value": "urn:a"}}]
+                raise PaginationTruncatedError("Virtuoso SR353: Sorted TOP clause", offset=1)
+            yield from chunked(q, **kw)
+        monkeypatch.setattr(helper, "select_chunked", pages)
+        if recover:
+            rows = helper.select_with_fallback(query, exhaustive=True)["results"]["bindings"]
+            assert sorted(r["s"]["value"] for r in rows) == ["urn:a", "urn:b", "urn:c"]
+            assert helper.last_select_execution["strategy"] == "cursor_recovery"
+        else:
+            with pytest.raises(PaginationTruncatedError):
+                helper.select_with_fallback(query, exhaustive=True)

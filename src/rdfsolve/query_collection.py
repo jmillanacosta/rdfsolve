@@ -9,9 +9,8 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Literal as QueryLiteral
 
-from rdflib import OWL, RDF, RDFS, SH, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, SH, Graph, Namespace, URIRef
 from rdflib.plugins.sparql.parser import parseQuery
-from rdflib.plugins.sparql.processor import prepareQuery
 from rdflib.term import Node
 
 from rdfsolve.schema_models.enrichment import RdfTerm

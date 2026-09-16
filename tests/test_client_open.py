@@ -11,7 +11,7 @@ from tests.test_client_api import CHEMICAL, DATA, client
 
 def test_open_saved_formats_and_mined_schema(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "rdfsolve.miner.SchemaMiner.mine", lambda *a, **k: pytest.fail("Do not mine")
+        "rdfsolve.mining.miner.SchemaMiner.mine", lambda *a, **k: pytest.fail("Do not mine")
     )
     with client() as original:
         schema = original._schema

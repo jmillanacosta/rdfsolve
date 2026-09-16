@@ -5,8 +5,8 @@ import json
 import logging
 from pathlib import Path
 
-from rdfsolve.mapping_models.core import MappingEdge
-from rdfsolve.mapping_models.io import load_edges_from_jsonld
+from rdfsolve.mappings.models.core import MappingEdge
+from rdfsolve.mappings.models.io import load_edges_from_jsonld
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def rdfsolve_edges_to_semra(edges: list[MappingEdge]):
         parts = edge.target_class.split(":", 1)
         o = Reference(prefix=parts[0], identifier=parts[1] if len(parts) > 1 else parts[0])
 
-        relation = PREDICATE_TO_RELATION.get(edge.predicate, "skos:exactMatch")
+        relation = PREDICATE_TO_RELATION[edge.predicate]
         evidence = [SimpleEvidence(
             justification=edge.mapping_justification or "rdfsolve_mapping",
             mapping_set_name=edge.source_dataset or "unknown",
@@ -48,7 +48,7 @@ def semra_to_rdfsolve_edges(mappings):
     for m in mappings:
         source_uri = f"{m.s.prefix}:{m.s.identifier}"
         target_uri = f"{m.o.prefix}:{m.o.identifier}"
-        predicate = RELATION_TO_PREDICATE.get(m.p, "http://www.w3.org/2004/02/skos/core#exactMatch")
+        predicate = RELATION_TO_PREDICATE[m.p]
 
         source_ds = target_ds = "unknown"
         justification = None

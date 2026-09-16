@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from rdfsolve.mapping_models.core import MappingEdge
+from rdfsolve.mappings.models.core import MappingEdge
 
 
 def load_edges_from_jsonld(path: str | Path) -> list[MappingEdge]:

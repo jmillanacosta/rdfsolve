@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import os
 import sys
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,69 +15,32 @@ from pydantic import ValidationError
 from rdflib import Graph
 from typing_extensions import Self
 
-from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
 from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_counts,
     enrich_patterns_with_labels,
 )
 from rdfsolve.mining.query_builders import (
-    _DECOMP_CHUNK,
-    _build_batched_blank_node_query,
-    _build_batched_literal_count_query,
-    _build_batched_literal_query,
-    _build_batched_typed_count_query,
-    _build_batched_typed_object_query,
-    _build_batched_untyped_count_query,
-    _build_batched_untyped_uri_query,
-    _build_blank_node_query,
-    _build_blank_node_query_plain,
-    _build_cardinality_query,
-    _build_class_discovery_query,
-    _build_class_discovery_query_plain,
     _build_declared_classes_query,
-    _build_example_query,
-    _build_label_query,
-    _build_literal_for_class_property_query,
-    _build_literal_query,
-    _build_literal_query_plain,
-    _build_properties_for_class_query,
-    _build_typed_object_for_class_property_query,
     _build_typed_object_query,
-    _build_typed_object_query_plain,
-    _build_untyped_uri_query,
-    _build_untyped_uri_query_plain,
-    _graph_clause,
-    _values_block,
-    pick_description,
 )
-from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.mining.single_pass_strategy import SinglePassStrategy
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
-from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.models import (
     AboutMetadata,
     MinedSchema,
     MiningReport,
     OneShotQueryResult,
-    PatternType,
-    PhaseReport,
-    QueryStats,
     SchemaPattern,
 )
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.sparql_helper import (
-    EndpointError,
-    EndpointTimeoutError,
     PaginationTruncatedError,
     SparqlHelper,
 )
 from rdfsolve.version import VERSION
-
-if TYPE_CHECKING:
-    from rdfsolve.sources import SourceEntry
 
 logger = logging.getLogger(__name__)
 

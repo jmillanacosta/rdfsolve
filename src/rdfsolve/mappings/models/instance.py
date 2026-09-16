@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import Field
 
-from rdfsolve.mapping_models.core import (
+from rdfsolve.mappings.models.core import (
     SKOS_NARROW_MATCH,
     InstanceMatchResult,
     Mapping,
@@ -69,7 +69,7 @@ class InstanceMapping(Mapping):
         Returns:
             :class:`InstanceMapping` ready for export.
         """
-        from rdfsolve.instance_matcher import probe_resource
+        from rdfsolve.mappings.probe import probe_resource
 
         return probe_resource(
             prefix=prefix,

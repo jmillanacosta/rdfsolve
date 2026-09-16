@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from rdfsolve.miner import SchemaMiner
+from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
 from rdfsolve.mining.pattern_enrichment import enrich_patterns_with_counts
 from rdfsolve.mining.strategy import MiningContext
@@ -189,7 +189,7 @@ def test_cursor_reads_rdf_terms_without_offset(monkeypatch):
 def test_mining_uses_cursor_for_pattern_pages(monkeypatch):
     import json
     from rdflib import Graph
-    from rdfsolve.miner import SchemaMiner
+    from rdfsolve.mining.miner import SchemaMiner
     from rdfsolve.mining.query_builders import _build_typed_object_query
     from tests.test_client_api import DATA
 

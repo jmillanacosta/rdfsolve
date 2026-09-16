@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from rdfsolve.sparql_helper import SparqlHelper
-
 ONTOLOGY_METACLASSES = frozenset(
     {
         "http://www.w3.org/2002/07/owl#Class",

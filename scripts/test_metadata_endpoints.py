@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Suppress verbose logs from dependencies
 logging.getLogger("rdfsolve.sparql_helper").setLevel(logging.WARNING)
-logging.getLogger("rdfsolve.miner").setLevel(logging.WARNING)
+logging.getLogger("rdfsolve.mining.miner").setLevel(logging.WARNING)
 logging.getLogger("rdfsolve.metadata").setLevel(logging.DEBUG)
 
 

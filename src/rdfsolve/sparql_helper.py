@@ -1281,8 +1281,29 @@ class SparqlHelper:
                         "SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows)
                     )
             except PaginationTruncatedError as error:
-                error.partial_rows = deepcopy(rows)
-                raise
+                if not (
+                    "SR353" in str(error)
+                    and dict.get(parsed, "modifier") == "DISTINCT"
+                    and limit is None
+                    and not offset
+                    and "orderby" not in parsed
+                ):
+                    error.partial_rows = deepcopy(rows)
+                    raise
+                meta.update(strategy="cursor_recovery", offset_error=str(error), pages=0)
+                rows = []
+                for page in self.select_chunked(
+                    self.prepare_paginated_query(query),
+                    pagination="cursor",
+                    chunk_size=self.select_page_size,
+                    max_pages=max_pages,
+                    delay_between_chunks=self.inter_request_delay,
+                    purpose=purpose,
+                    max_page_retries=self.select_page_retries,
+                    wait_after_timeout=self.select_page_cooldown,
+                ):
+                    rows.extend(page)
+                    meta.update(pages=meta["pages"] + 1, rows=len(rows))
             meta.update(
                 status="complete",
                 rows=len(rows),

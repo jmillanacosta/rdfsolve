@@ -93,7 +93,7 @@ schema = mine_schema(endpoint, navigation_hops=3, navigation_limit=50, navigatio
 
 The `MinedSchema` JSON retains the queries and observations and its SHACL
 exports include deactivated, nested query profiles for observed routes. See
-[the local QLever comparison](notebooks/mcp/05_path_mining.ipynb).
+[the mining API](docs/source/miner.rst).
 
 ### Discover existing VoID descriptions
 
@@ -443,7 +443,7 @@ Match URI patterns across endpoints to find datasets containing specific entity
 types:
 
 ```python
-from rdfsolve.instance_matcher import probe_endpoint
+from rdfsolve.mappings.probe import probe_endpoint
 
 match = probe_endpoint(
     endpoint_url="https://sparql.example.org/sparql",
@@ -608,3 +608,5 @@ result.table()
 uses `values={role: term_reference}`. MCP uses these client operations to
 construct queries and returns summaries; custom SPARQL remains available through
 Python.
+
+Schema connectivity and mapping analysis: [workflow and evidence](docs/source/analysis.rst).

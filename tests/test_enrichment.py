@@ -7,7 +7,7 @@ import pytest
 from rdflib import Dataset, Graph, Literal, Namespace, RDF, URIRef
 from rdflib.plugins.sparql.parser import parseQuery
 
-from rdfsolve.miner import SchemaMiner
+from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.enrichment import (
     class_example_query,
     definition_query,

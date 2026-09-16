@@ -7,13 +7,7 @@ __all__ = ["extract_class_set", "extract_namespace_set", "extract_predicate_set"
 
 def extract_class_set(schema: Any) -> set[str]:
     """Extract all class URIs from schema."""
-    classes = set()
-    for pattern in getattr(schema, "patterns", []):
-        if pattern.subject_class:
-            classes.add(pattern.subject_class)
-        if pattern.object_class and pattern.object_class not in ("Literal", "Resource"):
-            classes.add(pattern.object_class)
-    return classes
+    return set(schema.get_classes())
 
 
 def extract_predicate_set(schema: Any) -> set[str]:

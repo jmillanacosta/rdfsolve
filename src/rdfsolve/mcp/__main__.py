@@ -37,7 +37,7 @@ def main():
 
     mappings = []
     if args.mapping:
-        from rdfsolve.mapping_models import Mapping
+        from rdfsolve.mappings.models import Mapping
 
         mappings = Mapping.from_jsonld(args.mapping).edges
     peers = [Registry.read(path) for path in args.related_registry]

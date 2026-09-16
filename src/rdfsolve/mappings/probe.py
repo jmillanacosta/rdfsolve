@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from rdfsolve.mapping_models.core import (
+from rdfsolve.mappings.models.core import (
     SKOS_NARROW_MATCH,
     InstanceMatchResult,
     MappingEdge,
 )
-from rdfsolve.mapping_models.instance import InstanceMapping
+from rdfsolve.mappings.models.instance import InstanceMapping
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.sparql_helper import SparqlHelper
 

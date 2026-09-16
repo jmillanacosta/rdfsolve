@@ -319,7 +319,7 @@ class ShaclNodeShape(BaseModel):
     def from_rdf(cls, graph: Graph, uri: Node) -> ShaclNodeShape:
         """Parse from RDF graph."""
         from rdflib import Namespace
-        from rdflib.namespace import RDF, RDFS
+        from rdflib.namespace import RDFS
 
         sh = Namespace("http://www.w3.org/ns/shacl#")
 

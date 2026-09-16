@@ -322,11 +322,11 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
     assert peak == 1
     journal = [json.loads(line) for line in (tmp_path / "calls.jsonl").read_text().splitlines()]
     assert journal[0]["arguments"]["query"] == "SELECT broken"
-    assert len(journal) == (3 if truncated else 4)
+    assert len(journal) == (3 if truncated else 5)
     assert all("error" not in c["result"] for c in journal[1:3])
     if not truncated:
-        assert journal[-1]["name"] == "final_query"
-        assert journal[-1]["result"]["error"]["code"] == "missing_outputs"
+        assert journal[-1]["name"] == "final_execution"
+        assert journal[-2]["result"]["error"]["code"] == "missing_outputs"
     assert answer.calls[0]["result"]["error"]["code"] == "sparql_syntax"
     assert (tmp_path / "helper.json").is_file()
     assert evaluate(Answer(), {("x",)}, ["a"])["f1"] == 0
@@ -517,7 +517,9 @@ def test_control_final_execution_failure_is_in_the_call_report(tmp_path, monkeyp
     answer = asyncio.run(ask_endpoint("List resources", endpoint="https://example.invalid/sparql",
         model=FunctionModel(model), model_settings={}, usage_limits=None, output_dir=tmp_path))
     assert answer.state == "failed" and not answer.bindings
-    failed = json.loads((tmp_path / "calls.jsonl").read_text())
+    failed = [json.loads(line) for line in (tmp_path / "calls.jsonl").read_text().splitlines()]
+    assert len(failed) == 3
+    failed = failed[-1]
     assert failed["name"] == "final_execution"
     assert failed["result"]["error"]["type"] == "PaginationTruncatedError"
     assert answer.execution == {"status": "failed", "rows": 10000}

@@ -3,7 +3,7 @@
 from sssom import Mapping
 from sssom.context import ensure_converter
 
-from rdfsolve.sssom_generator import create_sssom_mappings
+from rdfsolve.mappings.sssom import create_sssom_mappings
 
 
 def test_custom_prefix_updates_converter(monkeypatch):

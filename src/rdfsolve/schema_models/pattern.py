@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
 

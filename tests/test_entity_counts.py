@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from rdflib import Dataset, Namespace, RDF, URIRef
 
-from rdfsolve.miner import SchemaMiner
+from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 

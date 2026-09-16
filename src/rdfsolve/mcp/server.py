@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_core import to_jsonable_python
 
 from rdfsolve.client.hydration import HydrationLimitError
@@ -283,7 +283,7 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
         )
         if value["error"]["code"] in {"goal_owner", "goal_type", "unresolved_goals"}:
             value["repair"] = (
-                "Use the selected field's typed pattern. If its meaning or owner is wrong, send rdf_schema corrections for the returned goal ID, with only changed fields; omit goals. Preserve the original clause and value restriction."
+                "Use the selected field's typed pattern. Inspect the requested owner and select evidence for the original meaning. Correct a mistaken vocabulary guess only when retained metadata supports it; omit goals. A valid field is not evidence for a different requested meaning."
             )
             value["retained_requirements"] = {
                 key: requirement.model_dump() for key, requirement in session.requirements.items()

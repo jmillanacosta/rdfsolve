@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import Field
 
-from rdfsolve.mapping_models.core import Mapping
+from rdfsolve.mappings.models.core import Mapping
 
 
 class SsomMapping(Mapping):

@@ -32,28 +32,6 @@ export PYTHONPATH="$RDFSOLVE_REPO/src${PYTHONPATH:+:$PYTHONPATH}"
 
 cd "$RDFSOLVE_REPO"
 
-# Stage 1: Load external mappings
-echo ""
-echo "=== Stage 1: External Mappings ==="
-python scripts/mappings_01_external.py
-
-# Stage 2: Extract cross-references WITH classes
-echo ""
-echo "=== Stage 2: Cross-References + Classes ==="
-python scripts/mappings_02_crossrefs.py
-
-# Stage 3: Infer class mappings
-echo ""
-echo "=== Stage 3: Class Mappings ==="
-python scripts/mappings_03_class_mappings.py
-
-# Stage 4: Consolidate and run semra
-echo ""
-echo "=== Stage 4: Consolidation + Semra ==="
-python scripts/mappings_04_consolidate.py
-
-echo ""
-echo "=========================================="
-echo "Pipeline complete"
-echo "Date: $(date)"
-echo "=========================================="
+python scripts/analyze_mappings.py "${RDFSOLVE_SCHEMAS:?Set the canonical schema directory}" \
+  --instances "${RDFSOLVE_INSTANCES:-$RDFSOLVE_REPO/output/mappings/instances}" \
+  --output "${RDFSOLVE_ANALYSIS_OUTPUT:-$RDFSOLVE_BASE/results/mapping-analysis-${SLURM_JOB_ID:-local}}" "$@"

@@ -1,7 +1,7 @@
 Instance Matcher
 ================
 
-.. automodule:: rdfsolve.instance_matcher
+.. automodule:: rdfsolve.mappings.probe
    :members:
    :undoc-members:
    :show-inheritance:

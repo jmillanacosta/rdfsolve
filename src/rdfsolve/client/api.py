@@ -8,18 +8,17 @@ from collections import defaultdict
 from collections.abc import Iterator
 from dataclasses import asdict
 from functools import cached_property
-from html import escape
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from typing import Literal as FormatLiteral
 
 import pandas as pd
 from pydantic import BaseModel
 from rdflib import Graph, Literal, URIRef
 
-from rdfsolve.client.exploration import SEARCH_PREDICATES, DatasetClient
-from rdfsolve.client.hydration import HydrationLimitError, _iri, _term
+from rdfsolve.client.exploration import DatasetClient
+from rdfsolve.client.hydration import _iri, _term
 from rdfsolve.client.model_rdf import model_to_graph
 from rdfsolve.client.query_log import QueryLog
 from rdfsolve.client.registry import Registry
@@ -1205,7 +1204,7 @@ class Results:
 
 def explore(endpoint: str, *, graph: str | None = None, timeout: float = 30) -> Client:
     """Read an endpoint's schema and open a query-recording client."""
-    from rdfsolve.miner import SchemaMiner
+    from rdfsolve.mining.miner import SchemaMiner
 
     miner = SchemaMiner(
         endpoint,

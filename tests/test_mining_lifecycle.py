@@ -7,7 +7,7 @@ import pytest
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DCTERMS
 
-from rdfsolve.miner import SchemaMiner
+from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining import mine_with_ontology
 from rdfsolve.schema_models import SchemaPattern
 from rdfsolve.schema_models.metadata import MetadataDocument

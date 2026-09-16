@@ -26,8 +26,6 @@ def to_void_graph(
     Allows feeding the result into VoidParser for downstream
     conversion to LinkML, SHACL, RDF-config, etc.
     """
-    import json
-
     from rdflib import Graph, Namespace, URIRef
     from rdflib import Literal as RdfLiteral
     from rdflib.namespace import DCTERMS, FOAF, OWL, RDF, RDFS, XSD

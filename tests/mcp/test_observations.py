@@ -56,6 +56,9 @@ def test_small_schema_pages_keep_usable_references(session):
 def test_route_tool_compiles_and_executes_the_client_path(session):
     declare(session, "Return Key Events", concept="Key Event")
     route = session.paths(str(E.AOP), str(E.Event), max_hops=1)["items"][0]["ref"]
+    queries = len(session.client.queries)
+    assert session.paths(str(E.AOP), str(E.Event), max_hops=1)["items"][0]["evidence"]["status"] == "matched"
+    assert len(session.client.queries) == queries
     prepared = dispatch(session, "rdf_prepare", {"patterns": [{"reference": route, "bindings": ["source", "event"]}], "outputs": ["source", "event"]})
     final = dispatch(session, "rdf_finish", {"query_ref": prepared["query_ref"]})
     assert final["rows"] == 3 and final["trace"]["query_ids"]

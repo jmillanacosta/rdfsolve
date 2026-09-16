@@ -24,7 +24,7 @@ def jaccard_similarity(set_a: set[Any], set_b: set[Any]) -> float:
 
 def compute_class_overlap(schema_a: Any, schema_b: Any) -> float:
     """Compute Jaccard similarity on class URIs between two schemas."""
-    from rdfsolve.schema_utils import extract_class_set
+    from rdfsolve.analysis.schema import extract_class_set
 
     return jaccard_similarity(
         extract_class_set(schema_a),
@@ -34,7 +34,7 @@ def compute_class_overlap(schema_a: Any, schema_b: Any) -> float:
 
 def compute_predicate_overlap(schema_a: Any, schema_b: Any) -> float:
     """Compute Jaccard similarity on predicate URIs between two schemas."""
-    from rdfsolve.schema_utils import extract_predicate_set
+    from rdfsolve.analysis.schema import extract_predicate_set
 
     return jaccard_similarity(
         extract_predicate_set(schema_a),
@@ -66,7 +66,7 @@ def pairwise_overlap_matrix(
     matrix = [[0.0] * n for _ in range(n)]
 
     for i in range(n):
-        matrix[i][i] = 1.0  # diagonal is always 1.0
+        matrix[i][i] = jaccard_similarity(schema_sets[i][1], schema_sets[i][1])
         for j in range(i + 1, n):
             sim = jaccard_similarity(schema_sets[i][1], schema_sets[j][1])
             matrix[i][j] = sim

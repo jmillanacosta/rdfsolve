@@ -16,7 +16,7 @@ from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.schema_models import MiningResult
 
 if TYPE_CHECKING:
-    from rdfsolve.miner import SchemaMiner
+    from rdfsolve.mining.miner import SchemaMiner
     from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)

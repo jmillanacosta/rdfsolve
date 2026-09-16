@@ -1,21 +1,21 @@
 """Mapping models - public API re-exports."""
 
-from rdfsolve.mapping_models.class_derived import ClassDerivedMapping
-from rdfsolve.mapping_models.core import (
+from rdfsolve.mappings.models.class_derived import ClassDerivedMapping
+from rdfsolve.mappings.models.core import (
     SKOS_NARROW_MATCH,
     InstanceMatchResult,
     Mapping,
     MappingEdge,
 )
-from rdfsolve.mapping_models.inference import (
+from rdfsolve.mappings.models.inference import (
     InferencedMapping,
 )
-from rdfsolve.mapping_models.instance import (
+from rdfsolve.mappings.models.instance import (
     InstanceMapping,
     merge_instance_jsonld,
 )
-from rdfsolve.mapping_models.semra import SemraMapping
-from rdfsolve.mapping_models.sssom import SsomMapping
+from rdfsolve.mappings.models.semra import SemraMapping
+from rdfsolve.mappings.models.sssom import SsomMapping
 from rdfsolve.schema_models.about import AboutMetadata
 
 __all__ = [

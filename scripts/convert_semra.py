@@ -5,7 +5,7 @@ import json
 import logging
 from pathlib import Path
 
-from rdfsolve.mapping_models.core import MappingEdge
+from rdfsolve.mappings.models.core import MappingEdge
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

@@ -1,6 +1,5 @@
 """Check source settings at the pipeline and miner boundaries."""
 
-import importlib.util
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,20 +8,44 @@ from unittest.mock import Mock
 import pytest
 
 from rdfsolve.endpoint_health import get_polite_delay
-from rdfsolve.miner import SchemaMiner
-from rdfsolve.models.source_model import SourceModel
+from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.strategy import MiningContext
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+from rdfsolve.models.source_model import SourceModel
 
 
 @pytest.fixture
 def pipeline():
-    path = Path(__file__).resolve().parents[1] / "scripts" / "pipeline.py"
-    spec = importlib.util.spec_from_file_location("rdfsolve_test_pipeline", path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    import subprocess
+    from importlib import import_module
+    from types import SimpleNamespace
+
+    scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+    sys.path.insert(0, scripts)
+    modules = [
+        import_module("pipeline_stages." + name)
+        for name in ("config", "base", "remote", "local", "grouped", "cloud", "cli")
+    ]
+    return SimpleNamespace(
+        subprocess=subprocess,
+        **{
+            name: getattr(module, name)
+            for module in modules
+            for name in (
+                "Source",
+                "SourceMode",
+                "PipelineConfig",
+                "Stage",
+                "RemoteMiningStage",
+                "LocalMiningStage",
+                "GroupedMiningStage",
+                "LsLodCloudStage",
+                "Pipeline",
+                "preflight",
+            )
+            if hasattr(module, name)
+        },
+    )
 
 
 @pytest.mark.parametrize("override,expected", [(None, 17.0), (29.0, 29.0)])
@@ -185,7 +208,7 @@ def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch,
         path = config.output_dir / "grouped_test" / "test_schema.json"
     else:
         stage = pipeline.LsLodCloudStage(config)
-        monkeypatch.setattr(stage, "_generate_sssom_mappings", Mock())
+        monkeypatch.setattr(stage, "_save_schema_connectivity", Mock())
         stage._mine_cloud([(source, tmp_path)], 7019)
         path = config.output_dir / "lslod_cloud" / "lslod_cloud_schema.json"
     assert MinedSchema.from_json(path) == schema
@@ -297,7 +320,9 @@ def test_partial_index_is_not_overwritten(pipeline, tmp_path):
 
 def test_registry_rejects_ambiguous_output_names(pipeline, tmp_path):
     registry = tmp_path / "sources.yaml"
-    registry.write_text("- name: test\n  endpoint: https://one.test\n- name: test\n  endpoint: https://two.test\n")
+    registry.write_text(
+        "- name: test\n  endpoint: https://one.test\n- name: test\n  endpoint: https://two.test\n"
+    )
     config = pipeline.PipelineConfig(base_dir=tmp_path, sources_file=registry)
     with pytest.raises(ValueError, match="Duplicate source names"):
         config.load_sources(["test"])
@@ -365,8 +390,9 @@ def test_group_index_reads_nested_inputs_and_forwards_budgets(pipeline, tmp_path
 
     config = pipeline.PipelineConfig(base_dir=tmp_path)
     stage = pipeline.GroupedMiningStage(config)
-    source = pipeline.Source(name="aopwikirdf",
-                             download_fields={"download_ttl": "https://aopwiki.org/data.ttl"})
+    source = pipeline.Source(
+        name="aopwikirdf", download_fields={"download_ttl": "https://aopwiki.org/data.ttl"}
+    )
     workdir = tmp_path / "group"
     workdir.mkdir()
     stage._prepare_group_qleverfile(workdir, "aop-group", [source], 8019)

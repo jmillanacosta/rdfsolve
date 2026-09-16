@@ -135,10 +135,10 @@ def test_shape_only_sequence_and_inverse_execute(bare):
 
 
 def test_mapping_evidence_improves_local_class_retrieval(session):
-    from rdfsolve.class_derivation import derive_class_mappings
-    from rdfsolve.class_index import ClassIndex, EntityClassInfo
+    from rdfsolve.mappings.derivation import derive_class_mappings
+    from rdfsolve.mappings.index import ClassIndex, EntityClassInfo
     from rdfsolve.client.registry import TypeDescription
-    from rdfsolve.mapping_models.core import MappingEdge
+    from rdfsolve.mappings.models.core import MappingEdge
 
     index = ClassIndex(
         endpoint_url="urn:local",
@@ -439,3 +439,7 @@ def test_output_alias_and_vocabulary_correction_keep_original_meaning(session):
     session.schema(corrections={"g2": {"concept": "measurement method"}})
     assert session.requirements["g2"].clause == "available measurement method"
     assert session.requirements["g2"].concept == "measurement method"
+    for concept in ("Chemical", "identifier"):
+        with pytest.raises(ValueError, match="does not explain"):
+            session.schema(corrections={"g1": {"concept": concept}})
+    assert session.requirements["g1"].concept == "measurement method"

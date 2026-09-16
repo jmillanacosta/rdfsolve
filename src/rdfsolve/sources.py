@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import json
 import logging
 from pathlib import Path
@@ -702,7 +701,7 @@ def load_sources_dataframe(
     """Load sources and return a :class:`~pandas.DataFrame`.
 
     The DataFrame has columns compatible with
-    :func:`~rdfsolve.instance_matcher.probe_resource`:
+    :func:`~rdfsolve.mappings.probe.probe_resource`:
     ``dataset_name``, ``endpoint_url``, ``graph_uri``, ``use_graph``,
     ``void_iri``.
 

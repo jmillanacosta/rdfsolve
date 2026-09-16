@@ -89,6 +89,7 @@ class MappingEdge(BaseModel):
         None,
         description="URI namespace prefix that was actually matched for target_class",
     )
+    mapping_source: str | None = Field(None, description="Original mapping set or file identifier")
     confidence: float | None = Field(
         None,
         ge=0,
@@ -181,21 +182,22 @@ class Mapping(BaseModel):
 
         graph: Any = _nx.MultiDiGraph()
         for edge in self.edges:
-            for uri, ds in (
-                (edge.source_class, edge.source_dataset),
-                (edge.target_class, edge.target_dataset),
-            ):
-                if uri not in graph:
-                    graph.add_node(uri, dataset=ds)
+            source, target = (
+                (edge.source_dataset, edge.source_class),
+                (edge.target_dataset, edge.target_class),
+            )
+            graph.add_node(source, dataset=edge.source_dataset, iri=edge.source_class)
+            graph.add_node(target, dataset=edge.target_dataset, iri=edge.target_class)
             graph.add_edge(
-                edge.source_class,
-                edge.target_class,
+                source,
+                target,
                 predicate=edge.predicate,
-                source_dataset=edge.source_dataset,
-                target_dataset=edge.target_dataset,
                 strategy=self.mapping_type,
                 confidence=edge.confidence,
+                mapping_source=edge.mapping_source,
+                mapping_justification=edge.mapping_justification,
             )
+
         return graph
 
     # Dataset-level graph export ------------------------
@@ -319,7 +321,7 @@ class Mapping(BaseModel):
             "foaf": "http://xmlns.com/foaf/0.1/",
             "sd": ("http://www.w3.org/ns/sparql-service-description#"),
         }
-        grouped: dict[str, dict[str, Any]] = {}
+        grouped: dict[tuple[str, str], dict[str, Any]] = {}
         created_at = self.about.generated_at
         _strategy = self.mapping_type or None
 
@@ -353,8 +355,13 @@ class Mapping(BaseModel):
             if edge.confidence is not None:
                 tgt_obj["rdfsolve:confidence"] = edge.confidence
 
-            if sc not in grouped:
-                grouped[sc] = {
+            for field in ("mapping_source", "mapping_justification"):
+                if value := getattr(edge, field):
+                    tgt_obj[f"rdfsolve:{field}"] = value
+
+            key = (edge.source_dataset, sc)
+            if key not in grouped:
+                grouped[key] = {
                     "@id": sc,
                     "void:inDataset": _dataset_node(
                         edge.source_dataset,
@@ -365,7 +372,7 @@ class Mapping(BaseModel):
                     "dcterms:created": created_at,
                 }
 
-            _merge_into_list(grouped, sc, pp, tgt_obj)
+            _merge_into_list(grouped, key, pp, tgt_obj)
 
         return {
             "@context": context,
@@ -512,6 +519,8 @@ def _parse_mapping_target(
             source_uri_format=src_uri_fmt,
             target_uri_format=tgt_uri_fmt,
             confidence=(float(confidence) if confidence is not None else None),
+            mapping_source=tgt.get("rdfsolve:mapping_source"),
+            mapping_justification=tgt.get("rdfsolve:mapping_justification"),
         )
     except Exception:
         return None

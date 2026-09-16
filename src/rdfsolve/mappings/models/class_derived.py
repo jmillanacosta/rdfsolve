@@ -6,22 +6,11 @@ from typing import Any
 
 from pydantic import Field
 
-from rdfsolve.mapping_models.core import Mapping
+from rdfsolve.mappings.models.core import Mapping
 
 
 class ClassDerivedMapping(Mapping):
-    """Mapping derived by aggregating instance-level evidence to class level.
-
-    Each edge represents a class-to-class mapping supported by N
-    instance-level edges from SSSOM or SeMRA sources.
-
-    The derivation process:
-    1. Loads instance-level mapping edges (SSSOM or SeMRA format).
-    2. Expands entity IRIs to all known URI forms via bioregistry.
-    3. Queries the LSLOD QLever endpoint for rdf:type classes of each entity.
-    4. Aggregates instance evidence per (source_class, target_class) pair.
-    5. Computes confidence and filters by threshold.
-    """
+    """Store an explicitly asserted class mapping with its derivation metadata."""
 
     mapping_type: str = Field(default="class_derived")
     source_mapping_type: str = Field(

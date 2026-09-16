@@ -19,7 +19,7 @@ def test_graph_to_jsonld():
     assert rdfsolve.MinedSchema.from_dict(result).patterns == []
 
 
-@patch("rdfsolve.miner.SchemaMiner")
+@patch("rdfsolve.mining.miner.SchemaMiner")
 def test_mine_schema(mock_cls):
     mock_schema = MagicMock()
     mock_schema.to_jsonld.return_value = {"@graph": []}

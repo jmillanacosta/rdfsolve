@@ -14,7 +14,7 @@ from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.navigation import NavigationSummary
-from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 
 if TYPE_CHECKING:
@@ -105,7 +105,7 @@ class MinedSchema(BaseModel):
         probe_limit: int = 0,
     ) -> NavigationSummary:
         """Compose bounded routes and optionally measure their joined source support."""
-        from rdfsolve.navigation import discover_paths
+        from rdfsolve.mining.navigation import discover_paths
 
         self.navigation = discover_paths(
             self,

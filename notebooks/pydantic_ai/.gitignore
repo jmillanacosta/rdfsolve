@@ -1,6 +1,0 @@
-.env
-.venv/
-.ipynb_checkpoints/
-runs/
-reference/
-data/

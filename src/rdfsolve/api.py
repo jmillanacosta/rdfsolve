@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -38,6 +37,8 @@ __all__ = [
     "QueryPattern",
     "Requirement",
     "ask_rdf",
+    "build_connectivity",
+    "compare_schemas",
     "discover_void_graphs",
     "discover_void_source",
     "enrich_source",
@@ -443,7 +444,7 @@ def mine_schema(
     MinedSchema
         Schema object with methods to export to JSON-LD, VoID, LinkML, SHACL.
     """
-    from .miner import mine_schema as _mine
+    from .mining.miner import mine_schema as _mine
 
     is_local = any(host in endpoint_url.lower() for host in ("localhost", "127.0.0.1", "::1"))
     if is_local:
@@ -676,3 +677,17 @@ def __getattr__(name):
 
 def __dir__():
     return sorted(set(globals()) | set(__all__))
+
+
+def compare_schemas(schemas):
+    """Compare vocabulary overlap across named schema snapshots."""
+    from rdfsolve.analysis.connectivity import compare_schemas as compare
+
+    return compare(schemas)
+
+
+def build_connectivity(schemas, *, class_mappings=(), associations=()):
+    """Build dataset-scoped connectivity with explicit evidence kinds."""
+    from rdfsolve.analysis.connectivity import build_connectivity as build
+
+    return build(schemas, class_mappings=class_mappings, associations=associations)

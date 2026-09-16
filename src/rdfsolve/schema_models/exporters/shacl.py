@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from rdflib import Graph
-
-from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
