@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from rdfsolve.qlever import QleverConfig, build_qleverfile
+from rdfsolve.qlever.inputs import expand_inputs, qlever_format, rdf_input_files
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .base import Stage
@@ -32,10 +33,10 @@ class LocalMiningStage(Stage):
         qlever_workdir = self.config.data_dir / "qlever_workdirs"
         qlever_workdir.mkdir(parents=True, exist_ok=True)
 
-        port = self.config.base_port
-
         for i, source in enumerate(sources, 1):
             log.info(f"[{i}/{len(sources)}] {source.name}")
+            # One port per source: a stopped server does not release it immediately.
+            port = self.config.base_port + i - 1
 
             workdir = qlever_workdir / source.name
             workdir.mkdir(parents=True, exist_ok=True)
@@ -49,9 +50,8 @@ class LocalMiningStage(Stage):
                 continue
 
             try:
-                qleverfile = workdir / "Qleverfile"
                 has_index = self._has_qlever_index(workdir, source.name)
-                if not qleverfile.exists() and not has_index:
+                if not has_index and not self.config.no_index:
                     self._prepare_qleverfile(workdir, source, port)
 
                 index_done = workdir / ".index.done"
@@ -92,20 +92,11 @@ class LocalMiningStage(Stage):
                         {"name": source.name, "error": "Server failed to start"}
                     )
 
-                port += 1
-
             except Exception as e:
                 log.error(f"  -> FAILED: {e}")
                 results["failed"].append({"name": source.name, "error": str(e)})
 
         return results
-
-    def _check_data_exists(self, workdir: Path, source: Source) -> bool:
-        """Check if data files already exist."""
-        for ext in ["*.ttl", "*.nt", "*.nq", "*.ttl.gz", "*.nt.gz"]:
-            if list(workdir.glob(ext)):
-                return True
-        return False
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
@@ -114,27 +105,30 @@ class LocalMiningStage(Stage):
         return has_cached_index(workdir, source_name)
 
     def _prepare_qleverfile(self, workdir: Path, source: Source, port: int):
-        """Generate Qleverfile for source."""
-        qleverfile_path = workdir / "Qleverfile"
-        if qleverfile_path.exists():
-            return
+        """Generate the Qleverfile for a source without a cached index."""
         entry = source.qlever_entry()
 
         cfg = QleverConfig(
-            memory_for_queries="30G",
+            memory_for_queries="80G",
             timeout="600s",
-            parser_buffer_size="2GB",
+            # Blocks of this size are read in one call; multi-GB reads come back short.
+            parser_buffer_size="100M",
             parallel_parsing=False,
             num_triples_per_batch=1_000_000,
         )
 
-        qleverfile_content = build_qleverfile(
-            entry, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
-        )
-
         qleverfile_path = workdir / "Qleverfile"
-        with qleverfile_path.open("x", encoding="utf-8") as stream:
-            stream.write(qleverfile_content)
+        try:
+            qleverfile_content = build_qleverfile(
+                entry, self.config.data_dir, port, runtime="singularity", cfg=cfg, workdir=workdir
+            )
+        except ValueError:
+            if not qleverfile_path.exists():
+                raise
+            log.info("    Keeping the cached Qleverfile")
+            return
+
+        qleverfile_path.write_text(qleverfile_content, encoding="utf-8")
         log.info("    Generated Qleverfile")
 
     def _execute_qleverfile(self, workdir: Path, source: Source, skip_download: bool = False):
@@ -151,43 +145,40 @@ class LocalMiningStage(Stage):
         rdf_dir = workdir / "rdf"
         rdf_dir.mkdir(exist_ok=True)
 
-        input_files_pattern = config.get("index", "INPUT_FILES")
-        rdf_format = config.get("data", "FORMAT")
         settings_json = config.get("index", "SETTINGS_JSON")
 
-        input_files = self._qlever_input_files(workdir, input_files_pattern)
+        expanded = expand_inputs(workdir)
+        input_files = rdf_input_files(workdir)
 
         if not input_files and not skip_download and not self.config.no_download:
             get_data_cmd = config.get("data", "GET_DATA_CMD")
             log.info("    Downloading data...")
             subprocess.run(["bash", "-c", get_data_cmd], check=True, cwd=workdir)
-
-            input_files = self._qlever_input_files(workdir, input_files_pattern)
+            expanded += expand_inputs(workdir)
+            input_files = rdf_input_files(workdir)
 
         if not input_files:
-            raise ValueError(f"No files found matching {input_files_pattern}")
+            raise ValueError(f"No prepared RDF inputs in {workdir}")
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
 
         file_flags = []
-        for f in input_files:
-            file_flags.extend(["-f", str(f)])
+        for path in input_files:
+            file_flags.extend(["-f", str(path), "-F", qlever_format(path)])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
             "singularity",
             "exec",
             "--bind",
-            f"{workdir}:{workdir}",
+            f"{self.config.data_dir}:{self.config.data_dir}",
             str(image_path),
             "qlever-index",
             "-i",
             config.get("data", "NAME", fallback=source.name),
             "-s",
             str(settings_path),
-            "-F",
-            rdf_format,
             *file_flags,
             "-p",
             config.get("index", "PARALLEL_PARSING"),
@@ -198,21 +189,11 @@ class LocalMiningStage(Stage):
         ]
 
         log.info(f"    Indexing {len(input_files)} files...")
-        subprocess.run(cmd, cwd=workdir, check=True)
-
-    @staticmethod
-    def _qlever_input_files(workdir: Path, patterns: str) -> list[Path]:
-        """Resolve each input glob; support legacy files outside rdf/."""
-        import glob
-        import shlex
-
-        files: set[Path] = set()
-        for pattern in shlex.split(patterns):
-            matches = [Path(p) for p in glob.glob(str(workdir / pattern))]
-            if not matches and pattern.startswith("rdf/"):
-                matches = [Path(p) for p in glob.glob(str(workdir / pattern[4:]))]
-            files.update(p.resolve() for p in matches if p.is_file())
-        return sorted(files)
+        try:
+            subprocess.run(cmd, cwd=workdir, check=True)
+        finally:
+            for path in expanded:
+                path.unlink(missing_ok=True)
 
     def _mine_local(self, source: Source, port: int):
         """Mine schema from local QLever instance."""

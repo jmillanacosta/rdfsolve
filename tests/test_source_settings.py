@@ -1,5 +1,6 @@
 """Check source settings at the pipeline and miner boundaries."""
 
+import gzip
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -238,7 +239,7 @@ def test_qlever_source_keeps_tar_scope(pipeline):
 
 
 @pytest.mark.parametrize("mode", ["local", "grouped", "cloud"])
-def test_existing_qleverfile_is_not_replaced(pipeline, tmp_path, mode):
+def test_unbuildable_qleverfile_is_kept(pipeline, tmp_path, mode):
     config = pipeline.PipelineConfig(base_dir=tmp_path)
     path = tmp_path / "Qleverfile"
     original = b"# Keep this archived source configuration\n"
@@ -255,6 +256,25 @@ def test_existing_qleverfile_is_not_replaced(pipeline, tmp_path, mode):
     assert path.read_bytes() == original
 
 
+@pytest.mark.parametrize("mode", ["local", "grouped"])
+def test_stale_qleverfile_is_regenerated_without_an_index(pipeline, tmp_path, mode):
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    path = tmp_path / "Qleverfile"
+    path.write_bytes(b"[index]\nINPUT_FILES = rdf/*.ttl\n")
+    source = pipeline.Source.from_dict(
+        {"name": "offline", "download_nq": "https://example.org/data.nq.gz"}
+    )
+    if mode == "local":
+        pipeline.LocalMiningStage(config)._prepare_qleverfile(tmp_path, source, 7019)
+    else:
+        pipeline.GroupedMiningStage(config)._prepare_group_qleverfile(
+            tmp_path, "offline", [source], 7019
+        )
+    content = path.read_text()
+    assert "INPUT_FILES          = rdf/*.nq" in content
+    assert "gunzip" in content
+
+
 def test_new_group_qleverfile_uses_group_directory(pipeline, tmp_path):
     config = pipeline.PipelineConfig(base_dir=tmp_path)
     source = pipeline.Source.from_dict(
@@ -268,15 +288,30 @@ def test_new_group_qleverfile_uses_group_directory(pipeline, tmp_path):
     assert "qlever_workdirs/test" not in text
 
 
-def test_input_globs_keep_legacy_and_nested_files(pipeline, tmp_path):
-    (tmp_path / "rdf").mkdir()
-    nested = tmp_path / "rdf" / "data.ttl"
-    legacy = tmp_path / "data.n3"
-    nested.touch()
-    legacy.touch()
-    assert pipeline.LocalMiningStage._qlever_input_files(tmp_path, "rdf/*.ttl rdf/*.n3") == sorted(
-        [nested, legacy]
+def test_cached_archives_are_expanded_before_indexing(pipeline, tmp_path, monkeypatch):
+    from rdfsolve.qlever.inputs import rdf_input_files
+
+    config = pipeline.PipelineConfig(base_dir=tmp_path, no_download=True)
+    (tmp_path / "Qleverfile").write_text(
+        "[data]\nNAME=test\nFORMAT=ttl\nGET_DATA_CMD=false\n"
+        "[index]\nINPUT_FILES=rdf/*.ttl\nSETTINGS_JSON={}\nPARALLEL_PARSING=false\n"
     )
+    (tmp_path / "rdf").mkdir()
+    (tmp_path / "rdf" / "data.ttl.gz").write_bytes(
+        gzip.compress(b"<http://a/s> <http://a/p> <http://a/o> .\n")
+    )
+    indexed = {}
+
+    def run(cmd, **kwargs):
+        indexed["files"] = [arg for arg in cmd if str(arg).endswith(".ttl")]
+        indexed["present"] = rdf_input_files(tmp_path)
+        return Mock(returncode=0)
+
+    monkeypatch.setattr(pipeline.subprocess, "run", run)
+    pipeline.LocalMiningStage(config)._execute_qleverfile(tmp_path, pipeline.Source(name="test"))
+    assert indexed["files"] == [str(tmp_path / "rdf" / "data.ttl")]
+    assert indexed["present"] == [tmp_path / "rdf" / "data.ttl"]
+    assert not (tmp_path / "rdf" / "data.ttl").exists()
 
 
 def test_no_download_does_not_run_source_command(pipeline, tmp_path, monkeypatch):
@@ -286,7 +321,7 @@ def test_no_download_does_not_run_source_command(pipeline, tmp_path, monkeypatch
     )
     run = Mock(side_effect=AssertionError("Must not launch a command"))
     monkeypatch.setattr(pipeline.subprocess, "run", run)
-    with pytest.raises(ValueError, match="No files found"):
+    with pytest.raises(ValueError, match="No prepared RDF inputs"):
         pipeline.LocalMiningStage(config)._execute_qleverfile(
             tmp_path, pipeline.Source(name="test")
         )
@@ -421,3 +456,46 @@ def test_group_index_reads_nested_inputs_and_forwards_budgets(pipeline, tmp_path
             workdir, "aop-group", [(source, source_dir), (source, tmp_path / "missing")]
         )
     run.assert_not_called()
+
+
+def test_preflight_reports_unusable_inputs(pipeline, tmp_path, monkeypatch):
+    import shutil
+
+    config = pipeline.PipelineConfig(base_dir=tmp_path, no_index=True)
+    config.sources = [
+        pipeline.Source.from_dict({"name": "broken", "download_ttl": "https://example.org/a.ttl.gz"})
+    ]
+    workdir = config.data_dir / "qlever_workdirs" / "broken" / "rdf"
+    workdir.mkdir(parents=True)
+    (workdir / "a.ttl.gz").write_bytes(b"<?xml version=\"1.0\"?><html>Object not found!</html>")
+    monkeypatch.setattr(shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(
+        pipeline.LocalMiningStage, "_ensure_qlever_image", lambda self: None, raising=True
+    )
+    with pytest.raises(FileNotFoundError, match="1 unusable inputs"):
+        pipeline.preflight(config, grouped=False, remote=False)
+
+
+def test_each_source_gets_its_own_port(pipeline, tmp_path, monkeypatch):
+    config = pipeline.PipelineConfig(base_dir=tmp_path, base_port=7019)
+    config.sources = [
+        pipeline.Source.from_dict({"name": name, "download_ttl": "https://example.org/a.ttl"})
+        for name in ("one", "two", "three")
+    ]
+    stage = pipeline.LocalMiningStage(config)
+    ports = []
+
+    def start(workdir, name, port):
+        ports.append(port)
+        if name == "one":
+            raise RuntimeError(f"Port {port} is in use")
+        return 123
+
+    monkeypatch.setattr(stage, "_ensure_qlever_image", lambda: None)
+    monkeypatch.setattr(stage, "_has_qlever_index", lambda path, name: True)
+    monkeypatch.setattr(stage, "_qlever_start", start)
+    monkeypatch.setattr(stage, "_qlever_stop", Mock())
+    monkeypatch.setattr(stage, "_mine_local", Mock())
+    results = stage._execute()
+    assert ports == [7019, 7020, 7021]
+    assert results["mined"] == ["two", "three"]

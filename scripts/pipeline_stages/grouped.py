@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from rdfsolve.qlever import QleverConfig, build_provider_qleverfile
-from rdfsolve.qlever.inputs import rdf_input_files
+from rdfsolve.qlever.inputs import (
+    cached_archives,
+    expand_inputs,
+    qlever_format,
+    rdf_input_files,
+)
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .config import Source
@@ -97,7 +102,9 @@ class GroupedMiningStage(LocalMiningStage):
                     source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
                     source_workdir.mkdir(parents=True, exist_ok=True)
 
-                    has_files = bool(rdf_input_files(source_workdir))
+                    has_files = bool(
+                        rdf_input_files(source_workdir) or cached_archives(source_workdir)
+                    )
 
                     if not has_files and self._has_qlever_index(source_workdir, source.name):
                         sources_with_existing_index.append((source, source_workdir))
@@ -119,7 +126,10 @@ class GroupedMiningStage(LocalMiningStage):
                                     source_workdir, source, self.config.base_port
                                 )
                             self._execute_qleverfile(source_workdir, source)
-                            has_files = bool(rdf_input_files(source_workdir))
+                            has_files = bool(
+                                rdf_input_files(source_workdir)
+                                or cached_archives(source_workdir)
+                            )
                         except Exception as dl_err:
                             log.warning(f"  -> Download failed for {source.name}: {dl_err}")
 
@@ -266,9 +276,6 @@ class GroupedMiningStage(LocalMiningStage):
         self, workdir: Path, group_name: str, group_sources: list[Source], port: int
     ):
         """Generate provider Qleverfile for grouped sources."""
-        qleverfile_path = workdir / "Qleverfile"
-        if qleverfile_path.exists():
-            return
         members = [source.qlever_entry() for source in group_sources]
 
         cfg = QleverConfig(
@@ -279,19 +286,24 @@ class GroupedMiningStage(LocalMiningStage):
             num_triples_per_batch=1_000_000,
         )
 
-        qleverfile_content = build_provider_qleverfile(
-            group_name,
-            members,
-            self.config.data_dir,
-            port,
-            runtime="singularity",
-            cfg=cfg,
-            workdir=workdir,
-        )
-
         qleverfile_path = workdir / "Qleverfile"
-        with qleverfile_path.open("x", encoding="utf-8") as stream:
-            stream.write(qleverfile_content)
+        try:
+            qleverfile_content = build_provider_qleverfile(
+                group_name,
+                members,
+                self.config.data_dir,
+                port,
+                runtime="singularity",
+                cfg=cfg,
+                workdir=workdir,
+            )
+        except ValueError:
+            if not qleverfile_path.exists():
+                raise
+            log.info("  Keeping the cached provider Qleverfile")
+            return
+
+        qleverfile_path.write_text(qleverfile_content, encoding="utf-8")
         log.info("  Generated provider Qleverfile")
 
     def _execute_group_qleverfile(
@@ -309,8 +321,10 @@ class GroupedMiningStage(LocalMiningStage):
         settings_path = workdir / f"{group_name}.settings.json"
         settings_path.write_text(settings_json)
 
+        expanded: list[Path] = []
         input_files = []
         for source, source_workdir in source_data:
+            expanded += expand_inputs(source_workdir)
             files = rdf_input_files(source_workdir)
             if not files:
                 raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
@@ -322,7 +336,9 @@ class GroupedMiningStage(LocalMiningStage):
 
         file_flags = []
         for file_path, graph_uri in input_files:
-            file_flags.extend(["-f", str(file_path), "-F", file_path.suffix[1:], "-g", graph_uri])
+            file_flags.extend(
+                ["-f", str(file_path), "-F", qlever_format(file_path), "-g", graph_uri]
+            )
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
@@ -346,7 +362,11 @@ class GroupedMiningStage(LocalMiningStage):
         ]
 
         log.info(f"  Indexing {len(input_files)} files from {len(source_data)} sources...")
-        subprocess.run(cmd, cwd=workdir, check=True)
+        try:
+            subprocess.run(cmd, cwd=workdir, check=True)
+        finally:
+            for path in expanded:
+                path.unlink(missing_ok=True)
 
     def _mine_grouped(self, group_name: str, sources: list[Source], port: int):
         from rdfsolve import SchemaMiner

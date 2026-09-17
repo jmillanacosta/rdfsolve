@@ -47,6 +47,29 @@ def test_known_incomplete_pubchem_metadata_is_rejected(tmp_path):
         has_cached_index(tmp_path, "pubchem.ftp.inchikey")
 
 
+def test_empty_index_is_rejected(tmp_path):
+    import json
+
+    from rdfsolve.qlever.index_check import has_cached_index
+
+    counts = {"normal": 0, "internal": 0}
+    (tmp_path / "empty.meta-data.json").write_text(
+        json.dumps(
+            {
+                "num-subjects": counts,
+                "num-predicates": counts,
+                "num-objects": counts,
+                "num-triples": counts,
+                "has-all-permutations": True,
+                "index-format-version": {"date": "2024-10-22", "pull-request-number": 1572},
+                "vocabulary-type": "on-disk-compressed",
+            }
+        )
+    )
+    with pytest.raises(ValueError, match="no triples"):
+        has_cached_index(tmp_path, "empty")
+
+
 def test_stop_escalates_only_for_owned_process():
     process = Mock()
     process.poll.return_value = None

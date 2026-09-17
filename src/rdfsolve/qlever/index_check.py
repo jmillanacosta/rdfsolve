@@ -42,6 +42,8 @@ def has_cached_index(workdir: Path, fallback: str) -> bool:
             type(counts.get(kind)) is not int or counts[kind] < 0 for kind in ("normal", "internal")
         ):
             raise ValueError(f"Invalid {key} in {metadata_path}")
+    if not metadata["num-triples"]["normal"]:
+        raise ValueError(f"Empty index in {workdir}: {metadata_path.name} reports no triples")
     if not isinstance(metadata["has-all-permutations"], bool):
         raise ValueError(f"Invalid has-all-permutations in {metadata_path}")
     permutations = ["pso", "pos"]

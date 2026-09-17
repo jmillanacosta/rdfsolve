@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.qlever.inputs import unusable_inputs
+
 from .analysis import AnalysisStage, SSSOMSeedingStage
 from .base import Stage
 from .cloud import LsLodCloudStage
@@ -96,26 +98,59 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
     sources = config.get_local_sources()
     if not sources:
         raise ValueError("No local sources selected")
-    covered = set()
+    covered: set[str] = set()
+    rejected: list[str] = []
     if grouped:
         for name, members in stage._identify_groups(sources).items():
             workdir = config.data_dir / "qlever_groups" / name
-            if stage._has_qlever_index(workdir, name):
+            try:
+                cached = stage._has_qlever_index(workdir, name)
+            except ValueError as error:
+                rejected.append(f"{name}: {error}")
+                continue
+            if cached:
                 covered.update(source.name for source in members)
                 log.info("Cached group %s: %s", name, workdir)
-    missing = []
+    missing: list[str] = []
+    unusable: list[str] = []
     for source in sources:
         if source.name in covered:
             continue
         workdir = config.data_dir / "qlever_workdirs" / source.name
-        if stage._has_qlever_index(workdir, source.name):
-            log.info("Cached source %s: %s", source.name, workdir)
+        try:
+            cached = stage._has_qlever_index(workdir, source.name)
+        except ValueError as error:
+            rejected.append(f"{source.name}: {error}")
+            cached = False
         else:
-            missing.append(source.name)
+            if cached:
+                log.info("Cached source %s: %s", source.name, workdir)
+            else:
+                missing.append(source.name)
+        if not cached:
+            unusable.extend(
+                f"{source.name}: {path} ({reason})" for path, reason in unusable_inputs(workdir)
+            )
+    for entry in rejected:
+        log.error("Unusable index: %s", entry)
+    for entry in unusable:
+        log.error("Unusable input: %s", entry)
     if missing:
-        raise FileNotFoundError(f"Prepare indices or narrow --sources. Missing indices: {missing}")
+        log.warning("No cached index for %d sources: %s", len(missing), missing)
+    problems = []
+    if rejected:
+        problems.append(f"{len(rejected)} unusable indices")
+    if unusable:
+        problems.append(f"{len(unusable)} unusable inputs")
+    if missing and config.no_index:
+        problems.append(f"missing indices: {missing}")
+    if problems:
+        raise FileNotFoundError(
+            "Prepare inputs or narrow --sources. " + "; ".join(problems) + ". See the logged paths."
+        )
     log.info(
-        "Preflight: %d local sources have cached indices; loadability is checked at startup",
+        "Preflight: %d local sources are ready to mine or index; "
+        "loadability is checked at startup",
         len(sources),
     )
 
