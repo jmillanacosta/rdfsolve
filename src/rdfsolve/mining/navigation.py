@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections import Counter, defaultdict, deque
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
@@ -11,6 +12,44 @@ from rdfsolve.schema_models.pattern import SchemaPattern
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
+
+logger = logging.getLogger(__name__)
+
+
+def discover_paths_with_fallback(
+    schema: MinedSchema,
+    *,
+    max_hops: int = 5,
+    min_hops: int = 3,
+    max_paths_per_length: int = 100,
+    helper=None,
+    probe_limit: int = 0,
+) -> NavigationSummary:
+    """Compose the longest routes the schema supports, stepping down to *min_hops*.
+
+    Routes of a given length only exist when the mined edges chain that far, so
+    each attempt is checked for a route of its own length and the hop bound is
+    lowered when none was found. The last attempt is returned even when it is
+    empty, so the caller always learns how deep the schema goes.
+    """
+    if not 2 <= min_hops <= max_hops <= 6:
+        raise ValueError("Use 2..6 hops with min_hops no greater than max_hops")
+    summary = None
+    for hops in range(max_hops, min_hops - 1, -1):
+        summary = discover_paths(
+            schema,
+            max_hops=hops,
+            max_paths_per_length=max_paths_per_length,
+            helper=helper,
+            probe_limit=probe_limit,
+        )
+        if any(len(route.steps) == hops for route in summary.paths):
+            return summary
+        if hops > min_hops:
+            logger.info("No %d-hop routes composed; retrying with %d hops", hops, hops - 1)
+        else:
+            logger.info("No %d-hop routes composed at the lowest bound", hops)
+    return summary
 
 
 def discover_paths(

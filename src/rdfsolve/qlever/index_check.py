@@ -63,31 +63,11 @@ def has_cached_index(workdir: Path, fallback: str) -> bool:
 
 def verify_named_graphs(helper: SparqlHelper, graph_uris: list[str]) -> None:
     """Require at least one triple in each selected cached graph."""
-    from rdflib import URIRef
+    from rdfsolve.mining.graph_selection import missing_graphs
 
-    for offset in range(0, len(graph_uris), 50):
-        expected = set(graph_uris[offset : offset + 50])
-        terms = " ".join(URIRef(iri).n3() for iri in sorted(expected))
-        query = (
-            "SELECT DISTINCT ?graph WHERE { VALUES ?graph { "
-            + terms
-            + " } FILTER EXISTS { GRAPH ?graph { ?s ?p ?o } } }"
+    missing = missing_graphs(helper, graph_uris)
+    if missing:
+        raise ValueError(
+            f"Cached index lacks nonempty graphs: {missing}. "
+            "Select matching cached inputs; no unscoped fallback was run."
         )
-        response = helper.select(query, purpose="cached_named_graphs")
-        bindings = response.get("results", {}).get("bindings")
-        if not isinstance(bindings, list):
-            raise ValueError("Cached graph check returned invalid SELECT bindings")
-        present = {
-            row["graph"]["value"]
-            for row in bindings
-            if isinstance(row, dict)
-            and isinstance(row.get("graph"), dict)
-            and row["graph"].get("type") == "uri"
-            and "value" in row["graph"]
-        }
-        missing = sorted(expected - present)
-        if missing:
-            raise ValueError(
-                f"Cached index lacks nonempty graphs: {missing}. "
-                "Select matching cached inputs; no unscoped fallback was run."
-            )

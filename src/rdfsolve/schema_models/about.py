@@ -214,6 +214,10 @@ class AboutMetadata(BaseModel):
         default_factory=list,
         description="List of validation error messages",
     )
+    cleaned: dict[str, Any] | None = Field(
+        default=None,
+        description="Namespaces, graphs and pattern count removed by clean_schema",
+    )
 
     # Authors
     authors: list[dict[str, str]] | None = Field(

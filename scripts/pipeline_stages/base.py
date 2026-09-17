@@ -95,8 +95,12 @@ class Stage:
                 self.config.trim_descriptions,
             )
         if self.config.navigation_hops:
-            schema.discover_paths(
+            from rdfsolve.mining.navigation import discover_paths_with_fallback
+
+            schema.navigation = discover_paths_with_fallback(
+                schema,
                 max_hops=self.config.navigation_hops,
+                min_hops=min(self.config.navigation_min_hops, self.config.navigation_hops),
                 max_paths_per_length=self.config.navigation_limit,
                 helper=helper,
                 probe_limit=self.config.navigation_probes,

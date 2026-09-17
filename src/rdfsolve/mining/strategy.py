@@ -30,6 +30,7 @@ class MiningContext:
         ontology_classes: list[str] | None = None,
         chunk_size: int = 10_000,
         unsafe_paging: bool = False,
+        excluded_graph_prefixes: tuple[str, ...] = (),
     ) -> None:
         """Initialize mining context.
 
@@ -44,6 +45,7 @@ class MiningContext:
             ontology_classes: Pre-discovered ontology classes
             chunk_size: Page size for pattern queries
             unsafe_paging: Permit paging without a stable order
+            excluded_graph_prefixes: Graph IRI prefixes to skip when discovering graphs
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -55,6 +57,7 @@ class MiningContext:
         self.ontology_classes = ontology_classes or []
         self.chunk_size = chunk_size
         self.unsafe_paging = unsafe_paging
+        self.excluded_graph_prefixes = excluded_graph_prefixes
 
 
 class MiningStrategy(ABC):

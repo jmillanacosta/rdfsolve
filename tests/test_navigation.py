@@ -4,9 +4,27 @@ import json
 from collections import Counter
 from pathlib import Path
 
+import pytest
 from rdflib import RDF, SH, Graph
 
+from rdfsolve.mining.navigation import discover_paths_with_fallback
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+
+def chain_schema(length: int) -> MinedSchema:
+    """Build a schema whose classes chain exactly *length* edges deep."""
+    return MinedSchema(
+        about=AboutMetadata.build(dataset_name="chain"),
+        patterns=[
+            SchemaPattern(
+                subject_class=f"urn:C{step}",
+                property_uri=f"urn:p{step}",
+                object_class=f"urn:C{step + 1}",
+                count=1,
+            )
+            for step in range(length)
+        ],
+    )
 
 
 def aop_schema():
@@ -158,3 +176,29 @@ def test_navigation_names_do_not_change_shape_identity():
     assert (
         next(s for s in restored.shapes.node_shapes if s.uri == str(profile)).name == route.label()
     )
+
+
+def test_hop_fallback_steps_down_to_the_deepest_reachable_length():
+    result = discover_paths_with_fallback(chain_schema(3), max_hops=5, min_hops=3)
+    assert result.max_hops == 3
+    assert max(len(route.steps) for route in result.paths) == 3
+
+
+def test_hop_fallback_keeps_the_requested_bound_when_routes_reach_it():
+    result = discover_paths_with_fallback(chain_schema(6), max_hops=5, min_hops=3)
+    assert result.max_hops == 5
+    assert any(len(route.steps) == 5 for route in result.paths)
+
+
+def test_hop_fallback_returns_the_lowest_attempt_when_nothing_chains():
+    result = discover_paths_with_fallback(chain_schema(1), max_hops=5, min_hops=3)
+    assert result.max_hops == 3
+    assert result.paths == []
+    assert result.walk_counts[1] == 1
+
+
+@pytest.mark.parametrize("bounds", [(7, 3), (5, 1), (3, 5)])
+def test_hop_fallback_rejects_an_impossible_range(bounds):
+    max_hops, min_hops = bounds
+    with pytest.raises(ValueError, match="2..6 hops"):
+        discover_paths_with_fallback(chain_schema(3), max_hops=max_hops, min_hops=min_hops)

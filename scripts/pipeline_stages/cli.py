@@ -187,6 +187,13 @@ Examples:
     parser.add_argument(
         "--skip-providers", nargs="+", help="Skip sources from these providers (e.g., idsm)"
     )
+    parser.add_argument(
+        "--exclude-graph",
+        action="append",
+        default=[],
+        metavar="PREFIX",
+        help="Graph IRI prefix to skip when discovering graphs; repeat to replace the default list",
+    )
     parser.add_argument("--skip-mining", action="store_true", help="Skip mining stages")
     parser.add_argument("--skip-mappings", action="store_true", help="Skip mapping stages")
     parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
@@ -230,8 +237,15 @@ Examples:
         "--navigation-hops",
         type=int,
         choices=[0, 2, 3, 4, 5, 6],
-        default=2,
+        default=5,
         help="Compose schema routes locally; 0 disables (no endpoint queries)",
+    )
+    parser.add_argument(
+        "--navigation-min-hops",
+        type=int,
+        choices=[2, 3, 4, 5, 6],
+        default=3,
+        help="Lowest hop bound accepted when longer routes cannot be composed",
     )
     parser.add_argument(
         "--navigation-probes",
@@ -295,6 +309,11 @@ Examples:
         "--parallelism", type=int, default=4, help="Maximum concurrent remote hosts"
     )
     parser.add_argument("--chunk-size", type=int, default=10000, help="Rows per query page")
+    parser.add_argument(
+        "--class-chunk-size",
+        type=int,
+        help="Page the class listing at this size; unset runs it as one query",
+    )
     parser.add_argument("--class-batch-size", type=int, default=15, help="Classes per query batch")
     parser.add_argument(
         "--max-response-mb", type=int, default=64, help="Decompressed response limit in MiB"
@@ -336,8 +355,11 @@ Examples:
     if args.timeout is not None and args.timeout <= 0:
         parser.error("--timeout must be positive")
     config.parallelism = args.parallelism
+    if args.exclude_graph:
+        config.exclude_graph_prefixes = tuple(args.exclude_graph)
     config.chunk_size = args.chunk_size
     config.class_batch_size = args.class_batch_size
+    config.class_chunk_size = args.class_chunk_size
     config.max_response_bytes = args.max_response_mb * 1024 * 1024
     config.timeout = args.timeout
     config.get_graphs_from_store = args.get_graphs_from_store
@@ -373,6 +395,7 @@ Examples:
     if config.navigation_probes < 0 or (config.navigation_probes and not args.navigation_hops):
         parser.error("--navigation-probes requires navigation hops and a nonnegative budget")
     config.navigation_hops = args.navigation_hops
+    config.navigation_min_hops = args.navigation_min_hops
     config.navigation_limit = args.navigation_limit
     if config.navigation_limit < 0:
         parser.error("--navigation-limit must be nonnegative")

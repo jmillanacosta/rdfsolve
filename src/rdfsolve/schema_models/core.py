@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json as _json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -146,6 +147,59 @@ class MinedSchema(BaseModel):
             )
         ]
         return self.model_copy(update={"patterns": kept})
+
+    def clean_schema(
+        self,
+        *,
+        namespaces: Sequence[str] = (),
+        graph_uris: Sequence[str] = (),
+        drop_unattributed: bool = False,
+    ) -> MinedSchema:
+        """Return a copy without patterns from the given namespaces or graphs.
+
+        A pattern is removed when any of its ``subject_class``,
+        ``property_uri`` or ``object_class`` starts with one of *namespaces*,
+        or when every graph in :attr:`SchemaPattern.graphs` starts with one of
+        *graph_uris*. Patterns mined without graph evidence are retained
+        unless *drop_unattributed*. Nothing is removed by default:
+        :data:`SUGGESTED_SERVICE_NAMESPACES` and
+        :data:`SUGGESTED_SERVICE_GRAPHS` are starting points to pass in.
+        """
+        ns = tuple(namespaces)
+        graphs = tuple(graph_uris)
+
+        def _in_namespace(uri: str) -> bool:
+            return bool(ns) and uri.startswith(ns)
+
+        def _only_service_graphs(pattern: SchemaPattern) -> bool:
+            if not graphs:
+                return False
+            if not pattern.graphs:
+                return drop_unattributed
+            return all(graph.startswith(graphs) for graph in pattern.graphs)
+
+        kept = [
+            p
+            for p in self.patterns
+            if not (
+                _in_namespace(p.subject_class)
+                or _in_namespace(p.property_uri)
+                or (p.object_class not in _SENTINEL_OBJECTS and _in_namespace(p.object_class))
+                or _only_service_graphs(p)
+            )
+        ]
+        about = self.about.model_copy(
+            update={
+                "pattern_count": len(kept),
+                "cleaned": {
+                    "namespaces": list(ns),
+                    "graph_uris": list(graphs),
+                    "drop_unattributed": drop_unattributed,
+                    "patterns_removed": len(self.patterns) - len(kept),
+                },
+            }
+        )
+        return self.model_copy(update={"patterns": kept, "about": about})
 
     # Queries -
 

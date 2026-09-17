@@ -16,6 +16,36 @@ these strings.  Used by
 :meth:`MinedSchema.filter_service_namespaces`.
 """
 
+SUGGESTED_SERVICE_NAMESPACES: tuple[str, ...] = (
+    "http://www.openlinksw.com/",
+    "http://www.w3.org/ns/sparql-service-description#",
+    "http://www.w3.org/ns/shacl#SPARQLExecutable",
+    "http://www.w3.org/ns/shacl#SPARQLSelectExecutable",
+    "http://www.w3.org/ns/shacl#SPARQLAskExecutable",
+    "http://www.w3.org/ns/ldp#",
+    "http://localhost:8890/",
+    "urn:core:services:sparql",
+    "urn:activitystreams-owl:",
+)
+"""Engine and example-query namespaces seen on public endpoints.
+
+Pass these to :meth:`MinedSchema.clean_schema`; nothing applies them
+implicitly. Extend the list per endpoint instead of editing it.
+"""
+
+SUGGESTED_SERVICE_GRAPHS: tuple[str, ...] = (
+    "http://www.openlinksw.com/",
+    "http://www.w3.org/ns/ldp#",
+    "http://localhost:8890/",
+    "urn:core:services:sparql",
+    "urn:activitystreams-owl:",
+)
+"""Graph IRI prefixes that hold engine metadata rather than source data.
+
+Endpoint-specific description graphs, such as a host's
+``.well-known/sparql-examples``, are named per endpoint by the caller.
+"""
+
 _RESOURCE_URIS = frozenset(
     {
         "http://www.w3.org/2000/01/rdf-schema#Resource",

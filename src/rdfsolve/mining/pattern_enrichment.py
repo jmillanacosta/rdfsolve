@@ -142,8 +142,8 @@ def enrich_patterns_with_counts(
         bs,
     )
 
-    # Build lookup: (sc, p, oc) -> count
-    counts: dict[tuple[str, str, str], int] = {}
+    # Build lookup: (sc, p, oc) -> {graph or "" : count}
+    counts: dict[tuple[str, str, str], dict[str, int]] = {}
 
     for batch_idx in range(n_batches):
         start = batch_idx * bs
@@ -209,9 +209,13 @@ def enrich_patterns_with_counts(
                 pat.property_uri,
                 pat.object_class,
             )
-        cnt = counts.get(key)
+        per_graph = counts.get(key)
+        if per_graph is None:
+            enriched.append(pat.model_copy(update={"count": None}))
+            continue
+        attributed = {graph: count for graph, count in per_graph.items() if graph}
         enriched.append(
-            pat.model_copy(update={"count": cnt}),
+            pat.model_copy(update={"count": sum(per_graph.values()), "graphs": attributed or None}),
         )
 
     return enriched
@@ -220,7 +224,7 @@ def enrich_patterns_with_counts(
 def _fetch_typed_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, int]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -255,7 +259,7 @@ def _fetch_typed_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(cnt)
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -277,7 +281,7 @@ def _fetch_typed_count_batch(
 def _fetch_literal_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, int]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -313,7 +317,7 @@ def _fetch_literal_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(cnt)
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -333,7 +337,7 @@ def _fetch_literal_count_batch(
 def _fetch_untyped_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, int]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -368,7 +372,7 @@ def _fetch_untyped_count_batch(
             )
             cnt = b.get("cnt", {}).get("value")
             if cnt:
-                counts[key] = int(cnt)
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(

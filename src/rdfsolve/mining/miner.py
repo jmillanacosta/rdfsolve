@@ -38,6 +38,7 @@ from rdfsolve.models import (
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.sparql_helper import (
     PaginationTruncatedError,
+    ResponseLimitError,
     SparqlHelper,
 )
 from rdfsolve.version import VERSION
@@ -120,6 +121,7 @@ class SchemaMiner:
         graph_store_dir: str | Path = "graph-store",
         graph_store_max_bytes: int = 64 * 1024 * 1024,
         pagination: Literal["offset", "cursor"] = "offset",
+        excluded_graph_prefixes: tuple[str, ...] = (),
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -156,6 +158,7 @@ class SchemaMiner:
         self.counts = counts
         self.unsafe_paging = unsafe_paging
         self.filter_service_namespaces = filter_service_namespaces
+        self.excluded_graph_prefixes = tuple(excluded_graph_prefixes)
         self.untyped_as_classes = untyped_as_classes
         self.authors = authors
         self.qlever_version = qlever_version
@@ -336,10 +339,14 @@ class SchemaMiner:
             ontology_classes=ontology_classes,
             chunk_size=self.chunk_size,
             unsafe_paging=self.unsafe_paging,
+            excluded_graph_prefixes=self.excluded_graph_prefixes,
         )
 
         # Run strategy
         patterns = self._strategy.mine(context)
+        if context.graph_uris != self.graph_uris:
+            logger.info("Mining continues in %d discovered graphs", len(context.graph_uris or []))
+            self.graph_uris = context.graph_uris
 
         # Extract one-shot results if available
         one_shot_results = None
@@ -415,8 +422,16 @@ class SchemaMiner:
         query = _build_declared_classes_query(self.graph_uris)
         declared: set[str] = set()
         try:
-            raw = self._helper.select(query, purpose="declared_classes")
-            bindings = raw.get("results", {}).get("bindings", [])
+            try:
+                raw = self._helper.select(query, purpose="declared_classes")
+                bindings = raw.get("results", {}).get("bindings", [])
+            except ResponseLimitError:
+                logger.warning("Declared classes exceeded the response limit; paging the query")
+                bindings = self._collect_bindings(
+                    SparqlHelper.prepare_paginated_query(query),
+                    "declared_classes",
+                    self.chunk_size,
+                )
             for row in bindings:
                 class_val = row.get("class", {}).get("value")
                 if class_val:
@@ -518,7 +533,21 @@ class SchemaMiner:
         flushed to disk after each phase completes.
         """
         with self._session(dataset_name):
+            self._verify_graph_scope()
             return self._finish_schema(self._mine_schema(dataset_name))
+
+    def _verify_graph_scope(self) -> None:
+        """Reject a configured graph the endpoint does not hold."""
+        if not self.graph_uris:
+            return
+        from rdfsolve.mining.graph_selection import missing_graphs
+
+        missing = missing_graphs(self._helper, self.graph_uris)
+        if missing:
+            raise ValueError(
+                f"Endpoint holds no triples in the selected graphs: {missing}. "
+                "Correct graph_uris or leave it empty to discover graphs."
+            )
 
     @contextmanager
     def _session(self, dataset_name: str | None) -> Iterator[None]:

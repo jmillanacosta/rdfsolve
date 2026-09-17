@@ -73,6 +73,14 @@ class SchemaPattern(BaseModel):
         ge=0,
         description="Number of triples matching this pattern",
     )
+    graphs: dict[str, int] | None = Field(
+        None,
+        description=(
+            "Named graph URI to the count observed in that graph. "
+            "None when mining was not graph-aware; the graph of the "
+            "subject-predicate-object edge is the one recorded."
+        ),
+    )
     datatype: str | None = Field(
         None,
         description="XSD datatype URI for literal objects (only when object_class == 'Literal')",

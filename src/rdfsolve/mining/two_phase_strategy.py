@@ -22,6 +22,7 @@ from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.models import SchemaPattern
+from rdfsolve.sparql_helper import ResponseLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +55,65 @@ class TwoPhaseStrategy(MiningStrategy):
         """
         # Phase 1 - discover classes
         p1 = context.report.start_phase("class-discovery")
+        classes = self._discover_classes(context)
+        if not classes and not context.graph_uris:
+            classes = self._discover_classes_in_named_graphs(context)
+        if not classes and not context.ontology_classes:
+            scope = (
+                f"{len(context.graph_uris)} named graphs"
+                if context.graph_uris
+                else "the default graph"
+            )
+            context.report.set_abort_reason(f"No data classes found in {scope}")
+
+        # Merge with ontology classes if available
+        if context.ontology_classes:
+            # Filter out metaclasses from ontology classes too
+            ontology_classes_filtered = [
+                c for c in context.ontology_classes if c not in ONTOLOGY_METACLASSES
+            ]
+            # Merge, keeping unique classes
+            classes_set = set(classes)
+            new_from_ontology = [c for c in ontology_classes_filtered if c not in classes_set]
+            if new_from_ontology:
+                logger.info(f"  -> Adding {len(new_from_ontology)} classes from ontology structure")
+                classes.extend(new_from_ontology)
+            logger.info(f"  -> {len(classes)} total classes (data + ontology)")
+
+        context.report.finish_phase(p1, items=len(classes))
+
+        # Phase 2 - batched per-class pattern discovery
+        p2 = context.report.start_phase("per-class-patterns")
+        patterns, abort_reason = self._run_phase2_batches(
+            classes,
+            context.graph_uris,
+            context,
+        )
+
+        logger.info(f"  -> {len(patterns)} total patterns from {len(classes)} classes")
+        context.report.finish_phase(p2, items=len(patterns), error=abort_reason)
+        if abort_reason:
+            context.report.set_abort_reason(abort_reason)
+        return patterns
+
+    def _discover_classes(self, context: MiningContext) -> list[str]:
+        """Run Phase 1 in the current scope and keep only data classes."""
         ccs = context.class_chunk_size
         if ccs is None:
             logger.info("Phase 1: discovering classes (no pagination) …")
             q = _build_class_discovery_query_plain(context.graph_uris)
             t0 = time.monotonic()
             try:
-                result = context.helper.select(q, purpose="two-phase/classes")
-                class_bindings = result.get("results", {}).get("bindings", [])
+                try:
+                    result = context.helper.select(q, purpose="two-phase/classes")
+                    class_bindings = result.get("results", {}).get("bindings", [])
+                except ResponseLimitError:
+                    logger.warning("Class listing exceeded the response limit; paging it")
+                    class_bindings = context.collect_bindings(
+                        _build_class_discovery_query(context.graph_uris),
+                        "two-phase/classes",
+                        context.chunk_size,
+                    )
                 context.report.record_query(
                     "two-phase/classes",
                     time.monotonic() - t0,
@@ -99,36 +151,22 @@ class TwoPhaseStrategy(MiningStrategy):
         if metaclass_count:
             logger.info(f"  -> Filtered {metaclass_count} ontology metaclasses")
         logger.info(f"  -> {len(classes)} data classes found")
+        return classes
 
-        # Merge with ontology classes if available
-        if context.ontology_classes:
-            # Filter out metaclasses from ontology classes too
-            ontology_classes_filtered = [
-                c for c in context.ontology_classes if c not in ONTOLOGY_METACLASSES
-            ]
-            # Merge, keeping unique classes
-            classes_set = set(classes)
-            new_from_ontology = [c for c in ontology_classes_filtered if c not in classes_set]
-            if new_from_ontology:
-                logger.info(f"  -> Adding {len(new_from_ontology)} classes from ontology structure")
-                classes.extend(new_from_ontology)
-            logger.info(f"  -> {len(classes)} total classes (data + ontology)")
+    def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
+        """Retry Phase 1 in the named graphs when the default graph has no types."""
+        from rdfsolve.mining.graph_selection import discover_data_graphs
 
-        context.report.finish_phase(p1, items=len(classes))
-
-        # Phase 2 - batched per-class pattern discovery
-        p2 = context.report.start_phase("per-class-patterns")
-        patterns, abort_reason = self._run_phase2_batches(
-            classes,
-            context.graph_uris,
-            context,
+        graphs = discover_data_graphs(
+            context.helper, excluded_prefixes=context.excluded_graph_prefixes
         )
-
-        logger.info(f"  -> {len(patterns)} total patterns from {len(classes)} classes")
-        context.report.finish_phase(p2, items=len(patterns), error=abort_reason)
-        if abort_reason:
-            context.report.set_abort_reason(abort_reason)
-        return patterns
+        if not graphs:
+            return []
+        logger.info(
+            "Default graph holds no typed data; retrying Phase 1 in %d named graphs", len(graphs)
+        )
+        context.graph_uris = graphs
+        return self._discover_classes(context)
 
     def _run_phase2_batches(
         self,
@@ -141,7 +179,7 @@ class TwoPhaseStrategy(MiningStrategy):
         total = len(classes)
         n_batches = (total + bs - 1) // bs
 
-        scope = f"GRAPH <{', '.join(graph_uris)}>" if graph_uris else "default graph"
+        scope = f"{len(graph_uris)} named graphs" if graph_uris else "default graph"
         logger.info(
             "Phase 2: mining patterns in %d batches of ≤%d classes (%d classes total, scope: %s) …",
             n_batches,

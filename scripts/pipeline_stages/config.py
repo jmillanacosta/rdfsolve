@@ -13,6 +13,7 @@ import yaml
 from pydantic import Field
 
 from rdfsolve.models.source_model import SourceModel
+from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_GRAPHS
 
 log = logging.getLogger(__name__)
 
@@ -84,12 +85,14 @@ class PipelineConfig:
     delay: float = 1.0
     chunk_size: int = 10000
     class_batch_size: int = 15
+    class_chunk_size: int | None = None
     max_response_bytes: int = 64 * 1024 * 1024
     benchmark: bool = True
     enrich: bool = True
     examples_per_pattern: int = 1
     trim_descriptions: int | None = None
-    navigation_hops: int = 2
+    navigation_hops: int = 5
+    navigation_min_hops: int = 3
     navigation_limit: int = 100
     navigation_probes: int = 0
     void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
@@ -114,6 +117,7 @@ class PipelineConfig:
     extract_metadata: bool = False
 
     parallelism: int = 4
+    exclude_graph_prefixes: tuple[str, ...] = SUGGESTED_SERVICE_GRAPHS
 
     output_suffix: str = ""
 

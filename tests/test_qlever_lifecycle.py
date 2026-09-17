@@ -91,9 +91,7 @@ def test_graph_membership_check_uses_real_aop_rdf():
     helper = Mock()
 
     def select(query, **kwargs):
-        return {"results": {"bindings": [
-            {"graph": {"type": "uri", "value": str(row.graph)}} for row in dataset.query(query)
-        ]}}
+        return {"boolean": dataset.query(query).askAnswer}
 
     helper.select.side_effect = select
     verify_named_graphs(helper, [uri])

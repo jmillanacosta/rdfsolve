@@ -21,10 +21,10 @@ set -euo pipefail
 RDFSOLVE_BASE="${RDFSOLVE_BASE:-/home/javier.millanacosta/rdfsolve}"
 RDFSOLVE_REPO="${RDFSOLVE_REPO:-$RDFSOLVE_BASE/rdfsolve-2}"
 VENV_PATH="${VENV_PATH:-$RDFSOLVE_REPO/.venv}"
-OUTPUT_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/output}"
-VOID_DIR="$OUTPUT_DIR/void"
+VOID_DIR="${OUTPUT_DIR:-$RDFSOLVE_BASE/runs/void-${SLURM_JOB_ID:-manual}-$(date -u +%Y%m%dT%H%M%S)}"
 
-mkdir -p "$RDFSOLVE_BASE/logs" "$VOID_DIR"
+mkdir -p "$RDFSOLVE_BASE/logs"
+mkdir -- "$VOID_DIR"
 
 echo "=========================================="
 echo "RDFSolve VoID Discovery"
@@ -41,7 +41,8 @@ source "$VENV_PATH/bin/activate"
 python scripts/discover_void_partitions.py \
     --output-dir "$VOID_DIR" \
     --sources data/sources.yaml \
-    --verbose
+    --timeout "${VOID_TIMEOUT:-120}" \
+    --verbose "$@"
 
 echo "=========================================="
 echo "VoID discovery complete: $(date)"

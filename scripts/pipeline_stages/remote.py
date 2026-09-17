@@ -154,9 +154,11 @@ class RemoteMiningStage(Stage):
                 sparql_strategy=source.sparql_strategy,
                 chunk_size=self.config.chunk_size,
                 class_batch_size=self.config.class_batch_size,
+                class_chunk_size=self.config.class_chunk_size,
                 enrich=self.config.enrich,
                 examples_per_pattern=self.config.examples_per_pattern,
                 max_response_bytes=self.config.max_response_bytes,
+                excluded_graph_prefixes=self.config.exclude_graph_prefixes,
                 report_path=str(report_path),
             )
 
