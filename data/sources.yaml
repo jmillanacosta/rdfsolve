@@ -1009,42 +1009,11 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000048.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000049.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000050.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000051.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000052.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000053.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000054.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000055.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000056.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000057.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000058.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000059.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000060.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000061.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000062.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000063.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000064.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000065.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000066.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000067.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000068.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000069.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000070.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000071.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000072.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000073.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000074.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000075.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000076.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000077.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000078.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000079.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_chemical_000080.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000003.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000004.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000005.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_disease_000006.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000003.ttl.gz
@@ -1055,7 +1024,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000008.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000009.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000010.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_chemical_gene_000011.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_disease_disease_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_disease_disease_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_disease_gene_000001.ttl.gz
@@ -1065,10 +1033,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000003.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000004.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000005.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000006.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000007.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/cooccurrence/pc_cooccurrence_gene_gene_000008.ttl.gz
   bioregistry_prefix: pubchem
   bioregistry_name: PubChem compound
   bioregistry_description: PubChem provides information on the biological activities of small molecules. It is a component of NIH's Molecular Libraries Roadmap Initiative. PubChem Compound archives chemical
@@ -1404,6 +1368,7 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_type_000017.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_type_000018.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_type_000019.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_type_000020.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_unit.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/endpoint/pc_endpoint_value.ttl.gz
   bioregistry_prefix: pubchem
@@ -2479,7 +2444,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2abstract_000072.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2abstract_000073.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2abstract_000074.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2abstract_000075.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000003.ttl.gz
@@ -2489,6 +2453,7 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000007.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000008.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000009.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2assigneevc_000010.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_additional_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_additional_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_additional_000003.ttl.gz
@@ -2512,24 +2477,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000013.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000014.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000015.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000016.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000017.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000018.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000019.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000020.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000021.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000022.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000023.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000024.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000025.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000026.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000027.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000028.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000029.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000030.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000031.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000032.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2cpc_inventive_000033.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2filingdate_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2filingdate_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2filingdate_000003.ttl.gz
@@ -2557,13 +2504,8 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000015.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000016.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000017.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000018.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000019.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000020.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000021.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000022.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2inventorvc_000023.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_additional_000001.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_additional_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000003.ttl.gz
@@ -2579,6 +2521,19 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000013.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000014.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000015.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000016.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000017.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000018.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000019.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000020.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000021.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000022.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000023.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000024.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000025.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000026.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000027.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2ipc_inventive_000028.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2iscitedby_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2iscitedby_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2iscitedby_000003.ttl.gz
@@ -2651,6 +2606,9 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000012.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000013.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000014.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000015.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000016.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2type_000017.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/patent/pc_patent2vc_fn_000003.ttl.gz
@@ -3103,29 +3061,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000008.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000009.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000010.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000011.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000012.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000013.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000014.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000015.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000016.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000017.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000018.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000019.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000020.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000021.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000022.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000023.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000024.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000025.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000026.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000027.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000028.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000029.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000030.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000031.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000032.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_000033.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_primary_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_primary_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference2meshheading_primary_000003.ttl.gz
@@ -3179,20 +3114,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000004.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000005.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000006.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000007.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000008.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000009.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000010.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000011.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000012.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000013.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000014.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000015.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000016.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000017.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000018.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000019.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_discusses_by_textming_000020.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_endingpage_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_endingpage_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_endingpage_000003.ttl.gz
@@ -3213,6 +3134,7 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issn_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issn_000003.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issn_000004.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issn_000005.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issue_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issue_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/reference/pc_reference_issue_000003.ttl.gz
@@ -3757,6 +3679,8 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2descriptor_000060.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2descriptor_000061.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2descriptor_000062.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2descriptor_000063.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2descriptor_000064.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2measuregroup_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2measuregroup_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2measuregroup_000003.ttl.gz
@@ -3815,70 +3739,6 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000047.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000048.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000049.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000050.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000051.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000052.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000053.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000054.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000055.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000056.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000057.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000058.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000059.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000060.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000061.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000062.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000063.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000064.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000065.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000066.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000067.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000068.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000069.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000070.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000071.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000072.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000073.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000074.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000075.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000076.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000077.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000078.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000079.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000080.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000081.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000082.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000083.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000084.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000085.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000086.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000087.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000088.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000089.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000090.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000091.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000092.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000093.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000094.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000095.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000096.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000097.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000098.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000099.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000100.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000101.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000102.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000103.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000104.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000105.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000106.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000107.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000108.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000109.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000110.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000111.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000112.ttl.gz
-  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance2reference_000113.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_available_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_available_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_available_000003.ttl.gz
@@ -3952,6 +3812,7 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_modified_000023.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_modified_000024.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_modified_000025.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_modified_000026.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_seealso_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_source_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/substance/pc_substance_source_000002.ttl.gz
@@ -4179,6 +4040,20 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000020.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000021.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000022.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000023.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000024.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000025.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000026.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000027.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000028.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000029.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000030.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000031.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000032.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000033.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000034.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000035.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_type_000036.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000001.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000002.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000003.ttl.gz
@@ -4200,6 +4075,7 @@
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000019.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000020.ttl.gz
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000021.ttl.gz
+  - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/synonym/pc_synonym_value_000022.ttl.gz
   bioregistry_prefix: pubchem
   bioregistry_name: PubChem compound
   bioregistry_description: PubChem provides information on the biological activities of small molecules. It is a component of NIH's Molecular Libraries Roadmap Initiative. PubChem Compound archives chemical
