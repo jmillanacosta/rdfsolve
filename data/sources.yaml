@@ -8767,22 +8767,22 @@
 - name: rdfportal.uniprot
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
-  - http://sparql.uniprot.org/uniprot
-  - http://sparql.uniprot.org/obsolete
   - http://sparql.uniprot.org/citationmapping
-  - http://sparql.uniprot.org/taxonomy
   - http://sparql.uniprot.org/citations
-  - http://sparql.uniprot.org/proteomes
-  - http://sparql.uniprot.org/go
-  - http://sparql.uniprot.org/enzyme
-  - http://sparql.uniprot.org/diseases
-  - http://sparql.uniprot.org/journal
-  - http://sparql.uniprot.org/pathways
-  - http://sparql.uniprot.org/keywords
-  - http://sparql.uniprot.org/locations
-  - http://sparql.uniprot.org/tissues
   - http://sparql.uniprot.org/core
   - http://sparql.uniprot.org/databases
+  - http://sparql.uniprot.org/diseases
+  - http://sparql.uniprot.org/enzyme
+  - http://sparql.uniprot.org/go
+  - http://sparql.uniprot.org/journal
+  - http://sparql.uniprot.org/keywords
+  - http://sparql.uniprot.org/locations
+  - http://sparql.uniprot.org/obsolete
+  - http://sparql.uniprot.org/pathways
+  - http://sparql.uniprot.org/proteomes
+  - http://sparql.uniprot.org/taxonomy
+  - http://sparql.uniprot.org/tissues
+  - http://sparql.uniprot.org/uniprot
   void_iri: https://sparql.uniprot.org/.well-known/void
   download_nt: https://rdfportal.org/ntriples/uniprot/latest/core.nt.gz
   use_graph: true
@@ -8817,6 +8817,7 @@
       number_of_properties: 180
       number_of_subjects: 8092918607
       number_of_objects: 7387257890
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/uniprot
   metadata_graph_uris: null
   enrichment: &id006
     state: partial
@@ -11024,6 +11025,7 @@
       number_of_properties: 6
       number_of_subjects: 2128002
       number_of_objects: 2176841
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pubcasefinder
   metadata_graph_uris: null
   enrichment: *id003
 - name: rdfportal.medgen
@@ -11120,6 +11122,7 @@
       number_of_properties: 46
       number_of_subjects: 3928741
       number_of_objects: 32320296
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/medgen
   metadata_graph_uris: null
   enrichment: *id003
 - name: rdfportal.jpost
@@ -11163,6 +11166,7 @@
       number_of_properties: 51
       number_of_subjects: 167382402
       number_of_objects: 190910396
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/jpostdb
   metadata_graph_uris: null
   enrichment: *id003
 - name: rdfportal.affymetrix
@@ -15914,6 +15918,7 @@
       number_of_properties: 104
       number_of_subjects: 4444215882
       number_of_objects: 6710572977
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pubchem
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -15987,6 +15992,7 @@
       number_of_properties: 40
       number_of_subjects: 1215974
       number_of_objects: 2230560
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/chebi
   metadata_graph_uris: null
   enrichment: &id005
     state: partial
@@ -16750,6 +16756,7 @@
       number_of_properties: 121
       number_of_subjects: 10331097478
       number_of_objects: 11623356647
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ddbj
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -17574,6 +17581,11 @@
   enrichment:
     state: skipped
     reason: No endpoint URL
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdf.glycoinfo.org/glytoucan
+  - http://www.glytoucan.org/glyco/owl/glytoucan
+  use_graph: true
 - name: glytoucan
   endpoint: https://ts.glytoucan.org/sparql
   bioregistry_prefix: glytoucan
@@ -18474,6 +18486,7 @@
       number_of_properties: 8
       number_of_subjects: 112
       number_of_objects: 568
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/nadd
   metadata_graph_uris: null
   enrichment: *id005
 - name: biobricks-aopwiki
@@ -19998,6 +20011,7 @@
       number_of_properties: 22
       number_of_subjects: 715849799
       number_of_objects: 155732700
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/bgee
 - name: rdfportal.biomodels
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -20050,6 +20064,7 @@
   endpoint: https://rdfportal.org/pdb/sparql
   graph_uris:
   - http://bmrbpub.protein.osaka-u.ac.jp/rdf/bmr
+  - http://bmrbpub.protein.osaka-u.ac.jp/rdf/bms
   use_graph: true
   keywords:
   - Other biomolecule
@@ -20073,6 +20088,7 @@
       number_of_properties: 2695
       number_of_subjects: 36916894
       number_of_objects: 39110387
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/bmrb
 - name: rdfportal.brenda
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20098,6 +20114,7 @@
       number_of_properties: 33
       number_of_subjects: 1036304
       number_of_objects: 2729305
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/brenda
 - name: rdfportal.chembl
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -20121,6 +20138,7 @@
       number_of_properties: 125
       number_of_subjects: 83960714
       number_of_objects: 185509730
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/chembl
 - name: rdfportal.clinvar
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
@@ -20147,6 +20165,7 @@
       number_of_properties: 183
       number_of_subjects: 362095575
       number_of_objects: 502025919
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/clinvar
 - name: rdfportal.dbcatalog
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20172,6 +20191,7 @@
       number_of_properties: 32
       number_of_subjects: 14731
       number_of_objects: 38067
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/dbcatalog
 - name: rdfportal.ensembl
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -20197,6 +20217,7 @@
       number_of_properties: 28
       number_of_subjects: 3820001372
       number_of_objects: 5000274877
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ensembl
 - name: rdfportal.ensembl_grch37
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -20227,6 +20248,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://fams.bio.chuo-u.ac.jp/GPCR/rdf/
+  - http://fams.bio.chuo-u.ac.jp/ontology/
   use_graph: true
   keywords:
   - Protein
@@ -20247,10 +20269,12 @@
       number_of_properties: 24
       number_of_subjects: 5858909
       number_of_objects: 6378252
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/famsbase
 - name: rdfportal.glycoepitope
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdf.glycoinfo.org/glycoepitope
+  - http://www.glycoepitope.jp/epitopes/glycoepitope.owl
   use_graph: true
   keywords:
   - Other biomolecule
@@ -20271,6 +20295,7 @@
       number_of_properties: 26
       number_of_subjects: 8678
       number_of_objects: 10723
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/glycoepitope
 - name: rdfportal.gtdb
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20372,6 +20397,7 @@
       number_of_properties: 8
       number_of_subjects: 363281
       number_of_objects: 794313
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/hgnc
 - name: rdfportal.homologene
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20397,6 +20423,7 @@
       number_of_properties: 5
       number_of_subjects: 319471
       number_of_objects: 773372
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/homologene
 - name: rdfportal.icgc
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20447,6 +20474,7 @@
       number_of_properties: 36
       number_of_subjects: 259214
       number_of_objects: 442635
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/jcm
 - name: rdfportal.knapsack
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20475,6 +20503,7 @@
       number_of_properties: 14
       number_of_subjects: 715781
       number_of_objects: 1385729
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/knapsack
 - name: rdfportal.ligandbox
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20502,6 +20531,7 @@
       number_of_properties: 7
       number_of_subjects: 92822893
       number_of_objects: 120779192
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ligandbox
 - name: rdfportal.massbank
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20531,8 +20561,11 @@
   graph_uris:
   - http://mbgd.genome.ad.jp/rdf/resource/default
   - http://mbgd.genome.ad.jp/rdf/resource/gene
+  - http://mbgd.genome.ad.jp/rdf/resource/nucseq
   - http://mbgd.genome.ad.jp/rdf/resource/organism
   - http://mbgd.genome.ad.jp/rdf/resource/xref_uniprot
+  - http://purl.jp/bio/11/mbgd
+  - http://purl.jp/bio/11/orth
   - http://rdfportal.org/ontology/taxonomy
   use_graph: true
   keywords:
@@ -20556,6 +20589,7 @@
       number_of_properties: 50
       number_of_subjects: 321276294
       number_of_objects: 476343849
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/mbgd
 - name: rdfportal.mco
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20694,6 +20728,7 @@
       number_of_properties: 17
       number_of_subjects: 3047
       number_of_objects: 20709
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/nando
 - name: rdfportal.naro_genebank
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20718,6 +20753,7 @@
       number_of_properties: 3
       number_of_subjects: 26442
       number_of_objects: 56341
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/naro_genebank
 - name: rdfportal.nbrc
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20745,6 +20781,7 @@
       number_of_properties: 18
       number_of_subjects: 195807
       number_of_objects: 378099
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/nbrc
 - name: rdfportal.ncbigene
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
@@ -20768,12 +20805,16 @@
       number_of_properties: 16
       number_of_subjects: 57768578
       number_of_objects: 160736140
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ncbigene
 - name: rdfportal.nikkaji
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/nikkaji/core
   - http://rdfportal.org/dataset/nikkaji/inchi
   - http://rdfportal.org/dataset/nikkaji/main
+  - http://rdfportal.org/dataset/nikkaji/mwmf
+  - http://rdfportal.org/dataset/nikkaji/sdf
+  - http://rdfportal.org/dataset/nikkaji/smiles
   use_graph: true
   keywords:
   - Drug/Chemical
@@ -20797,6 +20838,7 @@
       number_of_properties: 22
       number_of_subjects: 59100523
       number_of_objects: 167397541
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/nikkaji
 - name: rdfportal.nlm-catalog
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
@@ -20823,6 +20865,7 @@
       number_of_properties: 5
       number_of_subjects: 41226
       number_of_objects: 172266
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/nlm-catalog
 - name: rdfportal.oma
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
@@ -20874,10 +20917,12 @@
       number_of_properties: 32
       number_of_subjects: 1497955718
       number_of_objects: 2765961664
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/opentggates
 - name: rdfportal.paconto
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://jcggdb.jp/rdf/diseases/paconto
+  - http://jcggdb.jp/rdf/diseases/paconto-schema.rdf
   use_graph: true
   keywords:
   - Health/Disease
@@ -20905,10 +20950,12 @@
       number_of_properties: 99
       number_of_subjects: 9329
       number_of_objects: 16451
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/paconto
 - name: rdfportal.pgdbj
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://pgdbj.jp/od/
+  - http://purl.jp/bio/11/orth#
   use_graph: true
   keywords:
   - Gene
@@ -20931,6 +20978,7 @@
       number_of_properties: 19
       number_of_subjects: 1963741
       number_of_objects: 5728076
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pgdbj
 - name: rdfportal.polyinfo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -20955,6 +21003,7 @@
       number_of_properties: 14
       number_of_subjects: 1329
       number_of_objects: 3293
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/polyinfo
 - name: rdfportal.pubmed
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
@@ -20980,6 +21029,7 @@
       number_of_properties: 5
       number_of_subjects: 442968598
       number_of_objects: 659176517
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pubmed
 - name: rdfportal.pubtator
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
@@ -21005,9 +21055,11 @@
       number_of_properties: 3
       number_of_subjects: 238227596
       number_of_objects: 34642584
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pubtator
 - name: rdfportal.quanto
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
+  - http://purl.jp/bio/01/quanto/ontology/sos#
   - http://quanto.dbcls.jp
   use_graph: true
   keywords:
@@ -21028,6 +21080,7 @@
       number_of_properties: 29
       number_of_subjects: 21955729
       number_of_objects: 31484031
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/quanto
 - name: rdfportal.reactome
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -21051,6 +21104,7 @@
       number_of_properties: 45
       number_of_subjects: 3705512
       number_of_objects: 6831167
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/reactome
 - name: rdfportal.refex
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -21078,6 +21132,7 @@
       number_of_properties: 26
       number_of_subjects: 24260736
       number_of_objects: 27439087
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/refex
 - name: rdfportal.rhea
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
@@ -21132,3 +21187,75 @@
       number_of_properties: 33
       number_of_subjects: 6644
       number_of_objects: 9329
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ssbd
+- name: civic
+  endpoint: http://sparql.med2rdf.org/sparql
+  graph_uris:
+  - http://med2rdf.org/graph/civic
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/civic
+- name: dgidb
+  endpoint: http://sparql.med2rdf.org/sparql
+  graph_uris:
+  - http://med2rdf.org/graph/dgidb
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/dgidb
+- name: rdfportal.ggdonto
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://jcggdb.jp/rdf/diseases/ggdonto
+  - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ggdonto
+- name: rdfportal.go
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/ontology/go
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/go
+- name: rdfportal.hpo
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/ontology/hp
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/hpo
+- name: rdfportal.linked_icgc
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://icgc.link/release_20
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/linked_icgc
+- name: rdfportal.mondo
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/ontology/mondo
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/mondo
+- name: rdfportal.mp
+  endpoint: https://rdfportal.org/bioportal/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/bioportal/mp
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/mp
+- name: rdfportal.ncit
+  endpoint: https://rdfportal.org/bioportal/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/bioportal/ncit
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ncit
+- name: rdfportal.uberon
+  endpoint: https://rdfportal.org/bioportal/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/bioportal/uberon
+  use_graph: true
+  dataset_metadata:
+    rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/uberon
