@@ -20951,6 +20951,10 @@
       number_of_subjects: 9329
       number_of_objects: 16451
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/paconto
+    dumps_from: graph IRI dereferenced to RDF/XML
+  download_rdf:
+  - http://jcggdb.jp/rdf/diseases/paconto.rdf
+  - http://jcggdb.jp/rdf/diseases/paconto-schema.rdf
 - name: rdfportal.pgdbj
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -21210,6 +21214,10 @@
   use_graph: true
   dataset_metadata:
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ggdonto
+    dumps_from: graph IRI dereferenced to RDF/XML
+  download_rdf:
+  - http://jcggdb.jp/rdf/diseases/ggdonto.rdf
+  - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
 - name: rdfportal.go
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:

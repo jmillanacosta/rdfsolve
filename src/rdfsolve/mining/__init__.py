@@ -26,7 +26,8 @@ def _query_owl_class_superclasses(
     helper: SparqlHelper,
     graph_uris: list[str] | None = None,
     limit: int = 500,
-) -> list[str]:
+    allow_truncation: bool = False,
+) -> tuple[list[str], bool]:
     """Query for superclasses of owl:Class instances.
 
     For endpoints that use ontology classes as data (e.g., Rhea using CHEBI
@@ -39,7 +40,9 @@ def _query_owl_class_superclasses(
         limit: Maximum number of superclasses to return (default 500 to prevent OOM)
 
     Returns:
-        List of superclass URIs. Fail if the configured limit is reached.
+        The superclass URIs and whether the configured limit was reached.
+        Reaching the limit fails unless *allow_truncation* is set, because the
+        result is then the most used superclasses rather than all of them.
     """
     g_clause = ""
     if graph_uris:
@@ -67,7 +70,8 @@ LIMIT {limit}"""
     try:
         result = helper.select(query, purpose="owl-class-superclasses")
         bindings = result.get("results", {}).get("bindings", [])
-        if len(bindings) >= limit:
+        truncated = len(bindings) >= limit
+        if truncated and not allow_truncation:
             raise ValueError(
                 f"Ontology superclass query reached limit {limit}; results may be truncated"
             )
@@ -78,7 +82,13 @@ LIMIT {limit}"""
             if class_uri and class_uri not in ONTOLOGY_METACLASSES:
                 classes.append(class_uri)
         logger.info(f"Found {len(classes)} superclasses of owl:Class instances (top {limit})")
-        return classes
+        if truncated:
+            logger.warning(
+                "More than %d superclasses exist; aggregating into the %d most used",
+                limit,
+                len(classes),
+            )
+        return classes, truncated
     except Exception as e:
         raise RuntimeError(f"Failed to query owl:Class superclasses: {e}") from e
 
@@ -176,9 +186,13 @@ def _mine_with_ontology(
     # Aggregation does not require separate ontology export.
     if uses_ontology_as_data:
         logger.info("Querying for superclasses of owl:Class instances")
-        superclasses = _query_owl_class_superclasses(miner._helper, miner.graph_uris)
+        superclasses, truncated = _query_owl_class_superclasses(
+            miner._helper, miner.graph_uris, allow_truncation=True
+        )
+        miner._report.report.config["ontology_as_data_truncated"] = truncated
         if superclasses:
             miner._ontology_classes = superclasses
+            miner._aggregate_ontology_terms = True
 
     logger.info("Mining schema patterns (ABox)")
     data_schema = miner._mine_schema(dataset_name=dataset_name)
@@ -194,6 +208,7 @@ def _mine_with_ontology(
             miner._helper,
             miner.graph_uris,
             superclasses=superclasses,
+            allow_truncation=True,
         )
 
         # Mine patterns where owl:Class instances are subjects (attributed to superclass)
@@ -201,6 +216,7 @@ def _mine_with_ontology(
             miner._helper,
             miner.graph_uris,
             superclasses=superclasses,
+            allow_truncation=True,
         )
 
         # Merge with existing patterns

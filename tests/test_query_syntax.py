@@ -63,3 +63,20 @@ def test_optional_query_syntax(scope):
     MetadataMiner(helper, scope).mine()
     for call in helper.select.call_args_list:
         parseQuery(call.args[0])
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+def test_class_discovery_can_skip_subtyped_ontology_terms(scope):
+    """The ontology check must sit outside GRAPH: the ontology lives in another graph."""
+    plain = builders._build_class_discovery_query_plain(scope, True)
+    parseQuery(plain)
+    parseQuery(builders._build_class_discovery_query(scope, True).format(offset=0, limit=10))
+    assert "owl#Class" in plain
+    if scope:
+        graph_block = plain[plain.index("GRAPH") : plain.index("FILTER NOT EXISTS")]
+        assert graph_block.count("}") == graph_block.count("{")
+
+
+@pytest.mark.parametrize("scope", SCOPES)
+def test_class_discovery_keeps_every_type_by_default(scope):
+    assert "owl#Class" not in builders._build_class_discovery_query_plain(scope)

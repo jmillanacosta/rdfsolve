@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -254,6 +254,9 @@ class SourceAnalysis:
     needs_archive: bool = False
     """At least one archive (.zip / .tar.gz / .tgz) is present."""
 
+    urls_by_suffix: dict[str, list[str]] = field(default_factory=dict)
+    """Download URLs grouped by their ``download_*`` suffix."""
+
     @property
     def needs_rdfxml_conversion(self) -> bool:
         """Check if source requires RDF/XML to NQuads conversion."""
@@ -295,6 +298,7 @@ class SourceAnalysis:
 def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
     """Scan all download_* fields on entry in a single pass."""
     urls: list[str] = []
+    urls_by_suffix: dict[str, list[str]] = {}
     suffixes: set[str] = set()
     needs_gz = False
     needs_xz = False
@@ -310,6 +314,7 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
         suffixes.add(suffix)
         for u in urls_from_field(entry, key):
             urls.append(u)
+            urls_by_suffix.setdefault(suffix, []).append(u)
             low = u.lower()
             if low.endswith(".gz") and not low.endswith(".tar.gz"):
                 needs_gz = True
@@ -322,6 +327,7 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
 
     return SourceAnalysis(
         urls=urls,
+        urls_by_suffix=urls_by_suffix,
         suffixes=suffixes,
         needs_gz=needs_gz,
         needs_xz=needs_xz,
@@ -405,6 +411,24 @@ def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
         'mv "$fp" "./$dest"; '
         "done 2>/dev/null || true"
     )
+
+
+def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
+    """Give a Turtle download a .ttl name when its URL says otherwise.
+
+    Some sources serve Turtle from a .owl or .rdf URL. The index globs by
+    extension, so the file has to carry the extension of what is inside it.
+    """
+    renames = []
+    for url in analysis.urls_by_suffix.get("ttl", []):
+        name = url.rstrip("/").rsplit("/", 1)[-1]
+        if name and not name.endswith((".ttl", ".ttl.gz", ".n3")):
+            stem = name.rsplit(".", 1)[0] if "." in name else name
+            renames.append((name, f"{stem}.ttl"))
+    if not renames:
+        return []
+    moves = " ".join(f'[ -f "{src}" ] && mv -f "{src}" "{dst}";' for src, dst in renames)
+    return ["echo 'Naming Turtle downloads by content ...'", f"{moves} true"]
 
 
 def _extract_archives_steps() -> list[str]:
@@ -577,6 +601,8 @@ def _build_get_data_steps(
         f"cd {src_data_dir}",
         " && ".join(_wget_cmd(u) for u in analysis.urls),
     ]
+
+    steps.extend(_rename_mislabelled_steps(analysis))
 
     if analysis.needs_archive:
         steps.extend(_extract_archives_steps())

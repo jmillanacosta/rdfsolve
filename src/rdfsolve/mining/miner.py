@@ -340,6 +340,7 @@ class SchemaMiner:
             chunk_size=self.chunk_size,
             unsafe_paging=self.unsafe_paging,
             excluded_graph_prefixes=self.excluded_graph_prefixes,
+            aggregate_ontology_terms=getattr(self, "_aggregate_ontology_terms", False),
         )
 
         # Run strategy
@@ -553,6 +554,7 @@ class SchemaMiner:
     def _session(self, dataset_name: str | None) -> Iterator[None]:
         """Start one report before any phase and retain failures."""
         self._ontology_classes = None
+        self._aggregate_ontology_terms = False
         self._declared_classes = set()
         self._init_report(
             dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()

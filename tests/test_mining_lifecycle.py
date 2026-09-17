@@ -42,7 +42,9 @@ def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected)
         return run
 
     monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: detected)
-    monkeypatch.setattr("rdfsolve.mining._query_owl_class_superclasses", lambda *a: ["urn:A"])
+    monkeypatch.setattr(
+        "rdfsolve.mining._query_owl_class_superclasses", lambda *a, **kw: (["urn:A"], False)
+    )
     monkeypatch.setattr("rdfsolve.mining.OntologyMiner.mine", optional(OntologyStructure()))
     monkeypatch.setattr("rdfsolve.mining.MetadataMiner.mine", optional(MetadataDocument(graph=Graph())))
     pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
@@ -150,3 +152,41 @@ def test_bounded_graph_uses_real_mining_queries():
             (p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
         assert schema.prefixes["e"] == "urn:mine:"
         assert miner.last_report.finished_at
+
+
+def _superclass_helper(count):
+    """A helper whose superclass query returns *count* parents."""
+    helper = Mock()
+    helper.select.return_value = {
+        "results": {
+            "bindings": [
+                {"parent": {"value": f"urn:parent:{i}"}, "count": {"value": str(count - i)}}
+                for i in range(count)
+            ]
+        }
+    }
+    return helper
+
+
+def test_superclass_aggregation_reports_truncation_instead_of_failing():
+    from rdfsolve.mining import _query_owl_class_superclasses
+
+    classes, truncated = _query_owl_class_superclasses(
+        _superclass_helper(500), None, limit=500, allow_truncation=True
+    )
+    assert truncated is True
+    assert len(classes) == 500
+
+
+def test_superclass_aggregation_still_refuses_silent_truncation():
+    from rdfsolve.mining import _query_owl_class_superclasses
+
+    with pytest.raises(RuntimeError, match="reached limit 500"):
+        _query_owl_class_superclasses(_superclass_helper(500), None, limit=500)
+
+
+def test_superclass_aggregation_reports_no_truncation_below_the_limit():
+    from rdfsolve.mining import _query_owl_class_superclasses
+
+    classes, truncated = _query_owl_class_superclasses(_superclass_helper(3), None, limit=500)
+    assert (len(classes), truncated) == (3, False)

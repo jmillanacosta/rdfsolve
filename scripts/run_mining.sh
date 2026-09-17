@@ -39,7 +39,8 @@ for arg in "$@"; do
 done
 args=(scripts/pipeline.py "$select" --sources-file "$registry"
       --output-dir "$output" --data-dir "$data" --output-suffix "$suffix"
-      --extract-ontology --extract-metadata --skip-mappings --skip-inference --skip-analysis
+      --extract-ontology --extract-metadata --ontology-as-data
+      --skip-mappings --skip-inference --skip-analysis
       "${cache[@]}" "$@")
 echo "Mode: $mode; job: ${SLURM_JOB_ID:-manual}; node: $(hostname)"
 echo "Output: $output"

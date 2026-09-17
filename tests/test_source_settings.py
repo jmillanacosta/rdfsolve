@@ -499,3 +499,25 @@ def test_each_source_gets_its_own_port(pipeline, tmp_path, monkeypatch):
     results = stage._execute()
     assert ports == [7019, 7020, 7021]
     assert results["mined"] == ["two", "three"]
+
+
+def test_turtle_served_from_an_owl_url_is_renamed_by_content(pipeline, tmp_path):
+    from rdfsolve.qlever import build_qleverfile
+
+    qleverfile = build_qleverfile(
+        {"name": "glycoepitope", "download_ttl": "http://example.org/epitopes/glycoepitope.owl"},
+        tmp_path,
+        7019,
+        "singularity",
+    )
+    assert 'mv -f "glycoepitope.owl" "glycoepitope.ttl"' in qleverfile
+    assert "INPUT_FILES          = rdf/*.ttl" in qleverfile
+
+
+def test_a_turtle_url_is_left_alone(pipeline, tmp_path):
+    from rdfsolve.qlever import build_qleverfile
+
+    qleverfile = build_qleverfile(
+        {"name": "plain", "download_ttl": "http://example.org/data.ttl"}, tmp_path, 7019, "singularity"
+    )
+    assert "mv -f" not in qleverfile

@@ -101,7 +101,9 @@ class TwoPhaseStrategy(MiningStrategy):
         ccs = context.class_chunk_size
         if ccs is None:
             logger.info("Phase 1: discovering classes (no pagination) …")
-            q = _build_class_discovery_query_plain(context.graph_uris)
+            q = _build_class_discovery_query_plain(
+                context.graph_uris, context.aggregate_ontology_terms
+            )
             t0 = time.monotonic()
             try:
                 try:
@@ -110,7 +112,9 @@ class TwoPhaseStrategy(MiningStrategy):
                 except ResponseLimitError:
                     logger.warning("Class listing exceeded the response limit; paging it")
                     class_bindings = context.collect_bindings(
-                        _build_class_discovery_query(context.graph_uris),
+                        _build_class_discovery_query(
+                            context.graph_uris, context.aggregate_ontology_terms
+                        ),
                         "two-phase/classes",
                         context.chunk_size,
                     )
@@ -127,7 +131,9 @@ class TwoPhaseStrategy(MiningStrategy):
                 raise
         else:
             logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(context.graph_uris)
+            q = _build_class_discovery_query(
+                context.graph_uris, context.aggregate_ontology_terms
+            )
             class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
 
         # Extract class URIs - only keep IRI bindings, skip literals/bnodes
@@ -150,7 +156,13 @@ class TwoPhaseStrategy(MiningStrategy):
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
         if metaclass_count:
             logger.info(f"  -> Filtered {metaclass_count} ontology metaclasses")
-        logger.info(f"  -> {len(classes)} data classes found")
+        if context.aggregate_ontology_terms:
+            logger.info(
+                "  -> %d data classes found; subtyped ontology terms stand in as superclasses",
+                len(classes),
+            )
+        else:
+            logger.info(f"  -> {len(classes)} data classes found")
         return classes
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:

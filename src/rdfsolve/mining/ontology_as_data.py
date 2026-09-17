@@ -80,6 +80,7 @@ def mine_ontology_as_data_patterns(
     graph_uris: list[str] | None = None,
     superclasses: list[str] | None = None,
     bnode_namespace: str = "http://example.com/.well-known/genid/",
+    allow_truncation: bool = False,
 ) -> list[SchemaPattern]:
     """Mine patterns where owl:Class instances are used as data.
 
@@ -150,7 +151,13 @@ LIMIT 1000"""
         result = helper.select(query, purpose="ontology-as-data-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
         if len(bindings) >= 1000:
-            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
+            if not allow_truncation:
+                raise ValueError(
+                    "Ontology-as-data query reached limit 1000; results may be truncated"
+                )
+            logger.warning(
+                "Ontology-as-data reached the 1000-row limit; keeping the most used patterns"
+            )
 
         patterns = []
         for row in bindings:
@@ -188,6 +195,7 @@ def mine_ontology_as_data_subject_patterns(
     graph_uris: list[str] | None = None,
     superclasses: list[str] | None = None,
     bnode_namespace: str = "http://example.com/.well-known/genid/",
+    allow_truncation: bool = False,
 ) -> list[SchemaPattern]:
     """Mine patterns where owl:Class instances are subjects.
 
@@ -243,7 +251,13 @@ LIMIT 1000"""
         result = helper.select(query, purpose="ontology-as-data-subject-aggregated")
         bindings = result.get("results", {}).get("bindings", [])
         if len(bindings) >= 1000:
-            raise ValueError("Ontology-as-data query reached limit 1000; results may be truncated")
+            if not allow_truncation:
+                raise ValueError(
+                    "Ontology-as-data query reached limit 1000; results may be truncated"
+                )
+            logger.warning(
+                "Ontology-as-data reached the 1000-row limit; keeping the most used patterns"
+            )
 
         patterns = []
         for row in bindings:
