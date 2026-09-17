@@ -10743,10 +10743,10 @@
       void: skipped
     errors: {}
 - name: rdfportal.pdb.graph
-  endpoint: http://rdfportal.org/pdb/sparql
+  endpoint: https://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/pdbj
   graph_uris:
-  - http://rdfportal.org/dataset/pdbj
+  - http://rdfportal.org/dataset/pdb
   use_graph: true
   download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
   bioregistry_prefix: pdb
