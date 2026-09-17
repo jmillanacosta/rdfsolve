@@ -8787,6 +8787,7 @@
   download_nt: https://rdfportal.org/ntriples/uniprot/latest/core.nt.gz
   use_graph: true
   keywords:
+  - Protein
   - protein
   - sequence
   sparql_engine: virtuoso
@@ -8799,9 +8800,25 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: 0.9719455242156982
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: uniprot
+    title: UniProt RDF
+    description: The Universal Protein Resource (UniProt) is a comprehensive resource for protein sequence and annotation data. It is a central hub for protein information, providing curated and computationally
+      annotated data from a wide range of organisms. This RDF dataset represents UniProt data in a semantic format to enable integration and advanced querying across life science resources.
+    website: https://uniprot.org/
+    version: '2026_01'
+    issued: '2026-01-28'
+    licenses:
+    - Creative Commons Attribution 4.0 International (CC BY 4.0) License
+    statistics:
+      number_of_triples: 38873604515
+      number_of_classes: 154
+      number_of_properties: 180
+      number_of_subjects: 8092918607
+      number_of_objects: 7387257890
   metadata_graph_uris: null
-  enrichment: &id007
+  enrichment: &id006
     state: partial
     checked_at: '2026-09-08T10:27:58.967893+00:00'
     phases:
@@ -10801,8 +10818,13 @@
   - https://www.wwpdb.org/pdb?id=pdb_0000
   bioregistry_logo: https://cdn.rcsb.org/wwpdb/img/core/wwpdb-logo.png
   keywords:
-  - protein
+  - Drug/Chemical
+  - Other biomolecule
+  - Protein
+  - Sequence
+  - Structure
   - dna
+  - protein
   - rna
   - structure
   bioregistry_synonyms:
@@ -10935,18 +10957,24 @@
   failure_count: 1
   endpoint_down: false
   avg_response_time: 1.9203479290008545
-  dataset_metadata: &id003
-    title: Medical Subject Headings (MeSH) RDF
-    description: The Medical Subject Headings (MeSH) vocabulary as a Linked Data service.
-    source_license: http://creativecommons.org/publicdomain/zero/1.0/
-    source_publisher: U.S. National Library of Medicine
-    source_creator:
-    - U.S. National Library of Medicine
-    homepage: http://id.nlm.nih.gov/mesh/
-    metadata_subject_iri: http://id.nlm.nih.gov/mesh/void#MeSHRDF
-    metadata_identity_basis: single_dataset
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pdb
+    title: wwPDB/RDF
+    description: wwPDB/RDF is a translation of PDBx/PDBML data into RDF.
+    website: https://rdf.wwpdb.org/
+    version: Release_20260619
+    issued: '2026-06-19'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 23662283539
+      number_of_classes: 647
+      number_of_properties: 3954
+      number_of_subjects: 1692898040
+      number_of_objects: 1738580391
   metadata_graph_uris: null
-  enrichment: &id004
+  enrichment: &id003
     state: complete
     checked_at: '2026-09-08T10:28:20.554240+00:00'
     phases:
@@ -10955,14 +10983,19 @@
       void: skipped
     errors: {}
 - name: rdfportal.pubcasefinder
-  endpoint: http://rdfportal.org/pdb/sparql
+  endpoint: https://rdfportal.org/primary/sparql
   void_iri: https://pubcasefinder.dbcls.jp/rdf
   graph_uris:
   - https://pubcasefinder.dbcls.jp/rdf
   use_graph: true
   keywords:
-  - health
+  - Disease Search
+  - Genetic Disease
+  - Human Phenotype Ontology
+  - Phenotype
+  - Rare Disease
   - disease
+  - health
   - phenotype
   - rare disease
   sparql_engine: virtuoso
@@ -10975,11 +11008,26 @@
   failure_count: 1
   endpoint_down: false
   avg_response_time: 1.0000941753387451
-  dataset_metadata: *id003
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pubcasefinder
+    title: PubCaseFinder RDF
+    description: PubCaseFinder (PCF) is a Human Phenotype Ontology (HPO)-based clinical decision support system for rare and genetic diseases, always up-to-date.
+    website: https://pubcasefinder.dbcls.jp/
+    version: 1.3.0
+    issued: '2021-05-18'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 16367389
+      number_of_classes: 7
+      number_of_properties: 6
+      number_of_subjects: 2128002
+      number_of_objects: 2176841
   metadata_graph_uris: null
-  enrichment: *id004
+  enrichment: *id003
 - name: rdfportal.medgen
-  endpoint: http://rdfportal.org/pdb/sparql
+  endpoint: https://rdfportal.org/ncbi/sparql
   void_iri: http://rdfportal.org/dataset/medgen
   graph_uris:
   - http://rdfportal.org/dataset/medgen
@@ -11026,10 +11074,12 @@
   - 'https://n2t.net/medgen:'
   - https://www.ncbi.nlm.nih.gov/medgen/
   keywords:
+  - Health/Disease
+  - Ontology/Terminology/Nomenclature
   - bibliography/documents
+  - disease
   - genome/gene
   - health
-  - disease
   terminology_nomenclature:
   - phenotype
   bioregistry_synonyms:
@@ -11052,19 +11102,40 @@
   failure_count: 1
   endpoint_down: false
   avg_response_time: 1.0000948905944824
-  dataset_metadata: *id003
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: medgen
+    title: MedGen
+    description: MedGen organizes Information related to human medical genetics, such as attributes of conditions with a genetic contribution. This RDF dataset is generated by the RDF Portal based on data
+      distributed by NCBI MedGen.
+    website: https://www.ncbi.nlm.nih.gov/medgen
+    version: Med2RDF version based on release_20250903
+    issued: '2026-01-15'
+    licenses:
+    - null
+    - null
+    statistics:
+      number_of_triples: 125703664
+      number_of_classes: 4
+      number_of_properties: 46
+      number_of_subjects: 3928741
+      number_of_objects: 32320296
   metadata_graph_uris: null
-  enrichment: *id004
+  enrichment: *id003
 - name: rdfportal.jpost
-  endpoint: http://rdfportal.org/pdb/sparql
+  endpoint: https://rdfportal.org/primary/sparql
   void_iri: http://jpost.org/graph/database
   graph_uris:
   - http://jpost.org/graph/database
+  - http://rdf.jpostdb.org/ontology/jpost.owl
+  - http://rdfportal.org/ontology/taxonomy
   use_graph: true
   keywords:
+  - Protein
+  - Sequence
+  - mass spectrometry
   - protein
   - proteomics
-  - mass spectrometry
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
@@ -11075,9 +11146,25 @@
   failure_count: 1
   endpoint_down: false
   avg_response_time: 1.0000662803649902
-  dataset_metadata: *id003
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: jpostdb
+    title: jPOST databse RDF
+    description: jPOST database RDF is a public dataset that provides the contents of jPOSTdb, operated by the jPOST project, in RDF format. It contains dataset metadata, identified peptides, inferred proteins,
+      and post-translational modifications (PTMs) derived from proteomics public data reanalyzed under standardized criteria.
+    website: https://globe.jpostdb.org/
+    version: '202509'
+    issued: '2025-09-04'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 577714133
+      number_of_classes: 88
+      number_of_properties: 51
+      number_of_subjects: 167382402
+      number_of_objects: 190910396
   metadata_graph_uris: null
-  enrichment: *id004
+  enrichment: *id003
 - name: rdfportal.affymetrix
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
@@ -11100,7 +11187,7 @@
   avg_response_time: 1.0062439441680908
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: &id005
+  enrichment: &id004
     state: failed
     checked_at: '2026-09-08T10:28:26.352727+00:00'
     phases:
@@ -11188,7 +11275,7 @@
   avg_response_time: 1.0001699924468994
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: ctd
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3
@@ -11225,7 +11312,7 @@
   avg_response_time: 1.0001063346862793
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: kegg
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3
@@ -11321,7 +11408,7 @@
   avg_response_time: 1.6310389041900635
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: irefindex
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3
@@ -11346,7 +11433,7 @@
   avg_response_time: 1.0002238750457764
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: drugbank
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3
@@ -11446,7 +11533,7 @@
   avg_response_time: 1.0001697540283203
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: homologene
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3
@@ -11522,7 +11609,7 @@
   avg_response_time: 1.0001606941223145
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: ncbigene
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3
@@ -11659,7 +11746,7 @@
   avg_response_time: 1.0001437664031982
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: goa
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3
@@ -11743,7 +11830,7 @@
   avg_response_time: 1.000159502029419
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: hgnc
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3
@@ -11861,7 +11948,7 @@
   avg_response_time: 1.0009145736694336
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: interpro
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3
@@ -11973,7 +12060,7 @@
   avg_response_time: 1.0019900798797607
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: lsr
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3
@@ -11996,7 +12083,7 @@
   avg_response_time: 1.0002555847167969
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: mgi
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3
@@ -12166,7 +12253,7 @@
   avg_response_time: 1.0007588863372803
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: mesh
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3
@@ -12326,7 +12413,7 @@
   avg_response_time: 1.0007925033569336
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: ndc
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3
@@ -12390,7 +12477,7 @@
   avg_response_time: 1.0003411769866943
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: omim
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3
@@ -12533,7 +12620,7 @@
   avg_response_time: 1.003983497619629
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: pharmgkb
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3
@@ -12596,7 +12683,7 @@
   avg_response_time: 1.0028254985809326
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: bio2rdf.uniprot
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://sparql.uniprot.org/
@@ -12806,7 +12893,7 @@
   avg_response_time: 1.0024197101593018
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: sgd
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3
@@ -13080,7 +13167,7 @@
   avg_response_time: 1.0026254653930664
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: hp
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3
@@ -13190,7 +13277,7 @@
   avg_response_time: 1.0018119812011719
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: eco
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3
@@ -13291,7 +13378,7 @@
   avg_response_time: 1.0003507137298584
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: apo
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3
@@ -13341,7 +13428,7 @@
   avg_response_time: 1.5255138874053955
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: taxonomy
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
@@ -13527,7 +13614,7 @@
   avg_response_time: 1.00016450881958
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: sider
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3
@@ -13556,7 +13643,7 @@
   avg_response_time: 1.0001473426818848
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: wormbase
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3
@@ -13742,7 +13829,7 @@
   avg_response_time: 1.0001716613769531
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id005
+  enrichment: *id004
 - name: bio2rdf.biomodels
   endpoint: http://cu.biomodels.bio2rdf.org/sparql
   notes: Bio2RDF mirror - BioModels
@@ -15396,8 +15483,9 @@
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subclasses.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subproperties.nt.gz
   keywords:
-  - cell line
+  - Cell
   - biology
+  - cell line
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
@@ -15408,11 +15496,35 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: null
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: cellosaurus
+    title: Cellosaurus
+    description: Cellosaurus is a comprehensive knowledge resource describing cell lines used in biomedical research, including immortalized and finite cell lines, stem cell lines, and cell lines derived
+      from vertebrates, invertebrates, and plants. Each cell line is assigned a unique accession and is annotated with curated information such as recommended names and synonyms, species of origin, tissue
+      and cell type, disease associations, donor characteristics, genetic alterations, STR profiles, publications, and cross-references to cell banks and external databases. The RDF representation structures
+      these data and their relationships using the Cellosaurus ontology and links them to established biological databases and ontologies, facilitating integrated search and analysis across life science
+      RDF datasets.
+    website: https://www.cellosaurus.org/
+    version: Release 56
+    issued: '2026-06-25'
+    licenses:
+    - the Creative Commons Attribution 4.0 International (CC BY 4.0)
+    - See https://ftp.expasy.org/databases/cellosaurus/README
+    statistics:
+      number_of_triples: 19464252
+      number_of_classes: 134
+      number_of_properties: 167
+      number_of_subjects: 3269395
+      number_of_objects: 5909588
   metadata_graph_uris: null
   enrichment:
     state: skipped
     reason: No endpoint URL
+  endpoint: https://rdfportal.org/sib/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/cellosaurus
+  use_graph: true
 - name: sibils
   endpoint: https://sparql.sibils.org/sparql
   download_ttl: https://sparql.sibils.org/ontology.ttl
@@ -15770,6 +15882,8 @@
   endpoint: https://rdfportal.org/pubchem/sparql
   download_nt: https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz
   keywords:
+  - Drug/Chemical
+  - Other biomolecule
   - chemical
   - chemical compound
   sparql_engine: virtuoso
@@ -15782,7 +15896,24 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: 0.9386980533599854
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pubchem
+    title: PubChem RDF
+    description: 'PubChem is an open chemistry database at the National Institutes of Health (NIH). For the detailed information, please see the following URL: https://pubchemdocs.ncbi.nlm.nih.gov/about.
+      Note: The endpoint does not include files provided at ftp://ftp.ncbi.nlm.nih.gov/pubchem/RDF/compound/nbr2d/ and ftp://ftp.ncbi.nlm.nih.gov/pubchem/RDF/compound/nbr3d/'
+    website: https://pubchem.ncbi.nlm.nih.gov/
+    version: null
+    issued: '2025-05-28'
+    licenses:
+    - null
+    - null
+    statistics:
+      number_of_triples: 29084905457
+      number_of_classes: 300593
+      number_of_properties: 104
+      number_of_subjects: 4444215882
+      number_of_objects: 6710572977
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -15792,10 +15923,41 @@
       metadata: complete
       void: skipped
     errors: {}
+  graph_uris:
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/author
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/book
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/cell
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/compound
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/concept
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/disease
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/gene
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/grant
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/journal
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/organization
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/patent
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/protein
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/reference
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/source
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/substance
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
+  - http://rdf.ncbi.nlm.nih.gov/pubchem/void
+  use_graph: true
 - name: rdfportal.chebi
-  endpoint: https://rdfportal.org/primary/sparql
+  endpoint: https://rdfportal.org/ebi/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
   keywords:
+  - Drug/Chemical
   - chemical
   - chemical compound
   sparql_engine: virtuoso
@@ -15808,9 +15970,25 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: 1.8981420993804932
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: chebi
+    title: ChEBI RDF
+    description: ChEBI (Chemical Entities of Biological Interest) is a freely accessible, ontology-driven database of ‘small molecular entities’, including their chemical structures, names, definitions,
+      roles, and biological relationships. It provides manually curated, non-proprietary data supported by links to external resources and is widely used in chemical biology and bioinformatics
+    website: https://www.ebi.ac.uk/chebi/
+    version: Release 244
+    issued: '2025-08-01'
+    licenses:
+    - Creative Commons License (CC BY 4.0), and governed by EMBL-EBI’s terms of use and Long-term data preservation policy.
+    statistics:
+      number_of_triples: 8817518
+      number_of_classes: 7
+      number_of_properties: 40
+      number_of_subjects: 1215974
+      number_of_objects: 2230560
   metadata_graph_uris: null
-  enrichment: &id006
+  enrichment: &id005
     state: partial
     checked_at: '2026-09-08T10:30:30.368405+00:00'
     phases:
@@ -15819,6 +15997,9 @@
       void: skipped
     errors:
       metadata: Response stream exceeded the request time budget
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/chebi
+  use_graph: true
 - name: rdfportal.primary
   endpoint: https://rdfportal.org/primary/sparql
   keywords:
@@ -15835,7 +16016,7 @@
   avg_response_time: 1.0001583099365234
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id006
+  enrichment: *id005
 - name: mesh.nlm
   endpoint: https://id.nlm.nih.gov/mesh/sparql
   bioregistry_prefix: mesh
@@ -16189,7 +16370,7 @@
   avg_response_time: 1.0001418590545654
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id007
+  enrichment: *id006
 - name: colil
   endpoint: http://colil.dbcls.jp/sparql
   keywords:
@@ -16328,6 +16509,11 @@
 - name: rdfportal.kero
   endpoint: https://rdfportal.org/kero/sparql
   keywords:
+  - Gene expression
+  - Genome
+  - Other DNA
+  - Others
+  - Polymorphism
   - biology
   sparql_engine: virtuoso
   sparql_strategy: get+json
@@ -16340,15 +16526,22 @@
   endpoint_down: false
   avg_response_time: 1.000119686126709
   dataset_metadata:
-    title: Medical Subject Headings (MeSH) RDF
-    description: The Medical Subject Headings (MeSH) vocabulary as a Linked Data service.
-    source_license: http://creativecommons.org/publicdomain/zero/1.0/
-    source_publisher: U.S. National Library of Medicine
-    source_creator:
-    - U.S. National Library of Medicine
-    homepage: http://id.nlm.nih.gov/mesh/
-    metadata_subject_iri: http://id.nlm.nih.gov/mesh/void#MeSHRDF
-    metadata_identity_basis: single_dataset
+    catalogue: https://rdfportal.org/datasets/
+    id: kero
+    title: DBKERO RDF
+    description: DBKERO is a collection of multi-omics data sets including SNV, RNA-seq, ChIP-seq, BS-seq and TSS-seq. The ChIP-seq part is big, so its lite version chip_seq_lite is included. The original
+      big ChIP-seq data can also be downloaded at https://integbio.jp/rdf/download/kero/2017-01-27/all/chip_seq_all.tar.gz .
+    website: http://kero.hgc.jp/rdf/
+    version: '2020-06-10'
+    issued: '2020-06-10'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 11198913244
+      number_of_classes: 43
+      number_of_properties: 60
+      number_of_subjects: 965396936
+      number_of_objects: 7487172357
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -16358,6 +16551,10 @@
       metadata: complete
       void: skipped
     errors: {}
+  graph_uris:
+  - http://kero.hgc.jp/ontology/kero.owl
+  - http://rdfportal.org/dataset/kero/Cancer_Cell_Line
+  use_graph: true
 - name: rdfportal.wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
   keywords:
@@ -16514,8 +16711,18 @@
 - name: rdfportal.ddbj
   endpoint: https://rdfportal.org/ddbj/sparql
   keywords:
-  - sequence
+  - Gene
+  - Genome
+  - Ontology/Terminology/Nomenclature
+  - Other DNA
+  - Others
+  - Polymorphism
+  - RNA
+  - Sequence
+  - Tag sequence (nucleic acid)
+  - cDNA
   - genome
+  - sequence
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
@@ -16527,15 +16734,22 @@
   endpoint_down: false
   avg_response_time: 1.0001194477081299
   dataset_metadata:
-    title: Medical Subject Headings (MeSH) RDF
-    description: The Medical Subject Headings (MeSH) vocabulary as a Linked Data service.
-    source_license: http://creativecommons.org/publicdomain/zero/1.0/
-    source_publisher: U.S. National Library of Medicine
-    source_creator:
-    - U.S. National Library of Medicine
-    homepage: http://id.nlm.nih.gov/mesh/
-    metadata_subject_iri: http://id.nlm.nih.gov/mesh/void#MeSHRDF
-    metadata_identity_basis: single_dataset
+    catalogue: https://rdfportal.org/datasets/
+    id: ddbj
+    title: DDBJ
+    description: Semantic representation of annotated sequence records provided by the DNA Data Bank of Japan (DDBJ), a member of the International Nucleotide Sequence Database Collaboration (INSDC). DDBJ
+      collects, curates, and distributes nucleotide sequence data submitted by researchers worldwide, and this dataset represents those records in RDF to enable semantic integration and advanced querying.
+    website: http://www.ddbj.nig.ac.jp/index-e.html
+    version: '140'
+    issued: '2026-02-20'
+    licenses:
+    - Referred to in International Nucleotide Sequence Database Collaboration Policy (http://www.insdc.org/policy.html)
+    statistics:
+      number_of_triples: 68495145543
+      number_of_classes: 156
+      number_of_properties: 121
+      number_of_subjects: 10331097478
+      number_of_objects: 11623356647
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -16545,6 +16759,10 @@
       metadata: complete
       void: skipped
     errors: {}
+  graph_uris:
+  - http://rdfportal.org/dataset/ddbj
+  - http://rdfportal.org/ontology/taxonomy
+  use_graph: true
 - name: rdfportal.bioportal
   endpoint: https://rdfportal.org/bioportal/sparql
   keywords:
@@ -17282,11 +17500,34 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: null
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: mediadive
+    title: MediaDive RDF
+    description: MediaDive is the largest collection of cultivation media and growth conditions.
+    website: https://mediadive.dsmz.de/
+    version: '2024'
+    issued: '2025-09-16'
+    licenses:
+    - Creative Commons Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 1772251
+      number_of_classes: 13
+      number_of_properties: 69
+      number_of_subjects: 254810
+      number_of_objects: 316733
   metadata_graph_uris: null
   enrichment:
     state: skipped
     reason: No endpoint URL
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/mediadive
+  use_graph: true
+  keywords:
+  - Bioresource
+  - Cell
+  - Organism
 - name: mediadive
   endpoint: https://sparql.dsmz.de/api/mediadive
   keywords:
@@ -18200,6 +18441,11 @@
   download_nt: https://rdfportal.org/ntriples/nadd/latest/rdf/graph-1/NucleicAcidDrug.nt.gz
   notes: Nucleic Acid Drug Database (NADD) - RDFPortal
   keywords:
+  - Drug/Chemical
+  - Journal article/Report/Bibliography
+  - RNA
+  - Sequence
+  - Structure
   - disease
   - drug
   sparql_engine: virtuoso
@@ -18212,9 +18458,24 @@
   failure_count: 0
   endpoint_down: false
   avg_response_time: 1.7989122867584229
-  dataset_metadata: null
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: nadd
+    title: Nucleic Acid Drug Database
+    description: DB is focused on nucleic acid drugs known as biopharmaceuticals and displayed approval drugs and information on three phases of clinical trial stage.
+    website: https://medals.jp/edrugnainfo.html
+    version: '2019-05-14'
+    issued: '2019-05-14'
+    licenses:
+    - Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1)
+    statistics:
+      number_of_triples: 948
+      number_of_classes: 4
+      number_of_properties: 8
+      number_of_subjects: 112
+      number_of_objects: 568
   metadata_graph_uris: null
-  enrichment: *id006
+  enrichment: *id005
 - name: biobricks-aopwiki
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
   notes: 'KG Registry: BioBricks AOP-Wiki'
@@ -18570,7 +18831,7 @@
   avg_response_time: 0.12012219429016113
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: &id008
+  enrichment: &id007
     state: complete
     checked_at: '2026-09-08T10:34:32.811851+00:00'
     phases:
@@ -18655,7 +18916,7 @@
   avg_response_time: 1.0003602504730225
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id008
+  enrichment: *id007
 - name: gtopdb
   download_ttl:
   - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp.ttl
@@ -19075,7 +19336,7 @@
   avg_response_time: 1.0001575946807861
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id008
+  enrichment: *id007
 - name: reactome
   download_rdfxml:
   - https://download.reactome.org/95/biopax.zip
@@ -19506,7 +19767,7 @@
   avg_response_time: 1.1155238151550293
   dataset_metadata: null
   metadata_graph_uris: null
-  enrichment: *id008
+  enrichment: *id007
 - name: ubergraph
   endpoint: https://ubergraph.apps.renci.org/sparql
   download_nquads: https://ubergraph.apps.renci.org/downloads/current/ubergraph.nq.gz
@@ -19686,3 +19947,1188 @@
   enrichment:
     state: skipped
     reason: No endpoint URL
+- name: rdfportal.amrportal
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/amrportal
+  use_graph: true
+  keywords:
+  - Microbes
+  - Phenotype
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: amrportal
+    title: AMR portal RDF
+    description: The Antimicrobial Resistance (AMR) Portal is a data resource for exploring AMR phenotype and genotype annotations, including antibiotic resistance phenotypes, AMR gene detection, and combined
+      phenotype–genotype datasets. Developed through a collaboration between EMBL-EBI and Imperial College London, it provides large-scale AMR data in a reconciled and uniform format. This RDF dataset is
+      independently generated by the the RDF Portal based on data distributed by the AMR Portal.
+    website: https://www.ebi.ac.uk/amr
+    version: Release 2025-12
+    issued: '2025-12-04'
+    licenses:
+    - Data through the AMR Portal is made available under a CC-BY 4.0 license.
+    - https://www.ebi.ac.uk/amr/licensing/
+    statistics:
+      number_of_triples: 71602993
+      number_of_classes: 8
+      number_of_properties: 83
+      number_of_subjects: 2903832
+      number_of_objects: 2706032
+- name: rdfportal.bgee
+  endpoint: https://rdfportal.org/sib/sparql
+  graph_uris:
+  - http://bgee.org
+  use_graph: true
+  keywords:
+  - Gene
+  - Gene expression
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: bgee
+    title: Bgee
+    description: A database for retrieval and comparison of gene expression patterns across multiple animal species
+    website: https://www.bgee.org/
+    version: 15.2.3
+    issued: '2024-00-00'
+    licenses:
+    - Commons Zero license (CC0)
+    statistics:
+      number_of_triples: 6755885759
+      number_of_classes: 26
+      number_of_properties: 22
+      number_of_subjects: 715849799
+      number_of_objects: 155732700
+- name: rdfportal.biomodels
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/biomodels
+  use_graph: true
+  keywords:
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: biomodels
+    title: BioModels RDF
+    description: BioModels is a repository of computational models of biological processes, including systems biology, biochemical networks, and physiological mechanisms. It provides curated and annotated
+      models submitted by the scientific community, supporting model reuse and reproducibility.
+    website: https://www.biomodels.org/
+    version: r31
+    issued: '2018-06-19'
+    licenses:
+    - The BioModels Database dataset, which includes the encoded models (whatever the formats they are provided in) and their annotations, is provided under the terms of the Creative Commons CC0 Public
+      Domain Dedication license.
+    - https://www.biomodels.org/termsofuse
+    statistics:
+      number_of_triples: 47610560
+      number_of_classes: 20
+      number_of_properties: 59
+      number_of_subjects: 8021388
+      number_of_objects: 8557647
+- name: rdfportal.biosample
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/biosamples
+  use_graph: true
+  keywords: []
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: biosample
+    title: BioSample RDF
+    description: BioSample RDF developed by DBCLS and distributed by DDBJ
+    website: https://ddbj.nig.ac.jp/
+    version: '20200903'
+    issued: '2020-09-03'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 175594873
+      number_of_classes: 5
+      number_of_properties: 13
+      number_of_subjects: 13204740
+      number_of_objects: 96750327
+- name: rdfportal.bmrb
+  endpoint: https://rdfportal.org/pdb/sparql
+  graph_uris:
+  - http://bmrbpub.protein.osaka-u.ac.jp/rdf/bmr
+  use_graph: true
+  keywords:
+  - Other biomolecule
+  - Others
+  - Protein
+  - Sequence
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: bmrb
+    title: BMRB/RDF
+    description: BMRB/RDF is a translation of NMR-STAR data into RDF
+    website: https://bmrbpub.pdbj.org/
+    version: '2023-04-29'
+    issued: '2023-04-29'
+    licenses:
+    - Creative Commons Attribution 2.1 Japan (CC BY 2.1 JP)
+    statistics:
+      number_of_triples: 658230916
+      number_of_classes: 419
+      number_of_properties: 2695
+      number_of_subjects: 36916894
+      number_of_objects: 39110387
+- name: rdfportal.brenda
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/brenda
+  use_graph: true
+  keywords:
+  - Biocatalysis
+  - Bioresource
+  - Enzyme
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: brenda
+    title: BRENDA RDF
+    description: BRENDA is the comprehensive enzyme information system with data on enzyme function, structure, and kinetics.
+    website: https://brenda-enzymes.org/
+    version: '2025'
+    issued: '2025-09-16'
+    licenses:
+    - Creative Commons Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 10798737
+      number_of_classes: 25
+      number_of_properties: 33
+      number_of_subjects: 1036304
+      number_of_objects: 2729305
+- name: rdfportal.chembl
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/chembl
+  use_graph: true
+  keywords:
+  - Drug/Chemical
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: chembl
+    title: ChEMBL RDF
+    description: ChEMBL is a manually curated database of bioactive molecules with drug-like properties.
+    website: https://www.ebi.ac.uk/chembl/
+    version: '32'
+    issued: '2023-03-01'
+    licenses:
+    - Creative Commons Attribution-Share Alike 3.0 Unported License
+    statistics:
+      number_of_triples: 740029339
+      number_of_classes: 105
+      number_of_properties: 125
+      number_of_subjects: 83960714
+      number_of_objects: 185509730
+- name: rdfportal.clinvar
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/clinvar
+  use_graph: true
+  keywords:
+  - Health/Disease
+  - Polymorphism
+  - Sequence
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: clinvar
+    title: ClinVar RDF
+    description: ClinVar is a freely available archive describing relationships between medically important variants and phenotypes.
+    website: https://www.ncbi.nlm.nih.gov/clinvar/
+    version: release_20250623
+    issued: '2025-06-23'
+    licenses:
+    - https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+    - null
+    statistics:
+      number_of_triples: 1991923652
+      number_of_classes: 80
+      number_of_properties: 183
+      number_of_subjects: 362095575
+      number_of_objects: 502025919
+- name: rdfportal.dbcatalog
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/dbcatalog/main
+  - http://rdfportal.org/dataset/dbcatalog/tag
+  use_graph: true
+  keywords:
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: dbcatalog
+    title: Integbio Database Catalog/RDF
+    description: Integbio Database Catalog/RDF is a translation of Integbio Database Catalog data into RDF
+    website: https://catalog.integbio.jp/dbcatalog/en/
+    version: release_20230302
+    issued: '2023-03-02'
+    licenses:
+    - http://creativecommons.org/publicdomain/zero/1.0/
+    - Integbio Database Catalog© National Bioscience Database Center licensed under CC Attribution 2.1 Japan
+    statistics:
+      number_of_triples: 117526
+      number_of_classes: 8
+      number_of_properties: 32
+      number_of_subjects: 14731
+      number_of_objects: 38067
+- name: rdfportal.ensembl
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/ensembl
+  use_graph: true
+  keywords:
+  - Gene
+  - Protein
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: ensembl
+    title: Ensembl RDF
+    description: Ensembl is a collection of automatically annotated genome databases for vertebrates and a number of eukaryotes, integrated with all other relevant biological data available. This RDF dataset
+      is generated by the RDF Portal based on files distributed by Ensembl.
+    website: https://www.ensembl.org
+    version: '115'
+    issued: '2026-02-27'
+    licenses:
+    - http://ensembl.org/info/about/legal/disclaimer.html
+    statistics:
+      number_of_triples: 18523657272
+      number_of_classes: 95
+      number_of_properties: 28
+      number_of_subjects: 3820001372
+      number_of_objects: 5000274877
+- name: rdfportal.ensembl_grch37
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/ensembl
+  use_graph: true
+  keywords:
+  - Gene
+  - Protein
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: ensembl_grch37
+    title: Ensembl RDF for human genome GRCh 37
+    description: Ensembl is a collection of automatically annotated genome databases for vertebrates and a number of eukaryotes, integrated with all other relevant biological data available. This RDF dataset
+      is generated by the RDF Portal based on files distributed by Ensembl, and contains only data for the human genome assembly GRCh37. For data on the human genome assembly GRCh38, please use the standard
+      Ensembl RDF dataset.
+    website: https://www.ensembl.org
+    version: '75'
+    issued: '2022-05-19'
+    licenses:
+    - http://ensembl.org/info/about/legal/disclaimer.html
+    statistics:
+      number_of_triples: 26152049
+      number_of_classes: 80
+      number_of_properties: 16
+      number_of_subjects: 5437757
+      number_of_objects: 7911977
+- name: rdfportal.famsbase
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://fams.bio.chuo-u.ac.jp/GPCR/rdf/
+  use_graph: true
+  keywords:
+  - Protein
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: famsbase
+    title: FAMSBASE GPCR
+    description: RDFized reference gene expresson dataset derived from CAGE and GeneChip experiments in the RefEx database.
+    website: http://fams.bio.chuo-u.ac.jp/GPCR/
+    version: '2016-03-24'
+    issued: '2016-03-24'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 21297786
+      number_of_classes: 15
+      number_of_properties: 24
+      number_of_subjects: 5858909
+      number_of_objects: 6378252
+- name: rdfportal.glycoepitope
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdf.glycoinfo.org/glycoepitope
+  use_graph: true
+  keywords:
+  - Other biomolecule
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: glycoepitope
+    title: GlycoEpitope
+    description: GlycoEpitope is a database of useful information on carbohydrate antigens and antibodies.
+    website: https://www.glycoepitope.jp/
+    version: version 3
+    issued: '2015-11-18'
+    licenses:
+    - Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP)
+    statistics:
+      number_of_triples: 30150
+      number_of_classes: 17
+      number_of_properties: 26
+      number_of_subjects: 8678
+      number_of_objects: 10723
+- name: rdfportal.gtdb
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/gtdb
+  use_graph: true
+  keywords:
+  - Archaea
+  - Bacteria
+  - Taxonomy
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: gtdb
+    title: GTDB
+    description: The Genome Taxonomy Database (GTDB) is a resource that provides a standardized taxonomy for bacterial and archaeal genomes based on genome phylogeny. This RDF dataset is generated by the
+      RDF Portal based on data distributed by GTDB, representing the taxonomy and associated information in a semantic format to enable data integration and advanced querying across life science resources.
+    website: https://gtdb.ecogenomic.org/
+    version: '2024-06-27'
+    issued: '2024-06-27'
+    licenses:
+    - See licenses at https://gtdb.ecogenomic.org/licenses
+    statistics:
+      number_of_triples: 109645116
+      number_of_classes: 2
+      number_of_properties: 116
+      number_of_subjects: 1148707
+      number_of_objects: 14732952
+- name: rdfportal.gwas-catalog
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/gwas_catalog
+  use_graph: true
+  keywords:
+  - Genome
+  - Variation
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: gwas-catalog
+    title: GWAS catalog
+    description: null
+    website: https://www.ebi.ac.uk/gwas/
+    version: null
+    issued: null
+    licenses:
+    - Summary statistics are available under CC0 terms unless otherwise indicated
+    - Other GWAS Catalog data can be used under the standard Terms of Use for EBI services which can be found at http://www.ebi.ac.uk/about/terms-of-use.
+    - The code is available under the Apache version 2.0 license.
+    statistics:
+      number_of_triples: 47082578
+      number_of_classes: 11025
+      number_of_properties: 55
+      number_of_subjects: 2419147
+      number_of_objects: 6144136
+- name: rdfportal.hco
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/hco
+  use_graph: true
+  keywords:
+  - Ontology/Terminology/Nomenclature
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: hco
+    title: Human Chromosome Ontology (HCO)
+    description: The Human Chromosome Ontology (HCO) provides simple, stable, and version-aware URIs for semantically identifying human chromosomes in different human reference genome assemblies. HCO enables
+      RDF datasets to describe chromosome-level genomic locations consistently across reference genome versions.
+    website: https://biohackathon.org/resource/hco
+    version: '2020-07-15'
+    issued: '2020-07-15'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 25646
+      number_of_classes: 896
+      number_of_properties: 18
+      number_of_subjects: 7861
+      number_of_objects: 9536
+- name: rdfportal.hgnc
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/hgnc
+  use_graph: true
+  keywords:
+  - Gene
+  - Ontology/Terminology/Nomenclature
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: hgnc
+    title: 'HGNC: The resource for approved human gene nomenclature'
+    description: The HGNC is a resource for approved human gene nomenclature containing ~42000 gene
+    website: https://www.genenames.org/
+    version: release_20250630
+    issued: '2025-06-30'
+    licenses:
+    - https://www.genenames.org/about/
+    - HUGO Gene Nomenclature Committee at the European Bioinformatics Institute
+    statistics:
+      number_of_triples: 1345953
+      number_of_classes: 18
+      number_of_properties: 8
+      number_of_subjects: 363281
+      number_of_objects: 794313
+- name: rdfportal.homologene
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/homologene
+  use_graph: true
+  keywords:
+  - Gene
+  - Genome
+  - Phylogeny/Classification
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: homologene
+    title: HomoloGene RDF
+    description: HomoloGene RDF is a translation of HomoloGene data into RDF.
+    website: https://www.ncbi.nlm.nih.gov/homologene/
+    version: release_20230517
+    issued: '2023-05-17'
+    licenses:
+    - https://www.ncbi.nlm.nih.gov/home/about/policies/
+    statistics:
+      number_of_triples: 1553120
+      number_of_classes: 3
+      number_of_properties: 5
+      number_of_subjects: 319471
+      number_of_objects: 773372
+- name: rdfportal.icgc
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://icgc.link/release_20
+  use_graph: true
+  keywords:
+  - Genome
+  - Health/Disease
+  - Sequence
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: icgc
+    title: Linked ICGC Dataset
+    description: Linked ICGC Dataset is a linked data version of the public ICGC (International Cancer Genome Consortium) data. This includes the information of the donors and the somatic mutations.
+    website: https://rdfportal.org/dataset/icgc
+    version: release_20
+    issued: '2016-01-04'
+    licenses:
+    - Creative Commons CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+    statistics:
+      number_of_triples: 577082774
+      number_of_classes: 6
+      number_of_properties: 64
+      number_of_subjects: 51410016
+      number_of_objects: 30906909
+- name: rdfportal.jcm
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://metadb.riken.jp/db/xsearch_jcm_brso
+  use_graph: true
+  keywords:
+  - Bioresource
+  - Organism
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: jcm
+    title: Metadata of JCM resources
+    description: A RDF-based meta-database of microbial strains used in various researches such as biology, environment and human health as bioresources. Microbial strains are available from Japan Collection
+      of Microorganisms (JCM) in RIKEN BioResource Center. Please visit data browser at http://metadb.riken.jp/metadb/db/rikenbrc_jcm_microbe
+    website: http://jcm.brc.riken.jp/ja/
+    version: '2019-06-04'
+    issued: '2019-06-04'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 1113740
+      number_of_classes: 13
+      number_of_properties: 36
+      number_of_subjects: 259214
+      number_of_objects: 442635
+- name: rdfportal.knapsack
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://purl.jp/knapsack/
+  use_graph: true
+  keywords:
+  - Activity
+  - Compound
+  - Publication
+  - Taxonomy
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: knapsack
+    title: KNApSAcK RDF
+    description: RDFized dataset in the KNApSAcK family database.
+    website:
+    - https://ddbj.nig.ac.jp/public/rdf/metabobank/knapsack/
+    - http://www.knapsackfamily.com
+    version: 0.2.0
+    issued: '2022-05-30'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 3489616
+      number_of_classes: 8
+      number_of_properties: 14
+      number_of_subjects: 715781
+      number_of_objects: 1385729
+- name: rdfportal.ligandbox
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://purl.jp/bio/5/ligandbox/
+  - http://rdfportal.org/rdf/download/liganbox/2021-05-25/ontology-1/ligandbox.owl
+  use_graph: true
+  keywords:
+  - Drug/Chemical
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: ligandbox
+    title: LigandBox
+    description: LigandBox is a database of small chemical compounds for drug screening on computer docking studies. This database contains 3D molecular structures produced by calculation based on 2D structural
+      data of chemicals those are provided by companies and KEGG databases.
+    website: http://www.moldesk.net/ligandbox/cgi-bin/index.cgi?LANG=en
+    version: '2021-05-25'
+    issued: '2021-05-25'
+    licenses:
+    - Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+    - LigandBox © Technology Research Association for Next generation natural products chemistry licensed under CC Attribution-Share Alike 4.0 International
+    statistics:
+      number_of_triples: 283928849
+      number_of_classes: 20
+      number_of_properties: 7
+      number_of_subjects: 92822893
+      number_of_objects: 120779192
+- name: rdfportal.massbank
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/massbank
+  use_graph: true
+  keywords:
+  - Compound
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: massbank
+    title: MassBank
+    description: MassBank is an open-source mass spectral library for the identification of small chemical molecules in metabolomics, exposomics, and environmental research. This RDF dataset provides MassBank
+      data in RDF format.
+    website: https://massbank.jp/
+    version: null
+    issued: '2025-06-17'
+    licenses:
+    - NA
+    statistics:
+      number_of_triples: 29889091
+      number_of_classes: 5
+      number_of_properties: 37
+      number_of_subjects: 6277391
+      number_of_objects: 8444777
+- name: rdfportal.mbgd
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://mbgd.genome.ad.jp/rdf/resource/default
+  - http://mbgd.genome.ad.jp/rdf/resource/gene
+  - http://mbgd.genome.ad.jp/rdf/resource/organism
+  - http://mbgd.genome.ad.jp/rdf/resource/xref_uniprot
+  - http://rdfportal.org/ontology/taxonomy
+  use_graph: true
+  keywords:
+  - Gene
+  - Genome
+  - Phylogeny/Classification
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: mbgd
+    title: MBGD RDF
+    description: RDF dataset of Microbial Genome Database for Comparative Analysis (MBGD)
+    website: https://mbgd.nibb.ac.jp/rdf/archive/
+    version: '2015'
+    issued: '2015-06-20'
+    licenses:
+    - Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP)
+    - MBGD RDF © MBGD development team, National Institute for Basic Biology licensed under Creative Commons Attribution-ShareAlike 2.1 Japan
+    statistics:
+      number_of_triples: 1609018143
+      number_of_classes: 32
+      number_of_properties: 50
+      number_of_subjects: 321276294
+      number_of_objects: 476343849
+- name: rdfportal.mco
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/mco
+  use_graph: true
+  keywords:
+  - Ontology/Terminology/Nomenclature
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: mco
+    title: Mouse Chromosome Ontology (MCO)
+    description: The Mouse Chromosome Ontology (MCO) provides simple, stable, and version-aware URIs for semantically identifying mouse chromosomes in different mouse reference genome assemblies. MCO enables
+      RDF datasets to describe chromosome-level genomic locations consistently across reference genome versions.
+    website: https://biohackathon.org/resource/mco
+    version: '2024-09-13'
+    issued: '2024-09-13'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 466
+      number_of_classes: 26
+      number_of_properties: 10
+      number_of_subjects: 77
+      number_of_objects: 256
+- name: rdfportal.mesh
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://id.nlm.nih.gov/mesh
+  use_graph: true
+  keywords:
+  - Ontology/Terminology/Nomenclature
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: mesh
+    title: Medical Subject Headings (MeSH) RDF Dataset Description
+    description: A linked data representation of the MeSH biomedical vocabulary produced by the National Library of Medicine.
+    website: https://id.nlm.nih.gov/mesh/
+    version: '2025'
+    issued: '2024-12-05'
+    licenses:
+    - Creative commons 1.0 Universal (CC0 1.0)
+    statistics:
+      number_of_triples: 154704756
+      number_of_classes: 16
+      number_of_properties: 47
+      number_of_subjects: 23893096
+      number_of_objects: 55145885
+- name: rdfportal.microbedbjp
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/microbedbjp
+  use_graph: true
+  keywords:
+  - Metagenome
+  - Microbe
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: microbedbjp
+    title: MicrobeDB.jp
+    description: MicrobeDB.jp was an integrated database for microbiology that centered on genome information and semantically integrated diverse data such as genes, taxonomy, and environments. This RDF
+      dataset is an archive of MicrobeDB.jp. The original project has been succeeded by MicrobiomeDataHub.
+    website: https://mdatahub.org/
+    version: null
+    issued: '2025-10-01'
+    licenses:
+    - NA
+    statistics:
+      number_of_triples: 261253563
+      number_of_classes: 485
+      number_of_properties: 84
+      number_of_subjects: 60455015
+      number_of_objects: 88268089
+- name: rdfportal.mogplus
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/mogplus
+  use_graph: true
+  keywords:
+  - Genome
+  - Mouse
+  - Variation
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: mogplus
+    title: MoG+ RDF
+    description: 'MoG+ RDF is an RDF representation of MoG+ (Mouse Genome database with high added value), a mouse genomic variation database provided by the RIKEN BioResource Research Center. MoG+ provides
+      genomic variation information for laboratory mouse strains, including wild-derived strains and classical inbred strains, and supports comparative analysis of genomic polymorphisms across mouse strains.
+
+
+      Users of this RDF dataset should refer to the MoG+ Data Release Policy:
+
+      https://molossinus.brc.riken.jp/mogplus3/about/policy
+
+
+      The original MoG+ data files are available from:
+
+      https://molossinus.brc.riken.jp/pub/
+
+      '
+    website: https://molossinus.brc.riken.jp/mogplus/
+    version: null
+    issued: '2026-07-03'
+    licenses:
+    - https://molossinus.brc.riken.jp/mogplus3/about/policy
+    - MoG+ is licensed under a Creative Commons Attribution (CC-BY) 4.0 License.
+    statistics:
+      number_of_triples: 12376862684
+      number_of_classes: 15
+      number_of_properties: 70
+      number_of_subjects: 1405915030
+      number_of_objects: 1474488946
+- name: rdfportal.nando
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://nanbyodata.jp/ontology/nando
+  use_graph: true
+  keywords:
+  - Health/Disease
+  - Ontology/Terminology/Nomenclature
+  - Tag sequence (nucleic acid)
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: nando
+    title: NANDO
+    description: NANDO is a vocabulary that systematically and comprehensively organizes designated intractable diseases and pediatric chronic specific diseases, including their subtypes. Each disease in
+      NANDO is linked to Mondo (Monarch Disease Ontology), a disease vocabulary adopted by many international databases and systems, enabling integration with major international disease databases such
+      as OMIM and Orphanet.
+    website: https://nanbyodata.jp/
+    version: '2024-11-21'
+    issued: '2023-11-21'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 39977
+      number_of_classes: 4
+      number_of_properties: 17
+      number_of_subjects: 3047
+      number_of_objects: 20709
+- name: rdfportal.naro_genebank
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/naro_genebank
+  use_graph: true
+  keywords:
+  - Bioresource
+  - Organism
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: naro_genebank
+    title: Dataset of NARO Genebank Microorganism Bioresource
+    description: A dataset for microbes which are maintained, managed and provided from Genebank Project, NARO.
+    website: https://www.gene.affrc.go.jp/
+    version: null
+    issued: '2023-08-23'
+    licenses:
+    - Creative commons Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 132210
+      number_of_classes: 2849
+      number_of_properties: 3
+      number_of_subjects: 26442
+      number_of_objects: 56341
+- name: rdfportal.nbrc
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://purl.jp/bio/103/nite/culture/
+  - http://rdfportal.org/dataset/microbedbjp
+  use_graph: true
+  keywords:
+  - Bioresource
+  - Cell
+  - Organism
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: nbrc
+    title: Dataset of NBRC bioresource
+    description: Dataset of NBRC bioresource is a dataset for microbes which are maintained, managed and provided from NBRC (NITE Biological Resource Center).
+    website: https://www.nite.go.jp/en/index.html
+    version: release_20251225
+    issued: '2025-12-25'
+    licenses:
+    - Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP)
+    - Dataset of NBRC bioresource (C) NITE NBRC licensed under CC Attribution-ShareAlike 2.1 Japan
+    statistics:
+      number_of_triples: 982005
+      number_of_classes: 9
+      number_of_properties: 18
+      number_of_subjects: 195807
+      number_of_objects: 378099
+- name: rdfportal.ncbigene
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/ncbigene
+  use_graph: true
+  keywords:
+  - Gene
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: ncbigene
+    title: NCBI Gene RDF
+    description: NCBI Gene RDF is a translation of NCBI Gene data into RDF.
+    website: https://www.ncbi.nlm.nih.gov/gene/
+    version: release_20230525
+    issued: '2022-05-25'
+    licenses:
+    - https://www.ncbi.nlm.nih.gov/home/about/policies/
+    statistics:
+      number_of_triples: 550262723
+      number_of_classes: 1
+      number_of_properties: 16
+      number_of_subjects: 57768578
+      number_of_objects: 160736140
+- name: rdfportal.nikkaji
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/nikkaji/core
+  - http://rdfportal.org/dataset/nikkaji/inchi
+  - http://rdfportal.org/dataset/nikkaji/main
+  use_graph: true
+  keywords:
+  - Drug/Chemical
+  - Image/Movie
+  - Others
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: nikkaji
+    title: Nikkaji RDF
+    description: NBDC NikkajiRDF is RDF data of Japan Chemical Substance Dictionary (Nikkaji), which is one of the largest chemical substance databases in Japan.
+    website: http://dbarchive.biosciencedbc.jp/en/nikkaji/desc.html
+    version: '20260219'
+    issued: '2026-02-19'
+    licenses:
+    - Creative Commons Attribution 2.1 Japan (CC BY 2.1 JP)
+    - NBDC NikkajiRDF © Japan Science and Technology Agency licensed under CC Attribution 2.1 Japan
+    statistics:
+      number_of_triples: 298762829
+      number_of_classes: 12
+      number_of_properties: 22
+      number_of_subjects: 59100523
+      number_of_objects: 167397541
+- name: rdfportal.nlm-catalog
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/nlm_catalog
+  use_graph: true
+  keywords:
+  - Journal article/Report/Bibliography
+  - Ontology/Terminology/Nomenclature
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: nlm-catalog
+    title: NLM Catalog
+    description: NLM bibliographic data on journals, books, audiovisual materials, computer software, electronic resources, and other materials
+    website: https://www.ncbi.nlm.nih.gov/nlmcatalog/
+    version: NA
+    issued: '2025-09-18'
+    licenses:
+    - null
+    - null
+    - null
+    statistics:
+      number_of_triples: 215436
+      number_of_classes: 1
+      number_of_properties: 5
+      number_of_subjects: 41226
+      number_of_objects: 172266
+- name: rdfportal.oma
+  endpoint: https://rdfportal.org/sib/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/oma
+  use_graph: true
+  keywords:
+  - Gene
+  - Genome
+  - Phylogeny/Classification
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: oma
+    title: Orthologous MAtrix (OMA) RDF
+    description: The OMA (Orthologous MAtrix) project is a method and database for the inference of orthologs among complete genomes. The OMA RDF is a view of the OMA database in RDF.
+    website: https://omabrowser.org
+    version: Jul2024
+    issued: '2024-07-30'
+    licenses:
+    - Creative Commons Attribution 4.0 International
+    statistics:
+      number_of_triples: 584249484
+      number_of_classes: 25
+      number_of_properties: 36
+      number_of_subjects: 137419193
+      number_of_objects: 334832200
+- name: rdfportal.opentggates
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/open-tggates
+  use_graph: true
+  keywords:
+  - Drug/Chemical
+  - Gene
+  - Gene expression
+  - Health/Disease
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: opentggates
+    title: Open TG-GATEs
+    description: Open TG-GATEs is a public toxicogenomics database
+    website: http://toxico.nibiohn.go.jp/english/index.html
+    version: '2017-03-17'
+    issued: '2017-03-17'
+    licenses:
+    - http://toxico.nibiohn.go.jp/english/agreement.html
+    statistics:
+      number_of_triples: 6800384609
+      number_of_classes: 65
+      number_of_properties: 32
+      number_of_subjects: 1497955718
+      number_of_objects: 2765961664
+- name: rdfportal.paconto
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://jcggdb.jp/rdf/diseases/paconto
+  use_graph: true
+  keywords:
+  - Health/Disease
+  - Interaction/Pathway
+  - Other biomolecule
+  - Structure
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: paconto
+    title: PAConto
+    description: 'PAConto is the RDF representation of PACDB (Pathogen Adherence to Carbohydrate Database) data and Ontology of Infectious Diseases known to be related to Glycan Binding. PACDB was developed
+      by the Research Center for Medical Glycoscience (RCMG, AIST) and released in March 2010. At the present time PACDB provides information on about 370 strains of 120 microorganisms, and about 1,700
+      lectin-glycan interactions of two types: binding and not binding. Also, the PACDB provides information on about 100 infectious diseases in which the interaction between adherence molecules of pathogens
+      and glycan ligands of the host cells plays an important role in the disease pathogenesis. All of the information for the creation of this database was obtained from scientific articles.
+
+      '
+    website: http://acgg.asia/db/diseases/
+    version: v.1.0
+    issued: '2016-06-01'
+    licenses:
+    - Attribution NonCommercial ShareAlike 2.1 Japan (CC BY-NC-SA 2.1)
+    statistics:
+      number_of_triples: 81785
+      number_of_classes: 60
+      number_of_properties: 99
+      number_of_subjects: 9329
+      number_of_objects: 16451
+- name: rdfportal.pgdbj
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://pgdbj.jp/od/
+  use_graph: true
+  keywords:
+  - Gene
+  - Genome
+  - Phylogeny/Classification
+  - Sequence
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pgdbj
+    title: PGDBj Ortholog database RDF
+    description: null
+    website: http://pgdbj.jp/
+    version: 1.57.0
+    issued: '2016-07-26'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 13652175
+      number_of_classes: 10
+      number_of_properties: 19
+      number_of_subjects: 1963741
+      number_of_objects: 5728076
+- name: rdfportal.polyinfo
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/polyinfo
+  - http://rdfportal.org/ontology/taxonomy
+  use_graph: true
+  keywords:
+  - Drug/Chemical
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: polyinfo
+    title: PolyInfo BDG_S, ID definition
+    description: NIMS polymer database PoLyInfo-Bio Linkage Project, Definition of biodegradation IDs and linking schemas for synthetic polymers.
+    website: https://polymer.nims.go.jp/
+    version: '0.2'
+    issued: '2020-02-06'
+    licenses:
+    - Creative Commons BY 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 5446
+      number_of_classes: 14
+      number_of_properties: 14
+      number_of_subjects: 1329
+      number_of_objects: 3293
+- name: rdfportal.pubmed
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/pubmed
+  use_graph: true
+  keywords:
+  - Journal article/Report/Bibliography
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pubmed
+    title: PubMed
+    description: PubMed comprises more than 30 million citations for biomedical literature from MEDLINE, life science journals, and online books.
+    website: https://pubmed.ncbi.nlm.nih.gov/
+    version: release_20250830
+    issued: '2025-01-15'
+    licenses:
+    - https://www.nlm.nih.gov/databases/download.html
+    - null
+    statistics:
+      number_of_triples: 2825903159
+      number_of_classes: 2
+      number_of_properties: 5
+      number_of_subjects: 442968598
+      number_of_objects: 659176517
+- name: rdfportal.pubtator
+  endpoint: https://rdfportal.org/ncbi/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/pubtator_central
+  use_graph: true
+  keywords:
+  - Journal article/Report/Bibliography
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: pubtator
+    title: PubTator Central
+    description: Automatic annotations of biomedical concepts such as genes and mutations in PubMed abstracts and PMC full-text
+    website: https://www.ncbi.nlm.nih.gov/research/pubtator/
+    version: release_20250630
+    issued: '2025-06-30'
+    licenses:
+    - https://ftp.ncbi.nlm.nih.gov/pub/lu/PubTatorCentral/README.txt
+    - null
+    statistics:
+      number_of_triples: 1187987744
+      number_of_classes: 1
+      number_of_properties: 3
+      number_of_subjects: 238227596
+      number_of_objects: 34642584
+- name: rdfportal.quanto
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://quanto.dbcls.jp
+  use_graph: true
+  keywords:
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: quanto
+    title: Quanto RDF
+    description: Raw sequence data quality statistics calculated from the Sequence Read Archive data
+    website: https://sra.dbcls.jp/
+    version: 0.1.2
+    issued: '2016-07-12'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 107782639
+      number_of_classes: 8
+      number_of_properties: 29
+      number_of_subjects: 21955729
+      number_of_objects: 31484031
+- name: rdfportal.reactome
+  endpoint: https://rdfportal.org/ebi/sparql
+  graph_uris:
+  - http://rdf.ebi.ac.uk/dataset/reactome
+  use_graph: true
+  keywords:
+  - Interaction/Pathway
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: reactome
+    title: Reactome RDF
+    description: REACTOME is an open-source, open access, manually curated and peer-reviewed pathway database.
+    website: https://reactome.org/
+    version: '84'
+    issued: '2023'
+    licenses:
+    - Creative Commons Public Domain (CC0) License
+    statistics:
+      number_of_triples: 21317159
+      number_of_classes: 33
+      number_of_properties: 45
+      number_of_subjects: 3705512
+      number_of_objects: 6831167
+- name: rdfportal.refex
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://purl.jp/bio/01/refexo
+  - http://refex.dbcls.jp/rdf/fantom5
+  - http://refex.dbcls.jp/rdf/genechip
+  use_graph: true
+  keywords:
+  - Gene
+  - Gene expression
+  - Tag sequence (nucleic acid)
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: refex
+    title: RefEx RDF
+    description: RDFized reference gene expresson dataset derived from CAGE and GeneChip experiments in the RefEx database.
+    website: http://refex.dbcls.jp/index.php?lang=ja
+    version: '2017-04-07'
+    issued: '2017-04-07'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0) Database Center for Life Science
+    statistics:
+      number_of_triples: 123447504
+      number_of_classes: 10
+      number_of_properties: 26
+      number_of_subjects: 24260736
+      number_of_objects: 27439087
+- name: rdfportal.rhea
+  endpoint: https://rdfportal.org/sib/sparql
+  graph_uris:
+  - http://rdfportal.org/dataset/rhea
+  use_graph: true
+  keywords:
+  - Enzyme
+  - Protein
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: rhea
+    title: Rhea
+    description: An expert curated resource of biochemical reactions designed for the annotation of enzymes and genome-scale metabolic networks and models.
+    website: https://www.rhea-db.org/
+    version: Rhea release 140
+    issued: '2026-01-28'
+    licenses:
+    - Attribution 4.0 International (CC BY 4.0)
+    statistics:
+      number_of_triples: 2046904
+      number_of_classes: 2
+      number_of_properties: 59
+      number_of_subjects: 219912
+      number_of_objects: 620145
+- name: rdfportal.ssbd
+  endpoint: https://rdfportal.org/primary/sparql
+  graph_uris:
+  - http://metadb.riken.jp/db/SSBD
+  use_graph: true
+  keywords:
+  - Cell
+  - Gene expression
+  - Image/Movie
+  - Organism
+  - Other biomolecule
+  - Others
+  dataset_metadata:
+    catalogue: https://rdfportal.org/datasets/
+    id: ssbd
+    title: 'SSBD: Meta-information of quantitative data and microscopy images
+
+      '
+    description: Meta-information of quantitative data and datasets of microscopy images provided from SSBD database
+    website: http://ssbd.qbic.riken.jp/
+    version: SSBD31_20171218 release 20180324
+    issued: '2018-03-24'
+    licenses:
+    - Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP)
+    statistics:
+      number_of_triples: 40300
+      number_of_classes: 15
+      number_of_properties: 33
+      number_of_subjects: 6644
+      number_of_objects: 9329
