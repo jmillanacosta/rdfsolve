@@ -7,7 +7,6 @@ import importlib
 from rdfsolve.schema_models._constants import (
     _BASE_URI,
     _BLANK_NODE_URIS,
-    _GRAPH_SKIP_KEYS,
     _RESOURCE_URIS,
     _SENTINEL_OBJECTS,
     _URI_SCHEMES,
@@ -72,7 +71,6 @@ __all__ = [
     "SERVICE_NAMESPACE_PREFIXES",
     "_BASE_URI",
     "_BLANK_NODE_URIS",
-    "_GRAPH_SKIP_KEYS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",
     "_URI_SCHEMES",

@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import mkdtemp
 
 from rdfsolve.client.api import Client
+from rdfsolve.mappings.models.core import MappingEdge
 from rdfsolve.mcp.server import run_server
 
 
@@ -24,7 +25,7 @@ def main() -> None:
     parser.add_argument("--max-paths", type=int, default=100)
     parser.add_argument("--artifact-dir", type=Path)
     parser.add_argument("--log", type=Path)
-    parser.add_argument("--mapping", type=Path)
+    parser.add_argument("--mapping", type=Path, help="SSSOM class mappings")
     parser.add_argument("--related-registry", type=Path, action="append", default=[])
     parser.add_argument("--ontology-provider", choices=["ols", "ontobee"])
     parser.add_argument("--ontology-cache", type=Path)
@@ -35,12 +36,15 @@ def main() -> None:
     logging.getLogger("rdfsolve.client.ontology").setLevel(logging.INFO)
     from rdfsolve.client.registry import Registry
 
-    mappings = []
-    if args.mapping:
-        from rdfsolve.mappings.models import Mapping
-
-        mappings = Mapping.from_jsonld(args.mapping).edges
     peers = [Registry.read(path) for path in args.related_registry]
+    mappings: list[MappingEdge] = []
+    if args.mapping:
+        from rdfsolve.mappings.sssom import project_mappings
+        from rdfsolve.schema_models.core import MinedSchema
+
+        identities = {args.source_id: set(MinedSchema.from_json(args.schema).get_classes())}
+        identities.update({peer.source_id: {t.id for t in peer.types} for peer in peers})
+        mappings, _ = project_mappings(args.mapping, identities)
     artifacts = args.artifact_dir or Path(mkdtemp(prefix="rdfsolve-results-"))
     log = args.log or artifacts / "investigation.json"
     scope = {} if args.graphs is None else {"graph_uris": args.graphs}

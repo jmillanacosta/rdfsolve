@@ -67,11 +67,4 @@ _SENTINEL_OBJECTS = frozenset({"Literal", "Resource", "BlankNode"})
 - BlankNode: Object is a blank node (anonymous resource)
 """
 _URI_SCHEMES = ("http://", "https://", "urn:", "_:")
-_GRAPH_SKIP_KEYS = frozenset(
-    {
-        "void:inDataset",
-        "dcterms:created",
-        "dcterms:title",
-    }
-)
 _BASE_URI = "https://jmillanacosta.com/rdfsolve"
