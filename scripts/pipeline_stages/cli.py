@@ -196,7 +196,7 @@ Examples:
     )
     parser.add_argument("--skip-mining", action="store_true", help="Skip mining stages")
     parser.add_argument("--skip-mappings", action="store_true", help="Skip mapping stages")
-    parser.add_argument("--skip-inference", action="store_true", help="Skip inference")
+    parser.add_argument("--skip-inference", action="store_true", help="No effect; the pipeline has no mapping inference stage")
     parser.add_argument("--skip-analysis", action="store_true", help="Skip analysis stage")
     parser.add_argument(
         "--skip-completed",
@@ -426,9 +426,6 @@ Examples:
 
         if not config.skip_mappings:
             pipeline.add_stage(SSSOMSeedingStage)
-
-        if not config.skip_inference:
-            log.info("Inference is a separate workflow: scripts/infer_mappings.py")
 
         if not args.skip_analysis:
             pipeline.add_stage(AnalysisStage)

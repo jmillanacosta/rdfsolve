@@ -36,31 +36,6 @@ Test metadata capture across all endpoints.
 python scripts/test_metadata_endpoints.py
 ```
 
-## Mapping Scripts
-
-### `convert_semra.py`
-
-Convert SeMRA/SSSOM files to rdfsolve format. Preserves `mapping_justification`
-field.
-
-```bash
-python scripts/convert_semra.py mappings.sssom.tsv -o output.jsonld
-```
-
-### `infer_mappings.py`
-
-Run inference on mapping files (inversion, transitivity). Preserves
-`mapping_justification`.
-
-```bash
-python scripts/infer_mappings.py \
-    mappings/*.jsonld \
-    -o inferenced.jsonld \
-    --inversion \
-    --transitivity \
-    --chain-cutoff 3
-```
-
 ## Graph Scripts
 
 ### `build_graphs.py`
@@ -94,13 +69,6 @@ Download and index local RDF dumps with QLever.
 sbatch scripts/slurm_local.sh
 ```
 
-### `slurm_inference.sh`
-
-Run mapping inference pipeline.
-
-```bash
-sbatch scripts/slurm_inference.sh
-```
 
 ### `slurm_graphs.sh`
 

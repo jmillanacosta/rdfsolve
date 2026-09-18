@@ -437,21 +437,6 @@ Mine local RDF dumps using QLever:
 python scripts/pipeline.py --sources-file sources.yaml --local-only
 ```
 
-### Probe endpoints for entity matching
-
-Match URI patterns across endpoints to find datasets containing specific entity
-types:
-
-```python
-from rdfsolve.mappings.probe import probe_endpoint
-
-match = probe_endpoint(
-    endpoint_url="https://sparql.example.org/sparql",
-    uri_prefix="http://identifiers.org/ncbigene/",
-    limit=100,
-)
-```
-
 ### Check endpoint health
 
 Test endpoint availability and response times:
@@ -465,14 +450,6 @@ check_endpoint_health("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
 #     status='up', response_time=0.1596362590789795, error_message='',
 #     timestamp='2026-09-08T08:16:36.126659+00:00'
 # )
-```
-
-### Infer cross-dataset mappings
-
-Derive new mappings through inversion and transitivity:
-
-```bash
-python scripts/infer_mappings.py mappings/*.jsonld -o inferred.jsonld --transitivity
 ```
 
 ### Build connectivity graphs
