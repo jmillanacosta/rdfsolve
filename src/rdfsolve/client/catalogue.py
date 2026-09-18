@@ -136,10 +136,10 @@ class Catalogue:
                         "target_dataset": pair.target_dataset,
                         **(
                             {
-                                "supporting_entity_predicate": pair.supporting_entity_predicate,
+                                "supporting_entity_predicates": pair.supporting_entity_predicates,
                                 "class_relation": pair.class_relation,
                             }
-                            if hasattr(pair, "supporting_entity_predicate")
+                            if hasattr(pair, "supporting_entity_predicates")
                             else {"predicate": pair.predicate}
                         ),
                     },

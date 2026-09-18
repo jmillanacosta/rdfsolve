@@ -93,7 +93,7 @@ def build_connectivity(
             pair,
             pair.class_relation,
             {
-                "supporting_entity_predicate": pair.supporting_entity_predicate,
+                "supporting_entity_predicates": pair.supporting_entity_predicates,
                 "derivation_method": pair.derivation_method,
                 "instance_count": pair.instance_count,
                 "source_coverage": pair.source_coverage,
