@@ -62,12 +62,32 @@ def test_associations_deduplicate_entities_and_keep_dataset_types():
     assert (pair.source_class, pair.target_class, pair.instance_count) == ("urn:A", "urn:B", 1)
     assert pair.source_coverage == 0.5 and pair.target_coverage == 1
     assert not hasattr(pair, "confidence")
-    assert pair.supporting_entity_predicate == "urn:corresponds"
+    assert pair.supporting_entity_predicates == {"urn:corresponds": 1}
     assert pair.class_relation is None
     assert pair.derivation_method == "mapped_instance_types"
     assert stats["supporting_entity_predicates"] == {"urn:corresponds": 1}
     assert stats["processed_edges"] == 2
     assert derive_class_mappings([edge], combined, min_instance_count=2)[0] == []
+
+
+def test_one_association_per_class_pair_counts_each_supporting_predicate():
+    indices = {
+        "a": index("a", {"urn:x": ["urn:A"], "urn:y": ["urn:A"]}),
+        "b": index("b", {"urn:u": ["urn:B"], "urn:v": ["urn:B"]}),
+    }
+    edges = [
+        MappingEdge(source_class=s, target_class=t, source_dataset="a", target_dataset="b", predicate=p)
+        for s, t, p in (
+            ("urn:x", "urn:u", "urn:exact"),
+            ("urn:x", "urn:u", "urn:close"),
+            ("urn:y", "urn:v", "urn:close"),
+        )
+    ]
+    pairs, stats = derive_class_mappings(edges, indices)
+    assert len(pairs) == 1
+    assert pairs[0].instance_count == 2
+    assert pairs[0].supporting_entity_predicates == {"urn:close": 2, "urn:exact": 1}
+    assert stats["supporting_entity_predicates"] == {"urn:close": 1, "urn:exact": 1}
 
 
 def test_shared_identity_does_not_merge_dataset_nodes_or_assert_class_equivalence():
@@ -89,7 +109,9 @@ def test_shared_identity_does_not_merge_dataset_nodes_or_assert_class_equivalenc
     association = [d for _, _, d in graph.edges(data=True) if d["kind"] == "entity_association"][0]
     assert association["instance_count"] == 1 and "confidence" not in association
     assert association["predicate"] is None
-    assert association["supporting_entity_predicate"] == "http://www.w3.org/2002/07/owl#sameAs"
+    assert association["supporting_entity_predicates"] == {
+        "http://www.w3.org/2002/07/owl#sameAs": 1
+    }
     assert association["derivation_method"] == "shared_entity_iri"
     overlap = compare_schemas(schemas)[0]
     assert overlap["shared_classes"] == 1 and overlap["class_jaccard"] == 1 / 3

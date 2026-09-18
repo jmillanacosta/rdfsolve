@@ -12,20 +12,22 @@ from rdfsolve.mappings.models.core import MappingEdge
 
 @dataclass
 class ClassPair:
-    """Class association with unique entity evidence and observed-sample coverage.
+    """One dataset-scoped class pair with its supporting entity evidence.
 
-    supporting_entity_predicate relates the supporting entities, not the classes.
-    class_relation stays None unless a class-level assertion or a documented rule
-    supplies it. Counts and coverage are support, not confidence. Coverage uses
-    the supplied index.
+    instance_count counts distinct supporting entity pairs over all predicates.
+    supporting_entity_predicates counts them per entity predicate; one entity
+    pair can count under several predicates. These predicates relate the
+    entities, not the classes. class_relation stays None unless a class-level
+    assertion or a documented rule supplies it. Counts and coverage are support,
+    not confidence. Coverage uses the supplied index.
     """
 
     source_class: str
     target_class: str
     source_dataset: str
     target_dataset: str
-    supporting_entity_predicate: str
     instance_count: int = 0
+    supporting_entity_predicates: dict[str, int] = field(default_factory=dict)
     source_entities: set[str] = field(default_factory=set)
     target_entities: set[str] = field(default_factory=set)
     source_coverage: float = 0.0
@@ -57,9 +59,10 @@ def derive_class_mappings(
             return index.get_classes(entity) if index else set()
         return class_index.get_classes(entity, dataset)
 
-    Key = tuple[str, str, str, str, str]
+    Key = tuple[str, str, str, str]
     pairs: dict[Key, ClassPair] = {}
     witnesses: dict[Key, set[tuple[str, str]]] = {}
+    by_predicate: dict[Key, dict[str, set[tuple[str, str]]]] = {}
     skipped_source = skipped_target = processed = 0
     for edge in instance_edges:
         left = classes(edge.source_class, edge.source_dataset)
@@ -73,9 +76,11 @@ def derive_class_mappings(
         processed += 1
         for source in left:
             for target in right:
-                key = (source, target, edge.source_dataset, edge.target_dataset, edge.predicate)
+                key = (source, target, edge.source_dataset, edge.target_dataset)
                 pair = pairs.setdefault(key, ClassPair(*key, derivation_method=derivation_method))
-                witnesses.setdefault(key, set()).add((edge.source_class, edge.target_class))
+                witness = (edge.source_class, edge.target_class)
+                witnesses.setdefault(key, set()).add(witness)
+                by_predicate.setdefault(key, {}).setdefault(edge.predicate, set()).add(witness)
                 pair.source_entities.add(edge.source_class)
                 pair.target_entities.add(edge.target_class)
     sizes: Counter[tuple[str, str]] = Counter()
@@ -88,6 +93,9 @@ def derive_class_mappings(
             sizes.update((dataset, cls) for cls in classes(entity, dataset))
     for key, pair in pairs.items():
         pair.instance_count = len(witnesses[key])
+        pair.supporting_entity_predicates = {
+            predicate: len(found) for predicate, found in sorted(by_predicate[key].items())
+        }
         pair.source_coverage = (
             len(pair.source_entities) / sizes[(pair.source_dataset, pair.source_class)]
         )
@@ -102,7 +110,6 @@ def derive_class_mappings(
             p.source_class,
             p.target_dataset,
             p.target_class,
-            p.supporting_entity_predicate,
         ),
     )
     return result, {
@@ -113,7 +120,7 @@ def derive_class_mappings(
         "class_pairs_found": len(pairs),
         "output_edges": len(result),
         "supporting_entity_predicates": dict(
-            Counter(p.supporting_entity_predicate for p in result)
+            Counter(predicate for p in result for predicate in p.supporting_entity_predicates)
         ),
         "coverage_basis": "entities in the supplied class index",
     }
