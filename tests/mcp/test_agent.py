@@ -236,7 +236,7 @@ def test_repeated_blocker_stops_even_when_query_text_changes():
 def test_endpoint_control_has_no_schema_and_logs_failed_queries(
     session, tmp_path, monkeypatch, truncated
 ):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "notebooks" / "mcp"))
     import time
 
     import mcp_experiment
@@ -339,7 +339,7 @@ def test_endpoint_control_has_no_schema_and_logs_failed_queries(
 
 
 def test_examples_and_reference_use_typed_shacl(session, tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "notebooks" / "mcp"))
     from mcp_experiment import evaluate, load_examples, rdf_tuples, run_reference
 
     from rdfsolve.api import QueryCollection
@@ -443,7 +443,7 @@ def test_attempt_deadline_stops_blocking_worker_and_detached_children(tmp_path, 
 
     import psutil
 
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "notebooks" / "mcp"))
     from mcp_experiment import run_worker
 
     pid_file = tmp_path / "child.pid"
@@ -464,7 +464,7 @@ time.sleep(60)
 
 
 def test_trials_start_with_the_same_private_ontology_cache(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "notebooks" / "mcp"))
     monkeypatch.setenv("RDFSOLVE_MODEL", "fixture")
     monkeypatch.setenv("RDFSOLVE_MODEL_BASE_URL", "http://127.0.0.1:1/v1")
     from mcp_experiment import _attempt
@@ -502,7 +502,7 @@ def test_trials_start_with_the_same_private_ontology_cache(tmp_path, monkeypatch
 
 
 def test_control_final_execution_failure_is_in_the_call_report(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "scripts"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "notebooks" / "mcp"))
     from mcp_experiment import ask_endpoint
     from rdfsolve.sparql_helper import PaginationTruncatedError, SparqlHelper
 

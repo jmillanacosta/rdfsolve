@@ -28,14 +28,6 @@ python scripts/pipeline.py --sources wikipathways aopwikirdf
 python scripts/pipeline.py
 ```
 
-### `test_metadata_endpoints.py`
-
-Test metadata capture across all endpoints.
-
-```bash
-python scripts/test_metadata_endpoints.py
-```
-
 ## Graph Scripts
 
 ### `build_graphs.py`
@@ -141,15 +133,6 @@ The local Graph Store mining path uses RDFLib memory and the existing mining
 queries. The default download cap is 64 MiB, not a RAM limit. Keep large
 datasets in the disk-backed QLever workflow. Retrieval failures stop the run;
 they do not switch silently to another data source.
-
-```bash
-uv run scripts/test_aopwiki_graph_store.py --output-dir ../graph-store-aopwiki
-# Add --mine to run local instance mining after the count check.
-```
-
-At the September 8 check, AOPWiki returned 10,001 Graph Store triples for
-`http://aopwiki.org/`, while SPARQL counted 338,061. The script rejects this
-response. Do not treat it as a complete local dataset.
 
 For configured pipeline sources:
 
