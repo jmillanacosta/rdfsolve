@@ -130,6 +130,12 @@ class SourceModel(BaseModel):
         URL of the dataset logo image.
     bioregistry_extra_providers:
         Additional provider entries from Bioregistry.
+    kg_registry_id:
+        Resource identifier in the KG-Registry.
+    in_kamdar:
+        Whether the resource is in the Kamdar et al. LSLOD analysis.
+    terminology_nomenclature:
+        Topic tags for terminology and nomenclature resources.
     """
 
     name: str
@@ -186,6 +192,10 @@ class SourceModel(BaseModel):
     bioregistry_logo: str = ""
     bioregistry_extra_providers: list[dict[str, str | None]] = Field(default_factory=list)
 
+    kg_registry_id: str = ""
+    in_kamdar: bool = False
+    terminology_nomenclature: list[str] = Field(default_factory=list)
+
     model_config = {"populate_by_name": True, "extra": "ignore"}
 
     @field_validator(
@@ -194,6 +204,7 @@ class SourceModel(BaseModel):
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
         "keywords",
+        "terminology_nomenclature",
         mode="before",
     )
     @classmethod
@@ -260,6 +271,7 @@ class SourceModel(BaseModel):
             "bioregistry_domain",
             "bioregistry_uri_prefix",
             "bioregistry_logo",
+            "kg_registry_id",
         }
         for field_name in str_fields:
             if data.get(field_name) is None:
