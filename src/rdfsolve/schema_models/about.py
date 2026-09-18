@@ -7,8 +7,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
-from rdfsolve.schema_models._constants import _BASE_URI
-
 
 class AboutMetadata(BaseModel):
     """Provenance metadata attached to every schema export.
@@ -281,16 +279,14 @@ class AboutMetadata(BaseModel):
         confidence_score: float | None = None,
     ) -> AboutMetadata:
         """Create metadata with auto-populated version + timestamp."""
-        from urllib.parse import quote
         from uuid import uuid4
 
         from rdfsolve.version import VERSION
 
-        def _uri(suffix: str) -> str | None:
-            if not dataset_name:
-                return None
-            encoded_name = quote(dataset_name, safe="")
-            return f"{_BASE_URI}/api/{suffix}/{encoded_name}"
+        def _uri(kind: str) -> str | None:
+            from rdfsolve.config import mint
+
+            return mint(kind, dataset_name) if dataset_name else None
 
         generated_at = finished_at or datetime.now(timezone.utc).isoformat()
         version = (
@@ -347,8 +343,8 @@ class AboutMetadata(BaseModel):
             # Authors
             authors=authors,
             # Canonical URIs
-            schema_uri=_uri("schemas"),
+            schema_uri=_uri("schema"),
             void_uri=_uri("void"),
-            report_uri=_uri("reports"),
+            report_uri=_uri("report"),
             linkml_uri=_uri("linkml"),
         )

@@ -367,7 +367,7 @@ class VoidParser:
 
     def to_shacl(
         self,
-        schema_base_uri: str = "http://example.org/shapes/",
+        schema_base_uri: str | None = None,
     ) -> str:
         """Generate SHACL shapes (Turtle) from VoID triples.
 
@@ -375,7 +375,7 @@ class VoidParser:
         for validation.
 
         Args:
-            schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
+            schema_base_uri: Base IRI for the SHACL shapes (default: the dataset IRI)
 
         Returns:
             SHACL shapes as Turtle string

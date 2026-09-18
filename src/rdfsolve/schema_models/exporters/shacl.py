@@ -9,7 +9,7 @@ from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShap
 
 def minedschema_to_shacl(
     schema: MinedSchema,
-    base_uri: str = "http://example.org/shapes/",
+    base_uri: str | None = None,
     *,
     activate_observed: bool = False,
 ) -> ShaclShapesGraph:
@@ -19,13 +19,16 @@ def minedschema_to_shacl(
 
     Args:
         schema: MinedSchema to convert
-        base_uri: Base URI for shape URIs
+        base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
 
     Returns:
         ShaclShapesGraph with NodeShape per class
     """
     import logging
 
+    from rdfsolve.config import mint
+
+    base_uri = base_uri or mint("dataset", schema.about.dataset_name or "unnamed") + "/shapes/"
     lost_counts = sum(
         pattern.count is not None
         and (

@@ -1,29 +1,27 @@
-"""Configuration management for VoID URI namespaces."""
+"""Base IRI for resources that rdfsolve identifies."""
 
 import os
 from pathlib import Path
+from urllib.parse import quote
 
-DEFAULT_BASE_URI = "http://example.com/void"
+DEFAULT_BASE_URI = "https://w3id.org/rdfsolve/"
 
 
 def get_base_uri() -> str:
-    """Get base URI for VoID documents from config or environment.
+    """Return the base IRI, always ending with a slash.
 
     Priority:
     1. RDFSOLVE_BASE_URI environment variable
-    2. scripts/config/config.yaml if exists
-    3. Default: http://example.com/void
+    2. base_uri in scripts/config/config.yaml
+    3. DEFAULT_BASE_URI
     """
-    # Check environment variable first
     env_uri = os.environ.get("RDFSOLVE_BASE_URI")
     if env_uri:
-        return env_uri.rstrip("/")
+        return env_uri.rstrip("/") + "/"
 
-    # Try to read from config.yaml
     try:
         import yaml
 
-        # Look for config in multiple locations
         possible_paths = [
             Path.cwd() / "scripts" / "config" / "config.yaml",
             Path.cwd() / "config" / "config.yaml",
@@ -36,8 +34,21 @@ def get_base_uri() -> str:
                     config = yaml.safe_load(f)
                     if config and "base_uri" in config:
                         base_uri_value: str = config["base_uri"]
-                        return base_uri_value.rstrip("/")
+                        return base_uri_value.rstrip("/") + "/"
     except Exception:
         pass
 
     return DEFAULT_BASE_URI
+
+
+def mint(kind: str, *parts: str) -> str:
+    """Return the IRI of an rdfsolve resource of one kind, such as dataset or graph.
+
+    Each part is percent-encoded as one path segment.
+    """
+    if not kind or "/" in kind:
+        raise ValueError("Use one path segment as the resource kind")
+    segments = [kind, *(quote(part, safe="") for part in parts)]
+    if not all(segments):
+        raise ValueError("IRI path segments must be nonempty")
+    return get_base_uri() + "/".join(segments)

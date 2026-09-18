@@ -510,7 +510,9 @@ class ShaclShapesGraph(BaseModel):
         from hashlib import sha256
 
         identity = sha256(json.dumps(prefixes, sort_keys=True).encode()).hexdigest()
-        resource = resource or "urn:rdfsolve:prefixes:" + identity
+        from rdfsolve.config import mint
+
+        resource = resource or mint("prefixes", identity)
         existing = {item.prefix: item for item in self.prefix_declarations.get(resource, [])}
         for prefix, namespace in sorted(prefixes.items()):
             if prefix in existing and existing[prefix].namespace != namespace:

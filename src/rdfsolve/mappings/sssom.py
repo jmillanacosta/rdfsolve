@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from sssom import Mapping, MappingSetDataFrame, write_rdf, write_tsv
 
+from rdfsolve.config import get_base_uri
 from rdfsolve.mappings.models.core import MappingEdge
 
 if TYPE_CHECKING:
@@ -86,7 +87,7 @@ def create_sssom_mappings(
     msdf = MappingSetDataFrame.from_mappings(mappings=list(mappings), metadata=metadata)
 
     # Add custom prefixes for RDFSolve URIs
-    msdf.converter.add_prefix("rdfsolve", "https://rdfsolve.bigcat-bioinformatics.nl/", merge=True)
+    msdf.converter.add_prefix("rdfsolve", get_base_uri(), merge=True)
     msdf.converter.add_prefix("orcid", "https://orcid.org/", merge=True)
 
     # Clean prefix map to only include prefixes actually used in the mapping set

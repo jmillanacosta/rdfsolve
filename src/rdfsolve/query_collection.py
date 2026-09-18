@@ -14,6 +14,7 @@ from rdflib import RDF, RDFS, SH, Graph, Namespace, URIRef
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.term import Node
 
+from rdfsolve.config import mint
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
@@ -105,7 +106,7 @@ class QueryCollection:
         if prefixes is None:
             prefixes = schema.get_prefixes() if schema is not None else {}
         identity = json.dumps([name, query, prefixes], sort_keys=True)
-        uri = "urn:rdfsolve:query:" + sha256(identity.encode()).hexdigest()
+        uri = mint("query", sha256(identity.encode()).hexdigest())
         metadata = {
             str(RDFS.label): [RdfTerm(kind="literal", value=name)],
             str(RDF.type): [
@@ -123,7 +124,9 @@ class QueryCollection:
                 metadata[str(predicate)] = [RdfTerm(kind=term_kind, value=value)]
         if schema is not None:
             digest = sha256(json.dumps(schema.to_dict(), sort_keys=True).encode()).hexdigest()
-            metadata[str(SCHEMA.isBasedOn)] = [RdfTerm(kind="uri", value="urn:sha256:" + digest)]
+            metadata[str(SCHEMA.isBasedOn)] = [
+                RdfTerm(kind="uri", value=mint("hash", "sha256", digest))
+            ]
         shapes = ShaclShapesGraph()
         resources = []
         if prefixes:

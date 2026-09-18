@@ -28,9 +28,9 @@ class SSSOMSeedingStage(Stage):
         from rdfsolve.analysis.io import load_schemas
 
         schemas = list(load_schemas(self.config.output_dir).items())
-        dataset_void_uris = {
-            name: f"{self.config.void_base_url.rstrip('/')}/dataset/{name}" for name, _ in schemas
-        }
+        from rdfsolve.config import mint
+
+        dataset_void_uris = {name: mint("dataset", name) for name, _ in schemas}
         if not schemas:
             raise ValueError("No canonical schema snapshots found; run mining first")
 
