@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from rdfsolve.api import discover_void_source
+from rdfsolve.void_source import discover_void_source
 from rdfsolve.models.source_model import SourcesRegistry
 
 

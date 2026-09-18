@@ -175,11 +175,9 @@ def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
     key = lambda p: (p.object_class, p.datatype, p.count)
     assert {key(p) for p in restored.patterns} == {key(p) for p in schema.patterns}
 
-    from rdfsolve.void_discover import VoidParser
-    parser = VoidParser(schema.to_void_graph())
-    assert {key(p) for p in parser.to_mined_schema().patterns} == {key(p) for p in schema.patterns}
-    assert len(MinedSchema.from_shacl(parser.to_shacl()).patterns) == 4
-    assert len(parser.to_schema()) == 4
+    from_void = void_to_minedschema(schema.to_void_graph().serialize(format="turtle"))
+    assert {key(p) for p in from_void.patterns} == {key(p) for p in schema.patterns}
+    assert len(MinedSchema.from_shacl(from_void.to_shacl()).patterns) == 4
 
 
 def test_generated_void_describes_the_dataset_not_the_endpoint():

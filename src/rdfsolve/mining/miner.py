@@ -917,6 +917,10 @@ def mine_schema(
     MinedSchema
         Contains patterns and provenance metadata.
     """
+    from urllib.parse import urlsplit
+
+    if urlsplit(endpoint_url).hostname in {"localhost", "127.0.0.1", "::1"}:
+        delay = 0.0
     miner = SchemaMiner(
         endpoint_url=endpoint_url,
         graph_uris=graph_uris,

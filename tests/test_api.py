@@ -1,22 +1,7 @@
 """Test core API functions."""
 from unittest.mock import MagicMock, patch
-from rdflib import Graph
 import rdfsolve
 
-
-def test_load_parser_from_file(tmp_path):
-    void_file = tmp_path / "test.ttl"
-    void_file.write_text("@prefix void: <http://rdfs.org/ns/void#> .\n<http://ex.org/ds> a void:Dataset .")
-    parser = rdfsolve.load_parser_from_file(str(void_file))
-    assert parser is not None
-
-
-def test_graph_to_jsonld():
-    g = Graph()
-    g.parse(data="@prefix void: <http://rdfs.org/ns/void#> .\n<http://ex.org/ds> a void:Dataset .", format="turtle")
-    result = rdfsolve.graph_to_jsonld(g)
-    assert "@about" not in result
-    assert rdfsolve.MinedSchema.from_dict(result).patterns == []
 
 
 @patch("rdfsolve.mining.miner.SchemaMiner")
@@ -28,7 +13,7 @@ def test_mine_schema(mock_cls):
     assert schema is not None
 
 
-@patch("rdfsolve.sparql_helper.SparqlHelper")
+@patch("rdfsolve.metadata.SparqlHelper")
 def test_query_metadata(mock_cls):
     helper = mock_cls.return_value.__enter__.return_value
     helper.construct.return_value = ""
@@ -45,10 +30,9 @@ def test_load_sources(tmp_path):
     assert len(sources) == 1
 
 
-def test_execute_sparql():
-    with patch("rdfsolve.client.query.execute_sparql") as mock_exec:
-        mock_result = MagicMock()
-        mock_result.model_dump.return_value = {"bindings": []}
-        mock_exec.return_value = mock_result
-        result = rdfsolve.execute_sparql("SELECT * WHERE {?s ?p ?o}", "http://ex.org/sparql")
-        assert "bindings" in result
+def test_public_api_reexports_implementations():
+    from rdfsolve.client.query import execute_sparql
+    from rdfsolve.void_source import discover_void_source
+
+    assert rdfsolve.execute_sparql is execute_sparql
+    assert rdfsolve.discover_void_source is discover_void_source
