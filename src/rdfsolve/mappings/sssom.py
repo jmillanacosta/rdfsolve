@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 
 from sssom import Mapping, MappingSetDataFrame, write_rdf, write_tsv
 
+from rdfsolve.mappings.models.core import MappingEdge
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -114,15 +116,16 @@ def write_sssom_rdf(msdf: MappingSetDataFrame, output_path: Path, format: str = 
     write_rdf(msdf, output_path, serialisation=format)
 
 
-def project_mappings(path, identities):
+def project_mappings(
+    path: str | Path, identities: dict[str, set[str]]
+) -> tuple[list[MappingEdge], dict[str, int]]:
     """Expand SSSOM identifiers and project assertions onto matching dataset inventories."""
     from sssom.parsers import parse_sssom_table
 
-    from rdfsolve.mappings.models.core import MappingEdge
-
     table = parse_sssom_table(Path(path))
 
-    def expand(value):
+    def expand(value: object) -> str:
+        """Expand a declared SSSOM CURIE to an absolute IRI."""
         if not isinstance(value, str) or not value:
             raise ValueError("SSSOM identifiers and predicates must be nonempty")
         prefix, separator, local = value.partition(":")
@@ -132,7 +135,8 @@ def project_mappings(path, identities):
             return value
         raise ValueError(f"SSSOM prefix is not declared: {value}")
 
-    edges, unmatched = [], 0
+    edges: list[MappingEdge] = []
+    unmatched = 0
     for row in table.df.to_dict("records"):
         source, target = expand(row["subject_id"]), expand(row["object_id"])
         predicate = expand(row["predicate_id"])

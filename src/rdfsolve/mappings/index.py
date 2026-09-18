@@ -122,13 +122,16 @@ class ClassIndex(BaseModel):
             "errors": errors,
         }
 
-    def _query_classes_batch(self, helper, iris, graph_uris):
+    def _query_classes_batch(
+        self, helper: SparqlHelper, iris: list[str], graph_uris: list[str] | None
+    ) -> dict[str, dict[str, list[str]]]:
         """Retrieve types with explicit graph scope through the shared helper."""
         from rdflib import URIRef
 
         from rdfsolve.schema_models.paths import absolute_iri
 
-        def term(value):
+        def term(value: str) -> str:
+            """Serialize an absolute IRI as a SPARQL term."""
             return URIRef(absolute_iri(value)).n3()
 
         if not iris:

@@ -13,12 +13,18 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import RDF, Literal
 
-from rdfsolve.client.hydration import HydrationLimitError, _iri
-from rdfsolve.client.query_fragments import Fragment, linear_steps
+from rdfsolve.client.hydration import HydrationLimitError, _iri, class_iri
+from rdfsolve.client.query_fragments import Fragment, Step, linear_steps
 from rdfsolve.schema_models.paths import PropertyPath
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from rdfsolve.client.api import Client
+    from rdfsolve.schema_models.navigation import NavigationPath
+
+# A class IRI, or an intermediate node inside a compound field path.
+Node = str | tuple[str, str, str, int]
 
 COLUMNS = ["Path", "Step", "From", "Link", "Direction", "To"]
 CLASS_BATCH_SIZE = 200
@@ -59,22 +65,22 @@ def class_paths(
     if first == last and not allow_repeated_classes:
         raise ValueError("Choose two different classes")
     models = {str(getattr(model, "rdf_class_iri", "")): model for model in client.models.values()}
-    edges: dict[str, set[tuple[str, str, bool]]] = defaultdict(set)
-    reverse: dict[str, set[str]] = defaultdict(set)
-    unsupported = []
+    edges: dict[Node, set[tuple[str, Node, bool]]] = defaultdict(set)
+    reverse: dict[Node, set[Node]] = defaultdict(set)
+    unsupported: list[str] = []
     for cls, model in models.items():
-        for link in client.links(model).itertuples(index=False):
-            target_iri = str(client.model(link.target).rdf_class_iri)
+        for link in client.links(model).to_dict(orient="records"):
+            target_iri = class_iri(client.model(str(link["target"])))
             try:
-                steps = linear_steps(link.path)
+                steps = linear_steps(link["path"])
             except ValueError:
                 unsupported.append(
-                    f"{client.type_name(model)}.{link.field}: use this field directly for alternatives or repeated paths"
+                    f"{client.type_name(model)}.{link['field']}: use this field directly for alternatives or repeated paths"
                 )
                 continue
-            nodes = [
+            nodes: list[Node] = [
                 cls,
-                *[(cls, link.field, target_iri, i) for i in range(1, len(steps))],
+                *[(cls, str(link["field"]), target_iri, i) for i in range(1, len(steps))],
                 target_iri,
             ]
             for (left, right), (predicate, backward) in zip(pairwise(nodes), steps, strict=True):
@@ -83,16 +89,16 @@ def class_paths(
                 if both_directions:
                     edges[right].add((predicate, left, not backward))
                     reverse[left].add(right)
-    distances = {last: 0}
-    pending = deque([last])
+    distances: dict[Node, int] = {last: 0}
+    pending: deque[Node] = deque([last])
     while pending:
         node = pending.popleft()
         for previous in sorted(reverse[node], key=str):
             if previous not in distances:
                 distances[previous] = distances[node] + 1
                 pending.append(previous)
-    required = [str(client.model(value).rdf_class_iri) for value in via]
-    observed = {}
+    required = [class_iri(client.model(value)) for value in via]
+    observed: dict[tuple[Step, ...], NavigationPath] = {}
     if client._schema.navigation is not None:
         observed = {
             tuple((s.subject_class, s.property_uri, s.object_class, False) for s in p.steps): p
@@ -100,7 +106,8 @@ def class_paths(
             if all(s.subject_class in models and s.object_class in models for s in p.steps)
         }
 
-    def compatible(route):
+    def compatible(route: Sequence[Step]) -> bool:
+        """Check that the route passes the required classes in order."""
         intermediate = [edge[2] for edge in route[:-1]]
         position = 0
         for cls in required:
@@ -114,21 +121,24 @@ def class_paths(
 
     wanted = words(meaning)
 
-    vocabulary = {}
+    vocabulary: dict[str | None, set[str]] = {}
 
-    def terms(iri):
+    def terms(iri: str | None) -> set[str]:
+        """Return the label words of one vocabulary IRI."""
         if iri not in vocabulary:
             vocabulary[iri] = words(_label(client, iri)) if isinstance(iri, str) else set()
         return vocabulary[iri]
 
-    def relevance(route):
-        predicates, classes = set(), set()
+    def relevance(route: Sequence[Step]) -> tuple[int, int]:
+        """Count predicate and class words that match the meaning."""
+        predicates: set[str] = set()
+        classes: set[str] = set()
         for left, predicate, right, _ in route:
             predicates.update(terms(predicate))
             classes.update(terms(left) | terms(right))
         return len(wanted & predicates), len(wanted & classes)
 
-    routes = [
+    routes: list[list[Step]] = [
         list(route)
         for route in observed
         if route[0][0] == first
@@ -142,7 +152,9 @@ def class_paths(
     ]
     known = {tuple(route) for route in routes}
 
-    queue = deque([(first, {first}, [])])
+    queue: deque[tuple[Node, set[Node], list[tuple[Node, str, Node, bool]]]] = deque(
+        [(first, {first}, [])]
+    )
     truncated, expansions = False, 0
     expansion_limit = max(1000, max_paths * 100)
     while queue:
@@ -150,8 +162,13 @@ def class_paths(
         if len(route) + distances.get(node, max_hops + 1) > max_hops:
             continue
         if node == last and route:
-            normalized = [
-                (s if s in models else None, p, o if o in models else None, back)
+            normalized: list[Step] = [
+                (
+                    s if isinstance(s, str) and s in models else None,
+                    p,
+                    o if isinstance(o, str) and o in models else None,
+                    back,
+                )
                 for s, p, o, back in route
             ]
             if compatible(normalized) and tuple(normalized) not in known:
@@ -176,7 +193,8 @@ def class_paths(
     if truncated and not allow_partial:
         raise HydrationLimitError("Class path budget exhausted; reduce max_hops or raise max_paths")
 
-    def support(route):
+    def support(route: Sequence[Step]) -> str:
+        """Return the retained instance support of a mined route."""
         item = observed.get(tuple(route))
         return item.instance_support if item else "not_checked"
 
@@ -233,7 +251,7 @@ def class_paths(
     return table
 
 
-def route_fragment(client: Client, route) -> Fragment:
+def route_fragment(client: Client, route: list[Step]) -> Fragment:
     """Compile a generated-model route, retaining its intermediate class constraints."""
     paths = [PropertyPath(operator="predicate", iri=p) for _, p, _, _ in route]
     paths = [

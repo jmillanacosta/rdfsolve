@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from rdfsolve.mappings.derivation import ClassPair
+    from rdfsolve.mappings.models.core import MappingEdge
     from rdfsolve.mcp.workflow import ask_rdf
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.void_schema import VoidSchema
@@ -667,7 +671,7 @@ def load_mapping_jsonld(path: str) -> dict[str, Any]:
     return result
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name == "ask_rdf":
         from rdfsolve.mcp.workflow import ask_rdf
 
@@ -675,18 +679,23 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def __dir__():
+def __dir__() -> list[str]:
     return sorted(set(globals()) | set(__all__))
 
 
-def compare_schemas(schemas):
+def compare_schemas(schemas: Mapping[str, MinedSchema]) -> list[dict[str, Any]]:
     """Compare vocabulary overlap across named schema snapshots."""
     from rdfsolve.analysis.connectivity import compare_schemas as compare
 
     return compare(schemas)
 
 
-def build_connectivity(schemas, *, class_mappings=(), associations=()):
+def build_connectivity(
+    schemas: Mapping[str, MinedSchema],
+    *,
+    class_mappings: Sequence[MappingEdge] = (),
+    associations: Sequence[ClassPair] = (),
+) -> Any:
     """Build dataset-scoped connectivity with explicit evidence kinds."""
     from rdfsolve.analysis.connectivity import build_connectivity as build
 

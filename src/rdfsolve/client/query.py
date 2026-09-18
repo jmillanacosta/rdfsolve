@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
 from rdfsolve.sparql_helper import SparqlHelper
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 # Result models
 
@@ -33,7 +36,7 @@ class QueryResult(BaseModel):
     duration_ms: int
     error: str | None = None
 
-    def table(self):
+    def table(self) -> pd.DataFrame:
         """Display values; exact RDF terms remain in rows."""
         import pandas as pd
 

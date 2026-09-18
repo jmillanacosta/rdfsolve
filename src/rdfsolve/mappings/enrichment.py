@@ -94,7 +94,8 @@ def enrich_sssom_file(
     """Retain mappings touching observed classes and preserve their provenance."""
     msdf = parse_sssom_table(sssom_file)
 
-    def local(value):
+    def local(value: object) -> bool:
+        """Check whether a CURIE or IRI names an observed class."""
         prefix, separator, identifier = str(value).partition(":")
         iri = (
             msdf.prefix_map[prefix] + identifier

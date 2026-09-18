@@ -8,8 +8,8 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import Literal
 
-from rdfsolve.client.hydration import HydrationLimitError, Hydrator, _iri, _term
-from rdfsolve.schema_models.enrichment import NAME_PREDICATES
+from rdfsolve.client.hydration import HydrationLimitError, Hydrator, _iri, _term, field_metadata
+from rdfsolve.schema_models.enrichment import NAME_PREDICATES, RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_helper import EndpointError
@@ -33,7 +33,7 @@ def _path(model: type[BaseModel], field: str) -> PropertyPath:
 
 def field_targets(model: type[BaseModel], field: str) -> dict[str, str]:
     """Read target hints and their basis from generated field metadata."""
-    extra = model.model_fields[field].json_schema_extra or {}
+    extra = field_metadata(model.model_fields[field])
     targets = {
         p["object_class"]: "observed class pair"
         for p in extra.get("rdf_patterns", [])
@@ -61,7 +61,7 @@ def field_targets(model: type[BaseModel], field: str) -> dict[str, str]:
 class UnaddressableTargetError(EndpointError):
     """A returned URI cannot be used as an absolute IRI in a later request."""
 
-    def __init__(self, term, field: str, query_id: int):
+    def __init__(self, term: RdfTerm, field: str, query_id: int):
         """Retain the observed term and its anchored source query."""
         self.observed = term.model_dump(mode="json", exclude_none=True)
         self.field = field
@@ -75,6 +75,12 @@ class UnaddressableTargetError(EndpointError):
 
 class DatasetClient(Hydrator):
     """Search typed records and follow recorded links without recursive loading."""
+
+    def field_name(self, model: type[BaseModel], text: str) -> str:
+        """Accept an exact generated field name. Client also accepts labels and IRIs."""
+        if text in model.model_fields:
+            return text
+        raise ValueError(f"{model.__name__} has no field {text!r}")
 
     def links(self, model: type[BaseModel]) -> pd.DataFrame:
         """List generated field paths and their possible target types without querying."""

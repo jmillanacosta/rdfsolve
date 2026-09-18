@@ -189,7 +189,9 @@ class SchemaMiner:
         return self._helper
 
     @classmethod
-    def from_graph(cls, graph, *, endpoint_url="urn:rdfsolve:local", **kwargs):
+    def from_graph(
+        cls, graph: Graph, *, endpoint_url: str = "urn:rdfsolve:local", **kwargs: Any
+    ) -> Self:
         """Mine a bounded RDF snapshot using the existing SPARQL mining strategy."""
         from rdflib import Dataset
 

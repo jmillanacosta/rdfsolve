@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import Literal as QueryLiteral
 
 from rdflib import RDF, RDFS, SH, Graph, Namespace, URIRef
@@ -22,6 +22,10 @@ from rdfsolve.schema_models.shacl_model import (
     ShaclShapesGraph,
     ShaclSparqlExecutable,
 )
+
+if TYPE_CHECKING:
+    from rdfsolve.models.source_model import SourceModel
+    from rdfsolve.schema_models.core import MinedSchema
 
 SCHEMA = Namespace("https://schema.org/")
 QueryKind = QueryLiteral["SELECT", "ASK", "CONSTRUCT"]
@@ -89,7 +93,7 @@ class QueryCollection:
         *,
         description: str = "",
         endpoint: str = "",
-        schema=None,
+        schema: MinedSchema | None = None,
         prefixes: dict[str, str] | None = None,
     ) -> SavedQuery:
         """Populate the typed SHACL model with a named executable."""
@@ -167,7 +171,14 @@ class QueryCollection:
         self.paths.update(paths)
         return names
 
-    def load_directory(self, directory, *, endpoint="", schema=None, prefixes=None):
+    def load_directory(
+        self,
+        directory: str | Path,
+        *,
+        endpoint: str = "",
+        schema: MinedSchema | None = None,
+        prefixes: dict[str, str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Import local .rq/.sparql or Turtle files and report every rejected file."""
         paths = sorted(
             p for p in Path(directory).rglob("*") if p.suffix in {".rq", ".sparql", ".ttl"}
@@ -208,7 +219,13 @@ class QueryCollection:
         return self.import_report
 
     @classmethod
-    def from_source(cls, source, *, base_dir=".", repository_path=None):
+    def from_source(
+        cls,
+        source: SourceModel | dict[str, Any],
+        *,
+        base_dir: str | Path = ".",
+        repository_path: str | Path | None = None,
+    ) -> QueryCollection:
         """Load configured graphs/dumps, or an explicitly checked-out repository."""
         import requests
 

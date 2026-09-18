@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from threading import RLock
@@ -13,15 +13,20 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from rdfsolve.client.catalogue import words
-from rdfsolve.client.hydration import _term
-from rdfsolve.client.query_fragments import Fragment, PreparedQuery, identifier, path_size
+from rdfsolve.client.hydration import _term, class_iri
+from rdfsolve.client.query_fragments import (
+    Fragment,
+    PreparedQuery,
+    QueryPattern,
+    identifier,
+    path_size,
+)
 from rdfsolve.client.retrieval import QueryValidationError, Requirement
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client, Results
     from rdfsolve.client.query import QueryResult
-    from rdfsolve.client.query_fragments import QueryPattern
 
 
 def short(text: object, limit: int = 180) -> str:
@@ -60,15 +65,15 @@ class Session:
         self.catalogue = client.catalogue
         self.lock = RLock()
         self.question = ""
-        self.goals = {}
-        self.requirements = {}
-        self.interpretation_warnings = []
-        self.prepared = {}
-        self.results = {}
-        self.executions = {}
+        self.goals: dict[str, str] = {}
+        self.requirements: dict[str, Requirement] = {}
+        self.interpretation_warnings: list[str] = []
+        self.prepared: dict[str, PreparedQuery] = {}
+        self.results: dict[str, QueryResult] = {}
+        self.executions: dict[str, dict[str, Any]] = {}
         self.records = self.catalogue.records
-        self.selections = {}
-        self.cache = {}
+        self.selections: dict[str, Results] = {}
+        self.cache: dict[str, Any] = {}
         self.max_paths = max_paths
         self.output_variables = tuple(output_variables)
         self.artifact_dir = Path(artifact_dir).resolve() if artifact_dir else None
@@ -77,7 +82,7 @@ class Session:
     def _card(self, ref: str) -> dict[str, Any]:
         c = self.catalogue
         f = c.fragments[ref]
-        card = {"ref": ref, "label": short(f.label), "kind": f.kind}
+        card: dict[str, Any] = {"ref": ref, "label": short(f.label), "kind": f.kind}
         if f.description:
             card["description"] = short(f.description)
         if f.iri:
@@ -91,7 +96,7 @@ class Session:
             card["name_matches"] = [{**n, "text": short(n["text"])} for n in matches[:2]]
         if f.path:
             card.update(
-                owner=c.type_refs.get(f.owner),
+                owner=c.type_refs.get(f.owner) if f.owner else None,
                 field=f.field_name,
                 path=path_to_sparql(f.path),
                 complexity=path_size(f.path),
@@ -144,7 +149,7 @@ class Session:
         *,
         brief: bool = False,
     ) -> dict[str, Any]:
-        cards = []
+        cards: list[dict[str, Any]] = []
         for ref in refs[offset:]:
             card = self._card(ref)
             if brief:
@@ -237,7 +242,8 @@ class Session:
                         )
                 requirements[key] = revised
 
-            def normalize(value):
+            def normalize(value: str) -> str:
+                """Keep only lowercase letters and digits for name comparison."""
                 return re.sub(r"[^a-z0-9]", "", value.casefold())
 
             about = self.client._schema.about
@@ -252,13 +258,13 @@ class Session:
                 if url
                 for part in (urlsplit(url).hostname or "").split(".")
             ]
-            source_names = {normalize(name) for name in source_names if name}
+            known_names = {normalize(name) for name in source_names if name}
             for key, goal in requirements.items():
                 if goal.kind == "scope" or (
                     goal.concept.casefold() in {"database", "dataset", "source"}
-                    and normalize(goal.value) in source_names
+                    and normalize(goal.value) in known_names
                 ):
-                    if normalize(goal.value or goal.concept) not in source_names:
+                    if normalize(goal.value or goal.concept) not in known_names:
                         raise ValueError("The requested dataset differs from the configured source")
                     requirements[key] = goal.model_copy(update={"kind": "scope"})
             requested = {key: goal.clause for key, goal in requirements.items()}
@@ -308,16 +314,17 @@ class Session:
             self.interpretation_warnings.extend(warnings)
             self.question, self.goals, self.requirements = question, requested, requirements
         c = self.catalogue
-        unresolved = []
+        unresolved: list[str] = []
 
-        def resolve_types(values):
-            resolved = set()
+        def resolve_types(values: Iterable[str] | None) -> set[str]:
+            """Resolve references, selections and names to class IRIs."""
+            resolved: set[str] = set()
             for value in values or []:
                 try:
                     if value in self.selections:
-                        resolved.update(str(r.rdf_class_iri) for r in self.selections[value])
+                        resolved.update(class_iri(r) for r in self.selections[value])
                     elif value in self.records:
-                        resolved.add(str(self.records[value].rdf_class_iri))
+                        resolved.add(class_iri(self.records[value]))
                     else:
                         resolved.add(c._type(value))
                 except ValueError:
@@ -354,7 +361,7 @@ class Session:
             ]
             if exact:
                 ranked = exact
-                seeds.update(c.fragments[r].iri for r in exact)
+                seeds.update(iri for r in exact if (iri := c.fragments[r].iri))
             if cls and not any(c.relevance(r, concept) >= 1 for r in ranked):
                 fallback[cls] = [r for r in c.field_refs.values() if c.fragments[r].owner == cls]
             groups.append(
@@ -529,9 +536,9 @@ class Session:
             if source not in self.records:
                 raise ValueError("Follow requires a retained selection or entity")
             selected = Results(self.client, [selected])
-        field = self.catalogue.fragments.get(via)
+        field = self.catalogue.fragments.get(via) if via else None
         if field:
-            if field.kind != "field" or any(r.rdf_class_iri != field.owner for r in selected):
+            if field.kind != "field" or any(class_iri(r) != field.owner for r in selected):
                 raise ValueError("Select a field owned by the source records")
             via = field.field_name
         cls = self.catalogue._type(target)
@@ -566,7 +573,7 @@ class Session:
         f = c.fragments[ref]
         if text and f.kind == "type":
             return self.schema([text], owners=[ref])
-        if text and f.kind == "field":
+        if text and f.kind == "field" and f.owner and f.field_name:
             key = identifier("values", [ref, text])
             if key not in self.cache:
                 self.cache[key] = self.client.field_values(
@@ -591,13 +598,13 @@ class Session:
     def prepare(
         self,
         sparql: str | None = None,
-        grounding: Mapping[str, Any] | None = None,
+        grounding: Mapping[str, dict[str, Any]] | None = None,
         *,
         route: str | None = None,
         source: str = "source",
         target: str = "target",
-        fields: Sequence[str] | None = None,
-        patterns: Sequence[QueryPattern] | None = None,
+        fields: dict[str, list[str]] | None = None,
+        patterns: Sequence[QueryPattern | dict[str, Any]] | None = None,
         values: Mapping[str, str] | None = None,
         text: Mapping[str, str] | None = None,
         distinct: bool = True,
@@ -615,18 +622,29 @@ class Session:
                 "unresolved_goals",
                 f"Ground every active clause: {sorted(active)}. Source-scope clauses are already enforced by the Client.",
             )
-        options = {"requirements": self.requirements, "grounding": grounding}
         if patterns:
             from rdfsolve.client.retrieval import validate_outputs
 
             selected = (
                 outputs
                 or self.output_variables
-                or list(dict.fromkeys(v for p in patterns for v in p["bindings"]))
+                or list(
+                    dict.fromkeys(
+                        v
+                        for p in patterns
+                        for v in (p.bindings if isinstance(p, QueryPattern) else p["bindings"])
+                    )
+                )
             )
             validate_outputs(selected, self.output_variables)
             query = self.client.prepare_network(
-                patterns, outputs=selected, values=values, text=text, distinct=distinct, **options
+                patterns,
+                outputs=selected,
+                values=values,
+                text=text,
+                distinct=distinct,
+                requirements=self.requirements,
+                grounding=grounding,
             )
         elif route:
             query = self.client.prepare_path(
@@ -635,10 +653,18 @@ class Session:
                 target=target,
                 fields=fields,
                 output_variables=self.output_variables,
-                **options,
+                requirements=self.requirements,
+                grounding=grounding,
             )
+        elif sparql is None:
+            raise ValueError("Supply patterns, a route, or a SPARQL query")
         else:
-            query = self.client.prepare(sparql, output_variables=self.output_variables, **options)
+            query = self.client.prepare(
+                sparql,
+                output_variables=self.output_variables,
+                requirements=self.requirements,
+                grounding=grounding,
+            )
         query.warnings = list(dict.fromkeys([*self.interpretation_warnings, *query.warnings]))
         self.prepared = {query.ref: query}
         return {

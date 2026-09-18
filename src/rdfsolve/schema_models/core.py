@@ -102,7 +102,7 @@ class MinedSchema(BaseModel):
         *,
         max_hops: int = 3,
         max_paths_per_length: int = 100,
-        helper=None,
+        helper: SparqlHelper | None = None,
         probe_limit: int = 0,
     ) -> NavigationSummary:
         """Compose bounded routes and optionally measure their joined source support."""

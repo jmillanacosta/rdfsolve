@@ -2,6 +2,7 @@
 
 import logging
 from importlib import import_module
+from typing import Any
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 _EXPORTS = {
@@ -55,7 +56,7 @@ _EXPORTS = {
 __all__ = list(_EXPORTS)
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name not in _EXPORTS:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     module, attribute = _EXPORTS[name]
@@ -64,5 +65,5 @@ def __getattr__(name):
     return value
 
 
-def __dir__():
+def __dir__() -> list[str]:
     return sorted(set(globals()) | set(__all__))

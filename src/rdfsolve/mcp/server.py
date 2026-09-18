@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_core import to_jsonable_python
@@ -15,6 +15,16 @@ from rdfsolve.client.query_fragments import QueryPattern, QuerySyntaxError
 from rdfsolve.client.retrieval import QueryValidationError, Requirement
 from rdfsolve.mcp.session import Session
 from rdfsolve.sparql_helper import EndpointError
+
+if TYPE_CHECKING:
+    from mcp.server import Server, ServerRequestContext
+    from mcp.types import (
+        CallToolRequestParams,
+        PaginatedRequestParams,
+        ReadResourceRequestParams,
+    )
+
+    from rdfsolve.client.api import Client
 
 
 class Args(BaseModel):
@@ -187,7 +197,7 @@ class FinishArgs(Args):
     query_ref: str
 
 
-CONTRACTS = {
+CONTRACTS: dict[str, tuple[type[Args], str]] = {
     "rdf_schema": (SchemaArgs, "schema"),
     "rdf_find": (FindArgs, "find"),
     "rdf_paths": (PathsArgs, "paths"),
@@ -215,7 +225,7 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
     try:
         with session.lock, session.client.step(f"MCP {method}"):
             args = model.model_validate(arguments).model_dump(exclude_none=True)
-            value = getattr(session, method)(**args)
+            value: dict[str, Any] = getattr(session, method)(**args)
     except ValidationError as exc:
         value = {
             "error": {
@@ -325,7 +335,7 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
     return value
 
 
-def create_server(client, **kwargs):
+def create_server(client: Client, **kwargs: Any) -> Server[Any]:
     """Register tools and bounded diagnostic resources."""
     from mcp.server import Server
     from mcp.types import (
@@ -339,7 +349,10 @@ def create_server(client, **kwargs):
 
     session = Session(client, **kwargs)
 
-    async def list_tools(ctx, params):
+    async def list_tools(
+        ctx: ServerRequestContext[Any], params: PaginatedRequestParams | None
+    ) -> ListToolsResult:
+        """List the tool contracts."""
         return ListToolsResult(
             tools=[
                 Tool(name=n, description=m.__doc__, input_schema=m.model_json_schema())
@@ -347,7 +360,10 @@ def create_server(client, **kwargs):
             ]
         )
 
-    async def call_tool(ctx, params):
+    async def call_tool(
+        ctx: ServerRequestContext[Any], params: CallToolRequestParams
+    ) -> CallToolResult:
+        """Run one tool call in a worker thread."""
         value = await asyncio.to_thread(dispatch, session, params.name, params.arguments or {})
         return CallToolResult(
             content=[TextContent(type="text", text=json.dumps(value, ensure_ascii=False))],
@@ -355,7 +371,10 @@ def create_server(client, **kwargs):
             is_error="error" in value,
         )
 
-    async def read_resource(ctx, params):
+    async def read_resource(
+        ctx: ServerRequestContext[Any], params: ReadResourceRequestParams
+    ) -> ReadResourceResult:
+        """Return the session diagnostics resource."""
         if str(params.uri) != "rdfsolve://diagnostics":
             raise ValueError(
                 "Full result resources are private. The caller receives a local artifact after execution."
@@ -377,7 +396,7 @@ def create_server(client, **kwargs):
     )
 
 
-async def run_server(client, **kwargs):
+async def run_server(client: Client, **kwargs: Any) -> None:
     """Run a dedicated stdio investigation."""
     from mcp.server.stdio import stdio_server
 

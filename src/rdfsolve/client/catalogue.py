@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any
 
+from rdfsolve.client.hydration import class_iri
 from rdfsolve.client.query_fragments import Fragment, identifier
 from rdfsolve.schema_models.enrichment import NAME_PREDICATES, SYNONYM_PREDICATES, RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from pydantic import BaseModel
+
+    from rdfsolve.client.api import Client, Results
+    from rdfsolve.client.registry import Registry
+    from rdfsolve.client.retrieval import Requirement
 
 
 def words(text: str) -> set[str]:
@@ -34,15 +45,24 @@ def score(text: str, query: str) -> float:
 class Catalogue:
     """A source-scoped index built from the generated models."""
 
-    def __init__(self, client, source_id="rdf", *, class_mappings=(), related_registries=()):
+    def __init__(
+        self,
+        client: Client,
+        source_id: str = "rdf",
+        *,
+        class_mappings: Any = (),
+        related_registries: Iterable[Registry] = (),
+    ) -> None:
         """Index a generated registry and supplied mapping evidence."""
         self.client = client
         self.registry = client.registry(source_id=source_id)
         self.fragments: dict[str, Fragment] = {}
-        self.records = {}
-        self.metadata: dict[str, dict] = {}
+        self.records: dict[str, BaseModel] = {}
+        self.metadata: dict[str, dict[str, Any]] = {}
         self.known_iris: set[str] = set()
-        self.type_refs, self.field_refs = {}, {}
+        self.type_refs: dict[str, str] = {}
+        self.field_refs: dict[tuple[str, str], str] = {}
+        self.mapping_status: dict[str, int] = {}
         for item in self.registry.types:
             ref = self._put(
                 Fragment("type", item.label, iri=item.id, description=item.description), item.id
@@ -72,14 +92,16 @@ class Catalogue:
             for ref in (*self.type_refs.values(), *self.field_refs.values())
         }
 
-    def _mapping_hints(self, mappings, registries):
+    def _mapping_hints(
+        self, mappings: Any, registries: Iterable[Registry]
+    ) -> dict[str, dict[str, dict[str, Any]]]:
         """Index ClassPair or MappingEdge evidence from supplied registries."""
         lookup = {self.registry.source_id: self.registry}
         for registry in registries:
             if registry.source_id in lookup:
                 raise ValueError("Related registry IDs must be distinct from the active source")
             lookup[registry.source_id] = registry
-        hints = {}
+        hints: dict[str, dict[str, dict[str, Any]]] = {}
         self.mapping_status = {
             "supplied_pairs": 0,
             "indexed_links": 0,
@@ -94,14 +116,14 @@ class Catalogue:
             ):
                 if local_ds != self.registry.source_id or local not in self.type_refs:
                     continue
-                registry = lookup.get(remote_ds)
+                related = lookup.get(remote_ds)
                 other = (
-                    next((t for t in registry.types if t.id == remote), None) if registry else None
+                    next((t for t in related.types if t.id == remote), None) if related else None
                 )
                 if other is None:
                     self.mapping_status["missing_related_metadata"] += 1
                     continue
-                evidence = {
+                evidence: dict[str, Any] = {
                     "local_class": local,
                     "related_class": remote,
                     "related_source": remote_ds,
@@ -130,22 +152,22 @@ class Catalogue:
         self.mapping_status["indexed_links"] = sum(len(v) for v in hints.values())
         return hints
 
-    def _schema_document(self, ref):
+    def _schema_document(self, ref: str) -> tuple[str, list[str]]:
         f = self.fragments[ref]
         text = f"{f.label} {f.iri or ''} {f.description or ''} {f.field_name or ''}"
         if f.path:
             text += " " + path_to_sparql(f.path)
-        classes = [f.iri] if f.kind == "type" else self.metadata[ref].get("targets", [])
-        hint_refs = []
+        classes: list[Any] = [f.iri] if f.kind == "type" else self.metadata[ref].get("targets", [])
+        hint_refs: list[str] = []
         for cls in classes:
-            target = self.fragments.get(self.type_refs.get(cls))
+            target = self.fragments.get(self.type_refs.get(cls, "")) if cls else None
             if f.kind == "field" and target:
                 text += f" {target.label} {target.description or ''}"
             for hint_ref, hint in self.retrieval_hints.get(cls, {}).items():
                 text += f" {hint['label']} {hint['description'] or ''}"
                 hint_refs.append(hint_ref)
         iris = [f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri]
-        if f.path and f.path.iri in NAME_PREDICATES:
+        if f.path and f.owner and f.path.iri in NAME_PREDICATES:
             text += " name " + self.fragments[self.type_refs[f.owner]].label
         names = [
             {
@@ -160,9 +182,9 @@ class Catalogue:
             n["text"] for n in names if n["scope"] in {"label", "exact", "alternative"}
         )
         evidence = [
-            self.client.vocabulary_evidence[i]
+            item
             for i in dict.fromkeys([*iris, *classes])
-            if self.client.vocabulary_evidence.get(i)
+            if (item := self.client.vocabulary_evidence.get(i))
         ]
         self.metadata[ref]["ontology"] = evidence
         for item in evidence:
@@ -179,7 +201,7 @@ class Catalogue:
         self.metadata[ref]["names"] = names
         return text, hint_refs
 
-    def explain(self, ref):
+    def explain(self, ref: str) -> None:
         """Resolve a selected vocabulary term through the client's evidence overlay."""
         f = self.fragments[ref]
         if f.kind not in {"type", "field"} or not self.client.ontology or f.description:
@@ -189,22 +211,27 @@ class Catalogue:
             self.client.vocabulary(iri)
         self.schema_documents[ref] = self._schema_document(ref)
 
-    def search(self, concept="", *, owners=(), targets=()):
+    def search(
+        self, concept: str = "", *, owners: Iterable[str] = (), targets: Iterable[str] = ()
+    ) -> list[str]:
         """Find generated classes or fields by meaning and structural endpoints."""
-        owners = {self._type(o) for o in owners}
-        targets = {self._type(t) for t in targets}
+        owner_iris = {self._type(o) for o in owners}
+        target_iris = {self._type(t) for t in targets}
         refs = [
             r
-            for r in (self.field_refs.values() if owners else self.schema_documents)
-            if (not owners or self.fragments[r].owner in owners)
-            and (not targets or targets.intersection(self.metadata.get(r, {}).get("targets", [])))
+            for r in (self.field_refs.values() if owner_iris else self.schema_documents)
+            if (not owner_iris or self.fragments[r].owner in owner_iris)
+            and (
+                not target_iris
+                or target_iris.intersection(self.metadata.get(r, {}).get("targets", []))
+            )
         ]
         if not refs:
             return []
         if concept and self.client.ontology:
             from rdfsolve.client.ontology import term_key
 
-            iris = set()
+            iris: set[str] = set()
             for ref in refs:
                 f = self.fragments[ref]
                 iris.update([f.iri] if f.iri else [p.iri for p in self._paths(f.path) if p.iri])
@@ -235,7 +262,7 @@ class Catalogue:
             ),
         )
 
-    def relevance(self, ref, concept):
+    def relevance(self, ref: str, concept: str) -> float:
         """Rank a concept using local metadata and exact ontology names."""
         fragment = self.fragments[ref]
         document = self.schema_documents.get(ref, (fragment.label, []))[0]
@@ -260,7 +287,7 @@ class Catalogue:
             rank = max(rank, max(min(score(n["text"], concept), 1) * 0.5 for n in related))
         return rank
 
-    def requirement(self, value, output_variables=()):
+    def requirement(self, value: Any, output_variables: Iterable[str] = ()) -> Requirement:
         """Separate requested output bindings from their semantic clauses."""
         from rdfsolve.client.retrieval import Requirement
 
@@ -277,7 +304,7 @@ class Catalogue:
             )
         return goal
 
-    def validate_correction(self, previous, revised):
+    def validate_correction(self, previous: Requirement, revised: Requirement) -> None:
         """Keep known vocabulary evidence when correcting an initial search term."""
         c = self
         concept = (
@@ -308,7 +335,7 @@ class Catalogue:
                 f"The correction conflicts with retained evidence for '{previous.concept}'"
             )
 
-    def _put(self, fragment: Fragment, key):
+    def _put(self, fragment: Fragment, key: Any) -> str:
         prefix = {"type": "t", "field": "f", "path": "p", "term": "e"}[fragment.kind]
         ref = identifier(prefix, key)
         self.fragments.setdefault(ref, fragment)
@@ -328,14 +355,17 @@ class Catalogue:
         return ref
 
     @staticmethod
-    def _paths(path):
+    def _paths(path: PropertyPath | None) -> Iterator[PropertyPath]:
+        if path is None:
+            return
         yield path
         for child in path.items:
             yield from Catalogue._paths(child)
 
-    def _type(self, value):
-        if value in self.fragments and self.fragments[value].kind == "type":
-            return self.fragments[value].iri
+    def _type(self, value: str) -> str:
+        known = self.fragments.get(value)
+        if known is not None and known.kind == "type" and known.iri:
+            return known.iri
         fragment = self.fragments.get(value)
         if fragment and fragment.path:
             classes = [fragment.owner, *self.metadata.get(value, {}).get("targets", [])]
@@ -347,23 +377,23 @@ class Catalogue:
             raise ValueError(
                 f"{value} already describes a path. Use its insert, or select a class endpoint for further search: {choices}."
             )
-        return str(self.client.model(value).rdf_class_iri)
+        return class_iri(self.client.model(value))
 
-    def _field_names(self, owner, fields):
+    def _field_names(self, owner: str, fields: Iterable[str]) -> list[str]:
         """Resolve references, names and unique exact labels within one owner."""
-        names = []
+        names: list[str] = []
         for value in fields:
             fragment = self.fragments.get(value)
             if fragment:
                 if fragment.kind != "field" or fragment.owner != owner:
                     raise ValueError("Field reference belongs to a different subject type")
-                value = fragment.field_name
+                value = fragment.field_name or value
             name = self.client.field_name(self.client.model(owner), value)
             if name not in names:
                 names.append(name)
         return names
 
-    def paths(self, source: str, target: str, max_hops: int = 3, max_paths: int = 50):
+    def paths(self, source: str, target: str, max_hops: int = 3, max_paths: int = 50) -> list[str]:
         """Build fragments from retained shapes and bounded class paths."""
         table = self.client.paths_between(
             self._type(source),
@@ -373,18 +403,19 @@ class Catalogue:
             allow_partial=True,
             allow_repeated_classes=True,
         )
-        return table.attrs["references"]
+        references: list[str] = table.attrs["references"]
+        return references
 
-    def retain_records(self, result):
+    def retain_records(self, result: Results) -> list[str]:
         """Retain typed identities and the names that actually matched their lookup."""
-        refs = []
+        refs: list[str] = []
         for record in result:
-            term = RdfTerm(kind="uri", value=str(record.uri))
+            term = RdfTerm(kind="uri", value=str(vars(record)["uri"]))
             ref = self._put(
                 Fragment(
                     "term", self.client.title(record), term=term, basis="typed entity retrieval"
                 ),
-                [record.rdf_class_iri, term.value],
+                [class_iri(record), term.value],
             )
             self.records[ref] = record
             lookups = result.coverage.get("terms", [result.coverage.get("text", "")])
@@ -395,7 +426,7 @@ class Catalogue:
                     "scope": e.get("name_scope") or "label",
                 }
                 for e in result.evidence
-                if e.get("id") == str(record.uri) and "text" in e
+                if e.get("id") == str(vars(record)["uri"]) and "text" in e
             ]
             self.metadata.setdefault(ref, {})["name_matches"] = names
             if names and all(n["scope"] in {"broad", "narrow", "related"} for n in names):
@@ -406,9 +437,9 @@ class Catalogue:
             refs.append(ref)
         return refs
 
-    def retain_paths(self, table):
+    def retain_paths(self, table: pd.DataFrame) -> tuple[list[str], bool]:
         """Index the Client's executable paths without reconstructing them."""
-        refs = []
+        refs: list[str] = []
         for index, fragment in enumerate(table.attrs["fragments"]):
             ref = self._put(fragment, vars(fragment))
             self.metadata[ref] = (

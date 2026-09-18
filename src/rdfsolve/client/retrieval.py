@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Iterator, Mapping
 from functools import lru_cache
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from typing import Literal as Choice
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -14,6 +15,11 @@ from rdflib.plugins.sparql.parserutils import CompValue
 
 from rdfsolve.client.query_fragments import PreparedQuery, compile_query, walk
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
+if TYPE_CHECKING:
+    from rdflib.term import Node
+
+    from rdfsolve.client.catalogue import Catalogue
 
 
 class QueryValidationError(ValueError):
@@ -60,7 +66,7 @@ class Requirement(BaseModel):
     )
 
     @model_validator(mode="after")
-    def valid_request(self):
+    def valid_request(self) -> Requirement:
         """Reject incomplete interpretations before retaining any commitment."""
         if not self.clause.strip() or not self.concept.strip():
             raise ValueError("Each goal needs its original clause and a concept.")
@@ -75,7 +81,7 @@ class Requirement(BaseModel):
         return self
 
 
-def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
+def validate_retrieval(query: PreparedQuery, catalogue: Catalogue) -> list[str]:
     """Check the supported SELECT algebra, paths, owners and term constraints."""
     algebra = prepareQuery(query.sparql).algebra
     nodes = list(walk(algebra))
@@ -112,12 +118,12 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
         raise QueryValidationError(
             "empty_pattern", "A retrieval query needs a grounded RDF pattern."
         )
-    types = {}
+    types: dict[Node, set[str]] = {}
     for subject, predicate, obj in triples:
         if predicate == RDF.type and isinstance(obj, URIRef):
             types.setdefault(subject, set()).add(str(obj))
     fields = [f for f in catalogue.fragments.values() if f.kind == "field"]
-    supported = set()
+    supported: set[tuple[Node, Node, Node]] = set()
     for use in query.uses:
         if use.get("pattern"):
             fragment_algebra = prepareQuery("SELECT * WHERE {" + use["pattern"] + "}").algebra
@@ -128,7 +134,7 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
                 for t in n.triples
             )
     paths = {path_to_sparql(f.path): f for f in catalogue.fragments.values() if f.path}
-    bound_terms = {}
+    bound_terms: dict[Variable, set[Node]] = {}
     for node in nodes:
         if isinstance(node, CompValue) and node.name == "values":
             for row in node.res:
@@ -150,13 +156,18 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
                 "variable_predicate", "Discover a field or path before using its predicate."
             )
         candidates = [
-            f for f in fields if f.path.operator == "predicate" and str(predicate) == f.path.iri
+            f
+            for f in fields
+            if f.path is not None
+            and f.path.operator == "predicate"
+            and str(predicate) == f.path.iri
         ]
         if isinstance(predicate, Path):
             candidates = [
                 f
                 for f in fields
-                if canonical_path(predicate.n3()) == canonical_path(path_to_sparql(f.path))
+                if f.path is not None
+                and canonical_path(predicate.n3()) == canonical_path(path_to_sparql(f.path))
             ]
             candidates += [
                 f
@@ -174,7 +185,9 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
                     f"{predicate.n3()} belongs to a different class than {subject.n3()}. Inspect the field owner.",
                 )
             metadata = [
-                catalogue.metadata.get(catalogue.field_refs.get((f.owner, f.field_name)), {})
+                catalogue.metadata.get(
+                    catalogue.field_refs.get((f.owner or "", f.field_name or ""), ""), {}
+                )
                 for f in matched
             ]
             kinds = {k for m in metadata for k in m.get("node_kinds", [])}
@@ -238,12 +251,14 @@ def validate_retrieval(query: PreparedQuery, catalogue) -> list[str]:
 def canonical_path(text: str) -> str:
     """Normalize grouping in a retained path for the RDFLib serializer."""
     path = prepareQuery(f"SELECT ?s ?o WHERE {{ ?s {text} ?o }}").algebra
-    return next(
-        n.triples[0][1] for n in walk(path) if isinstance(n, CompValue) and n.name == "BGP"
-    ).n3()
+    return str(
+        next(
+            n.triples[0][1] for n in walk(path) if isinstance(n, CompValue) and n.name == "BGP"
+        ).n3()
+    )
 
 
-def _optional_scope(node) -> tuple[set, set]:
+def _optional_scope(node: Any) -> tuple[set[Variable], set[Variable]]:
     if not isinstance(node, CompValue):
         return set(), set()
     if node.name == "BGP":
@@ -270,7 +285,7 @@ def _optional_scope(node) -> tuple[set, set]:
     return _optional_scope(node.get("p")) if "p" in node else (set(), set())
 
 
-def validate_outputs(variables, expected):
+def validate_outputs(variables: Iterable[object], expected: Iterable[object]) -> None:
     """Require the caller's requested columns before final execution."""
     missing = sorted({str(v).lstrip("?$") for v in expected} - {str(v) for v in variables})
     if missing:
@@ -280,7 +295,12 @@ def validate_outputs(variables, expected):
 
 
 def verify_query(
-    sparql, requirements, grounding, catalogue, *, output_variables=()
+    sparql: str,
+    requirements: Mapping[str, Requirement],
+    grounding: Mapping[str, dict[str, Any]],
+    catalogue: Catalogue,
+    *,
+    output_variables: Iterable[str] = (),
 ) -> PreparedQuery:
     """Expand one SELECT and check its declared semantic witnesses."""
     query = compile_query(
@@ -288,7 +308,7 @@ def verify_query(
     )
     validate_outputs(query.variables, output_variables)
     query.warnings.extend(validate_retrieval(query, catalogue))
-    resolved = {}
+    resolved: dict[str, dict[str, Any]] = {}
     for key, requirement in requirements.items():
         if requirement.kind != "scope":
             selected = grounding.get(key, {})
@@ -315,7 +335,12 @@ def verify_query(
     return query
 
 
-def infer_grounding(requirement, query, catalogue, choice=None):
+def infer_grounding(
+    requirement: Requirement,
+    query: PreparedQuery,
+    catalogue: Catalogue,
+    choice: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Resolve a goal from actual query witnesses and generated metadata."""
     from rdfsolve.client.catalogue import score, words
 
@@ -323,23 +348,24 @@ def infer_grounding(requirement, query, catalogue, choice=None):
     nodes = list(walk(prepareQuery(query.sparql).algebra))
     triples = [t for n in nodes if isinstance(n, CompValue) and n.name == "BGP" for t in n.triples]
     used = {u["ref"] for u in query.uses}
-    types = {}
+    types: dict[Node, set[str]] = {}
     for subject, predicate, obj in triples:
         if predicate == RDF.type:
             types.setdefault(subject, set()).add(str(obj))
-    candidates = []
-    owner, subject_binding = None, None
+    candidates: list[tuple[tuple[float, float], str]] = []
+    owner: str | None = None
+    subject_binding: Variable | None = None
     if requirement.owner:
         try:
             owner = catalogue._type(requirement.owner)
         except ValueError:
             variable = Variable(requirement.owner.lstrip("?$"))
-            subjects = {s for s, _, _ in triples if isinstance(s, Variable)}
+            bound_subjects = {s for s, _, _ in triples if isinstance(s, Variable)}
             subject_binding = variable
-            if variable not in subjects:
+            if variable not in bound_subjects:
                 raise QueryValidationError(
                     "goal_owner",
-                    f"{requirement.clause}: owner '{requirement.owner}' is absent. The query has subject bindings {sorted(str(s) for s in subjects)}. Use the intended subject or correct its retained owner.",
+                    f"{requirement.clause}: owner '{requirement.owner}' is absent. The query has subject bindings {sorted(str(s) for s in bound_subjects)}. Use the intended subject or correct its retained owner.",
                 ) from None
     for ref in catalogue.schema_documents:
         fragment = catalogue.fragments[ref]
@@ -405,16 +431,17 @@ def infer_grounding(requirement, query, catalogue, choice=None):
     ]
     if requirement.kind != "entity_filter":
         entities = [""]
-    accepted, failures = [], []
-    for rank, ref in sorted(candidates, reverse=True):
-        if accepted and rank < accepted[0][0]:
+    accepted: list[tuple[tuple[float, float], dict[str, Any]]] = []
+    failures: list[QueryValidationError] = []
+    for ranking, ref in sorted(candidates, reverse=True):
+        if accepted and ranking < accepted[0][0]:
             break
         for entity in entities:
             selected = {**choice, "evidence": [ref], "entity": entity}
             before = len(query.warnings)
             try:
                 validate_goal(requirement, selected, query, catalogue)
-                accepted.append((rank, selected))
+                accepted.append((ranking, selected))
             except QueryValidationError as exc:
                 exc.evidence = [ref]
                 failures.append(exc)
@@ -444,7 +471,7 @@ def infer_grounding(requirement, query, catalogue, choice=None):
     )
 
 
-def required_nodes(value):
+def required_nodes(value: Any) -> Iterator[Any]:
     """Traverse patterns that hold for every solution."""
     yield value
     if isinstance(value, CompValue) and value.name == "LeftJoin":
@@ -460,7 +487,12 @@ def required_nodes(value):
             yield from required_nodes(item)
 
 
-def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, catalogue) -> None:
+def validate_goal(
+    requirement: Requirement,
+    grounding: Mapping[str, Any],
+    expanded: PreparedQuery,
+    catalogue: Catalogue,
+) -> None:
     """Require RDF witnesses for selected outputs, relations and restrictions."""
     evidence = [catalogue.type_refs.get(ref, ref) for ref in grounding.get("evidence", [])]
     fragments = [catalogue.fragments[ref] for ref in evidence if ref in catalogue.fragments]
@@ -503,7 +535,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
     algebra = prepareQuery(expanded.sparql).algebra
     nodes = list(required_nodes(algebra) if requirement.required else walk(algebra))
     triples = [t for n in nodes if isinstance(n, CompValue) and n.name == "BGP" for t in n.triples]
-    types = {}
+    types: dict[Node, set[str]] = {}
     for n in walk(algebra):
         if isinstance(n, CompValue) and n.name == "BGP":
             for subject, predicate, obj in n.triples:
@@ -701,7 +733,7 @@ def validate_goal(requirement: Requirement, grounding, expanded: PreparedQuery, 
             )
         if requirement.kind == "entity_filter":
             term = catalogue.fragments.get(grounding.get("entity", ""))
-            if term is None or term.kind != "term":
+            if term is None or term.kind != "term" or term.term is None:
                 raise QueryValidationError(
                     "goal_entity",
                     f"{requirement.clause}: retrieve and select the actual entity with rdf_find or a field value lookup.",

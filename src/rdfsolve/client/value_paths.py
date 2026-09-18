@@ -3,20 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rdfsolve.client.hydration import HydrationLimitError, _iri
 from rdfsolve.client.paths import _budget, class_paths, resource_path_table
 from rdfsolve.schema_models.enrichment import RdfTerm
 
 if TYPE_CHECKING:
+    import pandas as pd
+
     from rdfsolve.client.api import Client
+    from rdfsolve.client.query_fragments import Fragment
 
 
 def value_paths(
     client: Client,
-    sources,
-    targets,
+    sources: dict[str, list[str] | None],
+    targets: dict[str, list[str] | None],
     *,
     max_hops: int,
     both_directions: bool,
@@ -25,10 +28,12 @@ def value_paths(
     allow_repeated_classes: bool = False,
     meaning: str = "",
     via: tuple[str, ...] = (),
-):
+) -> pd.DataFrame:
     """Query whole selected sets, preserving path witnesses and graph-local bindings."""
     _budget(max_hops, max_paths)
-    fragments, observations, routes, warnings = [], [], [], []
+    fragments: list[Fragment] = []
+    routes: list[dict[str, Any]] = []
+    warnings: list[str] = []
     partial = False
     for source, source_iris in sources.items():
         for target, target_iris in targets.items():
@@ -60,7 +65,9 @@ def value_paths(
             raise HydrationLimitError("Class path budget exhausted; narrow the endpoint classes")
         fragments = fragments[:max_paths]
         partial = True
-    observations = [{"status": "not_tested", "matches": 0, "query_ids": []} for _ in fragments]
+    observations: list[dict[str, Any]] = [
+        {"status": "not_tested", "matches": 0, "query_ids": []} for _ in fragments
+    ]
     with client.step("Evaluate generated paths for selected resources"):
         for start in range(0, len(fragments), client.batch_size):
             bodies = []

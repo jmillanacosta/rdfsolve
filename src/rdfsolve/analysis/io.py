@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from rdfsolve.analysis.schema import extract_class_set
+from rdfsolve.mappings.models.core import MappingEdge
 from rdfsolve.schema_models.core import MinedSchema
 
 
@@ -23,7 +23,9 @@ def load_schemas(directory: str | Path) -> dict[str, MinedSchema]:
     return schemas
 
 
-def read_class_mappings(path: str | Path, schemas: dict[str, MinedSchema]) -> dict[str, Any]:
+def read_class_mappings(
+    path: str | Path, schemas: dict[str, MinedSchema]
+) -> tuple[list[MappingEdge], dict[str, int]]:
     """Expand file CURIEs and retain each class mapping in every applicable dataset pair.
 
     The input must contain class mappings. Entity mappings require type indexing

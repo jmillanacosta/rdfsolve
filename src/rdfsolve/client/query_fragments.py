@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from hashlib import sha256
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 from pyparsing import ParseBaseException, ParseResults
@@ -20,6 +20,11 @@ from rdfsolve.client.hydration import _iri
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
+
+if TYPE_CHECKING:
+    from rdflib.plugins.sparql.sparql import Query
+
+    from rdfsolve.client.catalogue import Catalogue
 
 PROTECTED = re.compile(
     r"""\"\"\"(?:\\.|(?!\"\"\")[\s\S])*\"\"\"|\'\'\'(?:\\.|(?!\'\'\')[\s\S])*\'\'\'|\"(?:\\.|[^\"\\])*\"|\'(?:\\.|[^\'\\])*\'|<[^<>\s]*>|\#[^\r\n]*"""
@@ -37,7 +42,7 @@ def identifier(prefix: str, value: Any) -> str:
     )
 
 
-def walk(value):
+def walk(value: Any) -> Iterator[Any]:
     """Traverse parsed query expressions and RDF path objects."""
     yield value
     if isinstance(value, (dict, CompValue)):
@@ -51,7 +56,15 @@ def walk(value):
             yield from walk(item)
 
 
-def path_size(path: PropertyPath) -> dict[str, int | None]:
+class PathSize(TypedDict):
+    """Structural edge count and traversal length bounds; None means unbounded."""
+
+    edges: int
+    min_hops: int
+    max_hops: int | None
+
+
+def path_size(path: PropertyPath) -> PathSize:
     """Return structural edge count and minimum/maximum traversal length."""
     if path.operator == "predicate":
         return {"edges": 1, "min_hops": 1, "max_hops": 1}
@@ -59,21 +72,19 @@ def path_size(path: PropertyPath) -> dict[str, int | None]:
     edges = sum(s["edges"] for s in sizes)
     if path.operator == "inverse":
         return sizes[0]
+    bounded = [s["max_hops"] for s in sizes if s["max_hops"] is not None]
+    unbounded = len(bounded) < len(sizes)
     if path.operator == "alternative":
         return {
             "edges": edges,
             "min_hops": min(s["min_hops"] for s in sizes),
-            "max_hops": None
-            if any(s["max_hops"] is None for s in sizes)
-            else max(s["max_hops"] for s in sizes),
+            "max_hops": None if unbounded else max(bounded),
         }
     if path.operator == "sequence":
         return {
             "edges": edges,
             "min_hops": sum(s["min_hops"] for s in sizes),
-            "max_hops": None
-            if any(s["max_hops"] is None for s in sizes)
-            else sum(s["max_hops"] for s in sizes),
+            "max_hops": None if unbounded else sum(bounded),
         }
     return {
         "edges": edges,
@@ -82,9 +93,11 @@ def path_size(path: PropertyPath) -> dict[str, int | None]:
     }
 
 
-def linear_steps(path: PropertyPath, reverse: bool = False):
+def linear_steps(path: PropertyPath, reverse: bool = False) -> list[tuple[str, bool]]:
     """Expose intermediate variables only for finite sequences/inverses."""
     if path.operator == "predicate":
+        if path.iri is None:
+            raise ValueError("A predicate path requires an IRI")
         return [(path.iri, reverse)]
     if path.operator == "inverse":
         return linear_steps(path.items[0], not reverse)
@@ -94,6 +107,10 @@ def linear_steps(path: PropertyPath, reverse: bool = False):
         )
     items = list(reversed(path.items)) if reverse else path.items
     return [step for p in items for step in linear_steps(p, reverse)]
+
+
+# Subject class, predicate, object class, inverse. None marks an intermediate resource.
+Step = tuple[str | None, str, str | None, bool]
 
 
 @dataclass
@@ -107,7 +124,7 @@ class Fragment:
     owner: str | None = None
     field_name: str | None = None
 
-    steps: list[tuple[str, str, str, bool]] = field(default_factory=list)
+    steps: list[Step] = field(default_factory=list)
     anchors: dict[int, RdfTerm | list[RdfTerm]] = field(default_factory=dict)
     endpoint_types: dict[int, str] = field(default_factory=dict)
     term_kinds: dict[int, tuple[str, str | None]] = field(default_factory=dict)
@@ -128,7 +145,7 @@ class Fragment:
                 )
             return _iri(self.term.value) if self.term.kind == "uri" else self.term.to_rdf().n3()
         if self.kind == "type":
-            if len(args) != 1:
+            if len(args) != 1 or self.iri is None:
                 raise ValueError("A class insert takes one variable.")
             return f"{args[0]} a {_iri(self.iri)} ."
         if self.path is None or len(args) < 2:
@@ -201,18 +218,27 @@ class QueryPattern(BaseModel):
     optional: bool = False
 
 
-def network_query(catalogue, patterns, outputs, *, values=None, text=None, distinct=True):
+def network_query(
+    catalogue: Catalogue,
+    patterns: Sequence[QueryPattern | dict[str, Any]],
+    outputs: Sequence[str],
+    *,
+    values: Mapping[str, str] | None = None,
+    text: Mapping[str, str] | None = None,
+    distinct: bool = True,
+) -> str:
     """Join retained fragments and nest optional descendants under their parent."""
-    patterns = [
+    selected = [
         p if isinstance(p, QueryPattern) else QueryPattern.model_validate(p) for p in patterns
     ]
-    if not patterns or not outputs or len(set(outputs)) != len(outputs):
+    if not selected or not outputs or len(set(outputs)) != len(outputs):
         raise ValueError("Supply connected patterns and unique output roles")
-    names = [*outputs, *(v for p in patterns for v in p.bindings)]
+    names = [*outputs, *(v for p in selected for v in p.bindings)]
     if not all(VAR.fullmatch("?" + v) for v in names):
         raise ValueError("Roles must be simple column names")
-    blocks, scopes = {0: []}, {}
-    pending = sorted(patterns, key=lambda p: p.optional)
+    blocks: dict[int, list[str | int]] = {0: []}
+    scopes: dict[str, int] = {}
+    pending = sorted(selected, key=lambda p: p.optional)
     while pending:
         progressed = False
         for pattern in pending[:]:
@@ -269,7 +295,8 @@ def network_query(catalogue, patterns, outputs, *, values=None, text=None, disti
             f"FILTER(isLiteral(?{variable}) && CONTAINS(LCASE(STR(?{variable})), LCASE({term})))"
         )
 
-    def render(scope):
+    def render(scope: int) -> str:
+        """Render one scope and its nested OPTIONAL blocks."""
         return "\n".join(
             "OPTIONAL {\n" + render(item) + "\n}" if isinstance(item, int) else item
             for item in blocks[scope]
@@ -285,14 +312,16 @@ def network_query(catalogue, patterns, outputs, *, values=None, text=None, disti
     )
 
 
-def path_query(catalogue, ref, source, target, fields):
+def path_query(
+    catalogue: Catalogue, ref: str, source: str, target: str, fields: dict[str, list[str]]
+) -> str:
     """Compose endpoint retrieval through the shared network builder."""
     fragment = catalogue.fragments.get(ref)
     if fragment is None or fragment.kind not in {"path", "field"}:
         raise ValueError("Select a retained path or field reference from this client")
     if source == target or set(fields) - {source, target}:
         raise ValueError("Use distinct endpoints and fields owned by their source or target column")
-    owners = {
+    owners: dict[str, str | None] = {
         source: fragment.owner or fragment.endpoint_types.get(0),
         target: fragment.endpoint_types.get(-1),
     }
@@ -304,13 +333,14 @@ def path_query(catalogue, ref, source, target, fields):
     patterns = [QueryPattern(reference=ref, bindings=[source, target])]
     outputs = [source, target]
     for role, names in fields.items():
-        if not owners[role]:
+        owner = owners[role]
+        if not owner:
             raise ValueError(f"Choose a typed route before selecting fields on {role}")
-        for name in catalogue._field_names(owners[role], names):
+        for name in catalogue._field_names(owner, names):
             output = role + "_" + name
             patterns.append(
                 QueryPattern(
-                    reference=catalogue.field_refs[(owners[role], name)],
+                    reference=catalogue.field_refs[(owner, name)],
                     bindings=[role, output],
                     optional=True,
                 )
@@ -322,7 +352,14 @@ def path_query(catalogue, ref, source, target, fields):
 class QuerySyntaxError(ValueError):
     """A rejected query with JSON-safe locations and evidence-based repair hints."""
 
-    def __init__(self, text, cause, fragments, *, phase):
+    def __init__(
+        self,
+        text: str,
+        cause: ParseBaseException,
+        fragments: dict[str, Fragment],
+        *,
+        phase: str,
+    ) -> None:
         """Retain parser locations and grounded repair hints."""
         line = cause.lineno
         column = cause.col
@@ -342,7 +379,7 @@ class QuerySyntaxError(ValueError):
         super().__init__(f"{cause.msg} (line {line}, column {column})")
 
 
-def _syntax_hints(text, fragments):
+def _syntax_hints(text: str, fragments: dict[str, Fragment]) -> list[dict[str, Any]]:
     visible = PROTECTED.sub(
         lambda m: m.group() if m.group().startswith("<") else re.sub(r"[^\r\n]", " ", m.group()),
         text,
@@ -350,7 +387,7 @@ def _syntax_hints(text, fragments):
     prefixes = dict(re.findall(r"(?i)\bPREFIX\s+([A-Za-z_][\w-]*|):\s*<([^<>]+)>", visible))
     classes = {f.iri for f in fragments.values() if f.kind == "type"}
     pattern = r"([?$][A-Za-z_][\w]*)\s+(<[^<>\s]+>|(?:[A-Za-z_][\w-]*|):[\w-]+)\s*\.(?=\s|$|})"
-    hints = []
+    hints: list[dict[str, Any]] = []
     bare = PROTECTED.sub(lambda m: " " * len(m.group()), text)
     for match in re.finditer(r"https?://[^\s{};,()]+", bare):
         hints.append(
@@ -367,7 +404,7 @@ def _syntax_hints(text, fragments):
                 "message": "Use CONTAINS(string, substring); STRCONTAINS is not a SPARQL function.",
             }
         )
-    stack = []
+    stack: list[int] = []
     for match in re.finditer(r"[{}]|(?i:\bLIMIT\b)", bare):
         word = match.group().upper()
         if word == "{":
@@ -409,7 +446,7 @@ def _syntax_hints(text, fragments):
     return hints[:4]
 
 
-def _parse(text, fragments, *, phase):
+def _parse(text: str, fragments: dict[str, Fragment], *, phase: str) -> Query:
     try:
         return prepareQuery(text)
     except ParseBaseException as exc:
@@ -436,7 +473,9 @@ class PreparedQuery:
     diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
-def _expand_references(template, fragments, expand):
+def _expand_references(
+    template: str, fragments: dict[str, Fragment], expand: Callable[[str, list[str]], str]
+) -> str:
     tokens = [
         m
         for m in re.finditer(
@@ -446,7 +485,8 @@ def _expand_references(template, fragments, expand):
         if not m.group().startswith("#")
     ]
     values = [m.group() for m in tokens]
-    chunks, end, i = [], 0, 0
+    chunks: list[str] = []
+    end = i = 0
     while i < len(tokens):
         value = values[i]
         macro = MACRO.fullmatch(value)
@@ -459,7 +499,8 @@ def _expand_references(template, fragments, expand):
                     f"Unknown fragment {value}; discover a retained class, field or entity."
                 )
             fragment = fragments[value]
-            first, last, args = i, i, []
+            first, last = i, i
+            args: list[str] = []
             before = values[i - 1] if i else ""
             after = values[i + 1 : i + 3]
             if fragment.kind == "term":
@@ -536,14 +577,16 @@ def compile_query(
         raise ValueError("Variables beginning __rdfsolve are reserved for internal path nodes.")
     counter = 0
 
-    def allocate():
+    def allocate() -> str:
+        """Return a new internal path variable."""
         nonlocal counter
         counter += 1
         return f"?__rdfsolve{counter}"
 
-    uses = []
+    uses: list[dict[str, Any]] = []
 
-    def expand(ref, args):
+    def expand(ref: str, args: list[str]) -> str:
+        """Render one fragment reference and record its use."""
         if ref not in fragments:
             raise ValueError(f"Unknown fragment {ref}; discover a retained class, field or entity.")
         text = fragments[ref].render(args, allocate)
@@ -609,7 +652,7 @@ def compile_query(
         raise ValueError(
             "Select output variables explicitly; SELECT * would expose package-internal path/scope variables."
         )
-    warnings = []
+    warnings: list[str] = []
 
     type_variables = sorted(
         {
