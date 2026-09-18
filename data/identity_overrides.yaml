@@ -15,4 +15,15 @@
 #   right: omabrowser
 #   relation: same_dataset
 #   note: Same OMA SPARQL service under two endpoint paths.
-[]
+- left: oma
+  right: omabrowser
+  relation: same_dataset
+  note: >-
+    /lode/sparql and /sparql/ on sparql.omabrowser.org are one Virtuoso service;
+    both returned the same named graphs on 2026-09-18.
+- left: string
+  right: stringdb
+  relation: same_dataset
+  note: >-
+    / and /sparql on sparql.string-db.org are one Virtuoso service; both
+    returned the same named graphs on 2026-09-18.

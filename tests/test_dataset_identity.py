@@ -203,3 +203,17 @@ def test_cli_writes_identity_and_review_table(tmp_path):
             "basis": "same endpoint and graph set",
         }
     ]
+
+
+def test_shipped_overrides_resolve_against_the_registry():
+    from pathlib import Path
+
+    from rdfsolve.dataset_identity import read_registry
+
+    data = Path(__file__).resolve().parents[1] / "data"
+    overrides = read_overrides(data / "identity_overrides.yaml")
+    result = resolve_identity(read_registry(data / "sources.yaml"), overrides)
+    assert {tuple(group) for group in result.datasets.values() if len(group) > 1} >= {
+        ("oma", "omabrowser"),
+        ("string", "stringdb"),
+    }
