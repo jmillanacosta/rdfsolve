@@ -5,25 +5,32 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from threading import RLock
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from rdfsolve.client.catalogue import words
 from rdfsolve.client.hydration import _term
-from rdfsolve.client.query_fragments import Fragment, identifier, path_size
+from rdfsolve.client.query_fragments import Fragment, PreparedQuery, identifier, path_size
 from rdfsolve.client.retrieval import QueryValidationError, Requirement
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
+if TYPE_CHECKING:
+    from rdfsolve.client.api import Client, Results
+    from rdfsolve.client.query import QueryResult
+    from rdfsolve.client.query_fragments import QueryPattern
 
-def short(text, limit=180):
+
+def short(text: object, limit: int = 180) -> str:
     """Bound a display excerpt while retaining its original value."""
     text = str(text or "")
     return text if len(text) <= limit else text[:limit] + "…"
 
 
-def profile(result):
+def profile(result: QueryResult) -> dict[str, Any]:
     """Summarize RDF term kinds and population of each column."""
     columns = {}
     for name in result.variables:
@@ -41,13 +48,13 @@ class Session:
 
     def __init__(
         self,
-        client,
+        client: Client,
         *,
-        artifact_dir=None,
-        log_path=None,
-        max_paths=100,
-        output_variables=(),
-    ):
+        artifact_dir: str | Path | None = None,
+        log_path: str | Path | None = None,
+        max_paths: int = 100,
+        output_variables: Sequence[str] = (),
+    ) -> None:
         """Attach the source and initialize one investigation."""
         self.client = client
         self.catalogue = client.catalogue
@@ -67,7 +74,7 @@ class Session:
         self.artifact_dir = Path(artifact_dir).resolve() if artifact_dir else None
         self.log_path = Path(log_path).resolve() if log_path else None
 
-    def _card(self, ref):
+    def _card(self, ref: str) -> dict[str, Any]:
         c = self.catalogue
         f = c.fragments[ref]
         card = {"ref": ref, "label": short(f.label), "kind": f.kind}
@@ -128,7 +135,15 @@ class Session:
             ]
         return {k: v for k, v in card.items() if v not in (None, [], "")}
 
-    def _page(self, refs, offset=0, budget=5500, limit=None, *, brief=False):
+    def _page(
+        self,
+        refs: Sequence[str],
+        offset: int = 0,
+        budget: int = 5500,
+        limit: int | None = None,
+        *,
+        brief: bool = False,
+    ) -> dict[str, Any]:
         cards = []
         for ref in refs[offset:]:
             card = self._card(ref)
@@ -151,15 +166,15 @@ class Session:
 
     def schema(
         self,
-        concepts=None,
-        owners=None,
-        targets=None,
+        concepts: Sequence[str] | None = None,
+        owners: Sequence[str] | None = None,
+        targets: Sequence[str] | None = None,
         *,
-        question="",
-        goals=None,
-        corrections=None,
-        offset=0,
-    ):
+        question: str = "",
+        goals: Sequence[Requirement] | None = None,
+        corrections: Mapping[str, Any] | None = None,
+        offset: int = 0,
+    ) -> dict[str, Any]:
         """Declare clauses and retrieve their connected schema region locally."""
         corrections = corrections or {}
         if goals is not None or corrections:
@@ -388,14 +403,23 @@ class Session:
             else None,
         }
 
-    def _retain(self, result, key, offset=0):
+    def _retain(self, result: Results, key: str, offset: int = 0) -> dict[str, Any]:
         """Keep a typed Results set and present a few candidate identities."""
         self.selections[key] = result
         refs = result.references
         summary = result.summary()
         return {"selection": key, **summary, **self._page(refs, offset, budget=3000, limit=4)}
 
-    def find(self, text, kind=None, *, fields=None, target=None, max_hops=2, offset=0):
+    def find(
+        self,
+        text: str,
+        kind: str | None = None,
+        *,
+        fields: Sequence[str] | None = None,
+        target: str | None = None,
+        max_hops: int = 2,
+        offset: int = 0,
+    ) -> dict[str, Any]:
         """Use typed search and optionally evaluate connections for the whole result set."""
         c = self.catalogue
         cls = c._type(kind) if kind else None
@@ -425,14 +449,23 @@ class Session:
             )
         return result
 
-    def _endpoint(self, ref):
+    def _endpoint(self, ref: str) -> Any:
         if ref in self.selections:
             return self.selections[ref]
         if ref in self.records:
             return self.records[ref]
         return self.catalogue._type(ref)
 
-    def paths(self, source, target, *, max_hops=3, meaning="", via=(), offset=0):
+    def paths(
+        self,
+        source: str,
+        target: str,
+        *,
+        max_hops: int = 3,
+        meaning: str = "",
+        via: Sequence[str] = (),
+        offset: int = 0,
+    ) -> dict[str, Any]:
         """Evaluate selected records with Client.paths_between; retain schema alternatives."""
         meaning = meaning or " ".join(
             r.concept for r in self.requirements.values() if r.kind == "relation"
@@ -479,7 +512,15 @@ class Session:
             "scope": "All identities in each selected set; paths stay in the configured graph scope.",
         }
 
-    def follow(self, source, target, *, via=None, value=None, offset=0):
+    def follow(
+        self,
+        source: str,
+        target: str,
+        *,
+        via: str | None = None,
+        value: str | None = None,
+        offset: int = 0,
+    ) -> dict[str, Any]:
         """Follow a selected field through Results.related without disclosing its records."""
         from rdfsolve.client.api import Results
 
@@ -499,7 +540,7 @@ class Session:
             self.selections[key] = selected.related(cls, via=via, value=value)
         return self._retain(self.selections[key], key, offset)
 
-    def inspect(self, ref, *, text=""):
+    def inspect(self, ref: str, *, text: str = "") -> dict[str, Any]:
         """Return definitions or a profile of a targeted value lookup."""
         c = self.catalogue
         if ref in self.selections:
@@ -549,19 +590,19 @@ class Session:
 
     def prepare(
         self,
-        sparql=None,
-        grounding=None,
+        sparql: str | None = None,
+        grounding: Mapping[str, Any] | None = None,
         *,
-        route=None,
-        source="source",
-        target="target",
-        fields=None,
-        patterns=None,
-        values=None,
-        text=None,
-        distinct=True,
-        outputs=(),
-    ):
+        route: str | None = None,
+        source: str = "source",
+        target: str = "target",
+        fields: Sequence[str] | None = None,
+        patterns: Sequence[QueryPattern] | None = None,
+        values: Mapping[str, str] | None = None,
+        text: Mapping[str, str] | None = None,
+        distinct: bool = True,
+        outputs: Sequence[str] = (),
+    ) -> dict[str, Any]:
         """Expand and verify a SELECT against retained semantic commitments."""
         self.prepared.clear()
         active = {
@@ -609,14 +650,14 @@ class Session:
             "interpretation": "Declared semantic commitments were checked against their selected schema evidence. The initial interpretation remains a model decision.",
         }
 
-    def _query(self, ref):
+    def _query(self, ref: str) -> PreparedQuery:
         if ref not in self.prepared:
             raise ValueError(
                 "Unknown or superseded query. Prepare the current query before probing or finishing."
             )
         return self.prepared[ref]
 
-    def probe(self, query_ref, *, limit=5):
+    def probe(self, query_ref: str, *, limit: int = 5) -> dict[str, Any]:
         """Execute a bounded query and report its RDF term profile."""
         query = self._query(query_ref)
         key = identifier("probe", [query_ref, limit])
@@ -632,7 +673,7 @@ class Session:
             "warning": "A sample establishes observed matches; it does not establish completeness or meaning.",
         }
 
-    def finish(self, query_ref):
+    def finish(self, query_ref: str) -> dict[str, Any]:
         """Execute the verified artifact once and retain its full RDF bindings."""
         if query_ref in self.executions:
             return self.executions[query_ref]
@@ -688,7 +729,7 @@ class Session:
             receipt["artifact"] = str(path)
         return receipt
 
-    def export(self, ref):
+    def export(self, ref: str) -> dict[str, Any]:
         """Read complete artifacts from Python."""
         if ref in self.results:
             result = self.results[ref]
@@ -710,7 +751,7 @@ class Session:
             }
         return asdict(self._query(ref))
 
-    def diagnostics(self):
+    def diagnostics(self) -> dict[str, Any]:
         """Report query counts and correlated operation outcomes."""
         return {
             **self.client.trace(),

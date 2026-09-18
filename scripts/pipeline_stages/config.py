@@ -228,8 +228,12 @@ class PipelineConfig:
         return filtered
 
     def get_remote_sources(self) -> list[Source]:
-        """Get sources that can be mined remotely."""
-        return [s for s in self.sources if s.mode in (SourceMode.REMOTE, SourceMode.BOTH)]
+        """Get sources to mine remotely, minus those a local index covers."""
+        return [
+            s
+            for s in self.sources
+            if s.mode in (SourceMode.REMOTE, SourceMode.BOTH) and not s.skip_remote
+        ]
 
     def get_local_sources(self) -> list[Source]:
         """Get sources that need local mining."""

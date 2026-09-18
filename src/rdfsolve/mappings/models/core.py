@@ -10,7 +10,7 @@ import logging
 from collections import Counter
 from collections.abc import Callable, Collection, Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import ujson
 from pydantic import BaseModel, Field
@@ -35,15 +35,19 @@ SKOS_NARROW_MATCH = "http://www.w3.org/2004/02/skos/core#narrowMatch"
 # -------------------------------------------------------------------
 
 
+NodeKeyT = TypeVar("NodeKeyT")
+
+
 def _merge_into_list(
-    grouped: dict[str, dict[str, Any]],
-    key: str,
+    grouped: dict[NodeKeyT, dict[str, Any]],
+    key: NodeKeyT,
     prop: str,
     value: Any,
 ) -> None:
     """Merge *value* into ``grouped[key][prop]``.
 
-    Creates a list when two distinct values share the same slot.
+    Creates a list when two distinct values share the same slot. Callers key
+    nodes by IRI or by (dataset, class), so the key type travels with the group.
     """
     node = grouped.setdefault(key, {"@id": key})
     existing = node.get(prop)

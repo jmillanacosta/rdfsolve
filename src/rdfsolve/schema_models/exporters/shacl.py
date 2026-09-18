@@ -190,18 +190,18 @@ def _complete_shapes(
             continue
         child = None
         for step in reversed(route.steps):
-            value = ShaclPropertyShape(path="")
+            constraint = ShaclPropertyShape(path="")
             if step.object_class == "Literal":
-                value.node_kind, value.datatype = "Literal", step.datatype
+                constraint.node_kind, constraint.datatype = "Literal", step.datatype
             elif step.object_class in {"Resource", "BlankNode"}:
-                value.node_kind = "IRI" if step.object_class == "Resource" else "BlankNode"
+                constraint.node_kind = "IRI" if step.object_class == "Resource" else "BlankNode"
             else:
-                value.class_constraint = step.object_class
+                constraint.class_constraint = step.object_class
             if child is not None:
-                value.properties = [child]
+                constraint.properties = [child]
             child = ShaclPropertyShape(
                 path=step.property_uri,
-                qualified_shape=value,
+                qualified_shape=constraint,
                 qualified_min_count=1,
                 name=step.property_label or step.property_uri,
             )

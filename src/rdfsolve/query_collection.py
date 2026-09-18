@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from typing import Any
 from typing import Literal as QueryLiteral
 
 from rdflib import RDF, RDFS, SH, Graph, Namespace, URIRef
@@ -62,7 +63,7 @@ class QueryCollection:
         self.shacl = ShaclShapesGraph()
         self._extra = Graph()
         self.paths: dict[str, PropertyPath] = {}
-        self.import_report: list[dict] = []
+        self.import_report: list[dict[str, Any]] = []
 
     @property
     def graph(self) -> Graph:
@@ -172,7 +173,7 @@ class QueryCollection:
             p for p in Path(directory).rglob("*") if p.suffix in {".rq", ".sparql", ".ttl"}
         )
         for path in paths:
-            event = {"file": str(path), "status": "loaded"}
+            event: dict[str, Any] = {"file": str(path), "status": "loaded"}
             try:
                 text = path.read_text()
                 if path.suffix == ".ttl":

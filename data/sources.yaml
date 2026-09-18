@@ -4668,6 +4668,7 @@
       void: skipped
     errors:
       metadata: 'Timeout: HTTPSConnectionPool(host=''idsm.elixir-czech.cz'', port=443): Read timed out. (read timeout=3)'
+  skip_remote: true
 - name: pubchem.endpoint
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
@@ -4807,6 +4808,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.measuregroup
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
@@ -4946,6 +4948,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: iocb.ontology
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://bioinfo.iocb.cz/dataset/ontology
@@ -5109,6 +5112,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.bioassay
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
@@ -5187,6 +5191,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.substance
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
@@ -5271,6 +5276,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: drugbank.drugs
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
@@ -5798,6 +5804,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.cell
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
@@ -5835,6 +5842,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: isdb
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
@@ -5999,6 +6007,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.conserveddomain
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
@@ -6138,6 +6147,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.organization
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
@@ -6277,6 +6287,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: mona
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/mona/
@@ -6557,6 +6568,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.author
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
@@ -6696,6 +6708,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.disease
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
@@ -6835,6 +6848,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: wikidata.idsm.entity
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://www.wikidata.org/entity/
@@ -7047,6 +7061,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.inchikey
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
@@ -7186,6 +7201,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.descriptor.compound
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
@@ -7464,6 +7480,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.concept
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
@@ -7603,6 +7620,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.source
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
@@ -7742,6 +7760,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.protein
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
@@ -7881,6 +7900,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.reference
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
@@ -8020,6 +8040,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: mesh.heading
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://id.nlm.nih.gov/mesh/heading
@@ -8317,6 +8338,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.compound
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/compound
@@ -8596,6 +8618,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: pubchem.patent
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
@@ -8735,6 +8758,7 @@
   dataset_metadata: null
   metadata_graph_uris: null
   enrichment: *id001
+  skip_remote: true
 - name: nanosafetyrdf
   endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
   graph_uris: []
@@ -8818,6 +8842,7 @@
       number_of_subjects: 8092918607
       number_of_objects: 7387257890
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/uniprot
+    skip_remote_reason: mined from a local index instead
   metadata_graph_uris: null
   enrichment: &id006
     state: partial
@@ -8828,6 +8853,7 @@
       void: skipped
     errors:
       metadata: Response stream exceeded the request time budget
+  skip_remote: true
 - name: uniprot
   void_iri: https://sparql.uniprot.org/
   endpoint: https://sparql.uniprot.org/sparql/
@@ -9065,6 +9091,7 @@
       void: skipped
     errors:
       health: 'Query failed after 1 attempts: 503 Server Error:  for url: https://sparql.uniprot.org/sparql?query=ASK+WHERE+%7B+%3Fs+%3Fp+%3Fo+%7D'
+  skip_remote: true
 - name: uniprot.chebi
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
@@ -15919,6 +15946,7 @@
       number_of_subjects: 4444215882
       number_of_objects: 6710572977
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/pubchem
+    skip_remote_reason: mined from a local index instead
   metadata_graph_uris: null
   enrichment:
     state: complete
@@ -15958,6 +15986,7 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
   - http://rdf.ncbi.nlm.nih.gov/pubchem/void
   use_graph: true
+  skip_remote: true
 - name: rdfportal.chebi
   endpoint: https://rdfportal.org/ebi/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz

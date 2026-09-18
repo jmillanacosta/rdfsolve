@@ -88,19 +88,19 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
         groups, evidence, seen = defaultdict(set), [], set()
         query_id = len(client._records())
         for row in rows[: client.max_rows]:
-            subject, cls, key = (_term(row[k]) for k in ("s", "type", "p"))
-            if subject.kind != "uri" or (cls.value, key.value) not in selected:
+            subject, class_term, field_term = (_term(row[k]) for k in ("s", "type", "p"))
+            if subject.kind != "uri" or (class_term.value, field_term.value) not in selected:
                 raise ValueError("Unexpected subject or generated field in search response")
             if subject.value not in seen and len(seen) >= client.max_subjects:
                 partial = True
                 continue
             seen.add(subject.value)
-            groups[cls.value].add(subject.value)
-            name, path = selected[(cls.value, key.value)]
+            groups[class_term.value].add(subject.value)
+            name, path = selected[(class_term.value, field_term.value)]
             evidence.append(
                 {
                     "id": subject.value,
-                    "type": cls.value,
+                    "type": class_term.value,
                     "field": name,
                     "predicate": path.iri,
                     "name_scope": SYNONYM_PREDICATES.get(path.iri),

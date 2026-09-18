@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any
 from typing import Literal as Choice
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -21,6 +22,9 @@ class QueryValidationError(ValueError):
     def __init__(self, code: str, message: str):
         """Associate a stable error code with a concrete query failure."""
         self.code = code
+        self.goal = ""
+        self.requirement: dict[str, Any] = {}
+        self.evidence: list[str] = []
         super().__init__(message)
 
 

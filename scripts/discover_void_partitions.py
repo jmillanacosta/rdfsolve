@@ -64,6 +64,18 @@ def main():
         help="Specific source names to process (default: all with endpoints)",
     )
     parser.add_argument(
+        "--graph-batch",
+        type=int,
+        default=1000,
+        help="Graph names requested per page when a source configures none",
+    )
+    parser.add_argument(
+        "--max-graphs",
+        type=int,
+        default=10000,
+        help="Give up on graph discovery beyond this many names",
+    )
+    parser.add_argument(
         "--timeout",
         type=float,
         default=120.0,
@@ -128,6 +140,8 @@ def main():
                 output_dir=args.output_dir / name,
                 graph_uris=graph_uris,
                 timeout=args.timeout,
+                batch_size=args.graph_batch,
+                max_pages=max(1, args.max_graphs // args.graph_batch),
             )
 
             if len(result.graph):

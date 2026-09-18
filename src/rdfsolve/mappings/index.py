@@ -142,7 +142,9 @@ class ClassIndex(BaseModel):
         result = helper.select_with_fallback(query, exhaustive=True, purpose="class_index")
         if helper.last_select_execution.get("status") != "complete":
             raise ValueError("Class indexing returned incomplete results")
-        grouped = defaultdict(lambda: defaultdict(set))
+        grouped: defaultdict[str, defaultdict[str, set[str]]] = defaultdict(
+            lambda: defaultdict(set)
+        )
         for row in result.get("results", {}).get("bindings", []):
             grouped[row["entity"]["value"]][row.get("graph", {}).get("value", "")].add(
                 row["class"]["value"]

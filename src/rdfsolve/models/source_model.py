@@ -146,6 +146,7 @@ class SourceModel(BaseModel):
     void_iri: str = ""
     graph_uris: list[str] = Field(default_factory=list)
     use_graph: bool = False
+    skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
     class_chunk_size: int | None = None

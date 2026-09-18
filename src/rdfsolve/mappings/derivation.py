@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Any
 
 from rdfsolve.mappings.index import ClassIndex
 from rdfsolve.mappings.models.core import MappingEdge
@@ -34,7 +35,7 @@ def derive_class_mappings(
     class_index: ClassIndex | dict[str, ClassIndex],
     *,
     min_instance_count: int = 1,
-) -> tuple[list[ClassPair], dict]:
+) -> tuple[list[ClassPair], dict[str, Any]]:
     """Aggregate distinct entity pairs using each dataset's own type evidence.
 
     Supply one index per dataset, or configure dataset_graphs on a combined index.
@@ -50,7 +51,9 @@ def derive_class_mappings(
             return index.get_classes(entity) if index else set()
         return class_index.get_classes(entity, dataset)
 
-    pairs, witnesses = {}, {}
+    Key = tuple[str, str, str, str, str]
+    pairs: dict[Key, ClassPair] = {}
+    witnesses: dict[Key, set[tuple[str, str]]] = {}
     skipped_source = skipped_target = processed = 0
     for edge in instance_edges:
         left = classes(edge.source_class, edge.source_dataset)
@@ -69,7 +72,7 @@ def derive_class_mappings(
                 witnesses.setdefault(key, set()).add((edge.source_class, edge.target_class))
                 pair.source_entities.add(edge.source_class)
                 pair.target_entities.add(edge.target_class)
-    sizes = Counter()
+    sizes: Counter[str] = Counter()
     datasets = {p.source_dataset for p in pairs.values()} | {
         p.target_dataset for p in pairs.values()
     }

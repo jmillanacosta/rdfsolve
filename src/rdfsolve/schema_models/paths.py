@@ -30,7 +30,7 @@ class PropertyPath(BaseModel):
         if self.operator == "predicate":
             if self.items:
                 raise ValueError("A predicate path has no child paths")
-            absolute_iri(self.iri)
+            absolute_iri(self.iri or "")
         elif self.iri is not None:
             raise ValueError("Only predicate paths have an IRI")
         elif self.operator in ("sequence", "alternative"):

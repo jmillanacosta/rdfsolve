@@ -67,9 +67,18 @@ class Stage:
     @staticmethod
     def _require_complete(miner: Any) -> None:
         report = miner.last_report
-        if report is None or report.completion_state != "complete":
-            reason = report.abort_reason if report is not None else "No mining report"
-            raise RuntimeError(f"Mining incomplete: {reason or 'see the source report'}")
+        if report is None:
+            raise RuntimeError("Mining incomplete: no mining report")
+        if report.completion_state != "complete":
+            reasons = [report.abort_reason] if report.abort_reason else []
+            if report.dropped_invalid_uris:
+                reasons.append(f"{report.dropped_invalid_uris} malformed IRIs dropped")
+            if report.query_failures:
+                reasons.append(f"{len(report.query_failures)} query failures")
+            unfinished = [p.name for p in report.phases if p.error or not p.finished_at]
+            if unfinished:
+                reasons.append(f"unfinished phases: {unfinished}")
+            raise RuntimeError(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
 
     def _save_schema_outputs(
         self,

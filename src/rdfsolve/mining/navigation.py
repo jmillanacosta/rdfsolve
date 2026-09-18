@@ -12,6 +12,7 @@ from rdfsolve.schema_models.pattern import SchemaPattern
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
+    from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def discover_paths_with_fallback(
     max_hops: int = 5,
     min_hops: int = 3,
     max_paths_per_length: int = 100,
-    helper=None,
+    helper: SparqlHelper | None = None,
     probe_limit: int = 0,
 ) -> NavigationSummary:
     """Compose the longest routes the schema supports, stepping down to *min_hops*.
@@ -34,21 +35,24 @@ def discover_paths_with_fallback(
     """
     if not 2 <= min_hops <= max_hops <= 6:
         raise ValueError("Use 2..6 hops with min_hops no greater than max_hops")
-    summary = None
-    for hops in range(max_hops, min_hops - 1, -1):
-        summary = discover_paths(
+
+    def compose(hops: int) -> NavigationSummary:
+        return discover_paths(
             schema,
             max_hops=hops,
             max_paths_per_length=max_paths_per_length,
             helper=helper,
             probe_limit=probe_limit,
         )
-        if any(len(route.steps) == hops for route in summary.paths):
-            return summary
-        if hops > min_hops:
-            logger.info("No %d-hop routes composed; retrying with %d hops", hops, hops - 1)
-        else:
-            logger.info("No %d-hop routes composed at the lowest bound", hops)
+
+    hops = max_hops
+    summary = compose(hops)
+    while hops > min_hops and not any(len(route.steps) == hops for route in summary.paths):
+        logger.info("No %d-hop routes composed; retrying with %d hops", hops, hops - 1)
+        hops -= 1
+        summary = compose(hops)
+    if not any(len(route.steps) == hops for route in summary.paths):
+        logger.info("No %d-hop routes composed at the lowest bound", hops)
     return summary
 
 
@@ -57,7 +61,7 @@ def discover_paths(
     *,
     max_hops: int = 3,
     max_paths_per_length: int = 100,
-    helper=None,
+    helper: SparqlHelper | None = None,
     probe_limit: int = 0,
 ) -> NavigationSummary:
     """Count schema walks with dynamic programming; retain a bounded sample.
@@ -162,14 +166,14 @@ def discover_paths(
     )
 
 
-def observe_path(route, helper, graphs):
+def observe_path(route: NavigationPath, helper: SparqlHelper, graphs: list[str]) -> None:
     """Measure whole-route support including focus nodes with no matching endpoint."""
     from datetime import datetime, timezone
 
     from rdflib import URIRef
 
-    def iri(value):
-        return URIRef(value).n3()
+    def iri(value: str) -> str:
+        return str(URIRef(value).n3())
 
     body = []
     for i, step in enumerate(route.steps):

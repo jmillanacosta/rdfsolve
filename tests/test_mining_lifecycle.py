@@ -190,3 +190,50 @@ def test_superclass_aggregation_reports_no_truncation_below_the_limit():
 
     classes, truncated = _query_owl_class_superclasses(_superclass_helper(3), None, limit=500)
     assert (len(classes), truncated) == (3, False)
+
+
+def test_an_anonymous_object_class_becomes_one_blank_node_pattern(monkeypatch):
+    """Virtuoso returns nodeID:// for anonymous classes; aggregate, do not drop."""
+    from rdfsolve.mining.strategy import MiningContext
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+
+    rows = [
+        {
+            "class": {"type": "uri", "value": "urn:C"},
+            "p": {"type": "uri", "value": "urn:p"},
+            "oc": {"type": "bnode", "value": "nodeID://b215908"},
+        },
+        {
+            "class": {"type": "uri", "value": "urn:C"},
+            "p": {"type": "uri", "value": "urn:p"},
+            "oc": {"type": "bnode", "value": "nodeID://b215909"},
+        },
+        {
+            "class": {"type": "uri", "value": "urn:C"},
+            "p": {"type": "uri", "value": "urn:p"},
+            "oc": {"type": "uri", "value": "urn:D"},
+        },
+    ]
+    miner = SchemaMiner("https://example.org/sparql", counts=False)
+    miner._init_report("test", "test", "2026-09-17T00:00:00+00:00")
+    helper = Mock()
+    helper.select.return_value = {
+        "results": {"bindings": [{"class": {"type": "uri", "value": "urn:C"}}]}
+    }
+    context = MiningContext(
+        helper=helper,
+        graph_uris=None,
+        report=miner._report,
+        collect_bindings=lambda *a, **kw: [],
+    )
+    monkeypatch.setattr(
+        "rdfsolve.mining.two_phase_strategy.query_with_bisect",
+        lambda classes, graphs, build_fn, purpose, *a, **kw: __import__(
+            "rdfsolve._outcomes", fromlist=["QueryOutcome"]
+        ).QueryOutcome(rows if "typed-object" in purpose else [], "complete", []),
+    )
+    patterns = TwoPhaseStrategy().mine(context)
+    assert sorted(p.object_class for p in patterns) == ["BlankNode", "urn:D"]
+    blank = next(p for p in patterns if p.object_class == "BlankNode")
+    assert (blank.subject_class, blank.property_uri) == ("urn:C", "urn:p")
+    assert miner._report.report.dropped_invalid_uris == 0

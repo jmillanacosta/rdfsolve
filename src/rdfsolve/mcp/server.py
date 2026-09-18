@@ -233,9 +233,9 @@ def dispatch(session: Session, name: str, arguments: dict[str, Any]) -> dict[str
         value = {"error": exc.detail}
     except QueryValidationError as exc:
         value = {"error": {"code": exc.code, "message": str(exc)}}
-        if hasattr(exc, "goal"):
+        if exc.goal:
             value.update(goal=exc.goal, requirement=exc.requirement)
-        value["selected_evidence"] = session._page(getattr(exc, "evidence", []), budget=2500)
+        value["selected_evidence"] = session._page(exc.evidence, budget=2500)
     except HydrationLimitError as exc:
         value = {
             "error": {

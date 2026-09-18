@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -131,9 +132,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 raise
         else:
             logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(
-                context.graph_uris, context.aggregate_ontology_terms
-            )
+            q = _build_class_discovery_query(context.graph_uris, context.aggregate_ontology_terms)
             class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
 
         # Extract class URIs - only keep IRI bindings, skip literals/bnodes
@@ -202,6 +201,7 @@ class TwoPhaseStrategy(MiningStrategy):
 
         patterns: list[SchemaPattern] = []
         abort_reason: str | None = None
+        anonymous_classes = 0
 
         def query_bisect(
             batch: list[str],
@@ -247,7 +247,16 @@ class TwoPhaseStrategy(MiningStrategy):
                 time.monotonic() - t0,
                 success=typed_bindings.state == "complete",
             )
+            anonymous_typed: list[dict[str, Any]] = []
             for b in typed_bindings.rows:
+                if b.get("class", {}).get("type") == "bnode":
+                    # An anonymous subject class cannot name a pattern.
+                    anonymous_classes += 1
+                    continue
+                if b.get("oc", {}).get("type") == "bnode":
+                    # Keep the edge, aggregated by the blank object class it points at.
+                    anonymous_typed.append(b)
+                    continue
                 cls = b.get("class", {}).get("value", "")
                 p = b.get("p", {}).get("value", "")
                 oc = b.get("oc", {}).get("value", "")
@@ -262,6 +271,7 @@ class TwoPhaseStrategy(MiningStrategy):
                         )
                     except (ValueError, ValidationError):
                         context.report.record_dropped_uri(f"{cls} {p} {oc}")
+            patterns.extend(blank_node_patterns(anonymous_typed, context, "class"))
 
             # 2b. Literal patterns
             t0 = time.monotonic()
@@ -330,4 +340,9 @@ class TwoPhaseStrategy(MiningStrategy):
             )
             patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
 
+        if anonymous_classes:
+            logger.info(
+                "  -> Skipped %d rows whose subject or object class is an anonymous node",
+                anonymous_classes,
+            )
         return patterns, abort_reason

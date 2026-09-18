@@ -28,7 +28,7 @@ class NavigationPath(BaseModel):
     observed_at: str | None = None
     error: str | None = None
 
-    def signature(self) -> tuple:
+    def signature(self) -> tuple[tuple[str, str, str, str | None], ...]:
         """Identify route structure independently of labels and observed counts."""
         return tuple(
             (s.subject_class, s.property_uri, s.object_class, s.datatype) for s in self.steps

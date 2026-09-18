@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from itertools import combinations
+from typing import TYPE_CHECKING, Any
 
 from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
 
+if TYPE_CHECKING:
+    from rdfsolve.mappings.derivation import ClassPair
+    from rdfsolve.mappings.models.core import MappingEdge
+    from rdfsolve.schema_models.core import MinedSchema
 
-def compare_schemas(schemas):
+
+def compare_schemas(schemas: Mapping[str, MinedSchema]) -> list[dict[str, Any]]:
     """Return vocabulary overlap for every dataset pair, including zero overlap."""
     classes = {name: extract_class_set(s) for name, s in schemas.items()}
     predicates = {name: extract_predicate_set(s) for name, s in schemas.items()}
@@ -26,7 +33,12 @@ def compare_schemas(schemas):
     ]
 
 
-def build_connectivity(schemas, *, class_mappings=(), associations=()):
+def build_connectivity(
+    schemas: Mapping[str, MinedSchema],
+    *,
+    class_mappings: Sequence[MappingEdge] = (),
+    associations: Sequence[ClassPair] = (),
+) -> Any:
     """Build a directed multigraph with dataset-qualified class nodes.
 
     Shared vocabulary, observed predicates, explicit class mappings and entity
@@ -34,8 +46,8 @@ def build_connectivity(schemas, *, class_mappings=(), associations=()):
     """
     import networkx as nx
 
-    graph = nx.MultiDiGraph()
-    occurrences = defaultdict(list)
+    graph: Any = nx.MultiDiGraph()
+    occurrences: defaultdict[str, list[str]] = defaultdict(list)
     for dataset, schema in sorted(schemas.items()):
         for cls in sorted(extract_class_set(schema)):
             graph.add_node((dataset, cls), dataset=dataset, iri=cls)
@@ -47,9 +59,9 @@ def build_connectivity(schemas, *, class_mappings=(), associations=()):
                     left, right, kind="schema", predicate=pattern.property_uri, count=pattern.count
                 )
     for cls, datasets in sorted(occurrences.items()):
-        for left, right in combinations(datasets, 2):
+        for first, second in combinations(datasets, 2):
             graph.add_edge(
-                (left, cls), (right, cls), kind="shared_class", predicate=None, directed=False
+                (first, cls), (second, cls), kind="shared_class", predicate=None, directed=False
             )
     for kind, edges in (("explicit_mapping", class_mappings), ("entity_association", associations)):
         for edge in edges:

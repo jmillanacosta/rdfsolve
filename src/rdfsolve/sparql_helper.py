@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from itertools import count
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal, TypedDict
 from urllib.parse import urlsplit
 
 with warnings.catch_warnings():
@@ -28,6 +28,23 @@ from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
 from rdfsolve.schema_models.paths import PropertyPath
 
 logger = logging.getLogger(__name__)
+
+
+class SelectExecution(TypedDict, total=False):
+    """How the last SELECT was executed, as reported to callers."""
+
+    strategy: str
+    status: str
+    pagination: str
+    pages: int
+    rows: int
+    chunk_size: int
+    max_pages: int | None
+    elapsed_seconds: float
+    completeness_basis: str
+    error: str
+    first_error: str
+    offset_error: str
 
 
 @dataclass
@@ -399,7 +416,7 @@ class SparqlHelper:
             records = self.get_collected_queries()
             if records and records[-1].query == query:
                 records[-1].success = False
-                records[-1].error_type = type(error).__name__
+                records[-1].error = type(error).__name__
                 records[-1].error_message = str(error)
             raise error from cause
 
@@ -1164,7 +1181,7 @@ class SparqlHelper:
             parseQuery,
         )
 
-        meta = {"strategy": "single_response", "status": "running", "pages": 0}
+        meta: SelectExecution = {"strategy": "single_response", "status": "running", "pages": 0}
         self.last_select_execution = meta
         started = time.monotonic()
         try:

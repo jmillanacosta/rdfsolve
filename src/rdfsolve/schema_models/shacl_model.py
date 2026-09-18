@@ -5,7 +5,7 @@ Specification: https://www.w3.org/TR/shacl/
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast, get_args
+from typing import TYPE_CHECKING, Literal, Self, cast, get_args
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -355,7 +355,7 @@ class ShaclNodeShape(BaseModel):
         )
 
 
-def _node(identity: str):
+def _node(identity: str) -> Node:
     from rdflib import BNode, URIRef
 
     return BNode(identity[2:]) if identity.startswith("_:") else URIRef(identity)
@@ -375,7 +375,7 @@ class ShaclPrefixDeclaration(BaseModel):
     namespace: str
 
     @model_validator(mode="after")
-    def check_namespace(self):
+    def check_namespace(self) -> Self:
         """Validate the namespace and SPARQL prefix syntax."""
         from pyparsing import ParseBaseException
         from rdflib.plugins.sparql.parser import parseQuery
@@ -389,7 +389,7 @@ class ShaclPrefixDeclaration(BaseModel):
             raise ValueError("Invalid prefix declaration")
         return self
 
-    def to_rdf(self, graph: Graph):
+    def to_rdf(self, graph: Graph) -> Node:
         """Write sh:prefix and the required xsd:anyURI namespace."""
         from rdflib import SH, XSD
         from rdflib import Literal as RdfLiteral
@@ -400,7 +400,7 @@ class ShaclPrefixDeclaration(BaseModel):
         return node
 
     @classmethod
-    def from_rdf(cls, graph: Graph, node: Node):
+    def from_rdf(cls, graph: Graph, node: Node) -> Self:
         """Read exactly one string prefix and one typed namespace."""
         from rdflib import SH, XSD
         from rdflib import Literal as RdfLiteral
@@ -436,7 +436,7 @@ class ShaclSparqlExecutable(BaseModel):
         labels = self.metadata.get(str(RDFS.label), [])
         return min(term.value for term in labels) if labels else self.uri
 
-    def to_rdf(self, graph: Graph):
+    def to_rdf(self, graph: Graph) -> Node:
         """Serialize the query body and references to prefix declarations."""
         from rdflib import SH, URIRef
         from rdflib import Literal as RdfLiteral
@@ -451,7 +451,7 @@ class ShaclSparqlExecutable(BaseModel):
         return node
 
     @classmethod
-    def from_rdf(cls, graph: Graph, node: Node):
+    def from_rdf(cls, graph: Graph, node: Node) -> Self:
         """Read a query and distinguish validation context from executable examples."""
         from rdflib import RDF, SH, XSD
         from rdflib import Literal as RdfLiteral
@@ -481,7 +481,7 @@ class ShaclSparqlExecutable(BaseModel):
             (None, link, node) in graph
             for link in (SH.sparql, SH.validator, SH.nodeValidator, SH.propertyValidator, SH.rule)
         )
-        metadata = {}
+        metadata: dict[str, list[RdfTerm]] = {}
         for predicate, value in graph.predicate_objects(node):
             if predicate not in {SH.select, SH.ask, SH.construct, SH.prefixes}:
                 metadata.setdefault(str(predicate), []).append(RdfTerm.from_rdf(value))
@@ -528,7 +528,9 @@ class ShaclShapesGraph(BaseModel):
         from rdflib.plugins.sparql.parser import parseQuery
         from rdflib.plugins.sparql.processor import prepareQuery
 
-        pending, seen, prefixes = list(query.prefixes), set(), {}
+        pending = list(query.prefixes)
+        seen: set[str] = set()
+        prefixes: dict[str, str] = {}
         while pending:
             resource = pending.pop()
             if resource in seen:
