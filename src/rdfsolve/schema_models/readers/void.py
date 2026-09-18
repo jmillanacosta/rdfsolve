@@ -128,6 +128,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                     property_uri=property_uri,
                     object_class=object_class,
                     count=count,
+                    evidence_source="void",
                     subject_label=labels.get(subject_class),
                     property_label=labels.get(property_uri),
                     object_label=labels.get(object_class),
@@ -142,6 +143,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                     object_class="Literal",
                     datatype=str(row.datatype),
                     count=count,
+                    evidence_source="void",
                     subject_label=labels.get(subject_class),
                     property_label=labels.get(property_uri),
                 )
@@ -179,6 +181,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
                     property_uri=property_uri,
                     object_class=object_class,
                     count=count,
+                    evidence_source="void",
                     subject_label=labels.get(subject_class),
                     property_label=labels.get(property_uri),
                     object_label=labels.get(object_class),

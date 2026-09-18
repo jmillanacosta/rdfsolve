@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -117,9 +118,12 @@ class SchemaPattern(BaseModel):
         le=1.0,
         description="Confidence score (0.0-1.0) for this pattern",
     )
-    evidence_source: str = Field(
+    evidence_source: Literal["mined", "void", "shacl", "imported", "inferred"] = Field(
         default="mined",
-        description="How this pattern was discovered: 'mined', 'inferred', 'imported'",
+        description=(
+            "Where the pattern comes from: mined from instance data, read from published "
+            "VoID or SHACL, imported, or inferred. Only 'mined' is observed evidence."
+        ),
     )
 
     # Labels

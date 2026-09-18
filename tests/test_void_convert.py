@@ -200,3 +200,14 @@ def test_generated_void_describes_the_dataset_not_the_endpoint():
     local = schema.model_copy(update={"about": schema.about.model_copy(update={"endpoint": "http://localhost:7001/sparql"})})
     assert not list(local.to_void_graph().triples((None, void.sparqlEndpoint, None)))
 
+
+
+def test_published_void_partitions_are_not_observed_patterns():
+    turtle = """
+    @prefix void: <http://rdfs.org/ns/void#> .
+    <urn:ds> a void:Dataset ; void:classPartition [ void:class <urn:A> ;
+        void:propertyPartition [ void:property <urn:p> ;
+            void:classPartition [ void:class <urn:B> ] ] ] .
+    """
+    schema = void_to_minedschema(turtle)
+    assert [p.evidence_source for p in schema.patterns] == ["void"]
