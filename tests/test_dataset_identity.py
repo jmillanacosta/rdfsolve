@@ -73,7 +73,7 @@ def test_endpoint_paths_on_one_service_and_catalog_names_are_candidates():
     )
     assert found == {
         ("oma", "omabrowser"): ("same_dataset", "candidate"),
-        ("rdfportal.rhea", "rhea"): ("distribution_of", "candidate"),
+        ("rdfportal.rhea", "rhea"): ("same_upstream", "candidate"),
     }
 
 
@@ -89,8 +89,8 @@ def test_shared_identifier_space_needs_a_matching_name():
         ]
     )
     assert found == {
-        ("chembl", "chembl.bigcat"): ("distribution_of", "candidate"),
-        ("x", "y"): ("distribution_of", "candidate"),
+        ("chembl", "chembl.bigcat"): ("same_upstream", "candidate"),
+        ("x", "y"): ("same_upstream", "candidate"),
     }
 
 
@@ -117,6 +117,42 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
     assert result.datasets == {"a": ["a", "b", "c"], "d": ["d"]}
     assert all(item.decided_by == "override" for item in result.relations)
     assert result.candidates == []
+
+
+def decided(left, right, relation):
+    return IdentityRelation(
+        left=left, right=right, relation=relation, basis="curated override", decided_by="override"
+    )
+
+
+def test_distributions_join_and_upstream_relations_do_not():
+    registry = [entry(name, f"https://{name}.org/sparql") for name in ("a", "b", "c", "d")]
+    result = resolve_identity(
+        registry,
+        [
+            decided("a", "b", "distribution_of"),
+            decided("b", "c", "same_upstream"),
+            decided("c", "d", "version_of"),
+        ],
+    )
+    assert result.datasets == {"a": ["a", "b"], "c": ["c"], "d": ["d"]}
+
+
+def test_contradictory_overrides_fail():
+    registry = [entry(name, f"https://{name}.org/sparql") for name in ("a", "b", "c")]
+    with pytest.raises(ValueError, match="distinct but join"):
+        resolve_identity(
+            registry,
+            [
+                decided("a", "b", "same_dataset"),
+                decided("b", "c", "same_dataset"),
+                decided("a", "c", "distinct"),
+            ],
+        )
+    with pytest.raises(ValueError, match="more than once"):
+        resolve_identity(
+            registry, [decided("a", "b", "same_dataset"), decided("b", "a", "distinct")]
+        )
 
 
 def test_overrides_must_name_registry_entries():

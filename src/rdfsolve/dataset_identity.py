@@ -5,6 +5,12 @@ another graph set on the same endpoint is a graph scope of it. Disjoint graph
 sets on the same endpoint are distinct datasets. Every other shared endpoint,
 host, identifier space or catalog name gives a candidate for review. Curated
 overrides decide candidates and take precedence over rules.
+
+same_dataset and distribution_of join entries into one canonical dataset:
+the same published RDF dataset under two names, or reached through another
+endpoint or dump. same_upstream relates different RDF datasets built from one
+upstream resource, such as independent RDF conversions. version_of,
+graph_scope_of and distinct keep entries apart. Candidates never join entries.
 """
 
 from __future__ import annotations
@@ -21,7 +27,11 @@ from pydantic import BaseModel, Field
 
 from rdfsolve.models.source_model import SourceModel
 
-Relation = Literal["same_dataset", "distribution_of", "version_of", "graph_scope_of", "distinct"]
+Relation = Literal[
+    "same_dataset", "distribution_of", "same_upstream", "version_of", "graph_scope_of", "distinct"
+]
+# Decided relations that make two registry entries one canonical dataset.
+JOINING: frozenset[str] = frozenset({"same_dataset", "distribution_of"})
 
 # Catalog membership from the registry name prefix or the endpoint host.
 CATALOG_NAME_PREFIXES = {
@@ -206,9 +216,9 @@ def relate(left: DatasetIdentity, right: DatasetIdentity) -> IdentityRelation | 
     if first.endpoint and _service(first.endpoint) == _service(second.endpoint) and a == b:
         return found("same_dataset", "same endpoint service and graph set", "candidate")
     if first.local_name == second.local_name:
-        return found("distribution_of", "same name in different catalogs", "candidate")
+        return found("same_upstream", "same name in different catalogs", "candidate")
     if first.kg_registry_id and first.kg_registry_id == second.kg_registry_id:
-        return found("distribution_of", "same KG-Registry identifier", "candidate")
+        return found("same_upstream", "same KG-Registry identifier", "candidate")
     prefix = first.bioregistry_prefix
     if (
         prefix
@@ -219,7 +229,7 @@ def relate(left: DatasetIdentity, right: DatasetIdentity) -> IdentityRelation | 
             second.local_name,
         }
     ):
-        return found("distribution_of", "same Bioregistry prefix", "candidate")
+        return found("same_upstream", "same Bioregistry prefix", "candidate")
     return None
 
 
@@ -234,12 +244,23 @@ def read_registry(path: str | Path) -> list[dict[str, Any]]:
 def resolve_identity(
     registry: Sequence[Mapping[str, Any]], overrides: Iterable[IdentityRelation] = ()
 ) -> IdentityResolution:
-    """Relate every pair of registry entries and group same_dataset decisions."""
+    """Relate every pair of registry entries and group joining decisions.
+
+    Raise ValueError for overrides that name unknown entries, decide one pair
+    twice, or place a distinct pair in one canonical dataset.
+    """
     entries = [DatasetIdentity.from_entry(item) for item in registry]
     names = [entry.dataset_id for entry in entries]
     if len(set(names)) != len(names):
         raise ValueError("Registry names must be unique")
-    curated = {frozenset((item.left, item.right)): item for item in overrides}
+    curated: dict[frozenset[str], IdentityRelation] = {}
+    for item in overrides:
+        key = frozenset((item.left, item.right))
+        if len(key) != 2:
+            raise ValueError(f"An override relates two different entries: {item.left}")
+        if key in curated:
+            raise ValueError(f"Overrides decide {sorted(key)} more than once")
+        curated[key] = item
     unknown = {name for pair in curated for name in pair} - set(names)
     if unknown:
         raise ValueError(f"Overrides name unknown registry entries: {sorted(unknown)}")
@@ -257,15 +278,21 @@ def resolve_identity(
     parent = {name: name for name in names}
 
     def root(name: str) -> str:
-        """Return the representative name of a same_dataset group."""
+        """Return the representative name of a canonical dataset group."""
         while parent[name] != name:
             name = parent[name]
         return name
 
     for item in relations:
-        if item.relation == "same_dataset":
+        if item.relation in JOINING:
             first, second = sorted((root(item.left), root(item.right)))
             parent[second] = first
+    for item in relations:
+        if item.relation == "distinct" and root(item.left) == root(item.right):
+            raise ValueError(
+                f"{item.left} and {item.right} are distinct but join one dataset "
+                f"through {JOINING} decisions"
+            )
     groups: dict[str, list[str]] = {}
     for name in sorted(names):
         groups.setdefault(root(name), []).append(name)

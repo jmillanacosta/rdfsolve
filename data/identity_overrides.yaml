@@ -2,11 +2,13 @@
 #
 # Each item decides one pair. It overrides the structural rules and any
 # candidate listed in identity_review.tsv. Relations:
-#   same_dataset     one resource under two registry names
-#   distribution_of  another access route to the same data
+#   same_dataset     one published RDF dataset under two registry names
+#   distribution_of  another endpoint or dump of the same published RDF dataset
+#   same_upstream    a different RDF dataset built from the same upstream resource
 #   version_of       another release of the same resource
 #   graph_scope_of   left is a graph subset of right on the same endpoint
 #   distinct         different datasets
+# same_dataset and distribution_of join entries into one canonical dataset.
 #
 # Example:
 # - left: oma
