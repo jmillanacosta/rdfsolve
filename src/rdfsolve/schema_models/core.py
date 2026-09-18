@@ -351,9 +351,7 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(
-        self, base_url: str | None = None, *, trim_descriptions: int | None = None
-    ) -> Graph:
+    def to_void_graph(self, *, trim_descriptions: int | None = None) -> Graph:
         """Export the supported VoID fields."""
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
@@ -364,7 +362,7 @@ class MinedSchema(BaseModel):
                 "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
             )
         return to_void_graph(
-            trim_export_text(self, trim_descriptions), base_url, trim_descriptions=trim_descriptions
+            trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions
         )
 
     def to_linkml(
