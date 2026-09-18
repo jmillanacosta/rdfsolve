@@ -1,7 +1,7 @@
 """Update sources.yaml with discovered graph information.
 
 This module provides utilities to update sources.yaml based on graph discovery results.
-It uses the SourceEntry schema defined in sources.py to ensure consistency.
+It edits the registry YAML mappings and preserves fields it does not change.
 """
 
 from __future__ import annotations

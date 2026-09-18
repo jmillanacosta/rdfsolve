@@ -95,7 +95,7 @@ def discover_batch(sources_file: str, output_path: Path, limit: int | None):
         sys.exit(1)
 
     # Filter to remote endpoints only
-    remote_sources = [s for s in sources_list if s.get("endpoint")]
+    remote_sources = [s for s in sources_list if s.endpoint]
 
     if limit:
         remote_sources = remote_sources[:limit]
@@ -108,8 +108,8 @@ def discover_batch(sources_file: str, output_path: Path, limit: int | None):
     error_count = 0
 
     for i, source in enumerate(remote_sources, 1):
-        name = source["name"]
-        endpoint = source["endpoint"]
+        name = source.name
+        endpoint = source.endpoint
 
         click.echo(f"[{i}/{len(remote_sources)}] {name}")
         try:

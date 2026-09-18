@@ -24,7 +24,6 @@ _EXPORTS = {
     "mine_schema": ("api", "mine_schema"),
     "query_metadata": ("api", "query_metadata"),
     "resolve_void_uri_base": ("api", "resolve_void_uri_base"),
-    "sources_to_jsonld": ("api", "sources_to_jsonld"),
     "to_jsonld_from_file": ("api", "to_jsonld_from_file"),
     "to_rdfconfig_from_file": ("api", "to_rdfconfig_from_file"),
     "to_void_from_file": ("api", "to_void_from_file"),

@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from urllib.parse import urlsplit
 
 from rdfsolve.endpoint_health import check_endpoint_health, update_endpoint_status
 from rdfsolve.models.source_model import SourceModel
-from rdfsolve.sources import SourceEntry
 from rdfsolve.sources_updater import _read_sources, _write_sources
 
 
@@ -20,7 +19,7 @@ def enrich_source(
     metadata_graph_uris: list[str] | None = None,
     discover_void: bool = False,
     timeout: float = 30.0,
-) -> SourceEntry:
+) -> dict[str, Any]:
     """Retrieve health and metadata; optionally add or update a YAML entry.
 
     Omit sources_file to preview without writing. Metadata uses the default
@@ -117,4 +116,4 @@ def enrich_source(
         else:
             entries[entries.index(existing)] = entry
         _write_sources(path, entries, original=original)
-    return cast(SourceEntry, entry)
+    return entry
