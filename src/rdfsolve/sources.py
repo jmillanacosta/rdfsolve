@@ -66,6 +66,10 @@ class SourceEntry(TypedDict, total=False):
     bioregistry_mappings: dict[str, str]
     bioregistry_logo: str
     bioregistry_extra_providers: list[dict[str, str | None]]
+    # Cross-registry references
+    kg_registry_id: str
+    in_kamdar: bool
+    terminology_nomenclature: list[str]
 
 
 # default path
@@ -614,8 +618,15 @@ def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
     if "notes" in node:
         e["notes"] = str(node["notes"])
 
-    # Pass through download_*, local_endpoint, and provider fields
-    passthrough = {"local_endpoint", "local_provider", "local_tar_url"}
+    # Pass through download_*, local access and cross-registry fields
+    passthrough = {
+        "local_endpoint",
+        "local_provider",
+        "local_tar_url",
+        "kg_registry_id",
+        "in_kamdar",
+        "terminology_nomenclature",
+    }
     e_dict: dict[str, Any] = e  # type: ignore[assignment]
     for key in node:
         if key.startswith("download_") or key in passthrough:
