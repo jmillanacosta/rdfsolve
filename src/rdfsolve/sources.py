@@ -1,103 +1,22 @@
-"""Load and enrich SPARQL data source definitions from YAML with Bioregistry metadata."""
+"""Load the source registry and enrich entries with Bioregistry metadata."""
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import Any
 
-import yaml
+from rdfsolve.models.source_model import SourceModel, SourcesRegistry
 
 logger = logging.getLogger(__name__)
 
-
-class SourceEntry(TypedDict, total=False):
-    """Typed dictionary for a single data-source definition."""
-
-    name: str
-    endpoint: str
-    sparql_examples: dict[str, Any]
-    dataset_metadata: dict[str, Any] | None
-    metadata_graph_uris: list[str] | None
-    enrichment: dict[str, Any]
-    endpoint_status: str
-    last_checked: str
-    last_success: str
-    last_error: str
-    failure_count: int
-    avg_response_time: float | None
-    has_void: bool
-    has_void_partitions: bool
-    has_void_patterns: bool
-    void_default_graph: bool
-    void_iri: str  # DEPRECATED: use void_graphs instead
-    void_uri_base: str
-    void_graphs: list[str]  # Discovered VoID metadata graph URIs
-    void_schema: list[str]  # VoID graphs with mineable partitions
-    graph_uris: list[str]
-    use_graph: bool
-    chunk_size: int
-    class_batch_size: int
-    class_chunk_size: int | None
-    timeout: float
-    delay: float
-    counts: bool
-    unsafe_paging: bool
-    notes: str
-    # Endpoint metadata (populated by probe/discovery scripts)
-    sparql_engine: str
-    sparql_strategy: str
-    supports_graph: bool
-    endpoint_down: bool
-    # Bioregistry-derived metadata (populated by enrich_source_with_bioregistry)
-    bioregistry_prefix: str
-    bioregistry_name: str
-    bioregistry_description: str
-    bioregistry_homepage: str
-    bioregistry_license: str
-    bioregistry_domain: str
-    keywords: list[str]
-    bioregistry_publications: list[dict[str, str | None]]
-    bioregistry_uri_prefix: str
-    bioregistry_uri_prefixes: list[str]
-    bioregistry_synonyms: list[str]
-    bioregistry_mappings: dict[str, str]
-    bioregistry_logo: str
-    bioregistry_extra_providers: list[dict[str, str | None]]
-    # Cross-registry references
-    kg_registry_id: str
-    in_kamdar: bool
-    terminology_nomenclature: list[str]
-
-
-# default path
-
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SOURCES_YAML = _REPO_ROOT / "data" / "sources.yaml"
-DEFAULT_SOURCES_JSONLD = _REPO_ROOT / "data" / "sources.jsonld"
-DEFAULT_SOURCES_CSV = _REPO_ROOT / "data" / "sources.csv"
 
 
-def _default_sources_path() -> Path:
-    """Return the default sources file, preferring YAML.
-
-    Raises
-    ------
-    FileNotFoundError
-        If neither ``data/sources.yaml`` nor ``data/sources.jsonld`` exists
-        relative to the repository root.
-    """
-    if DEFAULT_SOURCES_YAML.exists():
-        return DEFAULT_SOURCES_YAML
-    if DEFAULT_SOURCES_JSONLD.exists():
-        return DEFAULT_SOURCES_JSONLD
-    raise FileNotFoundError(
-        f"Default sources file not found. Looked for:\n"
-        f"  {DEFAULT_SOURCES_YAML}\n"
-        f"  {DEFAULT_SOURCES_JSONLD}\n"
-        "Pass an explicit 'path' argument to load_sources()."
-    )
+def load_sources(path: str | Path | None = None) -> list[SourceModel]:
+    """Load and validate the source registry YAML; the default is data/sources.yaml."""
+    return SourcesRegistry.from_yaml(path if path is not None else DEFAULT_SOURCES_YAML).sources
 
 
 # Bioregistry enrichment
@@ -135,7 +54,7 @@ def _get_extra_provider_index() -> dict[str, list[str]]:
     return _EXTRA_PROVIDER_INDEX
 
 
-def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
+def _resolve_bioregistry_prefix(source: SourceModel) -> str | None:
     """Resolve the canonical Bioregistry prefix for a source entry.
 
     Resolution is attempted in the following order, stopping at the first hit:
@@ -160,7 +79,7 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
         logger.debug("bioregistry not installed - skipping prefix resolution")
         return None
 
-    name: str = entry.get("name", "") or ""
+    name = source.name
 
     # 1. Exact match
     if bioregistry.get_resource(name) is not None:
@@ -174,7 +93,7 @@ def _resolve_bioregistry_prefix(entry: SourceEntry) -> str | None:
             return root
 
     # 3. local_provider field (e.g. 'pubchem', 'idsm')
-    local_provider: str = str(entry.get("local_provider") or "")
+    local_provider = source.local_provider
     if local_provider and bioregistry.get_resource(local_provider) is not None:
         return local_provider
 
@@ -318,20 +237,12 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     return meta
 
 
-def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
-    """Resolve the canonical Bioregistry prefix for the source and write all available metadata into the entry dict.
+def enrich_source_with_bioregistry(source: SourceModel) -> str | None:
+    """Resolve the Bioregistry prefix of a source and copy its metadata onto the model.
 
-    Parameters
-    ----------
-    entry:
-        A :class:`SourceEntry` dict, modified in-place.
-
-    Returns
-    -------
-    str or None
-        The resolved Bioregistry prefix, or ``None`` if no match was found.
+    The model is updated in place. Return the resolved prefix, or None.
     """
-    br_prefix = _resolve_bioregistry_prefix(entry)
+    br_prefix = _resolve_bioregistry_prefix(source)
     if br_prefix is None:
         return None
 
@@ -341,9 +252,8 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
         logger.warning("Could not fetch bioregistry metadata for %r: %s", br_prefix, exc)
         return None
 
-    entry["bioregistry_prefix"] = meta.get("prefix", br_prefix)
-
-    _scalar_fields = {
+    fields = {
+        "bioregistry_prefix": "prefix",
         "bioregistry_name": "name",
         "bioregistry_description": "description",
         "bioregistry_homepage": "homepage",
@@ -351,353 +261,19 @@ def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
         "bioregistry_domain": "domain",
         "bioregistry_uri_prefix": "uri_prefix",
         "bioregistry_logo": "logo",
-    }
-    _entry_dict: dict[str, Any] = entry  # type: ignore[assignment]
-    for entry_key, meta_key in _scalar_fields.items():
-        if meta_key in meta:
-            _entry_dict[entry_key] = meta[meta_key]
-
-    _list_fields = {
         "keywords": "keywords",
         "bioregistry_uri_prefixes": "uri_prefixes",
         "bioregistry_synonyms": "synonyms",
         "bioregistry_extra_providers": "extra_providers",
         "bioregistry_publications": "publications",
+        "bioregistry_mappings": "mappings",
     }
-    for entry_key, meta_key in _list_fields.items():
-        if meta_key in meta:
-            _entry_dict[entry_key] = meta[meta_key]
-
-    if "mappings" in meta:
-        _entry_dict["bioregistry_mappings"] = meta["mappings"]
-
-    return br_prefix
-
-
-# JSON-LD export
-
-# JSON-LD context for source entries
-_SOURCES_JSONLD_CONTEXT: dict[str, Any] = {
-    "@vocab": "https://schema.org/",
-    "void": "http://rdfs.org/ns/void#",
-    "dcat": "http://www.w3.org/ns/dcat#",
-    "dcterms": "http://purl.org/dc/terms/",
-    "rdfsolve": "https://rdfsolve.io/vocab#",
-    "bioregistry": "https://bioregistry.io/registry/",
-    "skos": "http://www.w3.org/2004/02/skos/core#",
-    # Source entry fields
-    "name": "schema:name",
-    "description": "schema:description",
-    "homepage": {"@id": "schema:url", "@type": "@id"},
-    "endpoint": {"@id": "void:sparqlEndpoint", "@type": "@id"},
-    "void_iri": {"@id": "void:dataDump", "@type": "@id"},
-    "graph_uris": {"@id": "void:inDataset", "@type": "@id", "@container": "@set"},
-    "sparql_examples": {"@id": "rdfsolve:sparqlExamples", "@type": "@json"},
-    "domain": "schema:about",
-    "license": {"@id": "dcterms:license", "@type": "@id"},
-    "keywords": {"@id": "schema:keywords", "@container": "@set"},
-    "uri_prefix": {"@id": "void:uriSpace"},
-    "uri_prefixes": {"@id": "rdfsolve:uriPrefixes", "@container": "@set"},
-    "synonyms": {"@id": "skos:altLabel", "@container": "@set"},
-    "logo": {"@id": "schema:logo", "@type": "@id"},
-    # Bioregistry mapping registry cross-references
-    "bioregistry_prefix": {"@id": "rdfsolve:bioregistryPrefix"},
-    "mappings": {"@id": "skos:exactMatch", "@container": "@index"},
-    # Publications
-    "publications": {"@id": "schema:citation", "@container": "@set"},
-    "pubmed": {"@id": "schema:identifier"},
-    "doi": {"@id": "schema:sameAs"},
-    "pmc": {"@id": "schema:identifier"},
-    "title": {"@id": "schema:name"},
-    # Extra providers
-    "extra_providers": {"@id": "rdfsolve:extraProvider", "@container": "@set"},
-    "code": "schema:identifier",
-    "uri_format": "rdfsolve:uriFormat",
-}
-
-_JSONLD_SCALAR_BR_FIELDS: list[tuple[str, str]] = [
-    ("bioregistry_name", "name"),
-    ("bioregistry_description", "description"),
-    ("bioregistry_homepage", "homepage"),
-    ("bioregistry_license", "license"),
-    ("bioregistry_domain", "domain"),
-    ("bioregistry_uri_prefix", "uri_prefix"),
-    ("bioregistry_logo", "logo"),
-]
-
-_JSONLD_LIST_BR_FIELDS: list[tuple[str, str]] = [
-    ("keywords", "keywords"),
-    ("bioregistry_synonyms", "synonyms"),
-    ("bioregistry_uri_prefixes", "uri_prefixes"),
-]
-
-
-def _entry_to_jsonld_node(entry: SourceEntry) -> dict[str, Any]:
-    """Build a JSON-LD ``@graph`` node dict for a single source entry."""
-    node: dict[str, Any] = {}
-    if entry.get("sparql_examples"):
-        node["sparql_examples"] = entry["sparql_examples"]
-
-    src_name: str = entry.get("name", "") or ""
-    node["@id"] = f"https://rdfsolve.io/sources/{src_name}"
-    node["@type"] = "dcat:Dataset"
-
-    if src_name:
-        node["rdfsolve:sourceName"] = src_name
-
-    endpoint = entry.get("endpoint") or ""
-    if endpoint:
-        node["endpoint"] = endpoint
-
-    void_iri = entry.get("void_iri") or ""
-    if void_iri:
-        node["void_iri"] = void_iri
-
-    graph_uris: list[str] = entry.get("graph_uris") or []
-    if graph_uris:
-        node["graph_uris"] = graph_uris
-
-    if entry.get("notes"):
-        node["rdfsolve:notes"] = entry["notes"]
-
-    _node_add_bioregistry_fields(node, entry)
-    return node
-
-
-def _node_add_bioregistry_fields(node: dict[str, Any], entry: SourceEntry) -> None:
-    """Populate *node* with Bioregistry-derived fields from *entry*."""
-    br_prefix = entry.get("bioregistry_prefix") or ""
-    if br_prefix:
-        node["bioregistry_prefix"] = br_prefix
-        node["skos:exactMatch"] = {"@id": f"https://bioregistry.io/registry/{br_prefix}"}
-
-    for field, pred in _JSONLD_SCALAR_BR_FIELDS:
-        val = entry.get(field)
-        if val:
-            node[pred] = val
-
-    for field, pred in _JSONLD_LIST_BR_FIELDS:
-        lst = entry.get(field)
-        if lst:
-            node[pred] = lst
-
-    pubs = entry.get("bioregistry_publications")
-    if pubs:
-        node["publications"] = pubs
-
-    extra_providers = entry.get("bioregistry_extra_providers")
-    if extra_providers:
-        node["extra_providers"] = extra_providers
-
-    br_mappings = entry.get("bioregistry_mappings")
-    if br_mappings:
-        node["mappings"] = br_mappings
-
-
-def sources_to_jsonld(
-    entries: list[SourceEntry],
-    *,
-    enrich: bool = False,
-) -> dict[str, Any]:
-    """Serialize a list of source entries to a JSON-LD document.
-
-    Parameters
-    ----------
-    entries:
-        Source entries, typically returned by :func:`load_sources`.
-    enrich:
-        When ``True``, call :func:`enrich_source_with_bioregistry` on each
-        entry before serialization (entries are **not** modified in place
-        when ``enrich=True``; a shallow copy is used per entry).
-
-    Returns
-    -------
-    dict
-        A JSON-LD document with ``@context`` and ``@graph`` keys, ready for
-        :func:`json.dump`.
-    """
-    graph: list[dict[str, Any]] = []
-
-    for raw_entry in entries:
-        if enrich:
-            entry: SourceEntry = cast(SourceEntry, dict(raw_entry))
-            enrich_source_with_bioregistry(entry)
-        else:
-            entry = raw_entry
-
-        graph.append(_entry_to_jsonld_node(entry))
-
-    return {"@context": _SOURCES_JSONLD_CONTEXT, "@graph": graph}
-
-
-# loading
-
-
-def load_sources(
-    path: str | Path | None = None,
-) -> list[SourceEntry]:
-    """Load data-source definitions from a YAML, JSON-LD, or CSV file.
-
-    Parameters
-    ----------
-    path:
-        Path to the sources file.  When ``None`` the default
-        ``data/sources.yaml`` (or ``.jsonld`` / ``.csv`` fallback)
-        is used.
-
-    Returns
-    -------
-    list[SourceEntry]
-        One dict per data source, keys normalised to snake_case.
-    """
-    p = Path(path) if path is not None else _default_sources_path()
-    suffix = p.suffix.lower()
-
-    if suffix in (".yaml", ".yml"):
-        return _load_yaml(p)
-    if suffix in (".jsonld", ".json"):
-        return _load_jsonld(p)
-    raise ValueError(
-        f"Unsupported sources file format {suffix!r}: expected .yaml, .yml, .jsonld, .json"
-    )
-
-
-# YAML reader
-
-
-def _load_yaml(path: Path) -> list[SourceEntry]:
-    with open(path, encoding="utf-8") as fh:
-        nodes = yaml.safe_load(fh)
-
-    if not isinstance(nodes, list):
-        raise ValueError(f"Expected a YAML list of source mappings in {path}")
-
-    entries: list[SourceEntry] = []
-    for node in nodes:
-        entry = _yaml_node_to_entry(node)
-        entries.append(entry)
-
-    logger.info("Loaded %d sources from %s", len(entries), path)
-    return entries
-
-
-def _yaml_node_to_entry(node: dict[str, Any]) -> SourceEntry:
-    """Convert a single YAML mapping to a SourceEntry."""
-    e: SourceEntry = {}
-    if node.get("sparql_examples"):
-        from rdfsolve.models.source_model import SparqlExamples
-
-        e["sparql_examples"] = SparqlExamples.model_validate(node["sparql_examples"]).model_dump()
-
-    e["name"] = node.get("name", "")
-    e["endpoint"] = node.get("endpoint", "")
-    e["void_iri"] = node.get("void_iri", "")
-
-    raw_g = node.get("graph_uris", [])
-    if isinstance(raw_g, str):
-        raw_g = [raw_g]
-    e["graph_uris"] = list(raw_g)
-
-    e["use_graph"] = bool(node.get("use_graph", False))
-    e["counts"] = bool(node.get("counts", True))
-    e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
-
-    for int_key in (
-        "chunk_size",
-        "class_batch_size",
-        "class_chunk_size",
-    ):
-        if int_key in node and node[int_key] is not None:
-            e[int_key] = int(node[int_key])
-
-    for float_key in ("timeout", "delay"):
-        if float_key in node and node[float_key] is not None:
-            e[float_key] = float(node[float_key])
-
-    if "notes" in node:
-        e["notes"] = str(node["notes"])
-
-    # Pass through download_*, local access and cross-registry fields
-    passthrough = {
-        "local_endpoint",
-        "local_provider",
-        "local_tar_url",
-        "kg_registry_id",
-        "in_kamdar",
-        "terminology_nomenclature",
-    }
-    e_dict: dict[str, Any] = e  # type: ignore[assignment]
-    for key in node:
-        if key.startswith("download_") or key in passthrough:
-            e_dict[key] = node[key]
-
-    return e
-
-
-# JSON-LD reader
-
-
-def _load_jsonld(path: Path) -> list[SourceEntry]:
-    with open(path, encoding="utf-8") as fh:
-        doc = json.load(fh)
-
-    graph = doc.get("@graph", [])
-    entries: list[SourceEntry] = []
-
-    for node in graph:
-        entry = _node_to_entry(node)
-        entries.append(entry)
-
-    logger.info("Loaded %d sources from %s", len(entries), path)
-    return entries
-
-
-def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
-    """Convert a single JSON-LD ``@graph`` node to a SourceEntry."""
-    e: SourceEntry = {}
-    if node.get("sparql_examples"):
-        from rdfsolve.models.source_model import SparqlExamples
-
-        e["sparql_examples"] = SparqlExamples.model_validate(node["sparql_examples"]).model_dump()
-
-    e["name"] = node.get("name", "")
-
-    # endpoint can be a plain string or {"@id": "…"}
-    ep = node.get("endpoint", "")
-    if isinstance(ep, dict):
-        ep = ep.get("@id", "")
-    e["endpoint"] = ep
-
-    # void_iri - same treatment
-    vi = node.get("void_iri", "")
-    if isinstance(vi, dict):
-        vi = vi.get("@id", "")
-    e["void_iri"] = vi
-
-    # graph_uris- normalise to list[str]
-    raw_g = node.get("graph_uris", [])
-    if isinstance(raw_g, str):
-        raw_g = [raw_g]
-    e["graph_uris"] = [(g["@id"] if isinstance(g, dict) else g) for g in raw_g]
-
-    # booleans
-    e["use_graph"] = bool(node.get("use_graph", False))
-    e["counts"] = bool(node.get("counts", True))
-    e["unsafe_paging"] = bool(node.get("unsafe_paging", False))
-
-    # optional numeric overrides (only set when present)
-    for int_key in ("chunk_size", "class_batch_size", "class_chunk_size"):
-        if int_key in node and node[int_key] is not None:
-            e[int_key] = int(node[int_key])
-
-    for float_key in ("timeout", "delay"):
-        if float_key in node and node[float_key] is not None:
-            e[float_key] = float(node[float_key])
-
-    if "notes" in node:
-        e["notes"] = str(node["notes"])
-
-    return e
+    updates = {field: meta[key] for field, key in fields.items() if key in meta}
+    updates.setdefault("bioregistry_prefix", br_prefix)
+    validated = SourceModel.model_validate({**source.model_dump(), **updates})
+    for field in updates:
+        setattr(source, field, getattr(validated, field))
+    return source.bioregistry_prefix
 
 
 # Source mode classification
@@ -725,14 +301,14 @@ _LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset(
 )
 
 
-def _has_rdf_download(entry: SourceEntry) -> bool:
+def _has_rdf_download(source: SourceModel) -> bool:
     """Return ``True`` if any ``download_*`` field links to an RDF dump.
 
     A URL is considered an RDF dump when its path (excluding query string)
     ends with one of the extensions in :data:`_LOCAL_RDF_EXTENSIONS`.
     """
-    entry_dict: dict[str, Any] = entry  # type: ignore[assignment]
-    for key, val in entry_dict.items():
+    fields = {**(source.model_extra or {}), "download_ttl": source.download_ttl}
+    for key, val in fields.items():
         if not key.startswith("download_"):
             continue
         urls: list[str] = val if isinstance(val, list) else ([val] if val else [])
@@ -746,7 +322,7 @@ def _has_rdf_download(entry: SourceEntry) -> bool:
     return False
 
 
-def classify_source_mode(entry: SourceEntry) -> str:
+def classify_source_mode(source: SourceModel) -> str:
     """Classify a source as ``'local'``, ``'remote'``, ``'both'``, or ``'unknown'``.
 
     Classification rules (in order):
@@ -760,16 +336,16 @@ def classify_source_mode(entry: SourceEntry) -> str:
 
     Parameters
     ----------
-    entry:
-        A :class:`SourceEntry` dict.
+    source:
+        A validated registry entry.
 
     Returns
     -------
     str
         One of ``'local'``, ``'remote'``, ``'both'``, ``'unknown'``.
     """
-    has_download = _has_rdf_download(entry)
-    has_endpoint = bool(entry.get("endpoint")) and not entry.get("endpoint_down", False)
+    has_download = _has_rdf_download(source)
+    has_endpoint = bool(source.endpoint) and not source.endpoint_down
 
     if has_download and has_endpoint:
         return "both"

@@ -246,17 +246,3 @@ def test_query_collection_uses_mined_prefixes():
     assert graph.value(declaration, SH.namespace) == Literal("urn:example:", datatype=XSD.anyURI)
     with pytest.raises(ValueError, match="Invalid prefix name"):
         MinedSchema(about={}, prefixes={"bad name": "urn:example:"})
-
-
-def test_source_locations_survive_jsonld(tmp_path):
-    import json
-    from rdfsolve.api import load_sources, sources_to_jsonld
-
-    path = tmp_path / "sources.yaml"
-    path.write_text(
-        "- name: example\n  endpoint: https://example.org/sparql\n  sparql_examples:\n    shacl_graph_in_endpoint: urn:examples\n    shacl_dumps: examples.ttl\n    link_to_repository: https://example.org/repository\n"
-    )
-    entries = load_sources(path)
-    exported = tmp_path / "sources.jsonld"
-    exported.write_text(json.dumps(sources_to_jsonld(entries)))
-    assert load_sources(exported)[0]["sparql_examples"] == entries[0]["sparql_examples"]

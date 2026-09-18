@@ -47,7 +47,7 @@ class Source(SourceModel):
         fields = {k: v for k, v in value.items() if k.startswith("download_") and v}
         urls = [url for v in fields.values() for url in ([v] if isinstance(v, str) else v)]
         return cls(
-            **settings.model_dump(),
+            **settings.model_dump(exclude=set(settings.model_extra or {})),
             download_urls=urls,
             download_fields=fields,
             local_tar_url=value.get("local_tar_url"),

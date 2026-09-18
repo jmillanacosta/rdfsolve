@@ -14,9 +14,9 @@ if TYPE_CHECKING:
     from rdfsolve.mappings.derivation import ClassPair
     from rdfsolve.mappings.models.core import MappingEdge
     from rdfsolve.mcp.workflow import ask_rdf
+    from rdfsolve.models.source_model import SourceModel
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.void_schema import VoidSchema
-    from rdfsolve.sources import SourceEntry
 
 import pandas as pd
 from rdflib import Graph
@@ -61,7 +61,6 @@ __all__ = [
     "mine_schema",
     "query_metadata",
     "resolve_void_uri_base",
-    "sources_to_jsonld",
     "to_jsonld_from_file",
     "to_linkml_from_file",
     "to_rdfconfig_from_file",
@@ -507,27 +506,28 @@ def query_metadata(
 def load_sources(
     path: str | Path | None = None,
     name_filter: str | None = None,
-) -> list[SourceEntry]:
-    """Load source entries, optionally filtered by name regex."""
+) -> list[SourceModel]:
+    """Load registry entries, optionally filtered by a name regex."""
     from .sources import load_sources as _load
 
     entries = _load(path)
     if name_filter:
         pat = re.compile(name_filter, re.IGNORECASE)
-        entries = [e for e in entries if pat.search(e.get("name", ""))]
+        entries = [e for e in entries if pat.search(e.name)]
     return entries
 
 
 def resolve_void_uri_base(
     name: str,
     override: str | None = None,
-    entry: SourceEntry | dict[str, Any] | None = None,
+    entry: SourceModel | None = None,
 ) -> str:
     """Return the VoID base URI for a dataset."""
     if override:
         return override.rstrip("/") + "/"
-    if entry and entry.get("void_uri_base"):
-        return str(entry["void_uri_base"]).rstrip("/") + "/"
+    base = (entry.model_extra or {}).get("void_uri_base") if entry is not None else None
+    if base:
+        return str(base).rstrip("/") + "/"
     from rdfsolve.config import mint
 
     return mint("dataset", name) + "/mined/"
@@ -540,22 +540,11 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     return _impl(br_prefix)
 
 
-def enrich_source_with_bioregistry(entry: SourceEntry) -> str | None:
-    """Populate ``bioregistry_*`` fields on a source entry in-place."""
+def enrich_source_with_bioregistry(entry: SourceModel) -> str | None:
+    """Populate ``bioregistry_*`` fields on a registry entry in place."""
     from rdfsolve.sources import enrich_source_with_bioregistry as _impl
 
     return _impl(entry)
-
-
-def sources_to_jsonld(
-    entries: list[SourceEntry],
-    *,
-    enrich: bool = False,
-) -> dict[str, Any]:
-    """Serialise source entries to a JSON-LD document."""
-    from rdfsolve.sources import sources_to_jsonld as _impl
-
-    return _impl(entries, enrich=enrich)
 
 
 def discover_void_source(

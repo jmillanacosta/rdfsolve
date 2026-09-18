@@ -196,7 +196,8 @@ class SourceModel(BaseModel):
     in_kamdar: bool = False
     terminology_nomenclature: list[str] = Field(default_factory=list)
 
-    model_config = {"populate_by_name": True, "extra": "ignore"}
+    # Keep registry fields without a typed attribute, such as download_* URL lists.
+    model_config = {"populate_by_name": True, "extra": "allow"}
 
     @field_validator(
         "graph_uris",

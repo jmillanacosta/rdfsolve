@@ -97,13 +97,13 @@ def main():
     log.info("Loading sources from %s", args.sources)
     sources_list = load_sources(args.sources)
     # Convert list to dict keyed by name
-    sources = {src["name"]: src for src in sources_list if src.get("name")}
+    sources = {src.name: src for src in sources_list if src.name}
 
     # Filter sources with endpoints
     endpoint_sources = {
         name: src
         for name, src in sources.items()
-        if src.get("endpoint")
+        if src.endpoint
     }
 
     if args.source_names:
@@ -123,10 +123,10 @@ def main():
     fail_count = 0
 
     for name, source in endpoint_sources.items():
-        endpoint = source["endpoint"]
+        endpoint = source.endpoint
         log.info("Discovering VoID for %s: %s", name, endpoint)
 
-        graph_uris = source.get("graph_uris") or None
+        graph_uris = source.graph_uris or None
         if graph_uris:
             log.info("  scope: %d named graphs", len(graph_uris))
         if not publishes_void(endpoint, graph_uris, args.timeout):
