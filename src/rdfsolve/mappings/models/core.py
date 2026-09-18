@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-SKOS_NARROW_MATCH = "http://www.w3.org/2004/02/skos/core#narrowMatch"
-
 
 class MappingEdge(BaseModel):
-    """A single mapping edge between two classes."""
+    """One mapping assertion read from an external mapping source.
+
+    source_class and target_class hold the mapped terms: classes for class
+    mappings, entities for entity mappings. predicate is the asserted relation
+    and has no default.
+    """
 
     source_class: str = Field(
         ...,
@@ -18,10 +21,7 @@ class MappingEdge(BaseModel):
         ...,
         description="URI of the target class",
     )
-    predicate: str = Field(
-        SKOS_NARROW_MATCH,
-        description=("Mapping predicate URI (default: skos:narrowMatch)"),
-    )
+    predicate: str = Field(..., min_length=1, description="Asserted mapping predicate IRI")
     source_dataset: str = Field(
         ...,
         description=("Dataset name for source_class"),

@@ -193,3 +193,10 @@ def test_analysis_stage_reads_canonical_schema_and_includes_zero_pairs(tmp_path,
     (tmp_path / "duplicate_schema.json").write_text((tmp_path / "a_schema.json").read_text())
     with pytest.raises(ValueError, match="one named schema"):
         load_schemas(tmp_path)
+
+
+def test_mapping_edges_need_an_asserted_predicate():
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        MappingEdge(source_class="urn:a", target_class="urn:b", source_dataset="a", target_dataset="b")
