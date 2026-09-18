@@ -62,6 +62,10 @@ def test_associations_deduplicate_entities_and_keep_dataset_types():
     assert (pair.source_class, pair.target_class, pair.instance_count) == ("urn:A", "urn:B", 1)
     assert pair.source_coverage == 0.5 and pair.target_coverage == 1
     assert not hasattr(pair, "confidence")
+    assert pair.supporting_entity_predicate == "urn:corresponds"
+    assert pair.class_relation is None
+    assert pair.derivation_method == "mapped_instance_types"
+    assert stats["supporting_entity_predicates"] == {"urn:corresponds": 1}
     assert stats["processed_edges"] == 2
     assert derive_class_mappings([edge], combined, min_instance_count=2)[0] == []
 
@@ -84,6 +88,9 @@ def test_shared_identity_does_not_merge_dataset_nodes_or_assert_class_equivalenc
     ]
     association = [d for _, _, d in graph.edges(data=True) if d["kind"] == "entity_association"][0]
     assert association["instance_count"] == 1 and "confidence" not in association
+    assert association["predicate"] is None
+    assert association["supporting_entity_predicate"] == "http://www.w3.org/2002/07/owl#sameAs"
+    assert association["derivation_method"] == "shared_entity_iri"
     overlap = compare_schemas(schemas)[0]
     assert overlap["shared_classes"] == 1 and overlap["class_jaccard"] == 1 / 3
     edge = MappingEdge(

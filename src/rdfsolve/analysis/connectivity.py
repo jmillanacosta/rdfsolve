@@ -64,7 +64,9 @@ def build_connectivity(
                 (first, cls), (second, cls), kind="shared_class", predicate=None, directed=False
             )
 
-    def add_evidence(kind: str, edge: MappingEdge | ClassPair, evidence: dict[str, Any]) -> None:
+    def add_evidence(
+        kind: str, edge: MappingEdge | ClassPair, predicate: str | None, evidence: dict[str, Any]
+    ) -> None:
         """Add one evidence edge between two schema class nodes."""
         left = (edge.source_dataset, edge.source_class)
         right = (edge.target_dataset, edge.target_class)
@@ -72,12 +74,13 @@ def build_connectivity(
             raise ValueError(
                 f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"
             )
-        graph.add_edge(left, right, kind=kind, predicate=edge.predicate, **evidence)
+        graph.add_edge(left, right, kind=kind, predicate=predicate, **evidence)
 
     for mapping in class_mappings:
         add_evidence(
             "explicit_mapping",
             mapping,
+            mapping.predicate,
             {
                 "confidence": mapping.confidence,
                 "justification": mapping.mapping_justification,
@@ -88,7 +91,10 @@ def build_connectivity(
         add_evidence(
             "entity_association",
             pair,
+            pair.class_relation,
             {
+                "supporting_entity_predicate": pair.supporting_entity_predicate,
+                "derivation_method": pair.derivation_method,
                 "instance_count": pair.instance_count,
                 "source_coverage": pair.source_coverage,
                 "target_coverage": pair.target_coverage,

@@ -134,7 +134,14 @@ class Catalogue:
                         "source_dataset": pair.source_dataset,
                         "target_class": pair.target_class,
                         "target_dataset": pair.target_dataset,
-                        "predicate": pair.predicate,
+                        **(
+                            {
+                                "supporting_entity_predicate": pair.supporting_entity_predicate,
+                                "class_relation": pair.class_relation,
+                            }
+                            if hasattr(pair, "supporting_entity_predicate")
+                            else {"predicate": pair.predicate}
+                        ),
                     },
                     "use": "class retrieval",
                 }
