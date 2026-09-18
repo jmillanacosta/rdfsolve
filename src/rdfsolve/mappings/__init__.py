@@ -7,14 +7,13 @@ from rdfsolve.mappings.derivation import (
     shared_entity_links,
 )
 from rdfsolve.mappings.index import ClassIndex, EntityClassInfo
-from rdfsolve.mappings.models.core import Mapping, MappingEdge
+from rdfsolve.mappings.models.core import MappingEdge
 
 __all__ = [
     "ClassIndex",
     "ClassPair",
     "EntityClassInfo",
     "EntityLink",
-    "Mapping",
     "MappingEdge",
     "derive_class_mappings",
     "shared_entity_links",

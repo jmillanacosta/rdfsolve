@@ -10,7 +10,6 @@ from rdfsolve.analysis import build_connectivity, compare_schemas, load_schemas,
 from rdfsolve.mappings import (
     ClassIndex,
     EntityClassInfo,
-    Mapping,
     MappingEdge,
     derive_class_mappings,
     shared_entity_links,
@@ -114,14 +113,6 @@ def test_shared_identity_does_not_merge_dataset_nodes_or_assert_class_equivalenc
     assert association["derivation_method"] == "shared_entity_iri"
     overlap = compare_schemas(schemas)[0]
     assert overlap["shared_classes"] == 1 and overlap["class_jaccard"] == 1 / 3
-    edge = MappingEdge(
-        source_class="urn:Common",
-        target_class="urn:Common",
-        source_dataset="a",
-        target_dataset="b",
-        predicate="urn:explicit",
-    )
-    assert len(Mapping(edges=[edge], about={}).to_networkx()) == 2
 
 
 def test_class_index_queries_keep_graph_scope_and_report_failures(monkeypatch):
@@ -202,26 +193,3 @@ def test_analysis_stage_reads_canonical_schema_and_includes_zero_pairs(tmp_path,
     (tmp_path / "duplicate_schema.json").write_text((tmp_path / "a_schema.json").read_text())
     with pytest.raises(ValueError, match="one named schema"):
         load_schemas(tmp_path)
-
-
-def test_mapping_export_keeps_dataset_scope_and_provenance(tmp_path):
-    edges = [
-        MappingEdge(
-            source_class="urn:Common",
-            target_class="urn:Target",
-            source_dataset=name,
-            target_dataset="target",
-            predicate="urn:maps",
-            mapping_source="urn:community",
-            mapping_justification="urn:manual",
-        )
-        for name in ("a", "b")
-    ]
-    path = tmp_path / "mapping.jsonld"
-    path.write_text(json.dumps(Mapping(edges=edges, about={}).to_jsonld()))
-    restored = Mapping.from_jsonld(path)
-    assert {e.source_dataset for e in restored.edges} == {"a", "b"}
-    assert all(
-        e.mapping_source == "urn:community" and e.mapping_justification == "urn:manual"
-        for e in restored.edges
-    )

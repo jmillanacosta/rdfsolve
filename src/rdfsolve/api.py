@@ -54,7 +54,6 @@ __all__ = [
     "graph_to_linkml",
     "graph_to_schema",
     "graph_to_shacl",
-    "load_mapping_jsonld",
     "load_parser_from_file",
     "load_parser_from_graph",
     "load_parser_from_jsonld",
@@ -660,15 +659,6 @@ def execute_sparql(
         variable_map=variable_map or {},
     )
     return qr.model_dump()
-
-
-# Mapping utilities
-
-
-def load_mapping_jsonld(path: str) -> dict[str, Any]:
-    """Load a mapping JSON-LD file from disk."""
-    result: dict[str, Any] = json.loads(Path(path).read_text(encoding="utf-8"))
-    return result
 
 
 def __getattr__(name: str) -> Any:
