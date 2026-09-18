@@ -79,7 +79,6 @@ def mine_ontology_as_data_patterns(
     helper: SparqlHelper,
     graph_uris: list[str] | None = None,
     superclasses: list[str] | None = None,
-    bnode_namespace: str = "http://example.com/.well-known/genid/",
     allow_truncation: bool = False,
 ) -> list[SchemaPattern]:
     """Mine patterns where owl:Class instances are used as data.
@@ -92,7 +91,6 @@ def mine_ontology_as_data_patterns(
         helper: SPARQL helper instance
         graph_uris: Optional list of graph URIs to restrict query
         superclasses: List of superclass URIs to aggregate into
-        bnode_namespace: Namespace for blank nodes (default: example.com)
 
     Returns:
         List of schema patterns showing superclass-level usage
@@ -194,7 +192,6 @@ def mine_ontology_as_data_subject_patterns(
     helper: SparqlHelper,
     graph_uris: list[str] | None = None,
     superclasses: list[str] | None = None,
-    bnode_namespace: str = "http://example.com/.well-known/genid/",
     allow_truncation: bool = False,
 ) -> list[SchemaPattern]:
     """Mine patterns where owl:Class instances are subjects.
@@ -205,7 +202,6 @@ def mine_ontology_as_data_subject_patterns(
         helper: SPARQL helper instance
         graph_uris: Optional list of graph URIs to restrict query
         superclasses: List of superclass URIs to aggregate into
-        bnode_namespace: Namespace for blank nodes
 
     Returns:
         List of schema patterns

@@ -13,6 +13,7 @@ from rdfsolve.qlever.inputs import rdf_input_files
 
 from .config import Source
 from .local import LocalMiningStage
+from rdfsolve.config import mint
 
 log = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ class LsLodCloudStage(LocalMiningStage):
             files = rdf_input_files(source_workdir)
             if not files:
                 raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
-            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            graph_uri = mint("graph", source.name)
             input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
@@ -185,7 +186,7 @@ class LsLodCloudStage(LocalMiningStage):
 
         endpoint = f"http://localhost:{port}"
 
-        graph_uris = [f"http://rdfsolve.org/graph/{s.name}" for s, _ in source_data]
+        graph_uris = [mint("graph", s.name) for s, _ in source_data]
 
         log.info(f"  Mining with {len(graph_uris)} named graphs")
 

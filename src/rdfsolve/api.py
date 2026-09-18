@@ -159,7 +159,7 @@ def to_linkml_from_file(
 
 def to_shacl_from_file(
     void_file_path: str,
-    schema_base_uri: str = "http://example.org/shapes/",
+    schema_base_uri: str | None = None,
 ) -> str:
     """Convert a VoID file to SHACL shapes.
 
@@ -169,7 +169,7 @@ def to_shacl_from_file(
 
     Args:
         void_file_path: Path to VoID file
-        schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
+        schema_base_uri: Base IRI for the SHACL shapes (default: the dataset IRI)
 
     Returns:
         SHACL shapes as Turtle/RDF string
@@ -251,7 +251,7 @@ def graph_to_linkml(
 def graph_to_shacl(
     graph: Graph,
     graph_uris: str | list[str] | None = None,
-    schema_base_uri: str = "http://example.org/shapes/",
+    schema_base_uri: str | None = None,
 ) -> str:
     """Convert a VoID graph to SHACL shapes.
 
@@ -262,7 +262,7 @@ def graph_to_shacl(
     Args:
         graph: RDFLib Graph with VoID data
         graph_uris: Graph URIs to filter extraction
-        schema_base_uri: Base URI for the SHACL shapes (default: http://example.org/shapes/)
+        schema_base_uri: Base IRI for the SHACL shapes (default: the dataset IRI)
 
     Returns:
         SHACL shapes as Turtle/RDF string
@@ -504,9 +504,6 @@ def query_metadata(
 # Sources / Registry
 
 
-_VOID_URI_DEFAULT = "https://jmillanacosta.com/rdfsolve/{name}/mined/"
-
-
 def load_sources(
     path: str | Path | None = None,
     name_filter: str | None = None,
@@ -531,7 +528,9 @@ def resolve_void_uri_base(
         return override.rstrip("/") + "/"
     if entry and entry.get("void_uri_base"):
         return str(entry["void_uri_base"]).rstrip("/") + "/"
-    return _VOID_URI_DEFAULT.format(name=name)
+    from rdfsolve.config import mint
+
+    return mint("dataset", name) + "/mined/"
 
 
 def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:

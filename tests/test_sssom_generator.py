@@ -18,5 +18,5 @@ def test_custom_prefix_updates_converter(monkeypatch):
         mapping_justification="semapv:ManualMappingCuration",
     )
     result = create_sssom_mappings([mapping], "https://example.org/mappings")
-    assert result.converter.expand("rdfsolve:A") == "https://rdfsolve.bigcat-bioinformatics.nl/A"
-    assert result.converter.compress("https://rdfsolve.bigcat-bioinformatics.nl/B") == "rdfsolve:B"
+    assert result.converter.expand("rdfsolve:A") == "https://w3id.org/rdfsolve/A"
+    assert result.converter.compress("https://w3id.org/rdfsolve/B") == "rdfsolve:B"

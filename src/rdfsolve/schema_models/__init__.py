@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 
 from rdfsolve.schema_models._constants import (
-    _BASE_URI,
     _BLANK_NODE_URIS,
     _RESOURCE_URIS,
     _SENTINEL_OBJECTS,
@@ -69,7 +68,6 @@ def __getattr__(name: str) -> object:
 __all__ = [
     # constants
     "SERVICE_NAMESPACE_PREFIXES",
-    "_BASE_URI",
     "_BLANK_NODE_URIS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",

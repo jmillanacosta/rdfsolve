@@ -467,7 +467,7 @@ class MinedSchema(BaseModel):
 
     def to_shacl(
         self,
-        base_uri: str = "http://example.org/shapes/",
+        base_uri: str | None = None,
         *,
         activate_observed: bool = False,
         trim_descriptions: int | None = None,
@@ -477,7 +477,7 @@ class MinedSchema(BaseModel):
         Returns SHACL Turtle string.
 
         Args:
-            base_uri: Base URI for shape URIs
+            base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
             activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
 
         Example:

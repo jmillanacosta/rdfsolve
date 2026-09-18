@@ -18,6 +18,7 @@ from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_expo
 
 from .config import Source
 from .local import LocalMiningStage
+from rdfsolve.config import mint
 
 log = logging.getLogger(__name__)
 
@@ -328,7 +329,7 @@ class GroupedMiningStage(LocalMiningStage):
             files = rdf_input_files(source_workdir)
             if not files:
                 raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
-            graph_uri = f"http://rdfsolve.org/graph/{source.name}"
+            graph_uri = mint("graph", source.name)
             input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
@@ -372,7 +373,7 @@ class GroupedMiningStage(LocalMiningStage):
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
-        graph_uris = [f"http://rdfsolve.org/graph/{s.name}" for s in sources]
+        graph_uris = [mint("graph", s.name) for s in sources]
 
         output_dir = self.config.output_dir / f"grouped_{group_name}"
         output_dir.mkdir(parents=True, exist_ok=True)

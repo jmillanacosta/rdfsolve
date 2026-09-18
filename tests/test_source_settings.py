@@ -447,7 +447,7 @@ def test_group_index_reads_nested_inputs_and_forwards_budgets(pipeline, tmp_path
     command = run.call_args.args[0]
     assert command[command.index("-f") + 1] == str(target)
     assert command[command.index("-F") + 1] == "ttl"
-    assert command[command.index("-g") + 1] == "http://rdfsolve.org/graph/aopwikirdf"
+    assert command[command.index("-g") + 1] == "https://w3id.org/rdfsolve/graph/aopwikirdf"
     assert command[command.index("-m") + 1] == "32GB"
     assert command[command.index("-b") + 1] == "1GB"
     run.reset_mock()

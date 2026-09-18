@@ -85,7 +85,7 @@ def test_graph_membership_check_uses_real_aop_rdf():
     from rdfsolve.qlever.index_check import verify_named_graphs
 
     dataset = Dataset()
-    uri = "http://rdfsolve.org/graph/aopwikirdf"
+    uri = "https://w3id.org/rdfsolve/graph/aopwikirdf"
     graph = dataset.graph(uri)
     graph.parse(Path(__file__).parent / "test_data" / "aopwikirdf_generated_void.ttl")
     helper = Mock()
@@ -96,4 +96,4 @@ def test_graph_membership_check_uses_real_aop_rdf():
     helper.select.side_effect = select
     verify_named_graphs(helper, [uri])
     with pytest.raises(ValueError, match="lacks nonempty graphs"):
-        verify_named_graphs(helper, [uri, "http://rdfsolve.org/graph/wikipathways"])
+        verify_named_graphs(helper, [uri, "https://w3id.org/rdfsolve/graph/wikipathways"])

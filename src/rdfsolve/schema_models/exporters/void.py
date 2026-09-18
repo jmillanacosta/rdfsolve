@@ -30,14 +30,13 @@ def to_void_graph(
     from rdflib import Literal as RdfLiteral
     from rdflib.namespace import DCTERMS, FOAF, OWL, RDF, RDFS, XSD
 
-    from rdfsolve.config import get_base_uri
+    from rdfsolve.config import mint
 
     # Configure namespaces
-    base_uri = get_base_uri()
+    dataset_iri = mint("dataset", schema.about.dataset_name or "unnamed")
     void = Namespace("http://rdfs.org/ns/void#")
     sd = Namespace("http://www.w3.org/ns/sparql-service-description#")
-    vocab_ns = Namespace(f"{base_uri}/vocab#")
-    partition_ns = Namespace(f"{base_uri}/schema#")
+    partition_ns = Namespace(f"{dataset_iri}/partition/")
 
     g = Graph()
 
@@ -58,8 +57,6 @@ def to_void_graph(
     ):
         g.bind(pfx, ns)
 
-    # Bind rdfsolve-specific namespaces
-    g.bind("vocab", vocab_ns)
     g.bind("partition", partition_ns)
 
     # Dataset URI: represents THE SOURCE RDF dataset
@@ -71,9 +68,8 @@ def to_void_graph(
         # Use schema namespace for partitions
         base = str(partition_ns)
     else:
-        # Local or no endpoint: use configured base URI
-        dataset_name = schema.about.dataset_name or "unknown"
-        dataset_uri = URIRef(f"{base_uri}/dataset/{dataset_name}")
+        # Local or no endpoint: use the minted dataset IRI
+        dataset_uri = URIRef(dataset_iri)
         # Use schema namespace for partitions
         base = str(partition_ns)
 
