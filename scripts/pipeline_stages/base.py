@@ -133,10 +133,7 @@ class Stage:
         if "void" in formats:
             path = output_dir / f"{name}{suffix}_void.ttl"
             try:
-                void_graph = schema.to_void_graph(
-                    base_url=self.config.void_base_url,
-                    trim_descriptions=self.config.trim_descriptions,
-                )
+                void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
                 if void_graph:
                     void_ttl = void_graph.serialize(format="turtle")
                     path.write_text(void_ttl, encoding="utf-8")

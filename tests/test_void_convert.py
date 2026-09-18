@@ -49,7 +49,7 @@ def test_roundtrip_simple():
     # Convert to VoID
     from rdflib import Graph
 
-    void_dataset = minedschema_to_void(original, base_url="http://example.org")
+    void_dataset = minedschema_to_void(original)
     g = Graph()
     void_dataset.to_rdf(g)
     void_ttl = g.serialize(format="turtle")
@@ -103,7 +103,7 @@ def test_roundtrip_with_datatypes():
     # Convert to VoID
     from rdflib import Graph
 
-    void_dataset = minedschema_to_void(original, base_url="http://example.org")
+    void_dataset = minedschema_to_void(original)
     g = Graph()
     void_dataset.to_rdf(g)
     void_ttl = g.serialize(format="turtle")
@@ -180,3 +180,25 @@ def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
     assert {key(p) for p in parser.to_mined_schema().patterns} == {key(p) for p in schema.patterns}
     assert len(MinedSchema.from_shacl(parser.to_shacl()).patterns) == 4
     assert len(parser.to_schema()) == 4
+
+
+def test_generated_void_describes_the_dataset_not_the_endpoint():
+    from rdflib import DCTERMS, RDF, URIRef
+    from rdflib.namespace import Namespace
+
+    void = Namespace("http://rdfs.org/ns/void#")
+    schema = MinedSchema(
+        about={"dataset_name": "demo", "endpoint": "https://example.org/sparql", "description": "Demo data."},
+        patterns=[SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")],
+    )
+    graph = schema.to_void_graph()
+    dataset = URIRef("https://w3id.org/rdfsolve/dataset/demo")
+    assert (dataset, RDF.type, void.Dataset) in graph
+    assert (dataset, void.sparqlEndpoint, URIRef("https://example.org/sparql")) in graph
+    assert not list(graph.triples((None, void.dataDump, None)))
+    assert [str(o) for o in graph.objects(dataset, DCTERMS.description)] == ["Demo data."]
+    assert all(str(p).startswith("https://w3id.org/rdfsolve/dataset/demo/partition/")
+               for p in graph.objects(dataset, void.classPartition))
+    local = schema.model_copy(update={"about": schema.about.model_copy(update={"endpoint": "http://localhost:7001/sparql"})})
+    assert not list(local.to_void_graph().triples((None, void.sparqlEndpoint, None)))
+

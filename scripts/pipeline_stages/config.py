@@ -95,7 +95,6 @@ class PipelineConfig:
     navigation_min_hops: int = 3
     navigation_limit: int = 100
     navigation_probes: int = 0
-    void_base_url: str = "https://rdfsolve.bigcat-bioinformatics.nl"
 
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
