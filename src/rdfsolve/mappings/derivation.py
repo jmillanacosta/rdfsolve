@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -10,13 +11,40 @@ from rdfsolve.mappings.index import ClassIndex
 from rdfsolve.mappings.models.core import MappingEdge
 
 
+@dataclass(frozen=True)
+class EntityLink:
+    """Two entities in two datasets, related by an asserted predicate or by shared identity.
+
+    predicate is None when no relation was asserted, for example when the same
+    IRI occurs in both datasets.
+    """
+
+    source_entity: str
+    target_entity: str
+    source_dataset: str
+    target_dataset: str
+    predicate: str | None = None
+
+    @classmethod
+    def from_edge(cls, edge: MappingEdge) -> EntityLink:
+        """Read an entity-level mapping assertion."""
+        return cls(
+            edge.source_class,
+            edge.target_class,
+            edge.source_dataset,
+            edge.target_dataset,
+            edge.predicate,
+        )
+
+
 @dataclass
 class ClassPair:
     """One dataset-scoped class pair with its supporting entity evidence.
 
     instance_count counts distinct supporting entity pairs over all predicates.
-    supporting_entity_predicates counts them per entity predicate; one entity
-    pair can count under several predicates. These predicates relate the
+    supporting_entity_predicates counts them per asserted entity predicate; one
+    entity pair can count under several predicates. Shared identity asserts no
+    predicate and adds no entry. These predicates relate the
     entities, not the classes. class_relation stays None unless a class-level
     assertion or a documented rule supplies it. Counts and coverage are support,
     not confidence. Coverage uses the supplied index.
@@ -37,7 +65,7 @@ class ClassPair:
 
 
 def derive_class_mappings(
-    instance_edges: list[MappingEdge],
+    instance_edges: Sequence[MappingEdge | EntityLink],
     class_index: ClassIndex | dict[str, ClassIndex],
     *,
     min_instance_count: int = 1,
@@ -64,9 +92,10 @@ def derive_class_mappings(
     witnesses: dict[Key, set[tuple[str, str]]] = {}
     by_predicate: dict[Key, dict[str, set[tuple[str, str]]]] = {}
     skipped_source = skipped_target = processed = 0
-    for edge in instance_edges:
-        left = classes(edge.source_class, edge.source_dataset)
-        right = classes(edge.target_class, edge.target_dataset)
+    for item in instance_edges:
+        edge = EntityLink.from_edge(item) if isinstance(item, MappingEdge) else item
+        left = classes(edge.source_entity, edge.source_dataset)
+        right = classes(edge.target_entity, edge.target_dataset)
         if not left:
             skipped_source += 1
             continue
@@ -78,11 +107,13 @@ def derive_class_mappings(
             for target in right:
                 key = (source, target, edge.source_dataset, edge.target_dataset)
                 pair = pairs.setdefault(key, ClassPair(*key, derivation_method=derivation_method))
-                witness = (edge.source_class, edge.target_class)
+                witness = (edge.source_entity, edge.target_entity)
                 witnesses.setdefault(key, set()).add(witness)
-                by_predicate.setdefault(key, {}).setdefault(edge.predicate, set()).add(witness)
-                pair.source_entities.add(edge.source_class)
-                pair.target_entities.add(edge.target_class)
+                predicates = by_predicate.setdefault(key, {})
+                if edge.predicate is not None:
+                    predicates.setdefault(edge.predicate, set()).add(witness)
+                pair.source_entities.add(edge.source_entity)
+                pair.target_entities.add(edge.target_entity)
     sizes: Counter[tuple[str, str]] = Counter()
     datasets = {p.source_dataset for p in pairs.values()} | {
         p.target_dataset for p in pairs.values()
@@ -129,17 +160,15 @@ def derive_class_mappings(
 def shared_entity_links(
     indices: dict[str, ClassIndex], *, min_instance_count: int = 1
 ) -> tuple[list[ClassPair], dict[str, Any]]:
-    """Find class associations supported by identical RDF identities in datasets."""
+    """Find class associations supported by the same IRI in two datasets.
+
+    A shared IRI is identity evidence, not an asserted relation. The links carry
+    no predicate.
+    """
     from itertools import combinations
 
     edges = [
-        MappingEdge(
-            source_class=iri,
-            target_class=iri,
-            source_dataset=left,
-            target_dataset=right,
-            predicate="http://www.w3.org/2002/07/owl#sameAs",
-        )
+        EntityLink(iri, iri, left, right)
         for left, right in combinations(sorted(indices), 2)
         for iri in sorted(indices[left].entities.keys() & indices[right].entities.keys())
     ]

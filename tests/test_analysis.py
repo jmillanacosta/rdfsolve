@@ -109,9 +109,8 @@ def test_shared_identity_does_not_merge_dataset_nodes_or_assert_class_equivalenc
     association = [d for _, _, d in graph.edges(data=True) if d["kind"] == "entity_association"][0]
     assert association["instance_count"] == 1 and "confidence" not in association
     assert association["predicate"] is None
-    assert association["supporting_entity_predicates"] == {
-        "http://www.w3.org/2002/07/owl#sameAs": 1
-    }
+    assert association["supporting_entity_predicates"] == {}
+    assert pairs[0].instance_count == 1
     assert association["derivation_method"] == "shared_entity_iri"
     overlap = compare_schemas(schemas)[0]
     assert overlap["shared_classes"] == 1 and overlap["class_jaccard"] == 1 / 3
