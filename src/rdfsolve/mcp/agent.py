@@ -4,11 +4,25 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import perf_counter
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from mcp import Client as MCPClient
+    from mcp.types import CallToolResult
+    from pydantic_ai.messages import ModelMessage
+    from pydantic_ai.models import Model
+    from pydantic_ai.settings import ModelSettings
+    from pydantic_ai.toolsets import FunctionToolset
+    from pydantic_ai.usage import UsageLimits
+
+# One journal entry, tool result or answer payload, as serialized JSON.
+Record = dict[str, Any]
 
 INSTRUCTIONS = """Investigate with the Client and its generated models.
 Use rdf_schema for class/field discovery and rdf_find for a particular name or text.
@@ -56,17 +70,22 @@ prepare the query and use its concrete validation feedback to repair it.
 DEFAULT_RESPONSE_TOKENS = 4096
 
 
-def bounded_model_settings(settings=None, max_response_tokens=DEFAULT_RESPONSE_TOKENS):
+def bounded_model_settings(
+    settings: dict[str, Any] | None = None,
+    max_response_tokens: int | None = DEFAULT_RESPONSE_TOKENS,
+) -> dict[str, Any]:
     """Apply an optional per-response ceiling to the caller's model settings."""
     settings = {"timeout": 120, **(settings or {})}
     if max_response_tokens is not None and (
         type(max_response_tokens) is not int or max_response_tokens < 1
     ):
         raise ValueError("max_response_tokens must be a positive integer or None")
-    requested = settings.get("max_tokens", max_response_tokens)
+    requested = settings.get("max_tokens")
+    if requested is None:
+        requested = max_response_tokens
     if requested is not None and (type(requested) is not int or requested < 1):
         raise ValueError("max_tokens must be a positive integer")
-    if max_response_tokens is None:
+    if max_response_tokens is None or requested is None:
         return settings
     if requested > max_response_tokens:
         logging.getLogger(__name__).warning(
@@ -80,17 +99,20 @@ class NoProgressError(RuntimeError):
     """The model repeated an unchanged operation without making progress."""
 
 
-def tool_json(result):
+def tool_json(result: CallToolResult) -> Record:
     """Read the single structured observation supplied by MCP."""
     if result.structured_content is not None:
-        return result.structured_content
+        return dict(result.structured_content)
     texts = [p.text for p in result.content if p.type == "text"]
     if len(texts) != 1:
         raise ValueError("Expected one JSON tool result")
-    return json.loads(texts[0])
+    parsed = json.loads(texts[0])
+    if not isinstance(parsed, dict):
+        raise ValueError("Expected a JSON object tool result")
+    return parsed
 
 
-def failure(exc, code):
+def failure(exc: BaseException, code: str) -> Record:
     """Expose actionable leaf errors from asynchronous exception groups."""
     children = getattr(exc, "exceptions", ())
     if children:
@@ -107,18 +129,25 @@ def failure(exc, code):
 class Bridge:
     """Record each model-visible observation and explicit finalization."""
 
-    def __init__(self, server, *, question="", calls=None, on_call=None):
+    def __init__(
+        self,
+        server: MCPClient,
+        *,
+        question: str = "",
+        calls: list[Record] | None = None,
+        on_call: Callable[[Record], None] | None = None,
+    ) -> None:
         """Attach a server and incremental tool journal."""
         self.server = server
         self.question = question
         self.calls = calls if calls is not None else []
         self.on_call = on_call
-        self.final = None
-        self._observations = {}
-        self._context_prefix = None
+        self.final: Record | None = None
+        self._observations: dict[str, int] = {}
+        self._context_prefix: list[ModelMessage] | None = None
         self._context_start = 0
 
-    def context(self, messages):
+    def context(self, messages: list[ModelMessage]) -> list[ModelMessage]:
         """Keep recent complete tool exchanges and bounded retained evidence."""
         from pydantic_ai.messages import ModelRequest, ModelResponse, UserPromptPart
 
@@ -127,9 +156,12 @@ class Bridge:
             return messages
         if self._context_prefix is not None and sum(i >= self._context_start for i in starts) <= 12:
             return [*self._context_prefix, *messages[self._context_start :]]
-        cards, goals, current = {}, {}, {}
+        cards: dict[str, Any] = {}
+        goals: dict[str, Any] = {}
+        current: dict[str, Any] = {}
 
-        def collect(value):
+        def collect(value: Any) -> None:
+            """Retain every evidence card found in a tool result."""
             if isinstance(value, dict):
                 if "ref" in value and "kind" in value:
                     cards[value["ref"]] = value
@@ -148,7 +180,7 @@ class Bridge:
                     "sparql": call["arguments"].get("sparql"),
                     "grounding": call["arguments"].get("grounding"),
                 }
-        kept = []
+        kept: list[Any] = []
         for card in reversed(list(cards.values())):
             if len(json.dumps([*kept, card]).encode()) > 8000:
                 break
@@ -170,7 +202,7 @@ class Bridge:
         self._context_prefix = [messages[0], summary]
         return [*self._context_prefix, *messages[self._context_start :]]
 
-    async def call(self, name, arguments):
+    async def call(self, name: str, arguments: dict[str, Any]) -> Record:
         """Run one tool and retain its observation or transport failure."""
         if self.final is not None:
             return {
@@ -233,16 +265,19 @@ class Bridge:
         return result
 
 
-async def mcp_tools(server, *, bridge=None):
+async def mcp_tools(server: MCPClient, *, bridge: Bridge | None = None) -> FunctionToolset[Any]:
     """Register the server contracts with PydanticAI."""
     from pydantic_ai import Tool
     from pydantic_ai.toolsets import FunctionToolset
 
     bridge = bridge or Bridge(server)
-    toolset = FunctionToolset()
+    toolset: FunctionToolset[Any] = FunctionToolset()
 
-    def bind(name):
-        async def call(**args):
+    def bind(name: str) -> Callable[..., Awaitable[Record]]:
+        """Create the tool function for one server tool."""
+
+        async def call(**args: Any) -> Record:
+            """Forward the model arguments to the bridge."""
             return await bridge.call(name, args)
 
         return call
@@ -267,20 +302,20 @@ class Answer:
     text: str = ""
     state: str = "failed"
     query: str | None = None
-    bindings: list[dict] = field(default_factory=list)
+    bindings: list[Record] = field(default_factory=list)
     usage: Any = None
-    calls: list[dict] = field(default_factory=list)
-    error: dict | None = None
-    terminal: dict = field(default_factory=dict)
-    execution: dict = field(default_factory=dict)
-    package: dict = field(default_factory=dict)
-    messages: list = field(default_factory=list)
-    files: dict = field(default_factory=dict)
+    calls: list[Record] = field(default_factory=list)
+    error: Record | None = None
+    terminal: Record = field(default_factory=dict)
+    execution: Record = field(default_factory=dict)
+    package: Record = field(default_factory=dict)
+    messages: list[Any] = field(default_factory=list)
+    files: dict[str, str] = field(default_factory=dict)
     elapsed_seconds: float = 0
     max_response_tokens: int | None = DEFAULT_RESPONSE_TOKENS
     response_token_limit: int | None = DEFAULT_RESPONSE_TOKENS
 
-    def table(self):
+    def table(self) -> pd.DataFrame:
         """Display values while retaining RDF term metadata in bindings."""
         if self.state != "complete":
             raise ValueError(f"No completed answer: {self.error}")
@@ -290,11 +325,11 @@ class Answer:
             [{name: term["value"] for name, term in row.items()} for row in self.bindings]
         )
 
-    def diagnostics(self):
+    def diagnostics(self) -> Record:
         """Report usage, strategy, recovery and failure facts."""
         from pydantic_core import to_jsonable_python
 
-        return to_jsonable_python(
+        report: Record = to_jsonable_python(
             {
                 "warnings": next(
                     (
@@ -315,8 +350,9 @@ class Answer:
                 },
             }
         )
+        return report
 
-    def save(self, path):
+    def save(self, path: str | Path) -> None:
         """Save exact results, costs and traces for reproduction."""
         from pydantic_core import to_jsonable_python
 
@@ -329,26 +365,28 @@ class Answer:
 
 
 async def ask(
-    server,
-    question,
+    server: MCPClient,
+    question: str,
     *,
-    model,
-    model_settings=None,
+    model: Model | str,
+    model_settings: dict[str, Any] | None = None,
     max_response_tokens: int | None = DEFAULT_RESPONSE_TOKENS,
-    usage_limits=None,
-    calls=None,
-    on_call=None,
-    answer=None,
-):
+    usage_limits: UsageLimits | None = None,
+    calls: list[Record] | None = None,
+    on_call: Callable[[Record], None] | None = None,
+    answer: Answer | None = None,
+) -> Answer:
     """Run with a response token ceiling; None leaves provider limits in control."""
     from pydantic_ai import Agent, capture_run_messages
     from pydantic_ai.capabilities import ProcessHistory
     from pydantic_ai.exceptions import UsageLimitExceeded
     from pydantic_ai.usage import RunUsage, UsageLimits
+    from pydantic_graph import End
 
     answer = answer or Answer()
     usage = answer.usage = RunUsage()
-    settings = bounded_model_settings(model_settings, max_response_tokens)
+    # bounded_model_settings validated the caller's keys and token values.
+    settings = cast("ModelSettings", bounded_model_settings(model_settings, max_response_tokens))
     answer.max_response_tokens = max_response_tokens
     answer.response_token_limit = settings.get("max_tokens")
     bridge = Bridge(server, question=question, calls=calls, on_call=on_call)
@@ -362,12 +400,15 @@ async def ask(
         capabilities=[ProcessHistory(bridge.context)],
     )
     limits = usage_limits or UsageLimits(request_limit=32, output_tokens_limit=32768)
-    messages = []
+    messages: list[ModelMessage] = []
     with capture_run_messages() as captured:
         try:
             async with agent.iter(question, usage_limits=limits, usage=usage) as run:
                 while run.result is None and bridge.final is None:
-                    await run.next(run.next_node)
+                    node = run.next_node
+                    if isinstance(node, End):
+                        break
+                    await run.next(node)
                     if bridge.final is None and any(
                         getattr(m, "finish_reason", None) == "length" for m in captured[-1:]
                     ):
@@ -382,7 +423,7 @@ async def ask(
                 else:
                     answer.state = "blocked"
                     answer.text = "No final query was executed. The model reported: " + str(
-                        run.result.output
+                        run.result.output if run.result is not None else ""
                     )
                     answer.error = {
                         "code": "not_executed",
@@ -413,12 +454,12 @@ async def ask(
     return answer
 
 
-def receipt_text(terminal):
+def receipt_text(terminal: Record) -> str:
     """Render verified execution facts for a human reader."""
     if terminal.get("state") != "complete":
-        return terminal.get("error", {}).get("message", "The query could not be completed.")
-    text = f"Retrieved {terminal['rows']} rows. " + terminal.get(
-        "strategy", "Used retained RDF paths and checked bindings."
+        return str(terminal.get("error", {}).get("message", "The query could not be completed."))
+    text = f"Retrieved {terminal['rows']} rows. " + str(
+        terminal.get("strategy", "Used retained RDF paths and checked bindings.")
     )
     warnings = list(dict.fromkeys(terminal.get("warnings", [])))
     if warnings:

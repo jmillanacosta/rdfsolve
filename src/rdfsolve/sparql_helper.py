@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from itertools import count
 from pathlib import Path
-from typing import Any, ClassVar, Literal, TypedDict
+from typing import Any, ClassVar, Literal, NoReturn, TypedDict
 from urllib.parse import urlsplit
 
 with warnings.catch_warnings():
@@ -411,7 +411,8 @@ class SparqlHelper:
         if not turtle_data.strip():
             return graph
 
-        def fail(message, cause=None):
+        def fail(message: str, cause: BaseException | None = None) -> NoReturn:
+            """Mark the recorded query as failed and raise the error."""
             error = EndpointError(message)
             records = self.get_collected_queries()
             if records and records[-1].query == query:
@@ -1189,23 +1190,26 @@ class SparqlHelper:
                 try:
                     result = self.select(query, purpose=purpose)
                 except EndpointTimeoutError as error:
-                    meta.update(first_error=str(error))
+                    meta.update({"first_error": str(error)})
                     logger.warning("SELECT[%s] switching to adaptive pages: %s", purpose, error)
                 else:
                     meta.update(
-                        status="complete",
-                        rows=len(result.get("results", {}).get("bindings", [])),
-                        completeness_basis="endpoint_response",
+                        {
+                            "status": "complete",
+                            "rows": len(result.get("results", {}).get("bindings", [])),
+                            "completeness_basis": "endpoint_response",
+                        }
                     )
                     return result
-            meta.update(strategy="adaptive_offset")
+            meta.update({"strategy": "adaptive_offset"})
             parsed = parseQuery(query)[1]
             if parsed.name != "SelectQuery":
                 raise QueryError("Pagination recovery requires SELECT")
             if "modifier" in parsed and parsed["modifier"] == "REDUCED":
                 raise QueryError("Cannot safely page SELECT REDUCED across independent responses")
 
-            def volatile(node):
+            def volatile(node: Any) -> bool:
+                """Check whether a parsed expression uses a volatile function."""
                 if getattr(node, "name", None) in {
                     "Builtin_RAND",
                     "Builtin_UUID",
@@ -1293,7 +1297,7 @@ class SparqlHelper:
                     ),
                 ):
                     rows.extend(page)
-                    meta.update(pages=meta["pages"] + 1, rows=len(rows))
+                    meta.update({"pages": meta["pages"] + 1, "rows": len(rows)})
                     logger.info(
                         "SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows)
                     )
@@ -1307,7 +1311,7 @@ class SparqlHelper:
                 ):
                     error.partial_rows = deepcopy(rows)
                     raise
-                meta.update(strategy="cursor_recovery", offset_error=str(error), pages=0)
+                meta.update({"strategy": "cursor_recovery", "offset_error": str(error), "pages": 0})
                 rows = []
                 for page in self.select_chunked(
                     self.prepare_paginated_query(query),
@@ -1320,17 +1324,19 @@ class SparqlHelper:
                     wait_after_timeout=self.select_page_cooldown,
                 ):
                     rows.extend(page)
-                    meta.update(pages=meta["pages"] + 1, rows=len(rows))
+                    meta.update({"pages": meta["pages"] + 1, "rows": len(rows)})
             meta.update(
-                status="complete",
-                rows=len(rows),
-                completeness_basis="original_limit"
-                if limit is not None and len(rows) == limit
-                else "empty_page",
+                {
+                    "status": "complete",
+                    "rows": len(rows),
+                    "completeness_basis": "original_limit"
+                    if limit is not None and len(rows) == limit
+                    else "empty_page",
+                }
             )
             return {"head": {"vars": projected}, "results": {"bindings": rows}}
         except Exception as error:
-            meta.update(status="failed", error=f"{type(error).__name__}: {error}")
+            meta.update({"status": "failed", "error": f"{type(error).__name__}: {error}"})
             raise
         finally:
             meta["elapsed_seconds"] = time.monotonic() - started

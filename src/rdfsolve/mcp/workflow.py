@@ -10,29 +10,36 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from rdfsolve.mcp.agent import Answer
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from pydantic_ai.models import Model
+    from pydantic_ai.usage import UsageLimits
+
 
 def launch_config(
-    schema,
+    schema: str | Path,
     *,
-    endpoint=None,
-    data_file=None,
-    graph_uris=None,
-    output_variables=(),
-    source_id="rdf",
-    timeout=900,
-    max_paths=100,
-    mapping_file=None,
-    related_registries=(),
-    ontology_grounding=False,
-    ontology_provider="ols",
-    ontology_cache=None,
-    ontology_offline=False,
-    artifact_dir=None,
-):
+    endpoint: str | None = None,
+    data_file: str | Path | None = None,
+    graph_uris: list[str] | None = None,
+    output_variables: Sequence[str] = (),
+    source_id: str = "rdf",
+    timeout: float = 900,
+    max_paths: int = 100,
+    mapping_file: str | Path | None = None,
+    related_registries: Iterable[str | Path] = (),
+    ontology_grounding: bool = False,
+    ontology_provider: str = "ols",
+    ontology_cache: str | Path | None = None,
+    ontology_offline: bool = False,
+    artifact_dir: str | Path | None = None,
+) -> dict[str, Any]:
     """Launch this checkout with the caller's Python and explicit source settings."""
     path = Path(schema).expanduser().resolve(strict=True)
     env = dict(os.environ)
@@ -60,8 +67,8 @@ def launch_config(
             args += [option, str(Path(value).resolve()) if option != "--endpoint" else str(value)]
     if mapping_file:
         args += ["--mapping", str(Path(mapping_file).resolve(strict=True))]
-    for path in related_registries:
-        args += ["--related-registry", str(Path(path).resolve(strict=True))]
+    for registry in related_registries:
+        args += ["--related-registry", str(Path(registry).resolve(strict=True))]
     if ontology_grounding:
         args += ["--ontology-provider", ontology_provider]
         if ontology_cache:
@@ -78,28 +85,28 @@ def launch_config(
 async def ask_rdf(
     question: str,
     *,
-    schema,
-    source_id="rdf",
-    endpoint=None,
-    data_file=None,
-    graph_uris=None,
-    output_variables=(),
-    model=None,
-    base_url=None,
-    model_name=None,
-    api_key=None,
-    model_settings=None,
+    schema: str | Path,
+    source_id: str = "rdf",
+    endpoint: str | None = None,
+    data_file: str | Path | None = None,
+    graph_uris: list[str] | None = None,
+    output_variables: Sequence[str] = (),
+    model: Model | None = None,
+    base_url: str | None = None,
+    model_name: str | None = None,
+    api_key: str | None = None,
+    model_settings: dict[str, Any] | None = None,
     max_response_tokens: int | None = 4096,
-    usage_limits=None,
-    timeout=900,
-    max_paths=100,
-    mapping_file=None,
-    related_registries=(),
-    ontology_grounding=False,
-    ontology_provider="ols",
-    ontology_cache=None,
-    ontology_offline=False,
-    output_dir=None,
+    usage_limits: UsageLimits | None = None,
+    timeout: float = 900,
+    max_paths: int = 100,
+    mapping_file: str | Path | None = None,
+    related_registries: Iterable[str | Path] = (),
+    ontology_grounding: bool = False,
+    ontology_provider: str = "ols",
+    ontology_cache: str | Path | None = None,
+    ontology_offline: bool = False,
+    output_dir: str | Path | None = None,
 ) -> Answer:
     """Discover, ground, compose and execute against a caller-selected database.
 
@@ -111,6 +118,7 @@ async def ask_rdf(
     """
     from mcp import Client as MCPClient
     from mcp import StdioServerParameters
+    from mcp.types import TextResourceContents
 
     from rdfsolve.mcp.agent import ask, failure
 
@@ -147,7 +155,8 @@ async def ask_rdf(
             "package": str(folder / (stem + ".package.json")),
         }
 
-    def journal(item):
+    def journal(item: dict[str, Any]) -> None:
+        """Append one tool call to the calls journal."""
         if answer.files:
             with Path(answer.files["calls"]).open("a", encoding="utf-8") as stream:
                 stream.write(json.dumps(item, ensure_ascii=False) + "\n")
@@ -196,7 +205,10 @@ async def ask_rdf(
                     data = json.loads((Path(artifacts) / (ref + ".json")).read_text())
                     answer.query, answer.bindings = data["query"], data["bindings"]
                 diagnostics = await server.read_resource("rdfsolve://diagnostics")
-                answer.package = json.loads(diagnostics.contents[0].text)
+                content = diagnostics.contents[0]
+                if not isinstance(content, TextResourceContents):
+                    raise ValueError("Diagnostics resource must be JSON text")
+                answer.package = json.loads(content.text)
         except Exception as exc:
             logging.getLogger(__name__).exception("RDF investigation failed")
             answer.state = "failed"

@@ -11,7 +11,7 @@ from rdfsolve.client.api import Client
 from rdfsolve.mcp.server import run_server
 
 
-def main():
+def main() -> None:
     """Load the configured source and run its tool server."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema", type=Path, required=True)

@@ -18,6 +18,7 @@ from typing import Any, TypeVar
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, create_model
+from pydantic.fields import FieldInfo
 from rdflib import Graph, Literal
 from typing_extensions import Self
 
@@ -35,6 +36,20 @@ RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 class HydrationLimitError(ValueError):
     """The result exceeded a budget. No partial object is returned."""
+
+
+def class_iri(model: type[BaseModel] | BaseModel) -> str:
+    """Return the RDF class IRI of a generated model or of one of its records."""
+    value = getattr(model, "rdf_class_iri", None)
+    if not isinstance(value, str):
+        raise TypeError(f"{model!r} is not a generated RDF model")
+    return value
+
+
+def field_metadata(info: FieldInfo | None) -> dict[str, Any]:
+    """Return the RDF metadata that the exporter stored on a generated field."""
+    extra = info.json_schema_extra if info is not None else None
+    return dict(extra) if isinstance(extra, dict) else {}
 
 
 def _iri(value: str) -> str:

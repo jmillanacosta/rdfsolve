@@ -63,26 +63,36 @@ def build_connectivity(
             graph.add_edge(
                 (first, cls), (second, cls), kind="shared_class", predicate=None, directed=False
             )
-    for kind, edges in (("explicit_mapping", class_mappings), ("entity_association", associations)):
-        for edge in edges:
-            left = (edge.source_dataset, edge.source_class)
-            right = (edge.target_dataset, edge.target_class)
-            if left not in graph or right not in graph:
-                raise ValueError(
-                    f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"
-                )
-            if kind == "explicit_mapping":
-                evidence = {
-                    "confidence": edge.confidence,
-                    "justification": edge.mapping_justification,
-                    "mapping_source": edge.mapping_source,
-                }
-            else:
-                evidence = {
-                    "instance_count": edge.instance_count,
-                    "source_coverage": edge.source_coverage,
-                    "target_coverage": edge.target_coverage,
-                    "coverage_basis": "indexed entities",
-                }
-            graph.add_edge(left, right, kind=kind, predicate=edge.predicate, **evidence)
+
+    def add_evidence(kind: str, edge: MappingEdge | ClassPair, evidence: dict[str, Any]) -> None:
+        """Add one evidence edge between two schema class nodes."""
+        left = (edge.source_dataset, edge.source_class)
+        right = (edge.target_dataset, edge.target_class)
+        if left not in graph or right not in graph:
+            raise ValueError(
+                f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"
+            )
+        graph.add_edge(left, right, kind=kind, predicate=edge.predicate, **evidence)
+
+    for mapping in class_mappings:
+        add_evidence(
+            "explicit_mapping",
+            mapping,
+            {
+                "confidence": mapping.confidence,
+                "justification": mapping.mapping_justification,
+                "mapping_source": mapping.mapping_source,
+            },
+        )
+    for pair in associations:
+        add_evidence(
+            "entity_association",
+            pair,
+            {
+                "instance_count": pair.instance_count,
+                "source_coverage": pair.source_coverage,
+                "target_coverage": pair.target_coverage,
+                "coverage_basis": "indexed entities",
+            },
+        )
     return graph

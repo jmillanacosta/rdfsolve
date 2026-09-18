@@ -6,6 +6,8 @@ import json
 import re
 from typing import TYPE_CHECKING, Any
 
+from rdfsolve.client.hydration import class_iri
+
 if TYPE_CHECKING:
     import pandas as pd
 
@@ -17,10 +19,10 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     if not kinds:
         raise ValueError("Choose the classes to show")
     models = list(dict.fromkeys(client.model(kind) for kind in kinds))
-    ids = {str(model.rdf_class_iri): f"C{i}" for i, model in enumerate(models)}
+    ids = {class_iri(model): f"C{i}" for i, model in enumerate(models)}
     lines = ["flowchart LR"]
     for model in models:
-        iri = str(model.rdf_class_iri)
+        iri = class_iri(model)
         label = _text(client.type_name(model)) + "<br/>" + _text(iri)
         lines.append(f'{ids[iri]}["{label}"]')
     edges = set()
@@ -28,7 +30,7 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
         for row in client.links(model).itertuples(index=False):
             if str(row.target) in ids:
                 label = _text(client.link_name(model, str(row.field)))
-                edges.add(f'{ids[str(model.rdf_class_iri)]} -->|"{label}"| {ids[str(row.target)]}')
+                edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[str(row.target)]}')
     return "```mermaid\n" + "\n".join([*lines, *sorted(edges)]) + "\n```"
 
 
@@ -78,8 +80,9 @@ def path_diagram(
                 s, o = [value or iri for value, iri in zip(types, (s, o), strict=True)]
         else:
             s, _predicate, o, backward = route[step]
-            labels = tuple(
-                client.type_name(client.model(c)) if c else "Intermediate resource" for c in (s, o)
+            labels = (
+                client.type_name(client.model(s)) if s else "Intermediate resource",
+                client.type_name(client.model(o)) if o else "Intermediate resource",
             )
             keys = [s or f"path:{row['Path']}:{step}", o or f"path:{row['Path']}:{step + 1}"]
             s, o = s or "", o or ""

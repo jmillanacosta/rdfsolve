@@ -37,6 +37,7 @@ def discover_paths_with_fallback(
         raise ValueError("Use 2..6 hops with min_hops no greater than max_hops")
 
     def compose(hops: int) -> NavigationSummary:
+        """Compose bounded routes for one schema."""
         return discover_paths(
             schema,
             max_hops=hops,
@@ -151,8 +152,9 @@ def discover_paths(
             for start, count in suffix[hops].items()
             if count > selected[start]
         }
-    for route in paths[:probe_limit]:
-        observe_path(route, helper, schema.about.graph_uris or [])
+    if helper is not None:
+        for route in paths[:probe_limit]:
+            observe_path(route, helper, schema.about.graph_uris or [])
     return NavigationSummary(
         max_hops=max_hops,
         max_paths_per_length=max_paths_per_length,
@@ -173,6 +175,7 @@ def observe_path(route: NavigationPath, helper: SparqlHelper, graphs: list[str])
     from rdflib import URIRef
 
     def iri(value: str) -> str:
+        """Serialize an absolute IRI as a SPARQL term."""
         return str(URIRef(value).n3())
 
     body = []

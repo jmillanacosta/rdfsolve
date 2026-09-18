@@ -7,6 +7,7 @@ from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
+from typing_extensions import Self
 
 __all__ = ["PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
 
@@ -42,12 +43,12 @@ class SparqlExamples(BaseModel):
 
     @field_validator("shacl_graph_in_endpoint", "shacl_dumps", mode="before")
     @classmethod
-    def locations(cls, value):
+    def locations(cls, value: Any) -> Any:
         """Accept one location or a list without changing their order."""
         return [value] if isinstance(value, str) else value or []
 
     @model_validator(mode="after")
-    def validate_locations(self):
+    def validate_locations(self) -> Self:
         """Validate graph identities and explicit HTTP repository links."""
         from rdfsolve.schema_models.paths import absolute_iri
 

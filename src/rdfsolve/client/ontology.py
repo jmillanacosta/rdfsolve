@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Any
 from urllib.parse import quote
 
 import bioregistry
@@ -18,6 +20,8 @@ from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
 
 logger = logging.getLogger(__name__)
+# One ontology term or provider response, as retained in the JSON cache.
+Term = dict[str, Any]
 OLS = "https://www.ebi.ac.uk/ols4/api"
 ONTOBEE = "https://sparql.hegroup.org/sparql/"
 LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
@@ -29,10 +33,10 @@ DEFINITIONS = (
 )
 
 
-def synonym_evidence(value):
+def synonym_evidence(value: Term) -> list[dict[str, str]]:
     """Retain declared synonym scope from OLS annotations and OBO metadata."""
     annotations = value.get("annotation") or {}
-    evidence = []
+    evidence: list[dict[str, str]] = []
     for predicate, scope in SYNONYM_PREDICATES.items():
         local = predicate.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
         keys = [predicate, local]
@@ -54,13 +58,13 @@ def synonym_evidence(value):
     return evidence
 
 
-def term_key(iri):
+def term_key(iri: str) -> str:
     """Use an exact IRI or a registered namespace/identifier correspondence."""
     prefix, identifier = bioregistry.parse_iri(iri)
     return f"{prefix}:{identifier}" if prefix and identifier else iri
 
 
-def canonical_iri(iri):
+def canonical_iri(iri: str) -> str:
     """Resolve registered IRI formats without guessing local namespaces."""
     absolute_iri(iri)
     prefix, identifier = bioregistry.parse_iri(iri)
@@ -70,27 +74,37 @@ def canonical_iri(iri):
 class OntologyLookup:
     """Bounded OLS or Ontobee access with a reusable response cache."""
 
-    def __init__(self, provider="ols", *, cache=None, offline=False, timeout=8, max_requests=40):
+    def __init__(
+        self,
+        provider: str = "ols",
+        *,
+        cache: str | Path | None = None,
+        offline: bool = False,
+        timeout: float = 8,
+        max_requests: int = 40,
+    ) -> None:
         """Configure a provider; defer requests until evidence is needed."""
         if provider not in {"ols", "ontobee"}:
             raise ValueError("Use ols or ontobee as the ontology provider")
         self.provider, self.offline = provider, offline
         self.timeout, self.max_requests = timeout, max_requests
         self.path = Path(cache).expanduser().resolve() if cache else None
-        self.cache = json.loads(self.path.read_text()) if self.path and self.path.exists() else {}
-        self.events = []
+        self.cache: dict[str, Any] = (
+            json.loads(self.path.read_text()) if self.path and self.path.exists() else {}
+        )
+        self.events: list[dict[str, Any]] = []
         self.requests = 0
         self.http = requests.Session()
         self.http.headers["User-Agent"] = "rdfsolve ontology lookup"
-        self.helper = None
+        self.helper: SparqlHelper | None = None
 
-    def close(self):
+    def close(self) -> None:
         """Release provider connections."""
         self.http.close()
         if self.helper:
             self.helper.close()
 
-    def cached(self, iri):
+    def cached(self, iri: str) -> bool:
         """Check whether exact vocabulary evidence is already available locally."""
         key = json.dumps([self.provider, "term", canonical_iri(iri)])
         stored = self.cache.get(key)
@@ -100,11 +114,16 @@ class OntologyLookup:
             and (self.offline or time.time() - stored["fetched_at"] < 86400)
         )
 
-    def _request(self, operation, value, fetch):
+    def _request(self, operation: str, value: Any, fetch: Callable[[], Any]) -> Any:
         key = json.dumps([self.provider, operation, value], sort_keys=True)
         started = time.monotonic()
         stored = self.cache.get(key)
-        event = {"provider": self.provider, "operation": operation, "value": value, "cached": False}
+        event: dict[str, Any] = {
+            "provider": self.provider,
+            "operation": operation,
+            "value": value,
+            "cached": False,
+        }
         if stored and (self.offline or time.time() - stored["fetched_at"] < 86400):
             event.update(cached=True, status="matched" if stored["data"] else "not_found")
             data = stored["data"]
@@ -139,7 +158,7 @@ class OntologyLookup:
         )
         return data
 
-    def _json(self, path, **params):
+    def _json(self, path: str, **params: Any) -> Any:
         with self.http.get(
             OLS + path, params=params, timeout=self.timeout, stream=True
         ) as response:
@@ -152,7 +171,7 @@ class OntologyLookup:
             return json.loads(content)
 
     @staticmethod
-    def _term(value):
+    def _term(value: Term) -> Term:
         names = synonym_evidence(value)
         return {
             "iri": value["iri"],
@@ -167,12 +186,13 @@ class OntologyLookup:
             "obsolete": value.get("is_obsolete", False),
         }
 
-    def lookup(self, iri, *, hierarchy=True):
+    def lookup(self, iri: str, *, hierarchy: bool = True) -> Term | None:
         """Read one term, its direct named parents and exact lookup provenance."""
         canonical = canonical_iri(iri)
         if self.provider == "ols":
 
-            def fetch():
+            def fetch() -> Term | None:
+                """Read the term from OLS."""
                 terms = (
                     self._json("/terms", iri=canonical, size=100)
                     .get("_embedded", {})
@@ -185,7 +205,8 @@ class OntologyLookup:
                 return self._term(terms[0]) if terms else None
         else:
 
-            def fetch():
+            def fetch() -> Term | None:
+                """Read the term from Ontobee."""
                 predicates = " ".join(
                     f"<{p}>" for p in [*NAME_PREDICATES, *DEFINITIONS, DEPRECATED]
                 )
@@ -251,7 +272,7 @@ class OntologyLookup:
             "fetched_at": self.cache[json.dumps([self.provider, "term", canonical])]["fetched_at"],
         }
 
-    def search(self, text, *, ontology=None):
+    def search(self, text: str, *, ontology: str | None = None) -> list[Term]:
         """Return ontology candidates; membership in a dataset requires client verification."""
         if not text.strip() or len(text) > 200:
             raise ValueError("Use a vocabulary phrase of at most 200 characters")
@@ -289,9 +310,10 @@ class OntologyLookup:
             logger.debug("Ontology search %s: retained names", text)
             return matches[:8]
 
-        def fetch():
+        def fetch() -> list[Term]:
+            """Search exact names at the configured provider."""
             if self.provider == "ols":
-                params = {
+                params: dict[str, Any] = {
                     "q": text,
                     "queryFields": "label,synonym",
                     "rows": 8,
@@ -322,14 +344,16 @@ class OntologyLookup:
                 for r in rows
             ]
 
-        return self._request("search_names", [text, ontology], fetch) or []
+        found: list[Term] = self._request("search_names", [text, ontology], fetch) or []
+        return found
 
-    def parents(self, term):
+    def parents(self, term: Term) -> list[Term]:
         """Retrieve a bounded direct hierarchy for explanation; leave query paths unchanged."""
         if self.provider == "ols" and not term.get("ontology"):
             return []
 
-        def fetch():
+        def fetch() -> list[Term]:
+            """Read direct named parents."""
             if self.provider == "ols":
                 name, iri = (
                     quote(term["ontology"], safe=""),
@@ -350,20 +374,21 @@ class OntologyLookup:
             ]
 
         parents = self._request("parents", [term["iri"], term.get("ontology")], fetch) or []
-        named = {}
+        named: dict[str, Term] = {}
         for parent in parents:
             named.setdefault(parent["iri"], parent)
         return list(named.values())
 
-    def _sparql(self, query):
+    def _sparql(self, query: str) -> list[dict[str, Any]]:
         if self.helper is None:
             self.helper = SparqlHelper(ONTOBEE, timeout=self.timeout, max_retries=1)
             self.helper.enable_query_collection(include_results=True)
-        return self.helper.select_with_fallback(query, purpose="ontology grounding")["results"][
-            "bindings"
-        ]
+        rows: list[dict[str, Any]] = self.helper.select_with_fallback(
+            query, purpose="ontology grounding"
+        )["results"]["bindings"]
+        return rows
 
-    def diagnostics(self):
+    def diagnostics(self) -> dict[str, Any]:
         """Separate ontology requests from source-dataset queries."""
         return {
             "provider": self.provider,

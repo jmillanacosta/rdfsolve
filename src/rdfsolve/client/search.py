@@ -3,17 +3,30 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 from rdflib import Literal
 
 from rdfsolve.client.exploration import SEARCH_PREDICATES, _path
-from rdfsolve.client.hydration import HydrationLimitError, _iri, _term
+from rdfsolve.client.hydration import HydrationLimitError, _iri, _term, class_iri, field_metadata
 from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
 
+if TYPE_CHECKING:
+    from rdfsolve.client.api import Client, Results
 
-def search_records(client, terms, kind, fields, *, names_only=False, allow_partial=False):
+
+def search_records(
+    client: Client,
+    terms: Sequence[str],
+    kind: str | None,
+    fields: Sequence[str],
+    *,
+    names_only: bool = False,
+    allow_partial: bool = False,
+) -> Results:
     """Search generated fields in one bounded request, keeping full RDF evidence."""
     from rdfsolve.client.api import Results, _name_fields
 
@@ -22,9 +35,11 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
     if len(fields) > 12:
         raise ValueError("Use at most twelve search fields")
     models = [client.model(kind)] if kind else list(client.models.values())
-    selected, direct, branches = {}, [], []
+    selected: dict[tuple[str, str], tuple[str | None, PropertyPath]] = {}
+    direct: list[str] = []
+    branches: list[str] = []
     for model in models:
-        cls = str(model.rdf_class_iri)
+        cls = class_iri(model)
         names = {client.field_name(model, name) for name in fields}
         if names_only and not fields:
             for predicate in sorted(SEARCH_PREDICATES):
@@ -35,7 +50,7 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
                 direct.append(f"({_iri(cls)} {_iri(predicate)})")
             continue
         for name, info in model.model_fields.items():
-            extra = info.json_schema_extra or {}
+            extra = field_metadata(info)
             if not extra.get("rdf_path"):
                 continue
             path = _path(model, name)
@@ -59,7 +74,7 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
                 continue
             key = path.iri or name
             selected[(cls, key)] = (name, path)
-            if path.operator == "predicate":
+            if path.operator == "predicate" and path.iri:
                 direct.append(f"({_iri(cls)} {_iri(path.iri)})")
             else:
                 branches.append(
@@ -85,7 +100,9 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
             f"SELECT DISTINCT ?s ?type ?p ?text ?_graph WHERE {{ {client._scope(body)} }} ORDER BY ?s ?type ?p ?text LIMIT {client.max_rows + 1}"
         )
         partial = len(rows) > client.max_rows
-        groups, evidence, seen = defaultdict(set), [], set()
+        groups: defaultdict[str, set[str]] = defaultdict(set)
+        evidence: list[dict[str, Any]] = []
+        seen: set[str] = set()
         query_id = len(client._records())
         for row in rows[: client.max_rows]:
             subject, class_term, field_term = (_term(row[k]) for k in ("s", "type", "p"))
@@ -96,14 +113,14 @@ def search_records(client, terms, kind, fields, *, names_only=False, allow_parti
                 continue
             seen.add(subject.value)
             groups[class_term.value].add(subject.value)
-            name, path = selected[(class_term.value, field_term.value)]
+            matched_field, path = selected[(class_term.value, field_term.value)]
             evidence.append(
                 {
                     "id": subject.value,
                     "type": class_term.value,
-                    "field": name,
+                    "field": matched_field,
                     "predicate": path.iri,
-                    "name_scope": SYNONYM_PREDICATES.get(path.iri),
+                    "name_scope": SYNONYM_PREDICATES.get(path.iri or ""),
                     "path": path.model_dump(mode="json"),
                     "text": _term(row["text"]).model_dump(mode="json"),
                     "graph": row.get("_graph", {}).get("value"),

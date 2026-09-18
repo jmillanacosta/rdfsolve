@@ -45,7 +45,8 @@ def derive_class_mappings(
     if min_instance_count < 1:
         raise ValueError("min_instance_count must be positive")
 
-    def classes(entity, dataset):
+    def classes(entity: str, dataset: str) -> set[str]:
+        """Return the indexed classes of an entity in one dataset."""
         if isinstance(class_index, dict):
             index = class_index.get(dataset)
             return index.get_classes(entity) if index else set()
@@ -72,7 +73,7 @@ def derive_class_mappings(
                 witnesses.setdefault(key, set()).add((edge.source_class, edge.target_class))
                 pair.source_entities.add(edge.source_class)
                 pair.target_entities.add(edge.target_class)
-    sizes: Counter[str] = Counter()
+    sizes: Counter[tuple[str, str]] = Counter()
     datasets = {p.source_dataset for p in pairs.values()} | {
         p.target_dataset for p in pairs.values()
     }
@@ -111,7 +112,9 @@ def derive_class_mappings(
     }
 
 
-def shared_entity_links(indices: dict[str, ClassIndex], *, min_instance_count=1):
+def shared_entity_links(
+    indices: dict[str, ClassIndex], *, min_instance_count: int = 1
+) -> tuple[list[ClassPair], dict[str, Any]]:
     """Find class associations supported by identical RDF identities in datasets."""
     from itertools import combinations
 
