@@ -14,20 +14,24 @@ from rdfsolve.mappings.models.core import MappingEdge
 class ClassPair:
     """Class association with unique entity evidence and observed-sample coverage.
 
-    predicate describes the supporting entity relation. It does not assert that
-    the classes themselves have that relation. Coverage uses the supplied index.
+    supporting_entity_predicate relates the supporting entities, not the classes.
+    class_relation stays None unless a class-level assertion or a documented rule
+    supplies it. Counts and coverage are support, not confidence. Coverage uses
+    the supplied index.
     """
 
     source_class: str
     target_class: str
     source_dataset: str
     target_dataset: str
-    predicate: str
+    supporting_entity_predicate: str
     instance_count: int = 0
     source_entities: set[str] = field(default_factory=set)
     target_entities: set[str] = field(default_factory=set)
     source_coverage: float = 0.0
     target_coverage: float = 0.0
+    class_relation: str | None = None
+    derivation_method: str = "mapped_instance_types"
 
 
 def derive_class_mappings(
@@ -35,6 +39,7 @@ def derive_class_mappings(
     class_index: ClassIndex | dict[str, ClassIndex],
     *,
     min_instance_count: int = 1,
+    derivation_method: str = "mapped_instance_types",
 ) -> tuple[list[ClassPair], dict[str, Any]]:
     """Aggregate distinct entity pairs using each dataset's own type evidence.
 
@@ -69,7 +74,7 @@ def derive_class_mappings(
         for source in left:
             for target in right:
                 key = (source, target, edge.source_dataset, edge.target_dataset, edge.predicate)
-                pair = pairs.setdefault(key, ClassPair(*key))
+                pair = pairs.setdefault(key, ClassPair(*key, derivation_method=derivation_method))
                 witnesses.setdefault(key, set()).add((edge.source_class, edge.target_class))
                 pair.source_entities.add(edge.source_class)
                 pair.target_entities.add(edge.target_class)
@@ -97,7 +102,7 @@ def derive_class_mappings(
             p.source_class,
             p.target_dataset,
             p.target_class,
-            p.predicate,
+            p.supporting_entity_predicate,
         ),
     )
     return result, {
@@ -107,7 +112,9 @@ def derive_class_mappings(
         "skipped_no_target_class": skipped_target,
         "class_pairs_found": len(pairs),
         "output_edges": len(result),
-        "predicates_distribution": dict(Counter(p.predicate for p in result)),
+        "supporting_entity_predicates": dict(
+            Counter(p.supporting_entity_predicate for p in result)
+        ),
         "coverage_basis": "entities in the supplied class index",
     }
 
@@ -129,4 +136,6 @@ def shared_entity_links(
         for left, right in combinations(sorted(indices), 2)
         for iri in sorted(indices[left].entities.keys() & indices[right].entities.keys())
     ]
-    return derive_class_mappings(edges, indices, min_instance_count=min_instance_count)
+    return derive_class_mappings(
+        edges, indices, min_instance_count=min_instance_count, derivation_method="shared_entity_iri"
+    )

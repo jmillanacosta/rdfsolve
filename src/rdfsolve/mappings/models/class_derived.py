@@ -10,7 +10,11 @@ from rdfsolve.mappings.models.core import Mapping
 
 
 class ClassDerivedMapping(Mapping):
-    """Store an explicitly asserted class mapping with its derivation metadata."""
+    """Store class mappings derived from instance-level mappings and their derivation metadata.
+
+    The mapping predicate is the relation between the supporting instances. It is
+    not a class-level assertion.
+    """
 
     mapping_type: str = Field(default="class_derived")
     source_mapping_type: str = Field(
@@ -28,7 +32,7 @@ class ClassDerivedMapping(Mapping):
             "Keys: input_edges, class_pairs_found, class_pairs_after_filter, "
             "output_edges, min_instance_count, min_confidence, "
             "confidence_mean, confidence_median, confidence_max, "
-            "predicates_distribution, top_class_pairs."
+            "supporting_entity_predicates, top_class_pairs."
         ),
     )
     enrichment_stats: dict[str, Any] = Field(
