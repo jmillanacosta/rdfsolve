@@ -23,7 +23,22 @@ class AboutMetadata(BaseModel):
     )
     schema_version: str = Field(
         default="",
-        description="Source release identifier or dated mining snapshot; not the JSON format version",
+        description=(
+            "Provider-declared release: version IRI, version, modified or issued date. "
+            "Empty when the provider declares none. Not the JSON format version."
+        ),
+    )
+    snapshot_id: str | None = Field(
+        None, description="rdfsolve identity of this observation of the source"
+    )
+    retrieved_at: str | None = Field(
+        None, description="ISO-8601 time the source was read for this snapshot"
+    )
+    content_sha256: str | None = Field(
+        None, description="SHA-256 of the retrieved content, when a dump was read"
+    )
+    snapshot_identity_basis: Literal["content_hash", "retrieval_record"] | None = Field(
+        None, description="Whether snapshot_id derives from content_sha256 or retrieved_at"
     )
 
     # Source
@@ -261,6 +276,8 @@ class AboutMetadata(BaseModel):
         qlever_version: dict[str, str] | None = None,
         # Version fields
         schema_version: str | None = None,
+        retrieved_at: str | None = None,
+        content_sha256: str | None = None,
         source_version: str | None = None,
         source_version_iri: str | None = None,
         source_issued: str | None = None,
@@ -284,9 +301,9 @@ class AboutMetadata(BaseModel):
         from rdfsolve.version import VERSION
 
         def _uri(kind: str) -> str | None:
-            from rdfsolve.config import mint
-
             return mint(kind, dataset_name) if dataset_name else None
+
+        from rdfsolve.config import mint
 
         generated_at = finished_at or datetime.now(timezone.utc).isoformat()
         version = (
@@ -295,12 +312,27 @@ class AboutMetadata(BaseModel):
             or source_modified
             or source_issued
             or schema_version
-            or f"snapshot:{generated_at}"
+            or ""
         )
+        retrieved = retrieved_at or started_at or generated_at
+        basis: Literal["content_hash", "retrieval_record"] = (
+            "content_hash" if content_sha256 else "retrieval_record"
+        )
+        snapshot_id = None
+        if dataset_name:
+            snapshot_id = (
+                mint("snapshot", dataset_name, "sha256", content_sha256)
+                if content_sha256
+                else mint("snapshot", dataset_name, retrieved)
+            )
         return AboutMetadata(
             # Identity
             schema_id=str(uuid4()),
             schema_version=version,
+            snapshot_id=snapshot_id,
+            retrieved_at=retrieved,
+            content_sha256=content_sha256,
+            snapshot_identity_basis=basis if snapshot_id else None,
             # Source
             dataset_name=dataset_name,
             endpoint=endpoint,
