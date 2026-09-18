@@ -36,8 +36,6 @@ _EXPORTS = {
     "DatasetClient": ("client.exploration", "DatasetClient"),
     "HydrationLimitError": ("client.hydration", "HydrationLimitError"),
     "Hydrator": ("client.hydration", "Hydrator"),
-    "probe_endpoint": ("mappings.probe", "probe_endpoint"),
-    "probe_resource": ("mappings.probe", "probe_resource"),
     "SchemaMiner": ("mining.miner", "SchemaMiner"),
     "AboutMetadata": ("schema_models.about", "AboutMetadata"),
     "Mapping": ("mappings.models", "Mapping"),

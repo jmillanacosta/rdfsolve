@@ -31,7 +31,6 @@ Table of Contents
    :maxdepth: 2
    :caption: Mappings & Integration
 
-   instance_matcher
    analysis
 
 .. toctree::

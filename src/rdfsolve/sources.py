@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
-import pandas as pd
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -699,80 +698,6 @@ def _node_to_entry(node: dict[str, Any]) -> SourceEntry:
         e["notes"] = str(node["notes"])
 
     return e
-
-
-# DataFrame conversion (for instance_matcher compat)
-
-
-def load_sources_dataframe(
-    path: str | Path | None = None,
-    *,
-    ports_json: str | Path | None = None,
-) -> pd.DataFrame:
-    """Load sources and return a :class:`~pandas.DataFrame`.
-
-    The DataFrame has columns compatible with
-    :func:`~rdfsolve.mappings.probe.probe_resource`:
-    ``dataset_name``, ``endpoint_url``, ``graph_uri``, ``use_graph``,
-    ``void_iri``.
-
-    Parameters
-    ----------
-    path:
-        Path to the sources file.  ``None`` = auto-detect default.
-    ports_json:
-        Optional path to a QLever ``ports.json`` file mapping
-        ``{dataset_name: port}``.  When supplied, ``endpoint_url`` is
-        replaced with ``http://localhost:{port}`` for every dataset
-        present in the file, and datasets **not** in the file are
-        dropped.  This ensures all queries go to local QLever
-        instances instead of remote SPARQL endpoints.
-    """
-    entries = load_sources(path)
-    rows = []
-    for e in entries:
-        rows.append(
-            {
-                "dataset_name": e.get("name", ""),
-                "endpoint_url": e.get("endpoint", ""),
-                "graph_uri": e["graph_uris"][0] if e.get("graph_uris") else "",
-                "void_iri": e.get("void_iri", ""),
-                "use_graph": e.get("use_graph", False),
-            }
-        )
-    df = pd.DataFrame(rows)
-
-    if ports_json is not None:
-        import json as _json
-
-        ports_path = Path(ports_json)
-        if not ports_path.exists():
-            logger.warning("ports_json %s does not exist - ignoring.", ports_path)
-            return df
-
-        port_map: dict[str, int] = _json.loads(ports_path.read_text(encoding="utf-8"))
-        logger.info(
-            "Overriding endpoint URLs from ports.json (%d datasets).",
-            len(port_map),
-        )
-
-        # Override endpoint_url for datasets in port_map
-        df["endpoint_url"] = df.apply(
-            lambda row: (
-                f"http://localhost:{port_map[row['dataset_name']]}"
-                if row["dataset_name"] in port_map
-                else ""
-            ),
-            axis=1,
-        )
-        # Keep only datasets that have a local endpoint
-        df = df[df["endpoint_url"] != ""].reset_index(drop=True)
-        logger.info(
-            "After ports.json filter: %d datasets with local endpoints.",
-            len(df),
-        )
-
-    return df
 
 
 # Source mode classification
