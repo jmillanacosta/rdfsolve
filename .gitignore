@@ -925,6 +925,7 @@ notes/*
 
 .vscode/settings.json
 data/*
+!data/identity_overrides.yaml
 /src/logs/
 rdfsolve_pipeline.svg
 docs/known-limitations.md

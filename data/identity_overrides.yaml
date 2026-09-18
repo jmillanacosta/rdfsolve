@@ -1,0 +1,16 @@
+# Curated relations between registry entries.
+#
+# Each item decides one pair. It overrides the structural rules and any
+# candidate listed in identity_review.tsv. Relations:
+#   same_dataset     one resource under two registry names
+#   distribution_of  another access route to the same data
+#   version_of       another release of the same resource
+#   graph_scope_of   left is a graph subset of right on the same endpoint
+#   distinct         different datasets
+#
+# Example:
+# - left: oma
+#   right: omabrowser
+#   relation: same_dataset
+#   note: Same OMA SPARQL service under two endpoint paths.
+[]
