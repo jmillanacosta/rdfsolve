@@ -274,7 +274,7 @@ class MinedSchema(BaseModel):
         This does not fill missing statistics by querying instance data.
         Pass discovery options such as graph_uris and get_graphs_from_store.
         """
-        from rdfsolve.api import discover_void_source
+        from rdfsolve.void_source import discover_void_source
 
         return discover_void_source(endpoint, name, **kwargs).to_mined_schema()
 

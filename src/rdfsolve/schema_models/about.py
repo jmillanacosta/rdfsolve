@@ -59,7 +59,7 @@ class AboutMetadata(BaseModel):
     )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,
-        description="All named graphs discovered via discover_all_graphs() with counts",
+        description="Named graphs discovered via discover_all_graphs(), with optional counts",
     )
     ontology_graph_uris: list[str] | None = Field(
         None,

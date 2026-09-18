@@ -23,7 +23,7 @@ def responses(monkeypatch):
         ENDPOINT, "up", 0.1, "", "2026-09-08T10:00:00+00:00"
     ))
     monkeypatch.setattr("rdfsolve.source_enrichment.check_endpoint_health", health)
-    monkeypatch.setattr("rdfsolve.api.query_metadata", metadata)
+    monkeypatch.setattr("rdfsolve.metadata.query_metadata", metadata)
     return health, metadata
 
 

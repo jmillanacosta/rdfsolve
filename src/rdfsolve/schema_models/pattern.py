@@ -48,7 +48,7 @@ class SchemaPattern(BaseModel):
       ``?s a ?sc . ?s ?p ?o . FILTER(isBlank(?o))``
 
     This model is shared between SchemaMiner (direct SPARQL)
-    and VoidParser (RDF triples VoID catalog-based extraction).
+    and the VoID reader (published VoID partitions).
     """
 
     subject_class: str = Field(

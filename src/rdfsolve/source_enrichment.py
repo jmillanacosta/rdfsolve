@@ -30,7 +30,8 @@ def enrich_source(
     Writes use a unique backup and atomic replacement. Use one registry
     writer at a time. YAML comments and layout are not retained.
     """
-    from rdfsolve.api import discover_void_source, query_metadata
+    from rdfsolve.metadata import query_metadata
+    from rdfsolve.void_source import discover_void_source
 
     parsed = urlsplit(endpoint)
     if not name.strip() or parsed.scheme not in {"http", "https"} or not parsed.hostname:

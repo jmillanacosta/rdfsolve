@@ -7,7 +7,7 @@ import pytest
 from rdflib import Dataset
 from rdflib.compare import isomorphic
 
-from rdfsolve.api import discover_void_graphs, discover_void_source
+from rdfsolve.void_source import discover_void_graphs, discover_void_source
 from rdfsolve.sparql_helper import EndpointUnhealthyError, PaginationTruncatedError, SparqlHelper
 from tests.test_navigation import aop_schema
 
