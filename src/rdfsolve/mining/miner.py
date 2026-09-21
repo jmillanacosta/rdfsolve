@@ -610,6 +610,17 @@ class SchemaMiner:
         self, schema: MinedSchema, annotation_iris: list[str] | None = None
     ) -> MinedSchema:
         """Filter the result and set final counts and times once."""
+        from rdfsolve.mining.types import ONTOLOGY_METACLASSES
+
+        excluded = [p for p in schema.patterns if p.subject_class in ONTOLOGY_METACLASSES]
+        if excluded:
+            schema.patterns = [
+                p for p in schema.patterns if p.subject_class not in ONTOLOGY_METACLASSES
+            ]
+            self._report.report.config["excluded_metaclass_patterns"] = {
+                "count": len(excluded),
+                "subject_classes": sorted({p.subject_class for p in excluded}),
+            }
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
         if self.enrich:

@@ -14,7 +14,7 @@ def annotate_rdf(schema: MinedSchema, graph: Graph, *, include_examples: bool = 
     """Add source text, example triples, and document provenance to RDF."""
     from rdflib import Literal as RdfLiteral
     from rdflib import URIRef
-    from rdflib.namespace import DCTERMS, OWL
+    from rdflib.namespace import DCTERMS
 
     schema.bind_prefixes(graph)
     if include_examples:
@@ -31,8 +31,9 @@ def annotate_rdf(schema: MinedSchema, graph: Graph, *, include_examples: bool = 
                     )
                 )
     document = URIRef("")
-    if schema.about.schema_version:
-        graph.add((document, OWL.versionInfo, RdfLiteral(schema.about.schema_version)))
+    # Do not encode an rdfsolve snapshot/retrieval identity as owl:versionInfo.
+    # Provider/schema versions are retained in AboutMetadata and the release manifest;
+    # generated RDF is identified through provenance rather than ontology versioning.
     if schema.about.source_version_iri:
         graph.add((document, DCTERMS.source, URIRef(schema.about.source_version_iri)))
     if schema.about.generated_at:

@@ -88,8 +88,9 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
     if schema.about.generated_at:
         g.add((void_doc_uri, DCTERMS.created, RdfLiteral(schema.about.generated_at)))
     g.add((void_doc_uri, FOAF.primaryTopic, dataset_uri))
-    if schema.about.schema_version:
-        g.add((void_doc_uri, OWL.versionInfo, RdfLiteral(schema.about.schema_version)))
+    # The generated VoID document is an rdfsolve artifact, not an ontology/source
+    # release. Its run/snapshot identity is recorded by release provenance instead
+    # of owl:versionInfo.
 
     # void:Dataset represents the source RDF dataset
     g.add((dataset_uri, RDF.type, void.Dataset))

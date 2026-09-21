@@ -135,13 +135,16 @@ class RemoteMiningStage(Stage):
         polite_delay = get_polite_delay(source)
         try:
             report_path = source_output_dir / f"{source.name}{suffix}_report.json"
+            from rdfsolve.evidence.declared_sources import empirical_graph_scope
+
+            empirical_graphs = empirical_graph_scope(source)
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
                 get_graphs_from_store=use_graph_store,
                 graph_store_url=self.config.graph_store_urls.get(source.name),
                 graph_store_dir=source_output_dir / "downloads",
                 graph_store_max_bytes=self.config.max_response_bytes,
-                graph_uris=source.graph_uris or None,
+                graph_uris=empirical_graphs or None,
                 timeout=(
                     self.config.timeout
                     if self.config.timeout is not None
@@ -214,6 +217,25 @@ class RemoteMiningStage(Stage):
                 source.failure_count = 0
                 source.endpoint_down = False
 
+            self._save_ontology_discovery(
+                schema,
+                source_output_dir,
+                source.name,
+                suffix,
+                helper=miner.helper,
+                mining_context="remote_endpoint",
+            )
+            self._save_declared_artifacts(
+                source,
+                source_output_dir,
+                source.name,
+                suffix,
+                helper=miner.helper,
+                access_context="remote_endpoint",
+            )
+            self._save_property_usage_evidence(
+                schema, source_output_dir, source.name, suffix, helper=miner.helper
+            )
             self._save_schema_outputs(
                 schema, source_output_dir, source.name, suffix, helper=miner.helper
             )

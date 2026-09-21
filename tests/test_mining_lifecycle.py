@@ -237,3 +237,24 @@ def test_an_anonymous_object_class_becomes_one_blank_node_pattern(monkeypatch):
     blank = next(p for p in patterns if p.object_class == "BlankNode")
     assert (blank.subject_class, blank.property_uri) == ("urn:C", "urn:p")
     assert miner._report.report.dropped_invalid_uris == 0
+
+
+def test_all_strategies_exclude_shacl_executable_classes_from_empirical_patterns():
+    from rdflib import Literal, Namespace, RDF
+
+    SH = Namespace("http://www.w3.org/ns/shacl#")
+    EX = Namespace("urn:ex:")
+    graph = Graph()
+    graph.add((EX.item, RDF.type, EX.DomainClass))
+    graph.add((EX.item, EX.p, Literal("domain")))
+    graph.add((EX.query, RDF.type, SH.SPARQLSelectExecutable))
+    graph.add((EX.query, SH.select, Literal("SELECT * WHERE { ?s ?p ?o }")))
+
+    for strategy in ("one-shot", "single-pass", "two-phase"):
+        with SchemaMiner.from_graph(graph, counts=False, delay=0, strategy=strategy) as miner:
+            schema = miner.mine(dataset_name=f"test-{strategy}")
+        assert all(
+            pattern.subject_class != str(SH.SPARQLSelectExecutable)
+            for pattern in schema.patterns
+        )
+        assert any(pattern.subject_class == str(EX.DomainClass) for pattern in schema.patterns)

@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from pydantic import BaseModel, Field
-from rdflib import OWL, RDF, RDFS, Graph, URIRef
+from rdflib import OWL, RDF, RDFS, Graph, Literal, URIRef
 
 from rdfsolve.schema_models.enrichment import TermAnnotation
 
@@ -19,6 +19,34 @@ class SubClassRelation(BaseModel):
     child: str
     parent: str
     confidence: float = 1.0
+
+
+class SubPropertyRelation(BaseModel):
+    """rdfs:subPropertyOf relation."""
+
+    child: str
+    parent: str
+
+
+class EquivalentClassRelation(BaseModel):
+    """owl:equivalentClass relation between named classes."""
+
+    class1: str
+    class2: str
+
+
+class EquivalentPropertyRelation(BaseModel):
+    """owl:equivalentProperty relation between named properties."""
+
+    property1: str
+    property2: str
+
+
+class DisjointClassRelation(BaseModel):
+    """owl:disjointWith relation between named classes."""
+
+    class1: str
+    class2: str
 
 
 class DomainAssertion(BaseModel):
@@ -64,6 +92,11 @@ class OntologyStructure(BaseModel):
     classes: list[str] = Field(default_factory=list)
     annotations: list[TermAnnotation] = Field(default_factory=list)
     subclass_relations: list[SubClassRelation] = []
+    subproperty_relations: list[SubPropertyRelation] = []
+    equivalent_classes: list[EquivalentClassRelation] = []
+    equivalent_properties: list[EquivalentPropertyRelation] = []
+    disjoint_classes: list[DisjointClassRelation] = []
+    deprecated_terms: list[str] = []
     domain_assertions: list[DomainAssertion] = []
     range_assertions: list[RangeAssertion] = []
     inverse_properties: list[InverseRelation] = []
@@ -84,25 +117,62 @@ class OntologyStructure(BaseModel):
         ranges = [item for item in self.range_assertions if item.property in properties]
         # A used type alone does not establish an embedded ontology.
         referenced = set(self.classes)
-        for relation in self.subclass_relations:
-            referenced.update((relation.child, relation.parent))
+        for sub in self.subclass_relations:
+            referenced.update((sub.child, sub.parent))
         selected = (
             (set(class_uris) & referenced)
             | {item.domain for item in domains}
             | {item.range for item in ranges}
         )
         parents: dict[str, set[str]] = defaultdict(set)
-        for relation in self.subclass_relations:
-            parents[relation.child].add(relation.parent)
+        for sub in self.subclass_relations:
+            parents[sub.child].add(sub.parent)
         pending = list(selected)
         while pending:
             for parent in parents[pending.pop()] - selected:
                 selected.add(parent)
                 pending.append(parent)
+        # Property ancestry/equivalence is retained only around used properties.
+        selected_properties = set(properties)
+        prop_parents: dict[str, set[str]] = defaultdict(set)
+        for subprop in self.subproperty_relations:
+            prop_parents[subprop.child].add(subprop.parent)
+        pending_properties = list(selected_properties)
+        while pending_properties:
+            for parent in prop_parents[pending_properties.pop()] - selected_properties:
+                selected_properties.add(parent)
+                pending_properties.append(parent)
+        for eq_prop in self.equivalent_properties:
+            if eq_prop.property1 in selected_properties or eq_prop.property2 in selected_properties:
+                selected_properties.update((eq_prop.property1, eq_prop.property2))
+
         return OntologyStructure(
             classes=sorted(selected),
             annotations=self.annotations,
             subclass_relations=[item for item in self.subclass_relations if item.child in selected],
+            subproperty_relations=[
+                item for item in self.subproperty_relations if item.child in selected_properties
+            ],
+            equivalent_classes=[
+                item
+                for item in self.equivalent_classes
+                if item.class1 in selected or item.class2 in selected
+            ],
+            equivalent_properties=[
+                item
+                for item in self.equivalent_properties
+                if item.property1 in selected_properties or item.property2 in selected_properties
+            ],
+            disjoint_classes=[
+                item
+                for item in self.disjoint_classes
+                if item.class1 in selected or item.class2 in selected
+            ],
+            deprecated_terms=sorted(
+                term
+                for term in self.deprecated_terms
+                if term in selected or term in selected_properties
+            ),
             domain_assertions=domains,
             range_assertions=ranges,
             inverse_properties=[
@@ -126,8 +196,23 @@ class OntologyStructure(BaseModel):
         for class_uri in self.classes:
             g.add((URIRef(class_uri), RDF.type, RDFS.Class))
 
-        for rel in self.subclass_relations:
-            g.add((URIRef(rel.child), RDFS.subClassOf, URIRef(rel.parent)))
+        for sub in self.subclass_relations:
+            g.add((URIRef(sub.child), RDFS.subClassOf, URIRef(sub.parent)))
+
+        for subprop in self.subproperty_relations:
+            g.add((URIRef(subprop.child), RDFS.subPropertyOf, URIRef(subprop.parent)))
+
+        for eq_class in self.equivalent_classes:
+            g.add((URIRef(eq_class.class1), OWL.equivalentClass, URIRef(eq_class.class2)))
+
+        for eq_prop in self.equivalent_properties:
+            g.add((URIRef(eq_prop.property1), OWL.equivalentProperty, URIRef(eq_prop.property2)))
+
+        for disjoint in self.disjoint_classes:
+            g.add((URIRef(disjoint.class1), OWL.disjointWith, URIRef(disjoint.class2)))
+
+        for term in self.deprecated_terms:
+            g.add((URIRef(term), OWL.deprecated, Literal(True)))
 
         for dom in self.domain_assertions:
             g.add((URIRef(dom.property), RDFS.domain, URIRef(dom.domain)))
@@ -157,8 +242,17 @@ class OntologyStructure(BaseModel):
     def term_iris(self) -> list[str]:
         """Return retained terms, without adding unused descendants."""
         terms = set(self.classes)
-        for relation in self.subclass_relations:
-            terms.update((relation.child, relation.parent))
+        for sub in self.subclass_relations:
+            terms.update((sub.child, sub.parent))
+        for subprop in self.subproperty_relations:
+            terms.update((subprop.child, subprop.parent))
+        for eq_class in self.equivalent_classes:
+            terms.update((eq_class.class1, eq_class.class2))
+        for eq_prop in self.equivalent_properties:
+            terms.update((eq_prop.property1, eq_prop.property2))
+        for disjoint in self.disjoint_classes:
+            terms.update((disjoint.class1, disjoint.class2))
+        terms.update(self.deprecated_terms)
         for domain in self.domain_assertions:
             terms.update((domain.property, domain.domain))
         for range_ in self.range_assertions:
@@ -183,11 +277,15 @@ class OntologyStructure(BaseModel):
 
 
 __all__ = [
+    "DisjointClassRelation",
     "DomainAssertion",
+    "EquivalentClassRelation",
+    "EquivalentPropertyRelation",
     "InverseRelation",
     "OntologyStructure",
     "PropertyCharacteristic",
     "RangeAssertion",
     "Restriction",
     "SubClassRelation",
+    "SubPropertyRelation",
 ]

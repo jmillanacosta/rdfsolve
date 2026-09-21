@@ -23,6 +23,7 @@ from rdfsolve.schema_models import AboutMetadata, MinedSchema
 def test_build_records_only_provider_declared_versions(fields, expected):
     about = AboutMetadata.build(finished_at="2026-09-07T12:00:00+00:00", **fields)
     assert about.schema_version == expected
+    assert about.generated_at == "2026-09-07T12:00:00+00:00"
     assert MinedSchema(patterns=[], about=about).to_dict()["version"] == 1
 
 

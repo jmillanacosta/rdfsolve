@@ -18,13 +18,17 @@ from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.schema_models.ontology import (
+    DisjointClassRelation,
     DomainAssertion,
+    EquivalentClassRelation,
+    EquivalentPropertyRelation,
     InverseRelation,
     OntologyStructure,
     PropertyCharacteristic,
     RangeAssertion,
     Restriction,
     SubClassRelation,
+    SubPropertyRelation,
 )
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
@@ -76,7 +80,10 @@ __all__ = [
     "AboutMetadata",
     # metadata
     # ontology
+    "DisjointClassRelation",
     "DomainAssertion",
+    "EquivalentClassRelation",
+    "EquivalentPropertyRelation",
     "InverseRelation",
     "MetadataDocument",
     "MinedSchema",
@@ -97,6 +104,7 @@ __all__ = [
     "ShaclPropertyShape",
     "ShaclShapesGraph",
     "SubClassRelation",
+    "SubPropertyRelation",
     # void models
     "VoidClassPartition",
     "VoidDataset",

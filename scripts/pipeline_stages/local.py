@@ -195,8 +195,20 @@ class LocalMiningStage(Stage):
             for path in expanded:
                 path.unlink(missing_ok=True)
 
-    def _mine_local(self, source: Source, port: int):
-        """Mine schema from local QLever instance."""
+    def _mine_local(
+        self,
+        source: Source,
+        port: int,
+        *,
+        graph_uris: list[str] | None = None,
+        mining_context: str = "local_distribution",
+    ):
+        """Mine one dataset from a local QLever instance.
+
+        ``graph_uris`` is used when several datasets share one physical QLever
+        index.  Grouping is an indexing optimization only; scientific evidence
+        is still produced one registry dataset at a time.
+        """
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
@@ -209,6 +221,7 @@ class LocalMiningStage(Stage):
 
         miner = SchemaMiner(
             endpoint_url=endpoint,
+            graph_uris=graph_uris,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
@@ -220,6 +233,11 @@ class LocalMiningStage(Stage):
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
+
+        if graph_uris:
+            from rdfsolve.qlever.index_check import verify_named_graphs
+
+            verify_named_graphs(miner._helper, graph_uris)
 
         if self.config.extract_ontology or self.config.extract_metadata:
             from rdfsolve.mining import mine_with_ontology
@@ -263,6 +281,37 @@ class LocalMiningStage(Stage):
         else:
             schema = miner.mine(dataset_name=source.name)
 
+        from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
+
+        owl_urls = source.download_fields.get("download_owl") or []
+        if isinstance(owl_urls, str):
+            owl_urls = [owl_urls]
+        local_ontology_files = archive_local_ontology_files(
+            source_dataset_id=source.name,
+            urls=[str(url) for url in owl_urls if url],
+            source_workdir=self.config.data_dir / "qlever_workdirs" / source.name,
+            dataset_output_dir=output_dir,
+        )
+        self._save_ontology_discovery(
+            schema,
+            output_dir,
+            source.name,
+            suffix,
+            helper=miner.helper,
+            mining_context=mining_context,
+            local_ontology_file_candidates=local_ontology_files,
+        )
+        self._save_declared_artifacts(
+            source,
+            output_dir,
+            source.name,
+            suffix,
+            helper=miner.helper,
+            access_context=mining_context,
+        )
+        self._save_property_usage_evidence(
+            schema, output_dir, source.name, suffix, helper=miner.helper
+        )
         self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=miner.helper)
         self._require_complete(miner)
 

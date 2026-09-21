@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 PREFIXES = """
 PREFIX void: <http://rdfs.org/ns/void#>
 PREFIX void-ext: <http://ldf.fi/void-ext#>
+PREFIX sd: <http://www.w3.org/ns/sparql-service-description#>
 """
 
 
@@ -67,6 +68,21 @@ def retrieve_description(helper: SparqlHelper, graphs: list[str] | None) -> Grap
     } UNION {
       ?s <http://xmlns.com/foaf/0.1/primaryTopic> ?dataset ; ?p ?o .
       ?dataset a void:Dataset .
+    } UNION {
+      # Preserve provider service-description graph identity.  Earlier
+      # retrieval kept graph-description fragments but omitted sd:name, making
+      # it impossible to associate graph-scoped metadata with the source graph.
+      ?s sd:namedGraph ?o .
+      BIND(sd:namedGraph AS ?p)
+    } UNION {
+      ?dataset sd:namedGraph ?namedGraph .
+      ?namedGraph ?p ?o .
+      BIND(?namedGraph AS ?s)
+    } UNION {
+      ?dataset sd:namedGraph ?namedGraph .
+      ?namedGraph sd:graph ?graphDescription .
+      ?graphDescription ?p ?o .
+      BIND(?graphDescription AS ?s)
     }
     """
     query = PREFIXES + "CONSTRUCT { ?s ?p ?o } WHERE { " + graph_scope(body, graphs) + " }"

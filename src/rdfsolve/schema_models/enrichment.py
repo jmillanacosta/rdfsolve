@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
+import re
 from typing import Any
 from typing import Literal as Kind
 
@@ -11,6 +13,22 @@ from rdflib import RDF, RDFS, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier, Node
 
 from rdfsolve._outcomes import QueryFailure
+
+_SAFE_BNODE = re.compile(r"^[A-Za-z_][A-Za-z0-9._-]*$")
+
+
+def _safe_bnode_id(value: str) -> str:
+    """Return a serialization-safe deterministic blank-node identifier.
+
+    Provider blank-node labels are not semantic identifiers and can contain
+    characters that RDFLib later emits as invalid Turtle labels (for example
+    ``nodeID://``).  Valid labels are preserved; unsafe labels are replaced by a
+    deterministic hash only in derived RDF serialization.
+    """
+    if _SAFE_BNODE.fullmatch(value) and not value.endswith("."):
+        return value
+    return "b" + hashlib.sha256(value.encode("utf-8")).hexdigest()[:24]
+
 
 DEFINITION_PREDICATES = (
     "http://www.w3.org/2004/02/skos/core#definition",
@@ -64,7 +82,7 @@ class RdfTerm(BaseModel):
         if self.kind == "uri":
             return URIRef(self.value)
         if self.kind == "bnode":
-            return BNode(self.value)
+            return BNode(_safe_bnode_id(self.value))
         return Literal(
             self.value,
             lang=self.language,

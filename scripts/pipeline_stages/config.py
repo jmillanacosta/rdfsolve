@@ -113,7 +113,13 @@ class PipelineConfig:
     extract_ontology: bool = False
     ontology_scope: str = "schema"
     ontology_as_data: bool = False
+    discover_ontology_graphs: bool = False
+    ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False
+    collect_property_usage_evidence: bool = False
+    collect_property_value_profiles: bool = False
+    collect_property_value_histograms: bool = False
+    collect_declared_artifacts: bool = False
 
     parallelism: int = 4
     exclude_graph_prefixes: tuple[str, ...] = SUGGESTED_SERVICE_GRAPHS

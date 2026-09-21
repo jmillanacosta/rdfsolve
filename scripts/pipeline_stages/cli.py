@@ -231,6 +231,53 @@ Examples:
         help="Extract infrastructure metadata (VoID/DCAT)",
     )
     parser.add_argument(
+        "--discover-ontology-graphs",
+        action="store_true",
+        help=(
+            "After schema mining, scan named graphs for ontology material and save "
+            "version/header evidence plus empirical term overlap"
+        ),
+    )
+    parser.add_argument(
+        "--ontology-discovery-max-graphs",
+        type=int,
+        default=500,
+        help="Maximum named graphs inspected by ontology discovery (default: 500)",
+    )
+    parser.add_argument(
+        "--property-usage-evidence",
+        action="store_true",
+        help=(
+            "Collect class/property subject support over the selected graph scope; "
+            "writes a separate empirical-evidence artifact"
+        ),
+    )
+    parser.add_argument(
+        "--property-value-profiles",
+        action="store_true",
+        help=(
+            "Also collect node-kind, datatype, and language-tag profiles for "
+            "class/property evidence; adds aggregate queries"
+        ),
+    )
+    parser.add_argument(
+        "--property-value-histograms",
+        action="store_true",
+        help=(
+            "Also collect bounded per-subject value-count histograms; intended "
+            "primarily for local indexes because it requires nested aggregation"
+        ),
+    )
+    parser.add_argument(
+        "--declared-artifacts",
+        action="store_true",
+        help=(
+            "Archive explicitly configured provider SHACL/SPARQL-example RDF "
+            "separately from empirical mining and project a documented subset "
+            "as declared evidence"
+        ),
+    )
+    parser.add_argument(
         "--no-enrichment", action="store_true", help="Skip definitions and observed examples"
     )
     parser.add_argument(
@@ -385,7 +432,15 @@ Examples:
     config.extract_ontology = args.extract_ontology
     config.ontology_scope = args.ontology_scope
     config.ontology_as_data = args.ontology_as_data
+    config.discover_ontology_graphs = args.discover_ontology_graphs
+    config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
+    if config.ontology_discovery_max_graphs < 1:
+        parser.error("--ontology-discovery-max-graphs must be positive")
     config.extract_metadata = args.extract_metadata
+    config.collect_property_usage_evidence = args.property_usage_evidence
+    config.collect_property_value_profiles = args.property_value_profiles
+    config.collect_property_value_histograms = args.property_value_histograms
+    config.collect_declared_artifacts = args.declared_artifacts
     config.enrich = not args.no_enrichment
     config.examples_per_pattern = args.examples_per_pattern
     config.trim_descriptions = args.trim_descriptions

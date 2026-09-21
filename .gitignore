@@ -539,6 +539,7 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+!src/rdfsolve/release/
 [Rr]eleases/
 x64/
 x86/

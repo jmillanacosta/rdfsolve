@@ -67,9 +67,13 @@ class GroupedMiningStage(LocalMiningStage):
             workdir.mkdir(parents=True, exist_ok=True)
 
             output_dir = self.config.output_dir / f"grouped_{group_name}"
-            schema_path = output_dir / f"{group_name}_schema.json"
-            if self.config.skip_completed and schema_path.exists():
-                log.info("  Skipping: output already exists")
+            suffix = self.config.output_suffix
+            completed = [
+                self.config.output_dir / source.name / f"{source.name}{suffix}_schema.json"
+                for source in group_sources
+            ]
+            if self.config.skip_completed and completed and all(path.exists() for path in completed):
+                log.info("  Skipping: all per-dataset outputs already exist")
                 results["skipped"].append(group_name)
                 continue
 
@@ -168,8 +172,10 @@ class GroupedMiningStage(LocalMiningStage):
 
                 if server_pid:
                     try:
-                        log.info("  Mining combined schema...")
-                        self._mine_grouped(group_name, group_sources, port)
+                        log.info("  Mining per-dataset schemas from shared index...")
+                        self._mine_grouped(
+                            group_name, [source for source, _ in source_data], port
+                        )
                         results["groups_mined"].append(group_name)
                     finally:
                         self._qlever_stop(server_pid)
@@ -370,80 +376,32 @@ class GroupedMiningStage(LocalMiningStage):
                 path.unlink(missing_ok=True)
 
     def _mine_grouped(self, group_name: str, sources: list[Source], port: int):
-        from rdfsolve import SchemaMiner
+        """Mine each registry dataset separately from one shared QLever index.
 
-        endpoint = f"http://localhost:{port}"
-        graph_uris = [mint("graph", s.name) for s in sources]
+        Every source was loaded into a synthetic named graph during grouped
+        indexing.  The shared physical index must not become a scientific
+        aggregation unit: counts, paths, declared evidence, and ontology usage
+        are therefore generated independently for each source graph.
+        """
 
-        output_dir = self.config.output_dir / f"grouped_{group_name}"
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        report_path = output_dir / f"{group_name}_report.json"
-
-        miner = SchemaMiner(
-            endpoint_url=endpoint,
-            graph_uris=graph_uris,
-            timeout=self.config.timeout if self.config.timeout is not None else 600.0,
-            delay=self.config.delay,
-            sparql_engine="qlever",
-            chunk_size=self.config.chunk_size,
-            class_batch_size=self.config.class_batch_size,
-            class_chunk_size=self.config.class_chunk_size,
-            enrich=self.config.enrich,
-            examples_per_pattern=self.config.examples_per_pattern,
-            max_response_bytes=self.config.max_response_bytes,
-            report_path=str(report_path),
-        )
-
-        from rdfsolve.qlever.index_check import verify_named_graphs
-
-        verify_named_graphs(miner._helper, graph_uris)
-
-        if self.config.extract_ontology or self.config.extract_metadata:
-            from rdfsolve.mining import mine_with_ontology
-
-            result = mine_with_ontology(
-                miner,
-                extract_ontology=self.config.extract_ontology,
-                ontology_scope=self.config.ontology_scope,
-                ontology_as_data=self.config.ontology_as_data,
-                extract_metadata=self.config.extract_metadata,
-                dataset_name=group_name,
+        mined: list[str] = []
+        suffix = self.config.output_suffix
+        for source in sources:
+            schema_path = (
+                self.config.output_dir
+                / source.name
+                / f"{source.name}{suffix}_schema.json"
             )
-            schema = result.data_schema
-            if result.ontology:
-                ontology_path = output_dir / f"{group_name}_ontology.ttl"
-                try:
-                    ontology_graph = trim_export_text(
-                        result.ontology, self.config.trim_descriptions
-                    ).to_rdf_graph()
-                    if ontology_graph:
-                        schema.annotate_rdf(
-                            ontology_graph,
-                            include_examples=False,
-                            trim_descriptions=self.config.trim_descriptions,
-                        )
-                        ont_ttl = ontology_graph.serialize(format="turtle")
-                        ontology_path.write_text(ont_ttl, encoding="utf-8")
-                except Exception as e:
-                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
-            if result.metadata:
-                metadata_path = output_dir / f"{group_name}_metadata.ttl"
-                try:
-                    metadata_graph = trim_export_text(
-                        result.metadata, self.config.trim_descriptions
-                    ).to_rdf_graph()
-                    if metadata_graph:
-                        meta_ttl = metadata_graph.serialize(format="turtle")
-                        metadata_path.write_text(meta_ttl, encoding="utf-8")
-                except Exception as e:
-                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
-        else:
-            schema = miner.mine(dataset_name=group_name)
-
-        self._save_schema_outputs(
-            schema, output_dir, group_name, self.config.output_suffix, helper=miner.helper
-        )
-        self._require_complete(miner)
-        schema_path = output_dir / f"{group_name}_schema.json"
-        log.info(f"  -> Saved grouped schema to {schema_path}")
+            if self.config.skip_completed and schema_path.exists():
+                log.info("  [%s] skipping existing per-dataset schema", source.name)
+                continue
+            graph_uri = mint("graph", source.name)
+            log.info("  [%s] mining graph %s from grouped index %s", source.name, graph_uri, group_name)
+            self._mine_local(
+                source,
+                port,
+                graph_uris=[graph_uri],
+                mining_context="grouped_local_distribution",
+            )
+            mined.append(source.name)
+        return mined

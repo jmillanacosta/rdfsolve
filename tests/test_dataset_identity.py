@@ -117,6 +117,8 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
     assert result.datasets == {"a": ["a", "b", "c"], "d": ["d"]}
     assert all(item.decided_by == "override" for item in result.relations)
     assert result.candidates == []
+    assert result.review_complete is True
+    assert result.canonical_dataset_count == 2
 
 
 def decided(left, right, relation):
@@ -191,7 +193,8 @@ def test_cli_writes_identity_and_review_table(tmp_path):
         main, ["registry", "identity", "--sources", str(sources), "--output", str(output)]
     )
     assert result.exit_code == 0, result.output
-    assert "3 registry entries, 3 datasets, 1 candidate" in result.output
+    assert "3 registry entries, 3 provisional groups, 1 candidate" in result.output
+    assert "canonical dataset count unresolved" in result.output
     assert json.loads((output / "identity.json").read_text())["datasets"]["other"] == ["other"]
     with (output / "identity_review.tsv").open() as stream:
         rows = list(csv.DictReader(stream, delimiter="\t"))
@@ -217,3 +220,10 @@ def test_shipped_overrides_resolve_against_the_registry():
         ("oma", "omabrowser"),
         ("string", "stringdb"),
     }
+
+
+def test_canonical_count_is_withheld_until_candidates_are_resolved():
+    result = resolve_identity([entry("a"), entry("b")])
+    assert result.candidates
+    assert result.review_complete is False
+    assert result.canonical_dataset_count is None

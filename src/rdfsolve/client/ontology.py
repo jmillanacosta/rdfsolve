@@ -11,7 +11,6 @@ from tempfile import NamedTemporaryFile
 from typing import Any
 from urllib.parse import quote
 
-import bioregistry
 import requests
 from rdflib import Literal
 
@@ -31,6 +30,23 @@ DEFINITIONS = (
     "http://purl.obolibrary.org/obo/IAO_0000115",
     "http://www.w3.org/2004/02/skos/core#definition",
 )
+
+
+def _parse_registered_iri(iri: str) -> tuple[str | None, str | None]:
+    """Use Bioregistry when installed; ontology lookup remains usable without it."""
+    try:
+        import bioregistry
+    except ImportError:
+        return None, None
+    return bioregistry.parse_iri(iri)
+
+
+def _registered_iri(prefix: str, identifier: str) -> str | None:
+    try:
+        import bioregistry
+    except ImportError:
+        return None
+    return bioregistry.get_iri(prefix, identifier)
 
 
 def synonym_evidence(value: Term) -> list[dict[str, str]]:
@@ -60,15 +76,15 @@ def synonym_evidence(value: Term) -> list[dict[str, str]]:
 
 def term_key(iri: str) -> str:
     """Use an exact IRI or a registered namespace/identifier correspondence."""
-    prefix, identifier = bioregistry.parse_iri(iri)
+    prefix, identifier = _parse_registered_iri(iri)
     return f"{prefix}:{identifier}" if prefix and identifier else iri
 
 
 def canonical_iri(iri: str) -> str:
     """Resolve registered IRI formats without guessing local namespaces."""
     absolute_iri(iri)
-    prefix, identifier = bioregistry.parse_iri(iri)
-    return bioregistry.get_iri(prefix, identifier) or iri if prefix and identifier else iri
+    prefix, identifier = _parse_registered_iri(iri)
+    return _registered_iri(prefix, identifier) or iri if prefix and identifier else iri
 
 
 class OntologyLookup:

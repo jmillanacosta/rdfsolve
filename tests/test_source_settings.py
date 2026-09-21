@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from rdfsolve.config import mint
 from rdfsolve.endpoint_health import get_polite_delay
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.strategy import MiningContext
@@ -206,7 +207,7 @@ def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch,
         path = config.output_dir / "test" / "test_schema.json"
     elif mode == "grouped":
         pipeline.GroupedMiningStage(config)._mine_grouped("test", [source], 7019)
-        path = config.output_dir / "grouped_test" / "test_schema.json"
+        path = config.output_dir / "test" / "test_schema.json"
     else:
         stage = pipeline.LsLodCloudStage(config)
         monkeypatch.setattr(stage, "_save_schema_connectivity", Mock())
@@ -521,3 +522,20 @@ def test_a_turtle_url_is_left_alone(pipeline, tmp_path):
         {"name": "plain", "download_ttl": "http://example.org/data.ttl"}, tmp_path, 7019, "singularity"
     )
     assert "mv -f" not in qleverfile
+
+
+def test_grouped_mining_keeps_dataset_scopes_separate(pipeline, tmp_path, monkeypatch):
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    stage = pipeline.GroupedMiningStage(config)
+    sources = [pipeline.Source(name="one"), pipeline.Source(name="two")]
+    calls = []
+
+    def mine_local(source, port, *, graph_uris=None, mining_context="local_distribution"):
+        calls.append((source.name, port, graph_uris, mining_context))
+
+    monkeypatch.setattr(stage, "_mine_local", mine_local)
+    assert stage._mine_grouped("provider", sources, 7019) == ["one", "two"]
+    assert calls == [
+        ("one", 7019, [mint("graph", "one")], "grouped_local_distribution"),
+        ("two", 7019, [mint("graph", "two")], "grouped_local_distribution"),
+    ]

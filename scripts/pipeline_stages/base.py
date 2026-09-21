@@ -80,6 +80,133 @@ class Stage:
                 reasons.append(f"unfinished phases: {unfinished}")
             raise RuntimeError(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
 
+
+    def _save_ontology_discovery(
+        self,
+        schema: Any,
+        output_dir: Path,
+        name: str,
+        suffix: str,
+        *,
+        helper: Any,
+        mining_context: str = "unknown",
+        local_ontology_file_candidates: list[Any] | None = None,
+    ) -> None:
+        """Save ontology discovery/acquisition evidence for one mined snapshot.
+
+        Remote endpoint graph discovery and local distribution file discovery are
+        deliberately separate evidence channels.  ``download_owl``-derived file
+        candidates must only be passed by local/grouped mining stages; they say
+        nothing about which graphs are loaded or exposed by a remote endpoint.
+        """
+        local_candidates = list(local_ontology_file_candidates or [])
+        if not self.config.discover_ontology_graphs and not local_candidates:
+            return
+
+        graph_candidates = []
+        if self.config.discover_ontology_graphs:
+            from rdfsolve.mining.ontology_discovery import discover_remote_ontology_graphs
+
+            result = discover_remote_ontology_graphs(
+                helper,
+                observed_classes=schema.get_classes(),
+                observed_properties=schema.get_properties(),
+                max_graphs=self.config.ontology_discovery_max_graphs,
+            )
+            graph_candidates = result.candidates
+            path = output_dir / f"{name}{suffix}_ontology_discovery.json"
+            path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+
+            schema.about.ontology_graph_uris = sorted(
+                {
+                    candidate.graph_uri
+                    for candidate in result.candidates
+                    if candidate.graph_uri != "DEFAULT"
+                }
+            )
+
+        # Build a usage-scoped acquisition plan.  Provider graph evidence is
+        # attached only to endpoint/index discovery; OWL-formatted files from a
+        # local source bundle are retained as local file candidates and are only
+        # promoted after parsing + empirical overlap.
+        from rdfsolve.evidence.ontology import observed_terms_from_patterns
+        from rdfsolve.evidence.ontology_acquisition import build_ontology_acquisition_plan
+
+        observed = observed_terms_from_patterns(schema.patterns)
+        provider_endpoint = (
+            getattr(helper, "endpoint_url", None)
+            if mining_context == "remote_endpoint"
+            else None
+        )
+        acquisition = build_ontology_acquisition_plan(
+            name,
+            observed,
+            graph_candidates=graph_candidates,
+            endpoint_url=provider_endpoint,
+            local_ontology_file_candidates=local_candidates,
+            mining_context=mining_context,
+        )
+        acquisition_path = output_dir / f"{name}{suffix}_ontology_acquisition.json"
+        acquisition_path.write_text(acquisition.model_dump_json(indent=2), encoding="utf-8")
+
+    def _save_declared_artifacts(
+        self,
+        source: Any,
+        output_dir: Path,
+        name: str,
+        suffix: str,
+        *,
+        helper: Any | None,
+        access_context: str,
+    ) -> None:
+        """Archive configured provider RDF separately from empirical evidence."""
+        if not self.config.collect_declared_artifacts:
+            return
+        from rdfsolve.evidence.declared_sources import harvest_configured_declared_artifacts
+
+        bundle = harvest_configured_declared_artifacts(
+            source=source,
+            dataset_id=name,
+            output_dir=output_dir,
+            access_context=access_context,
+            helper=helper,
+            base_dir=self.config.repo_dir or Path('.'),
+            max_download_bytes=self.config.max_response_bytes,
+        )
+        if bundle.artifacts or bundle.evidence or bundle.errors:
+            path = output_dir / f"{name}{suffix}_declared_artifacts.json"
+            path.write_text(bundle.model_dump_json(indent=2), encoding="utf-8")
+
+    def _save_property_usage_evidence(
+        self,
+        schema: Any,
+        output_dir: Path,
+        name: str,
+        suffix: str,
+        *,
+        helper: Any,
+    ) -> None:
+        """Write class/property subject-support evidence as a separate artifact."""
+        if not self.config.collect_property_usage_evidence:
+            return
+        from rdfsolve.evidence.observed import collect_property_usage_evidence
+
+        classes = sorted({pattern.subject_class for pattern in schema.patterns})
+        evidence = collect_property_usage_evidence(
+            dataset_id=name,
+            classes=classes,
+            class_entity_counts=schema.about.class_entity_counts,
+            helper=helper,
+            graph_uris=schema.about.graph_uris,
+            batch_size=min(max(1, self.config.class_batch_size), 10),
+            chunk_size=self.config.class_chunk_size or self.config.chunk_size,
+            collect_node_kinds=self.config.collect_property_value_profiles,
+            collect_datatypes=self.config.collect_property_value_profiles,
+            collect_histograms=self.config.collect_property_value_histograms,
+        )
+        path = output_dir / f"{name}{suffix}_property_usage.json"
+        path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
+
     def _save_schema_outputs(
         self,
         schema: Any,

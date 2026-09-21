@@ -23,7 +23,7 @@ from typing import Any, Literal
 from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from rdfsolve.models.source_model import SourceModel
 
@@ -108,12 +108,29 @@ class IdentityRelation(BaseModel):
 
 
 class IdentityResolution(BaseModel):
-    """Registry entries, their decided relations and the candidates to review."""
+    """Registry entries, decided relations, and unresolved candidates.
+
+    ``datasets`` contains provisional groups formed only from decided
+    ``same_dataset`` relations.  It must not be reported as a canonical dataset
+    denominator while candidate relations remain unresolved.
+    """
 
     entries: list[DatasetIdentity]
     relations: list[IdentityRelation]
     candidates: list[IdentityRelation]
     datasets: dict[str, list[str]]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def review_complete(self) -> bool:
+        """Return whether every generated identity candidate has been adjudicated."""
+        return not self.candidates
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def canonical_dataset_count(self) -> int | None:
+        """Return a canonical denominator only after identity review is complete."""
+        return len(self.datasets) if self.review_complete else None
 
     def write(self, directory: str | Path) -> None:
         """Write identity.json and identity_review.tsv."""
