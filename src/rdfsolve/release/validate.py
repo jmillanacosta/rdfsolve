@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -25,6 +26,50 @@ class ReleaseValidation(BaseModel):
     valid: bool
     checked_artifacts: int
     issues: list[ValidationIssue] = Field(default_factory=list)
+
+
+def _validate_role_json(role: str | None, path: Path) -> str | None:
+    """Validate scientific JSON artifacts against the model used by the release.
+
+    Imports are intentionally local so release validation stays independent of
+    optional conversion stacks unless the corresponding artifact is present.
+    """
+    if role is None or path.suffix.lower() != ".json":
+        return None
+    try:
+        payload = path.read_text(encoding="utf-8")
+        if role == "property_usage_evidence":
+            from rdfsolve.evidence.observed import PropertyUsageCollection
+
+            PropertyUsageCollection.model_validate_json(payload)
+        elif role == "declared_artifact_index":
+            from rdfsolve.evidence.declared_sources import DeclaredArtifactBundle
+
+            DeclaredArtifactBundle.model_validate_json(payload)
+        elif role == "ontology_discovery":
+            from rdfsolve.mining.ontology_discovery import OntologyDiscoverySummary
+
+            OntologyDiscoverySummary.model_validate_json(payload)
+        elif role == "ontology_acquisition":
+            from rdfsolve.evidence.ontology_acquisition import OntologyAcquisitionPlan
+
+            OntologyAcquisitionPlan.model_validate_json(payload)
+        elif role == "canonical_schema":
+            # Avoid requiring optional exporters merely to validate the frozen
+            # evidence record.  The canonical wrapper must contain a schema
+            # object and that object must contain a pattern list when present.
+            raw = json.loads(payload)
+            if not isinstance(raw, dict):
+                raise ValueError("canonical schema JSON must be an object")
+            schema = raw.get("schema", raw)
+            if not isinstance(schema, dict):
+                raise ValueError("canonical schema payload must be an object")
+            patterns = schema.get("patterns", [])
+            if not isinstance(patterns, list):
+                raise ValueError("canonical schema patterns must be a list")
+    except Exception as error:
+        return f"{type(error).__name__}: {error}"
+    return None
 
 
 _RDF_FORMATS = {
@@ -53,6 +98,26 @@ def validate_release(
                         kind="dangling_artifact", message=f"{dataset.dataset_id}: {ref}"
                     )
                 )
+        for usage in dataset.ontology_usages:
+            if usage.ontology_artifact_id and usage.ontology_artifact_id not in ids:
+                issues.append(
+                    ValidationIssue(
+                        kind="dangling_ontology_artifact",
+                        message=(
+                            f"{dataset.dataset_id}: {usage.namespace}: {usage.ontology_artifact_id}"
+                        ),
+                    )
+                )
+            for ontology_ref in usage.artifact_refs:
+                if ontology_ref.artifact_id and ontology_ref.artifact_id not in ids:
+                    issues.append(
+                        ValidationIssue(
+                            kind="dangling_ontology_artifact",
+                            message=(
+                                f"{dataset.dataset_id}: {usage.namespace}: {ontology_ref.artifact_id}"
+                            ),
+                        )
+                    )
 
     for artifact in manifest.artifacts:
         path = root / artifact.path
@@ -72,6 +137,11 @@ def validate_release(
                 ValidationIssue(
                     path=artifact.path, kind="checksum", message="SHA-256 differs from manifest"
                 )
+            )
+        model_error = _validate_role_json(artifact.role, path)
+        if model_error is not None:
+            issues.append(
+                ValidationIssue(path=artifact.path, kind="evidence_model", message=model_error)
             )
         if parse_rdf:
             suffix = path.suffix.lower()

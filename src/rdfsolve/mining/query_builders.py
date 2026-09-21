@@ -616,7 +616,7 @@ def _build_batched_typed_count_query(
     values = _values_block(class_uris)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
-SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)
+SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}
@@ -641,7 +641,7 @@ def _build_batched_literal_count_query(
     values = _values_block(class_uris)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
-SELECT ?class ?p ?dt{graph_var} (COUNT(*) AS ?cnt)
+SELECT ?class ?p ?dt{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}
@@ -667,7 +667,7 @@ def _build_batched_untyped_count_query(
     values = _values_block(class_uris)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
-SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)
+SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome
@@ -25,6 +26,40 @@ if TYPE_CHECKING:
     from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class _PatternCount:
+    """One graph-attributed count result for a schema pattern."""
+
+    triples: int
+    distinct_subjects: int | None
+    distinct_objects: int | None
+
+
+def _count_from_binding(binding: dict[str, Any]) -> _PatternCount | None:
+    """Parse one count row without turning malformed metrics into zeros."""
+    try:
+        triples = int(binding["cnt"]["value"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    def optional_int(name: str) -> int | None:
+        """Return an integer binding, or None when it is absent or malformed."""
+        value = binding.get(name, {}).get("value")
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    return _PatternCount(
+        triples=triples,
+        distinct_subjects=optional_int("subjects"),
+        distinct_objects=optional_int("objects"),
+    )
+
 
 __all__ = [
     "enrich_patterns_with_counts",
@@ -143,7 +178,7 @@ def enrich_patterns_with_counts(
     )
 
     # Build lookup: (sc, p, oc) -> {graph or "" : count}
-    counts: dict[tuple[str, str, str], dict[str, int]] = {}
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]] = {}
 
     for batch_idx in range(n_batches):
         start = batch_idx * bs
@@ -213,9 +248,28 @@ def enrich_patterns_with_counts(
         if per_graph is None:
             enriched.append(pat.model_copy(update={"count": None}))
             continue
-        attributed = {graph: count for graph, count in per_graph.items() if graph}
+        attributed = {graph: metric.triples for graph, metric in per_graph.items() if graph}
+        # Distinct counts are only safe to expose directly when the selected
+        # scope has at most one named graph (or the endpoint default graph).
+        # Summing per-graph distinct counts across several graphs would double
+        # count subjects/objects repeated in multiple graphs. Dataset-scope
+        # support is represented separately by PropertyUsageEvidence.
+        distinct_subjects = None
+        distinct_objects = None
+        if not graph_uris or len(graph_uris) <= 1:
+            metrics = list(per_graph.values())
+            if len(metrics) == 1:
+                distinct_subjects = metrics[0].distinct_subjects
+                distinct_objects = metrics[0].distinct_objects
         enriched.append(
-            pat.model_copy(update={"count": sum(per_graph.values()), "graphs": attributed or None}),
+            pat.model_copy(
+                update={
+                    "count": sum(metric.triples for metric in per_graph.values()),
+                    "graphs": attributed or None,
+                    "distinct_subjects": distinct_subjects,
+                    "distinct_objects": distinct_objects,
+                }
+            ),
         )
 
     return enriched
@@ -224,7 +278,7 @@ def enrich_patterns_with_counts(
 def _fetch_typed_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], dict[str, int]],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -257,9 +311,9 @@ def _fetch_typed_count_batch(
                 b.get("p", {}).get("value", ""),
                 b.get("oc", {}).get("value", ""),
             )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -281,7 +335,7 @@ def _fetch_typed_count_batch(
 def _fetch_literal_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], dict[str, int]],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -315,9 +369,9 @@ def _fetch_literal_count_batch(
                 b.get("p", {}).get("value", ""),
                 f"Literal:{dt}" if dt else "Literal",
             )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -337,7 +391,7 @@ def _fetch_literal_count_batch(
 def _fetch_untyped_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], dict[str, int]],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
@@ -370,9 +424,9 @@ def _fetch_untyped_count_batch(
                 b.get("p", {}).get("value", ""),
                 "Resource",
             )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(

@@ -70,13 +70,12 @@ def release() -> None:
 )
 def release_build(run_dir: Path, release_id: str | None) -> None:
     """Build release.json and release.ttl from one completed run directory."""
-    import json
-
     from rdfsolve.release import (
         build_release_manifest,
         release_to_rdf,
         summarize_release,
         write_release_manifest,
+        write_release_summary,
     )
     from rdfsolve.version import VERSION
 
@@ -84,11 +83,11 @@ def release_build(run_dir: Path, release_id: str | None) -> None:
     json_path = write_release_manifest(manifest, run_dir)
     ttl_path = run_dir / "release.ttl"
     ttl_path.write_text(release_to_rdf(manifest).serialize(format="turtle"), encoding="utf-8")
-    summary_path = run_dir / "summary.json"
-    summary_path.write_text(json.dumps(summarize_release(manifest), indent=2), encoding="utf-8")
+    summary_json, summary_tsv = write_release_summary(summarize_release(manifest, run_dir), run_dir)
     click.echo(f"Wrote {json_path}")
     click.echo(f"Wrote {ttl_path}")
-    click.echo(f"Wrote {summary_path}")
+    click.echo(f"Wrote {summary_json}")
+    click.echo(f"Wrote {summary_tsv}")
 
 
 @release.command("validate")
@@ -123,7 +122,7 @@ def release_summarize(run_dir: Path) -> None:
     if not path.exists():
         raise click.ClickException("release.json is missing; run `rdfsolve release build` first")
     manifest = ReleaseManifest.model_validate_json(path.read_text(encoding="utf-8"))
-    click.echo(json.dumps(summarize_release(manifest), indent=2, sort_keys=True))
+    click.echo(json.dumps(summarize_release(manifest, run_dir), indent=2, sort_keys=True))
 
 
 @release.command("compare-declared")
