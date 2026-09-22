@@ -72,3 +72,15 @@ def test_reference_acquisition_reuses_archived_source(tmp_path: Path):
     acquire_reference_ontologies(tmp_path, fetcher=lambda url: second.append(url) or data)
     assert len(first)==1
     assert second == []
+
+
+def test_reference_acquisition_keeps_output_outside_working_directory(tmp_path, monkeypatch):
+    working = tmp_path / "working"
+    working.mkdir()
+    output = tmp_path / "run"
+    _run_fixture(output)
+    monkeypatch.chdir(working)
+    result = acquire_reference_ontologies(output, fetcher=lambda _: _ontology_bytes())
+    assert not result.failures
+    assert (output / result.registry_path).is_file()
+    assert list(working.iterdir()) == []

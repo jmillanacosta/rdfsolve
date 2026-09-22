@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import logging
+import os
+from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -204,6 +207,25 @@ def _extract_collection_metadata(resource: Any, meta: dict[str, Any]) -> None:
         meta["extra_providers"] = extra_providers
 
 
+def _optional_bioregistry_getter(module: Any, name: str, prefix: str) -> Any:
+    """Call one public Bioregistry getter when available in the installed version."""
+    function = getattr(module, name, None)
+    if function is None:
+        return None
+    try:
+        return function(prefix)
+    except Exception:
+        logger.debug("Bioregistry %s failed for %s", name, prefix, exc_info=True)
+        return None
+
+
+def _bioregistry_package_version() -> str:
+    try:
+        return version("bioregistry")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     """Return a structured metadata dict for a Bioregistry prefix.
 
@@ -234,6 +256,19 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
     meta: dict[str, Any] = {"prefix": br_prefix}
     _extract_scalar_metadata(resource, meta)
     _extract_collection_metadata(resource, meta)
+    # Use public package getters for reference/download metadata. These describe
+    # the Bioregistry resource, not files observed in an rdfsolve local bundle.
+    for key, getter in {
+        "repository": "get_repository",
+        "owl_download": "get_owl_download",
+        "rdf_download": "get_rdf_download",
+        "obo_download": "get_obo_download",
+    }.items():
+        value = _optional_bioregistry_getter(bioregistry, getter, br_prefix)
+        if value:
+            meta[key] = str(value)
+    meta["package_version"] = _bioregistry_package_version()
+    meta["enriched_at"] = datetime.now(timezone.utc).isoformat()
     return meta
 
 
@@ -261,6 +296,12 @@ def enrich_source_with_bioregistry(source: SourceModel) -> str | None:
         "bioregistry_domain": "domain",
         "bioregistry_uri_prefix": "uri_prefix",
         "bioregistry_logo": "logo",
+        "bioregistry_repository": "repository",
+        "bioregistry_owl_download": "owl_download",
+        "bioregistry_rdf_download": "rdf_download",
+        "bioregistry_obo_download": "obo_download",
+        "bioregistry_enriched_at": "enriched_at",
+        "bioregistry_package_version": "package_version",
         "keywords": "keywords",
         "bioregistry_uri_prefixes": "uri_prefixes",
         "bioregistry_synonyms": "synonyms",
@@ -274,6 +315,75 @@ def enrich_source_with_bioregistry(source: SourceModel) -> str | None:
     for field in updates:
         setattr(source, field, getattr(validated, field))
     return source.bioregistry_prefix
+
+
+def enrich_registry_with_bioregistry(
+    path: str | Path | None = None,
+    *,
+    output: str | Path,
+    names: set[str] | None = None,
+) -> dict[str, Any]:
+    """Write a Bioregistry refresh proposal to a separate YAML file."""
+    import yaml
+
+    source_path = Path(path or DEFAULT_SOURCES_YAML)
+    target_path = Path(output)
+    if target_path.resolve() == source_path.resolve() or (
+        target_path.exists() and target_path.samefile(source_path)
+    ):
+        raise ValueError("Write the refresh proposal to a separate file")
+    raw = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list) or not all(isinstance(item, dict) for item in raw):
+        raise ValueError(f"Expected a YAML list in {source_path}")
+    selected = names or {str(item.get("name")) for item in raw if item.get("name")}
+    resolved = changed = 0
+    unresolved: list[str] = []
+    enriched_keys = {
+        name for name in SourceModel.model_fields if name.startswith("bioregistry_")
+    } | {"keywords"}
+    for item in raw:
+        name = str(item.get("name") or "")
+        if not name or name not in selected:
+            continue
+        model = SourceModel.model_validate(item)
+        before = model.model_dump(mode="json")
+        prefix = enrich_source_with_bioregistry(model)
+        if prefix is None:
+            unresolved.append(name)
+            continue
+        resolved += 1
+        after = model.model_dump(mode="json")
+        row_changed = False
+        for key in enriched_keys:
+            value = after.get(key)
+            if value in (None, "", [], {}):
+                # Remove stale Bioregistry-owned values that disappeared upstream.
+                if key in item:
+                    item.pop(key, None)
+                    row_changed = True
+                continue
+            if item.get(key) != value:
+                item[key] = value
+                row_changed = True
+        if row_changed or before != after:
+            changed += 1
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target_path.with_name(f".{target_path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(yaml.safe_dump(raw, sort_keys=False, allow_unicode=True), encoding="utf-8")
+        os.replace(tmp, target_path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    return {
+        "source": str(source_path),
+        "output": str(target_path),
+        "selected": len(selected),
+        "resolved": resolved,
+        "changed": changed,
+        "unresolved": sorted(unresolved),
+        "bioregistry_version": _bioregistry_package_version(),
+    }
 
 
 # Source mode classification

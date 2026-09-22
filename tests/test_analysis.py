@@ -200,3 +200,26 @@ def test_mapping_edges_need_an_asserted_predicate():
 
     with pytest.raises(ValidationError):
         MappingEdge(source_class="urn:a", target_class="urn:b", source_dataset="a", target_dataset="b")
+
+
+def test_class_association_witnesses_allow_exact_support_recomputation():
+    from rdfsolve.mappings import ClassIndex, EntityClassInfo, derive_class_mappings
+    from rdfsolve.mappings.models.core import MappingEdge
+
+    left = ClassIndex(endpoint_url="urn:left")
+    right = ClassIndex(endpoint_url="urn:right")
+    for iri in ("urn:a1", "urn:a2"):
+        left.entities[iri] = EntityClassInfo(entity_iri=iri, graph_classes={"left": ["urn:A"]})
+    for iri in ("urn:b1", "urn:b2"):
+        right.entities[iri] = EntityClassInfo(entity_iri=iri, graph_classes={"right": ["urn:B"]})
+    edges = [
+        MappingEdge(source_class="urn:a1", target_class="urn:b1", source_dataset="left", target_dataset="right", predicate="urn:match"),
+        MappingEdge(source_class="urn:a2", target_class="urn:b2", source_dataset="left", target_dataset="right", predicate="urn:match"),
+    ]
+    pairs, report = derive_class_mappings(
+        edges, {"left": left, "right": right}, include_witnesses=True
+    )
+    assert pairs[0].instance_count == 2
+    witnesses = report["witnesses"]
+    assert len({(row["source_entity"], row["target_entity"]) for row in witnesses}) == 2
+    assert all(row["supporting_entity_predicates"] == ["urn:match"] for row in witnesses)

@@ -152,6 +152,10 @@ class AboutMetadata(BaseModel):
 
     # Statistics
     class_entity_counts: dict[str, NonNegativeInt] = Field(default_factory=dict)
+    class_entity_count_states: dict[str, Literal["complete", "partial", "failed"]] = Field(
+        default_factory=dict,
+        description="Completion state of the class-population query contributing each denominator",
+    )
     pattern_count: int = Field(
         0,
         ge=0,

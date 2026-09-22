@@ -15,6 +15,7 @@ from rdfsolve.mining.query_builders import (
     _graph_scope,
 )
 from rdfsolve.schema_models import SchemaPattern
+from rdfsolve.sparql_helper import EndpointError
 
 GRAPHS = ["urn:g:types", "urn:g:edges"]
 
@@ -43,8 +44,7 @@ def _helper(data: Dataset) -> Mock:
 def test_graph_scope_merges_for_lookups_and_names_the_edge_graph():
     dataset, opening, closing = _graph_scope(GRAPHS)
     assert dataset == (
-        "FROM <urn:g:types> FROM <urn:g:edges> "
-        "FROM NAMED <urn:g:types> FROM NAMED <urn:g:edges>"
+        "FROM <urn:g:types> FROM <urn:g:edges> FROM NAMED <urn:g:types> FROM NAMED <urn:g:edges>"
     )
     assert (opening, closing) == ("GRAPH ?_g {", "}")
     assert _graph_scope(None) == ("", "", "")
@@ -120,9 +120,9 @@ def test_an_endpoint_without_types_is_not_reported_complete():
     helper.select_chunked.side_effect = lambda query, **kwargs: iter(
         [
             json.loads(
-                data.query(
-                    "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }"
-                ).serialize(format="json")
+                data.query("SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }").serialize(
+                    format="json"
+                )
             )["results"]["bindings"]
         ]
     )
@@ -194,3 +194,63 @@ def test_pattern_distinct_counts_are_not_summed_across_named_graphs():
     assert patterns[0].graphs == {"urn:g:one": 1, "urn:g:two": 1}
     assert patterns[0].distinct_subjects is None
     assert patterns[0].distinct_objects is None
+
+
+XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
+
+
+def _literal_counts(helper, report):
+    return enrich_patterns_with_counts(
+        [
+            SchemaPattern(
+                subject_class="urn:C",
+                property_uri="urn:name",
+                object_class="Literal",
+                datatype=XSD_STRING,
+            )
+        ],
+        helper,
+        ["urn:g:one"],
+        report,
+        lambda query, purpose, chunk=None: helper.select(query)["results"]["bindings"],
+        class_batch_size=5,
+        class_chunk_size=None,
+        unsafe_paging=False,
+        delay=0,
+    )
+
+
+def _literal_dataset() -> Dataset:
+    data = Dataset()
+    data.graph(URIRef("urn:g:one")).parse(
+        data="""
+        <urn:s1> a <urn:C>; <urn:name> "a", "b" .
+        <urn:s2> a <urn:C>; <urn:name> "b" .
+        """,
+        format="turtle",
+    )
+    return data
+
+
+def test_literal_counts_give_triples_distinct_subjects_and_distinct_objects():
+    miner = SchemaMiner("https://example.org/sparql", counts=False)
+    miner._init_report("test", "test", "2026-09-22T00:00:00+00:00")
+    pattern = _literal_counts(_helper(_literal_dataset()), miner._report)[0]
+    assert (pattern.count, pattern.distinct_subjects, pattern.distinct_objects) == (3, 2, 2)
+
+
+def test_failed_distinct_literal_objects_keep_counts_and_completion():
+    data = _literal_dataset()
+    helper = _helper(data)
+
+    def select(query, **kwargs):
+        if "COUNT(DISTINCT ?o)" in query and "isLiteral" in query:
+            raise EndpointError("HTTP 500: temp col too wide")
+        return json.loads(data.query(query).serialize(format="json"))
+
+    helper.select.side_effect = select
+    miner = SchemaMiner("https://example.org/sparql", counts=False)
+    miner._init_report("test", "test", "2026-09-22T00:00:00+00:00")
+    pattern = _literal_counts(helper, miner._report)[0]
+    assert (pattern.count, pattern.distinct_subjects, pattern.distinct_objects) == (3, 2, None)
+    assert not miner._report.report.query_failures

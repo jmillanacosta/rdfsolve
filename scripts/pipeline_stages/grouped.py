@@ -17,6 +17,7 @@ from rdfsolve.qlever.inputs import (
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .config import Source
+from .base import PartialMiningError
 from .local import LocalMiningStage
 from rdfsolve.config import mint
 
@@ -37,7 +38,7 @@ class GroupedMiningStage(LocalMiningStage):
         groups = self._identify_groups(sources)
         log.info(f"Identified {len(groups)} source groups for combined mining")
 
-        results = {"groups_mined": [], "failed": [], "skipped": [], "indexed_individually": []}
+        results = {"groups_mined": [], "partial": [], "failed": [], "skipped": [], "indexed_individually": []}
         grouped_names = {source.name for members in groups.values() for source in members}
         sources_with_existing_index: list[tuple[Source, Path]] = []
         for source in sources:
@@ -90,17 +91,18 @@ class GroupedMiningStage(LocalMiningStage):
                     port += 1
                     continue
                 if self.config.no_index:
+                    # Mining members one by one would lose edges between their graphs.
                     for source in group_sources:
-                        source_workdir = self.config.data_dir / "qlever_workdirs" / source.name
-                        if not self._has_qlever_index(source_workdir, source.name):
-                            results["failed"].append(
-                                {
-                                    "name": source.name,
-                                    "error": f"No grouped or individual index for {source.name}",
-                                }
-                            )
-                        else:
-                            sources_with_existing_index.append((source, source_workdir))
+                        results["failed"].append(
+                            {
+                                "name": source.name,
+                                "error": (
+                                    f"No grouped index for {group_name} in {workdir}; "
+                                    "build it from the prepared inputs (grouped mode without "
+                                    "--no-index) instead of mining members separately"
+                                ),
+                            }
+                        )
                     continue
                 source_data = []
                 for source in group_sources:
@@ -111,9 +113,6 @@ class GroupedMiningStage(LocalMiningStage):
                         rdf_input_files(source_workdir) or cached_archives(source_workdir)
                     )
 
-                    if not has_files and self._has_qlever_index(source_workdir, source.name):
-                        sources_with_existing_index.append((source, source_workdir))
-                        continue
                     if (
                         not has_files
                         and not self.config.no_download
@@ -139,16 +138,12 @@ class GroupedMiningStage(LocalMiningStage):
                             log.warning(f"  -> Download failed for {source.name}: {dl_err}")
 
                     if not has_files:
-                        if self._has_qlever_index(source_workdir, source.name):
-                            log.info(
-                                f"  -> No RDF files but found existing QLever index for {source.name}"
-                            )
-                            sources_with_existing_index.append((source, source_workdir))
-                        else:
-                            raise FileNotFoundError(
-                                f"No prepared RDF inputs for {source.name}; decompress cached downloads first"
-                            )
-                        continue
+                        # An individual index cannot stand in: the group index must hold
+                        # every member graph for edges between them to be mined.
+                        raise FileNotFoundError(
+                            f"No prepared RDF inputs for group member {source.name} in "
+                            f"{source_workdir}; prepare it before building the {group_name} index"
+                        )
                     source_data.append((source, source_workdir))
 
                 if not source_data:
@@ -172,7 +167,7 @@ class GroupedMiningStage(LocalMiningStage):
 
                 if server_pid:
                     try:
-                        log.info("  Mining per-dataset schemas from shared index...")
+                        log.info("  Mining the group across its dataset graphs...")
                         self._mine_grouped(
                             group_name, [source for source, _ in source_data], port
                         )
@@ -188,8 +183,9 @@ class GroupedMiningStage(LocalMiningStage):
                 port += 1
 
             except Exception as e:
-                log.error(f"  -> FAILED: {e}")
-                results["failed"].append({"group": group_name, "error": str(e)})
+                state = "partial" if isinstance(e, PartialMiningError) else "failed"
+                log.warning("  -> %s: %s", state.upper(), e)
+                results[state].append({"group": group_name, "error": str(e)})
 
         if sources_with_existing_index:
             log.info(
@@ -226,8 +222,9 @@ class GroupedMiningStage(LocalMiningStage):
                         )
                     individual_port += 1
                 except Exception as e:
-                    log.error(f"[{source.name}] -> FAILED: {e}")
-                    results["failed"].append({"name": source.name, "error": str(e)})
+                    state = "partial" if isinstance(e, PartialMiningError) else "failed"
+                    log.warning("[%s] -> %s: %s", source.name, state.upper(), e)
+                    results[state].append({"name": source.name, "error": str(e)})
 
         return results
 
@@ -375,33 +372,55 @@ class GroupedMiningStage(LocalMiningStage):
             for path in expanded:
                 path.unlink(missing_ok=True)
 
-    def _mine_grouped(self, group_name: str, sources: list[Source], port: int):
-        """Mine each registry dataset separately from one shared QLever index.
+    def _mine_grouped(self, group_name: str, sources: list[Source], port: int) -> list[str]:
+        """Mine all dataset graphs of a group together, then write one schema per dataset.
 
-        Every source was loaded into a synthetic named graph during grouped
-        indexing.  The shared physical index must not become a scientific
-        aggregation unit: counts, paths, declared evidence, and ontology usage
-        are therefore generated independently for each source graph.
+        Providers such as PubChem link entities across their datasets, and their
+        endpoints serve all graphs at once. Mining each dataset graph alone would
+        lose the classes of objects typed in another graph. Types therefore
+        resolve over every graph of the shared index, the counts phase attributes
+        each edge to its graph, and each dataset keeps the edges in its own graph.
         """
+        import shutil
 
-        mined: list[str] = []
+        from rdfsolve.mining.edge_graph_split import split_by_edge_graph, unattributed_patterns
+        from rdfsolve.mining.ontology_as_data import pattern_classes
+
         suffix = self.config.output_suffix
+        group_dir = self.config.output_dir / f"grouped_{group_name}"
+        group_dir.mkdir(parents=True, exist_ok=True)
+        group_report = group_dir / f"{group_name}{suffix}_report.json"
+        graphs = {source.name: mint("graph", source.name) for source in sources}
+
+        log.info("  Mining %d dataset graphs of %s together", len(graphs), group_name)
+        miner = self._local_miner(port, list(graphs.values()), group_report)
+        schema = self._mine_schema(miner, group_name, group_dir)
+        self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
+        missing = unattributed_patterns(schema)
+        if missing:
+            log.warning(
+                "  %d patterns have no per-graph count and appear only in the group schema",
+                len(missing),
+            )
+
         for source in sources:
-            schema_path = (
-                self.config.output_dir
-                / source.name
-                / f"{source.name}{suffix}_schema.json"
+            graph_uri = graphs[source.name]
+            part = split_by_edge_graph(
+                schema, graph_uri, source.name, declared_classes=miner.declared_classes
             )
-            if self.config.skip_completed and schema_path.exists():
-                log.info("  [%s] skipping existing per-dataset schema", source.name)
-                continue
-            graph_uri = mint("graph", source.name)
-            log.info("  [%s] mining graph %s from grouped index %s", source.name, graph_uri, group_name)
-            self._mine_local(
-                source,
-                port,
-                graph_uris=[graph_uri],
-                mining_context="grouped_local_distribution",
+            classes = sorted(pattern_classes(part.patterns) - miner.subsumed_classes)
+            counts, states = miner.count_class_entities(classes, [graph_uri])
+            part.about.class_entity_counts = counts
+            part.about.class_entity_count_states = states
+            output_dir = self.config.output_dir / source.name
+            log.info(
+                "  [%s] %d patterns with edges in %s", source.name, len(part.patterns), graph_uri
             )
-            mined.append(source.name)
-        return mined
+            self._save_dataset_outputs(
+                source, part, output_dir, miner.helper, "grouped_local_distribution"
+            )
+            # The dataset was observed in the grouped run; its report is that run's report.
+            if group_report.exists():
+                shutil.copyfile(group_report, output_dir / f"{source.name}{suffix}_report.json")
+        self._require_complete(miner)
+        return list(graphs)

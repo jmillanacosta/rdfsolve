@@ -1,5 +1,6 @@
 #!/bin/bash
-# Run a prepared mining environment. Only prepare mode downloads and builds indices.
+# Run a prepared mining environment. Only prepare mode downloads. Grouped mode may
+# build its provider index from prepared inputs: members are never mined one by one.
 set -euo pipefail
 trap 'status=$?; echo "Mining launcher failed (exit $status) at line $LINENO" >&2; exit "$status"' ERR
 
@@ -15,6 +16,7 @@ registry="${SOURCES_FILE:-$repo/data/sources.yaml}"
 output="${OUTPUT_DIR:-$(dirname -- "$repo")/runs/${mode}-${SLURM_JOB_ID:-manual}-$(date -u +%Y%m%dT%H%M%S)-$$}"
 # Prepare is local mining that may download and index; the others use prepared inputs only.
 if [ "$mode" = prepare ]; then select=--local-only; suffix=_local; cache=();
+elif [ "$mode" = grouped ]; then select=--grouped-only; suffix=_grouped; cache=(--no-download);
 else select="--$mode-only"; suffix="_$mode"; cache=(--no-download --no-index); fi
 test -x "$python" || { echo "Prepare the Python environment: $python" >&2; exit 2; }
 test -r "$registry" || { echo "Source registry not readable: $registry" >&2; exit 2; }
@@ -51,6 +53,6 @@ if "$preflight_only"; then exit 0; fi
 mkdir -p -- "$(dirname -- "$output")"
 mkdir -- "$output"
 git rev-parse HEAD > "$output/code_commit.txt"
-"$python" -m pip freeze > "$output/environment.txt"
+"$python" -c 'import importlib.metadata as m; print("\n".join(sorted({"%s==%s" % (d.name, d.version) for d in m.distributions()}, key=str.lower)))' > "$output/environment.txt"
 cp -- "$registry" "$output/sources.yaml"
 exec "$python" "${args[@]}"

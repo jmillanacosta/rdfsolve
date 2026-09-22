@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import json
 import logging
-from dataclasses import dataclass, field
+import shutil
+import subprocess
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -113,6 +116,7 @@ class PipelineConfig:
     extract_ontology: bool = False
     ontology_scope: str = "schema"
     ontology_as_data: bool = False
+    ontology_term_budget: int = 300
     discover_ontology_graphs: bool = False
     ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False
@@ -231,6 +235,98 @@ class PipelineConfig:
                 log.info(f"Skipped {skipped} sources with broken downloads")
 
         return filtered
+
+    def effective_config_dict(self) -> dict[str, Any]:
+        """Return the effective pipeline configuration in YAML-safe form.
+
+        Loaded source objects are represented by their selected registry names;
+        the frozen ``sources.yaml`` remains the authoritative source registry.
+        """
+
+        def clean(value):
+            if isinstance(value, Path):
+                return str(value)
+            if isinstance(value, Enum):
+                return value.value
+            if isinstance(value, tuple):
+                return [clean(item) for item in value]
+            if isinstance(value, list):
+                return [clean(item) for item in value]
+            if isinstance(value, dict):
+                return {str(key): clean(item) for key, item in value.items()}
+            return value
+
+        result: dict[str, Any] = {}
+        for item in fields(self):
+            if item.name == "sources":
+                continue
+            result[item.name] = clean(getattr(self, item.name))
+        result["selected_sources"] = [source.name for source in self.sources]
+        return result
+
+    def archive_run_inputs(self) -> dict[str, str]:
+        """Freeze the exact registry/configuration inputs used by this run.
+
+        This is intentionally pipeline infrastructure rather than CLI logic so
+        direct ``scripts/pipeline.py`` runs and wrappers produce the same
+        provenance files. Existing wrapper-written files are preserved.
+        """
+        assert self.output_dir is not None
+        output = self.output_dir
+        output.mkdir(parents=True, exist_ok=True)
+        written: dict[str, str] = {}
+
+        def copy_if_present(source: Path | None, name: str) -> None:
+            if source is None or not source.exists():
+                return
+            target = output / name
+            if source.resolve() != target.resolve():
+                shutil.copy2(source, target)
+            written[name] = str(target)
+
+        copy_if_present(self.sources_file, "sources.yaml")
+        copy_if_present(self.sssom_sources_file, "sssom_sources.yaml")
+        if self.sources_file is not None:
+            copy_if_present(
+                self.sources_file.with_name("identity_overrides.yaml"), "identity_overrides.yaml"
+            )
+
+        config_path = output / "pipeline_config.yaml"
+        config_path.write_text(
+            yaml.safe_dump(self.effective_config_dict(), sort_keys=True),
+            encoding="utf-8",
+        )
+        written["pipeline_config.yaml"] = str(config_path)
+
+        commit_path = output / "code_commit.txt"
+        if not commit_path.exists() and self.repo_dir is not None:
+            try:
+                commit = subprocess.run(
+                    ["git", "-C", str(self.repo_dir), "rev-parse", "HEAD"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                ).stdout.strip()
+            except (OSError, subprocess.SubprocessError):
+                commit = ""
+            if commit:
+                commit_path.write_text(commit + "\n", encoding="utf-8")
+        if commit_path.exists():
+            written["code_commit.txt"] = str(commit_path)
+
+        environment_path = output / "environment.txt"
+        if not environment_path.exists():
+            # Read installed distributions directly; uv environments have no pip.
+            frozen = sorted(
+                {f"{dist.name}=={dist.version}" for dist in importlib.metadata.distributions()},
+                key=str.lower,
+            )
+            if frozen:
+                environment_path.write_text("\n".join(frozen) + "\n", encoding="utf-8")
+        if environment_path.exists():
+            written["environment.txt"] = str(environment_path)
+        return written
 
     def get_remote_sources(self) -> list[Source]:
         """Get sources to mine remotely, minus those a local index covers."""

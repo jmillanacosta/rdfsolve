@@ -14,6 +14,10 @@ from .config import PipelineConfig
 log = logging.getLogger(__name__)
 
 
+class PartialMiningError(RuntimeError):
+    """Saved patterns have incomplete evidence."""
+
+
 class Stage:
     """Base class for pipeline stages."""
 
@@ -41,7 +45,7 @@ class Stage:
                 for key in ("mined", "groups_mined", "indexed_individually", "enriched_mappings")
             )
             skipped = bool(self.results.get("skipped"))
-            state = (
+            state = "partial" if self.results.get("partial") else (
                 ("partial" if produced else "failed")
                 if failed
                 else ("partial" if skipped and produced else "skipped" if skipped else "complete")
@@ -78,7 +82,8 @@ class Stage:
             unfinished = [p.name for p in report.phases if p.error or not p.finished_at]
             if unfinished:
                 reasons.append(f"unfinished phases: {unfinished}")
-            raise RuntimeError(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
+            error = PartialMiningError if report.completion_state == "partial" else RuntimeError
+            raise error(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
 
 
     def _save_ontology_discovery(
@@ -196,6 +201,7 @@ class Stage:
             dataset_id=name,
             classes=classes,
             class_entity_counts=schema.about.class_entity_counts,
+            class_entity_count_states=schema.about.class_entity_count_states,
             helper=helper,
             graph_uris=schema.about.graph_uris,
             batch_size=min(max(1, self.config.class_batch_size), 10),

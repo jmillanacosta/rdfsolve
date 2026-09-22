@@ -8,7 +8,7 @@ from typing import Any
 
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
-from .base import Stage
+from .base import PartialMiningError, Stage
 from .config import Source
 
 log = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class RemoteMiningStage(Stage):
 
         from threading import Lock
 
-        results = {"mined": [], "failed": [], "skipped": []}
+        results = {"mined": [], "partial": [], "failed": [], "skipped": []}
         results_lock = Lock()
 
         def mine_host_sources(host: str, host_sources: list[Source]) -> None:
@@ -54,6 +54,8 @@ class RemoteMiningStage(Stage):
                         results["mined"].append(result["data"])
                     elif result["status"] == "failed":
                         results["failed"].append(result["data"])
+                    elif result["status"] == "partial":
+                        results["partial"].append(result["data"])
                     else:
                         results["skipped"].append(result["data"])
 
@@ -173,6 +175,7 @@ class RemoteMiningStage(Stage):
                     extract_ontology=self.config.extract_ontology,
                     ontology_scope=self.config.ontology_scope,
                     ontology_as_data=self.config.ontology_as_data,
+                    ontology_term_budget=self.config.ontology_term_budget,
                     extract_metadata=self.config.extract_metadata,
                     dataset_name=source.name,
                 )
@@ -263,6 +266,9 @@ class RemoteMiningStage(Stage):
                 }
 
         except Exception as e:
+            if isinstance(e, PartialMiningError):
+                log.warning("[%s] -> PARTIAL: %s", source.name, e)
+                return {"status": "partial", "data": {"name": source.name, "error": str(e)}}
             if not use_graph_store:
                 source.failure_count += 1
                 source.last_error = str(e)[:500]

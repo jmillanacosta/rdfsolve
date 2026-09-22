@@ -38,7 +38,7 @@ def test_release_validation_checks_evidence_model_shape(tmp_path: Path):
     result = validate_release(manifest, tmp_path, parse_rdf=False)
     assert not result.valid
     assert any(
-        issue.kind == "evidence_model" and issue.path.endswith("_property_usage.json")
+        issue.kind == "json_model" and issue.path.endswith("_property_usage.json")
         for issue in result.issues
     )
 

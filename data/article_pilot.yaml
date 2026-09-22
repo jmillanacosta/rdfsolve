@@ -1,0 +1,25 @@
+remote:
+  - name: aopwikirdf
+    rationale: rich domain schema and existing behavioral fixture
+  - name: rhea
+    rationale: SHACL/SPARQL-example graph contamination observed in earlier runs
+  - name: swisslipids
+    rationale: provider SPARQL-example graph and malformed SHACL prefix metadata
+  - name: bgee
+    rationale: remote timeout/failure-envelope case with example metadata
+  - name: sibils
+    rationale: provider ontology metadata and earlier generated-VoID serialization failure
+  - name: bio2rdf.reactome
+    rationale: same upstream source is also tested locally; Bio2RDF schema/OWL files exist in the distribution
+  - name: rdfportal.chebi
+    rationale: named-graph RDF Portal source with downloadable N-Triples distribution
+local:
+  - name: bio2rdf.reactome
+    rationale: local-vs-remote comparison and many OWL-classified files in the downloadable bundle
+grouped:
+  # PubChem datasets link to each other and its endpoint serves all graphs at
+  # once, so PubChem is always mined as one group across its dataset graphs.
+  - name: pubchem.ftp.schema
+    rationale: local SHACL/schema files; exercises declared-vs-observed separation
+  - name: pubchem.ftp.substance
+    rationale: large local PubChem distribution for count/query cost and failure-envelope testing

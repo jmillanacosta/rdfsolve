@@ -15,6 +15,7 @@ from pydantic import ValidationError
 from rdflib import Graph
 from typing_extensions import Self
 
+from rdfsolve._outcomes import QueryState
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
 from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_counts,
@@ -35,7 +36,9 @@ from rdfsolve.models import (
     OneShotQueryResult,
     SchemaPattern,
 )
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
+from rdfsolve.schema_models.pattern import PatternType
 from rdfsolve.sparql_helper import (
     PaginationTruncatedError,
     ResponseLimitError,
@@ -51,48 +54,8 @@ __all__ = [
 ]
 
 
-# ReportCollector moved to rdfsolve.mining.report_tracking
-
-# SchemaMiner
-
-
 class SchemaMiner:
-    """Mine RDF schema patterns from a SPARQL endpoint.
-
-    Parameters
-    ----------
-    endpoint_url:
-        SPARQL endpoint URL.
-    graph_uris:
-        Optional named-graph URI(s) to restrict queries to.
-    chunk_size:
-        Number of rows per paginated request.
-    class_chunk_size:
-        Page size for Phase-1 class discovery in two-phase mode.
-        ``None`` disables pagination (single query).
-    class_batch_size:
-        Number of classes grouped into one ``VALUES`` query in
-        Phase-2 of two-phase mining.  Default ``15``.  Higher
-        values send fewer queries but each query is heavier.
-    delay:
-        Seconds to sleep between pagination requests.
-    timeout:
-        HTTP timeout per request (seconds).
-    counts:
-        Whether to also run COUNT queries for triple counts.
-    strategy:
-        Choose two-phase, single-pass, or one-shot mining.
-    filter_service_namespaces:
-        When ``True`` (the default), remove patterns whose
-        subject, property, or object URI belongs to a
-        service/system namespace (Virtuoso, OpenLink, etc.)
-        from the final result.
-    untyped_as_classes:
-        When ``True``, treat untyped URI objects (those without
-        an explicit ``rdf:type``) as ``owl:Class`` references
-        instead of the generic ``rdfs:Resource`` sentinel.
-        Default ``False``.
-    """
+    """Mine RDF schema patterns from a SPARQL endpoint."""
 
     def __init__(
         self,
@@ -123,14 +86,7 @@ class SchemaMiner:
         pagination: Literal["offset", "cursor"] = "offset",
         excluded_graph_prefixes: tuple[str, ...] = (),
     ) -> None:
-        """Initialize a SchemaMiner.
-
-        Args:
-            strategy: Mining strategy to use. Can be:
-                - A string: "two-phase" (default), "single-pass", or "one-shot"
-                - A MiningStrategy instance for custom strategies
-                - None (uses "two-phase" as default)
-        """
+        """Initialize a SchemaMiner."""
         self.endpoint_url = endpoint_url
         if pagination not in {"offset", "cursor"}:
             raise ValueError("pagination must be offset or cursor")
@@ -177,6 +133,9 @@ class SchemaMiner:
         self._report_path = Path(report_path) if report_path else None
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
+        self._ontology_term_budget: int | None = None
+        self._class_batches: list[list[str]] | None = None
+        self._subsumed_classes: set[str] = set()
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
 
@@ -257,6 +216,38 @@ class SchemaMiner:
 
     # public API
 
+    @property
+    def declared_classes(self) -> frozenset[str]:
+        """Return the classes the last run found declared as owl:Class or rdfs:Class."""
+        return frozenset(self._declared_classes)
+
+    @property
+    def subsumed_classes(self) -> frozenset[str]:
+        """Return the classes that stand for subsumed ontology terms in the last run."""
+        return frozenset(self._subsumed_classes)
+
+    def count_class_entities(
+        self, classes: list[str], graph_uris: list[str] | None
+    ) -> tuple[dict[str, int], dict[str, QueryState]]:
+        """Count typed entities per class in *graph_uris* after a run.
+
+        Query outcomes are recorded in the last run's report.
+        """
+        from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
+
+        states: dict[str, QueryState] = {}
+        counts = query_class_entity_counts(
+            sorted(set(classes)),
+            self._helper,
+            graph_uris,
+            self._report,
+            self.class_batch_size,
+            self.delay,
+            states_out=states,
+        )
+        self._report.flush()
+        return counts, states
+
     def _build_strategy_string(self) -> str:
         """Return the strategy tag that describes the active mining flags."""
         base = f"miner/{self._strategy.name}"
@@ -321,13 +312,7 @@ class SchemaMiner:
     def _run_patterns_phase(
         self,
     ) -> tuple[list[SchemaPattern], list[OneShotQueryResult] | None]:
-        """Execute pattern mining using the configured strategy.
-
-        Returns
-        -------
-        (patterns, one_shot_results)
-            *one_shot_results* is ``None`` unless strategy is OneShotStrategy.
-        """
+        """Execute pattern mining using the configured strategy."""
         # Prepare mining context
         ontology_classes = getattr(self, "_ontology_classes", None)
         context = MiningContext(
@@ -342,11 +327,11 @@ class SchemaMiner:
             chunk_size=self.chunk_size,
             unsafe_paging=self.unsafe_paging,
             excluded_graph_prefixes=self.excluded_graph_prefixes,
-            aggregate_ontology_terms=getattr(self, "_aggregate_ontology_terms", False),
         )
 
         # Run strategy
         patterns = self._strategy.mine(context)
+        self._class_batches = context.class_batches
         if context.graph_uris != self.graph_uris:
             logger.info("Mining continues in %d discovered graphs", len(context.graph_uris or []))
             self.graph_uris = context.graph_uris
@@ -376,7 +361,89 @@ class SchemaMiner:
                 self.class_chunk_size,
                 self.unsafe_paging,
                 self.delay,
+                class_batches=self._class_batches,
             )
+            self._report.finish_phase(phase, items=len(patterns))
+        except Exception as exc:
+            self._report.finish_phase(phase, error=str(exc))
+            raise
+        return patterns
+
+    def _run_term_subsumption_phase(
+        self, patterns: list[SchemaPattern], budget: int
+    ) -> list[SchemaPattern]:
+        """Add term-level ontology patterns, then subsume terms until *budget* classes remain.
+
+        Every pattern is probed at term level first; subsumption only replaces
+        classes by ancestors and merges the patterns that then coincide.
+        """
+        from rdfsolve.mining.ontology_as_data import (
+            OWL_CLASS,
+            RDFS_CLASS,
+            choose_representatives,
+            fetch_superclasses,
+            pattern_classes,
+            probe_term_patterns,
+            subsume_patterns,
+        )
+
+        phase = self._report.start_phase("ontology-terms")
+        try:
+            probed = probe_term_patterns(
+                self._helper, self.graph_uris, self._collect_bindings, self.chunk_size
+            )
+            # Term-level object patterns replace the generic "points at a class" ones.
+            covered = {(p.subject_class, p.property_uri) for p in probed}
+            patterns = [
+                p
+                for p in patterns
+                if not (
+                    p.object_class in (OWL_CLASS, RDFS_CLASS)
+                    and (p.subject_class, p.property_uri) in covered
+                )
+            ]
+            patterns = patterns + probed
+            classes = pattern_classes(patterns)
+            summary: dict[str, Any] = {
+                "budget": budget,
+                "probed_patterns": len(probed),
+                "classes_before": len(classes),
+                "classes_after": len(classes),
+                "subsumed": False,
+            }
+            if len(classes) > budget:
+                t0 = time.monotonic()
+                parents = fetch_superclasses(self._helper, classes)
+                self._report.record_query("ontology-terms/superclasses", time.monotonic() - t0)
+                chosen = choose_representatives(classes, parents, budget)
+                patterns = subsume_patterns(patterns, chosen.representative)
+                members = chosen.members()
+                self._subsumed_classes = set(members)
+                summary.update(
+                    {
+                        "classes_after": chosen.classes_after,
+                        "subsumed": True,
+                        "levels_lifted": chosen.levels_lifted,
+                        "over_budget": chosen.over_budget,
+                        "hierarchy_source": "endpoint rdfs:subClassOf",
+                        "representatives": {rep: len(terms) for rep, terms in members.items()},
+                    }
+                )
+                logger.info(
+                    "Subsumed %d classes into %d (budget %d, %d levels lifted)",
+                    chosen.classes_before,
+                    chosen.classes_after,
+                    budget,
+                    chosen.levels_lifted,
+                )
+                if chosen.over_budget:
+                    logger.warning(
+                        "%d classes remain above the budget of %d: the endpoint has no "
+                        "further rdfs:subClassOf parents for them",
+                        chosen.classes_after,
+                        budget,
+                    )
+            self._report.report.config["ontology_term_subsumption"] = summary
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:
             self._report.finish_phase(phase, error=str(exc))
@@ -409,7 +476,7 @@ class SchemaMiner:
         properties: set[str] = set()
         for p in patterns:
             classes.add(p.subject_class)
-            if p.object_class not in ("Literal", "Resource"):
+            if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
             properties.add(p.property_uri)
         return classes, properties
@@ -521,20 +588,7 @@ class SchemaMiner:
         self,
         dataset_name: str | None = None,
     ) -> MinedSchema:
-        """Run all queries and return a :class:`MinedSchema`.
-
-        Parameters
-        ----------
-        dataset_name:
-            Optional human-readable name attached to the metadata.
-
-        Notes
-        -----
-        The method also populates a :class:`MiningReport` with
-        per-phase timing, query counts, and failure stats.  If a
-        *report_path* was given at construction time, the JSON is
-        flushed to disk after each phase completes.
-        """
+        """Run all queries and return a :class:`MinedSchema`."""
         with self._session(dataset_name):
             self._verify_graph_scope()
             return self._finish_schema(self._mine_schema(dataset_name))
@@ -556,7 +610,9 @@ class SchemaMiner:
     def _session(self, dataset_name: str | None) -> Iterator[None]:
         """Start one report before any phase and retain failures."""
         self._ontology_classes = None
-        self._aggregate_ontology_terms = False
+        self._ontology_term_budget = None
+        self._class_batches = None
+        self._subsumed_classes = set()
         self._declared_classes = set()
         self._init_report(
             dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
@@ -623,20 +679,30 @@ class SchemaMiner:
             }
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
+        for pattern in schema.patterns:
+            if pattern.pattern_type == PatternType.UNKNOWN:
+                pattern.pattern_type = {
+                    "Literal": PatternType.DATATYPE_PROPERTY,
+                    "BlankNode": PatternType.BLANK_NODE_PROPERTY,
+                }.get(pattern.object_class, PatternType.OBJECT_PROPERTY)
         if self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
         entity_counts = {}
+        entity_count_states: dict[str, QueryState] = {}
         if self.counts:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 
+            # Subsumed representatives stand for many terms; their direct instance
+            # count would not describe them, so they are not counted here.
             entity_counts = query_class_entity_counts(
-                sorted(classes),
+                sorted(classes - self._subsumed_classes),
                 self._helper,
                 self.graph_uris,
                 self._report,
                 self.class_batch_size,
                 self.delay,
+                states_out=entity_count_states,
             )
         report = self._report.report
         report.strategy = schema.about.strategy or report.strategy
@@ -656,6 +722,7 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.class_entity_counts = entity_counts
+        schema.about.class_entity_count_states = entity_count_states
         dataset = getattr(self._helper, "dataset", None)
         if isinstance(dataset, Graph):
             schema.prefixes.update(
@@ -667,11 +734,7 @@ class SchemaMiner:
     def query_enrichment(
         self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
     ) -> SchemaEnrichment:
-        """Query definitions and observed examples with this miner's settings.
-
-        Assign the return value to ``schema.enrichment`` when called after mining.
-        No ontology or external vocabulary download is attempted.
-        """
+        """Query definitions and observed examples with this miner's settings."""
         from rdfsolve.mining.enrichment import query_enrichment
 
         return query_enrichment(
@@ -691,9 +754,13 @@ class SchemaMiner:
 
         t0 = time.monotonic()
         patterns, one_shot_results = self._run_patterns_phase()
+        self._report.report.pattern_count = len(patterns)
 
         if self.counts:
             patterns = self._run_counts_phase(patterns)
+
+        if self._ontology_term_budget is not None:
+            patterns = self._run_term_subsumption_phase(patterns, self._ontology_term_budget)
 
         patterns, uris_before = self._run_labels_phase(patterns)
 
@@ -777,18 +844,7 @@ class SchemaMiner:
         purpose: str = "",
         chunk_size: int | None = None,
     ) -> list[dict[str, Any]]:
-        """Paginate through a SELECT query and collect all bindings.
-
-        Parameters
-        ----------
-        query_template:
-            SPARQL query with ``{offset}`` / ``{limit}`` placeholders.
-        purpose:
-            Tag for logging and report tracking.
-        chunk_size:
-            Override the default ``self.chunk_size`` for this call.
-            Useful for phase-specific page sizes.
-        """
+        """Paginate through a SELECT query and collect all bindings."""
         effective = chunk_size if chunk_size is not None else self.chunk_size
         all_bindings: list[dict[str, Any]] = []
         has_rc = self._rc is not None
@@ -880,54 +936,7 @@ def mine_schema(
     navigation_limit: int = 100,
     navigation_probes: int = 0,
 ) -> MinedSchema:
-    """One-shot helper: mine a schema and return :class:`MinedSchema`.
-
-    Parameters
-    ----------
-    endpoint_url:
-        SPARQL endpoint URL.
-    graph_uris:
-        Named-graph URI(s) to restrict queries to.
-    dataset_name:
-        Human-readable name for the dataset.
-    chunk_size:
-        Pagination page size for pattern queries (single-pass and
-        count queries).
-    class_chunk_size:
-        Page size for the Phase-1 class-discovery query in two-phase
-        mode.  ``None`` (default) disables pagination - the class
-        list is fetched in a single query.  Set to a positive integer
-        when the endpoint has too many classes for one response.
-    class_batch_size:
-        Number of classes to group into a single VALUES query in
-        Phase-2 of two-phase mining.  Default ``15``.  Higher values
-        send fewer queries but each query is heavier.
-    delay:
-        Delay between pages (seconds).
-    timeout:
-        HTTP timeout per request.
-    counts:
-        Fetch triple counts per pattern.
-    strategy:
-        Mining strategy to use. Can be "two-phase" (default),
-        "single-pass", "one-shot", or a MiningStrategy instance.
-    report_path:
-        If given, write an analytics JSON report to this path.
-        The file is updated incrementally after each mining phase.
-    filter_service_namespaces:
-        Strip patterns whose URIs belong to service / system
-        namespaces (Virtuoso, OpenLink, etc.) from the
-        result.  Default ``True``.
-    untyped_as_classes:
-        Treat untyped URI objects as ``owl:Class`` references
-        instead of the generic ``rdfs:Resource`` sentinel.
-        Default ``False``.
-
-    Returns
-    -------
-    MinedSchema
-        Contains patterns and provenance metadata.
-    """
+    """One-shot helper: mine a schema and return :class:`MinedSchema`."""
     from urllib.parse import urlsplit
 
     if urlsplit(endpoint_url).hostname in {"localhost", "127.0.0.1", "::1"}:

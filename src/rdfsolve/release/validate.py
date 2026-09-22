@@ -26,49 +26,38 @@ class ReleaseValidation(BaseModel):
     valid: bool
     checked_artifacts: int
     issues: list[ValidationIssue] = Field(default_factory=list)
+    skipped_checks: list[str] = Field(default_factory=list)
 
 
-def _validate_role_json(role: str | None, path: Path) -> str | None:
-    """Validate scientific JSON artifacts against the model used by the release.
+def _validate_role_json(path: Path, role: str | None) -> None:
+    if role == "canonical_schema":
+        from rdfsolve.schema_models.core import MinedSchema
 
-    Imports are intentionally local so release validation stays independent of
-    optional conversion stacks unless the corresponding artifact is present.
-    """
-    if role is None or path.suffix.lower() != ".json":
-        return None
+        MinedSchema.from_json(path)
+    elif role == "property_usage_evidence":
+        from rdfsolve.evidence.observed import PropertyUsageCollection
+
+        PropertyUsageCollection.model_validate_json(path.read_text(encoding="utf-8"))
+    elif role == "declared_artifact_index":
+        from rdfsolve.evidence.declared_sources import DeclaredArtifactBundle
+
+        DeclaredArtifactBundle.model_validate_json(path.read_text(encoding="utf-8"))
+    elif role == "ontology_discovery":
+        from rdfsolve.mining.ontology_discovery import OntologyDiscoverySummary
+
+        OntologyDiscoverySummary.model_validate_json(path.read_text(encoding="utf-8"))
+    elif role == "ontology_acquisition":
+        from rdfsolve.evidence.ontology_acquisition import OntologyAcquisitionPlan
+
+        OntologyAcquisitionPlan.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _validate_sssom(path: Path) -> str | None:
     try:
-        payload = path.read_text(encoding="utf-8")
-        if role == "property_usage_evidence":
-            from rdfsolve.evidence.observed import PropertyUsageCollection
-
-            PropertyUsageCollection.model_validate_json(payload)
-        elif role == "declared_artifact_index":
-            from rdfsolve.evidence.declared_sources import DeclaredArtifactBundle
-
-            DeclaredArtifactBundle.model_validate_json(payload)
-        elif role == "ontology_discovery":
-            from rdfsolve.mining.ontology_discovery import OntologyDiscoverySummary
-
-            OntologyDiscoverySummary.model_validate_json(payload)
-        elif role == "ontology_acquisition":
-            from rdfsolve.evidence.ontology_acquisition import OntologyAcquisitionPlan
-
-            OntologyAcquisitionPlan.model_validate_json(payload)
-        elif role == "canonical_schema":
-            # Avoid requiring optional exporters merely to validate the frozen
-            # evidence record.  The canonical wrapper must contain a schema
-            # object and that object must contain a pattern list when present.
-            raw = json.loads(payload)
-            if not isinstance(raw, dict):
-                raise ValueError("canonical schema JSON must be an object")
-            schema = raw.get("schema", raw)
-            if not isinstance(schema, dict):
-                raise ValueError("canonical schema payload must be an object")
-            patterns = schema.get("patterns", [])
-            if not isinstance(patterns, list):
-                raise ValueError("canonical schema patterns must be a list")
-    except Exception as error:
-        return f"{type(error).__name__}: {error}"
+        from sssom import parse_sssom_table
+    except ImportError:
+        return "SSSOM parser unavailable in this environment"
+    parse_sssom_table(path)
     return None
 
 
@@ -89,6 +78,7 @@ def validate_release(
     """Check artifact references, sizes, hashes and RDF syntax of a release."""
     root = Path(root)
     issues: list[ValidationIssue] = []
+    skipped_checks: list[str] = []
     ids = {artifact.artifact_id for artifact in manifest.artifacts}
     for dataset in manifest.datasets:
         for ref in dataset.artifacts:
@@ -138,11 +128,21 @@ def validate_release(
                     path=artifact.path, kind="checksum", message="SHA-256 differs from manifest"
                 )
             )
-        model_error = _validate_role_json(artifact.role, path)
-        if model_error is not None:
-            issues.append(
-                ValidationIssue(path=artifact.path, kind="evidence_model", message=model_error)
-            )
+        if artifact.media_type == "application/json" or path.suffix.lower() == ".json":
+            try:
+                _validate_role_json(path, artifact.role)
+            except Exception as error:
+                issues.append(
+                    ValidationIssue(path=artifact.path, kind="json_model", message=str(error))
+                )
+        if path.name.endswith(".sssom.tsv"):
+            try:
+                skipped = _validate_sssom(path)
+            except Exception as error:
+                issues.append(ValidationIssue(path=artifact.path, kind="sssom", message=str(error)))
+            else:
+                if skipped:
+                    skipped_checks.append(f"{artifact.path}: {skipped}")
         if parse_rdf:
             suffix = path.suffix.lower()
             rdf_format = _RDF_FORMATS.get(suffix)
@@ -162,7 +162,10 @@ def validate_release(
                         ValidationIssue(path=artifact.path, kind="rdf_parse", message=str(error))
                     )
     return ReleaseValidation(
-        valid=not issues, checked_artifacts=len(manifest.artifacts), issues=issues
+        valid=not issues,
+        checked_artifacts=len(manifest.artifacts),
+        issues=issues,
+        skipped_checks=skipped_checks,
     )
 
 

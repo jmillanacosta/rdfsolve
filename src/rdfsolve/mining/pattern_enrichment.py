@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve._outcomes import QueryFailure, QueryOutcome
+from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.query_builders import (
     _build_batched_literal_count_query,
+    _build_batched_literal_objects_query,
     _build_batched_typed_count_query,
     _build_batched_untyped_count_query,
     _build_label_query,
@@ -74,6 +75,7 @@ def query_class_entity_counts(
     report: ReportCollector,
     batch_size: int = 50,
     delay: float = 0,
+    states_out: dict[str, QueryState] | None = None,
 ) -> dict[str, int]:
     """Count distinct typed entities, not overlapping pattern rows."""
     counts: dict[str, int] = {}
@@ -96,6 +98,7 @@ def query_class_entity_counts(
         report.record_query(
             "class-entity-counts", time.monotonic() - started, success=outcome.state == "complete"
         )
+        batch_found: set[str] = set()
         for row in outcome.rows:
             try:
                 iri = row["class"]["value"]
@@ -103,6 +106,7 @@ def query_class_entity_counts(
                 if iri not in batch or count < 0 or iri in counts:
                     raise ValueError("Invalid or duplicate class count")
                 counts[iri] = count
+                batch_found.add(iri)
             except (KeyError, TypeError, ValueError) as error:
                 outcome.state = "partial"
                 outcome.failures.append(
@@ -110,7 +114,7 @@ def query_class_entity_counts(
                         "invalid_response", str(error), "class-entity-counts", batch, graph_uris
                     )
                 )
-        missing = sorted(set(batch) - counts.keys())
+        missing = sorted(set(batch) - batch_found)
         if missing:
             outcome.state = "partial" if outcome.rows else "failed"
             outcome.failures.append(
@@ -122,6 +126,11 @@ def query_class_entity_counts(
                     graph_uris,
                 )
             )
+        if states_out is not None:
+            for iri in batch_found:
+                states_out[iri] = outcome.state
+            for iri in missing:
+                states_out[iri] = "failed" if not outcome.rows else "partial"
         report.record_outcome(outcome)
         if delay and offset + batch_size < len(classes):
             time.sleep(delay)
@@ -139,6 +148,7 @@ def enrich_patterns_with_counts(
     class_chunk_size: int | None,
     unsafe_paging: bool,
     delay: float,
+    class_batches: list[list[str]] | None = None,
 ) -> list[SchemaPattern]:
     """Run COUNT queries and merge counts into patterns.
 
@@ -158,6 +168,8 @@ def enrich_patterns_with_counts(
         class_chunk_size: Page size for class pagination
         unsafe_paging: Drop DISTINCT for faster paging
         delay: Delay between batches (seconds)
+        class_batches: Batches planned during pattern mining; subject classes
+            they do not cover are counted in fixed batches of *class_batch_size*
 
     Returns:
         Patterns with count field populated
@@ -169,20 +181,18 @@ def enrich_patterns_with_counts(
 
     bs = class_batch_size
     total = len(subject_classes)
-    n_batches = (total + bs - 1) // bs
-    logger.info(
-        "Counting phase: %d classes in %d batches of ≤%d …",
-        total,
-        n_batches,
-        bs,
-    )
+    wanted = set(subject_classes)
+    batches = [kept for batch in class_batches or [] if (kept := [c for c in batch if c in wanted])]
+    covered = {c for batch in batches for c in batch}
+    rest = [c for c in subject_classes if c not in covered]
+    batches.extend(rest[i : i + bs] for i in range(0, len(rest), bs))
+    n_batches = len(batches)
+    logger.info("Counting phase: %d classes in %d batches …", total, n_batches)
 
     # Build lookup: (sc, p, oc) -> {graph or "" : count}
     counts: dict[tuple[str, str, str], dict[str, _PatternCount]] = {}
 
-    for batch_idx in range(n_batches):
-        start = batch_idx * bs
-        batch = subject_classes[start : start + bs]
+    for batch_idx, batch in enumerate(batches):
         label = f"batch {batch_idx + 1}/{n_batches}"
 
         _fetch_typed_count_batch(
@@ -332,6 +342,16 @@ def _fetch_typed_count_batch(
         )
 
 
+def _literal_key(binding: dict[str, Any]) -> tuple[str, str, str]:
+    """Return the count key of a literal row: class, property and ``Literal[:datatype]``."""
+    dt = binding.get("dt", {}).get("value", "")
+    return (
+        binding.get("class", {}).get("value", ""),
+        binding.get("p", {}).get("value", ""),
+        f"Literal:{dt}" if dt else "Literal",
+    )
+
+
 def _fetch_literal_count_batch(
     batch: list[str],
     label: str,
@@ -363,15 +383,35 @@ def _fetch_literal_count_batch(
             success=outcome.state == "complete",
         )
         for b in outcome.rows:
-            dt = b.get("dt", {}).get("value", "")
-            key = (
-                b.get("class", {}).get("value", ""),
-                b.get("p", {}).get("value", ""),
-                f"Literal:{dt}" if dt else "Literal",
-            )
             metric = _count_from_binding(b)
             if metric is not None:
-                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
+                counts.setdefault(_literal_key(b), {})[b.get("_g", {}).get("value", "")] = metric
+
+        t0 = time.monotonic()
+        objects = query_with_bisect(
+            batch,
+            graph_uris,
+            _build_batched_literal_objects_query,
+            "counts/literal-objects",
+            helper,
+            collect_bindings,
+            chunk_size,
+            unsafe_paging,
+        )
+        report.record_query(
+            "counts/literal-objects",
+            time.monotonic() - t0,
+            success=objects.state == "complete",
+        )
+        if objects.state != "complete":
+            logger.warning("Distinct literal objects unavailable (%s)", label)
+            return
+        for b in objects.rows:
+            key, graph = _literal_key(b), b.get("_g", {}).get("value", "")
+            metric = counts.get(key, {}).get(graph)
+            value = b.get("objects", {}).get("value")
+            if metric is not None and value is not None:
+                counts[key][graph] = replace(metric, distinct_objects=int(value))
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-from urllib.parse import quote
 
 from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS
+
+from rdfsolve.config import mint_from_base
 
 from .model import ReleaseManifest
 
@@ -16,19 +17,15 @@ VOID = Namespace("http://rdfs.org/ns/void#")
 SPDX = Namespace("http://spdx.org/rdf/terms#")
 
 
-def _safe(value: str) -> str:
-    return quote(value, safe="")
-
-
 def _artifact_uri(base: str, artifact_id: str) -> URIRef:
     digest = hashlib.sha256(artifact_id.encode()).hexdigest()[:24]
-    return URIRef(f"{base.rstrip('/')}/distribution/{digest}")
+    return URIRef(mint_from_base(base, "distribution", digest))
 
 
 def release_to_rdf(
     manifest: ReleaseManifest,
     *,
-    base_uri: str = "https://w3id.org/rdfsolve/",
+    base_uri: str | None = None,
 ) -> Graph:
     """Project the canonical manifest into DCAT/VoID/PROV/SPDX RDF.
 
@@ -36,7 +33,7 @@ def release_to_rdf(
     RDF is a standards-oriented catalog/provenance view rather than a lossy
     replacement for the canonical manifest.
     """
-    base = base_uri.rstrip("/") + "/"
+    base = (base_uri or manifest.base_uri).rstrip("/") + "/"
     graph = Graph()
     for prefix, ns in {
         "dcat": DCAT,
@@ -48,8 +45,8 @@ def release_to_rdf(
         graph.bind(prefix, ns)
 
     release_hash = hashlib.sha256(manifest.release_id.encode()).hexdigest()[:24]
-    catalog = URIRef(f"{base}release/{release_hash}")
-    run = URIRef(f"{base}activity/{release_hash}")
+    catalog = URIRef(mint_from_base(base, "release", release_hash))
+    run = URIRef(mint_from_base(base, "activity", release_hash))
     graph.add((catalog, RDF.type, DCAT.Catalog))
     graph.add((catalog, RDF.type, VOID.Dataset))
     graph.add((catalog, DCTERMS.identifier, Literal(manifest.release_id)))
@@ -69,7 +66,7 @@ def release_to_rdf(
 
     artifact_by_id = manifest.artifact_by_id()
     for dataset in manifest.datasets:
-        snapshot = URIRef(f"{base}snapshot/{_safe(dataset.snapshot_id)}")
+        snapshot = URIRef(dataset.snapshot_id)
         graph.add((snapshot, RDF.type, DCAT.Dataset))
         graph.add((snapshot, RDF.type, VOID.Dataset))
         graph.add((snapshot, DCTERMS.identifier, Literal(dataset.dataset_id)))

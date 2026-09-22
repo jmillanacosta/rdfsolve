@@ -58,6 +58,31 @@ def identity(sources: Path | None, overrides: Path | None, output: Path) -> None
         )
 
 
+@registry.command("enrich-bioregistry")
+@click.option(
+    "--sources",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Registry YAML. Defaults to data/sources.yaml.",
+)
+@click.option(
+    "--output",
+    type=click.Path(dir_okay=False, path_type=Path),
+    required=True,
+    help="Separate YAML file for the refresh proposal.",
+)
+@click.option("--name", "names", multiple=True, help="Refresh only selected source names.")
+def enrich_bioregistry_registry(sources: Path | None, output: Path, names: tuple[str, ...]) -> None:
+    """Refresh Bioregistry metadata without changing local download classifications."""
+    import json
+
+    from rdfsolve.sources import DEFAULT_SOURCES_YAML, enrich_registry_with_bioregistry
+
+    path = sources or DEFAULT_SOURCES_YAML
+    report = enrich_registry_with_bioregistry(path, output=output, names=set(names) or None)
+    click.echo(json.dumps(report, indent=2, sort_keys=True))
+
+
 @main.group()
 def release() -> None:
     """Build and inspect frozen evidence-corpus releases."""

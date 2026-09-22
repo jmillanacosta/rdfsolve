@@ -191,6 +191,12 @@ class SourceModel(BaseModel):
     bioregistry_mappings: dict[str, str] = Field(default_factory=dict)
     bioregistry_logo: str = ""
     bioregistry_extra_providers: list[dict[str, str | None]] = Field(default_factory=list)
+    bioregistry_repository: str = ""
+    bioregistry_owl_download: str = ""
+    bioregistry_rdf_download: str = ""
+    bioregistry_obo_download: str = ""
+    bioregistry_enriched_at: str = ""
+    bioregistry_package_version: str = ""
 
     kg_registry_id: str = ""
     in_kamdar: bool = False
@@ -272,6 +278,12 @@ class SourceModel(BaseModel):
             "bioregistry_domain",
             "bioregistry_uri_prefix",
             "bioregistry_logo",
+            "bioregistry_repository",
+            "bioregistry_owl_download",
+            "bioregistry_rdf_download",
+            "bioregistry_obo_download",
+            "bioregistry_enriched_at",
+            "bioregistry_package_version",
             "kg_registry_id",
         }
         for field_name in str_fields:

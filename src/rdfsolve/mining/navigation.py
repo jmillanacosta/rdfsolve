@@ -165,6 +165,8 @@ def discover_paths(
         truncated_lengths=[
             hops for hops in range(2, max_hops + 1) if totals[hops] > max_paths_per_length
         ],
+        probe_limit=probe_limit,
+        probe_selection="retained_prefix",
     )
 
 

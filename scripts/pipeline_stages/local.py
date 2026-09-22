@@ -11,7 +11,7 @@ from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.inputs import expand_inputs, qlever_format, rdf_input_files
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
-from .base import Stage
+from .base import PartialMiningError, Stage
 from .config import Source
 
 log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class LocalMiningStage(Stage):
         sources = self.config.get_local_sources()
         log.info(f"Processing {len(sources)} local sources")
 
-        results = {"indexed": [], "mined": [], "failed": [], "skipped": []}
+        results = {"indexed": [], "mined": [], "partial": [], "failed": [], "skipped": []}
 
         self._ensure_qlever_image()
 
@@ -93,8 +93,9 @@ class LocalMiningStage(Stage):
                     )
 
             except Exception as e:
-                log.error(f"  -> FAILED: {e}")
-                results["failed"].append({"name": source.name, "error": str(e)})
+                state = "partial" if isinstance(e, PartialMiningError) else "failed"
+                log.warning("  -> %s: %s", state.upper(), e)
+                results[state].append({"name": source.name, "error": str(e)})
 
         return results
 
@@ -203,22 +204,21 @@ class LocalMiningStage(Stage):
         graph_uris: list[str] | None = None,
         mining_context: str = "local_distribution",
     ):
-        """Mine one dataset from a local QLever instance.
+        """Mine one dataset from a local QLever instance."""
+        output_dir = self.config.output_dir / source.name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        suffix = self.config.output_suffix
+        report_path = output_dir / f"{source.name}{suffix}_report.json"
+        miner = self._local_miner(port, graph_uris, report_path)
+        schema = self._mine_schema(miner, source.name, output_dir)
+        self._save_dataset_outputs(source, schema, output_dir, miner.helper, mining_context)
+        self._require_complete(miner)
 
-        ``graph_uris`` is used when several datasets share one physical QLever
-        index.  Grouping is an indexing optimization only; scientific evidence
-        is still produced one registry dataset at a time.
-        """
+    def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path):
+        """Create a miner for a local QLever instance and check its named graphs."""
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
-
-        output_dir = self.config.output_dir / source.name
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        suffix = self.config.output_suffix
-        report_path = output_dir / f"{source.name}{suffix}_report.json"
-
         miner = SchemaMiner(
             endpoint_url=endpoint,
             graph_uris=graph_uris,
@@ -239,6 +239,11 @@ class LocalMiningStage(Stage):
 
             verify_named_graphs(miner._helper, graph_uris)
 
+        return miner
+
+    def _mine_schema(self, miner, name: str, output_dir: Path):
+        """Mine *name* with the configured optional phases and write their RDF files."""
+        suffix = self.config.output_suffix
         if self.config.extract_ontology or self.config.extract_metadata:
             from rdfsolve.mining import mine_with_ontology
 
@@ -247,12 +252,13 @@ class LocalMiningStage(Stage):
                 extract_ontology=self.config.extract_ontology,
                 ontology_scope=self.config.ontology_scope,
                 ontology_as_data=self.config.ontology_as_data,
+                ontology_term_budget=self.config.ontology_term_budget,
                 extract_metadata=self.config.extract_metadata,
-                dataset_name=source.name,
+                dataset_name=name,
             )
             schema = result.data_schema
             if result.ontology:
-                ontology_path = output_dir / f"{source.name}{suffix}_ontology.ttl"
+                ontology_path = output_dir / f"{name}{suffix}_ontology.ttl"
                 try:
                     ontology_graph = trim_export_text(
                         result.ontology, self.config.trim_descriptions
@@ -268,7 +274,7 @@ class LocalMiningStage(Stage):
                 except Exception as e:
                     raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
             if result.metadata:
-                metadata_path = output_dir / f"{source.name}{suffix}_metadata.ttl"
+                metadata_path = output_dir / f"{name}{suffix}_metadata.ttl"
                 try:
                     metadata_graph = trim_export_text(
                         result.metadata, self.config.trim_descriptions
@@ -279,8 +285,16 @@ class LocalMiningStage(Stage):
                 except Exception as e:
                     raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
-            schema = miner.mine(dataset_name=source.name)
+            schema = miner.mine(dataset_name=name)
 
+        return schema
+
+    def _save_dataset_outputs(
+        self, source: Source, schema, output_dir: Path, helper, mining_context: str
+    ) -> None:
+        """Write one dataset's schema exports and its separate evidence files."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        suffix = self.config.output_suffix
         from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
 
         owl_urls = source.download_fields.get("download_owl") or []
@@ -297,7 +311,7 @@ class LocalMiningStage(Stage):
             output_dir,
             source.name,
             suffix,
-            helper=miner.helper,
+            helper=helper,
             mining_context=mining_context,
             local_ontology_file_candidates=local_ontology_files,
         )
@@ -306,14 +320,13 @@ class LocalMiningStage(Stage):
             output_dir,
             source.name,
             suffix,
-            helper=miner.helper,
+            helper=helper,
             access_context=mining_context,
         )
         self._save_property_usage_evidence(
-            schema, output_dir, source.name, suffix, helper=miner.helper
+            schema, output_dir, source.name, suffix, helper=helper
         )
-        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=miner.helper)
-        self._require_complete(miner)
+        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=helper)
 
     def _ensure_qlever_image(self):
         """Require the prepared image; do not pull a new engine during mining."""

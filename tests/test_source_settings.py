@@ -206,8 +206,11 @@ def test_pipeline_always_saves_canonical_schema(pipeline, tmp_path, monkeypatch,
         pipeline.LocalMiningStage(config)._mine_local(source, 7019)
         path = config.output_dir / "test" / "test_schema.json"
     elif mode == "grouped":
+        miner.declared_classes = frozenset()
+        miner.subsumed_classes = frozenset()
+        miner.count_class_entities.return_value = ({}, {})
         pipeline.GroupedMiningStage(config)._mine_grouped("test", [source], 7019)
-        path = config.output_dir / "test" / "test_schema.json"
+        path = config.output_dir / "grouped_test" / "test_schema.json"
     else:
         stage = pipeline.LsLodCloudStage(config)
         monkeypatch.setattr(stage, "_save_schema_connectivity", Mock())
@@ -384,6 +387,13 @@ def test_pipeline_enables_enrichment_in_every_mining_mode(pipeline, tmp_path, mo
     elif mode == "local":
         pipeline.LocalMiningStage(config)._mine_local(source, 7019)
     elif mode == "grouped":
+        from rdfsolve.schema_models import AboutMetadata, MinedSchema
+
+        miner = constructor.return_value
+        miner.mine.return_value = MinedSchema(patterns=[], about=AboutMetadata(dataset_name="test"))
+        miner.declared_classes = frozenset()
+        miner.subsumed_classes = frozenset()
+        miner.count_class_entities.return_value = ({}, {})
         pipeline.GroupedMiningStage(config)._mine_grouped("test", [source], 7019)
     else:
         pipeline.LsLodCloudStage(config)._mine_cloud([(source, tmp_path)], 7019)
@@ -464,11 +474,13 @@ def test_preflight_reports_unusable_inputs(pipeline, tmp_path, monkeypatch):
 
     config = pipeline.PipelineConfig(base_dir=tmp_path, no_index=True)
     config.sources = [
-        pipeline.Source.from_dict({"name": "broken", "download_ttl": "https://example.org/a.ttl.gz"})
+        pipeline.Source.from_dict(
+            {"name": "broken", "download_ttl": "https://example.org/a.ttl.gz"}
+        )
     ]
     workdir = config.data_dir / "qlever_workdirs" / "broken" / "rdf"
     workdir.mkdir(parents=True)
-    (workdir / "a.ttl.gz").write_bytes(b"<?xml version=\"1.0\"?><html>Object not found!</html>")
+    (workdir / "a.ttl.gz").write_bytes(b'<?xml version="1.0"?><html>Object not found!</html>')
     monkeypatch.setattr(shutil, "which", lambda name: f"/usr/bin/{name}")
     monkeypatch.setattr(
         pipeline.LocalMiningStage, "_ensure_qlever_image", lambda self: None, raising=True
@@ -519,23 +531,71 @@ def test_a_turtle_url_is_left_alone(pipeline, tmp_path):
     from rdfsolve.qlever import build_qleverfile
 
     qleverfile = build_qleverfile(
-        {"name": "plain", "download_ttl": "http://example.org/data.ttl"}, tmp_path, 7019, "singularity"
+        {"name": "plain", "download_ttl": "http://example.org/data.ttl"},
+        tmp_path,
+        7019,
+        "singularity",
     )
     assert "mv -f" not in qleverfile
 
 
-def test_grouped_mining_keeps_dataset_scopes_separate(pipeline, tmp_path, monkeypatch):
+def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
+    pipeline, tmp_path, monkeypatch
+):
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    one, two = mint("graph", "one"), mint("graph", "two")
     config = pipeline.PipelineConfig(base_dir=tmp_path)
     stage = pipeline.GroupedMiningStage(config)
     sources = [pipeline.Source(name="one"), pipeline.Source(name="two")]
-    calls = []
+    miners = []
+    miner = Mock(declared_classes=frozenset(), subsumed_classes=frozenset())
+    miner.count_class_entities.return_value = ({"urn:A": 2}, {"urn:A": "complete"})
+    miner.last_report.completion_state = "complete"
 
-    def mine_local(source, port, *, graph_uris=None, mining_context="local_distribution"):
-        calls.append((source.name, port, graph_uris, mining_context))
+    def local_miner(port, graph_uris, report_path):
+        miners.append(graph_uris)
+        return miner
 
-    monkeypatch.setattr(stage, "_mine_local", mine_local)
+    # The edge lives in graph one; its object is typed in graph two.
+    group = MinedSchema(
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri="urn:p",
+                object_class="urn:B",
+                count=3,
+                graphs={one: 3},
+            ),
+            SchemaPattern(
+                subject_class="urn:B",
+                property_uri="urn:q",
+                object_class="Literal",
+                count=1,
+                graphs={two: 1},
+            ),
+        ],
+        about=AboutMetadata(dataset_name="provider", graph_uris=[one, two]),
+    )
+    saved = {}
+    monkeypatch.setattr(stage, "_local_miner", local_miner)
+    monkeypatch.setattr(stage, "_mine_schema", lambda miner, name, output_dir: group)
+    monkeypatch.setattr(stage, "_save_schema_outputs", Mock())
+    monkeypatch.setattr(
+        stage,
+        "_save_dataset_outputs",
+        lambda source, part, output_dir, helper, context: saved.setdefault(
+            source.name, (part, context)
+        ),
+    )
     assert stage._mine_grouped("provider", sources, 7019) == ["one", "two"]
-    assert calls == [
-        ("one", 7019, [mint("graph", "one")], "grouped_local_distribution"),
-        ("two", 7019, [mint("graph", "two")], "grouped_local_distribution"),
+    assert miners == [[one, two]]
+    part, context = saved["one"]
+    assert context == "grouped_local_distribution"
+    assert [(p.subject_class, p.object_class, p.count) for p in part.patterns] == [
+        ("urn:A", "urn:B", 3)
     ]
+    assert part.about.dataset_name == "one" and part.about.graph_uris == [one]
+    assert part.about.class_entity_counts == {"urn:A": 2}
+    miner.count_class_entities.assert_any_call(["urn:A", "urn:B"], [one])
+    assert [p.property_uri for p in saved["two"][0].patterns] == ["urn:q"]

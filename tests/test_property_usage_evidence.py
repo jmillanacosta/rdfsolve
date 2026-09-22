@@ -130,7 +130,7 @@ def test_histogram_zero_bin_not_claimed_without_denominator():
         collect_histograms=True,
     )
     row = result.records[0]
-    assert row.denominator_state == "missing"
+    assert row.denominator_state == "not_run"
     assert row.value_count_histogram == {"1": 1}
     assert "0" not in row.value_count_histogram
 
@@ -152,6 +152,6 @@ def test_property_usage_artifact_retains_class_population_denominators():
     )
     by_class = {row.class_iri: row for row in result.class_populations}
     assert by_class[str(A)].subject_count == 1
-    assert by_class[str(A)].count_status == "available"
+    assert by_class[str(A)].count_status == "complete"
     assert by_class[str(B)].subject_count is None
-    assert by_class[str(B)].count_status == "missing"
+    assert by_class[str(B)].count_status == "not_run"

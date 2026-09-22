@@ -206,7 +206,16 @@ Examples:
     parser.add_argument(
         "--ontology-as-data",
         action="store_true",
-        help="Opt in to bounded superclass aggregation (not observed typing)",
+        help=(
+            "Probe patterns of ontology terms used as types or values, then subsume "
+            "terms under rdfs:subClassOf ancestors (recorded as inferred)"
+        ),
+    )
+    parser.add_argument(
+        "--ontology-term-budget",
+        type=int,
+        default=300,
+        help="Most classes a schema keeps before ontology terms are subsumed (default: 300)",
     )
     parser.add_argument(
         "--get-graphs-from-store",
@@ -432,6 +441,9 @@ Examples:
     config.extract_ontology = args.extract_ontology
     config.ontology_scope = args.ontology_scope
     config.ontology_as_data = args.ontology_as_data
+    config.ontology_term_budget = args.ontology_term_budget
+    if config.ontology_term_budget < 1:
+        parser.error("--ontology-term-budget must be positive")
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
     if config.ontology_discovery_max_graphs < 1:
@@ -466,6 +478,7 @@ Examples:
         return
 
     config.output_dir.mkdir(parents=True, exist_ok=True)
+    config.archive_run_inputs()
     pipeline = Pipeline(config)
 
     if args.grouped_only:

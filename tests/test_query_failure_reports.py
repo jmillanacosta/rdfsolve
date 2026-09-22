@@ -214,10 +214,17 @@ def test_failed_ontology_query_is_not_an_empty_ontology():
         OntologyMiner(helper).mine()
 
 
-def test_ontology_aggregation_limit_is_not_complete():
-    from rdfsolve.mining.ontology_as_data import mine_ontology_as_data_patterns
+def test_ontology_term_probes_page_to_completion_without_a_row_limit():
+    from rdfsolve.mining.ontology_as_data import probe_term_patterns
 
-    helper = Mock()
-    helper.select.return_value = {"results": {"bindings": [{}] * 1000}}
-    with pytest.raises(RuntimeError, match="truncated"):
-        mine_ontology_as_data_patterns(helper, superclasses=["urn:A"])
+    templates = []
+
+    def collect(template, purpose, chunk=None):
+        templates.append(template)
+        return []
+
+    probe_term_patterns(Mock(), None, collect, 10)
+    assert len(templates) == 2
+    for template in templates:
+        body = template.removesuffix("\nOFFSET {offset}\nLIMIT {limit}")
+        assert "LIMIT" not in body

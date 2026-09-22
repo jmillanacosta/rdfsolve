@@ -20,7 +20,11 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _artifact_paths(manifest: ReleaseManifest, role: str) -> list[str]:
-    return sorted(artifact.path for artifact in manifest.artifacts if artifact.role == role)
+    return sorted(
+        artifact.path
+        for artifact in manifest.artifacts
+        if artifact.role == role and artifact.dataset_id is not None
+    )
 
 
 def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]:
@@ -84,7 +88,7 @@ def _summarize_property_usage(manifest: ReleaseManifest, root: Path) -> dict[str
                 1
                 for row in populations
                 if isinstance(row, dict)
-                and row.get("count_status") == "available"
+                and row.get("count_status") == "complete"
                 and row.get("subject_count") is not None
             )
         for row in rows:
@@ -172,7 +176,22 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
     endpoint access is performed.
     """
     completion = Counter(item.completion_state for item in manifest.datasets)
-    modes = Counter(item.extraction_mode or "unknown" for item in manifest.datasets)
+    extraction_attempts = [
+        extraction for item in manifest.datasets for extraction in item.extractions
+    ]
+    if not extraction_attempts:
+        extraction_attempts = []
+    modes = Counter(extraction.mode for extraction in extraction_attempts)
+    datasets_by_mode = {
+        mode: len(
+            {
+                item.dataset_id
+                for item in manifest.datasets
+                if any(e.mode == mode for e in item.extractions)
+            }
+        )
+        for mode in sorted(modes)
+    }
     artifact_roles = Counter(item.role or "other" for item in manifest.artifacts)
     ontology_candidates = sum(len(item.ontology_usages) for item in manifest.datasets)
     ontology_by_basis = Counter(
@@ -209,16 +228,13 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
     attempted_completion = Counter(item.completion_state for item in attempted)
     access_fields = Counter(key for item in manifest.datasets for key in item.access_files)
     summary: dict[str, Any] = {
-        "datasets": len(manifest.datasets),
+        "registry_entries": len(manifest.datasets),
+        "identity_review_complete": manifest.identity_review_complete,
+        "identity_candidate_count": manifest.identity_candidate_count,
+        "canonical_dataset_count": manifest.canonical_dataset_count,
         "datasets_with_endpoint": endpoint,
         "datasets_with_configured_downloads": configured_downloads,
-        # Kept as a compatibility alias for older summaries; a configured
-        # download is not necessarily a dataset dump (e.g. download_owl).
-        "datasets_with_distribution": configured_downloads,
         "datasets_with_endpoint_and_configured_downloads": sum(
-            bool(item.endpoint and item.access_files) for item in manifest.datasets
-        ),
-        "datasets_with_both": sum(
             bool(item.endpoint and item.access_files) for item in manifest.datasets
         ),
         "datasets_with_download_owl": with_download_owl,
@@ -227,10 +243,12 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
         "local_ontology_file_candidates": local_ontology_file_candidates,
         "ontology_evidence_context": dict(sorted(ontology_contexts.items())),
         "attempted_datasets": len(attempted),
+        "extraction_attempts": len(extraction_attempts),
+        "datasets_by_extraction_mode": datasets_by_mode,
         "attempted_completion": dict(sorted(attempted_completion.items())),
         "access_file_fields": dict(sorted(access_fields.items())),
         "completion": dict(sorted(completion.items())),
-        "extraction_mode": dict(sorted(modes.items())),
+        "extraction_attempts_by_mode": dict(sorted(modes.items())),
         "artifacts": len(manifest.artifacts),
         "artifact_roles": dict(sorted(artifact_roles.items())),
         "ontology_usage_candidates": ontology_candidates,

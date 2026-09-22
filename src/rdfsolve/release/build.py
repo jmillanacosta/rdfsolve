@@ -11,8 +11,11 @@ from typing import Any
 
 import yaml
 
+from rdfsolve.config import get_base_uri, mint_from_base
+
 from .model import (
     DatasetReleaseRecord,
+    ExtractionReleaseRecord,
     OntologyReleaseRef,
     OntologyUsageReleaseRecord,
     ReleaseArtifact,
@@ -83,8 +86,17 @@ def _role(path: Path) -> str | None:
         return "source_registry"
     if name == "environment.txt":
         return "environment"
+    if name.endswith(("config.yaml", "config.yml")) or name in {
+        "pipeline_config.yaml",
+        "pipeline_config.yml",
+    }:
+        return "pipeline_config"
     if name == "code_commit.txt":
         return "code_commit"
+    if name == "identity_overrides.yaml":
+        return "identity_overrides"
+    if name == "sssom_sources.yaml":
+        return "mapping_source_registry"
     if name.startswith("pipeline_results") and name.endswith(".json"):
         return "pipeline_results"
     if path.as_posix().endswith("ontologies/registry.json"):
@@ -188,19 +200,46 @@ def _load_json(path: Path) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
-def _report_for_dataset(run_root: Path, dataset_id: str) -> tuple[Path | None, dict[str, Any]]:
+def _reports_for_dataset(run_root: Path, dataset_id: str) -> list[tuple[Path, dict[str, Any]]]:
     directory = run_root / dataset_id
     if not directory.is_dir():
-        return None, {}
-    reports = sorted(directory.glob("*_report.json"))
-    if not reports:
-        return None, {}
-    return reports[0], _load_json(reports[0])
+        return []
+    return [(path, _load_json(path)) for path in sorted(directory.glob("*_report.json"))]
+
+
+def _report_mode(path: Path) -> str:
+    name = path.name
+    for mode in ("remote", "local", "grouped"):
+        if f"_{mode}_" in name:
+            return mode
+    return "unknown"
+
+
+def _combined_completion(states: list[str]) -> str:
+    if not states:
+        return "unknown"
+    if "unfinished" in states:
+        return "unfinished"
+    if all(state == "unknown" for state in states):
+        return "unknown"
+    if all(state == "complete" for state in states):
+        return "complete"
+    if all(state in {"failed", "skipped"} for state in states):
+        return "failed" if "failed" in states else "skipped"
+    return "partial"
 
 
 def _completion(report: dict[str, Any]) -> str:
+    if "finished_at" in report and not report["finished_at"]:
+        return "unfinished"
     state = report.get("completion_state") or report.get("state")
-    if isinstance(state, str) and state in {"complete", "partial", "failed", "skipped"}:
+    if isinstance(state, str) and state in {
+        "complete",
+        "partial",
+        "failed",
+        "unfinished",
+        "skipped",
+    }:
         return state
     # Older reports may only contain abort/failure information.
     if report.get("abort_reason"):
@@ -294,20 +333,60 @@ def _artifact_refs_by_dataset(artifacts: list[ReleaseArtifact]) -> dict[str, lis
     return out
 
 
-def _snapshot_id(
-    dataset_id: str, about: dict[str, Any], report: dict[str, Any], artifacts: list[str]
-) -> str:
-    payload = {
-        "dataset_id": dataset_id,
-        "source_version": about.get("source_version"),
-        "source_version_iri": about.get("source_version_iri"),
-        "report_started": report.get("started_at") or report.get("created_at"),
-        "artifacts": artifacts,
-    }
-    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[
-        :24
-    ]
-    return f"snapshot:{dataset_id}:{digest}"
+def _snapshot_id(dataset_id: str, about: dict[str, Any], report: dict[str, Any]) -> str:
+    """Return the one snapshot identity used throughout rdfsolve.
+
+    Prefer the identity already minted when ``AboutMetadata`` was built.  Older
+    runs that predate that field are upgraded deterministically with the same
+    content-hash/retrieval-record semantics instead of hashing release artifacts
+    and thereby creating a second identity for the same observation.
+    """
+    existing = about.get("snapshot_id")
+    if isinstance(existing, str) and existing:
+        return existing
+    content_sha256 = about.get("content_sha256")
+    if isinstance(content_sha256, str) and content_sha256:
+        return mint_from_base(get_base_uri(), "snapshot", dataset_id, "sha256", content_sha256)
+    retrieved = (
+        about.get("retrieved_at")
+        or about.get("generated_at")
+        or report.get("started_at")
+        or report.get("created_at")
+        or "unknown-retrieval"
+    )
+    return mint_from_base(get_base_uri(), "snapshot", dataset_id, str(retrieved))
+
+
+def _identity_review(run_root: Path) -> tuple[bool | None, int | None, int | None, str | None]:
+    """Evaluate the frozen dataset-identity review inputs of a run.
+
+    The registry-entry count remains available regardless. A canonical dataset
+    denominator is returned only when every generated candidate relation has
+    been adjudicated by rules or the frozen override file.
+    """
+    sources_path = run_root / "sources.yaml"
+    if not sources_path.exists():
+        return None, None, None, "sources.yaml is missing"
+    try:
+        from rdfsolve.dataset_identity import (
+            read_overrides,
+            read_registry,
+            resolve_identity,
+        )
+
+        overrides_path = run_root / "identity_overrides.yaml"
+        resolution = resolve_identity(
+            read_registry(sources_path),
+            read_overrides(overrides_path if overrides_path.exists() else None),
+        )
+    except Exception as error:
+        return None, None, None, f"{type(error).__name__}: {error}"
+    return (
+        resolution.review_complete,
+        len(resolution.candidates),
+        resolution.canonical_dataset_count,
+        None,
+    )
 
 
 def build_release_manifest(
@@ -316,12 +395,12 @@ def build_release_manifest(
     release_id: str | None = None,
     rdfsolve_version: str | None = None,
     issued: datetime | None = None,
+    base_uri: str | None = None,
 ) -> ReleaseManifest:
     """Build the release manifest of one completed run directory."""
     run_root = Path(run_dir).resolve()
+    frozen_base_uri = (base_uri or get_base_uri()).rstrip("/") + "/"
     sources = _load_sources(run_root)
-    artifacts = inventory_artifacts(run_root, dataset_ids=set(sources))
-    artifact_ids = _artifact_refs_by_dataset(artifacts)
     dataset_dirs = {
         path.name
         for path in run_root.iterdir()
@@ -333,12 +412,23 @@ def build_release_manifest(
             or any(path.glob("*_report.json"))
         )
     }
-    dataset_ids = sorted(dataset_dirs | set(sources))
+    dataset_ids = sorted(sources if (run_root / "sources.yaml").exists() else dataset_dirs)
+    artifacts = inventory_artifacts(run_root, dataset_ids=set(dataset_ids))
+    artifact_ids = _artifact_refs_by_dataset(artifacts)
 
     datasets: list[DatasetReleaseRecord] = []
     for dataset_id in dataset_ids:
         source = sources.get(dataset_id, {})
-        report_path, report = _report_for_dataset(run_root, dataset_id)
+        reports = _reports_for_dataset(run_root, dataset_id)
+        report_path, report = reports[0] if reports else (None, {})
+        extractions = [
+            ExtractionReleaseRecord(
+                mode=_report_mode(path),
+                completion_state=_completion(raw),
+                report_path=path.relative_to(run_root).as_posix(),
+            )
+            for path, raw in reports
+        ]
         about = _schema_metadata(run_root, dataset_id)
         refs = artifact_ids.get(dataset_id, [])
         endpoint = source.get("endpoint") or None
@@ -347,15 +437,7 @@ def build_release_manifest(
         graphs = source.get("graph_uris") or []
         if isinstance(graphs, str):
             graphs = [graphs]
-        mode = None
-        if report_path is not None:
-            name = report_path.name
-            if "_remote_" in name:
-                mode = "remote"
-            elif "_local_" in name:
-                mode = "local"
-            elif "_grouped_" in name:
-                mode = "grouped"
+        mode = extractions[0].mode if extractions else None
         retrieved_at = (
             about.get("retrieved_at") or about.get("mined_at") or report.get("started_at")
         )
@@ -365,7 +447,7 @@ def build_release_manifest(
         datasets.append(
             DatasetReleaseRecord(
                 dataset_id=dataset_id,
-                snapshot_id=_snapshot_id(dataset_id, about, report, refs),
+                snapshot_id=_snapshot_id(dataset_id, about, report),
                 source_version=about.get("source_version"),
                 source_version_iri=about.get("source_version_iri"),
                 retrieved_at=retrieved_at,
@@ -374,8 +456,11 @@ def build_release_manifest(
                 access_files=access_files,
                 graph_scope=[str(item) for item in graphs],
                 extraction_mode=mode,
-                completion_state=_completion(report),
+                completion_state=_combined_completion(
+                    [item.completion_state for item in extractions]
+                ),
                 report_path=report_path.relative_to(run_root).as_posix() if report_path else None,
+                extractions=extractions,
                 artifacts=refs,
                 ontology_evidence_context=ontology_context,
                 local_ontology_file_candidate_count=local_ontology_file_count,
@@ -390,6 +475,18 @@ def build_release_manifest(
 
     source_artifact = next((a.artifact_id for a in artifacts if a.role == "source_registry"), None)
     environment_artifact = next((a.artifact_id for a in artifacts if a.role == "environment"), None)
+    pipeline_config_artifacts = sorted(
+        a.artifact_id for a in artifacts if a.role == "pipeline_config"
+    )
+    identity_overrides_artifact = next(
+        (a.artifact_id for a in artifacts if a.role == "identity_overrides"), None
+    )
+    (
+        identity_review_complete,
+        identity_candidate_count,
+        canonical_dataset_count,
+        identity_review_error,
+    ) = _identity_review(run_root)
     ontology_registry_artifact = next(
         (a.artifact_id for a in artifacts if a.path == "ontologies/registry.json"),
         None,
@@ -399,6 +496,9 @@ def build_release_manifest(
             "run": run_root.name,
             "code_commit": code_commit,
             "source_registry": source_artifact,
+            "identity_overrides": identity_overrides_artifact,
+            "identity_review_complete": identity_review_complete,
+            "canonical_dataset_count": canonical_dataset_count,
             "datasets": [(d.dataset_id, d.snapshot_id) for d in datasets],
         }
         release_id = (
@@ -408,12 +508,19 @@ def build_release_manifest(
 
     return ReleaseManifest(
         release_id=release_id,
+        base_uri=frozen_base_uri,
         issued=issued or datetime.now(timezone.utc),
         rdfsolve_version=rdfsolve_version,
         code_commit=code_commit,
         run_root=run_root.name,
         source_registry_artifact=source_artifact,
         environment_artifact=environment_artifact,
+        pipeline_config_artifacts=pipeline_config_artifacts,
+        identity_overrides_artifact=identity_overrides_artifact,
+        identity_review_complete=identity_review_complete,
+        identity_candidate_count=identity_candidate_count,
+        canonical_dataset_count=canonical_dataset_count,
+        identity_review_error=identity_review_error,
         ontology_registry_artifact=ontology_registry_artifact,
         datasets=datasets,
         artifacts=artifacts,

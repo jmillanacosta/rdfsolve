@@ -70,6 +70,7 @@ def derive_class_mappings(
     *,
     min_instance_count: int = 1,
     derivation_method: str = "mapped_instance_types",
+    include_witnesses: bool = False,
 ) -> tuple[list[ClassPair], dict[str, Any]]:
     """Aggregate distinct entity pairs using each dataset's own type evidence.
 
@@ -143,7 +144,7 @@ def derive_class_mappings(
             p.target_class,
         ),
     )
-    return result, {
+    report: dict[str, Any] = {
         "input_edges": len(instance_edges),
         "processed_edges": processed,
         "skipped_no_source_class": skipped_source,
@@ -155,10 +156,40 @@ def derive_class_mappings(
         ),
         "coverage_basis": "entities in the supplied class index",
     }
+    if include_witnesses:
+        kept = {
+            (pair.source_class, pair.target_class, pair.source_dataset, pair.target_dataset)
+            for pair in result
+        }
+        rows: list[dict[str, Any]] = []
+        for key in sorted(kept):
+            predicate_sets = by_predicate.get(key, {})
+            for source_entity, target_entity in sorted(witnesses.get(key, set())):
+                supporting = sorted(
+                    predicate
+                    for predicate, found in predicate_sets.items()
+                    if (source_entity, target_entity) in found
+                )
+                rows.append(
+                    {
+                        "source_class": key[0],
+                        "target_class": key[1],
+                        "source_dataset": key[2],
+                        "target_dataset": key[3],
+                        "source_entity": source_entity,
+                        "target_entity": target_entity,
+                        "supporting_entity_predicates": supporting,
+                    }
+                )
+        report["witnesses"] = rows
+    return result, report
 
 
 def shared_entity_links(
-    indices: dict[str, ClassIndex], *, min_instance_count: int = 1
+    indices: dict[str, ClassIndex],
+    *,
+    min_instance_count: int = 1,
+    include_witnesses: bool = False,
 ) -> tuple[list[ClassPair], dict[str, Any]]:
     """Find class associations supported by the same IRI in two datasets.
 
@@ -173,5 +204,9 @@ def shared_entity_links(
         for iri in sorted(indices[left].entities.keys() & indices[right].entities.keys())
     ]
     return derive_class_mappings(
-        edges, indices, min_instance_count=min_instance_count, derivation_method="shared_entity_iri"
+        edges,
+        indices,
+        min_instance_count=min_instance_count,
+        derivation_method="shared_entity_iri",
+        include_witnesses=include_witnesses,
     )

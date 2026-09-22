@@ -251,8 +251,14 @@ def relate(left: DatasetIdentity, right: DatasetIdentity) -> IdentityRelation | 
 
 
 def read_registry(path: str | Path) -> list[dict[str, Any]]:
-    """Read the raw registry mappings, including download fields."""
+    """Read raw registry mappings, including download fields.
+
+    The project registry is a YAML list; the wrapped ``sources:`` form is also
+    accepted for frozen/test fixtures and older run directories.
+    """
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    if isinstance(raw, dict) and "sources" in raw:
+        raw = raw["sources"]
     if not isinstance(raw, list) or not all(isinstance(item, dict) for item in raw):
         raise ValueError(f"Expected a YAML list of source mappings in {path}")
     return raw

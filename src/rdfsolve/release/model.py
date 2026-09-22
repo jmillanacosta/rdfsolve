@@ -12,7 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-CompletionState = Literal["complete", "partial", "failed", "skipped", "unknown"]
+CompletionState = Literal["complete", "partial", "failed", "unfinished", "skipped", "unknown"]
 
 
 class ReleaseArtifact(BaseModel):
@@ -62,6 +62,14 @@ class OntologyUsageReleaseRecord(BaseModel):
     artifact_refs: list[OntologyReleaseRef] = Field(default_factory=list)
 
 
+class ExtractionReleaseRecord(BaseModel):
+    """One mining attempt retained for a dataset snapshot."""
+
+    mode: str
+    completion_state: CompletionState = "unknown"
+    report_path: str
+
+
 class DatasetReleaseRecord(BaseModel):
     """One dataset snapshot of a release and its artifacts."""
 
@@ -77,6 +85,7 @@ class DatasetReleaseRecord(BaseModel):
     extraction_mode: str | None = None
     completion_state: CompletionState = "unknown"
     report_path: str | None = None
+    extractions: list[ExtractionReleaseRecord] = Field(default_factory=list)
     artifacts: list[str] = Field(default_factory=list)
     ontology_evidence_context: str | None = None
     local_ontology_file_candidate_count: int = 0
@@ -87,12 +96,19 @@ class ReleaseManifest(BaseModel):
     """Inventory and provenance of one frozen release."""
 
     release_id: str
+    base_uri: str = "https://w3id.org/rdfsolve/"
     issued: datetime
     rdfsolve_version: str | None = None
     code_commit: str | None = None
     run_root: str
     source_registry_artifact: str | None = None
     environment_artifact: str | None = None
+    pipeline_config_artifacts: list[str] = Field(default_factory=list)
+    identity_overrides_artifact: str | None = None
+    identity_review_complete: bool | None = None
+    identity_candidate_count: int | None = None
+    canonical_dataset_count: int | None = None
+    identity_review_error: str | None = None
     ontology_registry_artifact: str | None = None
     datasets: list[DatasetReleaseRecord] = Field(default_factory=list)
     artifacts: list[ReleaseArtifact] = Field(default_factory=list)

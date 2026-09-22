@@ -28,8 +28,8 @@ def miner(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("ontology", [False, True])
 @pytest.mark.parametrize("metadata", [False, True])
-@pytest.mark.parametrize("detected", [False, True])
-def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected):
+@pytest.mark.parametrize("probed", [False, True])
+def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, probed):
     reports = []
 
     def optional(value):
@@ -41,18 +41,12 @@ def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected)
 
         return run
 
-    monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: detected)
-    monkeypatch.setattr(
-        "rdfsolve.mining._query_owl_class_superclasses", lambda *a, **kw: (["urn:A"], False)
-    )
     monkeypatch.setattr("rdfsolve.mining.OntologyMiner.mine", optional(OntologyStructure()))
     monkeypatch.setattr("rdfsolve.mining.MetadataMiner.mine", optional(MetadataDocument(graph=Graph())))
     pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
     monkeypatch.setattr(
-        "rdfsolve.mining.mine_ontology_as_data_patterns", lambda *a, **kw: [pattern]
-    )
-    monkeypatch.setattr(
-        "rdfsolve.mining.mine_ontology_as_data_subject_patterns", lambda *a, **kw: []
+        "rdfsolve.mining.ontology_as_data.probe_term_patterns",
+        lambda *a, **kw: [pattern] if probed else [],
     )
     result = mine_with_ontology(
         miner, ontology, metadata, dataset_name="test", ontology_as_data=True
@@ -62,9 +56,9 @@ def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected)
     assert all(item is report for item in reports)
     assert (result.ontology is not None) is ontology
     assert (result.metadata is not None) is metadata
-    assert report.pattern_count == len(result.data_schema.patterns) == int(detected)
-    assert report.class_count == result.data_schema.about.class_count == (2 if detected else 0)
-    assert report.property_count == result.data_schema.about.property_count == int(detected)
+    assert report.pattern_count == len(result.data_schema.patterns) == int(probed)
+    assert report.class_count == result.data_schema.about.class_count == (2 if probed else 0)
+    assert report.property_count == result.data_schema.about.property_count == int(probed)
     assert result.data_schema.about.finished_at == report.finished_at
     if ontology:
         assert report.ontology_extraction is not None
@@ -122,7 +116,6 @@ def test_new_run_clears_injected_ontology_classes(miner):
 
 
 def test_failed_optional_phase_keeps_its_report(miner, monkeypatch):
-    monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: False)
     monkeypatch.setattr(
         "rdfsolve.mining.OntologyMiner.mine", Mock(side_effect=RuntimeError("ontology failed"))
     )
@@ -152,44 +145,6 @@ def test_bounded_graph_uses_real_mining_queries():
             (p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
         assert schema.prefixes["e"] == "urn:mine:"
         assert miner.last_report.finished_at
-
-
-def _superclass_helper(count):
-    """A helper whose superclass query returns *count* parents."""
-    helper = Mock()
-    helper.select.return_value = {
-        "results": {
-            "bindings": [
-                {"parent": {"value": f"urn:parent:{i}"}, "count": {"value": str(count - i)}}
-                for i in range(count)
-            ]
-        }
-    }
-    return helper
-
-
-def test_superclass_aggregation_reports_truncation_instead_of_failing():
-    from rdfsolve.mining import _query_owl_class_superclasses
-
-    classes, truncated = _query_owl_class_superclasses(
-        _superclass_helper(500), None, limit=500, allow_truncation=True
-    )
-    assert truncated is True
-    assert len(classes) == 500
-
-
-def test_superclass_aggregation_still_refuses_silent_truncation():
-    from rdfsolve.mining import _query_owl_class_superclasses
-
-    with pytest.raises(RuntimeError, match="reached limit 500"):
-        _query_owl_class_superclasses(_superclass_helper(500), None, limit=500)
-
-
-def test_superclass_aggregation_reports_no_truncation_below_the_limit():
-    from rdfsolve.mining import _query_owl_class_superclasses
-
-    classes, truncated = _query_owl_class_superclasses(_superclass_helper(3), None, limit=500)
-    assert (len(classes), truncated) == (3, False)
 
 
 def test_an_anonymous_object_class_becomes_one_blank_node_pattern(monkeypatch):
@@ -258,3 +213,57 @@ def test_all_strategies_exclude_shacl_executable_classes_from_empirical_patterns
             for pattern in schema.patterns
         )
         assert any(pattern.subject_class == str(EX.DomainClass) for pattern in schema.patterns)
+
+
+@pytest.mark.parametrize("strategy", ["one-shot", "single-pass", "two-phase"])
+def test_mining_sets_pattern_types(strategy):
+    from rdfsolve.schema_models.pattern import PatternType
+
+    graph = Graph().parse(data='''
+        @prefix e: <urn:kind:> .
+        e:a a e:A; e:link e:b; e:text "value"; e:unknown e:c; e:node [e:p "x"] .
+        e:b a e:B .
+    ''', format="turtle")
+    with SchemaMiner.from_graph(graph, counts=False, delay=0, strategy=strategy) as miner:
+        schema = miner.mine("kinds")
+    kinds = {p.property_uri: p.pattern_type for p in schema.patterns}
+    assert kinds["urn:kind:link"] == PatternType.OBJECT_PROPERTY
+    assert kinds["urn:kind:unknown"] == PatternType.OBJECT_PROPERTY
+    assert kinds["urn:kind:text"] == PatternType.DATATYPE_PROPERTY
+    assert kinds["urn:kind:node"] == PatternType.BLANK_NODE_PROPERTY
+    assert PatternType.UNKNOWN not in kinds.values()
+
+
+def test_failed_counts_keep_patterns_and_report_partial(tmp_path, monkeypatch):
+    from rdfsolve.sparql_helper import EndpointError
+
+    graph = Graph().parse(data='@prefix e: <urn:count:> . e:a a e:A; e:p "x" .', format="turtle")
+    path = tmp_path / "report.json"
+    with SchemaMiner.from_graph(graph, delay=0, report_path=path) as miner:
+        select = miner.helper.select
+
+        def fail_counts(query, **kwargs):
+            if kwargs.get("purpose") == "counts/literal":
+                assert json.loads(path.read_text())["completion_state"] == "unfinished"
+                raise EndpointError("Count query failed")
+            return select(query, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", fail_counts)
+        schema = miner.mine("count")
+    assert schema.patterns
+    assert next(p for p in schema.patterns if p.property_uri == "urn:count:p").count is None
+    report = json.loads(path.read_text())
+    assert report["completion_state"] == "partial"
+    assert report["finished_at"]
+    assert report["pattern_count"] == len(schema.patterns)
+    assert any(f["purpose"] == "counts/literal" for f in report["query_failures"])
+
+
+def test_error_after_pattern_discovery_keeps_report_count(miner, monkeypatch):
+    pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="Literal")
+    monkeypatch.setattr(miner, "_run_patterns_phase", lambda: ([pattern], None))
+    monkeypatch.setattr(miner, "_run_labels_phase", Mock(side_effect=RuntimeError("labels failed")))
+    with pytest.raises(RuntimeError, match="labels failed"):
+        miner.mine("test")
+    assert miner.last_report.pattern_count == 1
+    assert miner.last_report.completion_state == "partial"

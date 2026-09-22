@@ -18,6 +18,7 @@ from rdfsolve.mining.query_builders import (
     _build_batched_untyped_uri_query,
     _build_class_discovery_query,
     _build_class_discovery_query_plain,
+    _build_class_weight_query,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
@@ -27,7 +28,40 @@ from rdfsolve.sparql_helper import ResponseLimitError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["TwoPhaseStrategy"]
+__all__ = ["TwoPhaseStrategy", "plan_class_batches"]
+
+# Above this many classes, batch by instance count instead of a fixed size.
+WEIGHTED_BATCHING_ABOVE = 300
+MAX_CLASSES_PER_BATCH = 500
+MAX_INSTANCES_PER_BATCH = 1_000_000
+
+
+def plan_class_batches(
+    classes: list[str],
+    weights: dict[str, int],
+    *,
+    max_classes: int = MAX_CLASSES_PER_BATCH,
+    max_instances: int = MAX_INSTANCES_PER_BATCH,
+) -> list[list[str]]:
+    """Pack classes into batches bounded by class count and typed-instance count.
+
+    Heavy classes get batches of their own; many light classes (for example
+    ontology terms that type a few instances each) share one query.
+    """
+    ordered = sorted(classes, key=lambda c: (-weights.get(c, 1), c))
+    batches: list[list[str]] = []
+    batch: list[str] = []
+    load = 0
+    for cls in ordered:
+        weight = max(weights.get(cls, 1), 1)
+        if batch and (len(batch) >= max_classes or load + weight > max_instances):
+            batches.append(batch)
+            batch, load = [], 0
+        batch.append(cls)
+        load += weight
+    if batch:
+        batches.append(batch)
+    return batches
 
 
 class TwoPhaseStrategy(MiningStrategy):
@@ -82,6 +116,7 @@ class TwoPhaseStrategy(MiningStrategy):
             logger.info(f"  -> {len(classes)} total classes (data + ontology)")
 
         context.report.finish_phase(p1, items=len(classes))
+        context.class_batches = self._plan_batches(classes, context)
 
         # Phase 2 - batched per-class pattern discovery
         p2 = context.report.start_phase("per-class-patterns")
@@ -89,6 +124,7 @@ class TwoPhaseStrategy(MiningStrategy):
             classes,
             context.graph_uris,
             context,
+            batches=context.class_batches,
         )
 
         logger.info(f"  -> {len(patterns)} total patterns from {len(classes)} classes")
@@ -97,14 +133,47 @@ class TwoPhaseStrategy(MiningStrategy):
             context.report.set_abort_reason(abort_reason)
         return patterns
 
+    def _plan_batches(self, classes: list[str], context: MiningContext) -> list[list[str]]:
+        """Use fixed batches, or instance-count batches when there are many classes."""
+        size = context.class_batch_size
+        fixed = [classes[i : i + size] for i in range(0, len(classes), size)]
+        if len(classes) <= WEIGHTED_BATCHING_ABOVE:
+            return fixed
+        t0 = time.monotonic()
+        try:
+            rows = context.collect_bindings(
+                _build_class_weight_query(context.graph_uris),
+                "two-phase/class-weights",
+                context.chunk_size,
+            )
+        except Exception as error:
+            context.report.record_query(
+                "two-phase/class-weights", time.monotonic() - t0, success=False
+            )
+            logger.warning("Instance counts per class failed (%s); using fixed batches", error)
+            return fixed
+        context.report.record_query("two-phase/class-weights", time.monotonic() - t0)
+        weights: dict[str, int] = {}
+        for row in rows:
+            try:
+                weights[row["class"]["value"]] = int(row["n"]["value"])
+            except (KeyError, TypeError, ValueError):
+                continue
+        batches = plan_class_batches(classes, weights)
+        logger.info(
+            "  -> %d classes packed into %d batches by instance count (was %d fixed batches)",
+            len(classes),
+            len(batches),
+            len(fixed),
+        )
+        return batches
+
     def _discover_classes(self, context: MiningContext) -> list[str]:
         """Run Phase 1 in the current scope and keep only data classes."""
         ccs = context.class_chunk_size
         if ccs is None:
             logger.info("Phase 1: discovering classes (no pagination) …")
-            q = _build_class_discovery_query_plain(
-                context.graph_uris, context.aggregate_ontology_terms
-            )
+            q = _build_class_discovery_query_plain(context.graph_uris)
             t0 = time.monotonic()
             try:
                 try:
@@ -113,9 +182,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 except ResponseLimitError:
                     logger.warning("Class listing exceeded the response limit; paging it")
                     class_bindings = context.collect_bindings(
-                        _build_class_discovery_query(
-                            context.graph_uris, context.aggregate_ontology_terms
-                        ),
+                        _build_class_discovery_query(context.graph_uris),
                         "two-phase/classes",
                         context.chunk_size,
                     )
@@ -132,7 +199,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 raise
         else:
             logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(context.graph_uris, context.aggregate_ontology_terms)
+            q = _build_class_discovery_query(context.graph_uris)
             class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
 
         # Extract class URIs - only keep IRI bindings, skip literals/bnodes
@@ -155,13 +222,7 @@ class TwoPhaseStrategy(MiningStrategy):
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
         if metaclass_count:
             logger.info(f"  -> Filtered {metaclass_count} ontology metaclasses")
-        if context.aggregate_ontology_terms:
-            logger.info(
-                "  -> %d data classes found; subtyped ontology terms stand in as superclasses",
-                len(classes),
-            )
-        else:
-            logger.info(f"  -> {len(classes)} data classes found")
+        logger.info(f"  -> {len(classes)} data classes found")
         return classes
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
@@ -184,17 +245,19 @@ class TwoPhaseStrategy(MiningStrategy):
         classes: list[str],
         graph_uris: list[str] | None,
         context: MiningContext,
+        batches: list[list[str]] | None = None,
     ) -> tuple[list[SchemaPattern], str | None]:
-        """Execute Phase 2 batched queries for classes."""
-        bs = context.class_batch_size
+        """Execute Phase 2 batched queries for classes, in fixed or given batches."""
+        if batches is None:
+            bs = context.class_batch_size
+            batches = [classes[i : i + bs] for i in range(0, len(classes), bs)]
         total = len(classes)
-        n_batches = (total + bs - 1) // bs
+        n_batches = len(batches)
 
         scope = f"{len(graph_uris)} named graphs" if graph_uris else "default graph"
         logger.info(
-            "Phase 2: mining patterns in %d batches of ≤%d classes (%d classes total, scope: %s) …",
+            "Phase 2: mining patterns in %d batches (%d classes total, scope: %s) …",
             n_batches,
-            bs,
             total,
             scope,
         )
@@ -227,14 +290,13 @@ class TwoPhaseStrategy(MiningStrategy):
                 abort_reason = context.report.report.abort_reason
             return outcome
 
-        for batch_idx in range(n_batches):
-            batch_start = batch_idx * bs
-            batch = classes[batch_start : batch_start + bs]
+        done = 0
+        for batch_idx, batch in enumerate(batches):
             batch_label = (
                 f"batch {batch_idx + 1}/{n_batches} "
-                f"(classes {batch_start + 1}"
-                f"-{batch_start + len(batch)}/{total})"
+                f"(classes {done + 1}-{done + len(batch)}/{total})"
             )
+            done += len(batch)
             logger.info("  %s", batch_label)
 
             # 2a. Typed-object patterns

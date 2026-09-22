@@ -27,14 +27,17 @@ def test_entity_counts_are_distinct_scoped_and_queryable():
     )
     miner = SchemaMiner("https://example.org/sparql", counts=False)
     miner._init_report("test", "test", "2026-09-07T00:00:00+00:00")
+    states = {}
     counts = query_class_entity_counts(
         ["urn:A", "urn:B", "urn:C", "urn:unused"],
         helper,
         ["urn:g", "urn:h"],
         miner._report,
         batch_size=2,
+        states_out=states,
     )
     assert counts == {"urn:A": 1, "urn:B": 1, "urn:C": 1, "urn:unused": 0}
+    assert states == {"urn:A": "complete", "urn:B": "complete", "urn:C": "complete", "urn:unused": "complete"}
     schema = MinedSchema(
         about=AboutMetadata(dataset_name="test", class_entity_counts=counts),
         patterns=[
@@ -68,5 +71,7 @@ def test_missing_count_is_unknown_and_marks_run_incomplete():
     miner._init_report("test", "test", "2026-09-07T00:00:00+00:00")
     helper = Mock()
     helper.select.return_value = {"results": {"bindings": []}}
-    assert query_class_entity_counts(["urn:A"], helper, None, miner._report) == {}
+    states = {}
+    assert query_class_entity_counts(["urn:A"], helper, None, miner._report, states_out=states) == {}
+    assert states == {"urn:A": "failed"}
     assert miner._report.report.query_failures[0].classes == ["urn:A"]

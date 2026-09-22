@@ -8,13 +8,12 @@ import pytest
 from rdflib import Dataset
 from rdflib.plugins.sparql.parser import parseQuery
 
-from rdfsolve.mining import _query_owl_class_superclasses
 from rdfsolve.mining import query_builders as builders
 from rdfsolve.mining.metadata_mining import MetadataMiner
 from rdfsolve.mining.ontology_as_data import (
-    detect_ontology_as_data,
-    mine_ontology_as_data_patterns,
-    mine_ontology_as_data_subject_patterns,
+    build_term_object_query,
+    build_term_subject_query,
+    fetch_superclasses,
 )
 from rdfsolve.mining.ontology_extraction import OntologyMiner
 
@@ -55,26 +54,14 @@ def test_optional_query_syntax(scope):
     )
     helper.endpoint_url = "https://example.org/sparql"
     helper.construct.side_effect = lambda query: Dataset().query(query).serialize(format="turtle").decode()
-    _query_owl_class_superclasses(helper, scope)
-    detect_ontology_as_data(helper, scope)
-    mine_ontology_as_data_patterns(helper, scope, superclasses=["urn:A"])
-    mine_ontology_as_data_subject_patterns(helper, scope, superclasses=["urn:A"])
+    fetch_superclasses(helper, ["urn:A"])
+    # FROM clauses would make rdflib fetch the named graphs, so parse only.
+    parseQuery(build_term_object_query(scope))
+    parseQuery(build_term_subject_query(scope))
     OntologyMiner(helper, scope).mine()
     MetadataMiner(helper, scope).mine()
     for call in helper.select.call_args_list:
         parseQuery(call.args[0])
-
-
-@pytest.mark.parametrize("scope", SCOPES)
-def test_class_discovery_can_skip_subtyped_ontology_terms(scope):
-    """The ontology check must sit outside GRAPH: the ontology lives in another graph."""
-    plain = builders._build_class_discovery_query_plain(scope, True)
-    parseQuery(plain)
-    parseQuery(builders._build_class_discovery_query(scope, True).format(offset=0, limit=10))
-    assert "owl#Class" in plain
-    if scope:
-        graph_block = plain[plain.index("GRAPH") : plain.index("FILTER NOT EXISTS")]
-        assert graph_block.count("}") == graph_block.count("{")
 
 
 @pytest.mark.parametrize("scope", SCOPES)

@@ -16,6 +16,7 @@ include README.md LICENSE CITATION.cff ENDPOINT_HEALTH.md uv.lock
 include data/sources.yaml
 include data/sssom_sources.yaml
 include data/identity_overrides.yaml
+include data/article_pilot.yaml
 
 # ── Exclude everything that is not part of the installable package ──
 prune tests/.pytest_cache

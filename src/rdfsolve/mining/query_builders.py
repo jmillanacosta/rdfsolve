@@ -10,6 +10,7 @@ __all__ = [
     "_DECOMP_CHUNK",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
+    "_build_batched_literal_objects_query",
     "_build_batched_literal_query",
     "_build_batched_typed_count_query",
     "_build_batched_typed_object_query",
@@ -330,52 +331,49 @@ WHERE {{
 LIMIT {limit}"""
 
 
-_SUBTYPED_ONTOLOGY_TERM = """FILTER NOT EXISTS {
-      ?class a <http://www.w3.org/2002/07/owl#Class> .
-      ?class <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?_parent .
-      FILTER(isURI(?_parent))
-    }"""
-"""Drop a type that an ontology declares below another class.
-
-Such a type is represented by its superclass, which superclass aggregation
-adds to the class list, so enumerating it separately repeats its parent.
-The check sits outside any GRAPH block: a dataset graph holds the typed
-instances while the ontology that declares those types sits elsewhere.
-"""
-
-
 def _build_class_discovery_query(
     graph_uris: list[str] | None,
-    aggregate_ontology_terms: bool = False,
 ) -> str:
     """Discover all distinct rdf:type classes (paginated template)."""
     g_open, g_close = _graph_clause(graph_uris)
-    skip = _SUBTYPED_ONTOLOGY_TERM if aggregate_ontology_terms else ""
     q = f"""\
 SELECT DISTINCT ?class
 WHERE {{
   {g_open}
     ?s a ?class .
   {g_close}
-  {skip}
 }}"""
+    return SparqlHelper.prepare_paginated_query(q)
+
+
+def _build_class_weight_query(
+    graph_uris: list[str] | None,
+) -> str:
+    """Count typed instances per rdf:type class (paginated template)."""
+    g_open, g_close = _graph_clause(graph_uris)
+    q = f"""\
+SELECT ?class (COUNT(?s) AS ?n)
+WHERE {{
+  {g_open}
+    ?s a ?class .
+  {g_close}
+}}
+GROUP BY ?class
+ORDER BY ?class"""
     return SparqlHelper.prepare_paginated_query(q)
 
 
 def _build_class_discovery_query_plain(
     graph_uris: list[str] | None,
-    aggregate_ontology_terms: bool = False,
 ) -> str:
     """Discover all distinct rdf:type classes (single shot)."""
     g_open, g_close = _graph_clause(graph_uris)
-    skip = _SUBTYPED_ONTOLOGY_TERM if aggregate_ontology_terms else ""
     return f"""\
 SELECT DISTINCT ?class
 WHERE {{
   {g_open}
     ?s a ?class .
   {g_close}
-  {skip}
 }}"""
 
 
@@ -636,12 +634,44 @@ def _build_batched_literal_count_query(
     paginated: bool = False,
     drop_distinct: bool = False,
 ) -> str:
-    """Literal COUNT grouped by ``(class, p, dt)`` and edge graph."""
+    """Literal triple and distinct-subject counts grouped by ``(class, p, dt)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris)
     values = _values_block(class_uris)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
-SELECT ?class ?p ?dt{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+SELECT ?class ?p ?dt{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?subjects)
+{dataset}
+WHERE {{
+  {{
+    SELECT ?class ?p ?dt{graph_var} ?s (COUNT(*) AS ?k)
+    WHERE {{
+      {values}
+      ?s a ?class .
+      {g_open} ?s ?p ?o . {g_close}
+      FILTER(isLiteral(?o))
+      BIND(DATATYPE(?o) AS ?dt)
+    }}
+    GROUP BY ?class ?p ?dt{graph_var} ?s
+  }}
+}}
+GROUP BY ?class ?p ?dt{graph_var}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
+
+
+def _build_batched_literal_objects_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    paginated: bool = False,
+    drop_distinct: bool = False,
+) -> str:
+    """Distinct literal objects grouped by ``(class, p, dt)`` and edge graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris)
+    values = _values_block(class_uris)
+    graph_var = " ?_g" if g_open else ""
+    q = f"""\
+SELECT ?class ?p ?dt{graph_var} (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}

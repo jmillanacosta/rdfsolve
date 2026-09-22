@@ -42,7 +42,10 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
             {
                 "dataset_id": "demo",
                 "class_populations": [
-                    {"class_iri": "urn:A", "subject_count": 2, "count_status": "available"}
+                    {"class_iri": "urn:A", "subject_count": 2, "count_status": "complete"},
+                    {"class_iri": "urn:B", "subject_count": 0, "count_status": "complete"},
+                    {"class_iri": "urn:C", "subject_count": 1, "count_status": "partial"},
+                    {"class_iri": "urn:D", "subject_count": None, "count_status": "failed"},
                 ],
                 "records": [
                     {
@@ -93,6 +96,8 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
     }
     assert summary["property_usage_evidence"]["datasets"] == 1
     assert summary["property_usage_evidence"]["records"] == 1
+    assert summary["property_usage_evidence"]["class_populations"] == 4
+    assert summary["property_usage_evidence"]["class_populations_available"] == 2
     assert summary["property_usage_evidence"]["records_with_support_fraction"] == 1
     assert summary["property_usage_evidence"]["summary_state"] == {"complete": 1}
     assert summary["declared_evidence"]["artifacts"] == 2

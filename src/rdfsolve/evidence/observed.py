@@ -27,7 +27,7 @@ class ClassPopulationEvidence(BaseModel):
     graph_scope: list[str] = Field(default_factory=list)
     scope_semantics: Literal["endpoint_default_graph", "rdf_merge_selected_graphs"]
     subject_count: int | None = Field(default=None, ge=0)
-    count_status: Literal["available", "missing"]
+    count_status: CompletionState
     source_method: str = "class_entity_counts"
 
 
@@ -46,7 +46,7 @@ class PropertyUsageEvidence(BaseModel):
     scope_semantics: Literal["endpoint_default_graph", "rdf_merge_selected_graphs"]
 
     eligible_subjects: int | None = Field(default=None, ge=0)
-    denominator_state: Literal["available", "missing"] = "missing"
+    denominator_state: CompletionState = "not_run"
     subjects_with_property: int | None = Field(default=None, ge=0)
     triple_count: int | None = Field(default=None, ge=0)
     distinct_objects: int | None = Field(default=None, ge=0)
@@ -252,6 +252,7 @@ def collect_property_usage_evidence(
     dataset_id: str,
     classes: list[str],
     class_entity_counts: dict[str, int] | None,
+    class_entity_count_states: dict[str, str] | None = None,
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     batch_size: int = 10,
@@ -266,13 +267,16 @@ def collect_property_usage_evidence(
         "rdf_merge_selected_graphs" if graph_scope else "endpoint_default_graph"
     )
     denominator = class_entity_counts or {}
+    denominator_states = class_entity_count_states or {}
     class_populations = [
         ClassPopulationEvidence(
             class_iri=class_iri,
             graph_scope=graph_scope,
             scope_semantics=semantics,
             subject_count=denominator.get(class_iri),
-            count_status="available" if class_iri in denominator else "missing",
+            count_status=denominator_states.get(
+                class_iri, "complete" if class_iri in denominator else "not_run"
+            ),
         )
         for class_iri in sorted(set(classes))
     ]
@@ -312,7 +316,9 @@ def collect_property_usage_evidence(
                 graph_scope=graph_scope,
                 scope_semantics=semantics,
                 eligible_subjects=eligible,
-                denominator_state="available" if eligible is not None else "missing",
+                denominator_state=denominator_states.get(
+                    class_iri, "complete" if eligible is not None else "not_run"
+                ),
                 subjects_with_property=subjects,
                 triple_count=triples,
                 distinct_objects=objects,

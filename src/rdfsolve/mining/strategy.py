@@ -31,7 +31,6 @@ class MiningContext:
         chunk_size: int = 10_000,
         unsafe_paging: bool = False,
         excluded_graph_prefixes: tuple[str, ...] = (),
-        aggregate_ontology_terms: bool = False,
     ) -> None:
         """Initialize mining context.
 
@@ -47,7 +46,6 @@ class MiningContext:
             chunk_size: Page size for pattern queries
             unsafe_paging: Permit paging without a stable order
             excluded_graph_prefixes: Graph IRI prefixes to skip when discovering graphs
-            aggregate_ontology_terms: Represent subtyped ontology terms by their superclass
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -60,7 +58,8 @@ class MiningContext:
         self.chunk_size = chunk_size
         self.unsafe_paging = unsafe_paging
         self.excluded_graph_prefixes = excluded_graph_prefixes
-        self.aggregate_ontology_terms = aggregate_ontology_terms
+        # Class batches chosen by the strategy; the counts phase reuses them.
+        self.class_batches: list[list[str]] | None = None
 
 
 class MiningStrategy(ABC):

@@ -47,7 +47,10 @@ def main():
                     classes.append(cls)
     if args.entity_mappings and not indices:
         parser.error("Entity mappings need instance dumps with type evidence")
-    associations, shared = shared_entity_links(indices, min_instance_count=args.min_support)
+    associations, shared = shared_entity_links(
+        indices, min_instance_count=args.min_support, include_witnesses=True
+    )
+    witness_rows = list(shared.pop("witnesses", []))
     mappings, reports = [], {"shared_entities": shared}
     for path in args.class_mappings:
         edges, reports[str(path)] = read_class_mappings(path, schemas)
@@ -57,8 +60,12 @@ def main():
             path, {name: set(i.entities) for name, i in indices.items()}
         )
         pairs, report["derivation"] = derive_class_mappings(
-            edges, indices, min_instance_count=args.min_support
+            edges,
+            indices,
+            min_instance_count=args.min_support,
+            include_witnesses=True,
         )
+        witness_rows.extend(report["derivation"].pop("witnesses", []))
         associations.extend(pairs)
         reports[str(path)] = report
     graph = build_connectivity(schemas, class_mappings=mappings, associations=associations)
@@ -70,6 +77,26 @@ def main():
         ("evidence_report", reports),
     ):
         (args.output / f"{name}.json").write_text(json.dumps(value, indent=2, default=sorted))
+    if witness_rows:
+        witness_path = args.output / "class_association_witnesses.tsv.gz"
+        fields = [
+            "source_dataset",
+            "source_class",
+            "target_dataset",
+            "target_class",
+            "source_entity",
+            "target_entity",
+            "supporting_entity_predicates",
+        ]
+        with gzip.open(witness_path, "wt", newline="") as stream:
+            writer = csv.DictWriter(stream, delimiter="\t", fieldnames=fields, lineterminator="\n")
+            writer.writeheader()
+            for row in witness_rows:
+                out = dict(row)
+                out["supporting_entity_predicates"] = json.dumps(
+                    out.get("supporting_entity_predicates") or [], separators=(",", ":")
+                )
+                writer.writerow({field: out.get(field, "") for field in fields})
     print(
         f"{len(schemas)} schemas, {len(mappings)} explicit class links, {len(associations)} entity-supported associations"
     )
