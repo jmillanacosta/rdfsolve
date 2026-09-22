@@ -165,3 +165,16 @@ processes through shared storage. The mining launcher sets this explicitly. Use
 that same directory in interactive sessions to coordinate with jobs. Restart
 existing Python sessions to load changes; old processes do not gain these limits
 automatically.
+
+## Offline registry audit
+
+```bash
+python scripts/check_registry.py data/sources.yaml \
+  --overrides data/identity_overrides.yaml --output output/registry_checks.tsv
+```
+
+The report lists structure, scope and identity findings without network requests
+or registry edits. Exit status 1 means the report contains errors that block the
+freeze. Warnings require review. An existing output file is not overwritten.
+Provider membership is listed, but selected grouped members and prepared inputs
+need a separate run-level check; B7 reports them as not checked.
