@@ -1,11 +1,8 @@
-"""Check request exclusion across separate processes without network access."""
-
 import multiprocessing
 import os
 from queue import Empty
 
 import pytest
-
 from rdfsolve._host_gate import host_request
 
 

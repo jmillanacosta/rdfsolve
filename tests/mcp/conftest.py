@@ -3,7 +3,6 @@
 import json
 import multiprocessing
 import signal
-from collections import Counter
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -11,8 +10,7 @@ from time import perf_counter
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
-from rdflib import RDF, RDFS, XSD, BNode, Dataset, Graph, Literal, Namespace
-
+from rdflib import RDF, RDFS, XSD, Graph, Literal, Namespace
 from rdfsolve.client.api import Client
 from rdfsolve.mcp.session import Session
 from rdfsolve.schema_models.core import MinedSchema
@@ -240,7 +238,6 @@ def _serve(data, journal, connection):
                 signal.alarm(60)
                 from rdflib.plugins.sparql import prepareQuery
                 from rdflib.plugins.sparql.parserutils import CompValue
-
                 from rdfsolve.client.query_fragments import walk
 
                 parsed = prepareQuery(query)

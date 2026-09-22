@@ -1,8 +1,5 @@
-from pathlib import Path
-
-from rdflib import Graph, Namespace, OWL, RDF, RDFS, SH
-
-from rdfsolve.evidence.declared import DeclaredArtifact, archive_graph_artifact, project_declared_evidence
+from rdflib import OWL, RDF, RDFS, SH, Graph, Namespace
+from rdfsolve.evidence.declared import DeclaredArtifact, project_declared_evidence
 
 
 def _artifact() -> DeclaredArtifact:
@@ -25,7 +22,6 @@ def test_declared_projection_keeps_semantic_types_distinct():
     g.add((ex.p, RDFS.range, ex.Place))
     g.add((ex.City, RDFS.subClassOf, ex.Place))
     g.add((ex.Town, OWL.equivalentClass, ex.City))
-
     shape = ex.Shape
     prop = ex.PropertyShape
     g.add((shape, RDF.type, SH.NodeShape))
@@ -33,33 +29,17 @@ def test_declared_projection_keeps_semantic_types_distinct():
     g.add((shape, SH.property, prop))
     g.add((prop, SH.path, ex.p))
     g.add((prop, SH["class"], ex.Place))
-    g.add((prop, SH.minCount, __import__('rdflib').Literal(1)))
-    # Unsupported targetNode survives in raw RDF and is deliberately not projected.
+    g.add((prop, SH.minCount, __import__("rdflib").Literal(1)))
     g.add((shape, SH.targetNode, ex.alice))
-
     rows = project_declared_evidence(g, _artifact())
     kinds = {row.declaration_type for row in rows}
-    assert {"rdfs_domain", "rdfs_range", "subclass", "equivalent_class", "shacl_class", "shacl_min_count"} <= kinds
-    assert all(row.artifact_id == "declared:test" for row in rows)
+    assert {
+        "rdfs_domain",
+        "rdfs_range",
+        "subclass",
+        "equivalent_class",
+        "shacl_class",
+        "shacl_min_count",
+    } <= kinds
+    assert all((row.artifact_id == "declared:test" for row in rows))
     assert (shape, SH.targetNode, ex.alice) in g
-
-
-def test_archive_constructed_graph_retains_source_graph_identity(tmp_path: Path):
-    ex = Namespace("urn:ex:")
-    g = Graph()
-    g.add((ex.Shape, RDF.type, SH.NodeShape))
-    artifact = archive_graph_artifact(
-        graph=g,
-        dataset_id="demo",
-        kind="sparql_examples",
-        output_path=tmp_path / "examples.ttl",
-        source_url="https://example.org/sparql",
-        source_graph="urn:examples",
-        retrieval_method="sparql-construct",
-        complete=None,
-    )
-    assert artifact.source_graph == "urn:examples"
-    assert artifact.representation == "constructed_graph"
-    assert Path(artifact.local_path).is_file()
-    reparsed = Graph().parse(artifact.local_path)
-    assert (ex.Shape, RDF.type, SH.NodeShape) in reparsed

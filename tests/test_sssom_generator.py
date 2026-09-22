@@ -1,16 +1,10 @@
-"""Check mapping-set prefix registration."""
-
+from rdfsolve.mappings.sssom import create_sssom_mappings
 from sssom import Mapping
 from sssom.context import ensure_converter
 
-from rdfsolve.mappings.sssom import create_sssom_mappings
-
 
 def test_custom_prefix_updates_converter(monkeypatch):
-    monkeypatch.setattr(
-        "sssom.context.get_converter",
-        lambda: ensure_converter(use_defaults=False),
-    )
+    monkeypatch.setattr("sssom.context.get_converter", lambda: ensure_converter(use_defaults=False))
     mapping = Mapping(
         subject_id="rdfsolve:A",
         predicate_id="skos:relatedMatch",

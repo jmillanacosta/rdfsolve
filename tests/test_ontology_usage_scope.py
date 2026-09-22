@@ -1,5 +1,4 @@
-from rdflib import Graph, OWL, RDF, URIRef
-
+from rdflib import OWL, RDF, Graph, URIRef
 from rdfsolve.evidence.ontology import assess_ontology_usage
 
 

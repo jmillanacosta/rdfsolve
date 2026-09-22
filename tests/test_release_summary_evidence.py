@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import yaml
-
 from rdfsolve.release import build_release_manifest, summarize_release
 
 
@@ -81,10 +80,8 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
         ),
         encoding="utf-8",
     )
-
     manifest = build_release_manifest(tmp_path, release_id="test")
     summary = summarize_release(manifest, tmp_path)
-
     assert summary["observed_evidence"] == {
         "datasets": 1,
         "patterns": 1,
@@ -102,7 +99,4 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
     assert summary["property_usage_evidence"]["summary_state"] == {"complete": 1}
     assert summary["declared_evidence"]["artifacts"] == 2
     assert summary["declared_evidence"]["artifact_kinds"] == {"shacl": 1, "void": 1}
-    assert summary["declared_evidence"]["declaration_types"] == {
-        "rdfs_range": 1,
-        "shacl_class": 1,
-    }
+    assert summary["declared_evidence"]["declaration_types"] == {"rdfs_range": 1, "shacl_class": 1}

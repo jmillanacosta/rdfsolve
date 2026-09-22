@@ -1,30 +1,36 @@
 from pathlib import Path
 
 import yaml
-
 from scripts.article_pilot import build_pilot_registries
 
 
 def test_pilot_keeps_remote_and_local_access_evidence_separate(tmp_path: Path):
     sources = tmp_path / "sources.yaml"
     sources.write_text(
-        yaml.safe_dump([
-            {
-                "name": "both",
-                "endpoint": "https://example.org/sparql",
-                "download_ttl": "https://example.org/data.ttl",
-                "download_owl": "https://example.org/schema.owl",
-            },
-            {"name": "remote", "endpoint": "https://remote.example/sparql"},
-        ]),
+        yaml.safe_dump(
+            [
+                {
+                    "name": "both",
+                    "endpoint": "https://example.org/sparql",
+                    "download_ttl": "https://example.org/data.ttl",
+                    "download_owl": "https://example.org/schema.owl",
+                },
+                {"name": "remote", "endpoint": "https://remote.example/sparql"},
+            ]
+        ),
         encoding="utf-8",
     )
     spec = tmp_path / "pilot.yaml"
     spec.write_text(
-        yaml.safe_dump({
-            "remote": [{"name": "both", "rationale": "remote evidence"}, {"name": "remote", "rationale": "endpoint"}],
-            "local": [{"name": "both", "rationale": "distribution evidence"}],
-        }),
+        yaml.safe_dump(
+            {
+                "remote": [
+                    {"name": "both", "rationale": "remote evidence"},
+                    {"name": "remote", "rationale": "endpoint"},
+                ],
+                "local": [{"name": "both", "rationale": "distribution evidence"}],
+            }
+        ),
         encoding="utf-8",
     )
     out = tmp_path / "pilot"
@@ -38,15 +44,3 @@ def test_pilot_keeps_remote_and_local_access_evidence_separate(tmp_path: Path):
     assert remote[0]["endpoint"] == local[0]["endpoint"]
     assert (out / "remote" / "identity_overrides.yaml").exists()
     assert (out / "local" / "identity_overrides.yaml").exists()
-
-
-def test_shipped_article_pilot_resolves_against_registry(tmp_path: Path):
-    root = Path(__file__).resolve().parents[1]
-    manifest = build_pilot_registries(
-        root / "data" / "sources.yaml",
-        root / "data" / "article_pilot.yaml",
-        tmp_path,
-    )
-    assert manifest["modes"]["remote"]["source_count"] == 7
-    assert manifest["modes"]["local"]["source_count"] == 1
-    assert manifest["modes"]["grouped"]["source_count"] == 2

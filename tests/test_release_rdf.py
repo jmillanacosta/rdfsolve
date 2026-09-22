@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
-from pathlib import Path
 
 from rdflib import Graph
-
-from rdfsolve.release.model import DatasetReleaseRecord, ReleaseArtifact, ReleaseManifest
+from rdfsolve.release.model import (
+    DatasetReleaseRecord,
+    ReleaseArtifact,
+    ReleaseManifest,
+)
 from rdfsolve.release.rdf import DCAT, SPDX, release_to_rdf
 
 

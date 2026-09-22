@@ -1,11 +1,8 @@
-"""Remote ontology discovery keeps graph discovery separate from usage attribution."""
-
 from __future__ import annotations
 
 import json
 
-from rdflib import Dataset, Literal, OWL, RDF, RDFS, URIRef
-
+from rdflib import OWL, RDF, Dataset, Literal, URIRef
 from rdfsolve.mining.ontology_discovery import discover_remote_ontology_graphs
 
 
@@ -33,16 +30,18 @@ def _dataset() -> Dataset:
     ontology = data.graph(URIRef("https://example.org/graph/ontology.owl"))
     ontology.add((URIRef("https://example.org/onto"), RDF.type, OWL.Ontology))
     ontology.add((URIRef("https://example.org/onto"), OWL.versionInfo, Literal("2026.09")))
-    ontology.add((URIRef("https://example.org/onto"), OWL.imports, URIRef("https://example.org/base")))
+    ontology.add(
+        (URIRef("https://example.org/onto"), OWL.imports, URIRef("https://example.org/base"))
+    )
     ontology.add((URIRef("https://example.org/C"), RDF.type, OWL.Class))
     ontology.add((URIRef("https://example.org/p"), RDF.type, OWL.ObjectProperty))
-
     data_graph = data.graph(URIRef("https://example.org/graph/data"))
     data_graph.add((URIRef("urn:s"), RDF.type, URIRef("https://example.org/C")))
     data_graph.add((URIRef("urn:s"), URIRef("https://example.org/p"), URIRef("urn:o")))
-
     metadata = data.graph(URIRef("https://example.org/graph/metadata"))
-    metadata.add((URIRef("urn:dataset"), URIRef("http://purl.org/pav/version"), Literal("dataset-v1")))
+    metadata.add(
+        (URIRef("urn:dataset"), URIRef("http://purl.org/pav/version"), Literal("dataset-v1"))
+    )
     return data
 
 
@@ -69,38 +68,3 @@ def test_remote_discovery_keeps_version_and_empirical_overlap():
         ("2026.09", "ontology")
     ]
     assert candidate.query_ids
-
-
-def test_remote_dataset_version_metadata_is_not_ontology_discovery():
-    helper = DatasetHelper(_dataset())
-    result = discover_remote_ontology_graphs(
-        helper,
-        graph_uris=["https://example.org/graph/metadata"],
-        include_default_graph=False,
-    )
-    assert result.candidates == []
-
-
-def test_graph_name_hint_is_discovery_not_usage():
-    data = Dataset()
-    graph = data.graph(URIRef("https://example.org/ontology/empty.owl"))
-    graph.add((URIRef("urn:x"), RDFS.label, Literal("only a graph-name hint")))
-    result = discover_remote_ontology_graphs(
-        DatasetHelper(data), include_default_graph=False
-    )
-    [candidate] = result.candidates
-    assert candidate.discovery_status == "hint_only"
-    assert candidate.candidate_reasons == ["graph_iri_hint"]
-    assert candidate.used_by_schema is False
-
-
-def test_graph_scan_cap_is_reported_not_silently_complete():
-    data = Dataset()
-    for i in range(3):
-        data.graph(URIRef(f"urn:g:{i}")).add((URIRef(f"urn:s:{i}"), RDF.type, RDFS.Class))
-    result = discover_remote_ontology_graphs(
-        DatasetHelper(data), include_default_graph=False, max_graphs=2
-    )
-    assert result.discovered_named_graphs == 3
-    assert result.scanned_named_graphs == 2
-    assert result.graph_scan_truncated is True

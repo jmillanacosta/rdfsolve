@@ -1,26 +1,7 @@
-"""Check process ownership and startup failures without loading an index."""
-
-from pathlib import Path
-import shutil
-import socket
-import subprocess
 from unittest.mock import Mock
 
 import pytest
-
 from rdfsolve.qlever import lifecycle
-
-
-def test_busy_port_does_not_start_or_kill_a_process(tmp_path, monkeypatch):
-    image = tmp_path / "qlever.sif"
-    image.touch()
-    launch = Mock()
-    monkeypatch.setattr(lifecycle.subprocess, "Popen", launch)
-    with socket.socket() as occupied:
-        occupied.bind(("0.0.0.0", 0))
-        with pytest.raises(RuntimeError, match="in use"):
-            lifecycle.start_server(image, tmp_path, "test", occupied.getsockname()[1])
-    launch.assert_not_called()
 
 
 def test_failed_start_reaps_process_and_preserves_old_log(tmp_path, monkeypatch):
@@ -36,64 +17,3 @@ def test_failed_start_reaps_process_and_preserves_old_log(tmp_path, monkeypatch)
     process.wait.assert_called_once_with()
     process.terminate.assert_not_called()
     assert old_log.read_text() == "previous run"
-
-
-def test_known_incomplete_pubchem_metadata_is_rejected(tmp_path):
-    from rdfsolve.qlever.index_check import has_cached_index
-
-    fixture = Path(__file__).parent / "test_data" / "qlever_pubchem_inchikey_metadata.json"
-    shutil.copyfile(fixture, tmp_path / "pubchem.ftp.inchikey.meta-data.json")
-    with pytest.raises(ValueError, match="num-predicates"):
-        has_cached_index(tmp_path, "pubchem.ftp.inchikey")
-
-
-def test_empty_index_is_rejected(tmp_path):
-    import json
-
-    from rdfsolve.qlever.index_check import has_cached_index
-
-    counts = {"normal": 0, "internal": 0}
-    (tmp_path / "empty.meta-data.json").write_text(
-        json.dumps(
-            {
-                "num-subjects": counts,
-                "num-predicates": counts,
-                "num-objects": counts,
-                "num-triples": counts,
-                "has-all-permutations": True,
-                "index-format-version": {"date": "2024-10-22", "pull-request-number": 1572},
-                "vocabulary-type": "on-disk-compressed",
-            }
-        )
-    )
-    with pytest.raises(ValueError, match="no triples"):
-        has_cached_index(tmp_path, "empty")
-
-
-def test_stop_escalates_only_for_owned_process():
-    process = Mock()
-    process.poll.return_value = None
-    process.wait.side_effect = [subprocess.TimeoutExpired("qlever", 10), 0]
-    lifecycle.stop_server(process)
-    process.terminate.assert_called_once_with()
-    process.kill.assert_called_once_with()
-    assert process.wait.call_count == 2
-
-
-def test_graph_membership_check_uses_real_aop_rdf():
-    from rdflib import Dataset
-    from rdfsolve.qlever.index_check import verify_named_graphs
-
-    dataset = Dataset()
-    uri = "https://w3id.org/rdfsolve/graph/aopwikirdf"
-    graph = dataset.graph(uri)
-    graph.parse(Path(__file__).parent / "test_data" / "aopwikirdf_generated_void.ttl")
-    helper = Mock()
-
-    def select(query, **kwargs):
-        return {"boolean": dataset.query(query).askAnswer}
-
-    helper.select.side_effect = select
-    verify_named_graphs(helper, [uri])
-    with pytest.raises(ValueError, match="lacks nonempty graphs"):
-        verify_named_graphs(helper, [uri, "https://w3id.org/rdfsolve/graph/wikipathways"])

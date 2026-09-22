@@ -1,6 +1,5 @@
 from rdflib import Graph
-
-from rdfsolve.schema_models.enrichment import RdfTerm, SchemaEnrichment, PatternExample
+from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, SchemaEnrichment
 
 
 def test_unsafe_provider_blank_node_label_serializes_as_valid_turtle():
@@ -18,5 +17,4 @@ def test_unsafe_provider_blank_node_label_serializes_as_valid_turtle():
     ttl = enrichment.to_rdf_graph().serialize(format="turtle")
     Graph().parse(data=ttl, format="turtle")
     assert "nodeID://" not in ttl
-    # Canonical evidence retains the provider lexical label.
     assert enrichment.examples[0].value.value == value

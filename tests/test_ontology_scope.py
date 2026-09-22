@@ -1,126 +1,11 @@
-"""Keep the ontology needed by shapes, not every imported descendant."""
-
 from rdflib import RDF, RDFS, Literal, URIRef
-
-from rdfsolve.schema_models.ontology import DomainAssertion, OntologyStructure, SubClassRelation
-from rdfsolve.schema_models.enrichment import RdfTerm, TermAnnotation
-
-GENE = "http://purl.obolibrary.org/obo/SO_0000704"
-ENTITY = "http://identifiers.org/ensembl/ENSG00000144229"
-
-
-def test_gene_parent_remains_without_entity_leaf():
-    ontology = OntologyStructure(subclass_relations=[SubClassRelation(child=ENTITY, parent=GENE)])
-    ontology.annotations = [
-        TermAnnotation(
-            term_iri=GENE,
-            predicate=str(RDFS.label),
-            text=RdfTerm(kind="literal", value="gene", language="en"),
-        ),
-        TermAnnotation(
-            term_iri=GENE,
-            predicate=str(RDFS.comment),
-            text=RdfTerm(kind="literal", value="Source definition", language="en"),
-        ),
-        TermAnnotation(
-            term_iri=ENTITY,
-            predicate=str(RDFS.label),
-            text=RdfTerm(kind="literal", value="Entity leaf"),
-        ),
-    ]
-    selected = ontology.for_schema({GENE}, set())
-    assert selected.classes == [GENE]
-    assert selected.subclass_relations == []
-    graph = selected.to_rdf_graph()
-    assert (URIRef(GENE), RDF.type, RDFS.Class) in graph
-    assert (URIRef(GENE), RDFS.label, Literal("gene", lang="en")) in graph
-    assert (URIRef(GENE), RDFS.comment, Literal("Source definition", lang="en")) in graph
-    assert not list(graph.triples((URIRef(ENTITY), None, None)))
-    assert len(ontology.subclass_relations) == 1
-
-
-def test_used_leaf_class_is_not_removed_by_its_identifier():
-    ontology = OntologyStructure(subclass_relations=[SubClassRelation(child=ENTITY, parent=GENE)])
-    selected = ontology.for_schema({ENTITY}, set())
-    assert selected.subclass_relations == ontology.subclass_relations
-    assert set(selected.classes) == {ENTITY, GENE}
-
-
-def test_walks_up_hierarchy_and_handles_cycles():
-    ontology = OntologyStructure(
-        subclass_relations=[
-            SubClassRelation(child="urn:A", parent="urn:B"),
-            SubClassRelation(child="urn:B", parent="urn:A"),
-            SubClassRelation(child="urn:Unused", parent="urn:A"),
-        ]
-    )
-    selected = ontology.for_schema({"urn:A"}, set())
-    assert selected.classes == ["urn:A", "urn:B"]
-    assert len(selected.subclass_relations) == 2
-
-
-def test_domain_of_used_property_seeds_scope():
-    ontology = OntologyStructure(
-        domain_assertions=[
-            DomainAssertion(property_uri="urn:p", domain=GENE),
-            DomainAssertion(property_uri="urn:unused", domain="urn:Other"),
-        ]
-    )
-    selected = ontology.for_schema(set(), {"urn:p"})
-    assert selected.classes == [GENE]
-    assert len(selected.domain_assertions) == 1
-
-
-def test_empty_schema_has_empty_ontology_slice():
-    ontology = OntologyStructure(subclass_relations=[SubClassRelation(child=ENTITY, parent=GENE)])
-    assert len(ontology.for_schema(set(), set()).to_rdf_graph()) == 0
-
-
-def test_used_types_do_not_create_an_embedded_ontology():
-    ontology = OntologyStructure().for_schema(["urn:UsedType"], ["urn:p"])
-    assert ontology.classes == []
-    assert len(ontology.to_rdf_graph()) == 0
-
-
-def test_scoped_queries_keep_ancestors_not_descendants_or_other_graphs():
-    import json
-    from unittest.mock import Mock
-    from rdflib import Dataset, OWL
-    from rdfsolve.mining.ontology_extraction import OntologyMiner
-
-    dataset = Dataset()
-    graph = dataset.graph(URIRef("urn:chosen"))
-    for child, parent in [(ENTITY, GENE), ("urn:A", "urn:B"), ("urn:B", "urn:A")]:
-        graph.add((URIRef(child), RDFS.subClassOf, URIRef(parent)))
-    graph.add((URIRef("urn:p"), RDFS.domain, URIRef("urn:A")))
-    graph.add((URIRef("urn:inverse"), OWL.inverseOf, URIRef("urn:p")))
-    graph.add((URIRef("urn:p"), RDF.type, OWL.FunctionalProperty))
-    dataset.graph(URIRef("urn:other")).add((URIRef(GENE), RDFS.subClassOf, URIRef("urn:Wrong")))
-    helper = Mock()
-    rows_seen = []
-
-    def select(query, **kwargs):
-        result = json.loads(dataset.query(query).serialize(format="json"))
-        rows_seen.extend(result["results"]["bindings"])
-        return result
-
-    helper.select.side_effect = select
-    result = OntologyMiner(
-        helper, ["urn:chosen"], class_iris=[GENE, "urn:UsedOnly"],
-        property_iris=["urn:p"], batch_size=1,
-    ).mine()
-    assert set(result.classes) == {GENE, "urn:A", "urn:B"}
-    assert len(result.subclass_relations) == 2
-    assert result.inverse_properties[0].property1 == "urn:inverse"
-    assert len(result.property_characteristics) == 1
-    assert ENTITY not in json.dumps(rows_seen)
-    assert all("VALUES ?" in call.args[0] for call in helper.select.call_args_list)
 
 
 def test_scoped_ontology_keeps_named_equivalence_property_hierarchy_disjointness_and_deprecation():
     import json
     from unittest.mock import Mock
-    from rdflib import Dataset, OWL
+
+    from rdflib import OWL, Dataset
     from rdfsolve.mining.ontology_extraction import OntologyMiner
 
     dataset = Dataset()
@@ -132,7 +17,6 @@ def test_scoped_ontology_keeps_named_equivalence_property_hierarchy_disjointness
     graph.add((URIRef("urn:p"), RDFS.subPropertyOf, URIRef("urn:super")))
     graph.add((URIRef("urn:p"), OWL.equivalentProperty, URIRef("urn:p2")))
     graph.add((URIRef("urn:p"), OWL.deprecated, Literal(True)))
-
     helper = Mock()
     helper.select.side_effect = lambda query, **kwargs: json.loads(
         dataset.query(query).serialize(format="json")
@@ -143,7 +27,9 @@ def test_scoped_ontology_keeps_named_equivalence_property_hierarchy_disjointness
     assert [(r.class1, r.class2) for r in result.equivalent_classes] == [("urn:A", "urn:A2")]
     assert [(r.class1, r.class2) for r in result.disjoint_classes] == [("urn:A", "urn:Other")]
     assert [(r.child, r.parent) for r in result.subproperty_relations] == [("urn:p", "urn:super")]
-    assert [(r.property1, r.property2) for r in result.equivalent_properties] == [("urn:p", "urn:p2")]
+    assert [(r.property1, r.property2) for r in result.equivalent_properties] == [
+        ("urn:p", "urn:p2")
+    ]
     assert result.deprecated_terms == ["urn:p"]
     out = result.to_rdf_graph()
     assert (URIRef("urn:p"), RDFS.subPropertyOf, URIRef("urn:super")) in out

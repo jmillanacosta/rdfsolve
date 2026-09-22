@@ -1,78 +1,27 @@
-from pathlib import Path
+import json
 
 from rdfsolve.release import build_release_manifest
+from rdfsolve.release.model import DatasetReleaseRecord
 from rdfsolve.release.validate import validate_release
+from rdfsolve.schema_models import MinedSchema
 
 
-def test_release_validation_detects_hash_change(tmp_path: Path):
-    (tmp_path / "x.txt").write_text("before")
+def test_release_validation_reports_damaged_files_and_references(tmp_path):
+    path = tmp_path / "demo_remote_schema.json"
+    path.write_text(json.dumps(MinedSchema(about={}).to_dict()))
     manifest = build_release_manifest(tmp_path, release_id="test")
-    assert validate_release(manifest, tmp_path).valid
-    (tmp_path / "x.txt").write_text("after")
-    result = validate_release(manifest, tmp_path)
-    assert not result.valid
-    assert any(issue.kind == "checksum" for issue in result.issues)
-
-
-def test_release_validation_checks_evidence_model_shape(tmp_path: Path):
-    import json
-    import yaml
-
-    (tmp_path / "sources.yaml").write_text(
-        yaml.safe_dump([{"name": "demo"}]), encoding="utf-8"
-    )
-    dataset = tmp_path / "demo"
-    dataset.mkdir()
-    (dataset / "demo_remote_report.json").write_text(
-        json.dumps({"completion_state": "complete"}), encoding="utf-8"
-    )
-    (dataset / "demo_remote_schema.json").write_text(
-        json.dumps({"schema": {"patterns": []}}), encoding="utf-8"
-    )
-    # Valid JSON, invalid PropertyUsageCollection: required scope/status fields are absent.
-    (dataset / "demo_remote_property_usage.json").write_text(
-        json.dumps({"dataset_id": "demo", "records": [{"subject_class": "urn:A"}]}),
-        encoding="utf-8",
-    )
-    manifest = build_release_manifest(tmp_path, release_id="test")
-    result = validate_release(manifest, tmp_path, parse_rdf=False)
-    assert not result.valid
-    assert any(
-        issue.kind == "json_model" and issue.path.endswith("_property_usage.json")
-        for issue in result.issues
-    )
-
-
-def test_release_validation_checks_ontology_artifact_references(tmp_path: Path):
-    from rdfsolve.release.model import OntologyUsageReleaseRecord
-
-    (tmp_path / "x.txt").write_text("x")
-    manifest = build_release_manifest(tmp_path, release_id="test")
-    # Add one release-scoped dataset record directly; this exercises reference
-    # integrity independently of the ontology-acquisition parser.
-    from rdfsolve.release.model import DatasetReleaseRecord
-
+    assert validate_release(manifest, tmp_path).valid, "Intact release"
+    path.write_text('{"schema": {"patterns": "broken"}}')
     manifest.datasets.append(
         DatasetReleaseRecord(
-            dataset_id="demo",
-            snapshot_id="snapshot:demo:test",
-            ontology_usages=[
-                OntologyUsageReleaseRecord(
-                    namespace="urn:ontology:", ontology_artifact_id="sha256:missing"
-                )
-            ],
+            dataset_id="missing", snapshot_id="snapshot:missing", artifacts=["sha256:missing"]
         )
     )
-    result = validate_release(manifest, tmp_path, parse_rdf=False)
+    result = validate_release(manifest, tmp_path)
     assert not result.valid
-    assert any(issue.kind == "dangling_ontology_artifact" for issue in result.issues)
-
-
-def test_release_validates_declared_and_ontology_records(tmp_path):
-    for suffix in ["declared_artifacts", "ontology_discovery", "ontology_acquisition"]:
-        path = tmp_path / f"demo_{suffix}.json"
-        path.write_text('{"dataset_id": []}')
-    result = validate_release(build_release_manifest(tmp_path), tmp_path)
-    assert {issue.path for issue in result.issues if issue.kind == "json_model"} == {
-        "demo_declared_artifacts.json", "demo_ontology_discovery.json", "demo_ontology_acquisition.json"
-    }
+    assert {(issue.path, issue.kind) for issue in result.issues} == {
+        (path.name, "size"),
+        (path.name, "checksum"),
+        (path.name, "json_model"),
+        (None, "dangling_artifact"),
+    }, result.model_dump()

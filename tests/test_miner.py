@@ -1,33 +1,22 @@
-"""Test SchemaMiner."""
-from unittest.mock import MagicMock, patch
+from rdflib import Graph
 from rdfsolve.mining.miner import SchemaMiner
 
 
-@patch("rdfsolve.mining.miner.SparqlHelper")
-def test_miner_init(mock_helper):
-    miner = SchemaMiner(endpoint_url="http://example.org/sparql")
-    assert miner.endpoint_url == "http://example.org/sparql"
-    assert miner.timeout == 120.0
-
-
-@patch("rdfsolve.mining.miner.SparqlHelper")
-def test_miner_query_dataset_metadata(mock_cls):
-    mock_helper = MagicMock()
-    mock_helper.construct.return_value = ""
-    mock_helper.endpoint_url = "http://example.org/sparql"
-    mock_cls.return_value = mock_helper
-    miner = SchemaMiner(endpoint_url="http://example.org/sparql")
-    metadata = miner.query_dataset_metadata()
-    assert isinstance(metadata, dict)
-
-
-@patch("rdfsolve.mining.miner.SparqlHelper")
-def test_miner_mine_with_mock_data(mock_cls):
-    mock_helper = MagicMock()
-    mock_helper.execute_paginated_select.return_value = []
-    mock_helper.construct.return_value = ""
-    mock_helper.endpoint_url = "http://example.org/sparql"
-    mock_cls.return_value = mock_helper
-    miner = SchemaMiner(endpoint_url="http://example.org/sparql")
-    schema = miner.mine()
-    assert schema is not None
+def test_mine_graph_preserves_pattern_kinds():
+    graph = Graph().parse(
+        data='@prefix e: <urn:kind:> .\n        e:a a e:A; e:link e:b; e:text "value"; e:unknown e:c; e:node [e:p "x"] .\n        e:b a e:B .',
+        format="turtle",
+    )
+    with SchemaMiner.from_graph(graph, counts=False, delay=0) as miner:
+        schema = miner.mine("kinds")
+    assert {
+        p.property_uri: p.pattern_type.value
+        for p in schema.patterns
+        if p.property_uri.startswith("urn:kind:")
+    } == {
+        "urn:kind:link": "object_property",
+        "urn:kind:unknown": "object_property",
+        "urn:kind:text": "datatype_property",
+        "urn:kind:node": "blank_node_property",
+    }, "Mined pattern kinds"
+    assert miner.last_report.completion_state == "complete", "Finished graph mining"
