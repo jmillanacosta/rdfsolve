@@ -28,6 +28,20 @@ python scripts/pipeline.py --sources wikipathways aopwikirdf
 python scripts/pipeline.py
 ```
 
+## Source reports
+
+`sources.yaml` is a human-curated specification. Tools read it; observations go
+into separate output files.
+
+```bash
+python scripts/check_endpoints.py --sources data/sources.yaml --output output/endpoint_status.json
+python scripts/discover_void_partitions.py --sources data/sources.yaml --output-dir output/void
+```
+
+These are the endpoint-health and VoID-discovery entry points. Source settings
+are edited directly. The package `enrich_source` function returns observations;
+its `sources_file` argument supplies read-only context.
+
 ## Graph Scripts
 
 ### `build_graphs.py`

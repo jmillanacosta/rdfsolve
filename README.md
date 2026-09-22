@@ -343,10 +343,10 @@ print(helper.queries.paths)  # Choose a property shape
 query = helper.queries.path_query(property_shape_id, entity_iri, limit=20)
 ```
 
-### Add metadata to a source registry
+### Retrieve source metadata
 
-Start with a name and endpoint. Add `sources_file` to create or update a YAML
-entry; omit it to preview without writing:
+Start with a name and endpoint. Add `sources_file` to read existing settings.
+The function returns observations and leaves the registry unchanged:
 
 ```python
 from rdfsolve import enrich_source
@@ -364,8 +364,8 @@ This tests availability and retrieves dataset descriptions, not instance
 patterns. It fills supported metadata such as the description, license, and
 version when one dataset can be identified. Missing or ambiguous metadata stays
 blank; failed retrieval leaves previous values intact. Existing query settings
-and unrelated fields are kept. Saves make unique backups; YAML comments and
-layout are not preserved.
+and unrelated fields are kept. Save the returned observations in a separate
+report. Edit the human-curated source specification directly.
 
 Metadata comes from the default graph unless `metadata_graph_uris=[...]` is
 supplied or stored. Add `discover_void=True` to find published VoID descriptions
@@ -397,10 +397,10 @@ Mine multiple endpoints from a YAML file:
   endpoint: https://sparql.rhea-db.org/sparql
 ```
 
-To populate an entry from its name and endpoint, use
-`enrich_source(name, endpoint, sources_file="sources.yaml")` as above. Retrieved
-metadata is separate from settings such as `chunk_size`, `class_batch_size`, and
-`timeout`; choose those for the workload.
+To retrieve metadata for an entry, use
+`enrich_source(name, endpoint, sources_file="sources.yaml")` as above. The registry
+is read-only. Keep retrieved observations in separate reports; choose settings
+such as `chunk_size`, `class_batch_size`, and `timeout` for the workload.
 
 **Run batch mining:**
 

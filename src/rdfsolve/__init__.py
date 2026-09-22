@@ -33,8 +33,6 @@ _EXPORTS = {
     "ResultCell": ("client.query", "ResultCell"),
     "VoidSchema": ("schema_models.void_schema", "VoidSchema"),
     "classify_source_mode": ("sources", "classify_source_mode"),
-    "update_multiple_sources": ("sources_updater", "update_multiple_sources"),
-    "update_sources_yaml_with_graphs": ("sources_updater", "update_sources_yaml_with_graphs"),
     "VERSION": ("version", "VERSION"),
 }
 __all__ = list(_EXPORTS)

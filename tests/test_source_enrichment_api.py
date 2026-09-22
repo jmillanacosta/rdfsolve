@@ -1,21 +1,33 @@
 from unittest.mock import Mock
 
-import pytest
-from rdfsolve.sources_updater import _read_sources, _write_sources
+from rdfsolve.endpoint_health import EndpointHealthCheck
+from rdfsolve.source_enrichment import enrich_source
 
 
-def test_registry_write_rejects_changed_files_and_keeps_original_on_failure(tmp_path, monkeypatch):
+def test_enrichment_returns_observations_without_changing_registry(tmp_path, monkeypatch):
     path = tmp_path / "sources.yaml"
-    path.write_text("- name: original\n")
-    original, entries = _read_sources(path)
-    path.write_text("- name: user-edit\n")
-    with pytest.raises(RuntimeError, match="changed"):
-        _write_sources(path, entries, original=original)
-    current = path.read_bytes()
+    original = "# Curated\n- name: demo\n  endpoint: https://example.org/sparql\n  notes: keep\n"
+    path.write_text(original)
+    health = EndpointHealthCheck("https://example.org/sparql", "up", 0.2, "", "2026-09-22")
     monkeypatch.setattr(
-        "rdfsolve.sources_updater.os.replace", Mock(side_effect=OSError("disk error"))
+        "rdfsolve.source_enrichment.check_endpoint_health", Mock(return_value=health)
     )
-    with pytest.raises(OSError, match="disk error"):
-        _write_sources(path, entries, original=current)
-    assert path.read_bytes() == current
-    assert not list(tmp_path.glob("*.tmp"))
+    metadata = Mock()
+    metadata.project.return_value = {"title": "Demo"}
+    query = Mock(side_effect=[metadata, RuntimeError("metadata unavailable")])
+    monkeypatch.setattr("rdfsolve.metadata.query_metadata", query)
+    complete = enrich_source("demo", health.endpoint_url, sources_file=path)
+    partial = enrich_source("demo", health.endpoint_url, sources_file=path)
+    assert (complete["dataset_metadata"], complete["enrichment"]["state"]) == (
+        {"title": "Demo"},
+        "complete",
+    ), "Retrieved metadata"
+    assert partial["enrichment"]["phases"] == {
+        "health": "up",
+        "metadata": "failed",
+        "void": "skipped",
+    }, "Metadata failure does not become success"
+    assert partial["enrichment"]["errors"] == {"metadata": "metadata unavailable"}
+    assert complete["notes"] == partial["notes"] == "keep", "Curated fields"
+    assert path.read_text() == original, "Source specification must not be written"
+    assert list(tmp_path.iterdir()) == [path], "Enrichment must not create backup files"

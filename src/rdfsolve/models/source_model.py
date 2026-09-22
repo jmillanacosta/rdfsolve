@@ -73,7 +73,7 @@ class SourceModel(BaseModel):
     Attributes
     ----------
     name:
-        Unique source identifier (primary key in the ``sources`` DB table).
+        Unique source identifier.
     endpoint:
         SPARQL endpoint URL.
     void_iri:
@@ -290,20 +290,6 @@ class SourceModel(BaseModel):
             if data.get(field_name) is None:
                 data[field_name] = ""
         return data
-
-    def to_db_dict(self) -> dict[str, Any]:
-        """Return a plain dict suitable for :meth:`~rdfsolve.backend.database.Database.save_source`.
-
-        Publications are serialised as list-of-dicts (not Pydantic objects).
-
-        Returns
-        -------
-        dict[str, Any]
-            Dict with all fields, ready for database persistence.
-        """
-        d = self.model_dump()
-        d["bioregistry_publications"] = [p.model_dump() for p in self.bioregistry_publications]
-        return d
 
 
 class SourcesRegistry(BaseModel):
