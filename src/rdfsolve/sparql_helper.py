@@ -195,6 +195,7 @@ class SparqlHelper:
         "estimated execution time",
         "exceeds the limit",
         "query timed out",
+        "operation timed out",
         "timeout expired",
         "execution time limit",
         "statement timeout",
@@ -755,6 +756,23 @@ class SparqlHelper:
                             f"HTTP 502 Bad Gateway (overload): {e}",
                             status_code=502,
                         ) from e
+                    # Cost and time limits require smaller queries from the caller.
+                    if status_code in (429, 500, 504):
+                        body = self._last_error_body.lower()
+                        is_cost_limit = status_code == 504 or any(
+                            pat in body for pat in self.COST_LIMIT_PATTERNS
+                        )
+                        if is_cost_limit:
+                            tag = f"{query_type}[{purpose}]" if purpose else query_type
+                            logger.warning(
+                                "%s query cost/time limit on %s - not retrying the unchanged query",
+                                tag,
+                                self.endpoint_url,
+                            )
+                            raise EndpointTimeoutError(
+                                f"Query cost/time limit: {detail or status_code}",
+                                status_code=status_code,
+                            ) from e
                     # Let adaptive callers reduce work after local capacity errors.
                     if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
                         "localhost",
@@ -781,23 +799,6 @@ class SparqlHelper:
                             "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
                         )
                         continue
-                    # Cost and time limits require smaller queries from the caller.
-                    if status_code in (500, 504):
-                        body = self._last_error_body.lower()
-                        is_cost_limit = status_code == 504 or any(
-                            pat in body for pat in self.COST_LIMIT_PATTERNS
-                        )
-                        if is_cost_limit:
-                            tag = f"{query_type}[{purpose}]" if purpose else query_type
-                            logger.warning(
-                                "%s query cost/time limit on %s - not retrying the unchanged query",
-                                tag,
-                                self.endpoint_url,
-                            )
-                            raise EndpointTimeoutError(
-                                f"Query cost/time limit: {detail or status_code}",
-                                status_code=status_code,
-                            ) from e
                     self._handle_retry(
                         attempt,
                         query_type,
@@ -998,11 +999,6 @@ class SparqlHelper:
             timeout=self.timeout,
             stream=True,
         ) as response:
-            if response.status_code in (429, 503):
-                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
-                defer_host(
-                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
-                )
             body = bytearray()
             error_response = response.status_code >= 400
             limit = (
@@ -1027,6 +1023,14 @@ class SparqlHelper:
             )
             if error_response:
                 self._last_error_body = text
+            if response.status_code == 503 or (
+                response.status_code == 429
+                and not any(pattern in text.lower() for pattern in self.COST_LIMIT_PATTERNS)
+            ):
+                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
+                defer_host(
+                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
+                )
             response.raise_for_status()
             self._check_response_health(response, text)
             return text
