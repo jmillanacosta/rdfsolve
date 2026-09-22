@@ -27,3 +27,84 @@
   note: >-
     / and /sparql on sparql.string-db.org are one Virtuoso service; both
     returned the same named graphs on 2026-09-18.
+
+- left: rdfportal.icgc
+  right: rdfportal.linked_icgc
+  relation: same_dataset
+  note: >-
+    Owner decision, 2026-09-22: one dataset at the declared release_20 graph.
+    Retain both names and their catalogue and rdf-config provenance.
+- left: rdfportal.ensembl
+  right: rdfportal.ensembl_grch37
+  relation: version_of
+  note: >-
+    Owner decision, 2026-09-22: retain the release 115 and GRCh37 release 75
+    distinction. Verify extraction scopes before extraction; their identical
+    declared endpoint and graph remain unresolved.
+- left: rdfportal.jpost
+  right: rdfportal.mbgd
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: rdfportal.jpost
+  right: rdfportal.polyinfo
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: rdfportal.mbgd
+  right: rdfportal.polyinfo
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: emikg
+  right: globi
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: emikg
+  right: pf1600
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: emikg
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: globi
+  right: pf1600
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: globi
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: pf1600
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: rdfportal.microbedbjp
+  right: rdfportal.nbrc
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain distinct datasets.
+    Verify whether NBRC requires the MicrobeDB.jp graph as companion data;
+    this part of the NBRC extraction scope remains unresolved.
