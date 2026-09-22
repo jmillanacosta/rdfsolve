@@ -274,7 +274,13 @@ def choose_representatives(
         return len(set(current.values()) | fixed_set)
 
     result.classes_before = size()
+    seen: set[frozenset[str]] = set()
     while size() > budget:
+        representatives = frozenset(current.values())
+        if representatives in seen:
+            result.over_budget = True
+            break
+        seen.add(representatives)
         nodes = {rep for rep in current.values() if parents.get(rep)}
         if not nodes:
             result.over_budget = True

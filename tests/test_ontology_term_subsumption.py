@@ -169,3 +169,10 @@ def test_batches_pack_light_classes_and_isolate_heavy_ones():
     assert batches[0] == ["heavy"]
     assert [len(b) for b in batches[1:]] == [500, 500, 200]
     assert sorted(c for b in batches for c in b) == sorted(classes)
+
+
+def test_cycle_with_an_unrelated_class_stops_above_budget():
+    chosen = choose_representatives(["a", "b", "z"], {"a": {"b"}, "b": {"a"}}, budget=1)
+    assert chosen.over_budget is True
+    assert chosen.classes_after == 2
+    assert chosen.representative["z"] == "z"
