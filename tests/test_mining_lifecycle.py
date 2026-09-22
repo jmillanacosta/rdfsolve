@@ -267,3 +267,16 @@ def test_error_after_pattern_discovery_keeps_report_count(miner, monkeypatch):
         miner.mine("test")
     assert miner.last_report.pattern_count == 1
     assert miner.last_report.completion_state == "partial"
+
+
+def test_report_exists_before_the_first_query(miner, monkeypatch):
+    def interrupt():
+        report = json.loads(miner._report_path.read_text())
+        assert report["completion_state"] == "unfinished"
+        assert report["finished_at"] is None
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(miner, "_verify_graph_scope", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        miner.mine("test")
+    assert miner.last_report.completion_state == "failed"

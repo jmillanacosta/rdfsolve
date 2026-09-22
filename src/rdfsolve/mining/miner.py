@@ -308,6 +308,7 @@ class SchemaMiner:
             },
         )
         self._rc = ReportCollector(report, self._report_path)
+        self._rc.flush()
 
     def _run_patterns_phase(
         self,
@@ -588,7 +589,10 @@ class SchemaMiner:
         self,
         dataset_name: str | None = None,
     ) -> MinedSchema:
-        """Run all queries and return a :class:`MinedSchema`."""
+        """Run all queries and return a :class:`MinedSchema`.
+
+        Write the report after each phase when a report path is set.
+        """
         with self._session(dataset_name):
             self._verify_graph_scope()
             return self._finish_schema(self._mine_schema(dataset_name))
