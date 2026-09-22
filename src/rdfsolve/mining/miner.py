@@ -423,7 +423,7 @@ class SchemaMiner:
                 summary.update(
                     {
                         "classes_after": chosen.classes_after,
-                        "subsumed": True,
+                        "subsumed": bool(members),
                         "levels_lifted": chosen.levels_lifted,
                         "over_budget": chosen.over_budget,
                         "hierarchy_source": "endpoint rdfs:subClassOf",
