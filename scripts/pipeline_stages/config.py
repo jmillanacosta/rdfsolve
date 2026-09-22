@@ -286,6 +286,8 @@ class PipelineConfig:
 
         copy_if_present(self.sources_file, "sources.yaml")
         copy_if_present(self.sssom_sources_file, "sssom_sources.yaml")
+        copy_if_present(self.endpoint_status_file, "endpoint_status.json")
+        copy_if_present(self.download_status_file, "download_status.json")
         if self.sources_file is not None:
             copy_if_present(
                 self.sources_file.with_name("identity_overrides.yaml"), "identity_overrides.yaml"
