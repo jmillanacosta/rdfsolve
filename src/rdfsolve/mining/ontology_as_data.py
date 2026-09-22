@@ -183,12 +183,13 @@ def fetch_superclasses(
     *,
     batch_size: int = 500,
     purpose: str = "ontology-terms/superclasses",
+    graph_uris: list[str] | None = None,
 ) -> dict[str, set[str]]:
     """Return named ``rdfs:subClassOf`` parents for *terms* and all their ancestors.
 
-    The hierarchy is read from the whole endpoint rather than the data graphs,
-    because the ontology that declares the terms usually sits in its own graph.
+    Read the RDF merge of the selected graphs, or the endpoint default dataset.
     """
+    dataset, _, _ = _graph_scope(graph_uris)
     parents: dict[str, set[str]] = {}
     frontier = sorted(set(terms))
     while frontier:
@@ -197,6 +198,7 @@ def fetch_superclasses(
             values = " ".join(f"<{iri}>" for iri in batch)
             query = f"""\
 SELECT ?c ?parent
+{dataset}
 WHERE {{
   VALUES ?c {{ {values} }}
   ?c <{RDFS_SUBCLASS_OF}> ?parent .

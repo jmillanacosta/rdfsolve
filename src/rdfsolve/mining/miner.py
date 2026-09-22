@@ -134,6 +134,7 @@ class SchemaMiner:
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
+        self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
         self._subsumed_classes: set[str] = set()
         self._declared_classes: set[str] = set()
@@ -414,7 +415,9 @@ class SchemaMiner:
             }
             if len(classes) > budget:
                 t0 = time.monotonic()
-                parents = fetch_superclasses(self._helper, classes)
+                parents = fetch_superclasses(
+                    self._helper, classes, graph_uris=self._ontology_graph_uris
+                )
                 self._report.record_query("ontology-terms/superclasses", time.monotonic() - t0)
                 chosen = choose_representatives(classes, parents, budget)
                 patterns = subsume_patterns(patterns, chosen.representative)
@@ -426,7 +429,10 @@ class SchemaMiner:
                         "subsumed": bool(members),
                         "levels_lifted": chosen.levels_lifted,
                         "over_budget": chosen.over_budget,
-                        "hierarchy_source": "endpoint rdfs:subClassOf",
+                        "hierarchy_source": "selected named graphs rdfs:subClassOf"
+                        if self._ontology_graph_uris
+                        else "endpoint default dataset rdfs:subClassOf",
+                        "hierarchy_graph_uris": self._ontology_graph_uris,
                         "representatives": {rep: len(terms) for rep, terms in members.items()},
                     }
                 )
@@ -615,6 +621,7 @@ class SchemaMiner:
         """Start one report before any phase and retain failures."""
         self._ontology_classes = None
         self._ontology_term_budget = None
+        self._ontology_graph_uris = None
         self._class_batches = None
         self._subsumed_classes = set()
         self._declared_classes = set()

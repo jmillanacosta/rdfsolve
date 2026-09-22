@@ -1,4 +1,5 @@
-from rdflib import Graph
+import pytest
+from rdflib import Dataset, Graph, URIRef
 from rdflib.namespace import RDFS
 from rdfsolve.mining import mine_with_ontology
 from rdfsolve.mining.miner import SchemaMiner
@@ -24,7 +25,7 @@ def _triples(schema):
     return {(p.subject_class, p.property_uri, p.object_class): p for p in schema.patterns}
 
 
-def test_terms_are_subsumed_until_the_budget_holds():
+def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     schema, report = _mine(budget=5)
     triples = _triples(schema)
     classes = pattern_classes(schema.patterns)
@@ -51,3 +52,34 @@ def test_terms_are_subsumed_until_the_budget_holds():
     assert summary["over_budget"] and summary["representatives"] == {}
     assert T + "ethanol" in pattern_classes(raw.patterns)
     assert "+ontology-as-data" not in raw.about.strategy
+
+    dataset = Dataset(default_union=False)
+    dataset.graph(URIRef("urn:data")).parse(data="""
+        <urn:s1> a <urn:S>, <urn:a>; <urn:p> "one" .
+        <urn:s2> a <urn:S>, <urn:b>; <urn:p> "two" .
+    """, format="turtle")
+    dataset.graph(URIRef("urn:ontology")).parse(data="""
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        <urn:a> rdfs:subClassOf <urn:parent> .
+        <urn:b> rdfs:subClassOf <urn:parent> .
+        <urn:noise> a <urn:Decoy>; <urn:p> "not data" .
+    """, format="turtle")
+    dataset.default_graph.add((URIRef("urn:a"), RDFS.subClassOf, URIRef("urn:wrong")))
+    with SchemaMiner.from_graph(dataset, graph_uris=["urn:data"], delay=0) as miner:
+        scoped = mine_with_ontology(miner, ontology_as_data=True,
+            ontology_term_budget=2, ontology_graph_uris=["urn:ontology"])
+        patterns = _triples(scoped.data_schema)
+        assert ("urn:parent", "urn:p", "Literal") in patterns, "Read the selected hierarchy graph"
+        assert patterns["urn:parent", "urn:p", "Literal"].count == 2
+        assert not {"urn:Decoy", "urn:wrong"} & pattern_classes(scoped.data_schema.patterns)
+        assert miner.last_report.config["ontology_context"]["state"] == "nonempty"
+        assert miner.last_report.config["ontology_term_subsumption"]["hierarchy_graph_uris"] == ["urn:ontology"]
+
+        def unexpected_mining():
+            pytest.fail("Missing required ontology context must be checked before mining")
+
+        monkeypatch.setattr(miner, "_run_patterns_phase", unexpected_mining)
+        with pytest.raises(ValueError, match="ontology graphs"):
+            mine_with_ontology(miner, ontology_as_data=True, ontology_graph_uris=["urn:missing"])
+        assert miner.last_report.config["ontology_context"]["state"] == "missing"
+        assert miner.last_report.finished_at

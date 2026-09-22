@@ -39,9 +39,9 @@ def mine_with_ontology(
         ontology_term_budget: Largest number of classes the schema keeps before
             ontology terms are subsumed.
         dataset_name: Optional dataset name to attach to schema metadata
-        ontology_graph_uris: Explicit graph URIs to mine for ontology.
-            If provided, these graphs are mined specifically for ontology triples.
-            If None, uses miner.graph_uris or default graph.
+        ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
+            Named graphs must hold triples. None keeps extraction in the data
+            scope and superclass lookup in the endpoint default dataset.
         ontology_scope: Keep the schema's classes and ancestors, or all queried axioms.
 
     Returns:
@@ -52,6 +52,24 @@ def mine_with_ontology(
     with miner._session(dataset_name):
         miner._report.report.config["ontology_scope"] = ontology_scope
         miner._report.report.config["ontology_as_data"] = ontology_as_data
+        miner._ontology_graph_uris = ontology_graph_uris
+        context: dict[str, object] = {"graph_uris": ontology_graph_uris, "state": "not_checked"}
+        miner._report.report.config["ontology_context"] = context
+        if ontology_graph_uris and (extract_ontology or ontology_as_data):
+            from rdfsolve.mining.graph_selection import missing_graphs
+
+            context["state"] = "checking"
+            miner._report.flush()
+            try:
+                missing = missing_graphs(miner.helper, ontology_graph_uris)
+            except Exception:
+                context["state"] = "failed"
+                raise
+            if missing:
+                context.update({"state": "missing", "missing_graph_uris": missing})
+                raise ValueError(f"No triples in requested ontology graphs: {missing}")
+            context["state"] = "nonempty"
+            miner._report.flush()
         if ontology_as_data:
             if ontology_term_budget < 1:
                 raise ValueError("ontology_term_budget must be positive")
