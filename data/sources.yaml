@@ -1,3 +1,22 @@
+- name: pubchem.qlever
+  source_role: service
+  endpoint: https://qlever.dev/api/pubchem
+  sparql_engine: qlever
+  supports_graph: true
+  bioregistry_prefix: pubchem
+  notes: >-
+    QLever provider view of PubChem, separate from the IDSM provider view.
+    This service is an access record, not another dataset in corpus counts.
+    Local reproduction uses the PubChem FTP distributions plus the external
+    ontology bundle specified by the QLever PubChem recipe:
+    https://github.com/qlever-dev/qlever-control/blob/aca6208a03982216f182087044796169fde282ec/src/qlever/Qleverfiles/Qleverfile.pubchem.
+    The recipe uses http://rdf.ncbi.nlm.nih.gov/pubchem/ subdomain graph IRIs
+    and adds the external ontologies in http://rdf.ncbi.nlm.nih.gov/pubchem/ruleset.
+    Data edge scope, linked-object type context and ontology context must remain
+    separate in extraction reports. Verify context in each remote observation;
+    configured downloads do not prove that an endpoint holds those ontologies.
+    Pin input hashes and ontology versions for local runs. Recipe equivalence
+    does not establish equality with the live endpoint snapshot.
 - name: pubchem.ftp.anatomy
   local_provider: pubchem
   graph_uris: []
