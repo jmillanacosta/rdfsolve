@@ -35,7 +35,7 @@ class QleverConfig:
 
     memory_for_queries: str = "500G"
     timeout: str = "9999999999s"
-    parser_buffer_size: str = "8GB"
+    parser_buffer_size: str = "10M"
     stxxl_memory: str = "16GB"
     parallel_parsing: bool = False
     num_triples_per_batch: int = 1_000_000

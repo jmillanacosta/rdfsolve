@@ -112,8 +112,6 @@ class LocalMiningStage(Stage):
         cfg = QleverConfig(
             memory_for_queries="80G",
             timeout="600s",
-            # Blocks of this size are read in one call; multi-GB reads come back short.
-            parser_buffer_size="100M",
             parallel_parsing=False,
             num_triples_per_batch=1_000_000,
         )
@@ -184,7 +182,7 @@ class LocalMiningStage(Stage):
             "-p",
             config.get("index", "PARALLEL_PARSING"),
             "-b",
-            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            config.get("index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size),
             "-m",
             config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]

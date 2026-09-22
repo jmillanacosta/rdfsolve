@@ -104,7 +104,6 @@ class LsLodCloudStage(LocalMiningStage):
         cfg = QleverConfig(
             memory_for_queries="250G",
             timeout="3600s",
-            parser_buffer_size="8GB",
             parallel_parsing=False,
             num_triples_per_batch=1_000_000,
         )
@@ -173,7 +172,7 @@ class LsLodCloudStage(LocalMiningStage):
             "-p",
             config.get("index", "PARALLEL_PARSING"),
             "-b",
-            config.get("index", "PARSER_BUFFER_SIZE", fallback="2GB"),
+            config.get("index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size),
             "-m",
             config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
