@@ -67,6 +67,10 @@ def _media_type(path: Path) -> str | None:
 
 def _role(path: Path) -> str | None:
     name = path.name
+    if name == "scientific_checks.json":
+        return "scientific_validation_plan"
+    if name.endswith("scientific_check_results.json"):
+        return "scientific_validation_results"
     for marker, role in (
         ("_schema.json", "canonical_schema"),
         ("_schema.jsonld", "schema_jsonld"),

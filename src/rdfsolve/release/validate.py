@@ -30,7 +30,15 @@ class ReleaseValidation(BaseModel):
 
 
 def _validate_role_json(path: Path, role: str | None) -> None:
-    if role == "canonical_schema":
+    if role == "scientific_validation_results":
+        from rdfsolve.release.scientific_execution import ScientificValidationResults
+
+        ScientificValidationResults.model_validate_json(path.read_text(encoding="utf-8"))
+    elif role == "scientific_validation_plan":
+        from rdfsolve.release.scientific_validation import ScientificValidationPlan
+
+        ScientificValidationPlan.model_validate_json(path.read_text(encoding="utf-8"))
+    elif role == "canonical_schema":
         from rdfsolve.schema_models.core import MinedSchema
 
         MinedSchema.from_json(path)

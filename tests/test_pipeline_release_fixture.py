@@ -12,6 +12,7 @@ from rdfsolve.cli import main
 from rdfsolve.config import mint
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.release.model import ReleaseManifest
+from rdfsolve.release.scientific_execution import execute_scientific_validation_plan
 from rdfsolve.release.scientific_validation import (
     build_scientific_validation_plan,
     write_scientific_validation_plan,
@@ -170,6 +171,26 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode, state):
     assert plan.pattern_checks
     target = "remote_endpoint" if mode == "remote" else "frozen_local_index"
     assert all(check.target_kind == target for check in plan.pattern_checks + plan.route_checks)
+    validator = SchemaMiner.from_graph(data)
+    try:
+        for row in rows:
+            checks = [check for check in plan.pattern_checks if check.dataset_id == row["name"]]
+            if mode == "remote":
+                validator.helper.endpoint_url = checks[0].endpoint
+            observed = execute_scientific_validation_plan(
+                plan, validator.helper, dataset_id=row["name"], extraction_mode=mode,
+                index_reference="in-memory-fixture" if mode != "remote" else None,
+            )
+            assert all(result.state == "matched" for result in observed.results if result.check_id in {c.check_id for c in checks})
+            assert all(result.comparison == "agrees" for result in observed.results)
+            (output / "validation" / f'{row["name"]}_scientific_check_results.json').write_text(
+                observed.model_dump_json(indent=2)
+            )
+    finally:
+        validator.close()
+    for command in ["build", "validate"]:
+        checked = runner.invoke(main, ["release", command, str(output)])
+        assert checked.exit_code == 0, checked.output
     summary = json.loads((output / "summary.json").read_text())
     assert summary["attempted_completion"] == {state: len(rows)}
     assert summary["observed_evidence"]["patterns"] == sum(len(s.patterns) for s in schemas)
