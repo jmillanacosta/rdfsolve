@@ -332,7 +332,9 @@ class GroupedMiningStage(LocalMiningStage):
             files = rdf_input_files(source_workdir)
             if not files:
                 raise ValueError(f"No prepared RDF inputs for {source.name} in {source_workdir}")
-            graph_uri = mint("graph", source.name)
+            if len(source.graph_uris) > 1:
+                raise ValueError(f"Prepare an index with the recorded graph mapping for {source.name}")
+            graph_uri = source.graph_uris[0] if source.graph_uris else mint("graph", source.name)
             input_files.extend((path, graph_uri) for path in files)
 
         if not input_files:
@@ -390,11 +392,14 @@ class GroupedMiningStage(LocalMiningStage):
         group_dir = self.config.output_dir / f"grouped_{group_name}"
         group_dir.mkdir(parents=True, exist_ok=True)
         group_report = group_dir / f"{group_name}{suffix}_report.json"
-        graphs = {source.name: mint("graph", source.name) for source in sources}
+        graphs = {source.name: source.graph_uris or [mint("graph", source.name)] for source in sources}
+        data_graphs = list(dict.fromkeys(graph for scope in graphs.values() for graph in scope))
+        type_graphs = list(dict.fromkeys(graph for source in sources for graph in source.type_context_graph_uris))
+        ontology_graphs = list(dict.fromkeys(graph for source in sources for graph in source.ontology_graph_uris))
 
         log.info("  Mining %d dataset graphs of %s together", len(graphs), group_name)
-        miner = self._local_miner(port, list(graphs.values()), group_report)
-        schema = self._mine_schema(miner, group_name, group_dir)
+        miner = self._local_miner(port, data_graphs, group_report, type_context_graph_uris=type_graphs)
+        schema = self._mine_schema(miner, group_name, group_dir, ontology_graph_uris=ontology_graphs or None)
         self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
         missing = unattributed_patterns(schema)
         if missing:
@@ -409,7 +414,7 @@ class GroupedMiningStage(LocalMiningStage):
                 schema, graph_uri, source.name, declared_classes=miner.declared_classes
             )
             classes = sorted(pattern_classes(part.patterns) - miner.subsumed_classes)
-            counts, states = miner.count_class_entities(classes, [graph_uri])
+            counts, states = miner.count_class_entities(classes, graph_uri)
             part.about.class_entity_counts = counts
             part.about.class_entity_count_states = states
             output_dir = self.config.output_dir / source.name

@@ -3,7 +3,6 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from rdfsolve.config import mint
 
 
 @pytest.fixture
@@ -45,16 +44,17 @@ def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
 ):
     from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
-    one, two = (mint("graph", "one"), mint("graph", "two"))
+    one, two = ("urn:provider:one", "urn:provider:two")
     config = pipeline.PipelineConfig(base_dir=tmp_path)
     stage = pipeline.GroupedMiningStage(config)
-    sources = [pipeline.Source(name="one"), pipeline.Source(name="two")]
+    sources = [pipeline.Source.from_dict({"name": "one", "graph_uris": one, "type_context_graph_uris": "urn:types", "ontology_graph_uris": "urn:ontology"}), pipeline.Source(name="two", graph_uris=[two])]
     miners = []
     miner = Mock(declared_classes=frozenset(), subsumed_classes=frozenset())
     miner.count_class_entities.return_value = ({"urn:A": 2}, {"urn:A": "complete"})
     miner.last_report.completion_state = "complete"
 
-    def local_miner(port, graph_uris, report_path):
+    def local_miner(port, graph_uris, report_path, *, type_context_graph_uris):
+        assert type_context_graph_uris == ["urn:types"]
         miners.append(graph_uris)
         return miner
 
@@ -79,7 +79,11 @@ def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
     )
     saved = {}
     monkeypatch.setattr(stage, "_local_miner", local_miner)
-    monkeypatch.setattr(stage, "_mine_schema", lambda miner, name, output_dir: group)
+    def mine_schema(miner, name, output_dir, *, ontology_graph_uris):
+        assert ontology_graph_uris == ["urn:ontology"]
+        return group
+
+    monkeypatch.setattr(stage, "_mine_schema", mine_schema)
     monkeypatch.setattr(stage, "_save_schema_outputs", Mock())
     monkeypatch.setattr(
         stage,

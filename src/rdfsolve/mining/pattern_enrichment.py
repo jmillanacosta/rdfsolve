@@ -149,6 +149,7 @@ def enrich_patterns_with_counts(
     unsafe_paging: bool,
     delay: float,
     class_batches: list[list[str]] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> list[SchemaPattern]:
     """Run COUNT queries and merge counts into patterns.
 
@@ -162,6 +163,7 @@ def enrich_patterns_with_counts(
         patterns: Patterns to enrich with counts
         helper: SPARQL helper for query execution
         graph_uris: Named graphs to restrict queries to
+        type_context_graph_uris: Extra graphs for linked-object types
         report: Report collector for tracking query execution
         collect_bindings: Function to collect paginated results
         class_batch_size: Number of classes per batch
@@ -205,6 +207,7 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
         _fetch_literal_count_batch(
             batch,
@@ -227,6 +230,7 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
 
         # Delay between batches
@@ -295,6 +299,7 @@ def _fetch_typed_count_batch(
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
 ) -> None:
     """Query typed-object counts for one class batch and update *counts*."""
     try:
@@ -308,6 +313,7 @@ def _fetch_typed_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(
@@ -438,6 +444,7 @@ def _fetch_untyped_count_batch(
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
 ) -> None:
     """Query untyped-URI counts for one class batch and update *counts*."""
     try:
@@ -451,6 +458,7 @@ def _fetch_untyped_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(

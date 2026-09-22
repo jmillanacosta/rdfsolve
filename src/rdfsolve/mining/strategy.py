@@ -31,12 +31,16 @@ class MiningContext:
         chunk_size: int = 10_000,
         unsafe_paging: bool = False,
         excluded_graph_prefixes: tuple[str, ...] = (),
+        type_context_graph_uris: list[str] | None = None,
+        ontology_graph_uris: list[str] | None = None,
     ) -> None:
         """Initialize mining context.
 
         Args:
             helper: SPARQL helper for query execution
-            graph_uris: List of graph URIs to restrict queries
+            graph_uris: Data graphs
+            type_context_graph_uris: Extra graphs for linked-object types
+            ontology_graph_uris: Interpretation graphs excluded from data discovery
             report: Report collector for tracking progress
             collect_bindings: Function to execute queries and collect bindings (query, purpose, chunk_size)
             untyped_as_classes: Treat untyped URIs as owl:Class
@@ -49,6 +53,8 @@ class MiningContext:
         """
         self.helper = helper
         self.graph_uris = graph_uris
+        self.type_context_graph_uris = type_context_graph_uris
+        self.ontology_graph_uris = ontology_graph_uris
         self.report = report
         self.collect_bindings = collect_bindings
         self.untyped_as_classes = untyped_as_classes

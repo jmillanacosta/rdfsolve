@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from rdfsolve._outcomes import QueryFailure
-from rdfsolve.mining.query_builders import _graph_clause
+from rdfsolve.mining.query_builders import _graph_clause, _graph_scope, _type_pattern
 from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.schema_models.core import MinedSchema
@@ -42,28 +42,36 @@ def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
     }}"""
 
 
-def example_query(pattern: SchemaPattern, graph_uris: list[str] | None, limit: int) -> str:
+def example_query(
+    pattern: SchemaPattern,
+    graph_uris: list[str] | None,
+    limit: int,
+    type_context_graph_uris: list[str] | None = None,
+    *,
+    with_dataset: bool = True,
+) -> str:
     """Select values of this pattern, not an unrelated value of the property."""
     if not 1 <= limit <= 20:
         raise ValueError("Example limit must be between 1 and 20")
     for iri in graph_uris or []:
         _iri(iri)
-    opening, closing = _graph_clause(graph_uris)
+    dataset, opening, closing = _graph_scope(graph_uris, type_context_graph_uris)
+    if not with_dataset:
+        dataset = ""
     if pattern.object_class == "Literal":
         condition = "FILTER(isLiteral(?value))"
         if pattern.datatype:
             condition += f" FILTER(datatype(?value) = {_iri(pattern.datatype)})"
     elif pattern.object_class == "Resource":
-        condition = "FILTER(isIRI(?value)) FILTER NOT EXISTS { ?value a ?anyType }"
+        condition = f"FILTER(isIRI(?value)) FILTER NOT EXISTS {{ {_type_pattern('?value', '?anyType', type_context_graph_uris)} }}"
     elif pattern.object_class == "BlankNode":
         condition = "FILTER(isBlank(?value))"
     else:
-        condition = f"?value a {_iri(pattern.object_class)} ."
-    return f"""SELECT DISTINCT ?subject ?value WHERE {{
-      {opening}
-      ?subject a {_iri(pattern.subject_class)} ; {_iri(pattern.property_uri)} ?value .
+        condition = _type_pattern("?value", _iri(pattern.object_class), type_context_graph_uris)
+    return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
+      ?subject a {_iri(pattern.subject_class)} .
+      {opening} ?subject {_iri(pattern.property_uri)} ?value . {closing}
       {condition}
-      {closing}
     }} LIMIT {limit}"""
 
 
@@ -97,6 +105,7 @@ def query_enrichment(
     delay: float = 0.0,
     report: ReportCollector | None = None,
     annotation_iris: list[str] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> SchemaEnrichment:
     """Attempt definitions and examples for every class and pattern.
 
@@ -138,6 +147,8 @@ def query_enrichment(
 
             report.record_outcome(QueryOutcome([], "failed", [failure]))
 
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+
     def batched(queries: list[str], purpose: str) -> Iterator[tuple[int, dict[str, Any]]]:
         """Group example queries and retain each result slot."""
         for offset in range(0, len(queries), 10):
@@ -145,7 +156,9 @@ def query_enrichment(
                 f"{{ {{ {query} }} BIND({index} AS ?slot) }}"
                 for index, query in enumerate(queries[offset : offset + 10], offset)
             ]
-            for row in select("SELECT * WHERE { " + " UNION ".join(branches) + " }", purpose):
+            for row in select(
+                "SELECT * " + dataset + " WHERE { " + " UNION ".join(branches) + " }", purpose
+            ):
                 try:
                     index = int(row["slot"]["value"])
                     if not offset <= index < min(offset + 10, len(queries)):
@@ -191,7 +204,16 @@ def query_enrichment(
             )
             unique[key] = pattern
         patterns = list(unique.values())
-        queries = [example_query(pattern, graph_uris, examples_per_pattern) for pattern in patterns]
+        queries = [
+            example_query(
+                pattern,
+                graph_uris,
+                examples_per_pattern,
+                type_context_graph_uris,
+                with_dataset=False,
+            )
+            for pattern in patterns
+        ]
         for index, row in batched(queries, "pattern_examples"):
             pattern = patterns[index]
             try:

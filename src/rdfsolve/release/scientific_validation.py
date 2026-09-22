@@ -14,6 +14,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from rdfsolve.mining.query_builders import _graph_clause, _graph_scope, _type_pattern
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -34,6 +35,7 @@ class PatternSpotCheckPlan(BaseModel):
     endpoint: str | None = None
     graph_scope: list[str] = Field(default_factory=list)
     type_graph_scope: list[str] = Field(default_factory=list)
+    type_context_graph_scope: list[str] = Field(default_factory=list)
     pattern: dict[str, object]
     query: str
 
@@ -86,19 +88,15 @@ def _stable_id(*parts: str) -> str:
     return f"check:{digest}"
 
 
-def _dataset_scope(graphs: list[str], type_graphs: list[str]) -> tuple[str, str, str]:
-    if not graphs:
-        return "", "", ""
-    dataset = " ".join(f"FROM <{iri}>" for iri in type_graphs)
-    named = " ".join(f"FROM NAMED <{iri}>" for iri in graphs)
-    return f"{dataset} {named}", "GRAPH ?_edgeGraph {", "}"
-
-
 def pattern_existence_query(
-    pattern: SchemaPattern, graph_scope: list[str], type_graph_scope: list[str] | None = None
+    pattern: SchemaPattern,
+    graph_scope: list[str],
+    type_graph_scope: list[str] | None = None,
+    type_context_graph_scope: list[str] | None = None,
 ) -> str:
     """Build a bounded existence query with the same selected-graph semantics as counts."""
-    dataset, edge_open, edge_close = _dataset_scope(graph_scope, type_graph_scope or graph_scope)
+    dataset, _, _ = _graph_scope(type_graph_scope or graph_scope, type_context_graph_scope)
+    edge_open, edge_close = _graph_clause(graph_scope)
     subject = f"?s a <{pattern.subject_class}> ."
     edge = f"{edge_open} ?s <{pattern.property_uri}> ?o . {edge_close}"
     conditions: list[str] = []
@@ -107,11 +105,18 @@ def pattern_existence_query(
         if pattern.datatype:
             conditions.append(f"FILTER(DATATYPE(?o) = <{pattern.datatype}>)")
     elif pattern.object_class == "Resource":
-        conditions.extend(["FILTER(isIRI(?o))", "FILTER NOT EXISTS { ?o a ?_anyType }"])
+        conditions.extend(
+            [
+                "FILTER(isIRI(?o))",
+                f"FILTER NOT EXISTS {{ {_type_pattern('?o', '?_anyType', type_context_graph_scope)} }}",
+            ]
+        )
     elif pattern.object_class == "BlankNode":
         conditions.append("FILTER(isBlank(?o))")
     elif pattern.object_class not in _SENTINEL_OBJECTS:
-        conditions.append(f"?o a <{pattern.object_class}> .")
+        conditions.append(
+            _type_pattern("?o", f"<{pattern.object_class}>", type_context_graph_scope)
+        )
     where = " ".join([subject, edge, *conditions])
     return f"SELECT ?s ?o {dataset} WHERE {{ {where} }} LIMIT 1"
 
@@ -187,8 +192,11 @@ def build_scientific_validation_plan(
                     endpoint=endpoint,
                     graph_scope=graphs,
                     type_graph_scope=type_graphs,
+                    type_context_graph_scope=schema.about.type_context_graph_uris or [],
                     pattern=pattern.model_dump(mode="json"),
-                    query=pattern_existence_query(pattern, graphs, type_graphs),
+                    query=pattern_existence_query(
+                        pattern, graphs, type_graphs, schema.about.type_context_graph_uris
+                    ),
                 )
             )
         if schema.navigation is None or routes_per_schema <= 0:

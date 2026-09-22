@@ -22,7 +22,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from rdfsolve.mining.query_builders import _graph_scope
+from rdfsolve.mining.query_builders import _context_pattern, _graph_scope, _type_pattern
 from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -52,10 +52,22 @@ _NON_DATA_PREDICATE_NAMESPACES = (
 
 _DATA_PREDICATE = "\n    ".join(
     [f'FILTER(!STRSTARTS(STR(?p), "{ns}"))' for ns in _NON_DATA_PREDICATE_NAMESPACES]
-    + ["FILTER NOT EXISTS { ?p a <http://www.w3.org/2002/07/owl#AnnotationProperty> }"]
 )
 
-_TERM = f"{{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }}"
+
+def _term_filter(node: str, ontology_graph_uris: list[str] | None) -> str:
+    """Select named class terms without multiplying declaration matches."""
+    pattern = f"{{ {node} a <{OWL_CLASS}> }} UNION {{ {node} a <{RDFS_CLASS}> }}"
+    return f"FILTER EXISTS {{ {_context_pattern(pattern, ontology_graph_uris)} }}"
+
+
+def _data_predicate(ontology_graph_uris: list[str] | None) -> str:
+    """Exclude ontology structure and declared annotation predicates."""
+    annotation = "?p a <http://www.w3.org/2002/07/owl#AnnotationProperty>"
+    return (
+        _DATA_PREDICATE
+        + f" FILTER NOT EXISTS {{ {_context_pattern(annotation, ontology_graph_uris)} }}"
+    )
 
 
 def _metaclass_filter(variable: str) -> str:
@@ -63,44 +75,57 @@ def _metaclass_filter(variable: str) -> str:
     return f"FILTER(?{variable} NOT IN ({values}))"
 
 
-def build_term_object_query(graph_uris: list[str] | None) -> str:
+def build_term_object_query(
+    graph_uris: list[str] | None,
+    ontology_graph_uris: list[str] | None = None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
     """Instances whose property values are ontology terms, grouped per term."""
-    dataset, g_open, g_close = _graph_scope(graph_uris)
+    dataset, g_open, g_close = _graph_scope(
+        graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
+    )
     return f"""\
 SELECT ?sc ?p ?t (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?s ?p ?t . {g_close}
   ?s a ?sc .
-  {_TERM}
+  {_term_filter("?t", ontology_graph_uris)}
   FILTER(isIRI(?s) && isIRI(?sc) && isIRI(?t))
   FILTER NOT EXISTS {{ ?s a <{OWL_CLASS}> }}
   FILTER NOT EXISTS {{ ?s a <{RDFS_CLASS}> }}
   {_metaclass_filter("sc")}
-  {_DATA_PREDICATE}
+  {_data_predicate(ontology_graph_uris)}
 }}
 GROUP BY ?sc ?p ?t
 ORDER BY ?sc ?p ?t"""
 
 
-def build_term_subject_query(graph_uris: list[str] | None) -> str:
+def build_term_subject_query(
+    graph_uris: list[str] | None,
+    ontology_graph_uris: list[str] | None = None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
     """Ontology terms described with data properties, grouped per term and value kind."""
-    dataset, g_open, g_close = _graph_scope(graph_uris)
+    dataset, g_open, g_close = _graph_scope(
+        graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
+    )
     return f"""\
 SELECT ?t ?p ?kind ?oc ?dt (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?t ?p ?o . {g_close}
-  {_TERM}
+  {_term_filter("?t", ontology_graph_uris)}
   FILTER(isIRI(?t))
-  {_DATA_PREDICATE}
+  {_data_predicate(ontology_graph_uris)}
   OPTIONAL {{
     FILTER(isIRI(?o))
-    {{ ?o a <{OWL_CLASS}> BIND(?o AS ?term) }} UNION {{ ?o a <{RDFS_CLASS}> BIND(?o AS ?term) }}
+    {_term_filter("?o", ontology_graph_uris)}
+    BIND(?o AS ?term)
   }}
   OPTIONAL {{
     FILTER(isIRI(?o) && !BOUND(?term))
-    ?o a ?type .
+    {_type_pattern("?o", "?type", type_context_graph_uris)}
     FILTER(isIRI(?type))
   }}
   BIND(IF(isLiteral(?o), "literal", IF(isBlank(?o), "bnode", "iri")) AS ?kind)
@@ -123,6 +148,8 @@ def probe_term_patterns(
     graph_uris: list[str] | None,
     collect: Collect,
     chunk_size: int,
+    ontology_graph_uris: list[str] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> list[SchemaPattern]:
     """Return every observed pattern that uses an ontology term as value or subject.
 
@@ -130,7 +157,9 @@ def probe_term_patterns(
     """
     patterns: list[SchemaPattern] = []
     rows = collect(
-        SparqlHelper.prepare_paginated_query(build_term_object_query(graph_uris)),
+        SparqlHelper.prepare_paginated_query(
+            build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
+        ),
         "ontology-terms/object",
         chunk_size,
     )
@@ -145,7 +174,9 @@ def probe_term_patterns(
                 )
             )
     rows = collect(
-        SparqlHelper.prepare_paginated_query(build_term_subject_query(graph_uris)),
+        SparqlHelper.prepare_paginated_query(
+            build_term_subject_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
+        ),
         "ontology-terms/subject",
         chunk_size,
     )

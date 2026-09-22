@@ -7,6 +7,7 @@ from collections import Counter, defaultdict, deque
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
+from rdfsolve.mining.query_builders import _graph_scope, _type_pattern
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
 from rdfsolve.schema_models.pattern import SchemaPattern
 
@@ -154,7 +155,13 @@ def discover_paths(
         }
     if helper is not None:
         for route in paths[:probe_limit]:
-            observe_path(route, helper, schema.about.graph_uris or [])
+            observe_path(
+                route,
+                helper,
+                schema.about.graph_uris or [],
+                type_context_graph_uris=(schema.about.type_graph_uris or [])
+                + (schema.about.type_context_graph_uris or []),
+            )
     return NavigationSummary(
         max_hops=max_hops,
         max_paths_per_length=max_paths_per_length,
@@ -170,7 +177,13 @@ def discover_paths(
     )
 
 
-def observe_path(route: NavigationPath, helper: SparqlHelper, graphs: list[str]) -> None:
+def observe_path(
+    route: NavigationPath,
+    helper: SparqlHelper,
+    graphs: list[str],
+    *,
+    type_context_graph_uris: list[str] | None = None,
+) -> None:
     """Measure whole-route support including focus nodes with no matching endpoint."""
     from datetime import datetime, timezone
 
@@ -180,6 +193,7 @@ def observe_path(route: NavigationPath, helper: SparqlHelper, graphs: list[str])
         """Serialize an absolute IRI as a SPARQL term."""
         return str(URIRef(value).n3())
 
+    dataset, _, _ = _graph_scope(graphs, type_context_graph_uris)
     body = []
     for i, step in enumerate(route.steps):
         node = f"?n{i + 1}"
@@ -194,18 +208,13 @@ def observe_path(route: NavigationPath, helper: SparqlHelper, graphs: list[str])
                 f"FILTER({'isIRI' if step.object_class == 'Resource' else 'isBlank'}({node}))"
             )
         else:
-            body.append(f"{node} a {iri(step.object_class)} .")
+            body.append(_type_pattern(node, iri(step.object_class), type_context_graph_uris))
     scoped = f"?n0 a {iri(route.steps[0].subject_class)} . OPTIONAL {{ {' '.join(body)} }}"
-    if graphs:
-        scoped = (
-            f"VALUES ?graph {{ {' '.join(iri(g) for g in graphs)} }} GRAPH ?graph {{ {scoped} }}"
-        )
-    group = "?graph ?n0" if graphs else "?n0"
     query = (
         "SELECT (COUNT(*) AS ?sources) (SUM(IF(?degree > 0, 1, 0)) AS ?matched) "
-        "(MIN(?degree) AS ?minimum) (MAX(?degree) AS ?maximum) WHERE { "
-        f"{{ SELECT {group} (COUNT(DISTINCT ?n{len(route.steps)}) AS ?degree) "
-        f"WHERE {{ {scoped} }} GROUP BY {group} }} }}"
+        f"(MIN(?degree) AS ?minimum) (MAX(?degree) AS ?maximum) {dataset} WHERE {{ "
+        f"{{ SELECT ?n0 (COUNT(DISTINCT ?n{len(route.steps)}) AS ?degree) "
+        f"WHERE {{ {scoped} }} GROUP BY ?n0 }} }}"
     )
     route.query = query
     route.observed_at = datetime.now(timezone.utc).isoformat()

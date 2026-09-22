@@ -232,6 +232,10 @@ class TwoPhaseStrategy(MiningStrategy):
         graphs = discover_data_graphs(
             context.helper, excluded_prefixes=context.excluded_graph_prefixes
         )
+        companion = set(context.type_context_graph_uris or []) | set(
+            context.ontology_graph_uris or []
+        )
+        graphs = [graph for graph in graphs if graph not in companion]
         if not graphs:
             return []
         logger.info(
@@ -268,7 +272,7 @@ class TwoPhaseStrategy(MiningStrategy):
 
         def query_bisect(
             batch: list[str],
-            build_fn: Callable[[list[str], list[str] | None, bool, bool], str],
+            build_fn: Callable[..., str],
             purpose: str,
         ) -> QueryOutcome:
             """Run a query group and record unresolved failures."""
@@ -284,6 +288,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 ),
                 context.chunk_size,
                 unsafe_paging=context.unsafe_paging,
+                type_context_graph_uris=context.type_context_graph_uris,
             )
             context.report.record_outcome(outcome)
             if outcome.state != "complete":

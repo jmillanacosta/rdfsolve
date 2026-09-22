@@ -51,9 +51,17 @@ class OneShotStrategy(MiningStrategy):
         )
 
         _specs: list[tuple[str, str]] = [
-            ("typed-object", _build_typed_object_query_plain(context.graph_uris)),
+            (
+                "typed-object",
+                _build_typed_object_query_plain(
+                    context.graph_uris, context.type_context_graph_uris
+                ),
+            ),
             ("literal", _build_literal_query_plain(context.graph_uris)),
-            ("untyped-uri", _build_untyped_uri_query_plain(context.graph_uris)),
+            (
+                "untyped-uri",
+                _build_untyped_uri_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
             ("blank-node", _build_blank_node_query_plain(context.graph_uris)),
         ]
 

@@ -83,3 +83,20 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
             mine_with_ontology(miner, ontology_as_data=True, ontology_graph_uris=["urn:missing"])
         assert miner.last_report.config["ontology_context"]["state"] == "missing"
         assert miner.last_report.finished_at
+
+    dataset.graph(URIRef("urn:data")).parse(data='''
+        <urn:s1> <urn:ref> <urn:a> .
+        <urn:a> <urn:description> "data value" .
+    ''', format="turtle")
+    dataset.graph(URIRef("urn:ontology")).parse(data='''
+        <urn:a> a <http://www.w3.org/2002/07/owl#Class>,
+            <http://www.w3.org/2000/01/rdf-schema#Class> .
+        <urn:a> <urn:ontologyOnly> "excluded edge" .
+    ''', format="turtle")
+    with SchemaMiner.from_graph(dataset, graph_uris=["urn:data"], delay=0) as miner:
+        result = mine_with_ontology(miner, ontology_as_data=True, ontology_term_budget=20,
+                                    ontology_graph_uris=["urn:ontology"])
+        patterns = _triples(result.data_schema)
+        assert patterns["urn:S", "urn:ref", "urn:a"].count == 1, "Class declarations must not multiply data edges"
+        assert patterns["urn:a", "urn:description", "Literal"].count == 1
+        assert not any(p.property_uri == "urn:ontologyOnly" for p in result.data_schema.patterns)

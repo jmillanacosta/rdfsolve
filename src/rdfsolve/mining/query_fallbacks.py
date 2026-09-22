@@ -127,11 +127,15 @@ def query_with_bisect(
     collect_bindings: CollectBindings,
     chunk_size: int,
     unsafe_paging: bool = False,
+    type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
     """Retry timed-out class queries with smaller groups, then pages."""
     if not classes:
         return QueryOutcome()
-    outcome = select_outcome(build_fn(classes, graph_uris), purpose, helper, classes, graph_uris)
+    scope = {"type_context_graph_uris": type_context_graph_uris} if type_context_graph_uris else {}
+    outcome = select_outcome(
+        build_fn(classes, graph_uris, **scope), purpose, helper, classes, graph_uris
+    )
     if not outcome.failures or outcome.failures[0].category != "timeout":
         return outcome
 
@@ -147,6 +151,7 @@ def query_with_bisect(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         right = query_with_bisect(
             classes[mid:],
@@ -157,10 +162,11 @@ def query_with_bisect(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         return left.merge(right)
 
-    query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging)
+    query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging, **scope)
     paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
     if paged.state == "complete" or build_fn is not _build_batched_typed_object_query:
         return paged
@@ -173,6 +179,7 @@ def query_with_bisect(
         collect_bindings,
         chunk_size,
         unsafe_paging,
+        type_context_graph_uris,
     )
     if decomposed.state == "complete":
         return decomposed
@@ -240,18 +247,22 @@ def enumerate_oc_for_class_property(
     helper: SparqlHelper,
     collect_bindings: CollectBindings,
     unsafe_paging: bool = False,
+    type_context_graph_uris: list[str] | None = None,
     *,
     chunk_size: int = _DECOMP_CHUNK,
 ) -> QueryOutcome:
     """Return object-class bindings without hiding a failed property query."""
     return _select_or_page(
-        _build_typed_object_for_class_property_query(class_uri, prop_uri, graph_uris),
+        _build_typed_object_for_class_property_query(
+            class_uri, prop_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
+        ),
         _build_typed_object_for_class_property_query(
             class_uri,
             prop_uri,
             graph_uris,
             paginated=True,
             drop_distinct=unsafe_paging,
+            type_context_graph_uris=type_context_graph_uris,
         ),
         f"{purpose}/property/{prop_uri}",
         helper,
@@ -270,6 +281,7 @@ def typed_object_by_property(
     collect_bindings: CollectBindings,
     chunk_size: int,
     unsafe_paging: bool = False,
+    type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
     """Combine independent property queries and retain unresolved failures."""
     props = enumerate_properties_for_class(
@@ -293,6 +305,7 @@ def typed_object_by_property(
             helper,
             collect_bindings,
             unsafe_paging,
+            type_context_graph_uris,
             chunk_size=chunk_size,
         )
         result.rows = [

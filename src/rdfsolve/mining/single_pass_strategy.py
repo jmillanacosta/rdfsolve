@@ -75,7 +75,7 @@ class SinglePassStrategy(MiningStrategy):
 
     def _run_typed_object(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the typed-object SELECT query."""
-        q = _build_typed_object_query(context.graph_uris)
+        q = _build_typed_object_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/typed-object", None)
         results: list[SchemaPattern] = []
         for b in bindings:
@@ -120,7 +120,7 @@ class SinglePassStrategy(MiningStrategy):
 
     def _run_untyped_uri(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the untyped-URI SELECT query."""
-        q = _build_untyped_uri_query(context.graph_uris)
+        q = _build_untyped_uri_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/untyped-uri", None)
         oc = "http://www.w3.org/2002/07/owl#Class" if context.untyped_as_classes else "Resource"
         results: list[SchemaPattern] = []

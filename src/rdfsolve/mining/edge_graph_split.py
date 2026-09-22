@@ -30,14 +30,14 @@ def unattributed_patterns(schema: MinedSchema) -> list[SchemaPattern]:
 
 def split_by_edge_graph(
     schema: MinedSchema,
-    graph_uri: str,
+    graph_uri: str | list[str],
     dataset_name: str,
     *,
     declared_classes: frozenset[str] = frozenset(),
     class_entity_counts: Mapping[str, int] | None = None,
     class_entity_count_states: Mapping[str, QueryState] | None = None,
 ) -> MinedSchema:
-    """Keep the patterns whose edges lie in *graph_uri*, counted in that graph.
+    """Keep the patterns whose edges lie in the selected graphs, with their edge counts.
 
     Subject and object classes stay as resolved over all mined graphs. Group
     level statistics, navigation and retained source metadata describe the
@@ -45,17 +45,19 @@ def split_by_edge_graph(
     snapshot identity; entity counts must be measured in its graph by the
     caller.
     """
+    graphs = [graph_uri] if isinstance(graph_uri, str) else list(dict.fromkeys(graph_uri))
     patterns: list[SchemaPattern] = []
     for pattern in schema.patterns:
-        count = (pattern.graphs or {}).get(graph_uri)
+        attributed = {g: n for g, n in (pattern.graphs or {}).items() if g in graphs}
+        count = sum(attributed.values())
         if not count:
             continue
-        only_here = set(pattern.graphs or {}) == {graph_uri}
+        only_here = len(graphs) == 1 and set(pattern.graphs or {}) == set(graphs)
         patterns.append(
             pattern.model_copy(
                 update={
                     "count": count,
-                    "graphs": {graph_uri: count},
+                    "graphs": attributed,
                     "distinct_subjects": pattern.distinct_subjects if only_here else None,
                     "distinct_objects": pattern.distinct_objects if only_here else None,
                 }
@@ -71,7 +73,7 @@ def split_by_edge_graph(
         update={
             "schema_id": str(uuid4()),
             "dataset_name": dataset_name,
-            "graph_uris": [graph_uri],
+            "graph_uris": graphs,
             "type_graph_uris": about.type_graph_uris or about.graph_uris,
             "snapshot_id": mint("snapshot", dataset_name, retrieved) if retrieved else None,
             "snapshot_identity_basis": "retrieval_record" if retrieved else None,

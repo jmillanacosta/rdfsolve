@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import ValidationError
 from rdflib import Graph
 from typing_extensions import Self
 
@@ -23,7 +22,6 @@ from rdfsolve.mining.pattern_enrichment import (
 )
 from rdfsolve.mining.query_builders import (
     _build_declared_classes_query,
-    _build_typed_object_query,
 )
 from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.mining.single_pass_strategy import SinglePassStrategy
@@ -85,6 +83,7 @@ class SchemaMiner:
         graph_store_max_bytes: int = 64 * 1024 * 1024,
         pagination: Literal["offset", "cursor"] = "offset",
         excluded_graph_prefixes: tuple[str, ...] = (),
+        type_context_graph_uris: list[str] | None = None,
     ) -> None:
         """Initialize a SchemaMiner."""
         self.endpoint_url = endpoint_url
@@ -106,6 +105,7 @@ class SchemaMiner:
         self.graph_uris: list[str] | None = (
             [graph_uris] if isinstance(graph_uris, str) else graph_uris
         )
+        self.type_context_graph_uris = list(dict.fromkeys(type_context_graph_uris or []))
         self.chunk_size = chunk_size
         self.class_chunk_size = class_chunk_size
         self.class_batch_size = max(1, class_batch_size)
@@ -287,6 +287,7 @@ class SchemaMiner:
             qlever_version=self.qlever_version,
             config={
                 "graph_uris": self.graph_uris,
+                "type_context_graph_uris": self.type_context_graph_uris,
                 "graph_scope": "within_named_graphs" if self.graph_uris else "endpoint_default",
                 "sparql_engine": self._helper.sparql_engine,
                 "sparql_strategy": self._helper.sparql_strategy,
@@ -329,6 +330,8 @@ class SchemaMiner:
             chunk_size=self.chunk_size,
             unsafe_paging=self.unsafe_paging,
             excluded_graph_prefixes=self.excluded_graph_prefixes,
+            type_context_graph_uris=self.type_context_graph_uris,
+            ontology_graph_uris=self._ontology_graph_uris,
         )
 
         # Run strategy
@@ -364,6 +367,7 @@ class SchemaMiner:
                 self.unsafe_paging,
                 self.delay,
                 class_batches=self._class_batches,
+                type_context_graph_uris=self.type_context_graph_uris,
             )
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:
@@ -392,7 +396,12 @@ class SchemaMiner:
         phase = self._report.start_phase("ontology-terms")
         try:
             probed = probe_term_patterns(
-                self._helper, self.graph_uris, self._collect_bindings, self.chunk_size
+                self._helper,
+                self.graph_uris,
+                self._collect_bindings,
+                self.chunk_size,
+                ontology_graph_uris=self._ontology_graph_uris,
+                type_context_graph_uris=self.type_context_graph_uris,
             )
             # Term-level object patterns replace the generic "points at a class" ones.
             covered = {(p.subject_class, p.property_uri) for p in probed}
@@ -616,12 +625,37 @@ class SchemaMiner:
                 "Correct graph_uris or leave it empty to discover graphs."
             )
 
+    def _verify_context_graphs(self, name: str, graphs: list[str] | None) -> None:
+        """Record whether each required context graph holds triples."""
+        from rdfsolve.mining.graph_selection import missing_graphs
+
+        context: dict[str, object] = {"graph_uris": graphs, "state": "not_checked"}
+        self._report.report.config[name] = context
+        if not graphs:
+            return
+        context["state"] = "checking"
+        self._report.flush()
+        try:
+            missing = missing_graphs(self.helper, graphs)
+        except Exception:
+            context["state"] = "failed"
+            raise
+        if missing:
+            context.update({"state": "missing", "missing_graph_uris": missing})
+            raise ValueError(
+                f"No triples in requested {name.removesuffix('_context')} graphs: {missing}"
+            )
+        context["state"] = "nonempty"
+        self._report.flush()
+
     @contextmanager
-    def _session(self, dataset_name: str | None) -> Iterator[None]:
+    def _session(
+        self, dataset_name: str | None, ontology_graph_uris: list[str] | None = None
+    ) -> Iterator[None]:
         """Start one report before any phase and retain failures."""
         self._ontology_classes = None
         self._ontology_term_budget = None
-        self._ontology_graph_uris = None
+        self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
         self._subsumed_classes = set()
         self._declared_classes = set()
@@ -639,7 +673,13 @@ class SchemaMiner:
 
                 downloads = download_graphs(
                     self.graph_store_url or "",
-                    self.graph_uris or [],
+                    list(
+                        dict.fromkeys(
+                            (self.graph_uris or [])
+                            + self.type_context_graph_uris
+                            + (ontology_graph_uris or [])
+                        )
+                    ),
                     self.graph_store_dir,
                     max_bytes=self.graph_store_max_bytes,
                     timeout=self.timeout,
@@ -653,6 +693,7 @@ class SchemaMiner:
                     "engine": "rdflib",
                     "graphs": [asdict(item) for item in downloads],
                 }
+            self._verify_context_graphs("type_context", self.type_context_graph_uris)
             yield
         except BaseException as exc:
             reason = f"{type(exc).__name__}: {exc}"
@@ -732,6 +773,7 @@ class SchemaMiner:
             used_type_count=len(classes - self._declared_classes),
             discovered_metadata=report.discovered_metadata,
         )
+        schema.about.type_context_graph_uris = self.type_context_graph_uris or None
         schema.about.class_entity_counts = entity_counts
         schema.about.class_entity_count_states = entity_count_states
         dataset = getattr(self._helper, "dataset", None)
@@ -756,6 +798,7 @@ class SchemaMiner:
             delay=self.delay,
             report=self._rc,
             annotation_iris=annotation_iris,
+            type_context_graph_uris=self.type_context_graph_uris,
         )
 
     def _mine_schema(self, dataset_name: str | None) -> MinedSchema:
@@ -891,31 +934,6 @@ class SchemaMiner:
             raise
         return all_bindings
 
-    def _run_typed_object(self) -> list[SchemaPattern]:
-        """Run the typed-object SELECT query."""
-        q = _build_typed_object_query(self.graph_uris)
-        bindings = self._collect_bindings(
-            q,
-            purpose="mining/typed-object",
-        )
-        results: list[SchemaPattern] = []
-        for b in bindings:
-            sc = b.get("sc", {}).get("value", "")
-            p = b.get("p", {}).get("value", "")
-            oc = b.get("oc", {}).get("value", "")
-            if sc and p and oc:
-                try:
-                    results.append(
-                        SchemaPattern(
-                            subject_class=sc,
-                            property_uri=p,
-                            object_class=oc,
-                        )
-                    )
-                except (ValueError, ValidationError):
-                    self._report.record_dropped_uri(f"{sc} {p} {oc}")
-        return results
-
 
 # Convenience function
 
@@ -946,6 +964,7 @@ def mine_schema(
     navigation_hops: int = 0,
     navigation_limit: int = 100,
     navigation_probes: int = 0,
+    type_context_graph_uris: list[str] | None = None,
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`."""
     from urllib.parse import urlsplit
@@ -957,6 +976,7 @@ def mine_schema(
         graph_uris=graph_uris,
         chunk_size=chunk_size,
         pagination=pagination,
+        type_context_graph_uris=type_context_graph_uris,
         class_chunk_size=class_chunk_size,
         class_batch_size=class_batch_size,
         delay=delay,

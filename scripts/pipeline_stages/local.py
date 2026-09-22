@@ -209,12 +209,17 @@ class LocalMiningStage(Stage):
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
         report_path = output_dir / f"{source.name}{suffix}_report.json"
-        miner = self._local_miner(port, graph_uris, report_path)
-        schema = self._mine_schema(miner, source.name, output_dir)
+        miner = self._local_miner(
+            port, graph_uris if graph_uris is not None else source.graph_uris or None,
+            report_path, type_context_graph_uris=source.type_context_graph_uris,
+        )
+        schema = self._mine_schema(miner, source.name, output_dir,
+                                   ontology_graph_uris=source.ontology_graph_uris or None)
         self._save_dataset_outputs(source, schema, output_dir, miner.helper, mining_context)
         self._require_complete(miner)
 
-    def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path):
+    def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
+                     *, type_context_graph_uris: list[str] | None = None):
         """Create a miner for a local QLever instance and check its named graphs."""
         from rdfsolve import SchemaMiner
 
@@ -222,6 +227,7 @@ class LocalMiningStage(Stage):
         miner = SchemaMiner(
             endpoint_url=endpoint,
             graph_uris=graph_uris,
+            type_context_graph_uris=type_context_graph_uris,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
             delay=self.config.delay,
             sparql_engine="qlever",
@@ -241,16 +247,18 @@ class LocalMiningStage(Stage):
 
         return miner
 
-    def _mine_schema(self, miner, name: str, output_dir: Path):
+    def _mine_schema(self, miner, name: str, output_dir: Path,
+                     *, ontology_graph_uris: list[str] | None = None):
         """Mine *name* with the configured optional phases and write their RDF files."""
         suffix = self.config.output_suffix
-        if self.config.extract_ontology or self.config.extract_metadata:
+        if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
             from rdfsolve.mining import mine_with_ontology
 
             result = mine_with_ontology(
                 miner,
                 extract_ontology=self.config.extract_ontology,
                 ontology_scope=self.config.ontology_scope,
+                ontology_graph_uris=ontology_graph_uris,
                 ontology_as_data=self.config.ontology_as_data,
                 ontology_term_budget=self.config.ontology_term_budget,
                 extract_metadata=self.config.extract_metadata,

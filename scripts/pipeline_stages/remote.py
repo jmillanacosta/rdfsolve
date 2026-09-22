@@ -147,6 +147,7 @@ class RemoteMiningStage(Stage):
                 graph_store_dir=source_output_dir / "downloads",
                 graph_store_max_bytes=self.config.max_response_bytes,
                 graph_uris=empirical_graphs or None,
+                type_context_graph_uris=source.type_context_graph_uris,
                 timeout=(
                     self.config.timeout
                     if self.config.timeout is not None
@@ -167,13 +168,14 @@ class RemoteMiningStage(Stage):
                 report_path=str(report_path),
             )
 
-            if self.config.extract_ontology or self.config.extract_metadata:
+            if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
                 from rdfsolve.mining import mine_with_ontology
 
                 result = mine_with_ontology(
                     miner,
                     extract_ontology=self.config.extract_ontology,
                     ontology_scope=self.config.ontology_scope,
+                    ontology_graph_uris=source.ontology_graph_uris or None,
                     ontology_as_data=self.config.ontology_as_data,
                     ontology_term_budget=self.config.ontology_term_budget,
                     extract_metadata=self.config.extract_metadata,

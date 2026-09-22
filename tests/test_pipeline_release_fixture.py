@@ -49,6 +49,11 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
     right.add((E.b, E.text, Literal("b")))
     right.add((E.b, E.link, E.c))
     right.add((E.c, RDF.type, E.C))
+    context_graph = "urn:fixture:context"
+    context = data.graph(URIRef(context_graph))
+    context.add((E.b, RDF.type, E.Linked))
+    context.add((E.decoy, RDF.type, E.A))
+    context.add((E.decoy, E.leak, Literal("context")))
     rows = [
         {
             "name": left_name,
@@ -56,6 +61,7 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
             "graph_uris": [left_graph, right_graph],
             "last_checked": datetime.now(timezone.utc).isoformat(),
             "delay": 0,
+            "type_context_graph_uris": [context_graph],
         }
     ]
     if mode != "remote":
@@ -106,9 +112,10 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         stage = RemoteMiningStage
     else:
 
-        def local_miner(self, port, graph_uris, report_path):
+        def local_miner(self, port, graph_uris, report_path, *, type_context_graph_uris=None):
             return factory(
-                graph_uris=graph_uris or [left_graph, right_graph], report_path=report_path, delay=0
+                graph_uris=graph_uris or [left_graph, right_graph], report_path=report_path, delay=0,
+                type_context_graph_uris=type_context_graph_uris
             )
 
         monkeypatch.setattr(LocalMiningStage, "_local_miner", local_miner)
@@ -138,7 +145,8 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
             if p.subject_class == str(E.A) and p.property_uri == str(E.link)
         )
     )
-    assert link.object_class == str(E.B)
+    assert {p.object_class for p in schemas[0].patterns if p.property_uri == str(E.link) and p.subject_class == str(E.A)} == {str(E.B), str(E.Linked)}
+    assert all(p.property_uri != str(E.leak) for schema in schemas for p in schema.patterns)
     assert link.count == 1 and link.graphs == {left_graph: 1}
     assert all((p.pattern_type != "unknown" for schema in schemas for p in schema.patterns))
     assert schemas[0].about.class_entity_counts[str(E.A)] == 1
@@ -180,7 +188,7 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
     manifest = ReleaseManifest.model_validate_json((output / "release.json").read_text())
     assert len(manifest.datasets) == len(rows)
     assert all((d.completion_state == state for d in manifest.datasets))
-    plan = build_scientific_validation_plan(manifest, output)
+    plan = build_scientific_validation_plan(manifest, output, patterns_per_schema=100)
     write_scientific_validation_plan(plan, output / "validation/scientific_checks.json")
     assert plan.pattern_checks
     target = "remote_endpoint" if mode == "remote" else "frozen_local_index"

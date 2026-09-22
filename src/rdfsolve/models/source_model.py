@@ -83,7 +83,11 @@ class SourceModel(BaseModel):
     void_iri:
         Optional VoID dataset IRI.
     graph_uris:
-        Named graph URIs to restrict queries.
+        Named graphs that hold data edges.
+    type_context_graph_uris:
+        Extra named graphs for linked-object types.
+    ontology_graph_uris:
+        Named graphs for ontology interpretation and extraction.
     use_graph:
         Whether to use a GRAPH clause in SPARQL queries.
     chunk_size:
@@ -158,6 +162,8 @@ class SourceModel(BaseModel):
     has_void_patterns: bool | None = None
     void_iri: str = ""
     graph_uris: list[str] = Field(default_factory=list)
+    type_context_graph_uris: list[str] = Field(default_factory=list)
+    ontology_graph_uris: list[str] = Field(default_factory=list)
     use_graph: bool = False
     skip_remote: bool = False
     chunk_size: int | None = None
@@ -218,6 +224,8 @@ class SourceModel(BaseModel):
 
     @field_validator(
         "graph_uris",
+        "type_context_graph_uris",
+        "ontology_graph_uris",
         "download_ttl",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
