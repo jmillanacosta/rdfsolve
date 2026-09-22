@@ -66,3 +66,13 @@ def test_release_validation_checks_ontology_artifact_references(tmp_path: Path):
     result = validate_release(manifest, tmp_path, parse_rdf=False)
     assert not result.valid
     assert any(issue.kind == "dangling_ontology_artifact" for issue in result.issues)
+
+
+def test_release_validates_declared_and_ontology_records(tmp_path):
+    for suffix in ["declared_artifacts", "ontology_discovery", "ontology_acquisition"]:
+        path = tmp_path / f"demo_{suffix}.json"
+        path.write_text('{"dataset_id": []}')
+    result = validate_release(build_release_manifest(tmp_path), tmp_path)
+    assert {issue.path for issue in result.issues if issue.kind == "json_model"} == {
+        "demo_declared_artifacts.json", "demo_ontology_discovery.json", "demo_ontology_acquisition.json"
+    }
