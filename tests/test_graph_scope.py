@@ -74,6 +74,14 @@ def test_pattern_distinct_counts_are_not_summed_across_named_graphs():
                     return select(query, **options)
 
                 miner.helper.select = timeout_batch
+                collect = miner._collect_bindings
+
+                def timeout_page(query, purpose="", chunk_size=None):
+                    if purpose == "two-phase/typed-object":
+                        raise EndpointTimeoutError("Exercise property fallback without waiting")
+                    return collect(query, purpose, chunk_size)
+
+                miner._collect_bindings = timeout_page
             schema = miner.mine()
             actual = {(p.subject_class, p.property_uri, p.object_class):
                       (p.count, p.graphs, p.distinct_subjects, p.distinct_objects)

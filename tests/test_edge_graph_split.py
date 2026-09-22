@@ -51,3 +51,9 @@ def test_the_dataset_gets_its_own_identity_and_counts():
     assert about.schema_uri == mint("schema", "pubchem.ftp.compound")
     assert (about.pattern_count, about.class_count, about.declared_class_count) == (1, 1, 1)
     assert part.navigation is None
+
+    merged = split_by_edge_graph(_group(), [SUBSTANCE, COMPOUND], "combined")
+    assert merged.about.graph_uris == [SUBSTANCE, COMPOUND]
+    literal = next(p for p in merged.patterns if p.object_class == "Literal")
+    assert literal.count == 7 and literal.graphs == {SUBSTANCE: 2, COMPOUND: 5}
+    assert literal.distinct_subjects is None, "Distinct populations cannot be summed"

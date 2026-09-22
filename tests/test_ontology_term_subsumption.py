@@ -100,3 +100,10 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
         assert patterns["urn:S", "urn:ref", "urn:a"].count == 1, "Class declarations must not multiply data edges"
         assert patterns["urn:a", "urn:description", "Literal"].count == 1
         assert not any(p.property_uri == "urn:ontologyOnly" for p in result.data_schema.patterns)
+
+        from rdfsolve.mining.edge_graph_split import split_by_edge_graph
+
+        term_part = split_by_edge_graph(result.data_schema, "urn:data", "terms")
+        attributed = _triples(term_part)
+        assert attributed["urn:S", "urn:ref", "urn:a"].graphs == {"urn:data": 1}
+        assert attributed["urn:a", "urn:description", "Literal"].count == 1

@@ -84,8 +84,9 @@ def build_term_object_query(
     dataset, g_open, g_close = _graph_scope(
         graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
     )
+    graph_var = " ?_g" if g_open else ""
     return f"""\
-SELECT ?sc ?p ?t (COUNT(*) AS ?n)
+SELECT ?sc ?p ?t{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?s ?p ?t . {g_close}
@@ -97,8 +98,8 @@ WHERE {{
   {_metaclass_filter("sc")}
   {_data_predicate(ontology_graph_uris)}
 }}
-GROUP BY ?sc ?p ?t
-ORDER BY ?sc ?p ?t"""
+GROUP BY ?sc ?p ?t{graph_var}
+ORDER BY ?sc ?p ?t{graph_var}"""
 
 
 def build_term_subject_query(
@@ -110,8 +111,9 @@ def build_term_subject_query(
     dataset, g_open, g_close = _graph_scope(
         graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
     )
+    graph_var = " ?_g" if g_open else ""
     return f"""\
-SELECT ?t ?p ?kind ?oc ?dt (COUNT(*) AS ?n)
+SELECT ?t ?p ?kind ?oc ?dt{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?t ?p ?o . {g_close}
@@ -132,8 +134,8 @@ WHERE {{
   BIND(COALESCE(?term, ?type) AS ?oc)
   BIND(IF(isLiteral(?o), DATATYPE(?o), ?unbound) AS ?dt)
 }}
-GROUP BY ?t ?p ?kind ?oc ?dt
-ORDER BY ?t ?p ?kind ?oc ?dt"""
+GROUP BY ?t ?p ?kind ?oc ?dt{graph_var}
+ORDER BY ?t ?p ?kind ?oc ?dt{graph_var}"""
 
 
 def _row_count(row: Mapping[str, Any]) -> int | None:
@@ -155,7 +157,26 @@ def probe_term_patterns(
 
     Results are paged to completion. Each pattern carries its triple count.
     """
-    patterns: list[SchemaPattern] = []
+    patterns: dict[tuple[str, str, str, str | None], SchemaPattern] = {}
+
+    def add(pattern: SchemaPattern, row: Mapping[str, Any]) -> None:
+        """Combine graph rows while retaining each edge count."""
+        graph = row.get("_g", {}).get("value")
+        pattern.count = _row_count(row)
+        if graph and pattern.count is not None:
+            pattern.graphs = {graph: pattern.count}
+        key = (pattern.subject_class, pattern.property_uri, pattern.object_class, pattern.datatype)
+        previous = patterns.get(key)
+        if previous is None:
+            patterns[key] = pattern
+            return
+        previous.count = (
+            previous.count + pattern.count
+            if previous.count is not None and pattern.count is not None
+            else None
+        )
+        previous.graphs = {**(previous.graphs or {}), **(pattern.graphs or {})} or None
+
     rows = collect(
         SparqlHelper.prepare_paginated_query(
             build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
@@ -168,11 +189,7 @@ def probe_term_patterns(
         p = row.get("p", {}).get("value")
         t = row.get("t", {}).get("value")
         if sc and p and t:
-            patterns.append(
-                SchemaPattern(
-                    subject_class=sc, property_uri=p, object_class=t, count=_row_count(row)
-                )
-            )
+            add(SchemaPattern(subject_class=sc, property_uri=p, object_class=t), row)
     rows = collect(
         SparqlHelper.prepare_paginated_query(
             build_term_subject_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
@@ -186,26 +203,18 @@ def probe_term_patterns(
         kind = row.get("kind", {}).get("value")
         if not t or not p or kind == "bnode":
             continue
-        if kind == "literal":
-            dt = row.get("dt", {}).get("value")
-            patterns.append(
-                SchemaPattern(
-                    subject_class=t,
-                    property_uri=p,
-                    object_class="Literal",
-                    datatype=dt or None,
-                    count=_row_count(row),
-                )
-            )
-        else:
-            oc = row.get("oc", {}).get("value") or "Resource"
-            patterns.append(
-                SchemaPattern(
-                    subject_class=t, property_uri=p, object_class=oc, count=_row_count(row)
-                )
-            )
+        literal = kind == "literal"
+        add(
+            SchemaPattern(
+                subject_class=t,
+                property_uri=p,
+                object_class="Literal" if literal else row.get("oc", {}).get("value") or "Resource",
+                datatype=row.get("dt", {}).get("value") or None if literal else None,
+            ),
+            row,
+        )
     logger.info("Probed %d term-level ontology patterns", len(patterns))
-    return patterns
+    return list(patterns.values())
 
 
 def fetch_superclasses(

@@ -50,3 +50,22 @@ def test_path_probes_measure_joins_and_keep_zero_degree_sources():
     table = client.navigation(observed_only=True)
     query = client.prepare_path(table.loc[table.Target == "urn:route:C"].iloc[0]["Reference"])
     assert client.select(query).row_count == 1
+
+    from rdflib import Dataset, URIRef
+
+    scoped = Dataset(default_union=False)
+    for name in ["urn:data:left", "urn:data:right"]:
+        for triple in graph:
+            if triple != (URIRef("urn:route:c"), RDF.type, URIRef("urn:route:C")):
+                scoped.graph(URIRef(name)).add(triple)
+    context = scoped.graph(URIRef("urn:types"))
+    context.add((URIRef("urn:route:c"), RDF.type, URIRef("urn:route:C")))
+    context.add((URIRef("urn:route:decoy"), RDF.type, URIRef("urn:route:A")))
+    with SchemaMiner.from_graph(scoped, graph_uris=["urn:data:left", "urn:data:right"],
+                                type_context_graph_uris=["urn:types"], delay=0) as miner:
+        schema = miner.mine()
+        nav = schema.discover_paths(max_hops=2, max_paths_per_length=10,
+                                    helper=miner.helper, probe_limit=10)
+    route = next(p for p in nav.paths if p.steps[0].subject_class == "urn:route:A"
+                 and p.steps[-1].object_class == "urn:route:C")
+    assert (route.matched_sources, route.source_count) == (1, 2), "Merge data graphs; keep context out of route populations"
