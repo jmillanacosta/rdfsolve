@@ -57,6 +57,9 @@ class AboutMetadata(BaseModel):
         None,
         description="Named graph URIs queried",
     )
+    type_graph_uris: list[str] | None = Field(
+        None, description="Graphs used for type lookups when edges have a narrower graph scope"
+    )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,
         description="Named graphs discovered via discover_all_graphs(), with optional counts",

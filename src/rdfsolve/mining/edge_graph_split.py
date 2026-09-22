@@ -72,6 +72,7 @@ def split_by_edge_graph(
             "schema_id": str(uuid4()),
             "dataset_name": dataset_name,
             "graph_uris": [graph_uri],
+            "type_graph_uris": about.type_graph_uris or about.graph_uris,
             "snapshot_id": mint("snapshot", dataset_name, retrieved) if retrieved else None,
             "snapshot_identity_basis": "retrieval_record" if retrieved else None,
             # A content hash of the group input does not identify this dataset.

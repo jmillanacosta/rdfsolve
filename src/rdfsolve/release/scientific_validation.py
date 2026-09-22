@@ -18,6 +18,7 @@ from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 
+from .build import sha256_file
 from .model import ReleaseArtifact, ReleaseManifest
 
 
@@ -32,6 +33,7 @@ class PatternSpotCheckPlan(BaseModel):
     target_kind: Literal["remote_endpoint", "frozen_local_index", "unknown"]
     endpoint: str | None = None
     graph_scope: list[str] = Field(default_factory=list)
+    type_graph_scope: list[str] = Field(default_factory=list)
     pattern: dict[str, object]
     query: str
 
@@ -60,6 +62,7 @@ class ScientificValidationPlan(BaseModel):
     routes_per_schema: int
     pattern_checks: list[PatternSpotCheckPlan] = Field(default_factory=list)
     route_checks: list[RouteCheckPlan] = Field(default_factory=list)
+    skipped_checks: list[str] = Field(default_factory=list)
 
 
 def _mode_from_path(path: str) -> str:
@@ -83,17 +86,19 @@ def _stable_id(*parts: str) -> str:
     return f"check:{digest}"
 
 
-def _dataset_scope(graphs: list[str]) -> tuple[str, str, str]:
+def _dataset_scope(graphs: list[str], type_graphs: list[str]) -> tuple[str, str, str]:
     if not graphs:
         return "", "", ""
-    dataset = " ".join(f"FROM <{iri}>" for iri in graphs)
+    dataset = " ".join(f"FROM <{iri}>" for iri in type_graphs)
     named = " ".join(f"FROM NAMED <{iri}>" for iri in graphs)
     return f"{dataset} {named}", "GRAPH ?_edgeGraph {", "}"
 
 
-def pattern_existence_query(pattern: SchemaPattern, graph_scope: list[str]) -> str:
+def pattern_existence_query(
+    pattern: SchemaPattern, graph_scope: list[str], type_graph_scope: list[str] | None = None
+) -> str:
     """Build a bounded existence query with the same selected-graph semantics as counts."""
-    dataset, edge_open, edge_close = _dataset_scope(graph_scope)
+    dataset, edge_open, edge_close = _dataset_scope(graph_scope, type_graph_scope or graph_scope)
     subject = f"?s a <{pattern.subject_class}> ."
     edge = f"{edge_open} ?s <{pattern.property_uri}> ?o . {edge_close}"
     conditions: list[str] = []
@@ -122,7 +127,7 @@ def _sample_patterns(schema: MinedSchema, limit: int) -> list[SchemaPattern]:
     if limit <= 0:
         return []
     return sorted(
-        schema.patterns,
+        [pattern for pattern in schema.patterns if pattern.evidence_source == "mined"],
         key=lambda p: hashlib.sha256(
             json.dumps(
                 [p.subject_class, p.property_uri, p.object_class, p.datatype],
@@ -144,13 +149,23 @@ def build_scientific_validation_plan(
     datasets = {row.dataset_id: row for row in manifest.datasets}
     pattern_checks: list[PatternSpotCheckPlan] = []
     route_checks: list[RouteCheckPlan] = []
+    skipped_checks: list[str] = []
     for artifact in _canonical_schema_artifacts(manifest):
         if not artifact.dataset_id or artifact.dataset_id not in datasets:
             continue
         dataset = datasets[artifact.dataset_id]
+        if sha256_file(root / artifact.path) != artifact.sha256:
+            raise ValueError(f"Schema differs from release: {artifact.path}")
         schema = MinedSchema.from_json(root / artifact.path)
         mode = _mode_from_path(artifact.path)
         target_kind = _target_kind(mode)
+        snapshot = schema.about.snapshot_id or dataset.snapshot_id
+        graphs = schema.about.graph_uris or []
+        type_graphs = schema.about.type_graph_uris or graphs
+        if mode == "grouped" and not schema.about.type_graph_uris:
+            skipped_checks.append(f"{artifact.path}: grouped type-lookup scope is missing")
+            continue
+        endpoint = (schema.about.endpoint or dataset.endpoint) if mode == "remote" else None
         for pattern in _sample_patterns(schema, patterns_per_schema):
             signature = json.dumps(
                 [
@@ -163,16 +178,17 @@ def build_scientific_validation_plan(
             )
             pattern_checks.append(
                 PatternSpotCheckPlan(
-                    check_id=_stable_id(dataset.snapshot_id, artifact.artifact_id, signature),
+                    check_id=_stable_id(snapshot, artifact.artifact_id, signature),
                     dataset_id=dataset.dataset_id,
-                    snapshot_id=dataset.snapshot_id,
+                    snapshot_id=snapshot,
                     extraction_mode=mode,
                     schema_artifact_id=artifact.artifact_id,
                     target_kind=target_kind,
-                    endpoint=dataset.endpoint if target_kind == "remote_endpoint" else None,
-                    graph_scope=dataset.graph_scope,
+                    endpoint=endpoint,
+                    graph_scope=graphs,
+                    type_graph_scope=type_graphs,
                     pattern=pattern.model_dump(mode="json"),
-                    query=pattern_existence_query(pattern, dataset.graph_scope),
+                    query=pattern_existence_query(pattern, graphs, type_graphs),
                 )
             )
         if schema.navigation is None or routes_per_schema <= 0:
@@ -182,15 +198,13 @@ def build_scientific_validation_plan(
         for path in candidates[:routes_per_schema]:
             route_checks.append(
                 RouteCheckPlan(
-                    check_id=_stable_id(
-                        dataset.snapshot_id, artifact.artifact_id, path.query or ""
-                    ),
+                    check_id=_stable_id(snapshot, artifact.artifact_id, path.query or ""),
                     dataset_id=dataset.dataset_id,
-                    snapshot_id=dataset.snapshot_id,
+                    snapshot_id=snapshot,
                     extraction_mode=mode,
                     schema_artifact_id=artifact.artifact_id,
                     target_kind=target_kind,
-                    endpoint=dataset.endpoint if target_kind == "remote_endpoint" else None,
+                    endpoint=endpoint,
                     expected_instance_support=path.instance_support,
                     expected_source_count=path.source_count,
                     expected_matched_sources=path.matched_sources,
@@ -203,6 +217,7 @@ def build_scientific_validation_plan(
         routes_per_schema=routes_per_schema,
         pattern_checks=pattern_checks,
         route_checks=route_checks,
+        skipped_checks=skipped_checks,
     )
 
 
