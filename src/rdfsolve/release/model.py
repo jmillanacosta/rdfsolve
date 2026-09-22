@@ -110,6 +110,7 @@ class ReleaseManifest(BaseModel):
     canonical_dataset_count: int | None = None
     identity_review_error: str | None = None
     ontology_registry_artifact: str | None = None
+    service_records: list[str] = Field(default_factory=list)
     datasets: list[DatasetReleaseRecord] = Field(default_factory=list)
     artifacts: list[ReleaseArtifact] = Field(default_factory=list)
 

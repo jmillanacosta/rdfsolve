@@ -26,11 +26,13 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
             entry("b", graphs=["urn:g2"]),
             entry("c", "https://x.org/sparql"),
             entry("d", "https://y.org/sparql"),
+            entry("service", source_role="service"),
         ],
         overrides,
     )
     assert result.datasets == {"a": ["a", "b", "c"], "d": ["d"]}
     assert all((item.decided_by == "override" for item in result.relations))
+    assert result.entries[-1].source_role == "service", "Service provenance"
     assert result.candidates == []
     assert result.review_complete is True
     assert result.canonical_dataset_count == 2

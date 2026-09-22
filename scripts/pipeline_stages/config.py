@@ -202,7 +202,16 @@ class PipelineConfig:
                 f"Duplicate source names would overwrite outputs: {duplicates}. Select a registry with unique names."
             )
 
-        sources = self._filter_by_health_checks(sources)
+        excluded = {
+            s.name: "service record" if s.source_role == "service" else "skip_mining"
+            for s in sources
+            if not s.mining_enabled
+        }
+        if names and excluded:
+            raise ValueError(f"Sources not eligible for mining: {excluded}")
+        if excluded:
+            log.info("Excluded sources from mining: %s", excluded)
+        sources = self._filter_by_health_checks([s for s in sources if s.mining_enabled])
 
         self.sources = sources
         return sources
@@ -335,9 +344,15 @@ class PipelineConfig:
         return [
             s
             for s in self.sources
-            if s.mode in (SourceMode.REMOTE, SourceMode.BOTH) and not s.skip_remote
+            if s.mining_enabled
+            and s.mode in (SourceMode.REMOTE, SourceMode.BOTH)
+            and not s.skip_remote
         ]
 
     def get_local_sources(self) -> list[Source]:
         """Get sources that need local mining."""
-        return [s for s in self.sources if s.mode in (SourceMode.LOCAL, SourceMode.BOTH)]
+        return [
+            s
+            for s in self.sources
+            if s.mining_enabled and s.mode in (SourceMode.LOCAL, SourceMode.BOTH)
+        ]

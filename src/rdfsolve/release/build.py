@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from rdfsolve.config import get_base_uri, mint_from_base
+from rdfsolve.models.source_model import SourceModel
 
 from .model import (
     DatasetReleaseRecord,
@@ -405,6 +406,11 @@ def build_release_manifest(
     run_root = Path(run_dir).resolve()
     frozen_base_uri = (base_uri or get_base_uri()).rstrip("/") + "/"
     sources = _load_sources(run_root)
+    service_records = sorted(
+        name
+        for name, row in sources.items()
+        if SourceModel.model_validate(row).source_role == "service"
+    )
     dataset_dirs = {
         path.name
         for path in run_root.iterdir()
@@ -416,7 +422,11 @@ def build_release_manifest(
             or any(path.glob("*_report.json"))
         )
     }
-    dataset_ids = sorted(sources if (run_root / "sources.yaml").exists() else dataset_dirs)
+    dataset_ids = sorted(
+        (set(sources) - set(service_records))
+        if (run_root / "sources.yaml").exists()
+        else dataset_dirs
+    )
     artifacts = inventory_artifacts(run_root, dataset_ids=set(dataset_ids))
     artifact_ids = _artifact_refs_by_dataset(artifacts)
 
@@ -526,6 +536,7 @@ def build_release_manifest(
         canonical_dataset_count=canonical_dataset_count,
         identity_review_error=identity_review_error,
         ontology_registry_artifact=ontology_registry_artifact,
+        service_records=service_records,
         datasets=datasets,
         artifacts=artifacts,
     )

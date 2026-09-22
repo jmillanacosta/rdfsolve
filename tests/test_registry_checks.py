@@ -64,8 +64,9 @@ def test_registry_report_identifies_bad_inputs_without_writing_them(tmp_path, mo
     clean = tmp_path / "clean.yaml"
     clean.write_text(
         "- name: demo.clean\n  endpoint: https://example.org/sparql\n  graph_uris: [urn:g]\n"
+        "- name: demo.service\n  endpoint: https://example.org/sparql\n  source_role: service\n  graph_uris: []\n"
     )
-    assert check_registry(clean) == [
+    assert [r for r in check_registry(clean) if r["check_id"] != "A5"] == [
         {
             "check_id": "D3",
             "sources": "",

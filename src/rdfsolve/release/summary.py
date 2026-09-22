@@ -228,7 +228,9 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
     attempted_completion = Counter(item.completion_state for item in attempted)
     access_fields = Counter(key for item in manifest.datasets for key in item.access_files)
     summary: dict[str, Any] = {
-        "registry_entries": len(manifest.datasets),
+        "registry_entries": len(manifest.datasets) + len(manifest.service_records),
+        "dataset_entries": len(manifest.datasets),
+        "service_records": len(manifest.service_records),
         "identity_review_complete": manifest.identity_review_complete,
         "identity_candidate_count": manifest.identity_candidate_count,
         "canonical_dataset_count": manifest.canonical_dataset_count,

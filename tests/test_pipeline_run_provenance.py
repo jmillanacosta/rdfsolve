@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import yaml
 from scripts.pipeline_stages.config import PipelineConfig
 
@@ -10,7 +11,30 @@ def test_archive_run_inputs_freezes_registry_config_and_identity_overrides(tmp_p
     output = tmp_path / "run"
     data.mkdir(parents=True)
     sources = data / "sources.yaml"
-    sources.write_text("- name: demo\n  endpoint: https://example.org/sparql\n", encoding="utf-8")
+    sources.write_text(
+        yaml.safe_dump(
+            [
+                {
+                    "name": "demo",
+                    "endpoint": "https://example.org/sparql",
+                    "local_provider": "demo",
+                },
+                {
+                    "name": "service",
+                    "endpoint": "https://example.org/sparql",
+                    "local_provider": "demo",
+                    "source_role": "service",
+                },
+                {
+                    "name": "unresolved",
+                    "endpoint": "https://example.org/sparql",
+                    "local_provider": "demo",
+                    "skip_mining": True,
+                },
+            ]
+        ),
+        encoding="utf-8",
+    )
     (data / "sssom_sources.yaml").write_text("sources: []\n", encoding="utf-8")
     (data / "identity_overrides.yaml").write_text(
         "- left: a\n  right: b\n  relation: distinct\n", encoding="utf-8"
@@ -18,6 +42,11 @@ def test_archive_run_inputs_freezes_registry_config_and_identity_overrides(tmp_p
     config = PipelineConfig(base_dir=tmp_path, repo_dir=repo, output_dir=output)
     config.sources_file = sources
     config.sssom_sources_file = data / "sssom_sources.yaml"
+    assert [s.name for s in config.load_sources()] == ["demo"], "Eligible selection"
+    assert [s.name for s in config.get_remote_sources()] == ["demo"]
+    assert [s.name for s in config.get_local_sources()] == ["demo"]
+    with pytest.raises(ValueError, match="not eligible for mining"):
+        config.load_sources(["service", "unresolved"])
     config.load_sources()
     config.navigation_hops = 6
     config.collect_property_usage_evidence = True

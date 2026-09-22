@@ -98,7 +98,8 @@ def check_registry(
             add("A1", [name], str(error), "error")
             continue
         sources.append(source)
-        identities.append(identity)
+        if source.source_role == "dataset":
+            identities.append(identity)
         extra = set(row) - SourceModel.model_fields.keys()
         if extra:
             add(
@@ -133,7 +134,8 @@ def check_registry(
             except ValueError as error:
                 add("A4", [name], str(error), "error", source.endpoint)
             else:
-                by_endpoint[endpoint].append(source)
+                if source.source_role == "dataset":
+                    by_endpoint[endpoint].append(source)
                 if endpoint != source.endpoint:
                     add("A4", [name], f"Normalised spelling: {endpoint}", endpoint=source.endpoint)
         empty = [
@@ -158,7 +160,7 @@ def check_registry(
                 "info",
                 source.endpoint,
             )
-        if source.local_provider:
+        if source.local_provider and source.mining_enabled:
             by_provider[source.local_provider].append(name)
 
     for endpoint, members in sorted(by_endpoint.items()):

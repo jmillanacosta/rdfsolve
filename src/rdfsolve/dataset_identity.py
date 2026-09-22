@@ -50,6 +50,7 @@ class DatasetIdentity(BaseModel):
     """One registry entry with its access routes and catalog provenance."""
 
     dataset_id: str
+    source_role: Literal["dataset", "service"] = "dataset"
     bioregistry_prefix: str = ""
     homepage: str = ""
     kg_registry_id: str = ""
@@ -74,6 +75,7 @@ class DatasetIdentity(BaseModel):
         )
         return cls(
             dataset_id=source.name,
+            source_role=source.source_role,
             bioregistry_prefix=source.bioregistry_prefix,
             homepage=source.bioregistry_homepage,
             kg_registry_id=source.kg_registry_id,
@@ -192,6 +194,8 @@ def read_overrides(path: str | Path | None) -> list[IdentityRelation]:
 
 def relate(left: DatasetIdentity, right: DatasetIdentity) -> IdentityRelation | None:
     """Apply the structural rules to one pair, or return None if nothing relates them."""
+    if left.source_role == "service" or right.source_role == "service":
+        return None
     first, second = sorted((left, right), key=lambda item: item.dataset_id)
     a, b = set(first.graph_uris), set(second.graph_uris)
 
@@ -287,6 +291,9 @@ def resolve_identity(
     unknown = {name for pair in curated for name in pair} - set(names)
     if unknown:
         raise ValueError(f"Overrides name unknown registry entries: {sorted(unknown)}")
+    services = {entry.dataset_id for entry in entries if entry.source_role == "service"}
+    if any(services.intersection(pair) for pair in curated):
+        raise ValueError("Service records cannot have dataset identity overrides")
     relations: list[IdentityRelation] = []
     candidates: list[IdentityRelation] = []
     for left, right in combinations(entries, 2):
@@ -317,7 +324,7 @@ def resolve_identity(
                 f"through {JOINING} decisions"
             )
     groups: dict[str, list[str]] = {}
-    for name in sorted(names):
+    for name in sorted(set(names) - services):
         groups.setdefault(root(name), []).append(name)
     return IdentityResolution(
         entries=entries,

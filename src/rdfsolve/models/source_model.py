@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -74,6 +74,10 @@ class SourceModel(BaseModel):
     ----------
     name:
         Unique source identifier.
+    source_role:
+        Dataset or access service.
+    skip_mining:
+        Exclude this entry from pipeline mining.
     endpoint:
         SPARQL endpoint URL.
     void_iri:
@@ -139,6 +143,8 @@ class SourceModel(BaseModel):
     """
 
     name: str
+    source_role: Literal["dataset", "service"] = "dataset"
+    skip_mining: bool = False
     endpoint: str = ""
     sparql_examples: SparqlExamples | None = None
     dataset_metadata: dict[str, Any] | None = None
@@ -204,6 +210,11 @@ class SourceModel(BaseModel):
 
     # Keep registry fields without a typed attribute, such as download_* URL lists.
     model_config = {"populate_by_name": True, "extra": "allow"}
+
+    @property
+    def mining_enabled(self) -> bool:
+        """Return whether this entry permits pipeline mining."""
+        return self.source_role == "dataset" and not self.skip_mining
 
     @field_validator(
         "graph_uris",

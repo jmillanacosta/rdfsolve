@@ -19,7 +19,12 @@ def _fixture(root: Path) -> None:
                         "endpoint": "https://example.org/sparql",
                         "download_ttl": ["https://example.org/demo.ttl"],
                         "graph_uris": ["https://example.org/graph"],
-                    }
+                    },
+                    {
+                        "name": "service",
+                        "source_role": "service",
+                        "endpoint": "https://example.org/sparql",
+                    },
                 ]
             }
         ),
@@ -80,7 +85,13 @@ def test_release_builder_is_stable_and_excludes_its_own_outputs(tmp_path: Path):
     assert second.datasets[0].source_version == "1.2"
     assert second.datasets[0].ontology_usages[0].ontology_id == "chebi"
     summary = summarize_release(second)
-    assert summary["registry_entries"] == 1
+    assert summary["registry_entries"] == 2
+    assert summary["dataset_entries"] == 1
+    assert summary["service_records"] == 1
+    assert second.service_records == ["service"]
+    assert second.canonical_dataset_count == 1, "Services do not create identity candidates"
+    assert [d.dataset_id for d in second.datasets] == ["demo"]
+    assert any(a.role == "source_registry" for a in second.artifacts), "Service provenance"
     assert summary["completion"] == {"complete": 1}
     assert summary["ontology_identity_basis"] == {"reference_source": 1}
     report = tmp_path / "demo/demo_remote_report.json"

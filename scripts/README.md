@@ -178,3 +178,22 @@ or registry edits. Exit status 1 means the report contains errors that block the
 freeze. Warnings require review. An existing output file is not overwritten.
 Provider membership is listed, but selected grouped members and prepared inputs
 need a separate run-level check; B7 reports them as not checked.
+
+
+## Curated source roles
+
+A source has `source_role: dataset` by default. Mark an access/catalogue
+record with `source_role: service`. The pipeline excludes service records
+from remote, local and grouped mining. Identity resolution keeps their access
+provenance but excludes them from dataset groups and candidate pairs.
+
+Use `skip_mining: true` to hold a dataset out of mining until its scope is
+resolved. It remains a dataset for identity review and release inventory.
+Explicit selection of an excluded source fails with its name and reason.
+These fields apply to registry-driven pipeline selection; direct endpoint
+calls to SchemaMiner do not read the registry.
+
+Releases retain service names in `service_records` and their full provenance
+in the hashed source registry. Summaries distinguish `registry_entries`,
+`dataset_entries` and `service_records`. Older registries without these fields
+keep their existing meaning; no service role is inferred from names or URLs.

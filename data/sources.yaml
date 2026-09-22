@@ -8855,6 +8855,7 @@
       metadata: Response stream exceeded the request time budget
   skip_remote: true
 - name: uniprot
+  source_role: service
   void_iri: https://sparql.uniprot.org/
   endpoint: https://sparql.uniprot.org/sparql/
   download_rdf:
@@ -16036,6 +16037,7 @@
   - http://rdf.ebi.ac.uk/dataset/chebi
   use_graph: true
 - name: rdfportal.primary
+  source_role: service
   endpoint: https://rdfportal.org/primary/sparql
   keywords:
   - biology
@@ -16389,6 +16391,7 @@
     errors:
       metadata: 'Timeout: HTTPConnectionPool(host=''proxy.unimaas.nl'', port=3128): Read timed out. (read timeout=3)'
 - name: rdfportal.sib
+  source_role: service
   endpoint: https://rdfportal.org/sib/sparql
   keywords:
   - protein
@@ -16624,6 +16627,7 @@
       void: skipped
     errors: {}
 - name: rdfportal.pdb
+  source_role: service
   endpoint: https://rdfportal.org/pdb/sparql
   download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
   keywords:
@@ -16660,6 +16664,7 @@
       void: skipped
     errors: {}
 - name: rdfportal.ebi
+  source_role: service
   endpoint: https://rdfportal.org/ebi/sparql
   keywords:
   - biomedical science
@@ -16684,6 +16689,7 @@
       void: skipped
     errors: {}
 - name: rdfportal.ncbi
+  source_role: service
   endpoint: https://rdfportal.org/ncbi/sparql
   keywords:
   - sequence
@@ -16800,6 +16806,7 @@
   - http://rdfportal.org/ontology/taxonomy
   use_graph: true
 - name: rdfportal.bioportal
+  source_role: service
   endpoint: https://rdfportal.org/bioportal/sparql
   keywords:
   - biomedical science
@@ -18855,6 +18862,7 @@
     errors:
       health: Query failed unexpectedly []
 - name: emikg
+  skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: EMI KG; shares QLever earthmetabolome endpoint'
   kg_registry_id: emikg
@@ -18938,6 +18946,7 @@
     errors:
       health: 'Query failed after 1 attempts: 503 Server Error: Service Temporarily Unavailable for url: https://frink.apps.renci.org/geoconnex/sparql?query=ASK+WHERE+%7B+%3Fs+%3Fp+%3Fo+%7D'
 - name: globi
+  skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   download_nquads: https://zenodo.org/record/14640564/files/interactions.nq.gz
   notes: 'KG Registry: Global Biotic Interactions (GloBI); shares QLever earthmetabolome endpoint'
@@ -19360,6 +19369,7 @@
     state: skipped
     reason: No endpoint URL
 - name: pf1600
+  skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: pf1600 Dataset; shares QLever earthmetabolome endpoint'
   kg_registry_id: pf1600
@@ -19790,6 +19800,7 @@
     state: skipped
     reason: No endpoint URL
 - name: try
+  skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: TRY Plant Trait Database; shares QLever earthmetabolome endpoint'
   kg_registry_id: try
@@ -20222,6 +20233,7 @@
       number_of_objects: 38067
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/dbcatalog
 - name: rdfportal.ensembl
+  skip_mining: true
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/ensembl
@@ -20248,6 +20260,7 @@
       number_of_objects: 5000274877
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/ensembl
 - name: rdfportal.ensembl_grch37
+  skip_mining: true
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/ensembl
@@ -20784,6 +20797,7 @@
       number_of_objects: 56341
     rdf_config: https://github.com/dbcls/rdf-config/tree/master/config/naro_genebank
 - name: rdfportal.nbrc
+  skip_mining: true
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/103/nite/culture/
