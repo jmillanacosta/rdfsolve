@@ -48,6 +48,29 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
         assert report["completion_state"] == "partial" and report["finished_at"]
         assert any(p["error"] == "fixture property usage timeout" for p in report["phases"])
 
+    import pytest
+    from rdfsolve.schema_models import MinedSchema
+    from rdfsolve.schema_models.ontology import OntologyStructure
+
+    export_dir = tmp_path / "export_failure"
+    export_dir.mkdir()
+    export_report = export_dir / "fixture_report.json"
+    export_config = PipelineConfig(base_dir=tmp_path, output_dir=export_dir,
+                                   extract_ontology=True, enrich=False, navigation_hops=0)
+    with monkeypatch.context() as patch:
+        def broken_export(*args, **kwargs):
+            raise ValueError("fixture RDF serialization failure")
+
+        patch.setattr(OntologyStructure, "to_rdf_graph", broken_export)
+        with SchemaMiner.from_graph(data, report_path=export_report, delay=0) as miner:
+            with pytest.raises(PartialMiningError, match="serialization failure"):
+                LocalMiningStage(export_config)._mine_schema(miner, "fixture", export_dir)
+        saved = MinedSchema.from_json(export_dir / "fixture_schema.json")
+        assert any(p.property_uri == "urn:p" and p.count == 1 for p in saved.patterns)
+        report = json.loads(export_report.read_text())
+        assert report["completion_state"] == "partial" and report["finished_at"]
+        assert any("serialization failure" in (p["error"] or "") for p in report["phases"])
+
     from rdfsolve.mining import mine_with_ontology
     from scripts.pipeline_stages.remote import RemoteMiningStage
 
@@ -74,7 +97,6 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
     assert config.get_remote_sources() == [both], "Skipped remote attempt has no report path"
     assert RemoteMiningStage(config)._mine_single_source(both)["status"] == "skipped"
 
-    import pytest
     import rdfsolve
     from scripts.pipeline_stages.cloud import LsLodCloudStage
 

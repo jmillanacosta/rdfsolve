@@ -278,33 +278,37 @@ class LocalMiningStage(Stage):
                 dataset_name=name,
             )
             schema = result.data_schema
-            if result.ontology:
-                ontology_path = output_dir / f"{name}{suffix}_ontology.ttl"
-                try:
-                    ontology_graph = trim_export_text(
-                        result.ontology, self.config.trim_descriptions
-                    ).to_rdf_graph()
-                    if ontology_graph:
-                        schema.annotate_rdf(
-                            ontology_graph,
-                            include_examples=False,
-                            trim_descriptions=self.config.trim_descriptions,
-                        )
-                        ont_ttl = ontology_graph.serialize(format="turtle")
-                        ontology_path.write_text(ont_ttl, encoding="utf-8")
-                except Exception as e:
-                    raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
-            if result.metadata:
-                metadata_path = output_dir / f"{name}{suffix}_metadata.ttl"
-                try:
-                    metadata_graph = trim_export_text(
-                        result.metadata, self.config.trim_descriptions
-                    ).to_rdf_graph()
-                    if metadata_graph:
-                        meta_ttl = metadata_graph.serialize(format="turtle")
-                        metadata_path.write_text(meta_ttl, encoding="utf-8")
-                except Exception as e:
-                    raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
+            report_path = output_dir / f"{name}{suffix}_report.json"
+            with self._output_phase(miner, report_path):
+                schema_path = output_dir / f"{name}{suffix}_schema.json"
+                schema_path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+                if result.ontology:
+                    ontology_path = output_dir / f"{name}{suffix}_ontology.ttl"
+                    try:
+                        ontology_graph = trim_export_text(
+                            result.ontology, self.config.trim_descriptions
+                        ).to_rdf_graph()
+                        if ontology_graph:
+                            schema.annotate_rdf(
+                                ontology_graph,
+                                include_examples=False,
+                                trim_descriptions=self.config.trim_descriptions,
+                            )
+                            ont_ttl = ontology_graph.serialize(format="turtle")
+                            ontology_path.write_text(ont_ttl, encoding="utf-8")
+                    except Exception as e:
+                        raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
+                if result.metadata:
+                    metadata_path = output_dir / f"{name}{suffix}_metadata.ttl"
+                    try:
+                        metadata_graph = trim_export_text(
+                            result.metadata, self.config.trim_descriptions
+                        ).to_rdf_graph()
+                        if metadata_graph:
+                            meta_ttl = metadata_graph.serialize(format="turtle")
+                            metadata_path.write_text(meta_ttl, encoding="utf-8")
+                    except Exception as e:
+                        raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=name)
 
