@@ -97,7 +97,7 @@ class RemoteMiningStage(Stage):
         log.info(f"[{source.name}] Starting...")
 
         if not source.endpoint:
-            return {"status": "skipped", "data": source.name}
+            return self._record_skip(source, "No endpoint configured")
 
         use_graph_store = (
             self.config.get_graphs_from_store and source.name in self.config.graph_store_urls
@@ -105,7 +105,7 @@ class RemoteMiningStage(Stage):
 
         if source.endpoint_down and source.failure_count >= 3 and not use_graph_store:
             log.warning(f"[{source.name}] Skipping: endpoint marked as down")
-            return {"status": "skipped", "data": source.name}
+            return self._record_skip(source, "Endpoint marked as down")
 
         needs_health_check = True
         if source.last_checked:
@@ -122,7 +122,7 @@ class RemoteMiningStage(Stage):
             update_endpoint_status(source, health)
             if health.status != "up":
                 log.warning(f"[{source.name}] Skipping: endpoint is {health.status}")
-                return {"status": "skipped", "data": source.name}
+                return self._record_skip(source, f"Endpoint health: {health.status}")
 
         output_dir = self.config.output_dir
         source_output_dir = output_dir / source.name
@@ -222,28 +222,29 @@ class RemoteMiningStage(Stage):
                 source.failure_count = 0
                 source.endpoint_down = False
 
-            self._save_ontology_discovery(
-                schema,
-                source_output_dir,
-                source.name,
-                suffix,
-                helper=miner.helper,
-                mining_context="remote_endpoint",
-            )
-            self._save_declared_artifacts(
-                source,
-                source_output_dir,
-                source.name,
-                suffix,
-                helper=miner.helper,
-                access_context="remote_endpoint",
-            )
-            self._save_property_usage_evidence(
-                schema, source_output_dir, source.name, suffix, helper=miner.helper
-            )
-            self._save_schema_outputs(
-                schema, source_output_dir, source.name, suffix, helper=miner.helper
-            )
+            with self._output_phase(miner, report_path):
+                self._save_schema_outputs(
+                    schema, source_output_dir, source.name, suffix, helper=miner.helper
+                )
+                self._save_ontology_discovery(
+                    schema,
+                    source_output_dir,
+                    source.name,
+                    suffix,
+                    helper=miner.helper,
+                    mining_context="remote_endpoint",
+                )
+                self._save_declared_artifacts(
+                    source,
+                    source_output_dir,
+                    source.name,
+                    suffix,
+                    helper=miner.helper,
+                    access_context="remote_endpoint",
+                )
+                self._save_property_usage_evidence(
+                    schema, source_output_dir, source.name, suffix, helper=miner.helper
+                )
             self._require_complete(miner)
 
             if miner.last_report:

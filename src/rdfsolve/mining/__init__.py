@@ -119,44 +119,52 @@ def _mine_with_ontology(
 
     if extract_ontology:
         phase = miner._report.start_phase("ontology-extraction")
-        visible = data_schema
-        if miner.filter_service_namespaces:
-            visible = visible.filter_service_namespaces()
-        scope = ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris
-        logger.info("Querying %s-scoped ontology axioms", ontology_scope)
-        ontology = OntologyMiner(
-            miner._helper,
-            scope,
-            class_iris=visible.get_classes() if ontology_scope == "schema" else None,
-            property_iris=visible.get_properties() if ontology_scope == "schema" else None,
-            batch_size=min(miner.class_batch_size, 50),
-            delay=miner.delay,
-        ).mine()
-        miner._report.report.ontology_extraction = {
-            "scope": ontology_scope,
-            "graphs_mined": scope or [],
-            "graph_count": len(scope or []),
-            "classes": len(ontology.classes),
-            "subclass_relations": len(ontology.subclass_relations),
-            "subproperty_relations": len(ontology.subproperty_relations),
-            "equivalent_classes": len(ontology.equivalent_classes),
-            "equivalent_properties": len(ontology.equivalent_properties),
-            "disjoint_classes": len(ontology.disjoint_classes),
-            "deprecated_terms": len(ontology.deprecated_terms),
-            "domain_assertions": len(ontology.domain_assertions),
-            "range_assertions": len(ontology.range_assertions),
-            "inverse_properties": len(ontology.inverse_properties),
-            "property_characteristics": len(ontology.property_characteristics),
-        }
-        miner._report.finish_phase(phase)
+        try:
+            visible = data_schema
+            if miner.filter_service_namespaces:
+                visible = visible.filter_service_namespaces()
+            scope = ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris
+            logger.info("Querying %s-scoped ontology axioms", ontology_scope)
+            ontology = OntologyMiner(
+                miner._helper,
+                scope,
+                class_iris=visible.get_classes() if ontology_scope == "schema" else None,
+                property_iris=visible.get_properties() if ontology_scope == "schema" else None,
+                batch_size=min(miner.class_batch_size, 50),
+                delay=miner.delay,
+            ).mine()
+            miner._report.report.ontology_extraction = {
+                "scope": ontology_scope,
+                "graphs_mined": scope or [],
+                "graph_count": len(scope or []),
+                "classes": len(ontology.classes),
+                "subclass_relations": len(ontology.subclass_relations),
+                "subproperty_relations": len(ontology.subproperty_relations),
+                "equivalent_classes": len(ontology.equivalent_classes),
+                "equivalent_properties": len(ontology.equivalent_properties),
+                "disjoint_classes": len(ontology.disjoint_classes),
+                "deprecated_terms": len(ontology.deprecated_terms),
+                "domain_assertions": len(ontology.domain_assertions),
+                "range_assertions": len(ontology.range_assertions),
+                "inverse_properties": len(ontology.inverse_properties),
+                "property_characteristics": len(ontology.property_characteristics),
+            }
+        except Exception as error:
+            miner._report.finish_phase(phase, error=str(error))
+        else:
+            miner._report.finish_phase(phase)
 
     metadata = None
     if extract_metadata:
         phase = miner._report.start_phase("infrastructure-metadata")
         logger.info("Extracting infrastructure metadata")
-        metadata_miner = MetadataMiner(miner._helper, miner.graph_uris)
-        metadata = metadata_miner.mine()
-        miner._report.finish_phase(phase)
+        try:
+            metadata_miner = MetadataMiner(miner._helper, miner.graph_uris)
+            metadata = metadata_miner.mine()
+        except Exception as error:
+            miner._report.finish_phase(phase, error=str(error))
+        else:
+            miner._report.finish_phase(phase)
 
     return MiningResult(
         data_schema=data_schema,

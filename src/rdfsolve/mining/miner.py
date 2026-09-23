@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from rdflib import Graph
 from typing_extensions import Self
 
-from rdfsolve._outcomes import QueryState
+from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
 from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_counts,
@@ -340,6 +340,10 @@ class SchemaMiner:
         if context.graph_uris != self.graph_uris:
             logger.info("Mining continues in %d discovered graphs", len(context.graph_uris or []))
             self.graph_uris = context.graph_uris
+            self._report.report.graph_uris = self.graph_uris
+            self._report.report.config.update(
+                graph_uris=self.graph_uris, graph_scope="within_named_graphs"
+            )
 
         # Extract one-shot results if available
         one_shot_results = None
@@ -524,7 +528,20 @@ class SchemaMiner:
                     declared.add(str(class_val))
             logger.info("Found %d declared classes (owl:Class/rdfs:Class)", len(declared))
         except Exception as e:
-            raise RuntimeError(f"Class declarations could not be queried: {e}") from e
+            self._report.record_outcome(
+                QueryOutcome(
+                    state="failed",
+                    failures=[
+                        QueryFailure(
+                            "endpoint",
+                            str(e),
+                            "declared_classes",
+                            graph_uris=self.graph_uris,
+                        )
+                    ],
+                )
+            )
+            logger.warning("Class declarations unavailable: %s", e)
         return declared
 
     def _build_about_metadata(

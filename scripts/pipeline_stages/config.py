@@ -36,6 +36,7 @@ class Source(SourceModel):
     download_urls: list[str] = Field(default_factory=list)
     download_fields: dict[str, Any] = Field(default_factory=dict)
     local_tar_url: str | None = None
+    download_error: str = ""
 
     @property
     def mode(self):
@@ -217,33 +218,21 @@ class PipelineConfig:
         return sources
 
     def _filter_by_health_checks(self, sources: list[Source]) -> list[Source]:
-        filtered = sources
-
+        """Attach health observations to each selected access channel."""
         if self.endpoint_status_file and self.endpoint_status_file.exists():
-            with open(self.endpoint_status_file) as f:
-                status = json.load(f)
-            down = {name for name, data in status["endpoints"].items() if data["status"] != "up"}
-            before = len(filtered)
-            filtered = [s for s in filtered if s.name not in down]
-            skipped = before - len(filtered)
-            if skipped:
-                log.info(f"Skipped {skipped} sources with down endpoints")
-
+            status = json.loads(self.endpoint_status_file.read_text())
+            for source in sources:
+                observed = status["endpoints"].get(source.name)
+                if observed and observed["status"] != "up":
+                    source.endpoint_down = True
+                    source.failure_count = max(source.failure_count, 3)
         if self.download_status_file and self.download_status_file.exists():
-            with open(self.download_status_file) as f:
-                status = json.load(f)
-            broken = {
-                name
-                for name, data in status["downloads"].items()
-                if data["status"] not in ("accessible", "redirect")
-            }
-            before = len(filtered)
-            filtered = [s for s in filtered if s.name not in broken]
-            skipped = before - len(filtered)
-            if skipped:
-                log.info(f"Skipped {skipped} sources with broken downloads")
-
-        return filtered
+            status = json.loads(self.download_status_file.read_text())
+            for source in sources:
+                observed = status["downloads"].get(source.name)
+                if observed and observed["status"] not in ("accessible", "redirect"):
+                    source.download_error = f"Download health: {observed['status']}"
+        return sources
 
     def effective_config_dict(self) -> dict[str, Any]:
         """Return the effective pipeline configuration in YAML-safe form.

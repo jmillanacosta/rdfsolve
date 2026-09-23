@@ -6,6 +6,8 @@ import json
 import logging
 import subprocess
 import time
+from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +69,40 @@ class Stage:
 
     def _execute(self) -> dict[str, Any]:
         raise NotImplementedError
+
+    def _record_skip(self, source, reason):
+        """Write the reason for a source excluded from this attempt."""
+        output = self.config.output_dir / source.name
+        output.mkdir(parents=True, exist_ok=True)
+        path = output / f"{source.name}{self.config.output_suffix}_report.json"
+        if not path.exists():
+            path.write_text(json.dumps({
+                "dataset_name": source.name, "endpoint_url": source.endpoint,
+                "graph_uris": source.graph_uris, "completion_state": "skipped",
+                "reason": reason, "finished_at": datetime.now(timezone.utc).isoformat(),
+            }, indent=2))
+        return {"status": "skipped", "data": {"name": source.name, "reason": reason}}
+
+    @contextmanager
+    def _output_phase(self, miner, report_path):
+        """Retain output failures in the mining report."""
+        from rdfsolve.mining.report_tracking import ReportCollector
+
+        report = miner.last_report
+        collector = ReportCollector(report, report_path)
+        report.finished_at = None
+        phase = collector.start_phase("pipeline-outputs")
+        collector.flush()
+        try:
+            yield
+        except Exception as error:
+            collector.finish_phase(phase, error=str(error))
+            raise PartialMiningError(f"Pipeline outputs incomplete: {error}") from error
+        else:
+            collector.finish_phase(phase)
+        finally:
+            report.finished_at = datetime.now(timezone.utc).isoformat()
+            collector.flush()
 
     @staticmethod
     def _require_complete(miner: Any) -> None:
@@ -229,6 +265,8 @@ class Stage:
             name: Source name
             suffix: Output file suffix
         """
+        path = output_dir / f"{name}{suffix}_schema.json"
+        path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
         formats = self.config.output_formats
         if self.config.trim_descriptions is not None:
             log.warning(

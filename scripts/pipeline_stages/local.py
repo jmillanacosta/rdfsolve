@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -51,6 +52,10 @@ class LocalMiningStage(Stage):
 
             try:
                 has_index = self._has_qlever_index(workdir, source.name)
+                if not has_index and source.download_error and not self.config.no_download:
+                    self._record_skip(source, source.download_error)
+                    results["skipped"].append(source.name)
+                    continue
                 if not has_index and not self.config.no_index:
                     self._prepare_qleverfile(workdir, source, port)
 
@@ -213,7 +218,8 @@ class LocalMiningStage(Stage):
         )
         schema = self._mine_schema(miner, source.name, output_dir,
                                    ontology_graph_uris=source.ontology_graph_uris or None)
-        self._save_dataset_outputs(source, schema, output_dir, miner.helper, mining_context)
+        with self._output_phase(miner, report_path):
+            self._save_dataset_outputs(source, schema, output_dir, miner.helper, mining_context)
         self._require_complete(miner)
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
@@ -301,6 +307,7 @@ class LocalMiningStage(Stage):
         """Write one dataset's schema exports and its separate evidence files."""
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
+        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=helper)
         from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
 
         owl_urls = source.download_fields.get("download_owl") or []
@@ -332,7 +339,7 @@ class LocalMiningStage(Stage):
         self._save_property_usage_evidence(
             schema, output_dir, source.name, suffix, helper=helper
         )
-        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=helper)
+        (output_dir / f"{source.name}{suffix}_schema.json").write_text(json.dumps(schema.to_dict(), indent=2))
 
     def _ensure_qlever_image(self):
         """Require the prepared image; do not pull a new engine during mining."""
