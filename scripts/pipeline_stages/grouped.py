@@ -364,36 +364,43 @@ class GroupedMiningStage(LocalMiningStage):
         log.info("  Mining %d dataset graphs of %s together", len(graphs), group_name)
         miner = self._local_miner(port, data_graphs, group_report, type_context_graph_uris=type_graphs)
         schema = self._mine_schema(miner, group_name, group_dir, ontology_graph_uris=ontology_graphs or None)
-        self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
-        missing = unattributed_patterns(schema)
-        if missing:
-            from rdfsolve.mining.report_tracking import ReportCollector
+        member_reports: list[Path] = []
+        try:
+            with self._output_phase(miner, group_report):
+                self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
+                missing = unattributed_patterns(schema)
+                if missing:
+                    from rdfsolve.mining.report_tracking import ReportCollector
 
-            miner.last_report.abort_reason = f"{len(missing)} patterns lack edge-graph attribution"
-            ReportCollector(miner.last_report, group_report).flush()
-            log.warning(
-                "  %d patterns have no per-graph count and appear only in the group schema",
-                len(missing),
-            )
+                    miner.last_report.abort_reason = f"{len(missing)} patterns lack edge-graph attribution"
+                    ReportCollector(miner.last_report, group_report).flush()
+                    log.warning(
+                        "  %d patterns have no per-graph count and appear only in the group schema",
+                        len(missing),
+                    )
 
-        for source in sources:
-            graph_uri = graphs[source.name]
-            part = split_by_edge_graph(
-                schema, graph_uri, source.name, declared_classes=miner.declared_classes
-            )
-            classes = sorted(pattern_classes(part.patterns) - miner.subsumed_classes)
-            counts, states = miner.count_class_entities(classes, graph_uri)
-            part.about.class_entity_counts = counts
-            part.about.class_entity_count_states = states
-            output_dir = self.config.output_dir / source.name
-            log.info(
-                "  [%s] %d patterns with edges in %s", source.name, len(part.patterns), graph_uri
-            )
-            self._save_dataset_outputs(
-                source, part, output_dir, miner.helper, "grouped_local_distribution"
-            )
-            # The dataset was observed in the grouped run; its report is that run's report.
-            if group_report.exists():
-                shutil.copyfile(group_report, output_dir / f"{source.name}{suffix}_report.json")
+                for source in sources:
+                    output_dir = self.config.output_dir / source.name
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    report_path = output_dir / f"{source.name}{suffix}_report.json"
+                    member_reports.append(report_path)
+                    shutil.copyfile(group_report, report_path)
+                    graph_uri = graphs[source.name]
+                    part = split_by_edge_graph(
+                        schema, graph_uri, source.name, declared_classes=miner.declared_classes
+                    )
+                    classes = sorted(pattern_classes(part.patterns) - miner.subsumed_classes)
+                    counts, states = miner.count_class_entities(classes, graph_uri)
+                    part.about.class_entity_counts = counts
+                    part.about.class_entity_count_states = states
+                    log.info(
+                        "  [%s] %d patterns with edges in %s", source.name, len(part.patterns), graph_uri
+                    )
+                    self._save_dataset_outputs(
+                        source, part, output_dir, miner.helper, "grouped_local_distribution"
+                    )
+        finally:
+            for report_path in member_reports:
+                shutil.copyfile(group_report, report_path)
         self._require_complete(miner)
         return list(graphs)
