@@ -748,7 +748,7 @@ class SchemaMiner:
             }
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
-        for pattern in schema.patterns:
+        for pattern in [*schema.patterns, *(schema.raw_patterns or [])]:
             if pattern.pattern_type == PatternType.UNKNOWN:
                 pattern.pattern_type = {
                     "Literal": PatternType.DATATYPE_PROPERTY,
@@ -831,10 +831,16 @@ class SchemaMiner:
         if self.counts:
             patterns = self._run_counts_phase(patterns)
 
+        raw_patterns = None
         if self._ontology_term_budget is not None:
+            raw_patterns = [pattern.model_copy(deep=True) for pattern in patterns]
             patterns = self._run_term_subsumption_phase(patterns, self._ontology_term_budget)
 
-        patterns, uris_before = self._run_labels_phase(patterns)
+        pattern_count = len(patterns)
+        labelled, uris_before = self._run_labels_phase([*patterns, *(raw_patterns or [])])
+        patterns = labelled[:pattern_count]
+        if raw_patterns is not None:
+            raw_patterns = labelled[pattern_count:]
 
         dt = time.monotonic() - t0
         logger.info(
@@ -889,7 +895,7 @@ class SchemaMiner:
             used_type_count=len(used_types),
             discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
-        schema = MinedSchema(patterns=patterns, about=about)
+        schema = MinedSchema(patterns=patterns, raw_patterns=raw_patterns, about=about)
 
         return schema
 

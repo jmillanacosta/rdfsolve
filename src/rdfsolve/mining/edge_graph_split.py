@@ -46,28 +46,10 @@ def split_by_edge_graph(
     caller.
     """
     graphs = [graph_uri] if isinstance(graph_uri, str) else list(dict.fromkeys(graph_uri))
-    patterns: list[SchemaPattern] = []
-    for pattern in schema.patterns:
-        attributed = {g: n for g, n in (pattern.graphs or {}).items() if g in graphs}
-        count = sum(attributed.values())
-        if not count:
-            continue
-        only_here = len(graphs) == 1 and set(pattern.graphs or {}) == set(graphs)
-        patterns.append(
-            pattern.model_copy(
-                update={
-                    "count": count,
-                    "count_semantics": "upper_bound"
-                    if pattern.count_semantics == "upper_bound"
-                    else "triples_in_graph"
-                    if len(graphs) == 1
-                    else "quad_occurrences",
-                    "graphs": attributed,
-                    "distinct_subjects": pattern.distinct_subjects if only_here else None,
-                    "distinct_objects": pattern.distinct_objects if only_here else None,
-                }
-            )
-        )
+    patterns = _select_graphs(schema.patterns, graphs)
+    raw_patterns = (
+        _select_graphs(schema.raw_patterns, graphs) if schema.raw_patterns is not None else None
+    )
     classes = {p.subject_class for p in patterns} | {
         p.object_class for p in patterns if p.object_class not in _SENTINEL_OBJECTS
     }
@@ -101,5 +83,38 @@ def split_by_edge_graph(
         }
     )
     return schema.model_copy(
-        update={"patterns": patterns, "about": about, "navigation": None, "source_metadata": None}
+        update={
+            "patterns": patterns,
+            "raw_patterns": raw_patterns,
+            "about": about,
+            "navigation": None,
+            "source_metadata": None,
+        }
     )
+
+
+def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[SchemaPattern]:
+    """Select edge counts for the given graphs."""
+    patterns: list[SchemaPattern] = []
+    for pattern in source:
+        attributed = {g: n for g, n in (pattern.graphs or {}).items() if g in graphs}
+        count = sum(attributed.values())
+        if not count:
+            continue
+        only_here = len(graphs) == 1 and set(pattern.graphs or {}) == set(graphs)
+        patterns.append(
+            pattern.model_copy(
+                update={
+                    "count": count,
+                    "count_semantics": "upper_bound"
+                    if pattern.count_semantics == "upper_bound"
+                    else "triples_in_graph"
+                    if len(graphs) == 1
+                    else "quad_occurrences",
+                    "graphs": attributed,
+                    "distinct_subjects": pattern.distinct_subjects if only_here else None,
+                    "distinct_objects": pattern.distinct_objects if only_here else None,
+                }
+            )
+        )
+    return patterns

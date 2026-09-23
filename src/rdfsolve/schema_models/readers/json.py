@@ -49,6 +49,7 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
             or set(schema)
             - {
                 "patterns",
+                "raw_patterns",
                 "about",
                 "enrichment",
                 "shapes",
@@ -58,10 +59,11 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
             }
         ):
             raise ValueError("Expected patterns and about fields in canonical schema")
-        if isinstance(schema["patterns"], list):
-            for pattern in schema["patterns"]:
-                if isinstance(pattern, dict) and set(pattern) - set(SchemaPattern.model_fields):
-                    raise ValueError("Unknown canonical pattern fields")
+        for field in ("patterns", "raw_patterns"):
+            if isinstance(schema.get(field), list):
+                for pattern in schema[field]:
+                    if isinstance(pattern, dict) and set(pattern) - set(SchemaPattern.model_fields):
+                        raise ValueError("Unknown canonical pattern fields")
         return MinedSchema.model_validate(schema)
 
     _check_inline_contexts(raw)

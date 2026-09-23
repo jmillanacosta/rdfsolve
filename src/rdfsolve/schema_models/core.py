@@ -41,6 +41,14 @@ class MinedSchema(BaseModel):
         default_factory=list,
         description="Schema patterns",
     )
+    raw_patterns: list[SchemaPattern] | None = Field(
+        None,
+        description=(
+            "Typed observations before ontology-term probes, hierarchy grouping and output "
+            "filters. Retained when ontology-as-data is enabled; None means not retained. "
+            "Graph-specific schemas contain only evidence attributed to their selected graphs."
+        ),
+    )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"

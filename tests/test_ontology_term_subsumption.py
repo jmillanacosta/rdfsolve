@@ -28,6 +28,14 @@ def _triples(schema):
 def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     schema, report = _mine(budget=7)
     triples = _triples(schema)
+    assert schema.raw_patterns is not None, "Keep typed observations before interpretation"
+    observed = {(p.subject_class, p.property_uri, p.object_class): p for p in schema.raw_patterns}
+    leaf = observed[T + "ethanol", EX + "mass", "Literal"]
+    assert leaf.count == 1 and leaf.evidence_source == "mined", "Keep measured leaf counts"
+    assert leaf.pattern_type.value == "datatype_property"
+    assert (T + "alcohol", EX + "mass", "Literal") not in observed
+    assert all(p.evidence_source != "inferred" for p in schema.raw_patterns)
+    assert type(schema).from_dict(schema.to_dict()).raw_patterns == schema.raw_patterns
     classes = pattern_classes(schema.patterns)
     assert len(classes) <= 7
     assert {EX + "Substance", EX + "Participant", T + "alcohol", T + "acid"} <= classes
