@@ -425,6 +425,7 @@ class SchemaMiner:
                 "classes_before": len(classes),
                 "classes_after": len(classes),
                 "subsumed": False,
+                "representative_members": {},
             }
             if len(classes) > budget:
                 t0 = time.monotonic()
@@ -447,6 +448,7 @@ class SchemaMiner:
                         else "endpoint default dataset rdfs:subClassOf",
                         "hierarchy_graph_uris": self._ontology_graph_uris,
                         "representatives": {rep: len(terms) for rep, terms in members.items()},
+                        "representative_members": members,
                     }
                 )
                 logger.info(

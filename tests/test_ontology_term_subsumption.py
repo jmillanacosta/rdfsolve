@@ -64,6 +64,11 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     summary = report.config["ontology_term_subsumption"]
     assert summary["subsumed"] is True
     assert summary["representatives"] == {T + "acid": 2, T + "alcohol": 3}
+    saved = type(report).model_validate_json(report.model_dump_json())
+    assert saved.config["ontology_term_subsumption"]["representative_members"] == {
+        T + "acid": [T + "acetic", T + "formic"],
+        T + "alcohol": [T + "ethanol", T + "methanol", T + "propanol"],
+    }, "The report must identify the terms replaced by each representative"
     assert "+ontology-as-data" in schema.about.strategy
     cycle = choose_representatives(["a", "z"], {"a": {"b"}, "b": {"a"}}, budget=1)
     assert cycle.over_budget and cycle.classes_after == 2, "Cycle cannot satisfy the budget"
@@ -72,6 +77,7 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     summary = report.config["ontology_term_subsumption"]
     assert summary["subsumed"] is False, "No hierarchy must not count as subsumption"
     assert summary["over_budget"] and summary["representatives"] == {}
+    assert summary["representative_members"] == {}, "No hierarchy must yield no replacements"
     assert T + "ethanol" in pattern_classes(raw.patterns)
     assert "+ontology-as-data" not in raw.about.strategy
 
