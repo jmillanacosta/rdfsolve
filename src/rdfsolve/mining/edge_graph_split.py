@@ -25,7 +25,11 @@ __all__ = ["split_by_edge_graph", "unattributed_patterns"]
 
 def unattributed_patterns(schema: MinedSchema) -> list[SchemaPattern]:
     """Return patterns that carry no per-graph counts and so belong to no dataset."""
-    return [pattern for pattern in schema.patterns if not pattern.graphs]
+    return [
+        pattern
+        for pattern in [*schema.patterns, *(schema.term_patterns or [])]
+        if not pattern.graphs
+    ]
 
 
 def split_by_edge_graph(
@@ -86,6 +90,9 @@ def split_by_edge_graph(
         update={
             "patterns": patterns,
             "raw_patterns": raw_patterns,
+            "term_patterns": _select_graphs(schema.term_patterns, graphs)
+            if schema.term_patterns is not None
+            else None,
             "about": about,
             "navigation": None,
             "source_metadata": None,

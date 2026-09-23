@@ -39,7 +39,7 @@ class MinedSchema(BaseModel):
 
     patterns: list[SchemaPattern] = Field(
         default_factory=list,
-        description="Schema patterns",
+        description="Typed schema patterns, including hierarchy-derived summaries",
     )
     raw_patterns: list[SchemaPattern] | None = Field(
         None,
@@ -47,6 +47,14 @@ class MinedSchema(BaseModel):
             "Typed observations before ontology-term probes, hierarchy grouping and output "
             "filters. Retained when ontology-as-data is enabled; None means not retained. "
             "Graph-specific schemas contain only evidence attributed to their selected graphs."
+        ),
+    )
+    term_patterns: list[SchemaPattern] | None = Field(
+        None,
+        description=(
+            "Exact observed ontology-term bindings, separate from the class schema. "
+            "None means not probed. Counts refer to original terms before hierarchy grouping. "
+            "Class-schema exports, populations and navigation use patterns."
         ),
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
@@ -63,6 +71,26 @@ class MinedSchema(BaseModel):
     )
     navigation: NavigationSummary | None = None
     prefixes: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("patterns", "raw_patterns")
+    @classmethod
+    def check_class_patterns(
+        cls, patterns: list[SchemaPattern] | None
+    ) -> list[SchemaPattern] | None:
+        """Keep exact term bindings in their evidence collection."""
+        if any(p.subject_binding == "term" or p.object_binding == "term" for p in patterns or []):
+            raise ValueError("Exact term bindings belong in term_patterns")
+        return patterns
+
+    @field_validator("term_patterns")
+    @classmethod
+    def check_term_patterns(
+        cls, patterns: list[SchemaPattern] | None
+    ) -> list[SchemaPattern] | None:
+        """Require an exact term binding for term evidence."""
+        if any(p.subject_binding == p.object_binding == "type" for p in patterns or []):
+            raise ValueError("term_patterns requires an exact term binding")
+        return patterns
 
     @field_validator("prefixes")
     @classmethod

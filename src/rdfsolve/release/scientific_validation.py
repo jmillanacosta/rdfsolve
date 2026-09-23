@@ -97,10 +97,16 @@ def pattern_existence_query(
     """Build a bounded existence query with the same selected-graph semantics as counts."""
     dataset, _, _ = _graph_scope(type_graph_scope or graph_scope, type_context_graph_scope)
     edge_open, edge_close = _graph_clause(graph_scope)
-    subject = f"?s a <{pattern.subject_class}> ."
+    subject = (
+        f"VALUES ?s {{ <{pattern.subject_class}> }}"
+        if pattern.subject_binding == "term"
+        else f"?s a <{pattern.subject_class}> ."
+    )
     edge = f"{edge_open} ?s <{pattern.property_uri}> ?o . {edge_close}"
     conditions: list[str] = []
-    if pattern.object_class == "Literal":
+    if pattern.object_binding == "term":
+        conditions.append(f"VALUES ?o {{ <{pattern.object_class}> }}")
+    elif pattern.object_class == "Literal":
         conditions.append("FILTER(isLiteral(?o))")
         if pattern.datatype:
             conditions.append(f"FILTER(DATATYPE(?o) = <{pattern.datatype}>)")
@@ -132,10 +138,21 @@ def _sample_patterns(schema: MinedSchema, limit: int) -> list[SchemaPattern]:
     if limit <= 0:
         return []
     return sorted(
-        [pattern for pattern in schema.patterns if pattern.evidence_source == "mined"],
+        [
+            pattern
+            for pattern in [*schema.patterns, *(schema.term_patterns or [])]
+            if pattern.evidence_source == "mined"
+        ],
         key=lambda p: hashlib.sha256(
             json.dumps(
-                [p.subject_class, p.property_uri, p.object_class, p.datatype],
+                [
+                    p.subject_class,
+                    p.property_uri,
+                    p.object_class,
+                    p.datatype,
+                    p.subject_binding,
+                    p.object_binding,
+                ],
                 separators=(",", ":"),
             ).encode()
         ).hexdigest(),
@@ -180,6 +197,8 @@ def build_scientific_validation_plan(
                     pattern.property_uri,
                     pattern.object_class,
                     pattern.datatype,
+                    pattern.subject_binding,
+                    pattern.object_binding,
                 ],
                 separators=(",", ":"),
             )

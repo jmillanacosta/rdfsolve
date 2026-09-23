@@ -381,15 +381,9 @@ class SchemaMiner:
 
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int
-    ) -> list[SchemaPattern]:
-        """Add term-level ontology patterns, then subsume terms until *budget* classes remain.
-
-        Every pattern is probed at term level first; subsumption only replaces
-        classes by ancestors and merges the patterns that then coincide.
-        """
+    ) -> tuple[list[SchemaPattern], list[SchemaPattern]]:
+        """Retain exact term probes and group typed patterns by ancestry."""
         from rdfsolve.mining.ontology_as_data import (
-            OWL_CLASS,
-            RDFS_CLASS,
             choose_representatives,
             fetch_superclasses,
             pattern_classes,
@@ -407,17 +401,6 @@ class SchemaMiner:
                 ontology_graph_uris=self._ontology_graph_uris,
                 type_context_graph_uris=self.type_context_graph_uris,
             )
-            # Term-level object patterns replace the generic "points at a class" ones.
-            covered = {(p.subject_class, p.property_uri) for p in probed}
-            patterns = [
-                p
-                for p in patterns
-                if not (
-                    p.object_class in (OWL_CLASS, RDFS_CLASS)
-                    and (p.subject_class, p.property_uri) in covered
-                )
-            ]
-            patterns = patterns + probed
             classes = pattern_classes(patterns)
             summary: dict[str, Any] = {
                 "budget": budget,
@@ -470,7 +453,7 @@ class SchemaMiner:
         except Exception as exc:
             self._report.finish_phase(phase, error=str(exc))
             raise
-        return patterns
+        return patterns, probed
 
     def _run_labels_phase(
         self,
@@ -750,7 +733,11 @@ class SchemaMiner:
             }
         if self.filter_service_namespaces:
             schema = self._apply_namespace_filter(schema)
-        for pattern in [*schema.patterns, *(schema.raw_patterns or [])]:
+        for pattern in [
+            *schema.patterns,
+            *(schema.raw_patterns or []),
+            *(schema.term_patterns or []),
+        ]:
             if pattern.pattern_type == PatternType.UNKNOWN:
                 pattern.pattern_type = {
                     "Literal": PatternType.DATATYPE_PROPERTY,
@@ -834,9 +821,12 @@ class SchemaMiner:
             patterns = self._run_counts_phase(patterns)
 
         raw_patterns = None
+        term_patterns = None
         if self._ontology_term_budget is not None:
             raw_patterns = [pattern.model_copy(deep=True) for pattern in patterns]
-            patterns = self._run_term_subsumption_phase(patterns, self._ontology_term_budget)
+            patterns, term_patterns = self._run_term_subsumption_phase(
+                patterns, self._ontology_term_budget
+            )
 
         patterns, uris_before = self._run_labels_phase(patterns)
 
@@ -893,7 +883,9 @@ class SchemaMiner:
             used_type_count=len(used_types),
             discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
-        schema = MinedSchema(patterns=patterns, raw_patterns=raw_patterns, about=about)
+        schema = MinedSchema(
+            patterns=patterns, raw_patterns=raw_patterns, term_patterns=term_patterns, about=about
+        )
 
         return schema
 

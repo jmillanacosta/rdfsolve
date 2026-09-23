@@ -1,18 +1,4 @@
-"""Ontology terms used as data, mined per term and then subsumed.
-
-Some KGs use ontology terms as instance types (a substance typed with a CHEBI
-compound class) or as values and described resources (a reaction participant
-pointing at a CHEBI class, a reaction modelled as a subclass). Mining such a
-graph class by class returns one class per term. This module keeps every
-pattern observed for every term and then replaces terms by ancestors from the
-``rdfs:subClassOf`` hierarchy until the schema has at most a stated number of
-classes.
-
-Only terms that the data uses are counted or lifted, and only their ancestors
-are fetched, so an endpoint that also loads whole ontologies is handled the
-same way. Ontology axioms (``rdfs:subClassOf``, restrictions, annotation
-properties) never become patterns.
-"""
+"""Mine exact ontology-term bindings and group typed patterns by ancestry."""
 
 from __future__ import annotations
 
@@ -113,7 +99,7 @@ def build_term_subject_query(
     )
     graph_var = " ?_g" if g_open else ""
     return f"""\
-SELECT ?t ?p ?kind ?oc ?dt{graph_var} (COUNT(*) AS ?n)
+SELECT ?t ?p ?kind ?oc ?dt ?object_binding{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?t ?p ?o . {g_close}
@@ -121,8 +107,10 @@ WHERE {{
   FILTER(isIRI(?t))
   {_data_predicate(ontology_graph_uris)}
   OPTIONAL {{
-    FILTER(isIRI(?o))
-    {_term_filter("?o", ontology_graph_uris)}
+    {{ SELECT DISTINCT ?o WHERE {{
+      {_context_pattern(f"{{ ?o a <{OWL_CLASS}> }} UNION {{ ?o a <{RDFS_CLASS}> }}", ontology_graph_uris)}
+      FILTER(isIRI(?o))
+    }} }}
     BIND(?o AS ?term)
   }}
   OPTIONAL {{
@@ -132,10 +120,11 @@ WHERE {{
   }}
   BIND(IF(isLiteral(?o), "literal", IF(isBlank(?o), "bnode", "iri")) AS ?kind)
   BIND(COALESCE(?term, ?type) AS ?oc)
+  BIND(IF(BOUND(?term), "term", "type") AS ?object_binding)
   BIND(IF(isLiteral(?o), DATATYPE(?o), ?unbound) AS ?dt)
 }}
-GROUP BY ?t ?p ?kind ?oc ?dt{graph_var}
-ORDER BY ?t ?p ?kind ?oc ?dt{graph_var}"""
+GROUP BY ?t ?p ?kind ?oc ?dt ?object_binding{graph_var}
+ORDER BY ?t ?p ?kind ?oc ?dt ?object_binding{graph_var}"""
 
 
 def _row_count(row: Mapping[str, Any]) -> int | None:
@@ -157,7 +146,7 @@ def probe_term_patterns(
 
     Results are paged to completion. Each pattern carries its triple count.
     """
-    patterns: dict[tuple[str, str, str, str | None], SchemaPattern] = {}
+    patterns: dict[tuple[str, str, str, str | None, str, str], SchemaPattern] = {}
 
     def add(pattern: SchemaPattern, row: Mapping[str, Any]) -> None:
         """Combine graph rows while retaining each edge count."""
@@ -172,7 +161,14 @@ def probe_term_patterns(
         )
         if graph and pattern.count is not None:
             pattern.graphs = {graph: pattern.count}
-        key = (pattern.subject_class, pattern.property_uri, pattern.object_class, pattern.datatype)
+        key = (
+            pattern.subject_class,
+            pattern.property_uri,
+            pattern.object_class,
+            pattern.datatype,
+            pattern.subject_binding,
+            pattern.object_binding,
+        )
         previous = patterns.get(key)
         if previous is None:
             patterns[key] = pattern
@@ -196,7 +192,12 @@ def probe_term_patterns(
         p = row.get("p", {}).get("value")
         t = row.get("t", {}).get("value")
         if sc and p and t:
-            add(SchemaPattern(subject_class=sc, property_uri=p, object_class=t), row)
+            add(
+                SchemaPattern(
+                    subject_class=sc, property_uri=p, object_class=t, object_binding="term"
+                ),
+                row,
+            )
     rows = collect(
         SparqlHelper.prepare_paginated_query(
             build_term_subject_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
@@ -214,6 +215,10 @@ def probe_term_patterns(
         add(
             SchemaPattern(
                 subject_class=t,
+                subject_binding="term",
+                object_binding="term"
+                if row.get("object_binding", {}).get("value") == "term"
+                else "type",
                 property_uri=p,
                 object_class="Literal" if literal else row.get("oc", {}).get("value") or "Resource",
                 datatype=row.get("dt", {}).get("value") or None if literal else None,
@@ -381,6 +386,8 @@ def subsume_patterns(
     groups: dict[tuple[str, str, str, str | None], list[SchemaPattern]] = defaultdict(list)
     changed: set[tuple[str, str, str, str | None]] = set()
     for pattern in patterns:
+        if pattern.subject_binding == "term" or pattern.object_binding == "term":
+            raise ValueError("Exact term bindings cannot be replaced by class representatives")
         subject = representative.get(pattern.subject_class, pattern.subject_class)
         obj = pattern.object_class
         if obj not in _SENTINEL_OBJECTS:

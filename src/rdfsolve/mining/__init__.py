@@ -32,12 +32,11 @@ def mine_with_ontology(
         miner: Configured SchemaMiner instance
         extract_ontology: Extract TBox (class hierarchies, domain/range)
         extract_metadata: Extract infrastructure metadata (VoID/DCAT)
-        ontology_as_data: Probe patterns of ontology terms used as types, values
-            or described resources, then subsume terms under their
-            ``rdfs:subClassOf`` ancestors when the schema has more than
-            *ontology_term_budget* classes. Subsumed patterns are ``inferred``.
-        ontology_term_budget: Largest number of classes the schema keeps before
-            ontology terms are subsumed.
+        ontology_as_data: Retain exact term bindings in data_schema.term_patterns.
+            Group typed patterns under their rdfs:subClassOf ancestors when
+            their class count exceeds ontology_term_budget. Grouped patterns
+            are inferred; exact term observations retain their original IRIs.
+        ontology_term_budget: Target class count for the typed schema view.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
             Named graphs must hold triples. None keeps extraction in the data

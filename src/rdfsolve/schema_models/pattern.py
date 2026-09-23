@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
 
@@ -69,6 +69,20 @@ class SchemaPattern(BaseModel):
             "'BlankNode' for blank node objects."
         ),
     )
+    subject_binding: Literal["type", "term"] = Field(
+        "type", description="Match instances of subject_class, or the subject IRI itself"
+    )
+    object_binding: Literal["type", "term"] = Field(
+        "type", description="For IRI objects, match a type or the object IRI itself"
+    )
+
+    @model_validator(mode="after")
+    def check_term_binding(self) -> SchemaPattern:
+        """Require an IRI for an exact object binding."""
+        if self.object_binding == "term" and self.object_class in _SENTINEL_OBJECTS:
+            raise ValueError("An exact term binding requires an object IRI")
+        return self
+
     count: int | None = Field(
         None,
         ge=0,

@@ -58,7 +58,14 @@ def example_query(
     dataset, opening, closing = _graph_scope(graph_uris, type_context_graph_uris)
     if not with_dataset:
         dataset = ""
-    if pattern.object_class == "Literal":
+    subject = (
+        f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
+        if pattern.subject_binding == "term"
+        else f"?subject a {_iri(pattern.subject_class)} ."
+    )
+    if pattern.object_binding == "term":
+        condition = f"VALUES ?value {{ {_iri(pattern.object_class)} }}"
+    elif pattern.object_class == "Literal":
         condition = "FILTER(isLiteral(?value))"
         if pattern.datatype:
             condition += f" FILTER(datatype(?value) = {_iri(pattern.datatype)})"
@@ -69,7 +76,7 @@ def example_query(
     else:
         condition = _type_pattern("?value", _iri(pattern.object_class), type_context_graph_uris)
     return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
-      ?subject a {_iri(pattern.subject_class)} .
+      {subject}
       {opening} ?subject {_iri(pattern.property_uri)} ?value . {closing}
       {condition}
     }} LIMIT {limit}"""

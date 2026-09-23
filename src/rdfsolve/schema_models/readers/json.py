@@ -50,6 +50,7 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
             - {
                 "patterns",
                 "raw_patterns",
+                "term_patterns",
                 "about",
                 "enrichment",
                 "shapes",
@@ -59,7 +60,7 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
             }
         ):
             raise ValueError("Expected patterns and about fields in canonical schema")
-        for field in ("patterns", "raw_patterns"):
+        for field in ("patterns", "raw_patterns", "term_patterns"):
             if isinstance(schema.get(field), list):
                 for pattern in schema[field]:
                     if isinstance(pattern, dict) and set(pattern) - set(SchemaPattern.model_fields):

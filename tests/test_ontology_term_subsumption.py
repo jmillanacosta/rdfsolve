@@ -37,7 +37,7 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
         return select(helper, query, **options)
 
     monkeypatch.setattr(LocalGraphHelper, "select", recorded_select)
-    schema, report = _mine(budget=7)
+    schema, report = _mine(budget=6)
     assert label_queries and not any(T + "ethanol" in q for q in label_queries), (
         "Retaining raw evidence must not fetch labels for each discarded leaf"
     )
@@ -51,23 +51,23 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     assert all(p.evidence_source != "inferred" for p in schema.raw_patterns)
     assert type(schema).from_dict(schema.to_dict()).raw_patterns == schema.raw_patterns
     classes = pattern_classes(schema.patterns)
-    assert len(classes) <= 7
+    assert len(classes) <= 6
     assert {EX + "Substance", EX + "Participant", T + "alcohol", T + "acid"} <= classes
     assert not classes & {T + "ethanol", T + "methanol", T + "propanol", T + "acetic", T + "formic"}
     lifted = triples[T + "alcohol", EX + "mass", "Literal"]
     assert lifted.evidence_source == "inferred"
     assert lifted.count == 2
-    assert (EX + "Participant", EX + "compound", T + "alcohol") in triples
-    assert (EX + "Participant", EX + "compound", T + "acid") in triples
-    assert (T + "alcohol", EX + "smiles", "Literal") in triples
+    terms = {(p.subject_class, p.property_uri, p.object_class): p for p in schema.term_patterns}
+    assert terms[EX + "Participant", EX + "compound", T + "propanol"].object_binding == "term"
+    assert terms[T + "ethanol", EX + "smiles", "Literal"].subject_binding == "term"
     assert triples[EX + "Substance", EX + "mass", "Literal"].evidence_source == "mined"
     summary = report.config["ontology_term_subsumption"]
     assert summary["subsumed"] is True
-    assert summary["representatives"] == {T + "acid": 2, T + "alcohol": 3}
+    assert summary["representatives"] == {T + "acid": 1, T + "alcohol": 2}
     saved = type(report).model_validate_json(report.model_dump_json())
     assert saved.config["ontology_term_subsumption"]["representative_members"] == {
-        T + "acid": [T + "acetic", T + "formic"],
-        T + "alcohol": [T + "ethanol", T + "methanol", T + "propanol"],
+        T + "acid": [T + "acetic"],
+        T + "alcohol": [T + "ethanol", T + "methanol"],
     }, "The report must identify the terms replaced by each representative"
     assert "+ontology-as-data" in schema.about.strategy
     cycle = choose_representatives(["a", "z"], {"a": {"b"}, "b": {"a"}}, budget=1)
@@ -124,7 +124,7 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
     with SchemaMiner.from_graph(dataset, graph_uris=["urn:data"], delay=0) as miner:
         result = mine_with_ontology(miner, ontology_as_data=True, ontology_term_budget=20,
                                     ontology_graph_uris=["urn:ontology"])
-        patterns = _triples(result.data_schema)
+        patterns = {(p.subject_class, p.property_uri, p.object_class): p for p in result.data_schema.term_patterns}
         assert patterns["urn:S", "urn:ref", "urn:a"].count == 1, "Class declarations must not multiply data edges"
         assert patterns["urn:a", "urn:description", "Literal"].count == 1
         assert not any(p.property_uri == "urn:ontologyOnly" for p in result.data_schema.patterns)
@@ -132,6 +132,6 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
         from rdfsolve.mining.edge_graph_split import split_by_edge_graph
 
         term_part = split_by_edge_graph(result.data_schema, "urn:data", "terms")
-        attributed = _triples(term_part)
+        attributed = {(p.subject_class, p.property_uri, p.object_class): p for p in term_part.term_patterns}
         assert attributed["urn:S", "urn:ref", "urn:a"].graphs == {"urn:data": 1}
         assert attributed["urn:a", "urn:description", "Literal"].count == 1
