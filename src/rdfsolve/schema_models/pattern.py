@@ -72,8 +72,11 @@ class SchemaPattern(BaseModel):
     count: int | None = Field(
         None,
         ge=0,
-        description="Number of triples matching this pattern",
+        description="Pattern count in the declared count semantics",
     )
+    count_semantics: Literal[
+        "triples_in_graph", "quad_occurrences", "endpoint_default", "upper_bound", "unknown"
+    ] = "unknown"
     graphs: dict[str, int] | None = Field(
         None,
         description=(

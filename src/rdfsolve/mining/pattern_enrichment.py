@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.query_builders import (
+    _build_batched_blank_node_count_query,
     _build_batched_literal_count_query,
     _build_batched_literal_objects_query,
     _build_batched_typed_count_query,
@@ -220,7 +221,7 @@ def enrich_patterns_with_counts(
             class_chunk_size or 10000,
             unsafe_paging,
         )
-        _fetch_untyped_count_batch(
+        _fetch_resource_count_batch(
             batch,
             label,
             counts,
@@ -232,6 +233,21 @@ def enrich_patterns_with_counts(
             unsafe_paging,
             type_context_graph_uris,
         )
+
+        if any(p.object_class == "BlankNode" and p.subject_class in batch for p in patterns):
+            _fetch_resource_count_batch(
+                batch,
+                label,
+                counts,
+                helper,
+                graph_uris,
+                collect_bindings,
+                report,
+                class_chunk_size or 10000,
+                unsafe_paging,
+                type_context_graph_uris,
+                object_class="BlankNode",
+            )
 
         # Delay between batches
         if delay > 0:
@@ -279,6 +295,13 @@ def enrich_patterns_with_counts(
             pat.model_copy(
                 update={
                     "count": sum(metric.triples for metric in per_graph.values()),
+                    "count_semantics": (
+                        "quad_occurrences"
+                        if len(graph_uris or []) > 1
+                        else "triples_in_graph"
+                        if graph_uris
+                        else "endpoint_default"
+                    ),
                     "graphs": attributed or None,
                     "distinct_subjects": distinct_subjects,
                     "distinct_objects": distinct_objects,
@@ -434,7 +457,7 @@ def _fetch_literal_count_batch(
         )
 
 
-def _fetch_untyped_count_batch(
+def _fetch_resource_count_batch(
     batch: list[str],
     label: str,
     counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
@@ -445,15 +468,23 @@ def _fetch_untyped_count_batch(
     chunk_size: int,
     unsafe_paging: bool,
     type_context_graph_uris: list[str] | None = None,
+    *,
+    object_class: str = "Resource",
 ) -> None:
-    """Query untyped-URI counts for one class batch and update *counts*."""
+    """Count untyped URI or blank-node edges for one class batch."""
+    purpose = "counts/blank-node" if object_class == "BlankNode" else "counts/untyped-uri"
+    builder = (
+        _build_batched_blank_node_count_query
+        if object_class == "BlankNode"
+        else _build_batched_untyped_count_query
+    )
     try:
         t0 = time.monotonic()
         outcome = query_with_bisect(
             batch,
             graph_uris,
-            _build_batched_untyped_count_query,
-            "counts/untyped-uri",
+            builder,
+            purpose,
             helper,
             collect_bindings,
             chunk_size,
@@ -462,7 +493,7 @@ def _fetch_untyped_count_batch(
         )
         report.record_outcome(outcome)
         report.record_query(
-            "counts/untyped-uri",
+            purpose,
             time.monotonic() - t0,
             success=outcome.state == "complete",
         )
@@ -470,7 +501,7 @@ def _fetch_untyped_count_batch(
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
-                "Resource",
+                object_class,
             )
             metric = _count_from_binding(b)
             if metric is not None:
@@ -479,11 +510,7 @@ def _fetch_untyped_count_batch(
         report.record_outcome(
             QueryOutcome(
                 state="failed",
-                failures=[
-                    QueryFailure(
-                        "invalid_response", str(e), "counts/untyped-uri", batch, graph_uris
-                    )
-                ],
+                failures=[QueryFailure("invalid_response", str(e), purpose, batch, graph_uris)],
             )
         )
         logger.warning(

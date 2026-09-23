@@ -163,6 +163,13 @@ def probe_term_patterns(
         """Combine graph rows while retaining each edge count."""
         graph = row.get("_g", {}).get("value")
         pattern.count = _row_count(row)
+        pattern.count_semantics = (
+            "quad_occurrences"
+            if len(graph_uris or []) > 1
+            else "triples_in_graph"
+            if graph_uris
+            else "endpoint_default"
+        )
         if graph and pattern.count is not None:
             pattern.graphs = {graph: pattern.count}
         key = (pattern.subject_class, pattern.property_uri, pattern.object_class, pattern.datatype)
@@ -359,6 +366,7 @@ def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
             # representative contributes twice, so this is an upper bound.
             "count": None if None in counts else sum(c for c in counts if c is not None),
             "graphs": dict(graphs) or None,
+            "count_semantics": "upper_bound",
             "distinct_subjects": None,
             "distinct_objects": None,
             "evidence_source": "inferred",

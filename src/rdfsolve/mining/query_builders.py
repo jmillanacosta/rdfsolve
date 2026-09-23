@@ -660,3 +660,26 @@ GROUP BY ?class ?p{graph_var}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
+
+
+def _build_batched_blank_node_count_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    paginated: bool = False,
+    drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count blank-node edges per class, property and graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris)
+    graph_var = " ?_g" if g_open else ""
+    query = f"""SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)
+       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
+WHERE {{
+  {_values_block(class_uris)}
+  ?s a ?class .
+  {g_open} ?s ?p ?o . {g_close}
+  FILTER(isBlank(?o))
+}}
+GROUP BY ?class ?p{graph_var}"""
+    return SparqlHelper.prepare_paginated_query(query) if paginated else query

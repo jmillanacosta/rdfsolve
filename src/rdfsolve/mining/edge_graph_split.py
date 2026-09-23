@@ -57,6 +57,11 @@ def split_by_edge_graph(
             pattern.model_copy(
                 update={
                     "count": count,
+                    "count_semantics": "upper_bound"
+                    if pattern.count_semantics == "upper_bound"
+                    else "triples_in_graph"
+                    if len(graphs) == 1
+                    else "quad_occurrences",
                     "graphs": attributed,
                     "distinct_subjects": pattern.distinct_subjects if only_here else None,
                     "distinct_objects": pattern.distinct_objects if only_here else None,
