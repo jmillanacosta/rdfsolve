@@ -209,9 +209,6 @@ class LsLodCloudStage(LocalMiningStage):
             report_path=str(report_path),
         )
 
-        from rdfsolve.qlever.index_check import verify_named_graphs
-
-        verify_named_graphs(miner._helper, graph_uris)
         schema = miner.mine(dataset_name="lslod_cloud")
 
         self._save_schema_outputs(

@@ -238,7 +238,7 @@ class LocalMiningStage(Stage):
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
                      *, type_context_graph_uris: list[str] | None = None):
-        """Create a miner for a local QLever instance and check its named graphs."""
+        """Create a miner for a local QLever instance."""
         from rdfsolve import SchemaMiner
 
         endpoint = f"http://localhost:{port}"
@@ -257,11 +257,6 @@ class LocalMiningStage(Stage):
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
         )
-
-        if graph_uris:
-            from rdfsolve.qlever.index_check import verify_named_graphs
-
-            verify_named_graphs(miner._helper, graph_uris)
 
         return miner
 

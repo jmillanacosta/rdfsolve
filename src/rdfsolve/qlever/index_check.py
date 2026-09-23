@@ -4,12 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from rdfsolve.qlever.lifecycle import index_name
-
-if TYPE_CHECKING:
-    from rdfsolve.sparql_helper import SparqlHelper
 
 
 def has_cached_index(workdir: Path, fallback: str) -> bool:
@@ -59,18 +55,6 @@ def has_cached_index(workdir: Path, fallback: str) -> bool:
     if missing_files:
         raise ValueError(f"Incomplete index in {workdir}: missing or empty {missing_files}")
     return True
-
-
-def verify_named_graphs(helper: SparqlHelper, graph_uris: list[str]) -> None:
-    """Require at least one triple in each selected cached graph."""
-    from rdfsolve.mining.graph_selection import missing_graphs
-
-    missing = missing_graphs(helper, graph_uris)
-    if missing:
-        raise ValueError(
-            f"Cached index lacks nonempty graphs: {missing}. "
-            "Select matching cached inputs; no unscoped fallback was run."
-        )
 
 
 def index_artifact_files(workdir: Path, fallback: str) -> list[Path]:

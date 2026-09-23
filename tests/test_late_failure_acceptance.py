@@ -73,3 +73,24 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
     assert config.get_local_sources() == [both], "Endpoint health removed the local access channel"
     assert config.get_remote_sources() == [both], "Skipped remote attempt has no report path"
     assert RemoteMiningStage(config)._mine_single_source(both)["status"] == "skipped"
+
+    import pytest
+    import rdfsolve
+    from scripts.pipeline_stages.cloud import LsLodCloudStage
+
+    monkeypatch.setattr(rdfsolve, "SchemaMiner",
+                        lambda **options: SchemaMiner.from_graph(data, **options))
+    missing = Source.from_dict({"name": "missing_scope", "graph_uris": ["urn:missing"]})
+    for stage_class, name in [(LocalMiningStage, "missing_scope"),
+                              (LsLodCloudStage, "lslod_cloud")]:
+        scoped_stage = stage_class(config)
+        with pytest.raises(ValueError, match="graphs"):
+            if stage_class is LocalMiningStage:
+                scoped_stage._mine_local(missing, 7000)
+            else:
+                scoped_stage._mine_cloud([(missing, tmp_path)], 7000)
+        path = config.output_dir / name / f"{name}_report.json"
+        assert path.exists(), f"{name}: missing graph failure has no report"
+        report = json.loads(path.read_text())
+        assert report["completion_state"] == "failed" and report["finished_at"]
+        assert report["graph_uris"] and "graphs" in report["abort_reason"]
