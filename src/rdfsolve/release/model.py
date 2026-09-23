@@ -67,14 +67,22 @@ class ExtractionReleaseRecord(BaseModel):
 
     mode: str
     completion_state: CompletionState = "unknown"
-    report_path: str
+    report_path: str | None = None
+    snapshot_id: str | None = None
+    schema_path: str | None = None
+    schema_artifact_id: str | None = None
+    graph_scope: list[str] = Field(default_factory=list)
+    type_context_graph_scope: list[str] = Field(default_factory=list)
+    ontology_graph_scope: list[str] = Field(default_factory=list)
+    endpoint: str | None = None
+    retrieved_at: str | None = None
 
 
 class DatasetReleaseRecord(BaseModel):
     """One dataset snapshot of a release and its artifacts."""
 
     dataset_id: str
-    snapshot_id: str
+    snapshot_id: str | None = None
     source_version: str | None = None
     source_version_iri: str | None = None
     retrieved_at: str | None = None
@@ -82,6 +90,7 @@ class DatasetReleaseRecord(BaseModel):
     distributions: list[str] = Field(default_factory=list)
     access_files: dict[str, list[str]] = Field(default_factory=dict)
     graph_scope: list[str] = Field(default_factory=list)
+    graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     extraction_mode: str | None = None
     completion_state: CompletionState = "unknown"
     report_path: str | None = None

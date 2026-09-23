@@ -26,6 +26,9 @@ class SSSOMSeedingStage(Stage):
         log.info(f"Loading SSSOM sources from {self.config.sssom_sources_file}")
 
         from rdfsolve.analysis.io import load_schemas
+        from rdfsolve.release.build import build_release_manifest, write_release_manifest
+
+        write_release_manifest(build_release_manifest(self.config.output_dir), self.config.output_dir)
 
         schemas = list(load_schemas(self.config.output_dir).items())
         from rdfsolve.config import mint
@@ -72,6 +75,9 @@ class AnalysisStage(Stage):
         from rdfsolve.analysis.io import load_schemas, read_class_mappings
 
         output = self.config.output_dir
+        from rdfsolve.release.build import build_release_manifest, write_release_manifest
+
+        write_release_manifest(build_release_manifest(output), output)
         schemas = load_schemas(output)
         if not schemas:
             raise ValueError(

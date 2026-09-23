@@ -165,6 +165,8 @@ def build_scientific_validation_plan(
         mode = _mode_from_path(artifact.path)
         target_kind = _target_kind(mode)
         snapshot = schema.about.snapshot_id or dataset.snapshot_id
+        if snapshot is None:
+            raise ValueError(f"Extraction snapshot identity missing: {artifact.path}")
         graphs = schema.about.graph_uris or []
         type_graphs = schema.about.type_graph_uris or graphs
         if mode == "grouped" and not schema.about.type_graph_uris:

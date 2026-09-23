@@ -50,10 +50,11 @@ def main() -> int:
         action="store_true",
         help="Also drop patterns that carry no graph evidence when --graph is used",
     )
+    parser.add_argument("--extraction-mode", choices=["remote", "local", "grouped", "unknown"])
     args = parser.parse_args()
 
     namespaces, graph_uris = selections(args)
-    schemas = load_schemas(args.run_dir)
+    schemas = load_schemas(args.run_dir, extraction_mode=args.extraction_mode)
     if not schemas:
         raise FileNotFoundError(f"No mined schemas under {args.run_dir}")
     args.output_dir.mkdir(parents=True, exist_ok=False)

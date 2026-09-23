@@ -16,8 +16,9 @@ def main():
     parser.add_argument("schemas_dir", type=Path)
     parser.add_argument("--mappings-dir", type=Path)
     parser.add_argument("--output", type=Path, default=Path("output/graphs"))
+    parser.add_argument("--extraction-mode", choices=["remote", "local", "grouped", "unknown"])
     args = parser.parse_args()
-    schemas = load_schemas(args.schemas_dir)
+    schemas = load_schemas(args.schemas_dir, extraction_mode=args.extraction_mode)
     if not schemas:
         parser.error("No canonical schema snapshots found")
     edges, imports = [], {}

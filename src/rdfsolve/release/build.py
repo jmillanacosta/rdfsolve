@@ -255,12 +255,8 @@ def _completion(report: dict[str, Any]) -> str:
     return "unknown"
 
 
-def _schema_metadata(run_root: Path, dataset_id: str) -> dict[str, Any]:
-    directory = run_root / dataset_id
-    schemas = sorted(directory.glob("*_schema.json")) if directory.is_dir() else []
-    if not schemas:
-        return {}
-    raw = _load_json(schemas[0])
+def _schema_metadata(path: Path) -> dict[str, Any]:
+    raw = _load_json(path)
     schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
     about = (
         schema.get("about")
@@ -434,16 +430,36 @@ def build_release_manifest(
     for dataset_id in dataset_ids:
         source = sources.get(dataset_id, {})
         reports = _reports_for_dataset(run_root, dataset_id)
-        report_path, report = reports[0] if reports else (None, {})
-        extractions = [
-            ExtractionReleaseRecord(
-                mode=_report_mode(path),
-                completion_state=_completion(raw),
-                report_path=path.relative_to(run_root).as_posix(),
+        report_path, report = reports[0] if len(reports) == 1 else (None, {})
+        schema_paths = sorted((run_root / dataset_id).glob("*_schema.json"))
+        about = _schema_metadata(schema_paths[0]) if len(schema_paths) == 1 else {}
+        extractions: list[ExtractionReleaseRecord] = []
+        stems = {path.name.removesuffix("_report.json") for path, _ in reports}
+        stems.update(path.name.removesuffix("_schema.json") for path in schema_paths)
+        for stem in sorted(stems):
+            schema_path = run_root / dataset_id / f"{stem}_schema.json"
+            extraction_report = run_root / dataset_id / f"{stem}_report.json"
+            raw = _load_json(extraction_report)
+            metadata = _schema_metadata(schema_path)
+            relative = schema_path.relative_to(run_root).as_posix()
+            artifact = next((a for a in artifacts if a.path == relative), None)
+            extractions.append(
+                ExtractionReleaseRecord(
+                    mode=_report_mode(extraction_report),
+                    completion_state=_completion(raw),
+                    report_path=extraction_report.relative_to(run_root).as_posix()
+                    if extraction_report.exists()
+                    else None,
+                    schema_path=relative if artifact else None,
+                    schema_artifact_id=artifact.artifact_id if artifact else None,
+                    snapshot_id=_snapshot_id(dataset_id, metadata, raw) if metadata else None,
+                    graph_scope=metadata.get("graph_uris") or [],
+                    type_context_graph_scope=metadata.get("type_context_graph_uris") or [],
+                    ontology_graph_scope=metadata.get("ontology_graph_uris") or [],
+                    endpoint=metadata.get("endpoint"),
+                    retrieved_at=metadata.get("retrieved_at") or metadata.get("started_at"),
+                )
             )
-            for path, raw in reports
-        ]
-        about = _schema_metadata(run_root, dataset_id)
         refs = artifact_ids.get(dataset_id, [])
         endpoint = source.get("endpoint") or None
         access_files = _source_access_files(source)
@@ -451,7 +467,7 @@ def build_release_manifest(
         graphs = source.get("graph_uris") or []
         if isinstance(graphs, str):
             graphs = [graphs]
-        mode = extractions[0].mode if extractions else None
+        mode = extractions[0].mode if len(extractions) == 1 else None
         retrieved_at = (
             about.get("retrieved_at") or about.get("mined_at") or report.get("started_at")
         )
@@ -461,7 +477,9 @@ def build_release_manifest(
         datasets.append(
             DatasetReleaseRecord(
                 dataset_id=dataset_id,
-                snapshot_id=_snapshot_id(dataset_id, about, report),
+                snapshot_id=_snapshot_id(dataset_id, about, report)
+                if len(extractions) <= 1
+                else None,
                 source_version=about.get("source_version"),
                 source_version_iri=about.get("source_version_iri"),
                 retrieved_at=retrieved_at,
@@ -469,6 +487,7 @@ def build_release_manifest(
                 distributions=[str(item) for item in downloads],
                 access_files=access_files,
                 graph_scope=[str(item) for item in graphs],
+                graph_sources=source.get("graph_sources") or {},
                 extraction_mode=mode,
                 completion_state=_combined_completion(
                     [item.completion_state for item in extractions]
@@ -513,7 +532,13 @@ def build_release_manifest(
             "identity_overrides": identity_overrides_artifact,
             "identity_review_complete": identity_review_complete,
             "canonical_dataset_count": canonical_dataset_count,
-            "datasets": [(d.dataset_id, d.snapshot_id) for d in datasets],
+            "datasets": [
+                (
+                    d.dataset_id,
+                    [(e.mode, e.snapshot_id, e.schema_artifact_id) for e in d.extractions],
+                )
+                for d in datasets
+            ],
         }
         release_id = (
             "release:"

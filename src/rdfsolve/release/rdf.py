@@ -66,7 +66,9 @@ def release_to_rdf(
 
     artifact_by_id = manifest.artifact_by_id()
     for dataset in manifest.datasets:
-        snapshot = URIRef(dataset.snapshot_id)
+        snapshot = URIRef(
+            dataset.snapshot_id or mint_from_base(base, "dataset", dataset.dataset_id)
+        )
         graph.add((snapshot, RDF.type, DCAT.Dataset))
         graph.add((snapshot, RDF.type, VOID.Dataset))
         graph.add((snapshot, DCTERMS.identifier, Literal(dataset.dataset_id)))
@@ -83,6 +85,27 @@ def release_to_rdf(
             graph.add((snapshot, DCAT.version, Literal(dataset.source_version)))
         if dataset.source_version_iri:
             graph.add((snapshot, PROV.wasDerivedFrom, URIRef(dataset.source_version_iri)))
+
+        for extraction in dataset.extractions:
+            if extraction.snapshot_id:
+                observed = URIRef(extraction.snapshot_id)
+                graph.add((observed, RDF.type, DCAT.Dataset))
+                graph.add(
+                    (
+                        observed,
+                        PROV.specializationOf,
+                        URIRef(mint_from_base(base, "dataset", dataset.dataset_id)),
+                    )
+                )
+                graph.add((observed, PROV.wasGeneratedBy, run))
+                if extraction.schema_artifact_id:
+                    graph.add(
+                        (
+                            observed,
+                            DCAT.distribution,
+                            _artifact_uri(base, extraction.schema_artifact_id),
+                        )
+                    )
 
         for artifact_id in dataset.artifacts:
             artifact = artifact_by_id.get(artifact_id)

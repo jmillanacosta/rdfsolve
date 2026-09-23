@@ -28,8 +28,9 @@ def main():
     parser.add_argument("--entity-mappings", nargs="*", type=Path, default=[])
     parser.add_argument("--min-support", type=int, default=1)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--extraction-mode", choices=["remote", "local", "grouped", "unknown"])
     args = parser.parse_args()
-    schemas = load_schemas(args.schemas)
+    schemas = load_schemas(args.schemas, extraction_mode=args.extraction_mode)
     if not schemas:
         parser.error("Supply canonical schema snapshots")
     indices = {}

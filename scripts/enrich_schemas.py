@@ -69,10 +69,11 @@ def main() -> int:
     parser.add_argument("--sources", nargs="+", help="Only process these dataset names")
     parser.add_argument("--redo-enrichment", action="store_true", help="Re-query stored annotations")
     parser.add_argument("--skip-enrichment", action="store_true", help="Only compose routes")
+    parser.add_argument("--extraction-mode", choices=["remote", "local", "grouped", "unknown"])
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-8s | %(message)s")
 
-    schemas = load_schemas(args.run_dir)
+    schemas = load_schemas(args.run_dir, extraction_mode=args.extraction_mode)
     if args.sources:
         unknown = sorted(set(args.sources) - set(schemas))
         if unknown:
