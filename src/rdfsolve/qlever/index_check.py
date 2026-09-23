@@ -71,3 +71,21 @@ def verify_named_graphs(helper: SparqlHelper, graph_uris: list[str]) -> None:
             f"Cached index lacks nonempty graphs: {missing}. "
             "Select matching cached inputs; no unscoped fallback was run."
         )
+
+
+def index_artifact_files(workdir: Path, fallback: str) -> list[Path]:
+    """List index data files after structural checks; exclude runtime logs."""
+    if not has_cached_index(workdir, fallback):
+        raise ValueError(f"No cached index in {workdir}")
+    name = index_name(workdir, fallback)
+    files = []
+    for path in sorted(workdir.glob(f"{name}.*")):
+        suffix = path.name.removeprefix(f"{name}.")
+        if suffix.endswith((".log", "-log.tsv", "-log.jsonl")):
+            continue
+        if path.is_file() and (
+            suffix == "meta-data.json"
+            or suffix.startswith(("index.", "internal.index.", "vocabulary."))
+        ):
+            files.append(path)
+    return files
