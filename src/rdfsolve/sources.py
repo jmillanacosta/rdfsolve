@@ -417,6 +417,8 @@ def _has_rdf_download(source: SourceModel) -> bool:
     A URL is considered an RDF dump when its path (excluding query string)
     ends with one of the extensions in :data:`_LOCAL_RDF_EXTENSIONS`.
     """
+    if source.graph_sources:
+        return True
     fields = {**(source.model_extra or {}), "download_ttl": source.download_ttl}
     for key, val in fields.items():
         if not key.startswith("download_"):

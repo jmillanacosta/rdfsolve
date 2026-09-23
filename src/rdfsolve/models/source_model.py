@@ -88,8 +88,8 @@ class SourceModel(BaseModel):
         Extra named graphs for linked-object types.
     ontology_graph_uris:
         Named graphs for ontology interpretation and extraction.
-    use_graph:
-        Whether to use a GRAPH clause in SPARQL queries.
+    graph_sources:
+        Download fields keyed by the named graph that receives their triples.
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -147,6 +147,7 @@ class SourceModel(BaseModel):
     """
 
     name: str
+    aliases: list[str] = Field(default_factory=list)
     source_role: Literal["dataset", "service"] = "dataset"
     skip_mining: bool = False
     endpoint: str = ""
@@ -164,7 +165,7 @@ class SourceModel(BaseModel):
     graph_uris: list[str] = Field(default_factory=list)
     type_context_graph_uris: list[str] = Field(default_factory=list)
     ontology_graph_uris: list[str] = Field(default_factory=list)
-    use_graph: bool = False
+    graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
@@ -217,12 +218,46 @@ class SourceModel(BaseModel):
     # Keep registry fields without a typed attribute, such as download_* URL lists.
     model_config = {"populate_by_name": True, "extra": "allow"}
 
+    @model_validator(mode="after")
+    def validate_graph_sources(self) -> Self:
+        """Require an input mapping for every selected local graph."""
+        if not self.graph_sources:
+            return self
+        from rdfsolve.schema_models.paths import absolute_iri
+
+        scopes = set(self.graph_uris + self.type_context_graph_uris + self.ontology_graph_uris)
+        if not self.graph_uris or scopes != set(self.graph_sources):
+            raise ValueError("graph_sources must match the data, type and ontology graph scopes")
+        if self.download_ttl or any(
+            value
+            for key, value in (self.model_extra or {}).items()
+            if key.startswith("download_") or key == "local_tar_url"
+        ):
+            raise ValueError("Place all downloads inside graph_sources")
+        for graph, fields in self.graph_sources.items():
+            absolute_iri(graph)
+            if not fields:
+                raise ValueError(f"No inputs for {graph}")
+            for key, urls in fields.items():
+                if key not in {
+                    "download_ttl",
+                    "download_nt",
+                    "download_rdf",
+                    "download_rdfxml",
+                    "download_owl",
+                }:
+                    raise ValueError(f"Unsupported graph input format: {key}")
+                if not urls or any(not url.strip() for url in urls):
+                    raise ValueError(f"Empty input locations for {graph}")
+        return self
+
     @property
     def mining_enabled(self) -> bool:
         """Return whether this entry permits pipeline mining."""
         return self.source_role == "dataset" and not self.skip_mining
 
     @field_validator(
+        "aliases",
         "graph_uris",
         "type_context_graph_uris",
         "ontology_graph_uris",

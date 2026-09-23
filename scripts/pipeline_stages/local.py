@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from rdfsolve.qlever import QleverConfig, build_qleverfile
-from rdfsolve.qlever.inputs import expand_inputs, qlever_format, rdf_input_files
+from rdfsolve.qlever.inputs import (
+    expand_inputs, graph_input_directory, mapped_input_files, qlever_format, rdf_input_files,
+)
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .base import PartialMiningError, Stage
@@ -151,25 +153,37 @@ class LocalMiningStage(Stage):
 
         settings_json = config.get("index", "SETTINGS_JSON")
 
-        expanded = expand_inputs(workdir)
-        input_files = rdf_input_files(workdir)
-
-        if not input_files and not skip_download and not self.config.no_download:
-            get_data_cmd = config.get("data", "GET_DATA_CMD")
-            log.info("    Downloading data...")
-            subprocess.run(["bash", "-c", get_data_cmd], check=True, cwd=workdir)
-            expanded += expand_inputs(workdir)
-            input_files = rdf_input_files(workdir)
-
-        if not input_files:
-            raise ValueError(f"No prepared RDF inputs in {workdir}")
+        directories = [graph_input_directory(workdir, graph) for graph in source.graph_sources] or [workdir]
+        expanded = [path for directory in directories for path in expand_inputs(directory)]
+        try:
+            if not all(rdf_input_files(directory) for directory in directories):
+                if not skip_download and not self.config.no_download:
+                    get_data_cmd = config.get("data", "GET_DATA_CMD")
+                    subprocess.run(["bash"], input=get_data_cmd, text=True, check=True, cwd=workdir)
+                    expanded.extend(path for directory in directories for path in expand_inputs(directory))
+            if source.graph_sources:
+                mapped = mapped_input_files(workdir, list(source.graph_sources))
+                for graph, fields in source.graph_sources.items():
+                    expected = sum(len(urls) for urls in fields.values())
+                    found = sum(mapped_graph == graph for _, mapped_graph in mapped)
+                    if found != expected:
+                        raise ValueError(f"Graph {graph} has {found} input files; expected {expected}")
+            else:
+                mapped = [(path, "") for path in rdf_input_files(workdir)]
+            if not mapped:
+                raise ValueError(f"No prepared RDF inputs in {workdir}")
+        except BaseException:
+            for path in expanded:
+                path.unlink(missing_ok=True)
+            raise
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
-
         file_flags = []
-        for path in input_files:
+        for path, graph in mapped:
             file_flags.extend(["-f", str(path), "-F", qlever_format(path)])
+            if graph:
+                file_flags.extend(["-g", graph])
 
         image_path = self.config.data_dir / "qlever.sif"
         cmd = [
@@ -192,7 +206,7 @@ class LocalMiningStage(Stage):
             config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
-        log.info(f"    Indexing {len(input_files)} files...")
+        log.info(f"    Indexing {len(mapped)} files...")
         try:
             subprocess.run(cmd, cwd=workdir, check=True)
         finally:

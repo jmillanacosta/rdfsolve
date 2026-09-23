@@ -191,7 +191,7 @@ def check_registry(
                     "error",
                     endpoint,
                 )
-        settings = ("sparql_engine", "sparql_strategy", "supports_graph", "use_graph", "delay")
+        settings = ("sparql_engine", "sparql_strategy", "supports_graph", "delay")
         differing = [key for key in settings if len({getattr(s, key) for s in members}) > 1]
         if differing:
             add(

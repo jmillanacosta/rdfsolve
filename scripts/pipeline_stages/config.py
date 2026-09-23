@@ -40,7 +40,7 @@ class Source(SourceModel):
 
     @property
     def mode(self):
-        local = bool(self.local_provider or self.download_urls or self.local_tar_url)
+        local = bool(self.graph_sources or self.local_provider or self.download_urls or self.local_tar_url)
         if self.endpoint:
             return SourceMode.BOTH if local else SourceMode.REMOTE
         return SourceMode.LOCAL if local else SourceMode.UNKNOWN
@@ -64,6 +64,7 @@ class Source(SourceModel):
             **self.download_fields,
             "local_tar_url": self.local_tar_url,
             "graph_uris": self.graph_uris,
+            "graph_sources": self.graph_sources,
         }
 
 

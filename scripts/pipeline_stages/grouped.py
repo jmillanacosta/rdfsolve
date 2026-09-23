@@ -234,45 +234,10 @@ class GroupedMiningStage(LocalMiningStage):
         Only sources with download_urls or local_provider are included -
         endpoint-only sources cannot be grouped for local mining.
         """
-        from urllib.parse import urlparse
-
         groups: dict[str, list[Source]] = {}
-
         for source in sources:
-            if not source.download_urls and not source.local_provider:
-                continue
-
-            group_name = None
-
-            if source.download_urls:
-                first_url = (
-                    source.download_urls[0]
-                    if isinstance(source.download_urls, list)
-                    else source.download_urls
-                )
-                hostname = urlparse(first_url).hostname
-                if hostname:
-                    if source.name.startswith("pubchem.ftp.") or (
-                        hostname == "ftp.ncbi.nlm.nih.gov"
-                        and urlparse(first_url).path.lower().startswith("/pubchem/")
-                    ):
-                        group_name = "pubchem.ftp"
-                    elif "bio2rdf" in hostname or "bio2rdf" in source.name:
-                        group_name = "bio2rdf"
-                    elif "rdfportal" in hostname or "rdfportal" in source.name:
-                        group_name = "rdfportal"
-                    elif "dbcls" in hostname or "dbcls" in source.name:
-                        group_name = "dbcls"
-
-            if not group_name and source.local_provider:
-                group_name = source.local_provider
-
-            if not group_name:
-                continue
-
-            if group_name not in groups:
-                groups[group_name] = []
-            groups[group_name].append(source)
+            if source.local_provider and not source.graph_sources:
+                groups.setdefault(source.local_provider, []).append(source)
 
         return groups
 
@@ -402,6 +367,10 @@ class GroupedMiningStage(LocalMiningStage):
         self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
         missing = unattributed_patterns(schema)
         if missing:
+            from rdfsolve.mining.report_tracking import ReportCollector
+
+            miner.last_report.abort_reason = f"{len(missing)} patterns lack edge-graph attribution"
+            ReportCollector(miner.last_report, group_report).flush()
             log.warning(
                 "  %d patterns have no per-graph count and appear only in the group schema",
                 len(missing),

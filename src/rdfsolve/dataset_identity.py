@@ -57,6 +57,7 @@ class DatasetIdentity(BaseModel):
     endpoint: str = ""
     graph_uris: list[str] = Field(default_factory=list)
     distributions: list[str] = Field(default_factory=list)
+    aliases: list[str] = Field(default_factory=list)
     catalogs: list[str] = Field(default_factory=list)
 
     @classmethod
@@ -72,6 +73,12 @@ class DatasetIdentity(BaseModel):
                 if isinstance(url, str) and url
             }
             | set(source.download_ttl)
+            | {
+                url
+                for graph in source.graph_uris
+                for urls in source.graph_sources.get(graph, {}).values()
+                for url in urls
+            }
         )
         return cls(
             dataset_id=source.name,
@@ -82,6 +89,7 @@ class DatasetIdentity(BaseModel):
             endpoint=_endpoint(source.endpoint),
             graph_uris=sorted(set(source.graph_uris)),
             distributions=downloads,
+            aliases=source.aliases,
             catalogs=catalogs(source.name, source.endpoint),
         )
 

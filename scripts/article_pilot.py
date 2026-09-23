@@ -69,7 +69,7 @@ def build_pilot_registries(
             local_fields = [
                 key
                 for key, value in row.items()
-                if value and (key.startswith("download_") or key == "local_tar_url")
+                if value and (key.startswith("download_") or key in {"local_tar_url", "graph_sources"})
             ]
             if mode in ("local", "grouped") and not local_fields and not row.get("local_provider"):
                 raise ValueError(f"{mode.title()} pilot source {name!r} has no configured local input")

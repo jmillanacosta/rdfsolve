@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
+import shlex
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -689,6 +692,62 @@ def build_qleverfile(
     workdir = (workdir or data_dir / "qlever_workdirs" / name).resolve()
     rdf_subdir = "rdf"
     src_data_dir = f"{workdir}/{rdf_subdir}"
+
+    graph_sources = entry.get("graph_sources")
+    if graph_sources:
+        from rdfsolve.qlever.inputs import graph_input_directory
+
+        commands: list[str] = []
+        streams: list[dict[str, str]] = []
+        files: list[str] = []
+        for graph, fields in graph_sources.items():
+            directory = graph_input_directory(workdir, graph) / "rdf"
+            commands.extend(
+                [f"mkdir -p {shlex.quote(str(directory))}", f"cd {shlex.quote(str(directory))}"]
+            )
+            for key, urls in fields.items():
+                suffix = key.removeprefix("download_")
+                suffix = "rdf" if suffix == "rdfxml" else suffix
+                for url in urls:
+                    compression = (
+                        ".gz" if url.endswith(".gz") else ".xz" if url.endswith(".xz") else ""
+                    )
+                    filename = hashlib.sha256(url.encode()).hexdigest() + "." + suffix + compression
+                    commands.append(f"wget -c -q -O {filename} {shlex.quote(url)}")
+                    if compression:
+                        executable = "gunzip" if compression == ".gz" else "xz -d"
+                        commands.append(f"{executable} -fk {filename}")
+                        filename = filename.removesuffix(compression)
+                    if suffix in {"rdf", "owl"}:
+                        target = filename.rsplit(".", 1)[0] + ".nt"
+                        commands.append(
+                            f"rapper -q -i rdfxml -o ntriples {filename} > {target}.part"
+                        )
+                        commands.append(f"mv {target}.part {target}")
+                        filename = target
+                    path = directory / filename
+                    files.append(shlex.quote(str(path)))
+                    streams.append(
+                        {
+                            "cmd": f"cat {shlex.quote(str(path))}",
+                            "format": path.suffix[1:],
+                            "graph": graph,
+                        }
+                    )
+        content = _render_qleverfile(
+            name=name,
+            workdir=workdir,
+            port=port,
+            runtime=runtime,
+            rdf_format="ttl",
+            input_files=" ".join(files),
+            cat_input_files="",
+            get_data_cmd=" && ".join(commands),
+            cfg=cfg,
+        )
+        return content.replace(
+            "[index]\n", "[index]\nMULTI_INPUT_JSON = " + json.dumps(streams) + "\n"
+        )
 
     # Bulk-tar path
     local_tar_url = entry.get("local_tar_url", "")

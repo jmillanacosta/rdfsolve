@@ -121,3 +121,21 @@ def rdf_input_files(workdir: Path) -> list[Path]:
                     raise ValueError(f"Ambiguous RDF inputs: {previous} and {path}")
                 found[path.name] = path
     return sorted(found.values())
+
+
+def graph_input_directory(workdir: Path, graph: str) -> Path:
+    """Return the input directory for a named graph."""
+    return workdir / "graphs" / hashlib.sha256(graph.encode()).hexdigest()
+
+
+def mapped_input_files(workdir: Path, graphs: list[str]) -> list[tuple[Path, str]]:
+    """Require prepared triple files for every mapped graph."""
+    inputs: list[tuple[Path, str]] = []
+    for graph in graphs:
+        files = rdf_input_files(graph_input_directory(workdir, graph))
+        if not files:
+            raise ValueError(f"No prepared inputs for graph {graph}")
+        if any(path.suffix not in {".ttl", ".nt"} for path in files):
+            raise ValueError(f"Mapped graph {graph} requires triple inputs")
+        inputs.extend((path, graph) for path in files)
+    return inputs

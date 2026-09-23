@@ -16,10 +16,5 @@ remote:
 local:
   - name: bio2rdf.reactome
     rationale: local-vs-remote comparison and many OWL-classified files in the downloadable bundle
-grouped:
-  # PubChem datasets link to each other and its endpoint serves all graphs at
-  # once, so PubChem is always mined as one group across its dataset graphs.
-  - name: pubchem.ftp.schema
-    rationale: local SHACL/schema files; exercises declared-vs-observed separation
-  - name: pubchem.ftp.substance
-    rationale: large local PubChem distribution for count/query cost and failure-envelope testing
+  - name: pubchem.ftp
+    rationale: full PubChem data graphs with the QLever companion ontology scope

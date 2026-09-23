@@ -791,6 +791,7 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.type_context_graph_uris = self.type_context_graph_uris or None
+        schema.about.ontology_graph_uris = self._ontology_graph_uris
         schema.about.class_entity_counts = entity_counts
         schema.about.class_entity_count_states = entity_count_states
         dataset = getattr(self._helper, "dataset", None)
