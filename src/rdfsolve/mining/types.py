@@ -20,6 +20,11 @@ ONTOLOGY_METACLASSES = frozenset(
         "http://www.w3.org/2002/07/owl#IrreflexiveProperty",
         "http://www.w3.org/2002/07/owl#Restriction",
         "http://www.w3.org/2002/07/owl#Axiom",
+    }
+)
+
+EXCLUDED_RECORD_TYPES = frozenset(
+    {
         "http://www.w3.org/2002/07/owl#Ontology",
         "http://www.w3.org/ns/shacl#SPARQLExecutable",
         "http://www.w3.org/ns/shacl#SPARQLSelectExecutable",
@@ -35,5 +40,6 @@ ONTOLOGY_METACLASSES = frozenset(
         "http://www.w3.org/ns/dcat#Distribution",
     }
 )
+ONTOLOGY_METACLASSES |= EXCLUDED_RECORD_TYPES
 
-__all__ = ["ONTOLOGY_METACLASSES"]
+__all__ = ["EXCLUDED_RECORD_TYPES", "ONTOLOGY_METACLASSES"]

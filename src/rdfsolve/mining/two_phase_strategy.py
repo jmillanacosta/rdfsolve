@@ -22,7 +22,7 @@ from rdfsolve.mining.query_builders import (
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
-from rdfsolve.mining.types import ONTOLOGY_METACLASSES
+from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import ResponseLimitError
 
@@ -103,9 +103,8 @@ class TwoPhaseStrategy(MiningStrategy):
 
         # Merge with ontology classes if available
         if context.ontology_classes:
-            # Filter out metaclasses from ontology classes too
             ontology_classes_filtered = [
-                c for c in context.ontology_classes if c not in ONTOLOGY_METACLASSES
+                c for c in context.ontology_classes if c not in EXCLUDED_RECORD_TYPES
             ]
             # Merge, keeping unique classes
             classes_set = set(classes)
@@ -202,26 +201,24 @@ class TwoPhaseStrategy(MiningStrategy):
             q = _build_class_discovery_query(context.graph_uris)
             class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
 
-        # Extract class URIs - only keep IRI bindings, skip literals/bnodes
-        # Filter out ontology metaclasses (owl:Class, rdfs:Class, etc.)
         classes = []
         non_iri_count = 0
-        metaclass_count = 0
+        excluded_count = 0
         for b in class_bindings:
             binding = b.get("class", {})
             if binding.get("type") == "uri":
                 value = binding.get("value", "")
                 if value:
-                    if value in ONTOLOGY_METACLASSES:
-                        metaclass_count += 1
+                    if value in EXCLUDED_RECORD_TYPES:
+                        excluded_count += 1
                     else:
                         classes.append(value)
             else:
                 non_iri_count += 1
         if non_iri_count:
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
-        if metaclass_count:
-            logger.info(f"  -> Filtered {metaclass_count} ontology metaclasses")
+        if excluded_count:
+            logger.info(f"  -> Filtered {excluded_count} artifact and catalogue types")
         logger.info(f"  -> {len(classes)} data classes found")
         return classes
 

@@ -735,14 +735,14 @@ class SchemaMiner:
         self, schema: MinedSchema, annotation_iris: list[str] | None = None
     ) -> MinedSchema:
         """Filter the result and set final counts and times once."""
-        from rdfsolve.mining.types import ONTOLOGY_METACLASSES
+        from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
 
-        excluded = [p for p in schema.patterns if p.subject_class in ONTOLOGY_METACLASSES]
+        excluded = [p for p in schema.patterns if p.subject_class in EXCLUDED_RECORD_TYPES]
         if excluded:
             schema.patterns = [
-                p for p in schema.patterns if p.subject_class not in ONTOLOGY_METACLASSES
+                p for p in schema.patterns if p.subject_class not in EXCLUDED_RECORD_TYPES
             ]
-            self._report.report.config["excluded_metaclass_patterns"] = {
+            self._report.report.config["excluded_record_patterns"] = {
                 "count": len(excluded),
                 "subject_classes": sorted({p.subject_class for p in excluded}),
             }

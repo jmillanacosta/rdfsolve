@@ -26,10 +26,10 @@ def _triples(schema):
 
 
 def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
-    schema, report = _mine(budget=5)
+    schema, report = _mine(budget=7)
     triples = _triples(schema)
     classes = pattern_classes(schema.patterns)
-    assert len(classes) <= 5
+    assert len(classes) <= 7
     assert {EX + "Substance", EX + "Participant", T + "alcohol", T + "acid"} <= classes
     assert not classes & {T + "ethanol", T + "methanol", T + "propanol", T + "acetic", T + "formic"}
     lifted = triples[T + "alcohol", EX + "mass", "Literal"]
