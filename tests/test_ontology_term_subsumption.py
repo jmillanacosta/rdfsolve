@@ -26,7 +26,21 @@ def _triples(schema):
 
 
 def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
+    from rdfsolve.mining.local_graph import LocalGraphHelper
+
+    label_queries = []
+    select = LocalGraphHelper.select
+
+    def recorded_select(helper, query, **options):
+        if options.get("purpose") == "labels":
+            label_queries.append(query)
+        return select(helper, query, **options)
+
+    monkeypatch.setattr(LocalGraphHelper, "select", recorded_select)
     schema, report = _mine(budget=7)
+    assert label_queries and not any(T + "ethanol" in q for q in label_queries), (
+        "Retaining raw evidence must not fetch labels for each discarded leaf"
+    )
     triples = _triples(schema)
     assert schema.raw_patterns is not None, "Keep typed observations before interpretation"
     observed = {(p.subject_class, p.property_uri, p.object_class): p for p in schema.raw_patterns}

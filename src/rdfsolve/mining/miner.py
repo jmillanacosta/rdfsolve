@@ -836,11 +836,7 @@ class SchemaMiner:
             raw_patterns = [pattern.model_copy(deep=True) for pattern in patterns]
             patterns = self._run_term_subsumption_phase(patterns, self._ontology_term_budget)
 
-        pattern_count = len(patterns)
-        labelled, uris_before = self._run_labels_phase([*patterns, *(raw_patterns or [])])
-        patterns = labelled[:pattern_count]
-        if raw_patterns is not None:
-            raw_patterns = labelled[pattern_count:]
+        patterns, uris_before = self._run_labels_phase(patterns)
 
         dt = time.monotonic() - t0
         logger.info(
