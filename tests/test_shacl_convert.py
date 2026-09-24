@@ -1,5 +1,5 @@
-def test_mixed_values_use_alternatives_not_conflicting_node_kinds():
-    """Regress the mixed literal/resource shape produced by mining."""
+def test_shacl_import_storage_and_navigation():
+    """Import constraints, preserve their RDF and compose declared paths."""
     from rdflib import Graph, Namespace
     from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
@@ -50,3 +50,18 @@ def test_mixed_values_use_alternatives_not_conflicting_node_kinds():
         restored.get_metadata().to_rdf_graph(),
     ), "Keep the full provider profile, including constraints outside the model"
     assert restored.shapes.node_shapes[0].closed
+
+
+    implicit = MinedSchema.from_shacl("""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix e: <urn:declared:> .
+        e:Person a rdfs:Class, sh:NodeShape;
+            sh:property [ sh:path e:worksFor; sh:class e:Organization ] .
+        e:Organization a rdfs:Class, sh:NodeShape;
+            sh:property [ sh:path e:location; sh:class e:Place ] .
+    """)
+    assert len(implicit.patterns) == 2, "Class shapes supply implicit targets"
+    routes = implicit.discover_paths(max_hops=2)
+    assert len(routes.paths) == 1
+    assert routes.paths[0].instance_support == "not_checked", "Declarations are not witnesses"

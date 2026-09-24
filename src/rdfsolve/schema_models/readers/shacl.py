@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from rdflib import RDF, Graph
+from rdflib import RDF, RDFS, Graph, URIRef
 
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
@@ -55,6 +55,16 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
         "IRIOrLiteral": ("Resource", "Literal"),
     }
     for shape in shapes.node_shapes:
+        if (
+            not shape.target_class
+            and shape.uri
+            and not shape.uri.startswith("_:")
+            and any(
+                RDFS.Class in graph.transitive_objects(kind, RDFS.subClassOf)
+                for kind in graph.objects(URIRef(shape.uri), RDF.type)
+            )
+        ):
+            shape.target_class = shape.uri
         if not shape.target_class:
             continue
         for prop in shape.property_shapes:

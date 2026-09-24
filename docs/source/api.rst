@@ -195,3 +195,7 @@ Use ``schema.get_metadata().to_rdf_graph()`` for the original constraints,
 including predicates outside the supported shape model. ``schema.shapes``
 and ``schema.to_shacl()`` expose the supported projection. Validate against
 the retained provider graph when full source constraints are required.
+
+Class shapes without an explicit ``sh:targetClass`` use their implicit
+class target when the supplied graph identifies them as RDFS classes.
+Their composed paths remain unchecked until probed against instance data.
