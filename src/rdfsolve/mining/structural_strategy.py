@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 import time
+from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any
 
 from rdflib import Literal
 
+from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
@@ -39,10 +41,16 @@ def _discovery_query(
     graph: str | None,
     named_graphs: list[str],
     residual: str,
+    *,
+    include_edges: bool = False,
 ) -> str:
-    return f"""SELECT DISTINCT ?ss ?os ?p ?sk ?ok ?dt ?lang
+    edges = "?s ?o " if include_edges else ""
+    edge_pattern = f"?s ?p ?o . {residual}"
+    if include_edges:
+        edge_pattern = f"{{ SELECT ?s ?p ?o WHERE {{ {edge_pattern} }} }}"
+    return f"""SELECT DISTINCT {edges}?ss ?os ?p ?sk ?ok ?dt ?lang
 {_dataset(graph, named_graphs)} WHERE {{
-  ?s ?p ?o . {residual}
+  {edge_pattern}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
      WHERE {{ ?s ?sp ?sv }} GROUP BY ?s }}
   OPTIONAL {{
@@ -142,6 +150,11 @@ class StructuralStrategy(MiningStrategy):
             },
             key=str,
         )
+        local = isinstance(context.helper, LocalGraphHelper)
+        context.report.report.config["structural_execution"] = (
+            "local_bulk" if local else "per_profile_queries"
+        )
+        observations: dict[str | None, list[dict[str, Any]]] = {}
         phase = context.report.start_phase("typed-coverage")
         coverage: list[dict[str, Any]] = []
         context.report.report.config["structural_coverage"] = coverage
@@ -156,23 +169,49 @@ class StructuralStrategy(MiningStrategy):
             coverage.append(entry)
             context.report.flush()
             try:
+                match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
+                selection = "" if local else "?covered"
+                binding = "" if local else f"BIND({match} AS ?covered)"
                 rows = _select(
                     context,
-                    f"""SELECT ?typed ?covered (COUNT(*) AS ?n)
+                    f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
 {_dataset(graph, named)} WHERE {{ ?s ?p ?o .
 BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
-BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS ?covered)
-}} GROUP BY ?typed ?covered""",
+{binding}
+}} GROUP BY ?typed {selection}""",
                     "structural/coverage",
                 )
                 total = sum(int(r["n"]["value"]) for r in rows)
                 untyped = sum(
                     int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"}
                 )
-                covered = sum(
-                    int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
-                )
-                missing = total - covered
+                if local:
+                    needed = untyped > 0 or bool(
+                        _select(
+                            context,
+                            f"SELECT ?s {_dataset(graph, named)} WHERE {{ "
+                            f"?s ?p ?o . FILTER(!{match}) }} LIMIT 1",
+                            "structural/check",
+                        )
+                    )
+                    observations[graph] = (
+                        _select(
+                            context,
+                            _discovery_query(graph, named, f"FILTER(!{match})", include_edges=True),
+                            "structural/discovery",
+                        )
+                        if needed
+                        else []
+                    )
+                    missing = len(observations[graph])
+                    covered = total - missing
+                    if covered < 0:
+                        raise ValueError("Structural bindings exceed the graph triple count")
+                else:
+                    covered = sum(
+                        int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
+                    )
+                    missing = total - covered
                 entry.update(
                     triple_count=total,
                     untyped_subject_triples=untyped,
@@ -198,7 +237,7 @@ BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS
             if not entry["uncovered_triples"]:
                 continue
             try:
-                self._mine_graph(context, entry, keys, named)
+                self._mine_graph(context, entry, keys, named, observations.get(entry["graph_uri"]))
             except Exception:
                 entry["state"] = "failed"
                 raise
@@ -212,11 +251,17 @@ BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS
         entry: dict[str, Any],
         keys: list[tuple[str, str, str, str | None]],
         named: list[str],
+        rows: list[dict[str, Any]] | None = None,
     ) -> None:
         graph = entry["graph_uri"]
-        residual = uncovered_filter(keys, context.graph_uris, context.type_context_graph_uris)
-        rows = _select(context, _discovery_query(graph, named, residual), "structural/discovery")
+        bulk = rows is not None
+        if rows is None:
+            residual = uncovered_filter(keys, context.graph_uris, context.type_context_graph_uris)
+            rows = _select(
+                context, _discovery_query(graph, named, residual), "structural/discovery"
+            )
         candidates: dict[str, StructuralPattern] = {}
+        bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
             predicate = row["p"]["value"]
             candidate = StructuralPattern(
@@ -238,18 +283,31 @@ BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS
                 witness_query="",
                 recount_query="",
             )
-            candidates[json.dumps(candidate.model_dump(), sort_keys=True)] = candidate
+            key = json.dumps(candidate.model_dump(), sort_keys=True)
+            candidates[key] = candidate
+            if bulk:
+                bindings[key].append(row)
         structural = []
         for key in sorted(candidates):
             pattern = candidates[key]
             pattern.witness_query, pattern.recount_query = structural_queries(pattern)
-            counts = _select(context, pattern.recount_query, "structural/count")
-            if len(counts) != 1:
-                raise ValueError("Expected one structural count row")
-            pattern.count = int(counts[0]["n"]["value"])
-            pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
-            pattern.distinct_objects = int(counts[0]["objects"]["value"])
-            pattern.examples = _select(context, pattern.witness_query, "structural/witness")
+            if bulk:
+                pairs = {
+                    (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
+                    for row in bindings[key]
+                }
+                pattern.count = len(pairs)
+                pattern.distinct_subjects = len({subject for subject, _ in pairs})
+                pattern.distinct_objects = len({obj for _, obj in pairs})
+                pattern.examples = [{name: bindings[key][0][name] for name in ("s", "o")}]
+            else:
+                counts = _select(context, pattern.recount_query, "structural/count")
+                if len(counts) != 1:
+                    raise ValueError("Expected one structural count row")
+                pattern.count = int(counts[0]["n"]["value"])
+                pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
+                pattern.distinct_objects = int(counts[0]["objects"]["value"])
+                pattern.examples = _select(context, pattern.witness_query, "structural/witness")
             if pattern.count < 1 or len(pattern.examples) != 1:
                 raise ValueError("Structural discovery and witnesses disagree")
             structural.append(pattern)

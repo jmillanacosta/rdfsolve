@@ -35,7 +35,16 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
     with SchemaMiner.from_graph(data, graph_uris=["urn:data", "urn:other"],
             type_context_graph_uris=["urn:context"], delay=0,
             report_path=folder / "fixture_local_report.json") as miner:
+        select = miner.helper.select
+        mining_queries = []
+        def record_query(query, purpose=""):
+            mining_queries.append(purpose)
+            return select(query, purpose)
+        monkeypatch.setattr(miner.helper, "select", record_query)
         schema = miner.mine("fixture")
+        assert "structural/count" not in mining_queries
+        assert "structural/witness" not in mining_queries
+
         assert not schema.patterns and not schema.about.class_entity_counts
         structural = schema.structural_patterns
         assert structural and miner.last_report.completion_state == "complete"
@@ -187,7 +196,10 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         assert miner.last_report.completion_state != "complete"
 
     with SchemaMiner.from_graph(mixed, graph_uris=["urn:data"], delay=0) as miner:
-        select = miner.helper.select
+        from rdfsolve.sparql_helper import SparqlHelper
+        local = miner.helper
+        select = local.select
+        miner._helper = SparqlHelper("https://example.org/sparql")
         def zero_coverage(query, purpose=""):
             assert purpose != "structural/discovery", "Contradictory coverage must stop extraction"
             response = select(query, purpose)

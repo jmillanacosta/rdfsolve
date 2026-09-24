@@ -61,6 +61,13 @@ compare report phases before choosing a strategy. Counting is enabled by
 default. Set `counts=False` if the task needs model structure without
 population/count enrichment; structural coverage checks still run.
 
+In-memory graphs use bulk structural mining automatically. One SPARQL result
+supplies uncovered edges, exact counts, distinct nodes and witness bindings.
+Recount and witness queries remain available for independent verification.
+A typed graph with no uncovered edges skips structural profile discovery.
+This path retains uncovered bindings in memory; SPARQL endpoints keep
+aggregate queries.
+
 Collection profiles are available as `schema.collections` and under
 `document["schema"]["collections"]` in canonical JSON.
 
