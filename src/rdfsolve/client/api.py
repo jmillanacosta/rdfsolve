@@ -15,7 +15,7 @@ from typing import Literal as FormatLiteral
 
 import pandas as pd
 from pydantic import BaseModel
-from rdflib import Graph, Literal, URIRef
+from rdflib import BNode, Graph, Literal, URIRef
 
 from rdfsolve.client.exploration import DatasetClient
 from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
@@ -738,26 +738,66 @@ class Client(DatasetClient):
             )
         return matches[0]
 
-    def from_table(
-        self, kind: str, table: pd.DataFrame, *, id_column: str, **columns: str
-    ) -> Results:
-        """Create typed records from named table columns without querying."""
+    def create(
+        self,
+        kind: str,
+        *,
+        uri: str | BNode | None = None,
+        blank_node_scope: str | None = None,
+        **values: Any,
+    ) -> BaseModel:
+        """Create a typed record. Omit uri for a new blank node; pass RDF literals as values."""
+        from rdfsolve.client.authoring import create_record
+
         model = self.model(kind)
-        missing = {id_column, *columns.values()} - set(table.columns)
+        fields = {self.field_name(model, field): value for field, value in values.items()}
+        return create_record(model, fields, uri=uri, blank_node_scope=blank_node_scope)
+
+    def from_table(
+        self,
+        kind: str,
+        table: pd.DataFrame,
+        *,
+        id_column: str | None = None,
+        languages: Mapping[str, str] | None = None,
+        datatypes: Mapping[str, str] | None = None,
+        blank_node_scope: str | None = None,
+        **columns: str,
+    ) -> Results:
+        """Create records from columns, with optional literal defaults keyed by field.
+
+        Omit id_column to create distinct blank nodes. Explicit RDF terms in cells
+        retain their language and datatype. Errors identify the input row.
+        """
+        from rdfsolve.client.authoring import create_record, table_literal
+
+        model = self.model(kind)
+        missing = ({id_column} if id_column is not None else set()) | set(columns.values())
+        missing -= set(table.columns)
         if missing:
             raise ValueError(f"Missing columns: {sorted(missing)}")
         fields = {self.field_name(model, field): column for field, column in columns.items()}
+        languages = {self.field_name(model, k): v for k, v in (languages or {}).items()}
+        datatypes = {self.field_name(model, k): v for k, v in (datatypes or {}).items()}
+        if (languages.keys() | datatypes.keys()) - fields.keys():
+            raise ValueError("Literal defaults require a mapped field")
         records = []
-        for row in table.to_dict(orient="records"):
-            iri = row[id_column]
-            if not isinstance(iri, str):
-                raise ValueError("The identifier column must contain IRIs")
-            _iri(iri)
-            records.append(
-                model.model_validate(
-                    {"uri": iri, **{field: row[column] for field, column in fields.items()}}
+        for position, (index, row) in enumerate(table.iterrows()):
+            try:
+                identifier = row[id_column] if id_column is not None else None
+                if id_column is not None and not isinstance(identifier, (str, BNode)):
+                    raise ValueError("The identifier column must contain IRIs or blank nodes")
+                values = {
+                    field: table_literal(
+                        row[column], language=languages.get(field), datatype=datatypes.get(field)
+                    )
+                    for field, column in fields.items()
+                }
+                records.append(
+                    create_record(model, values, uri=identifier, blank_node_scope=blank_node_scope)
                 )
-            )
+            except (TypeError, ValueError) as error:
+                raise ValueError(f"row {position} (index {index!r}): {error}") from error
         return Results(self, records)
 
     def types(self) -> pd.DataFrame:

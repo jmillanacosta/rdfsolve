@@ -95,6 +95,7 @@ def to_pydantic(
 
     used = {
         "RDFResource",
+        "RDFRecord",
         "BaseModel",
         "Graph",
         "ConfigDict",
@@ -166,7 +167,7 @@ def to_pydantic(
         "from decimal import Decimal",
         "from typing import Any, ClassVar",
         "from pydantic import BaseModel, ConfigDict, Field",
-        "from rdflib import Graph",
+        "from rdfsolve.client.authoring import RDFRecord",
         "",
         f"DATASET_METADATA = {metadata!r}",
         f"RDF_PREFIXES = {schema.get_prefixes()!r}",
@@ -174,20 +175,8 @@ def to_pydantic(
         f"RDF_NAVIGATION_SUMMARY = {summary!r}",
         f"SHACL_PROFILES = {profiles!r}",
         "",
-        "class RDFResource(BaseModel):",
-        "    model_config = ConfigDict(populate_by_name=True, extra='allow')",
+        "class RDFResource(RDFRecord):",
         "    rdf_prefixes: ClassVar[dict[str, str]] = RDF_PREFIXES",
-        "    uri: str = Field(alias='@id', min_length=1)",
-        "    rdf_type: list[str] = Field(default_factory=list, alias='@type')",
-        "    rdf_terms: dict[str, list[dict[str, Any]]] = Field(default_factory=dict, repr=False)",
-        "    rdf_loaded_fields: list[str] = Field(default_factory=list, repr=False)",
-        "    rdf_source: dict[str, Any] = Field(default_factory=dict, repr=False)",
-        "",
-        "    def to_graph(self, *, fields: list[str] | None = None) -> Graph:",
-        '        """Write populated RDF fields. Compound paths need their intermediate triples."""',
-        "        from rdfsolve.client.model_rdf import model_to_graph",
-        "",
-        "        return model_to_graph(self, fields=fields)",
         "",
     ]
     for iri, name in names.items():

@@ -26,7 +26,10 @@ def _resource(value: str, scope: str) -> URIRef | BNode:
 
 def _new_term(value: Any, extra: dict[str, Any], scope: str) -> Identifier:
     if isinstance(value, BaseModel):
-        return _resource(str(vars(value)["uri"]), scope)
+        return _resource(
+            str(vars(value)["uri"]),
+            str(vars(value).get("rdf_source", {}).get("blank_node_scope", "")),
+        )
     patterns = extra.get("rdf_patterns", [])
     kinds = {p["object_class"] for p in patterns}
     if kinds and "Literal" not in kinds:
