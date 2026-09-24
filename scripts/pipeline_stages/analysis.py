@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -25,12 +24,13 @@ class SSSOMSeedingStage(Stage):
 
         log.info(f"Loading SSSOM sources from {self.config.sssom_sources_file}")
 
-        from rdfsolve.analysis.io import load_schemas
+        from rdfsolve.analysis.io import iter_extractions
         from rdfsolve.release.build import build_release_manifest, write_release_manifest
 
         write_release_manifest(build_release_manifest(self.config.output_dir), self.config.output_dir)
 
-        schemas = list(load_schemas(self.config.output_dir).items())
+        schemas = [(dataset, schema) for dataset, _, schema in iter_extractions(self.config.output_dir)
+                   if schema is not None]
         from rdfsolve.config import mint
 
         dataset_void_uris = {name: mint("dataset", name) for name, _ in schemas}
@@ -68,42 +68,17 @@ class AnalysisStage(Stage):
 
     name = "analysis"
 
-    def _execute(self):
-        from networkx import node_link_data
-
-        from rdfsolve.analysis.connectivity import build_connectivity, compare_schemas
-        from rdfsolve.analysis.io import load_schemas, read_class_mappings
-
-        output = self.config.output_dir
+    def _execute(self) -> dict[str, Any]:
+        from rdfsolve.analysis.release import analyze_release, write_release_analysis
         from rdfsolve.release.build import build_release_manifest, write_release_manifest
 
-        write_release_manifest(build_release_manifest(output), output)
-        schemas = load_schemas(output)
-        if not schemas:
-            raise ValueError(
-                "No canonical *_schema.json files found in the selected output directory"
-            )
-        mappings, imports = [], {}
-        for path in sorted((output / "mappings" / "enriched").glob("*.sssom.tsv")):
-            edges, report = read_class_mappings(path, schemas)
-            mappings.extend(edges)
-            imports[str(path.relative_to(output))] = report
-        graph = build_connectivity(schemas, class_mappings=mappings)
-        overlaps = compare_schemas(schemas)
-        stats = {
-            "total_schemas": len(schemas),
-            "class_nodes": len(graph),
-            "schema_edges": sum(d["kind"] == "schema" for _, _, d in graph.edges(data=True)),
-            "explicit_mapping_edges": len(mappings),
-            "mapping_imports": imports,
-            "overlapping_pairs": sum(
-                p["shared_classes"] > 0 or p["shared_predicates"] > 0 for p in overlaps
-            ),
-        }
-        for name, data in (
-            ("paper_statistics.json", stats),
-            ("schema_overlaps.json", overlaps),
-            ("class_connectivity.json", node_link_data(graph)),
-        ):
-            (output / name).write_text(json.dumps(data, indent=2))
-        return stats
+        output = self.config.output_dir
+        manifest = build_release_manifest(output)
+        write_release_manifest(manifest, output)
+        result = analyze_release(output)
+        write_release_analysis(result, output)
+        write_release_manifest(
+            build_release_manifest(output, release_id=manifest.release_id, issued=manifest.issued),
+            output,
+        )
+        return result["paper_statistics"]
