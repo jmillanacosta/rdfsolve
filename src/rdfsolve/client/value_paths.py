@@ -74,7 +74,11 @@ def value_paths(
             batch = fragments[start : start + client.batch_size]
             for index, fragment in enumerate(batch, start):
                 hops = len(fragment.steps)
-                pattern = fragment.render([f"?n{i}" for i in range(hops + 1)], lambda: "?_unused")
+                pattern = fragment.render(
+                    [f"?n{i}" for i in range(hops + 1)],
+                    lambda: "?_unused",
+                    type_pattern=client._type_pattern,
+                )
                 bindings = [f"BIND({index} AS ?route)"]
                 for i, (_, predicate, _, back) in enumerate(fragment.steps):
                     bindings += [

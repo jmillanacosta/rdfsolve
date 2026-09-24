@@ -29,3 +29,10 @@ def test_companion_types_across_client_operations():
         result = client.select(client.prepare_path(route.Reference))
         assert result.row_count == 1, "Generated paths must use the same typing scope as mining"
         assert all(cell.value != "Excluded" for row in result.rows for cell in row.values())
+
+        actual = client.paths_between(source[0], "urn:example:Group", max_hops=1)
+        assert len(actual) == 1, "Record paths must find targets typed in companion graphs"
+        assert actual.iloc[0]["To class"] == client.type_name(group), "Show the target's companion type"
+        connections = client.connections(source[0], max_hops=1, both_directions=False)
+        assert len(connections) == 1, "Companion properties must not become data links"
+        assert connections.iloc[0]["To class"] == client.type_name(group)

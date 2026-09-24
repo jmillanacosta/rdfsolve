@@ -414,7 +414,9 @@ def _add_classes(client: Client, table: pd.DataFrame, routes: list[dict[str, Any
     with client.step("Read classes along connections"):
         for start in range(0, len(nodes), batch_size):
             values = " ".join(safe_nodes[node] for node in nodes[start : start + batch_size])
-            body = client._scope(f"VALUES ?resource {{ {values} }} ?resource a ?class")
+            body = client._scope(
+                f"VALUES ?resource {{ {values} }} " + client._type_pattern("?resource", "?class")
+            )
             found = client._select(
                 f"SELECT DISTINCT ?resource ?class ?_graph WHERE {{ {body} }} LIMIT {client.max_rows + 1}"
             )
