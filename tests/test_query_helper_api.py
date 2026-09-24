@@ -26,6 +26,13 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
         monkeypatch.setattr(helper._session, "request", request)
         with pytest.raises(EndpointError, match="query rejected"):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        response._content = b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+        helper.max_retries = 3
+        helper.initial_backoff = 0
+        with pytest.raises(EndpointTimeoutError, match="Tried to allocate"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 2, "A query memory limit must reach the caller without retries"
+        helper.max_retries = 1
         response.status_code = 429
         response._content = b'{"exception":"Operation timed out: deadline exceeded"}'
         with pytest.raises(EndpointTimeoutError, match="Operation timed out"):
@@ -39,4 +46,4 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
         with pytest.raises(EndpointRateLimitError):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
         defer.assert_called_once_with("example.org", 30)
-        assert request.call_count == 3, "Rejected queries must not repeat unchanged"
+        assert request.call_count == 4, "Rejected queries must not repeat unchanged"

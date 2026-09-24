@@ -204,6 +204,7 @@ class SparqlHelper:
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
+        "tried to allocate",
     )
 
     def enable_query_collection(
