@@ -148,6 +148,7 @@ class MinedSchema(BaseModel):
         graph: Graph,
         *,
         graph_uris: list[str] | None = None,
+        type_context_graph_uris: list[str] | None = None,
     ) -> list[CollectionProfile]:
         """Inspect lists in a local snapshot within the schema scope or an explicit scope."""
         from rdfsolve.mining.collections import discover_collections
@@ -155,6 +156,11 @@ class MinedSchema(BaseModel):
         self.collections = discover_collections(
             graph,
             graph_uris=self.about.graph_uris if graph_uris is None else graph_uris,
+            type_context_graph_uris=(
+                self.about.type_context_graph_uris
+                if type_context_graph_uris is None
+                else type_context_graph_uris
+            ),
         )
         return self.collections
 

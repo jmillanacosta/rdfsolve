@@ -1,4 +1,4 @@
-"""Read RDF lists within each selected graph of a local snapshot."""
+"""Read RDF lists across selected data graphs with separate type context."""
 
 from __future__ import annotations
 
@@ -10,7 +10,11 @@ from rdflib.term import Node
 from rdfsolve.schema_models.collections import CollectionProfile
 
 
-def _members(graph: Graph, head: Node) -> list[Node]:
+def _objects(graphs: list[Graph], subject: Node, predicate: Node) -> set[Node]:
+    return {value for graph in graphs for value in graph.objects(subject, predicate)}
+
+
+def _members(graphs: list[Graph], head: Node) -> list[Node]:
     members: list[Node] = []
     seen: set[Node] = set()
     cell = head
@@ -18,7 +22,10 @@ def _members(graph: Graph, head: Node) -> list[Node]:
         if cell in seen or not isinstance(cell, (URIRef, BNode)):
             raise ValueError("Cyclic or non-resource list cell")
         seen.add(cell)
-        first, rest = list(graph.objects(cell, RDF.first)), list(graph.objects(cell, RDF.rest))
+        first, rest = (
+            list(_objects(graphs, cell, RDF.first)),
+            list(_objects(graphs, cell, RDF.rest)),
+        )
         if len(first) != 1 or len(rest) != 1:
             raise ValueError("Each list cell needs one rdf:first and one rdf:rest")
         members.append(first[0])
@@ -30,8 +37,9 @@ def discover_collections(
     source: Graph,
     *,
     graph_uris: list[str] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> list[CollectionProfile]:
-    """Describe typed owners' RDF lists without combining named graphs.
+    """Describe RDF lists across selected data graphs and retain each owner-edge graph.
 
     None or an empty scope selects the default graph. Malformed lists are
     counted separately; observed lengths do not impose cardinality constraints.
@@ -52,10 +60,18 @@ def discover_collections(
             )
         ]
     )
+    data_graphs = [graph for _, graph in graphs]
+    type_graphs = data_graphs + (
+        [source.graph(URIRef(iri)) for iri in type_context_graph_uris or []]
+        if isinstance(source, Dataset)
+        else []
+    )
     result: list[CollectionProfile] = []
     for graph_uri, graph in graphs:
         profiles: dict[tuple[str, str], CollectionProfile] = {}
-        heads = set(graph.subjects(RDF.first)) | set(graph.subjects(RDF.rest)) | {RDF.nil}
+        heads = {s for g in data_graphs for p in (RDF.first, RDF.rest) for s in g.subjects(p)} | {
+            RDF.nil
+        }
         for head in sorted(heads, key=str):
             owners = [
                 (s, p)
@@ -65,11 +81,11 @@ def discover_collections(
             if not owners:
                 continue
             try:
-                members = _members(graph, head)
+                members = _members(data_graphs, head)
             except ValueError:
                 members = None
             for owner, predicate in owners:
-                for cls in graph.objects(owner, RDF.type):
+                for cls in _objects(type_graphs, owner, RDF.type):
                     if not isinstance(cls, URIRef):
                         continue
                     key = str(cls), str(predicate)
@@ -121,7 +137,7 @@ def discover_collections(
                                 set(profile.member_types)
                                 | {
                                     str(t)
-                                    for t in graph.objects(member, RDF.type)
+                                    for t in _objects(type_graphs, member, RDF.type)
                                     if isinstance(t, URIRef)
                                 }
                             )

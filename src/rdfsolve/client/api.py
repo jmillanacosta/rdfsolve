@@ -29,9 +29,11 @@ from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 
 if TYPE_CHECKING:
     from rdfsolve.client.catalogue import Catalogue
+    from rdfsolve.client.extraction import Extraction
     from rdfsolve.client.ontology import OntologyLookup
     from rdfsolve.client.query import QueryResult
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
+    from rdfsolve.schema_models.selection import SchemaSelection
 
 
 def _key(name: str) -> str:
@@ -466,6 +468,14 @@ class Client(DatasetClient):
             row_count=len(rows),
             duration_ms=round((perf_counter() - started) * 1000),
         )
+
+    def extract(
+        self, selection: SchemaSelection, *, root_class: str, roots: list[str] | None = None
+    ) -> Extraction:
+        """Retrieve selected connected fields, list cells and original graph evidence."""
+        from rdfsolve.client.extraction import extract
+
+        return extract(self, selection, root_class, roots)
 
     def field_values(
         self, kind: str, field: str, *, text: str = "", limit: int = 8, offset: int = 0

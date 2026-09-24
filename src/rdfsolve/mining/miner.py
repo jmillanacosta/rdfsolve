@@ -778,7 +778,11 @@ class SchemaMiner:
         if isinstance(dataset, Graph):
             phase = self._report.start_phase("collections")
             try:
-                profiles = schema.discover_collections(dataset, graph_uris=self.graph_uris or [])
+                profiles = schema.discover_collections(
+                    dataset,
+                    graph_uris=self.graph_uris or [],
+                    type_context_graph_uris=self.type_context_graph_uris or [],
+                )
                 self._report.report.config["collection_profile_count"] = len(profiles)
                 self._report.report.config["invalid_collection_count"] = sum(
                     p.invalid_count for p in profiles
