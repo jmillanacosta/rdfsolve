@@ -43,6 +43,7 @@ def typed_match(
         "?_contextGraph", "?_objectAnyGraph"
     )
     return f"""EXISTS {{
+?s ?p ?o .
 VALUES (?_coveredSubject ?_coveredPredicate ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 {subject_type}
 FILTER(?p = ?_coveredPredicate)

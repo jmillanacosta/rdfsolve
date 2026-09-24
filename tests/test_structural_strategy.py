@@ -185,3 +185,18 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         with pytest.raises(EndpointError, match="coverage unavailable"):
             miner.mine("failed coverage")
         assert miner.last_report.completion_state != "complete"
+
+    with SchemaMiner.from_graph(mixed, graph_uris=["urn:data"], delay=0) as miner:
+        select = miner.helper.select
+        def zero_coverage(query, purpose=""):
+            assert purpose != "structural/discovery", "Contradictory coverage must stop extraction"
+            response = select(query, purpose)
+            if purpose == "structural/coverage":
+                for row in response["results"]["bindings"]:
+                    row["covered"]["value"] = "false"
+            return response
+        monkeypatch.setattr(miner.helper, "select", zero_coverage)
+        with pytest.raises(ValueError, match="Typed observations have zero edge coverage"):
+            miner.mine("contradictory coverage")
+        assert miner.last_report.completion_state == "failed"
+        assert all(e["state"] == "failed" for e in miner.last_report.config["structural_coverage"])

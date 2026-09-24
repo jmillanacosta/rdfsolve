@@ -12,6 +12,7 @@ from rdflib import Literal
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 from rdfsolve.mining.typed_coverage import eligible_subject, typed_match, uncovered_filter
+from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
 
@@ -138,7 +139,9 @@ class StructuralStrategy(MiningStrategy):
             {
                 (p.subject_class, p.property_uri, p.object_class, p.datatype)
                 for p in patterns
-                if p.subject_binding == p.object_binding == "type" and p.evidence_source == "mined"
+                if p.subject_binding == p.object_binding == "type"
+                and p.evidence_source == "mined"
+                and p.subject_class not in EXCLUDED_RECORD_TYPES
             },
             key=str,
         )
@@ -193,6 +196,10 @@ BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS
             except Exception:
                 entry["state"] = "failed"
                 raise
+        if keys and not any(entry["covered_triples"] for entry in coverage):
+            for entry in coverage:
+                entry.update(state="failed", reason="typed_coverage_mismatch")
+            raise ValueError("Typed observations have zero edge coverage")
         context.report.finish_phase(phase, items=len(coverage))
         if not any(entry["uncovered_triples"] for entry in coverage):
             return patterns
