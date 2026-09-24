@@ -45,6 +45,22 @@ RDFLib can normalize lexical forms when Literal is constructed. Use
 normalize=False or RdfTerm when the original spelling matters; rdfsolve
 preserves the supplied term but cannot recover text already normalized.
 
+Client.create and Client.from_table resolve plain values against the field
+definition. A date field allowing gYear, gYearMonth and date accepts
+"2026", "2026-09" and "2026-09-24" with their respective datatypes and
+unchanged lexical forms. Calendar dates and timezone offsets are checked.
+Invalid or ambiguous values raise an error naming the field. Custom datatypes
+whose lexical forms cannot be checked require an explicit Literal or RdfTerm.
+
+Pass language="en" to either method as a default for language-tagged fields
+and collection members. It does not add language tags to IRIs or typed
+numbers and dates. Explicit terms and per-column defaults take precedence.
+Where a field permits both an IRI and text, pass URIRef or Literal explicitly.
+
+Pass extra_types=["https://example.org/Other"] to create to add RDF type
+assertions on the same node. The primary model class is retained. Extra
+types do not combine generated models or validate the additional classes.
+
 Use client.save("records.ttl", record, table_results) to save individual
 records and table results together.
 
@@ -79,10 +95,11 @@ Ordered RDF collections
 
 Use RDFList for an ordered collection. Ordinary Python lists still write
 multiple predicate values. Collections preserve order and duplicates, and
-an empty collection writes rdf:nil. Plain strings are literal members.
-Use URIRef("https://example.org/person") for an IRI reference, BNode for a
-blank node, or a generated record for a typed member. A reference alone
-does not establish the referenced resource's class.
+an empty collection writes rdf:nil. Plain members use the owning field's
+collection profile: a string IRI becomes a reference in a resource-only
+collection; numbers use the permitted literal datatype. If both a reference
+and text are valid, use URIRef or Literal to state which you mean. Explicit
+terms keep their metadata. A reference does not establish its target's class.
 
 .. code-block:: python
 

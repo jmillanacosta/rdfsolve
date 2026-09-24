@@ -27,13 +27,26 @@ class RDFList(BaseModel, Generic[Member]):
         if not isinstance(values, (list, tuple)):
             raise ValueError("RDFList items must be a list or tuple")
         return [
-            RdfTerm.from_rdf(value)
-            if isinstance(value, (Literal, URIRef, BNode))
-            else value
-            if isinstance(value, (BaseModel, dict))
-            else RdfTerm.from_rdf(Literal(value))
+            RdfTerm.from_rdf(value) if isinstance(value, (Literal, URIRef, BNode)) else value
             for value in values
         ]
+
+
+def member_patterns(extra: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return RDF kinds and datatypes permitted for collection members."""
+    patterns = []
+    for profile in extra.get("rdf_collections", []):
+        kinds = set(profile["member_kinds"])
+        if "IRI" in kinds or profile["member_types"]:
+            patterns.append({"object_class": "Resource"})
+        if "BlankNode" in kinds or profile["member_types"]:
+            patterns.append({"object_class": "BlankNode"})
+        if "Literal" in kinds:
+            patterns.extend(
+                {"object_class": "Literal", "datatype": datatype}
+                for datatype in profile["member_datatypes"] or [None]
+            )
+    return patterns
 
 
 def write_collection(
@@ -44,7 +57,7 @@ def write_collection(
     field: str,
 ) -> Identifier:
     """Write one collection with stable cells and its nested records."""
-    from rdfsolve.client.authoring import _check_term
+    from rdfsolve.client.authoring import _check_term, coerce_value
     from rdfsolve.client.hydration import class_iri
     from rdfsolve.client.model_rdf import _add_record, _new_term
 
@@ -57,6 +70,9 @@ def write_collection(
     nodes = []
     for index, member in enumerate(value.items):
         location = f"{field}[{index}]"
+        member = coerce_value(member, {"rdf_patterns": member_patterns(extra)}, location)
+        if isinstance(member, (Literal, URIRef, BNode)):
+            member = RdfTerm.from_rdf(member)
         if isinstance(member, RdfTerm):
             term = member
             _check_term(term, [], location)

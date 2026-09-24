@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import re
+from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
@@ -10,6 +11,105 @@ from rdflib import RDF, XSD, BNode, Graph, Literal, URIRef
 
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import absolute_iri
+
+
+def _date_lexical(text: str, datatype: str) -> bool | None:
+    """Check calendar fields and timezone offsets for XML Schema dates."""
+    suffix = {
+        str(XSD.gYear): "",
+        str(XSD.gYearMonth): r"-(?P<month>[0-9]{2})",
+        str(XSD.date): r"-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})",
+    }.get(datatype)
+    if suffix is None:
+        return None
+    match = re.fullmatch(
+        r"(?P<year>-?(?:[0-9]{4}|[1-9][0-9]{4,}))" + suffix + r"(?P<zone>Z|[+-][0-9]{2}:[0-9]{2})?",
+        text,
+    )
+    if match is None:
+        return False
+    fields = match.groupdict()
+    zone = fields.get("zone")
+    if zone and zone != "Z":
+        hours, minutes = map(int, zone[1:].split(":"))
+        if hours > 14 or minutes > 59 or (hours == 14 and minutes):
+            return False
+    month = int(fields.get("month") or 1)
+    year = int(fields["year"])
+    if not 1 <= month <= 12:
+        return False
+    leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+    days = (31, 29 if leap else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    return 1 <= int(fields.get("day") or 1) <= days[month - 1]
+
+
+def coerce_value(
+    value: Any,
+    extra: dict[str, Any],
+    field: str,
+    language: str | None = None,
+) -> Any:
+    """Resolve plain values only when the field permits one RDF interpretation."""
+    from rdfsolve.client.collections import RDFList, member_patterns
+
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [coerce_value(item, extra, field, language) for item in value]
+    if isinstance(value, RDFList):
+        metadata = {"rdf_patterns": member_patterns(extra)}
+        return value.model_copy(
+            update={
+                "items": [
+                    coerce_value(item, metadata, f"{field}[{i}]", language)
+                    for i, item in enumerate(value.items)
+                ]
+            }
+        )
+    if isinstance(value, (RdfTerm, Literal, URIRef, BNode, BaseModel)):
+        return value
+    patterns = extra.get("rdf_patterns", [])
+    if not patterns:
+        return value
+    candidates: dict[tuple[str, str | None, str | None], RdfTerm] = {}
+    for pattern in patterns:
+        kind = pattern["object_class"]
+        if kind != "Literal":
+            if not isinstance(value, str):
+                continue
+            term = RdfTerm(
+                kind="bnode" if value.startswith("_:") else "uri",
+                value=value.removeprefix("_:"),
+            )
+            try:
+                _check_term(term, [pattern], field)
+            except ValueError:
+                continue
+        else:
+            datatype = pattern.get("datatype") or str(XSD.string)
+            if datatype == str(RDF.langString):
+                if not language or not isinstance(value, str):
+                    continue
+                term = RdfTerm(kind="literal", value=value, language=language)
+            else:
+                literal = Literal(value, datatype=URIRef(datatype), normalize=False)
+                lexical = _date_lexical(str(literal), datatype)
+                parsed = Literal(str(literal), datatype=URIRef(datatype), normalize=False)
+                if datatype != str(XSD.string) and (
+                    lexical is False or (lexical is None and parsed.ill_typed is not False)
+                ):
+                    continue
+                term = RdfTerm.from_rdf(literal)
+            try:
+                _check_term(term, [pattern], field)
+            except ValueError:
+                continue
+        candidates[(term.kind, term.datatype, term.language)] = term
+    if len(candidates) == 1:
+        return next(iter(candidates.values()))
+    if candidates:
+        raise ValueError(f"{field}: Ambiguous RDF value; use an explicit RDF term")
+    raise ValueError(f"{field}: no valid RDF interpretation; check datatype, language or IRI")
 
 
 def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> None:
@@ -21,7 +121,9 @@ def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> No
         if term.datatype == str(RDF.langString) and not term.language:
             raise ValueError(f"{field}: rdf:langString needs a language")
         literal = term.to_rdf()
-        if isinstance(literal, Literal) and literal.ill_typed:
+        if (isinstance(literal, Literal) and literal.ill_typed) or _date_lexical(
+            term.value, term.datatype or ""
+        ) is False:
             raise ValueError(f"{field}: invalid lexical form for {term.datatype}")
     if not patterns:
         return
@@ -140,11 +242,16 @@ def create_record(
     *,
     uri: str | BNode | None = None,
     blank_node_scope: str | None = None,
+    language: str | None = None,
+    extra_types: Sequence[str] = (),
 ) -> BaseModel:
     """Create a named or anonymous record with explicit blank-node scope."""
-    from rdfsolve.client.hydration import class_iri
+    from rdfsolve.client.hydration import class_iri, field_metadata
 
-    data = dict(values)
+    data = {
+        name: coerce_value(value, field_metadata(model.model_fields[name]), name, language)
+        for name, value in values.items()
+    }
     if uri is not None:
         identifier = "_:" + str(uri) if isinstance(uri, BNode) else uri
         if not identifier.startswith("_:"):
@@ -152,7 +259,11 @@ def create_record(
         elif not identifier[2:]:
             raise ValueError("A blank node needs a label")
         data["uri"] = identifier
-    data["rdf_type"] = [class_iri(model)]
+    if isinstance(extra_types, str):
+        raise ValueError("extra_types must be a sequence of IRIs")
+    for iri in extra_types:
+        absolute_iri(iri)
+    data["rdf_type"] = list(dict.fromkeys([class_iri(model), *extra_types]))
     if blank_node_scope is not None:
         if not blank_node_scope:
             raise ValueError("Use a nonempty blank_node_scope")

@@ -249,7 +249,11 @@ def to_pydantic(
                         for cls in profile["member_types"]
                     }
                 )
-                types.append("RDFList[" + " | ".join(["RdfTerm", *member_types]) + "]")
+                types.append(
+                    "RDFList["
+                    + " | ".join(["RdfTerm", "str", "int", "float", "bool", *member_types])
+                    + "]"
+                )
             value_type = " | ".join(types)
             description = schema.enrichment.description(prop) or "; ".join(
                 sorted({p.property_label for p in patterns if p.property_label})

@@ -765,14 +765,27 @@ class Client(DatasetClient):
         *,
         uri: str | BNode | None = None,
         blank_node_scope: str | None = None,
+        language: str | None = None,
+        extra_types: list[str] | tuple[str, ...] = (),
         **values: Any,
     ) -> BaseModel:
-        """Create a typed record. Omit uri for a new blank node; pass RDF literals as values."""
+        """Create a record with schema-guided values and optional extra type IRIs.
+
+        Language supplies a default for language-tagged fields. Explicit RDF
+        terms retain their metadata. Extra types add assertions to this node.
+        """
         from rdfsolve.client.authoring import create_record
 
         model = self.model(kind)
         fields = {self.field_name(model, field): value for field, value in values.items()}
-        return create_record(model, fields, uri=uri, blank_node_scope=blank_node_scope)
+        return create_record(
+            model,
+            fields,
+            uri=uri,
+            blank_node_scope=blank_node_scope,
+            language=language,
+            extra_types=extra_types,
+        )
 
     def from_table(
         self,
@@ -780,6 +793,7 @@ class Client(DatasetClient):
         table: pd.DataFrame,
         *,
         id_column: str | None = None,
+        language: str | None = None,
         languages: Mapping[str, str] | None = None,
         datatypes: Mapping[str, str] | None = None,
         blank_node_scope: str | None = None,
@@ -819,7 +833,13 @@ class Client(DatasetClient):
                     for field, column in fields.items()
                 }
                 records.append(
-                    create_record(model, values, uri=identifier, blank_node_scope=blank_node_scope)
+                    create_record(
+                        model,
+                        values,
+                        uri=identifier,
+                        blank_node_scope=blank_node_scope,
+                        language=language,
+                    )
                 )
             except (TypeError, ValueError) as error:
                 raise ValueError(f"row {position} (index {index!r}): {error}") from error

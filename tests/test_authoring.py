@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace
+from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.compare import isomorphic
 
 from rdfsolve import MinedSchema, SchemaPattern
@@ -23,6 +23,7 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
                 (E.label, "Literal", str(RDF.langString)),
                 (E.date, "Literal", str(XSD.gYear)),
                 (E.date, "Literal", str(XSD.date)),
+                (E.date, "Literal", str(XSD.gYearMonth)),
                 (E.part, str(E.Part), None),
                 (E.part, "Literal", str(RDF.langString)),
             ]
@@ -96,6 +97,32 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert (None, RDF.type, E.Part) in left.to_graph()
         linked = client.create(str(E.Item), part=left).to_graph()
         assert next(linked.objects(None, E.part)) in set(linked.subjects(RDF.type, E.Part))
+
+        inferred = client.create(
+            str(E.Item), uri=str(E.one), language="en", extra_types=[str(E.Other)],
+            label="One", date="2026-09", part=part,
+        ).to_graph()
+        assert (E.one, E.date, Literal("2026-09", datatype=XSD.gYearMonth, normalize=False)) in inferred
+        assert (E.one, E.label, Literal("One", lang="en")) in inferred
+        assert set(inferred.objects(E.one, RDF.type)) == {E.Item, E.Other}
+        inferred_rows = client.from_table(
+            str(E.Item), pd.DataFrame([{"label": "One", "date": "2026-09"}]),
+            language="en", label="label", date="date",
+        )
+        assert set(inferred_rows[0].to_graph().objects(None, E.date)) == {
+            Literal("2026-09", datatype=XSD.gYearMonth, normalize=False)
+        }
+        for bad in ("2026-99", "2026-02-30", "2026-09+14:01"):
+            with pytest.raises(ValueError, match="date"):
+                client.create(str(E.Item), date=bad)
+        with pytest.raises(ValueError, match="date"):
+            client.create(str(E.Item), date=Literal("2026-09", datatype=XSD.gYear, normalize=False))
+        with pytest.raises(ValueError, match="part.*[Aa]mbiguous"):
+            client.create(str(E.Item), language="en", part=str(E.Part))
+        explicit = client.create(str(E.Item), part=URIRef(E.Part), language="en")
+        assert (None, E.part, E.Part) in explicit.to_graph()
+        with pytest.raises(ValueError, match="IRI"):
+            client.create(str(E.Item), extra_types=["relative"])
 
         with pytest.raises(ValueError, match="label"):
             client.create(str(E.Item), label=Literal(1, datatype=XSD.integer))
