@@ -126,6 +126,14 @@ def _complete_shapes(
 
     from rdfsolve.schema_models.navigation import NavigationPath
 
+    inactive = sum(shape.deactivated for shape in shapes.node_shapes)
+    if inactive:
+        logging.getLogger(__name__).warning(
+            "SHACL export contains %d deactivated node shapes. These shapes do not "
+            "validate data. Use activate_observed=True to enforce generated one-hop templates; "
+            "retained source constraints keep their activation state.",
+            inactive,
+        )
     shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes

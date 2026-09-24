@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from hashlib import sha256
+from importlib.resources import files
 from typing import TYPE_CHECKING, Any, cast
 
 from bioregistry import curie_from_iri
@@ -86,11 +87,13 @@ def make_valid_linkml_name(uri_or_curie: str) -> str:
 # Core conversion
 
 
-def _names(iris: list[str], labels: dict[str, str]) -> dict[str, str]:
+def _names(iris: list[str], labels: dict[str, str], reserved: set[str]) -> dict[str, str]:
     result = {}
-    used: set[str] = set()
+    used = set(reserved)
     for iri in sorted(iris):
         name = make_valid_linkml_name(labels.get(iri) or iri) or "term"
+        if name in used:
+            name = make_valid_linkml_name(iri)
         if name in used:
             name += "_" + sha256(iri.encode()).hexdigest()[:8]
         used.add(name)
@@ -119,8 +122,15 @@ def to_linkml(
                 labels.setdefault(iri, label)
     for annotation in schema.enrichment.labels:
         labels.setdefault(annotation.term_iri, annotation.text.value)
-    class_names = _names(schema.get_classes(), labels)
-    slot_names = _names(schema.get_properties(), labels)
+    from linkml_runtime.utils.schemaview import SchemaView
+
+    builtin_types = set(
+        SchemaView(
+            str(files("linkml_runtime").joinpath("linkml_model/model/schema/types.yaml"))
+        ).all_types()
+    )
+    class_names = _names(schema.get_classes(), labels, builtin_types)
+    slot_names = _names(schema.get_properties(), labels, builtin_types | set(class_names.values()))
     types: dict[str, TypeDefinition] = {}
     classes = {
         iri: ClassDefinition(
