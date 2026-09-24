@@ -18,7 +18,9 @@ def test_extract_selected_connected_records(tmp_path):
     path=next(p for p in nav.paths if p.steps[-1].property_uri=="urn:example:label")
     selection=schema.select(paths=[path])
     with Client(schema,data) as client:
-        result=client.extract(selection, root_class="urn:example:Chemical")
+        model=client.model("Chemical")
+        records=client.sample(model, limit=2)
+        result=client.extract(selection, root_class=model, roots=[str(r.uri) for r in records])
         assert len(result.roots)==2, "Retain chemicals without the selected relationship"
         assert len(result.quads)==8, "Two roots, two links, two labels and two group types"
         assert {q.graph for q in result.quads}=={"urn:example:data","urn:example:labels","urn:example:types"}
@@ -31,7 +33,7 @@ def test_extract_selected_connected_records(tmp_path):
         restored.save(target)
         saved=Dataset().parse(target,format="trig")
         assert len(saved.graph(URIRef("urn:example:labels")))==2
-        only=client.extract(selection,root_class="urn:example:Chemical",roots=["urn:example:missing"])
+        only=client.extract(selection,root_class="Chemical",roots=["urn:example:missing"])
         assert len(only.roots)==1 and len(only.quads)==1
     with Client(schema,data,max_rows=1) as client:
         with pytest.raises(HydrationLimitError):

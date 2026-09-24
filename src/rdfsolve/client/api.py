@@ -470,12 +470,18 @@ class Client(DatasetClient):
         )
 
     def extract(
-        self, selection: SchemaSelection, *, root_class: str, roots: list[str] | None = None
+        self,
+        selection: SchemaSelection,
+        *,
+        root_class: str | type[BaseModel],
+        roots: list[str] | None = None,
     ) -> Extraction:
         """Retrieve selected connected fields, list cells and original graph evidence."""
         from rdfsolve.client.extraction import extract
 
-        return extract(self, selection, root_class, roots)
+        model = self.model(root_class) if isinstance(root_class, str) else root_class
+        self._check_model_scope(model)
+        return extract(self, selection, class_iri(model), roots)
 
     def field_values(
         self, kind: str, field: str, *, text: str = "", limit: int = 8, offset: int = 0
