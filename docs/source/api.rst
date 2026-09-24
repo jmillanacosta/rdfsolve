@@ -253,3 +253,23 @@ are included; inspect report.results for ambiguous and unresolved inputs.
 An empty accepted set yields FILTER(1 = 0). Keep the input rows and the
 report so returned resolution positions identify the original records.
 This prepares bindings only; callers retain query scope and execution budgets.
+
+
+Select source-backed fields
+---------------------------
+
+Use schema.select(paths=[route], fields=[(class_iri, predicate_iri)]) to keep
+fields needed for an application. Routes must already occur in schema.navigation.
+The result retains an independent copy of the complete source schema. Save it
+with model_dump_json() and reload with SchemaSelection.model_validate_json()
+from rdfsolve.schema_models.selection.
+
+selection.patterns contains every range observed for the selected fields and
+path steps. selection.collections retains their list profiles. Counts and partial
+population states keep their original meaning and denominators. selection.paths
+keeps the source's joined-support evidence. No queries run during selection.
+
+Provider shapes, original RDF, structural evidence and other source fields remain
+under selection.source as context. They are not projected or adopted constraints.
+This view does not extract instance data, prove a path works, or close a SHACL
+shape. Selection of untyped structural paths is not yet supported.

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from rdfsolve.client.hydration import Hydrator
     from rdfsolve.local_rdf import LocalBackend
     from rdfsolve.schema_models.metadata import MetadataDocument
+    from rdfsolve.schema_models.selection import SchemaSelection
     from rdfsolve.sparql_helper import SparqlHelper
 
 
@@ -184,6 +185,19 @@ class MinedSchema(BaseModel):
         from rdfsolve.mining.navigation import probe_paths
 
         return probe_paths(self, paths, helper=helper)
+
+    def select(
+        self,
+        *,
+        paths: Sequence[NavigationPath] = (),
+        fields: Sequence[tuple[str, str]] = (),
+    ) -> SchemaSelection:
+        """Select class-property fields and retained paths with a copy of source evidence."""
+        from rdfsolve.schema_models.selection import SchemaSelection
+
+        return SchemaSelection(
+            source=self.model_copy(deep=True), fields=list(fields), paths=list(paths)
+        )
 
     # Service-namespace filtering
 
