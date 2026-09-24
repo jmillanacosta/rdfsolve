@@ -635,6 +635,8 @@ class Client(DatasetClient):
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Accept generated names, spaced names, or full class IRIs."""
         name_or_iri = str(name_or_iri)
+        if name_or_iri in self.models:
+            return self.models[name_or_iri]
         for model in self.models.values():
             if class_iri(model) == name_or_iri:
                 return model
@@ -648,8 +650,6 @@ class Client(DatasetClient):
                 f"Unknown or ambiguous class {name_or_iri!r}; use a full IRI: "
                 + ", ".join(sorted(class_iri(model) for model in local_matches))
             )
-        if name_or_iri in self.models:
-            return self.models[name_or_iri]
         matches = [
             model
             for name, model in self.models.items()
@@ -1078,7 +1078,7 @@ class Results:
         models = {type(record) for record in self.records}
         for source in self.client.models.values() if incoming else models:
             for row in self.client.links(source).itertuples(index=False):
-                target = self.client.model(str(row.target))
+                target = self.client.models[str(row.target)]
                 if not incoming or target in models:
                     routes.append(
                         (target, str(row.field), source)
@@ -1124,10 +1124,10 @@ class Results:
             except ValueError:
                 intermediate = None
             if intermediate is not None:
-                middle = self.related(intermediate.__name__, incoming=incoming)
+                middle = self.related(class_iri(intermediate), incoming=incoming)
                 return middle.related(kind, value=value, incoming=incoming)
         if kind is None:
-            targets = sorted({target.__name__ for _, _, target in self._routes(incoming)})
+            targets = sorted({class_iri(target) for _, _, target in self._routes(incoming)})
             records: list[BaseModel] = []
             for name in targets:
                 records.extend(self.related(name, via=via, value=value, incoming=incoming))

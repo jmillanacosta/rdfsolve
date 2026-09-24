@@ -70,7 +70,7 @@ def class_paths(
     unsupported: list[str] = []
     for cls, model in models.items():
         for link in client.links(model).to_dict(orient="records"):
-            target_iri = class_iri(client.model(str(link["target"])))
+            target_iri = class_iri(client.models[str(link["target"])])
             try:
                 steps = linear_steps(link["path"])
             except ValueError:

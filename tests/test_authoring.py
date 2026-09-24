@@ -145,8 +145,10 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         for iri in ("https://schema.org/Person", "http://xmlns.com/foaf/0.1/Person")
     ])
     with Client(people, Graph()) as client:
+        client.models["Person"] = client.model("https://schema.org/Person")
+        assert client.model("Person").rdf_class_iri == "https://schema.org/Person"
         with pytest.raises(ValueError, match="ambiguous") as error:
-            client.model("Person")
+            client.model("person")
         assert all(iri in str(error.value) for iri in people.get_classes())
         iri = "https://schema.org/Person"
         model = client.model(iri)
