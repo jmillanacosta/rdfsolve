@@ -294,8 +294,9 @@ path remain as rows with unbound intermediate/target values. Set
 include_unmatched=False to retrieve only complete matches.
 
 Selected-path queries reuse the mining scope: data edges join across selected
-data graphs; companion graphs supply subject and object types. General client path
-templates currently resolve their class filters in the selected data graphs.
+data graphs; companion graphs supply subject and object types. Generated client
+fragments, samples and link retrieval also use companion types.
+Handwritten SPARQL retains its explicit type clauses.
 A path needs to have been discovered or supplied before it can be selected.
 Mining includes fields on data subjects typed in companion context. Companion-only
 subjects without outgoing data edges are excluded from class discovery and
@@ -303,5 +304,43 @@ populations. A failed match is not an ontology inconsistency.
 
 Cross-graph results retain their query and selected scope. A missing single
 graph value is not evidence that the path came from the default graph.
-Per-edge graph witnesses and full shape-directed subgraph extraction remain
-separate work. No new SHACL constraints are adopted by query generation.
+Selected extraction retains each statement's graph. Full SHACL shape-fragment
+semantics remain separate work. Query generation adopts no new SHACL constraints.
+
+
+Extract and assess selected RDF
+--------------------------------
+
+client.extract(selection, root_class=class_iri, roots=None) returns the
+selected connected records. Omit roots for all matching data subjects, or
+supply exact resource IRIs. Paths must start at the root class; extra selected
+fields must belong to a class reached by those paths. Unmatched roots remain.
+Every selected field retains all its actual values. Intermediate identities,
+type statements and selected RDF list cells remain available.
+
+result.quads records the graph of each returned statement. result.roots
+contains the starting records; result.selection retains the source schema.
+result.save("selected.trig") preserves named graphs. Blank nodes remain
+within one response and receive a response-specific scope when restored.
+Extraction uses one SELECT for local or remote sources. Exceeding max_rows
+raises an error; a successful response cannot certify an endpoint's hidden limits.
+
+result.assess(shapes_graph, ontology=ontology_graph, inference="none")
+checks the extracted RDF union with pySHACL from the validation extra.
+The supplied shapes and ontology remain unchanged. The report keeps declarations,
+individual violations, inactive-targeted-shape counts, retained path support,
+and comparisons between selected observations and simple declared constraints.
+Requirements outside the selected fields produce scope warnings. Closed shapes
+apply to the extracted view; they cannot certify absent properties in the source.
+
+Set inference="rdfs", "owlrl" or "both" explicitly for external
+inference. OWL-RL modes also retain contradictions reported by owlrl.
+No reported contradiction is not a proof of full OWL consistency.
+The report's source_conforms remains unknown. With no active targeted shapes,
+the result is not_checked. Validator failures remain error.
+Opening or closing a supplied shape is an explicit change to that shape's
+sh:closed value; extraction and probing do not make that decision.
+
+For example, selecting cell-line references does not imply that every cell line
+has one. A minimum count of one can expose missing references; a minimum count
+of zero permits them. Keep that application decision separate from mined counts.

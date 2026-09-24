@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import BNode, Dataset, URIRef
+from rdflib import BNode, Dataset, Graph, URIRef
 from rdflib.term import Node
 
 from rdfsolve.client.hydration import HydrationLimitError, _iri, _term
@@ -17,6 +17,7 @@ from rdfsolve.schema_models.selection import SchemaSelection
 
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client
+    from rdfsolve.client.assessment import Inference, SelectionAssessment
 
 RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
@@ -59,6 +60,14 @@ class Extraction(BaseModel):
             graph = result.graph(URIRef(quad.graph)) if quad.graph else result.default_graph
             graph.add((node(quad.subject), URIRef(quad.predicate), node(quad.object)))
         return result
+
+    def assess(
+        self, shapes: Graph, *, ontology: Graph | None = None, inference: Inference = "none"
+    ) -> SelectionAssessment:
+        """Check supplied SHACL and optional ontology rules on the extracted RDF."""
+        from rdfsolve.client.assessment import assess
+
+        return assess(self, shapes, ontology, inference)
 
     def save(self, path: str | Path) -> None:
         """Write TriG with every retained graph."""
