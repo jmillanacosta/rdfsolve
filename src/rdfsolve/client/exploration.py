@@ -85,6 +85,7 @@ class DatasetClient(Hydrator):
     def links(self, model: type[BaseModel] | str) -> pd.DataFrame:
         """List generated field paths and their possible target types without querying."""
         model = self.model(model) if isinstance(model, str) else model
+        self._check_model_scope(model)
         names = {getattr(cls, "rdf_class_iri", ""): name for name, cls in self.models.items()}
         rows = [
             {
@@ -113,6 +114,7 @@ class DatasetClient(Hydrator):
 
         Matching uses literal wording. Raise if the match count exceeds the limit.
         """
+        self._check_model_scope(model)
         if not text.strip():
             raise ValueError("Supply search text")
         if type(limit) is not int or not 1 <= limit <= self.max_subjects:
@@ -164,6 +166,8 @@ class DatasetClient(Hydrator):
                 f"CONTAINS(LCASE(STR(?_nameValue)), LCASE({Literal(value).n3()}))) }}"
             )
         source_model = type(records[0])
+        self._check_model_scope(source_model)
+        self._check_model_scope(target)
         if any(type(record) is not source_model for record in records):
             raise ValueError("Use records of one generated model")
         owner = target if inverse else source_model

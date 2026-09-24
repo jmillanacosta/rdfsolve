@@ -204,22 +204,22 @@ def probe_paths(
     return selected
 
 
-def observe_path(
+def _path_pattern(
     route: NavigationPath,
-    helper: SparqlHelper,
     graphs: list[str],
+    type_context_graph_uris: list[str] | None,
     *,
-    type_context_graph_uris: list[str] | None = None,
-) -> None:
-    """Measure whole-route support including focus nodes with no matching endpoint."""
-    from datetime import datetime, timezone
-
-    from rdflib import URIRef
+    include_unmatched: bool = True,
+) -> tuple[str, str]:
+    """Return dataset clauses and the typed path pattern."""
+    from rdfsolve.schema_models.paths import absolute_iri
 
     def iri(value: str) -> str:
         """Serialize an absolute IRI as a SPARQL term."""
-        return str(URIRef(value).n3())
+        return "<" + absolute_iri(value) + ">"
 
+    for graph in [*graphs, *(type_context_graph_uris or [])]:
+        absolute_iri(graph)
     dataset, _, _ = _graph_scope(graphs, type_context_graph_uris)
     body = []
     for i, step in enumerate(route.steps):
@@ -236,7 +236,38 @@ def observe_path(
             )
         else:
             body.append(_type_pattern(node, iri(step.object_class), type_context_graph_uris))
-    scoped = f"?n0 a {iri(route.steps[0].subject_class)} . OPTIONAL {{ {' '.join(body)} }}"
+    joined = " ".join(body)
+    if include_unmatched:
+        joined = f"OPTIONAL {{ {joined} }}"
+    return dataset, f"?n0 a {iri(route.steps[0].subject_class)} . {joined}"
+
+
+def path_query(
+    route: NavigationPath,
+    graphs: list[str],
+    *,
+    type_context_graph_uris: list[str] | None = None,
+    include_unmatched: bool = True,
+) -> str:
+    """Select source and intermediate RDF terms for one typed route."""
+    dataset, body = _path_pattern(
+        route, graphs, type_context_graph_uris, include_unmatched=include_unmatched
+    )
+    nodes = " ".join(f"?n{i}" for i in range(len(route.steps) + 1))
+    return f"SELECT DISTINCT {nodes} {dataset} WHERE {{ {body} }} ORDER BY {nodes}"
+
+
+def observe_path(
+    route: NavigationPath,
+    helper: SparqlHelper,
+    graphs: list[str],
+    *,
+    type_context_graph_uris: list[str] | None = None,
+) -> None:
+    """Measure whole-route support including focus nodes with no matching endpoint."""
+    from datetime import datetime, timezone
+
+    dataset, scoped = _path_pattern(route, graphs, type_context_graph_uris)
     query = (
         "SELECT (COUNT(*) AS ?sources) (SUM(IF(?degree > 0, 1, 0)) AS ?matched) "
         f"(MIN(?degree) AS ?minimum) (MAX(?degree) AS ?maximum) {dataset} WHERE {{ "

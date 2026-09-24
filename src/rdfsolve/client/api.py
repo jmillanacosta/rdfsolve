@@ -248,6 +248,7 @@ class Client(DatasetClient):
         output_variables requires the specified column names. Preparation makes
         no source request. Pass the artifact to select().
         """
+        from rdfsolve.client.query_fragments import identifier
         from rdfsolve.client.retrieval import verify_query
 
         entries = (
@@ -266,6 +267,8 @@ class Client(DatasetClient):
                 self.catalogue,
                 output_variables=output_variables,
             )
+        query.sparql = self._scope_query(query.sparql)
+        query.ref = identifier("q", query.sparql)
         self._prepared[query.ref] = query, self.source, tuple(self.graph_uris)
         return query
 
@@ -430,6 +433,7 @@ class Client(DatasetClient):
             if type(limit) is not int or limit < 1:
                 raise ValueError("Use a positive integer probe limit")
             query += f"\nLIMIT {limit}"
+        query = self._scope_query(query)
         parsed = prepareQuery(query)
         if parsed.algebra.name != "SelectQuery":
             raise ValueError("Client.select requires a SELECT query")
@@ -496,7 +500,7 @@ class Client(DatasetClient):
 
         Two class names use retained model fields without querying. A record or
         Results on either side evaluates paths for those exact identities in each
-        configured graph. target_value searches names with find first. Results
+        selected data scope. target_value searches names with find first. Results
         preserve their whole selected scope; no example record is substituted.
         allow_partial returns bounded evidence with explicit coverage.
         """
@@ -578,7 +582,7 @@ class Client(DatasetClient):
         """Find actual paths between records, or around one record.
 
         Show every intermediate resource and link. Paths do not repeat resources
-        and stay in one graph. Requests run in sequence. By default, stop at
+        and can cross selected data graphs. Requests run in sequence. By default, stop at
         the client's row budget and return a marked partial view with a warning.
         Set max_paths explicitly to require a strict limit and raise on overflow.
         Set both_directions=False to follow outgoing links only.

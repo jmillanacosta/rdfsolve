@@ -59,3 +59,18 @@ class SchemaSelection(BaseModel):
             return None
         fields = self._fields()
         return [p for p in self.source.collections if (p.subject_class, p.property_uri) in fields]
+
+    def path_query(self, path: NavigationPath, *, include_unmatched: bool = True) -> str:
+        """Build a scoped SELECT exposing every node of one selected path."""
+        from rdfsolve.mining.navigation import path_query
+
+        retained = {route.signature(): route for route in self.paths}
+        if path.signature() not in retained:
+            raise ValueError("Choose a selected path")
+        return path_query(
+            retained[path.signature()],
+            self.source.about.graph_uris or [],
+            type_context_graph_uris=(self.source.about.type_graph_uris or [])
+            + (self.source.about.type_context_graph_uris or []),
+            include_unmatched=include_unmatched,
+        )

@@ -90,7 +90,7 @@ class Hydrator:
     """Read model fields from an endpoint or a local RDF graph.
 
     Fields are views, not SHACL validation results. References remain IRIs.
-    Named-graph paths stay within each graph; graphs are not merged.
+    Named-graph paths join across the selected data graphs.
     """
 
     def __init__(
@@ -276,6 +276,23 @@ class Hydrator:
                 return model
         raise KeyError(name_or_iri)
 
+    def _check_model_scope(self, model: type[BaseModel]) -> None:
+        """Require the model's declared data and typing scope to match this schema."""
+        metadata = model.model_config.get("json_schema_extra")
+        if not isinstance(metadata, dict):
+            raise ValueError("Model graph scope is missing")
+        source = metadata.get("rdf_dataset")
+        if not isinstance(source, dict):
+            raise ValueError("Model graph scope is missing")
+        for field in ("graph_uris", "type_graph_uris", "type_context_graph_uris"):
+            graphs = source.get(field) or []
+            if not isinstance(graphs, list) or any(not isinstance(graph, str) for graph in graphs):
+                raise ValueError("Model graph scope must contain graph IRIs")
+            if {str(graph) for graph in graphs} != set(getattr(self._schema.about, field) or []):
+                raise ValueError("Model graph scope differs from this client's schema")
+        if metadata.get("endpoint") != self._schema.about.endpoint:
+            raise ValueError("Model graph scope belongs to a different source endpoint")
+
     def with_paths(
         self, model: type[Model], **paths: str | list[str] | PropertyPath
     ) -> type[Model]:
@@ -284,6 +301,7 @@ class Hydrator:
         A string means one predicate. A list means a sequence of predicates.
         PropertyPath supports the remaining SHACL Core path operators.
         """
+        self._check_model_scope(model)
         fields: dict[str, Any] = {}
         for name, value in paths.items():
             if (
@@ -313,14 +331,37 @@ class Hydrator:
         return create_model(model.__name__, __base__=model, **fields)
 
     def _scope(self, body: str) -> str:
-        """Keep an entire path inside the selected named graph."""
-        if not self.graph_uris:
+        """Scope one graph directly; multiple data graphs use a query dataset."""
+        if len(self.graph_uris) != 1:
             return body
         graphs = " ".join(_iri(graph) for graph in self.graph_uris)
         return f"VALUES ?_graph {{ {graphs} }} GRAPH ?_graph {{ {body} }}"
 
+    def _scope_query(self, query: str) -> str:
+        """Apply the selected data-graph union to a complete query."""
+        if len(self.graph_uris) < 2:
+            return query
+        import re
+
+        from rdflib.plugins.sparql import prepareQuery
+
+        from rdfsolve.client.query_fragments import PROTECTED
+
+        if prepareQuery(query).algebra.datasetClause:
+            return query
+        masked = PROTECTED.sub(lambda match: " " * len(match.group()), query)
+        start = masked.find("{")
+        if start < 0:
+            raise ValueError("A scoped query requires a graph pattern")
+        where = re.search(r"\bWHERE\s*$", masked[:start], re.IGNORECASE)
+        position = where.start() if where else start
+        dataset = " ".join(f"FROM {_iri(graph)}" for graph in dict.fromkeys(self.graph_uris))
+        named = " ".join(f"FROM NAMED {_iri(graph)}" for graph in dict.fromkeys(self.graph_uris))
+        return query[:position] + dataset + " " + named + " " + query[position:]
+
     def _select(self, query: str, *, exhaustive: bool = False) -> list[dict[str, Any]]:
         """Execute one bounded query and retain its text for inspection."""
+        query = self._scope_query(query)
         self.queries.append(query)
         self.last_query_execution = {
             "strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"
@@ -365,6 +406,7 @@ class Hydrator:
         self, model: type[Model], *, limit: int = 3, fields: list[str] | None = None
     ) -> list[Model]:
         """Retrieve a small ordered sample of IRI subjects with the requested type."""
+        self._check_model_scope(model)
         if type(limit) is not int or not 1 <= limit <= self.max_subjects:
             raise ValueError(f"Use a sample limit between 1 and {self.max_subjects}")
         class_iri = _iri(getattr(model, "rdf_class_iri", ""))
@@ -391,6 +433,7 @@ class Hydrator:
         Unrequested fields stay None. Raw terms keep language and datatype.
         Blank-node labels are scoped to their response and cannot be followed.
         """
+        self._check_model_scope(model)
         if len(iris) > self.max_subjects:
             raise HydrationLimitError("Too many subjects; use smaller calls")
         for iri in iris:

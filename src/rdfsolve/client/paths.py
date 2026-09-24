@@ -313,7 +313,7 @@ def resource_paths(
 ) -> pd.DataFrame:
     """Retrieve bounded simple resource paths, marking a limited default view.
 
-    Each path stays in one selected graph. Reverse steps are included when
+    Paths join across selected data graphs. Reverse steps are included when
     both_directions is true. With a target, no predicates are excluded.
     Without a target, exclude rdf:type and literal leaves.
     Endpoint limits still apply; a successful response is not a completeness proof.

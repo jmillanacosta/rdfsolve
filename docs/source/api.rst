@@ -273,3 +273,34 @@ Provider shapes, original RDF, structural evidence and other source fields remai
 under selection.source as context. They are not projected or adopted constraints.
 This view does not extract instance data, prove a path works, or close a SHACL
 shape. Selection of untyped structural paths is not yet supported.
+
+
+Retrieve across selected graphs
+-------------------------------
+
+Client queries can join across the union of their selected data graphs. A model
+belongs to its schema's selected scope, which may contain one or several graphs.
+Its JSON Schema retains that scope and the graph evidence for each mined field.
+Models from another declared data or typing scope are rejected before retrieval.
+An explicit client graph override changes retrieval scope; it does not rewrite
+the model's original evidence. Mine that scope to obtain its observed model.
+
+For a retained selection, query = selection.path_query(selection.paths[0])
+builds a SELECT with n0 as the source and n1, n2, etc. as successive nodes.
+Run it through client.select(query) or a SPARQL helper in the same source.
+Intermediate identities, alternative values, languages and datatypes remain
+available in the returned bindings. By default, sources lacking the complete
+path remain as rows with unbound intermediate/target values. Set
+include_unmatched=False to retrieve only complete matches.
+
+Selected-path queries reuse the mining scope: data edges join across selected
+data graphs; companion graphs supply object types only. General client path
+templates currently resolve their class filters in the selected data graphs.
+A path needs to have been discovered or supplied before it can be selected.
+Mining does not yet discover a subject field whose type exists only in companion
+context. A failed match is not an ontology inconsistency.
+
+Cross-graph results retain their query and selected scope. A missing single
+graph value is not evidence that the path came from the default graph.
+Per-edge graph witnesses and full shape-directed subgraph extraction remain
+separate work. No new SHACL constraints are adopted by query generation.
