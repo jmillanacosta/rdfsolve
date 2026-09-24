@@ -16,7 +16,10 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
         raise AssertionError("Analysis must use archived evidence")
     monkeypatch.setattr("requests.sessions.Session.request", no_http)
     registry = tmp_path / "sources.yaml"
-    registry.write_text(yaml.safe_dump([{"name": n} for n in ("typed", "untyped", "failed")]))
+    registry.write_text(yaml.safe_dump(
+        [{"name": n} for n in ("typed", "untyped", "failed", "not_attempted")]
+        + [{"name": "umbrella", "source_role": "service"}]
+    ))
     for name, mode, triples in [
         ("typed", "local", '<urn:a> a <urn:A>; <urn:link> <urn:b> . <urn:b> a <urn:B> . <urn:catalogue> a <http://www.w3.org/ns/dcat#Dataset>; <urn:title> "Catalogue" .'),
         ("typed", "remote", '<urn:a> a <urn:A>; <urn:remote> "x" .'),
@@ -49,6 +52,19 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
     result = analyze_release(tmp_path)
     inventory = {(r["dataset_id"], r["mode"]): r for r in result["extraction_inventory"]}
     assert len(inventory) == 4
+    units = {r["dataset_id"]: r for r in result["dataset_inventory"]}
+    assert units["not_attempted"]["extraction_records"] == 0
+    assert units["not_attempted"]["schema_extractions"] == 0
+    assert units["not_attempted"]["completion_states"] == {}
+    assert "umbrella" not in units
+    assert result["paper_statistics"]["registry_dataset_entries"] == 4
+    assert result["paper_statistics"]["service_records"] == 1
+    assert result["paper_statistics"]["datasets_with_extraction_records"] == 3
+    assert result["paper_statistics"]["datasets_without_extraction_records"] == 1
+    assert inventory["typed", "remote"]["coverage_basis"] == "incomplete_extraction"
+    assert inventory["typed", "local"]["coverage_basis"] == "complete_extraction"
+    assert inventory["failed", "remote"]["coverage_basis"] == "unavailable"
+
     assert inventory["typed", "remote"]["completion_state"] == "partial"
     assert inventory["failed", "remote"]["views"] is None
     assert inventory["untyped", "local"]["views"]["structural_patterns"] == {

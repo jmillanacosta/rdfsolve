@@ -166,7 +166,27 @@ def analyze_release(
             row["view_exclusions"] = excluded_counts
             schemas[attempt.schema_path] = view
             row["views"] = _view_counts(view)
+        row["coverage_basis"] = (
+            "unavailable"
+            if row["coverage"] is None
+            else "complete_extraction"
+            if attempt.completion_state == "complete"
+            else "incomplete_extraction"
+        )
         inventory.append(row)
+
+    dataset_inventory: list[dict[str, Any]] = []
+    for dataset_record in manifest.datasets:
+        attempts = [row for row in inventory if row["dataset_id"] == dataset_record.dataset_id]
+        dataset_inventory.append(
+            {
+                "dataset_id": dataset_record.dataset_id,
+                "extraction_records": len(attempts),
+                "schema_extractions": sum(row["views"] is not None for row in attempts),
+                "completion_states": dict(Counter(row["completion_state"] for row in attempts)),
+                "channels": sorted({row["mode"] for row in attempts}),
+            }
+        )
 
     mappings = []
     for artifact in manifest.artifacts:
@@ -201,6 +221,7 @@ def analyze_release(
         graphs[mode] = node_link_data(graph)
         channels[mode] = {
             "extraction_attempts": len(attempts),
+            "completion_states": dict(Counter(row["completion_state"] for row in attempts)),
             "schema_extractions": len(selected),
             "datasets_with_schemas": len(
                 {r["dataset_id"] for r in attempts if r["views"] is not None}
@@ -232,11 +253,22 @@ def analyze_release(
             "excluded_subject_classes": sorted(excluded_subject_classes),
             "structural_view_scope": "retained_extraction",
             "dataset_unit": "registry_entry",
+            "registry_dataset_entries": len(dataset_inventory),
+            "service_records": len(manifest.service_records),
+            "identity_review_complete": manifest.identity_review_complete,
+            "canonical_dataset_count": manifest.canonical_dataset_count,
+            "datasets_with_extraction_records": sum(
+                row["extraction_records"] > 0 for row in dataset_inventory
+            ),
+            "datasets_without_extraction_records": sum(
+                row["extraction_records"] == 0 for row in dataset_inventory
+            ),
             "extraction_attempts": len(inventory),
             "schema_extractions": len(schemas),
             "completion_states": dict(Counter(row["completion_state"] for row in inventory)),
             "channels": channels,
         },
+        "dataset_inventory": dataset_inventory,
         "extraction_inventory": inventory,
         "schema_overlaps": overlaps,
         "channel_comparisons": comparisons,
