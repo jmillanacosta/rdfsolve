@@ -199,3 +199,16 @@ the retained provider graph when full source constraints are required.
 Class shapes without an explicit ``sh:targetClass`` use their implicit
 class target when the supplied graph identifies them as RDFS classes.
 Their composed paths remain unchecked until probed against instance data.
+
+Selected path observations
+--------------------------
+
+Call ``schema.discover_paths(probe_limit=0)`` to retain candidate routes.
+Select entries from ``schema.navigation.paths``, then call
+``schema.probe_paths(selected, helper=helper)`` to measure only those routes.
+The helper must address the intended data source. Data and typing graph scopes
+come from ``schema.about`` and are retained on each observation. Repeated
+selections update retained routes; unselected observations remain unchanged.
+``probe_selection`` and ``probe_limit`` describe the latest selection.
+Canonical JSON preserves observations. A matched route establishes joined
+support in the queried scope; it does not establish SHACL or OWL validity.

@@ -15,7 +15,7 @@ from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 from rdfsolve.schema_models.metadata import RetainedMetadata
-from rdfsolve.schema_models.navigation import NavigationSummary
+from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 from rdfsolve.schema_models.structural import StructuralPattern
@@ -176,6 +176,14 @@ class MinedSchema(BaseModel):
             probe_limit=probe_limit,
         )
         return self.navigation
+
+    def probe_paths(
+        self, paths: Sequence[NavigationPath], *, helper: SparqlHelper
+    ) -> list[NavigationPath]:
+        """Measure selected retained paths within this schema's data and typing scopes."""
+        from rdfsolve.mining.navigation import probe_paths
+
+        return probe_paths(self, paths, helper=helper)
 
     # Service-namespace filtering
 

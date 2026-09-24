@@ -85,3 +85,12 @@ def test_path_probes_measure_joins_and_keep_zero_degree_sources():
                      type_context_graph_uris=["urn:types"])
     assert route.instance_support == "matched" and route.error is None
     assert (route.matched_sources, route.source_count) == (1, 2)
+
+    candidates = schema.discover_paths(max_hops=2, max_paths_per_length=10)
+    selected = next(p for p in candidates.paths if p.steps[-1].object_class == "urn:route:C")
+    with SchemaMiner.from_graph(scoped) as probe:
+        observed = schema.probe_paths([selected], helper=probe.helper)
+    assert observed == [selected] and selected.matched_sources == 1
+    assert all(p.instance_support == "not_checked" for p in candidates.paths if p is not selected)
+    assert candidates.probe_selection == "explicit"
+    assert MinedSchema.from_dict(schema.to_dict()).navigation == candidates

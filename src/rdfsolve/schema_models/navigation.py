@@ -65,4 +65,4 @@ class NavigationSummary(BaseModel):
     truncated_lengths: list[int] = Field(default_factory=list)
     omitted_by_class: dict[int, dict[str, int]] = Field(default_factory=dict)
     probe_limit: int = Field(default=0, ge=0)
-    probe_selection: Literal["retained_prefix"] = "retained_prefix"
+    probe_selection: Literal["retained_prefix", "explicit"] = "retained_prefix"

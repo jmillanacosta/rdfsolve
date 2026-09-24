@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections import Counter, defaultdict, deque
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import TYPE_CHECKING
 
 from rdfsolve.mining.query_builders import _graph_scope, _type_pattern
@@ -175,6 +175,33 @@ def discover_paths(
         probe_limit=probe_limit,
         probe_selection="retained_prefix",
     )
+
+
+def probe_paths(
+    schema: MinedSchema,
+    paths: Sequence[NavigationPath],
+    *,
+    helper: SparqlHelper,
+) -> list[NavigationPath]:
+    """Probe selected retained routes and update their stored observations."""
+    if schema.navigation is None:
+        raise ValueError("Discover candidate paths before selecting probes")
+    retained = {route.signature(): route for route in schema.navigation.paths}
+    signatures = list(dict.fromkeys(route.signature() for route in paths))
+    if any(signature not in retained for signature in signatures):
+        raise ValueError("Choose paths retained in schema.navigation")
+    selected = [retained[signature] for signature in signatures]
+    for route in selected:
+        observe_path(
+            route,
+            helper,
+            schema.about.graph_uris or [],
+            type_context_graph_uris=(schema.about.type_graph_uris or [])
+            + (schema.about.type_context_graph_uris or []),
+        )
+    schema.navigation.probe_selection = "explicit"
+    schema.navigation.probe_limit = len(selected)
+    return selected
 
 
 def observe_path(
