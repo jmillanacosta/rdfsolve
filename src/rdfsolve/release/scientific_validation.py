@@ -220,6 +220,30 @@ def build_scientific_validation_plan(
                     ),
                 )
             )
+        from rdfsolve.mining.structural_strategy import structural_queries
+
+        structural = sorted(
+            schema.structural_patterns or [],
+            key=lambda p: hashlib.sha256(p.model_dump_json().encode()).hexdigest(),
+        )
+        for structural_pattern in structural[: max(0, patterns_per_schema)]:
+            witness, _ = structural_queries(structural_pattern)
+            pattern_checks.append(
+                PatternSpotCheckPlan(
+                    check_id=_stable_id(snapshot, artifact.artifact_id, witness),
+                    dataset_id=dataset.dataset_id,
+                    snapshot_id=snapshot,
+                    extraction_mode=mode,
+                    schema_artifact_id=artifact.artifact_id,
+                    target_kind=target_kind,
+                    endpoint=endpoint,
+                    graph_scope=[structural_pattern.graph_uri]
+                    if structural_pattern.graph_uri
+                    else [],
+                    pattern=structural_pattern.model_dump(mode="json"),
+                    query=witness,
+                )
+            )
         if schema.navigation is None or routes_per_schema <= 0:
             continue
         candidates = [path for path in schema.navigation.paths if path.query]

@@ -85,6 +85,7 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
     assert summary["observed_evidence"] == {
         "datasets": 1,
         "patterns": 1,
+        "structural_patterns": 0,
         "pattern_types": {"object_property": 1},
         "evidence_sources": {"mined": 1},
         "patterns_with_counts": 1,

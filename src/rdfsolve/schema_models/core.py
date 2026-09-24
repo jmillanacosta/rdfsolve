@@ -17,6 +17,7 @@ from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.navigation import NavigationSummary
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
+from rdfsolve.schema_models.structural import StructuralPattern
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -56,6 +57,9 @@ class MinedSchema(BaseModel):
             "None means not probed. Counts refer to original terms before hierarchy grouping. "
             "Class-schema exports, populations and navigation use patterns."
         ),
+    )
+    structural_patterns: list[StructuralPattern] | None = Field(
+        None, description="Graph-local record shapes and edges; None means not mined"
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
     shapes: ShaclShapesGraph | None = Field(

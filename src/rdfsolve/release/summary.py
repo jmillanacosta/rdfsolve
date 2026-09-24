@@ -31,6 +31,7 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     pattern_types: Counter[str] = Counter()
     evidence_sources: Counter[str] = Counter()
     patterns = 0
+    structural_patterns = 0
     datasets = 0
     with_counts = 0
     with_distinct_subjects = 0
@@ -38,6 +39,8 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     for rel in _artifact_paths(manifest, "canonical_schema"):
         raw = _load_json(root / rel)
         schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
+        if isinstance(schema, dict):
+            structural_patterns += len(schema.get("structural_patterns") or [])
         rows = schema.get("patterns") if isinstance(schema, dict) else None
         if not isinstance(rows, list):
             continue
@@ -57,6 +60,7 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     return {
         "datasets": datasets,
         "patterns": patterns,
+        "structural_patterns": structural_patterns,
         "pattern_types": dict(sorted(pattern_types.items())),
         "evidence_sources": dict(sorted(evidence_sources.items())),
         "patterns_with_counts": with_counts,

@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
     from rdfsolve.mining.report_tracking import ReportCollector
     from rdfsolve.models import SchemaPattern
+    from rdfsolve.schema_models.structural import StructuralPattern
     from rdfsolve.sparql_helper import SparqlHelper
 
 __all__ = ["MiningContext", "MiningStrategy"]
@@ -66,6 +67,7 @@ class MiningContext:
         self.excluded_graph_prefixes = excluded_graph_prefixes
         # Class batches chosen by the strategy; the counts phase reuses them.
         self.class_batches: list[list[str]] | None = None
+        self.structural_patterns: list[StructuralPattern] = []
 
 
 class MiningStrategy(ABC):

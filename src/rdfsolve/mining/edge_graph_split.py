@@ -94,6 +94,9 @@ def split_by_edge_graph(
             if schema.term_patterns is not None
             else None,
             "about": about,
+            "structural_patterns": [p for p in schema.structural_patterns if p.graph_uri in graphs]
+            if schema.structural_patterns is not None
+            else None,
             "navigation": None,
             "source_metadata": None,
         }

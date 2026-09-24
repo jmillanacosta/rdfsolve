@@ -26,6 +26,7 @@ from rdfsolve.mining.query_builders import (
 from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.mining.single_pass_strategy import SinglePassStrategy
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.mining.structural_strategy import StructuralStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 from rdfsolve.models import (
     AboutMetadata,
@@ -37,6 +38,7 @@ from rdfsolve.models import (
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import PatternType
+from rdfsolve.schema_models.structural import StructuralPattern
 from rdfsolve.sparql_helper import (
     PaginationTruncatedError,
     ResponseLimitError,
@@ -139,6 +141,7 @@ class SchemaMiner:
         self._subsumed_classes: set[str] = set()
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
+        self._structural_patterns: list[StructuralPattern] | None = None
 
     @property
     def helper(self) -> SparqlHelper:
@@ -199,6 +202,7 @@ class SchemaMiner:
             "two-phase": TwoPhaseStrategy,
             "single-pass": SinglePassStrategy,
             "one-shot": OneShotStrategy,
+            "structural": StructuralStrategy,
         }
 
         if strategy not in strategy_map:
@@ -337,6 +341,10 @@ class SchemaMiner:
         # Run strategy
         patterns = self._strategy.mine(context)
         self._class_batches = context.class_batches
+        if context.structural_patterns or any(
+            p.name == "structural-patterns" for p in self._report.report.phases
+        ):
+            self._structural_patterns = context.structural_patterns
         if context.graph_uris != self.graph_uris:
             logger.info("Mining continues in %d discovered graphs", len(context.graph_uris or []))
             self.graph_uris = context.graph_uris
@@ -659,6 +667,7 @@ class SchemaMiner:
         self._ontology_term_budget = None
         self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
+        self._structural_patterns = None
         self._subsumed_classes = set()
         self._declared_classes = set()
         self._init_report(
@@ -763,6 +772,7 @@ class SchemaMiner:
                 states_out=entity_count_states,
             )
         report = self._report.report
+        report.config["structural_pattern_count"] = len(schema.structural_patterns or [])
         report.strategy = schema.about.strategy or report.strategy
         self._report.finalise(
             pattern_count=len(schema.patterns),
@@ -815,6 +825,8 @@ class SchemaMiner:
 
         t0 = time.monotonic()
         patterns, one_shot_results = self._run_patterns_phase()
+        if self._structural_patterns is not None:
+            strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
         if self.counts:
@@ -884,7 +896,11 @@ class SchemaMiner:
             discovered_metadata=discovered_metadata if discovered_metadata else {},
         )
         schema = MinedSchema(
-            patterns=patterns, raw_patterns=raw_patterns, term_patterns=term_patterns, about=about
+            patterns=patterns,
+            raw_patterns=raw_patterns,
+            term_patterns=term_patterns,
+            structural_patterns=self._structural_patterns,
+            about=about,
         )
 
         return schema

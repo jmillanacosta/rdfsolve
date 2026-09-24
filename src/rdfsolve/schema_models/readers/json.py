@@ -51,6 +51,7 @@ def read_schema(raw: dict[str, Any] | list[dict[str, Any]]) -> MinedSchema:
                 "patterns",
                 "raw_patterns",
                 "term_patterns",
+                "structural_patterns",
                 "about",
                 "enrichment",
                 "shapes",
