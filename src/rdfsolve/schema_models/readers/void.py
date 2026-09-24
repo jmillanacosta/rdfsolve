@@ -7,6 +7,7 @@ import logging
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
+from rdfsolve.local_rdf import LocalBackend, LocalRdf
 from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
@@ -16,7 +17,7 @@ VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
 
-def void_to_minedschema(void_ttl: str) -> MinedSchema:
+def void_to_minedschema(void_ttl: str, *, local_backend: LocalBackend = "oxigraph") -> MinedSchema:
     """Parse VoID Turtle into MinedSchema.
 
     Args:
@@ -33,14 +34,18 @@ def void_to_minedschema(void_ttl: str) -> MinedSchema:
     """
     g = Graph()
     g.parse(data=void_ttl, format="turtle")
-    return void_graph_to_minedschema(g)
+    return void_graph_to_minedschema(g, local_backend=local_backend)
 
 
 def void_graph_to_minedschema(
-    g: Graph, *, endpoint: str | None = None, report_untyped: bool = True
+    g: Graph,
+    *,
+    endpoint: str | None = None,
+    report_untyped: bool = True,
+    local_backend: LocalBackend = "oxigraph",
 ) -> MinedSchema:
     """Read VoID RDF without treating metadata predicates as patterns."""
-    patterns = _extract_patterns_from_void(g)
+    patterns = _extract_patterns_from_void(g, local_backend=local_backend)
     if report_untyped:
         warn_untyped_partitions(g, patterns)
     about = _extract_metadata_from_void(g, endpoint=endpoint)
@@ -70,11 +75,14 @@ def void_graph_to_minedschema(
     return schema
 
 
-def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
+def _extract_patterns_from_void(
+    g: Graph, *, local_backend: LocalBackend = "oxigraph"
+) -> list[SchemaPattern]:
     """Extract SchemaPattern list from VoID graph."""
     from rdflib.namespace import RDFS
 
     patterns = []
+    engine = LocalRdf(g, backend=local_backend)
 
     # Extract all rdfs:label triples for URIs
     labels: dict[str, str] = {}
@@ -109,7 +117,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
     }
     """
 
-    for row in g.query(query):
+    for row in engine.query(query):
         if not isinstance(row, ResultRow):
             raise TypeError("Expected a SELECT result row")
         subject_class = str(row.subjectClass)
@@ -167,7 +175,7 @@ def _extract_patterns_from_void(g: Graph) -> list[SchemaPattern]:
 
     # Use linksets only if no nested partitions found (avoid duplicates)
     if not patterns:
-        for row in g.query(linkset_query):
+        for row in engine.query(linkset_query):
             if not isinstance(row, ResultRow):
                 raise TypeError("Expected a SELECT result row")
             count_val = row.get("count")

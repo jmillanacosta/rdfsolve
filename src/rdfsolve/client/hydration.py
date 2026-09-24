@@ -22,6 +22,7 @@ from pydantic.fields import FieldInfo
 from rdflib import Graph, Literal
 from typing_extensions import Self
 
+from rdfsolve.local_rdf import LocalBackend, LocalRdf
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
@@ -103,6 +104,7 @@ class Hydrator:
         max_rows: int = 5000,
         max_subjects: int = 100,
         contract: bool = False,
+        local_backend: LocalBackend = "oxigraph",
     ) -> None:
         """Create models and budgets without making requests.
 
@@ -125,6 +127,9 @@ class Hydrator:
             SparqlHelper(source, timeout=timeout, max_retries=2, inter_request_delay=0.5)
             if isinstance(source, str)
             else source
+        )
+        self._local_rdf = (
+            LocalRdf(self.source, backend=local_backend) if isinstance(self.source, Graph) else None
         )
         self.models = build_pydantic_classes(schema, contract=contract)
         self.batch_size = batch_size
@@ -194,6 +199,7 @@ class Hydrator:
                 **{name: version(name) for name in ("rdfsolve", "pydantic", "rdflib")},
             },
             "graph_uris": list(self.graph_uris),
+            "local_backend": self._local_rdf.metadata() if self._local_rdf else None,
             "budgets": {
                 "batch_size": self.batch_size,
                 "max_rows": self.max_rows,
@@ -320,11 +326,13 @@ class Hydrator:
             "strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"
         }
         if isinstance(self.source, Graph):
+            if self._local_rdf is None:
+                raise RuntimeError("Local RDF backend is not initialized")
             record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
             self._local_records.append(record)
             started = time.monotonic()
             try:
-                raw = self.source.query(query).serialize(format="json")
+                raw = self._local_rdf.query(query).serialize(format="json")
                 if raw is None:
                     raise EndpointError("Local query returned no results document")
                 result = json.loads(raw)

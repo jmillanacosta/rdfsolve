@@ -15,6 +15,7 @@ from rdflib import Graph
 from typing_extensions import Self
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
+from rdfsolve.local_rdf import LocalBackend
 from rdfsolve.mining.one_shot_strategy import OneShotStrategy
 from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_counts,
@@ -86,9 +87,11 @@ class SchemaMiner:
         pagination: Literal["offset", "cursor"] = "offset",
         excluded_graph_prefixes: tuple[str, ...] = (),
         type_context_graph_uris: list[str] | None = None,
+        local_backend: LocalBackend = "oxigraph",
     ) -> None:
         """Initialize a SchemaMiner."""
         self.endpoint_url = endpoint_url
+        self.local_backend = local_backend
         if pagination not in {"offset", "cursor"}:
             raise ValueError("pagination must be offset or cursor")
         if pagination == "cursor" and unsafe_paging:
@@ -168,7 +171,7 @@ class SchemaMiner:
                 dataset.default_graph.add(triple)
         miner = cls(endpoint_url, **kwargs)
         miner._helper.close()
-        miner._helper = LocalGraphHelper(endpoint_url, dataset)
+        miner._helper = LocalGraphHelper(endpoint_url, dataset, backend=miner.local_backend)
         return miner
 
     def close(self) -> None:
@@ -313,6 +316,10 @@ class SchemaMiner:
                 "examples_per_pattern": self.examples_per_pattern,
             },
         )
+        from rdfsolve.mining.local_graph import LocalGraphHelper
+
+        if isinstance(self._helper, LocalGraphHelper):
+            report.config["local_backend"] = self._helper.local.metadata()
         self._rc = ReportCollector(report, self._report_path)
         self._rc.flush()
 
@@ -700,12 +707,15 @@ class SchemaMiner:
                 self._helper = LocalGraphHelper(
                     self.endpoint_url,
                     load_downloads(downloads, endpoint_url=self.endpoint_url, timeout=self.timeout),
+                    backend=self.local_backend,
                 )
                 self._report.report.config["graph_store"] = {
                     "url": self.graph_store_url,
-                    "engine": "rdflib",
+                    "engine": self._helper.sparql_engine,
                     "graphs": [asdict(item) for item in downloads],
                 }
+                self._report.report.config["local_backend"] = self._helper.local.metadata()
+                self._report.report.config["sparql_engine"] = self._helper.sparql_engine
             self._verify_context_graphs("type_context", self.type_context_graph_uris)
             yield
         except BaseException as exc:
@@ -1001,6 +1011,7 @@ def mine_schema(
     navigation_limit: int = 100,
     navigation_probes: int = 0,
     type_context_graph_uris: list[str] | None = None,
+    local_backend: LocalBackend = "oxigraph",
 ) -> MinedSchema:
     """One-shot helper: mine a schema and return :class:`MinedSchema`."""
     from urllib.parse import urlsplit
@@ -1030,6 +1041,7 @@ def mine_schema(
         graph_store_url=graph_store_url,
         graph_store_dir=graph_store_dir,
         graph_store_max_bytes=graph_store_max_bytes,
+        local_backend=local_backend,
     )
     try:
         schema = miner.mine(dataset_name=dataset_name)

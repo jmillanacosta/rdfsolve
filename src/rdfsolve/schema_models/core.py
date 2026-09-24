@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
     from rdfsolve.client.api import Client
     from rdfsolve.client.hydration import Hydrator
+    from rdfsolve.local_rdf import LocalBackend
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.sparql_helper import SparqlHelper
 
@@ -374,7 +375,7 @@ class MinedSchema(BaseModel):
         return discover_void_source(endpoint, name, **kwargs).to_mined_schema()
 
     @classmethod
-    def from_void(cls, void_ttl: str) -> MinedSchema:
+    def from_void(cls, void_ttl: str, *, local_backend: LocalBackend = "oxigraph") -> MinedSchema:
         """Parse VoID Turtle into MinedSchema.
 
         Args:
@@ -391,7 +392,7 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.readers.void import void_to_minedschema
 
-        return void_to_minedschema(void_ttl)
+        return void_to_minedschema(void_ttl, local_backend=local_backend)
 
     @classmethod
     def from_shacl(cls, shacl_ttl: str) -> MinedSchema:

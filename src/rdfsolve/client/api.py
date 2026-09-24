@@ -184,7 +184,10 @@ class Client(DatasetClient):
             elif format == "shacl":
                 schema = MinedSchema.from_shacl(path.read_text(encoding="utf-8"))
             elif format == "void":
-                schema = MinedSchema.from_void(path.read_text(encoding="utf-8"))
+                schema = MinedSchema.from_void(
+                    path.read_text(encoding="utf-8"),
+                    local_backend=kwargs.get("local_backend", "oxigraph"),
+                )
             else:
                 raise ValueError("Use json, shacl, or void as the schema format")
         if not schema.get_classes():

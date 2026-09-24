@@ -61,6 +61,20 @@ compare report phases before choosing a strategy. Counting is enabled by
 default. Set `counts=False` if the task needs model structure without
 population/count enrichment; structural coverage checks still run.
 
+Local SPARQL uses Oxigraph by default. Choose `local_backend="rdflib"` on
+`SchemaMiner.from_graph(...)`, `Client(...)`, `Client.open(...)`, or
+`MinedSchema.from_void(...)` to use RDFLib. Graph Store downloads use the
+same option on `SchemaMiner(...)`. HTTP endpoints use their own query engine.
+
+Oxigraph reads a snapshot of the supplied graph or dataset. Reopen the miner
+or client after changing the input. Named graphs, blank-node identifiers and
+literal forms are retained. If Oxigraph storage would change terms, or named graphs share triples, RDFLib
+executes the queries and a warning explains why. The overlap fallback preserves
+set-based RDF merge counts across multiple `FROM` clauses. Mining reports and client
+session metadata record the requested backend, actual engine, version and
+fallback reason under `local_backend`. RDFLib remains the graph/term API for
+parsing, authoring, exports and SHACL validation. No graph digest is computed.
+
 In-memory graphs use bulk structural mining automatically. One SPARQL result
 supplies uncovered edges, exact counts, distinct nodes and witness bindings.
 Recount and witness queries remain available for independent verification.
