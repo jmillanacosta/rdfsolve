@@ -126,9 +126,13 @@ def _build_typed_object_query_plain(
 SELECT DISTINCT ?sc ?p ?oc
 {dataset}
 WHERE {{
-  ?s a ?sc .
-  {g_open} ?s ?p ?o . {g_close}
-    {_type_pattern("?o", "?oc", type_context_graph_uris)}
+  {{
+    SELECT DISTINCT ?sc ?p ?o WHERE {{
+      ?s a ?sc .
+      {g_open} ?s ?p ?o . {g_close}
+    }}
+  }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
 
 
@@ -438,9 +442,13 @@ def _build_typed_object_for_class_property_query(
 SELECT {distinct}?oc
 {dataset}
 WHERE {{
-  ?s a <{class_uri}> .
-  {g_open} ?s <{prop_uri}> ?o . {g_close}
-    {_type_pattern("?o", "?oc", type_context_graph_uris)}
+  {{
+    SELECT DISTINCT ?o WHERE {{
+      ?s a <{class_uri}> .
+      {g_open} ?s <{prop_uri}> ?o . {g_close}
+    }}
+  }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -462,9 +470,13 @@ def _build_batched_typed_object_query(
 SELECT {distinct}?class ?p ?oc
 {dataset}
 WHERE {{
-  {values}
-  ?s a ?class .
-  {g_open} ?s ?p ?o . {g_close}
+  {{
+    SELECT DISTINCT ?class ?p ?o WHERE {{
+      {values}
+      ?s a ?class .
+      {g_open} ?s ?p ?o . {g_close}
+    }}
+  }}
   {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
     if paginated:
