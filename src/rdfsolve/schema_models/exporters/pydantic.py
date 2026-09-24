@@ -96,6 +96,8 @@ def to_pydantic(
     used = {
         "RDFResource",
         "RDFRecord",
+        "RDFList",
+        "RdfTerm",
         "BaseModel",
         "Graph",
         "ConfigDict",
@@ -124,6 +126,16 @@ def to_pydantic(
         meaningful = sorted(label for label in labels[iri] if label not in {iri, curie})
         base = _identifier(meaningful[0] if meaningful else curie, class_name=True)
         names[iri] = _unique_name(base, iri, used)
+
+    collections: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for collection_profile in schema.collections or []:
+        if collection_profile.list_count:
+            collections[collection_profile.subject_class, collection_profile.property_uri].append(
+                collection_profile.model_dump(mode="json")
+            )
+            grouped[collection_profile.subject_class].setdefault(
+                collection_profile.property_uri, []
+            )
 
     profiles: dict[str, list[dict[str, Any]]] = {}
     if schema.shapes is not None:
@@ -168,6 +180,8 @@ def to_pydantic(
         "from typing import Any, ClassVar",
         "from pydantic import BaseModel, ConfigDict, Field",
         "from rdfsolve.client.authoring import RDFRecord",
+        "from rdfsolve.client.collections import RDFList",
+        "from rdfsolve.schema_models.enrichment import RdfTerm",
         "",
         f"DATASET_METADATA = {metadata!r}",
         f"RDF_PREFIXES = {schema.get_prefixes()!r}",
@@ -216,6 +230,16 @@ def to_pydantic(
                 field = "prop_" + field
             field = _unique_name(field, prop, fields)
             types = sorted({part for p in patterns for part in _value_type(p, names).split(" | ")})
+            collection_profiles = collections.get((iri, prop), [])
+            if collection_profiles:
+                member_types = sorted(
+                    {
+                        names[cls]
+                        for profile in collection_profiles
+                        for cls in profile["member_types"]
+                    }
+                )
+                types.append("RDFList[" + " | ".join(["RdfTerm", *member_types]) + "]")
             value_type = " | ".join(types)
             description = schema.enrichment.description(prop) or "; ".join(
                 sorted({p.property_label for p in patterns if p.property_label})
@@ -231,6 +255,7 @@ def to_pydantic(
                 "rdf_property_iri": prop,
                 "rdf_path": {"operator": "predicate", "iri": prop, "items": []},
                 "rdf_patterns": [p.model_dump(mode="json") for p in patterns],
+                "rdf_collections": collection_profiles,
                 "rdf_examples": [
                     e.model_dump(mode="json")
                     for e in schema.enrichment.examples

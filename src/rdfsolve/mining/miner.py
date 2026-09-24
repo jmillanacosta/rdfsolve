@@ -773,6 +773,21 @@ class SchemaMiner:
                 self.delay,
                 states_out=entity_count_states,
             )
+        dataset = getattr(self._helper, "dataset", None)
+        if isinstance(dataset, Graph):
+            phase = self._report.start_phase("collections")
+            try:
+                profiles = schema.discover_collections(dataset, graph_uris=self.graph_uris or [])
+                self._report.report.config["collection_profile_count"] = len(profiles)
+                self._report.report.config["invalid_collection_count"] = sum(
+                    p.invalid_count for p in profiles
+                )
+            except Exception as error:
+                self._report.finish_phase(phase, error=str(error))
+                raise
+            self._report.finish_phase(phase, items=len(profiles))
+            if self.filter_service_namespaces:
+                schema = schema.filter_service_namespaces()
         report = self._report.report
         report.config["structural_pattern_count"] = len(schema.structural_patterns or [])
         report.strategy = schema.about.strategy or report.strategy

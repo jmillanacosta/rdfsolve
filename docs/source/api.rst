@@ -51,3 +51,34 @@ Generated classes also accept explicit RDF terms directly. Fields can be
 addressed by their generated Python names or full predicate IRI aliases.
 These records retain observed field definitions; optional fields do not
 establish required values or closed-world constraints.
+
+
+Ordered RDF collections
+-----------------------
+
+Use RDFList for an ordered collection. Ordinary Python lists still write
+multiple predicate values. Collections preserve order and duplicates, and
+an empty collection writes rdf:nil.
+
+.. code-block:: python
+
+   from rdfsolve.api import RDFList
+
+   record = client.create(
+       "Record",
+       members=RDFList(items=[first_agent, second_agent, first_agent]),
+   )
+   record.to_graph().serialize("record.ttl", format="turtle")
+
+Local snapshot mining inspects collections within each selected graph.
+Canonical schema JSON and generated models retain member types, literal
+datatypes and observed lengths. A profile describes one owner class,
+predicate and graph; it does not create a pattern for each list position.
+Malformed lists are counted separately. Lengths are observations, not
+required or maximum counts for future records.
+
+To inspect a local snapshot against an existing schema, call
+schema.discover_collections(graph). Pass graph_uris=[] for the default
+graph, or supply a Dataset and named graph IRIs. Remote mining does not
+automatically fetch list contents. VoID exports omit collection profiles;
+keep canonical JSON for the full model.

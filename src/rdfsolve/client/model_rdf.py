@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier
 
+from rdfsolve.client.collections import RDFList, write_collection
 from rdfsolve.client.hydration import _iri, _value
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import PropertyPath
@@ -124,7 +125,12 @@ def _add_record(
                 for term in terms
             ]
         else:
-            nodes = [_new_term(item, extra, scope) for item in values]
+            nodes = [
+                write_collection(item, extra, graph, seen, name)
+                if isinstance(item, RDFList)
+                else _new_term(item, extra, scope)
+                for item in values
+            ]
         for node in nodes:
             if reverse:
                 if not isinstance(node, (URIRef, BNode)):
@@ -133,5 +139,5 @@ def _add_record(
             else:
                 graph.add((subject, URIRef(predicate), node))
         for item in values:
-            if isinstance(item, BaseModel):
+            if isinstance(item, BaseModel) and not isinstance(item, RDFList):
                 _add_record(item, graph, seen)

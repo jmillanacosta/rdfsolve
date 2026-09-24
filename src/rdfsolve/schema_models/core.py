@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 from rdfsolve.schema_models.metadata import RetainedMetadata
@@ -60,6 +61,9 @@ class MinedSchema(BaseModel):
     )
     structural_patterns: list[StructuralPattern] | None = Field(
         None, description="Graph-local record shapes and edges; None means not mined"
+    )
+    collections: list[CollectionProfile] | None = Field(
+        None, description="Graph-scoped RDF list observations; None means not inspected"
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
     shapes: ShaclShapesGraph | None = Field(
@@ -137,6 +141,21 @@ class MinedSchema(BaseModel):
         for prefix, namespace in self.get_prefixes().items():
             graph.bind(prefix, namespace, replace=True)
 
+    def discover_collections(
+        self,
+        graph: Graph,
+        *,
+        graph_uris: list[str] | None = None,
+    ) -> list[CollectionProfile]:
+        """Inspect lists in a local snapshot within the schema scope or an explicit scope."""
+        from rdfsolve.mining.collections import discover_collections
+
+        self.collections = discover_collections(
+            graph,
+            graph_uris=self.about.graph_uris if graph_uris is None else graph_uris,
+        )
+        return self.collections
+
     def discover_paths(
         self,
         *,
@@ -186,7 +205,16 @@ class MinedSchema(BaseModel):
                 or (p.object_class not in _SENTINEL_OBJECTS and _svc(p.object_class))
             )
         ]
-        return self.model_copy(update={"patterns": kept})
+        collections = (
+            [
+                p
+                for p in self.collections or []
+                if not any(_svc(iri) for iri in [p.subject_class, p.property_uri, *p.member_types])
+            ]
+            if self.collections is not None
+            else None
+        )
+        return self.model_copy(update={"patterns": kept, "collections": collections})
 
     def clean_schema(
         self,
@@ -239,7 +267,28 @@ class MinedSchema(BaseModel):
                 },
             }
         )
-        return self.model_copy(update={"patterns": kept, "about": about})
+        collections = (
+            [
+                p
+                for p in self.collections or []
+                if not any(
+                    _in_namespace(iri) for iri in [p.subject_class, p.property_uri, *p.member_types]
+                )
+                and not (
+                    graphs
+                    and (
+                        p.graph_uri.startswith(graphs)
+                        if p.graph_uri is not None
+                        else drop_unattributed
+                    )
+                )
+            ]
+            if self.collections is not None
+            else None
+        )
+        return self.model_copy(
+            update={"patterns": kept, "about": about, "collections": collections}
+        )
 
     # Queries -
 
@@ -254,11 +303,17 @@ class MinedSchema(BaseModel):
             classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
+        for profile in self.collections or []:
+            classes.add(profile.subject_class)
+            classes.update(profile.member_types)
         return sorted(classes)
 
     def get_properties(self) -> list[str]:
         """Return sorted unique property URIs."""
-        return sorted({p.property_uri for p in self.patterns})
+        return sorted(
+            {p.property_uri for p in self.patterns}
+            | {p.property_uri for p in self.collections or []}
+        )
 
     # JSON-LD import
 
@@ -395,11 +450,11 @@ class MinedSchema(BaseModel):
         """Export the supported VoID fields."""
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        if self.shapes is not None or self.navigation is not None:
+        if self.shapes is not None or self.navigation is not None or self.collections:
             import logging
 
             logging.getLogger(__name__).warning(
-                "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
+                "VoID does not encode SHACL profiles, collections or composed navigation. Keep canonical JSON."
             )
         return to_void_graph(
             trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions

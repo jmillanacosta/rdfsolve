@@ -1,0 +1,91 @@
+"""Explicit ordered RDF values."""
+
+from __future__ import annotations
+
+from hashlib import sha256
+from typing import Any, Generic, TypeVar
+
+from pydantic import BaseModel, Field, field_validator
+from rdflib import RDF, BNode, Graph, Literal, URIRef
+from rdflib.term import Identifier
+
+from rdfsolve.schema_models.enrichment import RdfTerm
+
+Member = TypeVar("Member")
+
+
+class RDFList(BaseModel, Generic[Member]):
+    """An RDF collection whose members retain order and duplicates."""
+
+    items: list[Member]
+    identifier: str = Field(default_factory=lambda: str(BNode()), repr=False)
+
+    @field_validator("items", mode="before")
+    @classmethod
+    def read_members(cls, values: Any) -> Any:
+        """Accept RDF terms, model records and plain literal values."""
+        if not isinstance(values, (list, tuple)):
+            raise ValueError("RDFList items must be a list or tuple")
+        return [
+            RdfTerm.from_rdf(value)
+            if isinstance(value, (Literal, URIRef, BNode))
+            else value
+            if isinstance(value, (BaseModel, dict))
+            else RdfTerm.from_rdf(Literal(value))
+            for value in values
+        ]
+
+
+def write_collection(
+    value: RDFList[Any],
+    extra: dict[str, Any],
+    graph: Graph,
+    seen: set[int],
+    field: str,
+) -> Identifier:
+    """Write one collection with stable cells and its nested records."""
+    from rdfsolve.client.authoring import _check_term
+    from rdfsolve.client.hydration import class_iri
+    from rdfsolve.client.model_rdf import _add_record, _new_term
+
+    profiles = extra.get("rdf_collections", [])
+    if not profiles:
+        raise ValueError(f"{field}: no RDF collection definition")
+    kinds = {kind for profile in profiles for kind in profile["member_kinds"]}
+    classes = {cls for profile in profiles for cls in profile["member_types"]}
+    datatypes = {dt for profile in profiles for dt in profile["member_datatypes"]}
+    nodes = []
+    for member in value.items:
+        if isinstance(member, RdfTerm):
+            term = member
+            _check_term(term, [], field)
+            node = term.to_rdf()
+        elif isinstance(member, BaseModel):
+            if classes and class_iri(member) not in classes:
+                raise ValueError(f"{field}: collection member has an unexpected class")
+            node = _new_term(member, {}, "")
+            term = RdfTerm.from_rdf(node)
+            _add_record(member, graph, seen)
+        else:
+            raise ValueError(f"{field}: use RDF terms or typed records as list members")
+        kind = {"uri": "IRI", "bnode": "BlankNode", "literal": "Literal"}[term.kind]
+        if kinds and kind not in kinds and not (classes and kind in {"IRI", "BlankNode"}):
+            raise ValueError(f"{field}: collection member has an unexpected RDF kind")
+        datatype = (
+            str(RDF.langString)
+            if term.language
+            else term.datatype or "http://www.w3.org/2001/XMLSchema#string"
+        )
+        if kind == "Literal" and datatypes and datatype not in datatypes:
+            raise ValueError(f"{field}: collection member has an unexpected datatype")
+        nodes.append(node)
+    if not nodes:
+        return RDF.nil
+    cells = [
+        BNode("l" + sha256(f"{value.identifier}:{i}".encode()).hexdigest())
+        for i in range(len(nodes))
+    ]
+    for i, node in enumerate(nodes):
+        graph.add((cells[i], RDF.first, node))
+        graph.add((cells[i], RDF.rest, cells[i + 1] if i + 1 < len(cells) else RDF.nil))
+    return cells[0]
