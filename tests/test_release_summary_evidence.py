@@ -80,12 +80,38 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
         ),
         encoding="utf-8",
     )
+    schema_path = dataset / "demo_remote_schema.json"
+    raw = json.loads(schema_path.read_text())
+    evidence = raw["schema"]
+    evidence["raw_patterns"] = evidence["patterns"].copy()
+    term = dict(evidence["patterns"][0], object_binding="term")
+    evidence["term_patterns"] = [term]
+    from rdfsolve.schema_models.structural import StructuralPattern
+    shape = StructuralPattern(
+        subject_properties=["urn:p", "urn:q"], subject_kind="IRI",
+        property_uri="urn:p", object_kind="Literal", graph_uri="urn:g",
+        count=1, distinct_subjects=1, distinct_objects=1,
+        witness_query="SELECT ?s WHERE { ?s <urn:p> ?o } LIMIT 1",
+        recount_query="SELECT (COUNT(*) AS ?n) WHERE { ?s <urn:p> ?o }",
+    ).model_dump()
+    evidence["structural_patterns"] = [shape, dict(shape, property_uri="urn:q")]
+    schema_path.write_text(json.dumps(raw))
+    (dataset / "demo_local_schema.json").write_text(json.dumps({
+        "schema": {"patterns": [], "structural_patterns": [shape,
+            dict(shape, shape_semantics="property_profile", subject_properties=[])]}}))
+    (dataset / "demo_local_report.json").write_text(
+        json.dumps({"completion_state": "partial"}))
     manifest = build_release_manifest(tmp_path, release_id="test")
     summary = summarize_release(manifest, tmp_path)
     assert summary["observed_evidence"] == {
         "datasets": 1,
+        "schema_artifacts": 2,
         "patterns": 1,
-        "structural_patterns": 0,
+        "raw_patterns": 1,
+        "term_patterns": 1,
+        "structural_patterns": 4,
+        "structural_subject_shapes": 2,
+        "retained_collections": {"raw_patterns": 1, "term_patterns": 1, "structural_patterns": 2},
         "pattern_types": {"object_property": 1},
         "evidence_sources": {"mined": 1},
         "patterns_with_counts": 1,

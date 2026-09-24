@@ -31,8 +31,12 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     pattern_types: Counter[str] = Counter()
     evidence_sources: Counter[str] = Counter()
     patterns = 0
-    structural_patterns = 0
-    datasets = 0
+    collections: Counter[str] = Counter()
+    retained: Counter[str] = Counter()
+    subject_shapes = 0
+    datasets: set[str] = set()
+    schema_artifacts = 0
+    dataset_ids = {a.path: a.dataset_id for a in manifest.artifacts if a.dataset_id is not None}
     with_counts = 0
     with_distinct_subjects = 0
     with_distinct_objects = 0
@@ -40,11 +44,28 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
         raw = _load_json(root / rel)
         schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
         if isinstance(schema, dict):
-            structural_patterns += len(schema.get("structural_patterns") or [])
+            for field in ("raw_patterns", "term_patterns", "structural_patterns"):
+                collection = schema.get(field)
+                if isinstance(collection, list):
+                    retained[field] += 1
+                    collections[field] += len(collection)
+            subject_shapes += len(
+                {
+                    (
+                        row.get("graph_uri"),
+                        row.get("subject_kind"),
+                        tuple(sorted(set(row.get("subject_properties") or []))),
+                    )
+                    for row in schema.get("structural_patterns") or []
+                    if isinstance(row, dict)
+                    and row.get("shape_semantics", "exact_property_sets") == "exact_property_sets"
+                }
+            )
         rows = schema.get("patterns") if isinstance(schema, dict) else None
         if not isinstance(rows, list):
             continue
-        datasets += 1
+        schema_artifacts += 1
+        datasets.add(dataset_ids[rel])
         for row in rows:
             if not isinstance(row, dict):
                 continue
@@ -58,9 +79,17 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
             if row.get("distinct_objects") is not None:
                 with_distinct_objects += 1
     return {
-        "datasets": datasets,
+        "datasets": len(datasets),
+        "schema_artifacts": schema_artifacts,
         "patterns": patterns,
-        "structural_patterns": structural_patterns,
+        "raw_patterns": collections["raw_patterns"],
+        "term_patterns": collections["term_patterns"],
+        "structural_patterns": collections["structural_patterns"],
+        "structural_subject_shapes": subject_shapes,
+        "retained_collections": {
+            field: retained[field]
+            for field in ("raw_patterns", "term_patterns", "structural_patterns")
+        },
         "pattern_types": dict(sorted(pattern_types.items())),
         "evidence_sources": dict(sorted(evidence_sources.items())),
         "patterns_with_counts": with_counts,
