@@ -5,18 +5,7 @@ from __future__ import annotations
 from rdflib import Literal, URIRef
 
 from rdfsolve.mining.query_builders import _context_pattern
-from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
-
-
-def eligible_subject(graphs: list[str] | None) -> str:
-    """Select untyped subjects and subjects with an included IRI type."""
-    types = _context_pattern("?s a ?_recordType .", graphs)
-    excluded = ", ".join(URIRef(t).n3() for t in sorted(EXCLUDED_RECORD_TYPES))
-    return (
-        f"(!EXISTS {{ {types} }} || EXISTS {{ {types} "
-        f"FILTER(isIRI(?_recordType) && ?_recordType NOT IN ({excluded})) }})"
-    )
 
 
 def typed_match(
@@ -61,8 +50,5 @@ def uncovered_filter(
     type_graphs: list[str] | None,
     context_graphs: list[str] | None,
 ) -> str:
-    """Select eligible edges absent from the observed typed profiles."""
-    return (
-        f"FILTER({eligible_subject(type_graphs)}) "
-        f"FILTER(!{typed_match(keys, type_graphs, context_graphs)})"
-    )
+    """Select edges absent from the observed typed profiles."""
+    return f"FILTER(!{typed_match(keys, type_graphs, context_graphs)})"

@@ -40,7 +40,7 @@ def _terms(rows: Sequence[SchemaPattern | StructuralPattern]) -> dict[str, set[s
 def _view_counts(schema: MinedSchema) -> dict[str, dict[str, int] | None]:
     """Count retained rows and graph-local exact subject shapes."""
     result: dict[str, dict[str, int] | None] = {}
-    for view in _VIEWS:
+    for view in (*_VIEWS, "collections"):
         rows = getattr(schema, view)
         result[view] = None if rows is None else {"rows": len(rows)}
     if schema.structural_patterns is not None:
@@ -103,7 +103,9 @@ def _compare(
     return result
 
 
-def analyze_release(directory: str | Path) -> dict[str, Any]:
+def analyze_release(
+    directory: str | Path, *, excluded_subject_classes: frozenset[str] = frozenset()
+) -> dict[str, Any]:
     """Read a frozen release and retain each attempt in channel-specific analyses."""
     from networkx import node_link_data
 
@@ -140,8 +142,30 @@ def analyze_release(directory: str | Path) -> dict[str, Any]:
                 raise ValueError(
                     f"Schema used by multiple extraction records: {attempt.schema_path}"
                 )
-            schemas[attempt.schema_path] = schema
-            row["views"] = _view_counts(schema)
+            row["retained_views"] = _view_counts(schema)
+            row["coverage_scope"] = "retained_extraction"
+            view = schema.model_copy(deep=True)
+            excluded_counts = {}
+            for name in ("patterns", "raw_patterns", "term_patterns"):
+                patterns = getattr(view, name)
+                if patterns is not None:
+                    kept = [
+                        p
+                        for p in patterns
+                        if p.subject_binding != "type"
+                        or p.subject_class not in excluded_subject_classes
+                    ]
+                    excluded_counts[name] = len(patterns) - len(kept)
+                    setattr(view, name, kept)
+            if view.collections is not None:
+                kept_collections = [
+                    p for p in view.collections if p.subject_class not in excluded_subject_classes
+                ]
+                excluded_counts["collections"] = len(view.collections) - len(kept_collections)
+                view.collections = kept_collections
+            row["view_exclusions"] = excluded_counts
+            schemas[attempt.schema_path] = view
+            row["views"] = _view_counts(view)
         inventory.append(row)
 
     mappings = []
@@ -205,6 +229,8 @@ def analyze_release(directory: str | Path) -> dict[str, Any]:
         "paper_statistics": {
             "release_id": manifest.release_id,
             "primary_view": "pending_review",
+            "excluded_subject_classes": sorted(excluded_subject_classes),
+            "structural_view_scope": "retained_extraction",
             "dataset_unit": "registry_entry",
             "extraction_attempts": len(inventory),
             "schema_extractions": len(schemas),

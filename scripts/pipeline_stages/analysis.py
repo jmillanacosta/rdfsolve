@@ -75,7 +75,9 @@ class AnalysisStage(Stage):
         output = self.config.output_dir
         manifest = build_release_manifest(output)
         write_release_manifest(manifest, output)
-        result = analyze_release(output)
+        from rdfsolve.mining.types import METADATA_RECORD_TYPES
+
+        result = analyze_release(output, excluded_subject_classes=METADATA_RECORD_TYPES)
         write_release_analysis(result, output)
         write_release_manifest(
             build_release_manifest(output, release_id=manifest.release_id, issued=manifest.issued),

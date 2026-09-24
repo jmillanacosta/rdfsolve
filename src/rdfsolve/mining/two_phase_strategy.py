@@ -22,7 +22,6 @@ from rdfsolve.mining.query_builders import (
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
-from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import ResponseLimitError
 
@@ -100,12 +99,9 @@ class TwoPhaseStrategy(MiningStrategy):
 
         # Merge with ontology classes if available
         if context.ontology_classes:
-            ontology_classes_filtered = [
-                c for c in context.ontology_classes if c not in EXCLUDED_RECORD_TYPES
-            ]
             # Merge, keeping unique classes
             classes_set = set(classes)
-            new_from_ontology = [c for c in ontology_classes_filtered if c not in classes_set]
+            new_from_ontology = [c for c in context.ontology_classes if c not in classes_set]
             if new_from_ontology:
                 logger.info(f"  -> Adding {len(new_from_ontology)} classes from ontology structure")
                 classes.extend(new_from_ontology)
@@ -165,7 +161,7 @@ class TwoPhaseStrategy(MiningStrategy):
         return batches
 
     def _discover_classes(self, context: MiningContext) -> list[str]:
-        """Run Phase 1 in the current scope and keep only data classes."""
+        """Discover named classes in the current scope."""
         ccs = context.class_chunk_size
         if ccs is None:
             logger.info("Phase 1: discovering classes (no pagination) …")
@@ -200,22 +196,16 @@ class TwoPhaseStrategy(MiningStrategy):
 
         classes = []
         non_iri_count = 0
-        excluded_count = 0
         for b in class_bindings:
             binding = b.get("class", {})
             if binding.get("type") == "uri":
                 value = binding.get("value", "")
                 if value:
-                    if value in EXCLUDED_RECORD_TYPES:
-                        excluded_count += 1
-                    else:
-                        classes.append(value)
+                    classes.append(value)
             else:
                 non_iri_count += 1
         if non_iri_count:
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
-        if excluded_count:
-            logger.info(f"  -> Filtered {excluded_count} artifact and catalogue types")
         logger.info(f"  -> {len(classes)} data classes found")
         return classes
 

@@ -54,9 +54,11 @@ def test_ontology_records_survive_mining():
                         strategy, term_probes, key, pattern
                     )
                 assert all(
-                    p.subject_class != "http://www.w3.org/ns/shacl#NodeShape"
-                    and p.property_uri != "urn:context-only"
+                    p.property_uri != "urn:context-only"
                     for p in schema.patterns
-                ), (strategy, term_probes, "artifact or context edge leaked")
+                ), (strategy, term_probes, "context edge leaked")
+                assert any(p.subject_class == "http://www.w3.org/ns/shacl#NodeShape"
+                           and p.property_uri == "http://www.w3.org/ns/shacl#targetClass"
+                           for p in schema.patterns), (strategy, term_probes, "missing shape record")
                 assert schema.about.class_entity_counts[str(OWL.Class)] == 2
                 assert miner.last_report.completion_state == "complete"

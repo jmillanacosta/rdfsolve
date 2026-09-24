@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 ONTOLOGY_METACLASSES = frozenset(
     {
         "http://www.w3.org/2002/07/owl#Class",
@@ -23,7 +21,7 @@ ONTOLOGY_METACLASSES = frozenset(
     }
 )
 
-EXCLUDED_RECORD_TYPES = frozenset(
+METADATA_RECORD_TYPES = frozenset(
     {
         "http://www.w3.org/2002/07/owl#Ontology",
         "http://www.w3.org/ns/shacl#SPARQLExecutable",
@@ -40,6 +38,6 @@ EXCLUDED_RECORD_TYPES = frozenset(
         "http://www.w3.org/ns/dcat#Distribution",
     }
 )
-ONTOLOGY_METACLASSES |= EXCLUDED_RECORD_TYPES
+ONTOLOGY_METACLASSES |= METADATA_RECORD_TYPES
 
-__all__ = ["EXCLUDED_RECORD_TYPES", "ONTOLOGY_METACLASSES"]
+__all__ = ["METADATA_RECORD_TYPES", "ONTOLOGY_METACLASSES"]

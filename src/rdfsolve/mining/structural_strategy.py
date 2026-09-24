@@ -11,8 +11,7 @@ from rdflib import Literal
 
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
-from rdfsolve.mining.typed_coverage import eligible_subject, typed_match, uncovered_filter
-from rdfsolve.mining.types import EXCLUDED_RECORD_TYPES
+from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
 
@@ -128,7 +127,7 @@ class StructuralStrategy(MiningStrategy):
         return "structural"
 
     def mine(self, context: MiningContext) -> list[SchemaPattern]:
-        """Measure typed coverage and mine only uncovered eligible edges."""
+        """Measure typed coverage and mine only uncovered edges."""
         patterns = self.patterns if self.patterns is not None else TwoPhaseStrategy().mine(context)
         if context.report.report.abort_reason or context.report.report.query_failures:
             context.report.report.config["structural_coverage"] = [
@@ -139,9 +138,7 @@ class StructuralStrategy(MiningStrategy):
             {
                 (p.subject_class, p.property_uri, p.object_class, p.datatype)
                 for p in patterns
-                if p.subject_binding == p.object_binding == "type"
-                and p.evidence_source == "mined"
-                and p.subject_class not in EXCLUDED_RECORD_TYPES
+                if p.subject_binding == p.object_binding == "type" and p.evidence_source == "mined"
             },
             key=str,
         )
@@ -161,32 +158,25 @@ class StructuralStrategy(MiningStrategy):
             try:
                 rows = _select(
                     context,
-                    f"""SELECT ?typed ?eligible ?covered (COUNT(*) AS ?n)
+                    f"""SELECT ?typed ?covered (COUNT(*) AS ?n)
 {_dataset(graph, named)} WHERE {{ ?s ?p ?o .
 BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
-BIND({eligible_subject(context.graph_uris)} AS ?eligible)
 BIND({typed_match(keys, context.graph_uris, context.type_context_graph_uris)} AS ?covered)
-}} GROUP BY ?typed ?eligible ?covered""",
+}} GROUP BY ?typed ?covered""",
                     "structural/coverage",
                 )
                 total = sum(int(r["n"]["value"]) for r in rows)
                 untyped = sum(
                     int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"}
                 )
-                excluded = sum(
-                    int(r["n"]["value"]) for r in rows if r["eligible"]["value"] in {"false", "0"}
-                )
                 covered = sum(
-                    int(r["n"]["value"])
-                    for r in rows
-                    if r["eligible"]["value"] in {"true", "1"}
-                    and r["covered"]["value"] in {"true", "1"}
+                    int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
                 )
-                missing = total - excluded - covered
+                missing = total - covered
                 entry.update(
                     triple_count=total,
                     untyped_subject_triples=untyped,
-                    excluded_subject_triples=excluded,
+                    excluded_subject_triples=0,
                     covered_triples=covered,
                     uncovered_triples=missing,
                     type_graph_uris=context.graph_uris,

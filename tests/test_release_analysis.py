@@ -18,7 +18,7 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
     registry = tmp_path / "sources.yaml"
     registry.write_text(yaml.safe_dump([{"name": n} for n in ("typed", "untyped", "failed")]))
     for name, mode, triples in [
-        ("typed", "local", '<urn:a> a <urn:A>; <urn:link> <urn:b> . <urn:b> a <urn:B> .'),
+        ("typed", "local", '<urn:a> a <urn:A>; <urn:link> <urn:b> . <urn:b> a <urn:B> . <urn:catalogue> a <http://www.w3.org/ns/dcat#Dataset>; <urn:title> "Catalogue" .'),
         ("typed", "remote", '<urn:a> a <urn:A>; <urn:remote> "x" .'),
         ("untyped", "local", '<urn:u> <urn:link> "untyped" .'),
     ]:
@@ -83,6 +83,15 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
     state = AnalysisStage(config).run()
     assert state["success"], state
     assert state["schema_extractions"] == 3
+    article = json.loads((tmp_path / "extraction_inventory.json").read_text())
+    article_local = next(r for r in article if r["dataset_id"] == "typed" and r["mode"] == "local")
+    assert article_local["retained_views"] == inventory["typed", "local"]["views"]
+    assert article_local["views"]["patterns"]["rows"] == inventory["typed", "local"]["views"]["patterns"]["rows"] - 2
+    assert article_local["coverage_scope"] == "retained_extraction"
+    assert article_local["view_exclusions"]["patterns"] == 2
+    article_graph = json.loads((tmp_path / "class_connectivity.json").read_text())["local"]
+    assert all(n["iri"] != "http://www.w3.org/ns/dcat#Dataset" for n in article_graph["nodes"])
+    assert any(n["iri"] == "http://www.w3.org/ns/dcat#Dataset" for n in result["class_connectivity"]["local"]["nodes"])
     current = build_release_manifest(tmp_path)
     saved = json.loads((tmp_path / "release.json").read_text())
     assert {a.path: a.sha256 for a in current.artifacts} == {

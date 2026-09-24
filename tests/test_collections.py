@@ -1,5 +1,7 @@
+import json
+
 import pytest
-from rdflib import RDF, BNode, Dataset, Graph, Literal, Namespace
+from rdflib import RDF, XSD, BNode, Dataset, Graph, Literal, Namespace
 from rdflib.collection import Collection
 from rdflib.compare import isomorphic
 
@@ -40,7 +42,7 @@ def test_collection_profiles_and_ordered_records(tmp_path):
     assert schema.clean_schema(graph_uris=[str(E.data)]).collections == []
     assert split_by_edge_graph(schema, str(E.other), "other").collections == []
     restored = MinedSchema.from_dict(schema.to_dict())
-    with Client(restored, Graph()) as client:
+    with Client(restored, Graph(), contract=True) as client:
         a = client.create(str(E.Agent), uri=str(E.a), label=Literal("A", lang="en"))
         b = client.create(str(E.Agent), uri=str(E.b), label=Literal("B", lang="en"))
         record = client.create(str(E.Record), uri=str(E.one), members=RDFList(items=[a, b, a]))
@@ -60,6 +62,58 @@ def test_collection_profiles_and_ordered_records(tmp_path):
             client.create(
                 str(E.Record), members=RDFList(items=[Literal("wrong member")])
             ).to_graph()
+    graph = Graph().parse(
+        data="""
+        @prefix dcat: <http://www.w3.org/ns/dcat#> .
+        @prefix prov: <http://www.w3.org/ns/prov#> .
+        @prefix dct: <http://purl.org/dc/terms/> .
+        @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix e: <https://example.org/> .
+        e:dataset a dcat:Dataset; dct:title "Measurements"@en;
+            prov:qualifiedAttribution [a prov:Attribution; prov:agent e:lab];
+            e:readings ("1"^^xsd:integer "2"^^xsd:integer "1"^^xsd:integer) .
+        e:lab a foaf:Organization; foaf:name "Laboratory"@en .
+        """,
+        format="turtle",
+    )
+    with SchemaMiner.from_graph(graph, counts=False, delay=0) as miner:
+        observed = miner.mine()
+    snapshot = tmp_path / "approved-schema.json"
+    snapshot.write_text(json.dumps(observed.to_dict()))
+    approved = MinedSchema.from_json(snapshot)
+    namespace = {"__name__": "generated_authoring_workflow"}
+    exec(compile(approved.to_pydantic(contract=True), "models.py", "exec"), namespace)
+    models = {
+        value.rdf_class_iri: value
+        for value in namespace.values()
+        if isinstance(value, type) and hasattr(value, "rdf_class_iri")
+    }
+    lab = models["http://xmlns.com/foaf/0.1/Organization"](
+        uri=str(E.lab),
+        name=Literal("Laboratory", lang="en"),
+    )
+    attribution = models["http://www.w3.org/ns/prov#Attribution"](agent=lab)
+    record = models["http://www.w3.org/ns/dcat#Dataset"](
+        uri=str(E.dataset),
+        title=Literal("Measurements", lang="en"),
+        qualifiedattribution=attribution,
+        readings=RDFList(items=[Literal(1), Literal(2), Literal(1)]),
+    )
+    output = tmp_path / "authored.ttl"
+    record.to_graph().serialize(output, format="turtle")
+    assert isomorphic(Graph().parse(output), graph), "The approved model changed the input graph"
+    assert len(approved.collections) == 1 and approved.collections[0].member_datatypes == [
+        str(XSD.integer)
+    ]
+    assert approved.to_dict() == observed.to_dict(), "Authoring changed the approved snapshot"
+    restored_record = type(record).model_validate_json(record.model_dump_json())
+    assert isomorphic(restored_record.to_graph(), graph)
+    record.readings = RDFList(items=[Literal(3)])
+    assert len(list(record.to_graph().objects(None, RDF.first))) == 1, (
+        "Observed lengths became constraints"
+    )
+
     broken = Graph().parse(
         data="""
         @prefix e: <https://example.org/> .
