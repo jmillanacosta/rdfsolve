@@ -66,7 +66,10 @@ supplies uncovered edges, exact counts, distinct nodes and witness bindings.
 Recount and witness queries remain available for independent verification.
 A typed graph with no uncovered edges skips structural profile discovery.
 This path retains uncovered bindings in memory; SPARQL endpoints keep
-aggregate queries.
+aggregate queries. Local reports separate `graph-census` (triple and type-presence
+counts), `structural-discovery` (uncovered edges and property sets), and
+`structural-patterns` (profile assembly). Query timings remain available under
+`query_stats`.
 
 Collection profiles are available as `schema.collections` and under
 `document["schema"]["collections"]` in canonical JSON.

@@ -155,7 +155,7 @@ class StructuralStrategy(MiningStrategy):
             "local_bulk" if local else "per_profile_queries"
         )
         observations: dict[str | None, list[dict[str, Any]]] = {}
-        phase = context.report.start_phase("typed-coverage")
+        phase = context.report.start_phase("graph-census" if local else "typed-coverage")
         coverage: list[dict[str, Any]] = []
         context.report.report.config["structural_coverage"] = coverage
         graphs: Sequence[str | None] = (
@@ -164,12 +164,12 @@ class StructuralStrategy(MiningStrategy):
         named = list(
             dict.fromkeys((context.graph_uris or []) + (context.type_context_graph_uris or []))
         )
+        match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
         for graph in graphs:
             entry: dict[str, Any] = {"graph_uri": graph, "state": "checking"}
             coverage.append(entry)
             context.report.flush()
             try:
-                match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
                 selection = "" if local else "?covered"
                 binding = "" if local else f"BIND({match} AS ?covered)"
                 rows = _select(
@@ -186,7 +186,32 @@ BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
                     int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"}
                 )
                 if local:
-                    needed = untyped > 0 or bool(
+                    entry.update(triple_count=total, untyped_subject_triples=untyped)
+                    continue
+                covered = sum(
+                    int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
+                )
+                missing = total - covered
+                entry.update(
+                    triple_count=total,
+                    untyped_subject_triples=untyped,
+                    excluded_subject_triples=0,
+                    covered_triples=covered,
+                    uncovered_triples=missing,
+                    type_graph_uris=context.graph_uris,
+                    subject_selection="uncovered",
+                    state="needed" if missing else "not_needed",
+                )
+            except Exception:
+                entry["state"] = "failed"
+                raise
+        context.report.finish_phase(phase, items=len(coverage))
+        if local:
+            phase = context.report.start_phase("structural-discovery")
+            for entry in coverage:
+                graph = entry["graph_uri"]
+                try:
+                    needed = entry["untyped_subject_triples"] > 0 or bool(
                         _select(
                             context,
                             f"SELECT ?s {_dataset(graph, named)} WHERE {{ "
@@ -204,32 +229,27 @@ BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
                         else []
                     )
                     missing = len(observations[graph])
-                    covered = total - missing
+                    covered = entry["triple_count"] - missing
                     if covered < 0:
                         raise ValueError("Structural bindings exceed the graph triple count")
-                else:
-                    covered = sum(
-                        int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
+                    entry.update(
+                        excluded_subject_triples=0,
+                        covered_triples=covered,
+                        uncovered_triples=missing,
+                        type_graph_uris=context.graph_uris,
+                        subject_selection="uncovered",
+                        state="needed" if missing else "not_needed",
                     )
-                    missing = total - covered
-                entry.update(
-                    triple_count=total,
-                    untyped_subject_triples=untyped,
-                    excluded_subject_triples=0,
-                    covered_triples=covered,
-                    uncovered_triples=missing,
-                    type_graph_uris=context.graph_uris,
-                    subject_selection="uncovered",
-                    state="needed" if missing else "not_needed",
-                )
-            except Exception:
-                entry["state"] = "failed"
-                raise
+                except Exception:
+                    entry["state"] = "failed"
+                    raise
+            context.report.finish_phase(
+                phase, items=sum(len(rows) for rows in observations.values())
+            )
         if keys and not any(entry["covered_triples"] for entry in coverage):
             for entry in coverage:
                 entry.update(state="failed", reason="typed_coverage_mismatch")
             raise ValueError("Typed observations have zero edge coverage")
-        context.report.finish_phase(phase, items=len(coverage))
         if not any(entry["uncovered_triples"] for entry in coverage):
             return patterns
         phase = context.report.start_phase("structural-patterns")

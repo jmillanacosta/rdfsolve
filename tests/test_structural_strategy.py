@@ -39,6 +39,11 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         mining_queries = []
         def record_query(query, purpose=""):
             mining_queries.append(purpose)
+            if purpose == "structural/discovery":
+                phase = miner._report.report.phases[-1]
+                assert phase.name == "structural-discovery" and phase.finished_at is None, (
+                    "Attribute bulk discovery to its own active phase"
+                )
             return select(query, purpose)
         monkeypatch.setattr(miner.helper, "select", record_query)
         schema = miner.mine("fixture")
