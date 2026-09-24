@@ -650,7 +650,20 @@ def _render_qleverfile(
     except Exception:
         pass
 
-    return QLEVERFILE_TEMPLATE.format(
+    streams = []
+    if cat_input_files == "cat ${INPUT_FILES}":
+        streams = [
+            {
+                "cmd": 'cat "{}"',
+                "format": rdf_format,
+                "for-each": pattern,
+                "parallel": "true" if cfg.parallel_parsing else "false",
+            }
+            for pattern in shlex.split(input_files)
+        ]
+        cat_input_files = ""
+
+    content = QLEVERFILE_TEMPLATE.format(
         name=name,
         workdir=workdir,
         port=port,
@@ -668,6 +681,12 @@ def _render_qleverfile(
         timeout=cfg.timeout,
         image=cfg.image,
     )
+
+    if streams:
+        return content.replace(
+            "[index]\n", "[index]\nMULTI_INPUT_JSON = " + json.dumps(streams) + "\n"
+        )
+    return content
 
 
 # Public builders
