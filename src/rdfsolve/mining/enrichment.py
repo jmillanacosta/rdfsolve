@@ -8,7 +8,12 @@ from collections.abc import Iterator
 from typing import Any
 
 from rdfsolve._outcomes import QueryFailure
-from rdfsolve.mining.query_builders import _graph_clause, _graph_scope, _type_pattern
+from rdfsolve.mining.query_builders import (
+    _graph_clause,
+    _graph_scope,
+    _subject_type_pattern,
+    _type_pattern,
+)
 from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.schema_models.core import MinedSchema
@@ -61,7 +66,7 @@ def example_query(
     subject = (
         f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
         if pattern.subject_binding == "term"
-        else f"?subject a {_iri(pattern.subject_class)} ."
+        else _type_pattern("?subject", _iri(pattern.subject_class), type_context_graph_uris)
     )
     if pattern.object_binding == "term":
         condition = f"VALUES ?value {{ {_iri(pattern.object_class)} }}"
@@ -82,12 +87,22 @@ def example_query(
     }} LIMIT {limit}"""
 
 
-def class_example_query(iri: str, graph_uris: list[str] | None, limit: int) -> str:
-    """Sample instances, including classes that occur only as object types."""
+def class_example_query(
+    iri: str,
+    graph_uris: list[str] | None,
+    limit: int,
+    type_context_graph_uris: list[str] | None = None,
+    *,
+    with_dataset: bool = True,
+) -> str:
+    """Sample typed subjects in the selected data scope."""
     for graph in graph_uris or []:
         _iri(graph)
-    opening, closing = _graph_clause(graph_uris)
-    return f"SELECT DISTINCT ?subject WHERE {{ {opening} ?subject a {_iri(iri)} . {closing} }} LIMIT {limit}"
+    pattern = _subject_type_pattern("?subject", _iri(iri), type_context_graph_uris)
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    if not with_dataset:
+        dataset = ""
+    return f"SELECT DISTINCT ?subject {dataset} WHERE {{ {pattern} }} LIMIT {limit}"
 
 
 def _term(binding: dict[str, Any], scope: int) -> RdfTerm:
@@ -193,7 +208,12 @@ def query_enrichment(
                 invalid(error, "definitions")
     if examples_per_pattern:
         result.class_examples = {iri: [] for iri in classes}
-        queries = [class_example_query(iri, graph_uris, examples_per_pattern) for iri in classes]
+        queries = [
+            class_example_query(
+                iri, graph_uris, examples_per_pattern, type_context_graph_uris, with_dataset=False
+            )
+            for iri in classes
+        ]
         for index, row in batched(queries, "class_examples"):
             try:
                 result.class_examples[classes[index]].append(

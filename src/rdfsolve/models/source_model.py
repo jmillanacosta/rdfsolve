@@ -85,7 +85,7 @@ class SourceModel(BaseModel):
     graph_uris:
         Named graphs that hold data edges.
     type_context_graph_uris:
-        Extra named graphs for linked-object types.
+        Extra named graphs for subject and object types.
     ontology_graph_uris:
         Named graphs for ontology interpretation and extraction.
     graph_sources:

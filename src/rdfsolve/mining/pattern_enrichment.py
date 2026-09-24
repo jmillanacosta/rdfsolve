@@ -17,6 +17,8 @@ from rdfsolve.mining.query_builders import (
     _build_batched_untyped_count_query,
     _build_label_query,
     _graph_clause,
+    _graph_scope,
+    _subject_type_pattern,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.models import SchemaPattern
@@ -77,23 +79,24 @@ def query_class_entity_counts(
     batch_size: int = 50,
     delay: float = 0,
     states_out: dict[str, QueryState] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> dict[str, int]:
     """Count distinct typed entities, not overlapping pattern rows."""
     counts: dict[str, int] = {}
     if batch_size < 1:
         raise ValueError("Class count batch size must be positive")
     batch_size = min(batch_size, 10)
-    opening, closing = _graph_clause(graph_uris)
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
     phase = report.start_phase("class-entity-counts")
     for offset in range(0, len(classes), batch_size):
         batch = classes[offset : offset + batch_size]
-        aggregate = "COUNT(DISTINCT ?entity)" if graph_uris and len(graph_uris) > 1 else "COUNT(*)"
+        aggregate = "COUNT(DISTINCT ?entity)"
         branches = [
             f"{{ SELECT (<{iri}> AS ?class) ({aggregate} AS ?count) WHERE {{ "
-            f"{opening} ?entity a <{iri}> . {closing} }} }}"
+            f"{_subject_type_pattern('?entity', f'<{iri}>', type_context_graph_uris)} }} }}"
             for iri in batch
         ]
-        query = "SELECT ?class ?count WHERE { " + " UNION ".join(branches) + " }"
+        query = f"SELECT ?class ?count {dataset} WHERE {{ " + " UNION ".join(branches) + " }"
         started = time.monotonic()
         outcome = select_outcome(query, "class-entity-counts", helper, batch, graph_uris)
         report.record_query(
@@ -164,7 +167,7 @@ def enrich_patterns_with_counts(
         patterns: Patterns to enrich with counts
         helper: SPARQL helper for query execution
         graph_uris: Named graphs to restrict queries to
-        type_context_graph_uris: Extra graphs for linked-object types
+        type_context_graph_uris: Extra graphs for subject and object types
         report: Report collector for tracking query execution
         collect_bindings: Function to collect paginated results
         class_batch_size: Number of classes per batch
@@ -220,6 +223,7 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
         _fetch_resource_count_batch(
             batch,
@@ -391,6 +395,7 @@ def _fetch_literal_count_batch(
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
 ) -> None:
     """Query literal counts for one class batch and update *counts*."""
     try:
@@ -404,6 +409,7 @@ def _fetch_literal_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(
@@ -426,6 +432,7 @@ def _fetch_literal_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_query(
             "counts/literal-objects",

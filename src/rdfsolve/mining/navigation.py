@@ -7,7 +7,7 @@ from collections import Counter, defaultdict, deque
 from collections.abc import Iterator, Sequence
 from typing import TYPE_CHECKING
 
-from rdfsolve.mining.query_builders import _graph_scope, _type_pattern
+from rdfsolve.mining.query_builders import _graph_scope, _subject_type_pattern, _type_pattern
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
 from rdfsolve.schema_models.pattern import SchemaPattern
 
@@ -239,7 +239,8 @@ def _path_pattern(
     joined = " ".join(body)
     if include_unmatched:
         joined = f"OPTIONAL {{ {joined} }}"
-    return dataset, f"?n0 a {iri(route.steps[0].subject_class)} . {joined}"
+    root = _subject_type_pattern("?n0", iri(route.steps[0].subject_class), type_context_graph_uris)
+    return dataset, f"{root} {joined}"
 
 
 def path_query(

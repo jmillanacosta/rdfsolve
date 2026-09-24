@@ -27,7 +27,7 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         <urn:disease:1> <urn:association> <urn:a1> .
     ''', format="turtle")
     data.graph(URIRef("urn:context")).parse(data='''
-        <urn:disease:1> a <http://www.w3.org/2002/07/owl#Class>;
+        <urn:context:disease> a <http://www.w3.org/2002/07/owl#Class>;
             <urn:contextOnly> "excluded" .
     ''', format="turtle")
     folder = tmp_path / "fixture"

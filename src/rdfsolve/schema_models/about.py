@@ -61,7 +61,7 @@ class AboutMetadata(BaseModel):
         None, description="Graphs used for type lookups when edges have a narrower graph scope"
     )
     type_context_graph_uris: list[str] | None = Field(
-        None, description="Additional graphs used only for linked-object type lookups"
+        None, description="Additional graphs used only for subject and object type lookups"
     )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,

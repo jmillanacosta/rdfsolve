@@ -134,7 +134,7 @@ class TwoPhaseStrategy(MiningStrategy):
         t0 = time.monotonic()
         try:
             rows = context.collect_bindings(
-                _build_class_weight_query(context.graph_uris),
+                _build_class_weight_query(context.graph_uris, context.type_context_graph_uris),
                 "two-phase/class-weights",
                 context.chunk_size,
             )
@@ -165,7 +165,9 @@ class TwoPhaseStrategy(MiningStrategy):
         ccs = context.class_chunk_size
         if ccs is None:
             logger.info("Phase 1: discovering classes (no pagination) …")
-            q = _build_class_discovery_query_plain(context.graph_uris)
+            q = _build_class_discovery_query_plain(
+                context.graph_uris, context.type_context_graph_uris
+            )
             t0 = time.monotonic()
             try:
                 try:
@@ -174,7 +176,9 @@ class TwoPhaseStrategy(MiningStrategy):
                 except ResponseLimitError:
                     logger.warning("Class listing exceeded the response limit; paging it")
                     class_bindings = context.collect_bindings(
-                        _build_class_discovery_query(context.graph_uris),
+                        _build_class_discovery_query(
+                            context.graph_uris, context.type_context_graph_uris
+                        ),
                         "two-phase/classes",
                         context.chunk_size,
                     )
@@ -191,7 +195,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 raise
         else:
             logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(context.graph_uris)
+            q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
             class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
 
         classes = []

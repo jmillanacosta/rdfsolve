@@ -90,7 +90,8 @@ def test_pattern_distinct_counts_are_not_summed_across_named_graphs():
             assert actual["urn:C", "urn:p", "urn:E"] == (2, {"urn:data": 2}, 2, 1), strategy
             assert ("urn:C", "urn:p", "Resource") not in actual, strategy
             assert actual["urn:C", "urn:other", "Resource"][0] == 1, strategy
-            assert all(sc != "urn:Outside" and p != "urn:leak" for sc, p, oc in actual), strategy
+            assert actual["urn:Outside", "urn:p", "urn:E"] == (1, {"urn:data": 1}, 1, 1), strategy
+            assert all(p != "urn:leak" for sc, p, oc in actual), strategy
             assert schema.about.class_entity_counts["urn:C"] == 2, "Context cannot enlarge populations"
             assert schema.about.type_context_graph_uris == ["urn:types", "urn:types:duplicate"]
             assert miner.last_report.config["type_context"]["state"] == "nonempty"

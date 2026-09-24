@@ -12,7 +12,7 @@ Dataset graph inputs
 
 A dataset can load several input bundles into one index. ``graph_sources`` maps each
 named graph IRI to its download fields. Use ``graph_uris`` for data edges,
-``type_context_graph_uris`` for extra linked-object types, and ``ontology_graph_uris``
+``type_context_graph_uris`` for extra subject and object types, and ``ontology_graph_uris``
 for ontology interpretation. Every selected local graph must have an input mapping. A
 graph can serve more than one scope.
 

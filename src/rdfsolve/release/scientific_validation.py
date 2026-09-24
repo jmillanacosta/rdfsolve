@@ -100,7 +100,7 @@ def pattern_existence_query(
     subject = (
         f"VALUES ?s {{ <{pattern.subject_class}> }}"
         if pattern.subject_binding == "term"
-        else f"?s a <{pattern.subject_class}> ."
+        else _type_pattern("?s", f"<{pattern.subject_class}>", type_context_graph_scope)
     )
     edge = f"{edge_open} ?s <{pattern.property_uri}> ?o . {edge_close}"
     conditions: list[str] = []

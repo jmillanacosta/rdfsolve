@@ -252,6 +252,7 @@ class SchemaMiner:
             self.class_batch_size,
             self.delay,
             states_out=states,
+            type_context_graph_uris=self.type_context_graph_uris,
         )
         self._report.flush()
         return counts, states
@@ -771,6 +772,7 @@ class SchemaMiner:
                 self.class_batch_size,
                 self.delay,
                 states_out=entity_count_states,
+                type_context_graph_uris=self.type_context_graph_uris,
             )
         dataset = getattr(self._helper, "dataset", None)
         if isinstance(dataset, Graph):

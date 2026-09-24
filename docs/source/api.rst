@@ -294,11 +294,12 @@ path remain as rows with unbound intermediate/target values. Set
 include_unmatched=False to retrieve only complete matches.
 
 Selected-path queries reuse the mining scope: data edges join across selected
-data graphs; companion graphs supply object types only. General client path
+data graphs; companion graphs supply subject and object types. General client path
 templates currently resolve their class filters in the selected data graphs.
 A path needs to have been discovered or supplied before it can be selected.
-Mining does not yet discover a subject field whose type exists only in companion
-context. A failed match is not an ontology inconsistency.
+Mining includes fields on data subjects typed in companion context. Companion-only
+subjects without outgoing data edges are excluded from class discovery and
+populations. A failed match is not an ontology inconsistency.
 
 Cross-graph results retain their query and selected scope. A missing single
 graph value is not evidence that the path came from the default graph.

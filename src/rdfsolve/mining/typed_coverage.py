@@ -22,7 +22,7 @@ def typed_match(
         dt = URIRef(datatype).n3() if datatype else "UNDEF"
         values.append(f"({URIRef(subject).n3()} {URIRef(predicate).n3()} {target} {dt})")
     objects = list(dict.fromkeys((type_graphs or []) + (context_graphs or [])))
-    subject_type = _context_pattern("?s a ?_coveredSubject .", type_graphs).replace(
+    subject_type = _context_pattern("?s a ?_coveredSubject .", objects).replace(
         "?_contextGraph", "?_subjectTypeGraph"
     )
     object_type = _context_pattern("?o a ?_coveredObject .", objects).replace(

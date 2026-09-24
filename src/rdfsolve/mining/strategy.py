@@ -40,7 +40,7 @@ class MiningContext:
         Args:
             helper: SPARQL helper for query execution
             graph_uris: Data graphs
-            type_context_graph_uris: Extra graphs for linked-object types
+            type_context_graph_uris: Extra graphs for subject and object types
             ontology_graph_uris: Interpretation graphs excluded from data discovery
             report: Report collector for tracking progress
             collect_bindings: Function to execute queries and collect bindings (query, purpose, chunk_size)

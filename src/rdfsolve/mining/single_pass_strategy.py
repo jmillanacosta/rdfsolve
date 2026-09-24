@@ -66,7 +66,9 @@ class SinglePassStrategy(MiningStrategy):
 
         phase = context.report.start_phase("blank-node")
         bindings = context.collect_bindings(
-            _build_blank_node_query(context.graph_uris), "mining/blank-node", None
+            _build_blank_node_query(context.graph_uris, context.type_context_graph_uris),
+            "mining/blank-node",
+            None,
         )
         blank_nodes = blank_node_patterns(bindings, context)
         patterns.extend(blank_nodes)
@@ -97,7 +99,7 @@ class SinglePassStrategy(MiningStrategy):
 
     def _run_literal(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the literal-property SELECT query."""
-        q = _build_literal_query(context.graph_uris)
+        q = _build_literal_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/literal", None)
         results: list[SchemaPattern] = []
         for b in bindings:

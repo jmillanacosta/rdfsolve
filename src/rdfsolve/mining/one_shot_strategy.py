@@ -57,12 +57,18 @@ class OneShotStrategy(MiningStrategy):
                     context.graph_uris, context.type_context_graph_uris
                 ),
             ),
-            ("literal", _build_literal_query_plain(context.graph_uris)),
+            (
+                "literal",
+                _build_literal_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
             (
                 "untyped-uri",
                 _build_untyped_uri_query_plain(context.graph_uris, context.type_context_graph_uris),
             ),
-            ("blank-node", _build_blank_node_query_plain(context.graph_uris)),
+            (
+                "blank-node",
+                _build_blank_node_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
         ]
 
         patterns: list[SchemaPattern] = []

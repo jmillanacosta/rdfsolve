@@ -176,7 +176,7 @@ class StructuralStrategy(MiningStrategy):
                     context,
                     f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
 {_dataset(graph, named)} WHERE {{ ?s ?p ?o .
-BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
+BIND(EXISTS {{ {_types(named)} }} AS ?typed)
 {binding}
 }} GROUP BY ?typed {selection}""",
                     "structural/coverage",
@@ -198,7 +198,7 @@ BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
                     excluded_subject_triples=0,
                     covered_triples=covered,
                     uncovered_triples=missing,
-                    type_graph_uris=context.graph_uris,
+                    type_graph_uris=named,
                     subject_selection="uncovered",
                     state="needed" if missing else "not_needed",
                 )
@@ -236,7 +236,7 @@ BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
                         excluded_subject_triples=0,
                         covered_triples=covered,
                         uncovered_triples=missing,
-                        type_graph_uris=context.graph_uris,
+                        type_graph_uris=named,
                         subject_selection="uncovered",
                         state="needed" if missing else "not_needed",
                     )
@@ -293,7 +293,7 @@ BIND(EXISTS {{ {_types(context.graph_uris)} }} AS ?typed)
                 datatype=row.get("dt", {}).get("value"),
                 language=row.get("lang", {}).get("value"),
                 graph_uri=graph,
-                type_graph_uris=context.graph_uris or [],
+                type_graph_uris=named,
                 object_type_graph_uris=context.type_context_graph_uris or [],
                 covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
                 subject_selection="uncovered",

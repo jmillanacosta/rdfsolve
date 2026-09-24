@@ -223,15 +223,19 @@ def enumerate_properties_for_class(
     unsafe_paging: bool = False,
     *,
     chunk_size: int = _DECOMP_CHUNK,
+    type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
     """Return property bindings and the completion state of their enumeration."""
     return _select_or_page(
-        _build_properties_for_class_query(class_uri, graph_uris),
+        _build_properties_for_class_query(
+            class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
+        ),
         _build_properties_for_class_query(
             class_uri,
             graph_uris,
             paginated=True,
             drop_distinct=unsafe_paging,
+            type_context_graph_uris=type_context_graph_uris,
         ),
         f"{purpose}/properties",
         helper,
@@ -295,6 +299,7 @@ def typed_object_by_property(
         collect_bindings,
         unsafe_paging,
         chunk_size=chunk_size,
+        type_context_graph_uris=type_context_graph_uris,
     )
     combined = QueryOutcome(state=props.state, failures=props.failures) if props.failures else None
     for prop_uri in dict.fromkeys(
