@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
 from rdflib import RDF, XSD, BNode, Graph, Literal, URIRef
 
 from rdfsolve.schema_models.enrichment import RdfTerm
@@ -43,6 +43,8 @@ def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> No
 
 class RDFRecord(BaseModel):
     """An authored or retrieved record with retained RDF terms."""
+
+    rdf_contract: ClassVar[bool] = False
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
     uri: str = Field(default_factory=lambda: "_:" + str(BNode()), alias="@id", min_length=1)
@@ -87,17 +89,25 @@ class RDFRecord(BaseModel):
             raw = data[key]
             values = raw if isinstance(raw, list) else [raw]
             if not any(isinstance(item, (RdfTerm, Literal, URIRef, BNode)) for item in values):
+                if name in retained:
+                    native = [_value(RdfTerm.model_validate(term)) for term in retained[name]]
+                    if TypeAdapter(list[Any]).dump_python(native, mode="json") == values:
+                        data[key] = native if isinstance(raw, list) else native[0]
                 continue
             terms = []
             converted = []
             for item in values:
-                term = (
-                    item
-                    if isinstance(item, RdfTerm)
-                    else RdfTerm.from_rdf(item)
-                    if isinstance(item, (Literal, URIRef, BNode))
-                    else RdfTerm.from_rdf(_new_term(item, extra, ""))
-                )
+                if isinstance(item, RdfTerm):
+                    term = item
+                elif isinstance(item, (Literal, URIRef, BNode)):
+                    term = RdfTerm.from_rdf(item)
+                elif isinstance(item, BaseModel):
+                    identifier = str(vars(item)["uri"])
+                    term = RdfTerm.from_rdf(
+                        BNode(identifier[2:]) if identifier.startswith("_:") else URIRef(identifier)
+                    )
+                else:
+                    term = RdfTerm.from_rdf(_new_term(item, extra, ""))
                 _check_term(term, extra.get("rdf_patterns", []), name)
                 terms.append(term.model_dump(mode="json"))
                 converted.append(
@@ -109,6 +119,13 @@ class RDFRecord(BaseModel):
             data[key] = converted if isinstance(raw, list) else converted[0]
         data["rdf_terms"] = retained
         return data
+
+    @model_validator(mode="after")
+    def check_contract(self) -> RDFRecord:
+        """Validate authored contract records before returning them."""
+        if self.rdf_contract:
+            self.to_graph()
+        return self
 
     def to_graph(self, *, fields: list[str] | None = None) -> Graph:
         """Write populated RDF fields with their retained terms."""

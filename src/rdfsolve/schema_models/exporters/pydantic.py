@@ -76,7 +76,11 @@ def _value_type(pattern: SchemaPattern, names: dict[str, str]) -> str:
 
 
 def to_pydantic(
-    schema: MinedSchema, schema_name: str | None = None, *, trim_descriptions: int | None = None
+    schema: MinedSchema,
+    schema_name: str | None = None,
+    *,
+    trim_descriptions: int | None = None,
+    contract: bool = False,
 ) -> str:
     """Use labels for names and retain IRIs in schema metadata."""
     labels: dict[str, set[str]] = defaultdict(set)
@@ -191,6 +195,8 @@ def to_pydantic(
         "",
         "class RDFResource(RDFRecord):",
         "    rdf_prefixes: ClassVar[dict[str, str]] = RDF_PREFIXES",
+        f"    rdf_contract: ClassVar[bool] = {contract!r}",
+        f"    model_config = ConfigDict(populate_by_name=True, extra={'forbid' if contract else 'allow'!r})",
         "",
     ]
     for iri, name in names.items():
@@ -220,6 +226,10 @@ def to_pydantic(
                 "rdf_terms",
                 "rdf_loaded_fields",
                 "rdf_source",
+                "rdf_contract",
+                "read_terms",
+                "check_identifier",
+                "check_contract",
                 "to_graph",
             }
         )
@@ -299,10 +309,15 @@ def to_pydantic(
     return "\n".join(lines) + "\n"
 
 
-def build_pydantic_classes(schema: MinedSchema) -> dict[str, type[BaseModel]]:
+def build_pydantic_classes(
+    schema: MinedSchema, *, contract: bool = False
+) -> dict[str, type[BaseModel]]:
     """Load only code produced by this exporter, never supplied Python source."""
     namespace: dict[str, Any] = {"__name__": "rdfsolve.generated"}
-    exec(compile(to_pydantic(schema), "<rdfsolve generated models>", "exec"), namespace)  # noqa: S102
+    exec(  # noqa: S102
+        compile(to_pydantic(schema, contract=contract), "<rdfsolve generated models>", "exec"),
+        namespace,
+    )
     return {
         name: value
         for name, value in namespace.items()

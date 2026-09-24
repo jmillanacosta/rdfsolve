@@ -518,11 +518,11 @@ class MinedSchema(BaseModel):
             graph_uri=graph_uri,
         )
 
-    def to_pydantic_classes(self) -> dict[str, type[BaseModel]]:
+    def to_pydantic_classes(self, *, contract: bool = False) -> dict[str, type[BaseModel]]:
         """Generate runtime classes using the same definitions as the Python export."""
         from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
 
-        return build_pydantic_classes(self)
+        return build_pydantic_classes(self, contract=contract)
 
     def client(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Client:
         """Open the exploratory client without mining or querying the source."""
@@ -537,7 +537,11 @@ class MinedSchema(BaseModel):
         return Hydrator(self, source, **kwargs)
 
     def to_pydantic(
-        self, schema_name: str | None = None, *, trim_descriptions: int | None = None
+        self,
+        schema_name: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
+        contract: bool = False,
     ) -> str:
         """Generate label-named Pydantic views of observed RDF patterns."""
         from rdfsolve.schema_models.exporters.pydantic import to_pydantic
@@ -545,6 +549,7 @@ class MinedSchema(BaseModel):
         return to_pydantic(
             trim_export_text(self, trim_descriptions),
             schema_name,
+            contract=contract,
             trim_descriptions=trim_descriptions,
         )
 

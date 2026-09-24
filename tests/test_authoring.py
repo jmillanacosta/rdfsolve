@@ -24,6 +24,7 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
                 (E.date, "Literal", str(XSD.gYear)),
                 (E.date, "Literal", str(XSD.date)),
                 (E.part, str(E.Part), None),
+                (E.part, "Literal", str(RDF.langString)),
             ]
         ]
         + [
@@ -99,4 +100,14 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
             client.create(str(E.Item), missing="value")
         with pytest.raises(ValueError, match="row"):
             client.from_table(str(E.Item), pd.DataFrame([{"id": "relative"}]), id_column="id")
+        dated = client.create(
+            str(E.Item), date=Literal("2026-09-24", datatype=XSD.date, normalize=False)
+        )
+        restored = type(dated).model_validate_json(dated.model_dump_json())
+        assert isomorphic(dated.to_graph(), restored.to_graph()), (
+            "A mixed date field lost its RDF value"
+        )
+        mixed = client.create(str(E.Item), part=[left, Literal("other", lang="en")]).to_graph()
+        assert set(mixed.subjects(RDF.type, E.Part)) <= set(mixed.objects(None, E.part))
+        assert Literal("other", lang="en") in set(mixed.objects(None, E.part))
         assert not client.queries

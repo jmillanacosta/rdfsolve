@@ -61,6 +61,12 @@ def model_to_graph(record: BaseModel, *, fields: list[str] | None = None) -> Gra
     """
     graph = Graph()
     _add_record(record, graph, set(), fields)
+    if getattr(type(record), "rdf_contract", False):
+        if fields is not None:
+            raise ValueError("Contract validation requires all populated fields")
+        from rdfsolve.client.contract import validate_contract
+
+        validate_contract(record, graph)
     return graph
 
 
@@ -121,8 +127,12 @@ def _add_record(
             ]:
                 raise ValueError(f"Values changed in {name}; update or remove its rdf_terms entry")
             nodes = [
-                _resource("_:" + term.value, scope) if term.kind == "bnode" else term.to_rdf()
-                for term in terms
+                _new_term(item, extra, scope)
+                if isinstance(item, BaseModel)
+                else _resource("_:" + term.value, scope)
+                if term.kind == "bnode"
+                else term.to_rdf()
+                for term, item in zip(terms, values, strict=True)
             ]
         else:
             nodes = [

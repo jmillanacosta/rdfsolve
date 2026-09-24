@@ -102,6 +102,7 @@ class Hydrator:
         batch_size: int = 20,
         max_rows: int = 5000,
         max_subjects: int = 100,
+        contract: bool = False,
     ) -> None:
         """Create models and budgets without making requests.
 
@@ -125,7 +126,7 @@ class Hydrator:
             if isinstance(source, str)
             else source
         )
-        self.models = build_pydantic_classes(schema)
+        self.models = build_pydantic_classes(schema, contract=contract)
         self.batch_size = batch_size
         self.max_rows = max_rows
         self.max_subjects = max_subjects

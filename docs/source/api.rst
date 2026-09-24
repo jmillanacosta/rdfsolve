@@ -82,3 +82,48 @@ schema.discover_collections(graph). Pass graph_uris=[] for the default
 graph, or supply a Dataset and named graph IRIs. Remote mining does not
 automatically fetch list contents. VoID exports omit collection profiles;
 keep canonical JSON for the full model.
+
+
+Use an approved model as a contract
+-----------------------------------
+
+Keep the reviewed canonical schema JSON under version control. Generate
+contract models from that snapshot with
+schema.to_pydantic_classes(contract=True), or export Python with
+schema.to_pydantic(contract=True). Client.open also accepts contract=True.
+
+.. code-block:: python
+
+   from rdflib import Graph, Literal
+   from rdfsolve.api import Client
+   from rdfsolve import MinedSchema
+
+   approved = MinedSchema.from_json("approved-schema.json")
+   with Client.open(approved, Graph(), contract=True) as client:
+       item = client.create(
+           "Item", label=Literal("One", lang="en")
+       )
+       item.to_graph().serialize("item.ttl", format="turtle")
+
+Contract models reject extra fields and check RDF kinds, datatypes and
+known linked-record classes at construction and serialization. Partial
+field exports cannot establish contract conformance and are rejected.
+A bare IRI remains a reference; it does not prove the target's class.
+
+Explicit active constraints in the snapshot's shapes are checked with
+pySHACL. Install the optional dependency with:
+
+.. code-block:: console
+
+   pip install 'rdfsolve[validation]'
+
+Required values and cardinalities come from these declared constraints.
+Mining does not activate observed shapes or invent required fields.
+Deactivated shapes stay inactive. Validation uses the supplied graph
+without imports, inference or endpoint requests. Include referenced records
+when a declared class constraint needs their type statements.
+
+Keep the approved snapshot separate from later mining output and review
+changes before generating a new contract. Generated model metadata retains
+the snapshot's schema version and source provenance. Canonical schema JSON
+is the shared definition for models and declared constraints.

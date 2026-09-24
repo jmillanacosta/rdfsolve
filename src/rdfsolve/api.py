@@ -15,6 +15,7 @@ from rdfsolve.metadata import query_metadata
 from rdfsolve.mining.miner import mine_schema
 from rdfsolve.models import MinedSchema
 from rdfsolve.query_collection import QueryCollection
+from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.source_enrichment import enrich_source
 from rdfsolve.sources import enrich_source_with_bioregistry, get_bioregistry_metadata, load_sources
 from rdfsolve.void_source import (
@@ -34,6 +35,7 @@ __all__ = [
     "QueryCollection",
     "QueryPattern",
     "RDFList",
+    "RdfTerm",
     "Requirement",
     "ask_rdf",
     "build_connectivity",

@@ -90,12 +90,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+validation = ["pyshacl>=0.27,<1"]
 agents = [
     "pydantic-ai-slim[openai,anthropic]==2.0.0",
     "python-dotenv==1.2.3",
 ]
 mcp = ["mcp==2.2.0"]
 tests = [
+    "pyshacl>=0.27,<1",
     "psutil>=5.9",
     "pydantic-ai-slim[openai]==2.0.0",
     "mcp==2.2.0",
