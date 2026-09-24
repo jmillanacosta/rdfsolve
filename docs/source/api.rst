@@ -186,3 +186,12 @@ schema.to_shacl(activate_observed=True). This does not infer required fields
 or per-record cardinalities. Retained source constraints keep their activation
 state. Review the shapes before treating a conformance result as validation
 of an intended contract.
+
+Provider SHACL evidence
+-----------------------
+
+``MinedSchema.from_shacl(text)`` retains the supplied RDF in canonical JSON.
+Use ``schema.get_metadata().to_rdf_graph()`` for the original constraints,
+including predicates outside the supported shape model. ``schema.shapes``
+and ``schema.to_shacl()`` expose the supported projection. Validate against
+the retained provider graph when full source constraints are required.

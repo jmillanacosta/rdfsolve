@@ -9,6 +9,7 @@ from rdflib import RDF, Graph
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
+from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 
@@ -33,6 +34,11 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
         void_graph_to_minedschema(graph, report_untyped=False)
         if (None, RDF.type, VOID.Dataset) in graph
         else MinedSchema(about=AboutMetadata.build())
+    )
+    schema.source_metadata = RetainedMetadata(
+        rdf=graph.serialize(format="turtle"),
+        format="turtle",
+        scope="supplied SHACL document",
     )
     schema.shapes = shapes
     schema.prefixes = {
