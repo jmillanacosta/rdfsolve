@@ -26,10 +26,9 @@ def test_coverage_matches_edges_as_a_relation():
                 and (p == URIRef("urn:link") or p == URIRef("urn:blank")
                      or (p == URIRef("urn:value") and str(o) == "text"))}
     expression = typed_match(keys, None, None)
-    body = expression.removeprefix("EXISTS {").removesuffix("}")
     joined = {tuple(row) for row in graph.query(
-        f"SELECT DISTINCT ?s ?p ?o WHERE {{ {body} }}")}
+        f"SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . BIND({expression} AS ?covered) FILTER(?covered) }}")}
     correlated = {tuple(row) for row in graph.query(
         f"SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER({expression}) }}")}
-    assert joined == expected, "Coverage must bind the edge inside its existence test"
+    assert joined == expected, "Coverage must classify the current edge"
     assert correlated == expected, "Type overlap must not change covered edge membership"

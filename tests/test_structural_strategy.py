@@ -200,3 +200,20 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
             miner.mine("contradictory coverage")
         assert miner.last_report.completion_state == "failed"
         assert all(e["state"] == "failed" for e in miner.last_report.config["structural_coverage"])
+
+    from rdflib import Graph
+    lists = Graph().parse(data='''
+        @prefix e: <https://example.org/> .
+        e:s a e:A, e:B; e:value "typed"; e:items ("member") .
+        e:u e:label "untyped" .
+    ''', format="turtle")
+    with SchemaMiner.from_graph(lists, delay=0) as miner:
+        result = miner.mine("lists and multiple types")
+        rows = result.structural_patterns
+        assert len(result.patterns) == 6
+        assert len(rows) == 3 and sum(p.count for p in rows) == 3
+        assert len({(p.graph_uri, p.subject_kind, tuple(p.subject_properties)) for p in rows}) == 2
+        assert len(result.collections) == 2
+        assert miner.last_report.config["structural_coverage"][0]["covered_triples"] == 4
+        for p in rows:
+            assert int(miner.helper.select(p.recount_query)["results"]["bindings"][0]["n"]["value"]) == p.count

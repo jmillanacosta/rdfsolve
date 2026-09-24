@@ -31,7 +31,7 @@ def typed_match(
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
         "?_contextGraph", "?_objectAnyGraph"
     )
-    return f"""EXISTS {{
+    match = f"""EXISTS {{
 ?s ?p ?o .
 VALUES (?_coveredSubject ?p ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 {subject_type}
@@ -43,6 +43,7 @@ FILTER(
   (?_coveredObject = "BlankNode" && isBlank(?o))
 )
 }}"""
+    return f"IF(EXISTS {{ {subject_type} }}, {match}, false)"
 
 
 def uncovered_filter(
