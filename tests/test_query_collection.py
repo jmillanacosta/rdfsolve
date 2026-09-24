@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from rdflib import Graph, URIRef
+from rdflib import PROV, Graph, URIRef
 from rdflib.compare import isomorphic
 from rdfsolve.sparql_helper import SparqlHelper
 
@@ -51,3 +51,19 @@ def test_named_queries_roundtrip_and_session_isolation(monkeypatch):
         first.select(query)
         assert len(first.get_collected_queries()) == 1
         assert not second.get_collected_queries()
+
+        source = "https://example.org/recipes/mesh"
+        conversion = """SELECT ?text ?iri WHERE {
+            VALUES ?text { "MESH:D000001" }
+            BIND(IRI(REPLACE(?text, "MESH:", "http://id.nlm.nih.gov/mesh/")) AS ?iri)
+        }"""
+        saved = first.queries.add("mesh conversion", conversion, source=source)
+        from rdfsolve.query_collection import QueryCollection
+        archive = QueryCollection()
+        archive.load_shacl(Graph().parse(data=first.queries.to_turtle(), format="turtle"))
+        restored = archive.queries["mesh conversion"]
+        assert (restored.node, PROV.wasDerivedFrom, URIRef(source)) in archive.graph
+        row = list(Graph().query(restored.query))[0]
+        assert str(row.text) == "MESH:D000001"
+        assert row.iri == URIRef("http://id.nlm.nih.gov/mesh/D000001")
+        assert saved.query == restored.query

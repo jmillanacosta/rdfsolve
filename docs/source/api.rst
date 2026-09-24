@@ -218,3 +218,13 @@ queried data scope. It reports no_match when starting instances exist but none
 completes the route with the requested typing constraints. Missing context can
 cause either outcome; these statuses do not identify its cause. Timeout and error
 carry no support counts. Old saved no_match results retain their original status.
+
+Published query recipes
+-----------------------
+
+QueryCollection.add accepts source= with the IRI of a published query or recipe.
+The exported SHACL executable retains it as prov:wasDerivedFrom, independently
+of the execution endpoint and optional schema hash. Exporting and reloading the
+collection preserves this attribution and the executable query. A supplied
+conversion remains explicit SPARQL; attribution does not certify its correctness
+or assert equivalence between the input and output identifiers.

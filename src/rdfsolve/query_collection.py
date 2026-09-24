@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from typing import Literal as QueryLiteral
 
-from rdflib import RDF, RDFS, SH, Graph, Namespace, URIRef
+from rdflib import PROV, RDF, RDFS, SH, Graph, Namespace, URIRef
 from rdflib.plugins.sparql.parser import parseQuery
 from rdflib.term import Node
 
@@ -94,6 +94,7 @@ class QueryCollection:
         *,
         description: str = "",
         endpoint: str = "",
+        source: str = "",
         schema: MinedSchema | None = None,
         prefixes: dict[str, str] | None = None,
     ) -> SavedQuery:
@@ -117,6 +118,7 @@ class QueryCollection:
         for predicate, value, term_kind in (
             (RDFS.comment, description, "literal"),
             (SCHEMA.target, endpoint, "uri"),
+            (PROV.wasDerivedFrom, source, "uri"),
         ):
             if value:
                 if term_kind == "uri":
