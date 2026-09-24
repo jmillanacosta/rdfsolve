@@ -55,6 +55,9 @@ def test_collection_profiles_and_ordered_records(tmp_path):
         assert list(Collection(output, head)) == [E.a, E.b, E.a]
         cloned = type(record).model_validate_json(record.model_dump_json())
         assert isomorphic(cloned.to_graph(), record.to_graph()), "Record JSON lost collection types"
+        with pytest.raises(ValueError, match=r"members\[0\].*Literal.*URIRef") as error:
+            client.create(str(E.Record), members=RDFList(items=[str(E.a), b]))
+        assert str(E.a) in str(error.value)
         ordinary = client.create(str(E.Record), members=["_:one", "_:two"])
         assert len(list(ordinary.to_graph().objects(None, E.members))) == 2
         assert not list(ordinary.to_graph().triples((None, RDF.first, None)))

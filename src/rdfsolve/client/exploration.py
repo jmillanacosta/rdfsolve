@@ -82,8 +82,9 @@ class DatasetClient(Hydrator):
             return text
         raise ValueError(f"{model.__name__} has no field {text!r}")
 
-    def links(self, model: type[BaseModel]) -> pd.DataFrame:
+    def links(self, model: type[BaseModel] | str) -> pd.DataFrame:
         """List generated field paths and their possible target types without querying."""
+        model = self.model(model) if isinstance(model, str) else model
         names = {getattr(cls, "rdf_class_iri", ""): name for name, cls in self.models.items()}
         rows = [
             {

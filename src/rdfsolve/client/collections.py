@@ -55,29 +55,38 @@ def write_collection(
     classes = {cls for profile in profiles for cls in profile["member_types"]}
     datatypes = {dt for profile in profiles for dt in profile["member_datatypes"]}
     nodes = []
-    for member in value.items:
+    for index, member in enumerate(value.items):
+        location = f"{field}[{index}]"
         if isinstance(member, RdfTerm):
             term = member
-            _check_term(term, [], field)
+            _check_term(term, [], location)
             node = term.to_rdf()
         elif isinstance(member, BaseModel):
             if classes and class_iri(member) not in classes:
-                raise ValueError(f"{field}: collection member has an unexpected class")
+                raise ValueError(
+                    f"{location}: got class {class_iri(member)!r}; expected {sorted(classes)}"
+                )
             node = _new_term(member, {}, "")
             term = RdfTerm.from_rdf(node)
             _add_record(member, graph, seen)
         else:
-            raise ValueError(f"{field}: use RDF terms or typed records as list members")
+            raise ValueError(f"{location}: got {member!r}; use RDF terms or typed records")
         kind = {"uri": "IRI", "bnode": "BlankNode", "literal": "Literal"}[term.kind]
         if kinds and kind not in kinds and not (classes and kind in {"IRI", "BlankNode"}):
-            raise ValueError(f"{field}: collection member has an unexpected RDF kind")
+            raise ValueError(
+                f"{location}: got {kind} {term.value!r}; expected {sorted(kinds)}. "
+                "Use URIRef for an IRI, BNode for a blank node, or a typed record."
+            )
         datatype = (
             str(RDF.langString)
             if term.language
             else term.datatype or "http://www.w3.org/2001/XMLSchema#string"
         )
         if kind == "Literal" and datatypes and datatype not in datatypes:
-            raise ValueError(f"{field}: collection member has an unexpected datatype")
+            raise ValueError(
+                f"{location}: got {term.value!r} with datatype {datatype}; "
+                f"expected {sorted(datatypes)}"
+            )
         nodes.append(node)
     if not nodes:
         return RDF.nil

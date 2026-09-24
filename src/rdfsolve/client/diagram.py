@@ -16,9 +16,11 @@ if TYPE_CHECKING:
 
 def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     """Draw generated model labels and retained field paths without source requests."""
-    if not kinds:
-        raise ValueError("Choose the classes to show")
-    models = list(dict.fromkeys(client.model(kind) for kind in kinds))
+    models = (
+        list(dict.fromkeys(client.model(kind) for kind in kinds))
+        if kinds
+        else list(client.models.values())
+    )
     ids = {class_iri(model): f"C{i}" for i, model in enumerate(models)}
     lines = ["flowchart LR"]
     for model in models:
@@ -28,7 +30,7 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     edges = set()
     for model in models:
         for row in client.links(model).itertuples(index=False):
-            target = class_iri(client.model(str(row.target)))
+            target = class_iri(client.models[str(row.target)])
             if target in ids:
                 label = _text(client.link_name(model, str(row.field)))
                 edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[target]}')

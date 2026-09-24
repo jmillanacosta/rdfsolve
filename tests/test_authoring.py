@@ -64,6 +64,11 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
             "Direct records lost RDF terms or nested nodes"
         )
         assert isomorphic(direct.to_graph(), expected)
+        by_iri = client.create(
+            str(E.Item), uri=str(E.one), part=part, label=Literal("One", lang="en"),
+            **{E.date: Literal("2026", datatype=XSD.gYear, normalize=False)},
+        )
+        assert isomorphic(by_iri.to_graph(), expected)
         rows = client.from_table(
             str(E.Item),
             pd.DataFrame([{"id": str(E.one), "text": "One", "date": "2026", "part": part}]),
@@ -134,3 +139,19 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert isomorphic(Graph().parse(direct_path), expected)
         client.save(tmp_path / "sparse.ttl", sparse, left)
         assert not client.queries
+
+    people = MinedSchema(about={"dataset_name": "api-check"}, patterns=[
+        SchemaPattern(subject_class=iri, property_uri=str(E.knows), object_class=iri)
+        for iri in ("https://schema.org/Person", "http://xmlns.com/foaf/0.1/Person")
+    ])
+    with Client(people, Graph()) as client:
+        with pytest.raises(ValueError, match="ambiguous") as error:
+            client.model("Person")
+        assert all(iri in str(error.value) for iri in people.get_classes())
+        iri = "https://schema.org/Person"
+        model = client.model(iri)
+        assert not client.links(iri).empty
+        assert client.field_name(iri, str(E.knows)) == client.field_name(model, str(E.knows))
+        assert client.type_name(iri) == client.type_name(model)
+        assert client.link_name(iri, "knows") == client.link_name(model, "knows")
+        assert all(iri in client.diagram() for iri in people.get_classes())

@@ -634,6 +634,20 @@ class Client(DatasetClient):
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
         """Accept generated names, spaced names, or full class IRIs."""
+        name_or_iri = str(name_or_iri)
+        for model in self.models.values():
+            if class_iri(model) == name_or_iri:
+                return model
+        local_matches = [
+            model
+            for model in self.models.values()
+            if _key(name_or_iri) == _key(re.split(r"[/#:]", class_iri(model))[-1])
+        ]
+        if len(local_matches) > 1:
+            raise ValueError(
+                f"Unknown or ambiguous class {name_or_iri!r}; use a full IRI: "
+                + ", ".join(sorted(class_iri(model) for model in local_matches))
+            )
         if name_or_iri in self.models:
             return self.models[name_or_iri]
         matches = [
@@ -671,8 +685,9 @@ class Client(DatasetClient):
             )
         return matches[0]
 
-    def type_name(self, model: type[BaseModel]) -> str:
+    def type_name(self, model: type[BaseModel] | str) -> str:
         """Display a source label without changing the generated type."""
+        model = self.model(model) if isinstance(model, str) else model
         iri = getattr(model, "rdf_class_iri", "")
         labels = [
             item.text.value
@@ -686,8 +701,9 @@ class Client(DatasetClient):
         local = re.split(r"[/#:]", iri)[-1]
         return local if re.search(r"\d", local) else _name(local)
 
-    def link_name(self, model: type[BaseModel], field: str) -> str:
+    def link_name(self, model: type[BaseModel] | str, field: str) -> str:
         """Use a source label or readable predicate name for a link."""
+        model = self.model(model) if isinstance(model, str) else model
         extra = model.model_fields[field].json_schema_extra
         if isinstance(extra, dict):
             iri = str(extra.get("rdf_property_iri", ""))
@@ -704,8 +720,10 @@ class Client(DatasetClient):
                 return _name(re.split(r"[/#:]", iri)[-1])
         return _name(field)
 
-    def field_name(self, model: type[BaseModel], text: str) -> str:
+    def field_name(self, model: type[BaseModel] | str, text: str) -> str:
         """Resolve a field by its Python name, source label or exact predicate IRI."""
+        text = str(text)
+        model = self.model(model) if isinstance(model, str) else model
         if text in model.model_fields:
             return text
         matches = [
