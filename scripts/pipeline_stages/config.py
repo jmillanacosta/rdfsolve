@@ -340,9 +340,15 @@ class PipelineConfig:
         ]
 
     def get_local_sources(self) -> list[Source]:
-        """Get sources that need local mining."""
+        """Select eligible sources with local inputs or a cached index."""
+        from rdfsolve.qlever.index_check import has_cached_index
+
         return [
             s
             for s in self.sources
-            if s.mining_enabled and s.mode in (SourceMode.LOCAL, SourceMode.BOTH)
+            if s.mining_enabled
+            and (
+                s.mode in (SourceMode.LOCAL, SourceMode.BOTH)
+                or has_cached_index(self.data_dir / "qlever_workdirs" / s.name, s.name)
+            )
         ]
