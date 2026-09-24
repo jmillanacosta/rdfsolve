@@ -23,7 +23,9 @@ class StructuralPattern(BaseModel):
     language: str | None = None
     graph_uri: str | None = None
     type_graph_uris: list[str] = Field(default_factory=list)
-    subject_selection: Literal["all", "untyped"] = "all"
+    object_type_graph_uris: list[str] = Field(default_factory=list)
+    covered_types: list[tuple[str, str, str | None]] = Field(default_factory=list)
+    subject_selection: Literal["all", "untyped", "uncovered"] = "all"
     shape_semantics: Literal["exact_property_sets", "property_profile"] = "exact_property_sets"
     count: int = Field(ge=0)
     distinct_subjects: int = Field(ge=0)
@@ -34,7 +36,9 @@ class StructuralPattern(BaseModel):
     recount_query: str
     examples: list[dict[str, dict[str, str]]] = Field(default_factory=list)
 
-    @field_validator("subject_properties", "object_properties", "type_graph_uris")
+    @field_validator(
+        "subject_properties", "object_properties", "type_graph_uris", "object_type_graph_uris"
+    )
     @classmethod
     def check_properties(cls, values: list[str]) -> list[str]:
         """Validate and sort the property set."""

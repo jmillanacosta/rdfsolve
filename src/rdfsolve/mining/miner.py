@@ -341,7 +341,7 @@ class SchemaMiner:
         # Run strategy
         patterns = self._strategy.mine(context)
         if not isinstance(self._strategy, StructuralStrategy):
-            StructuralStrategy(residual_only=True).mine(context)
+            StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
         if context.structural_patterns or any(
             p.name == "structural-patterns" for p in self._report.report.phases
@@ -827,7 +827,7 @@ class SchemaMiner:
 
         t0 = time.monotonic()
         patterns, one_shot_results = self._run_patterns_phase()
-        if self._structural_patterns is not None:
+        if self._structural_patterns:
             strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
