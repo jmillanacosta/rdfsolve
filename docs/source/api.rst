@@ -228,3 +228,20 @@ of the execution endpoint and optional schema hash. Exporting and reloading the
 collection preserves this attribution and the executable query. A supplied
 conversion remains explicit SPARQL; attribution does not certify its correctness
 or assert equivalence between the input and output identifiers.
+
+Identifier resolution policy
+----------------------------
+
+resolve_identifiers(terms, source, target_iris=observed_iris) reports exact IRI
+matches. Set mode="namespace" to also try the source's recorded alternative
+namespaces and prefix synonyms. Supply RdfTerm values from selected identifier
+fields and target IRIs observed in your chosen graph and type scope.
+
+The report preserves original terms, namespace candidates, matching targets,
+source rules and a hash of the supplied target set. Multiple target alternatives
+are ambiguous; no winner is selected. Language-tagged text and non-string typed
+literals are not expanded. An exact target IRI takes precedence over expansion.
+No network requests, RDF edits, registry writes or equivalence assertions occur.
+A match establishes membership in the supplied set, not identifier validity,
+a further graph connection or ontology consistency. Preserve the target snapshot
+and its scope alongside the report; the hash alone cannot reconstruct it.
