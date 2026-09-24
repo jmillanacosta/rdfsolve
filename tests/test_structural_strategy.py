@@ -122,6 +122,15 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
     for strategy in ["two-phase", "one-shot", "single-pass"]:
         with SchemaMiner.from_graph(mixed, graph_uris=["urn:data", "urn:types"],
                 strategy=strategy, delay=0) as miner:
+            select = miner.helper.select
+            def numeric_booleans(query, purpose=""):
+                response = select(query, purpose)
+                if purpose == "structural/coverage":
+                    for row in response["results"]["bindings"]:
+                        for field in ("typed", "eligible"):
+                            row[field]["value"] = "1" if row[field]["value"] == "true" else "0"
+                return response
+            monkeypatch.setattr(miner.helper, "select", numeric_booleans)
             result = miner.mine("mixed")
             assert result.patterns, "Keep the typed schema"
             assert {p.property_uri for p in result.structural_patterns} == {

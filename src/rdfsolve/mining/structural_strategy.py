@@ -170,11 +170,11 @@ BIND(EXISTS {{ {_types(graphs)} FILTER(isIRI(?_type) && ?_type NOT IN ({excluded
             "structural/coverage",
         )
         total = sum(int(r["n"]["value"]) for r in rows)
-        untyped = sum(int(r["n"]["value"]) for r in rows if r["typed"]["value"] == "false")
+        untyped = sum(int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"})
         excluded_count = sum(
             int(r["n"]["value"])
             for r in rows
-            if r["typed"]["value"] == "true" and r["eligible"]["value"] == "false"
+            if r["typed"]["value"] in {"true", "1"} and r["eligible"]["value"] in {"false", "0"}
         )
         entry.update(
             triple_count=total,
