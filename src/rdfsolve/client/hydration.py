@@ -330,16 +330,39 @@ class Hydrator:
             )
         return create_model(model.__name__, __base__=model, **fields)
 
+    def _type_pattern(self, node: str, cls: str) -> str:
+        """Read types from the selected data and declared type context."""
+        from rdfsolve.mining.query_builders import _type_pattern
+
+        context = list(
+            dict.fromkeys(
+                (self._schema.about.type_graph_uris or [])
+                + (self._schema.about.type_context_graph_uris or [])
+            )
+        )
+        return _type_pattern(node, cls, context)
+
+    def _subject_type(self, node: str, cls: str) -> str:
+        """Require a typed subject to have an outgoing data edge."""
+        return self._type_pattern(node, cls) + f" FILTER EXISTS {{ {node} ?_dataP ?_dataO }}"
+
     def _scope(self, body: str) -> str:
         """Scope one graph directly; multiple data graphs use a query dataset."""
         if len(self.graph_uris) != 1:
             return body
+        if self._schema.about.type_context_graph_uris or self._schema.about.type_graph_uris:
+            return f"VALUES ?_graph {{ {_iri(self.graph_uris[0])} }} {{ {body} }}"
         graphs = " ".join(_iri(graph) for graph in self.graph_uris)
         return f"VALUES ?_graph {{ {graphs} }} GRAPH ?_graph {{ {body} }}"
 
     def _scope_query(self, query: str) -> str:
         """Apply the selected data-graph union to a complete query."""
-        if len(self.graph_uris) < 2:
+        context = (self._schema.about.type_graph_uris or []) + (
+            self._schema.about.type_context_graph_uris or []
+        )
+        if len(self.graph_uris) < 2 and not context:
+            return query
+        if not self.graph_uris:
             return query
         import re
 
@@ -356,7 +379,9 @@ class Hydrator:
         where = re.search(r"\bWHERE\s*$", masked[:start], re.IGNORECASE)
         position = where.start() if where else start
         dataset = " ".join(f"FROM {_iri(graph)}" for graph in dict.fromkeys(self.graph_uris))
-        named = " ".join(f"FROM NAMED {_iri(graph)}" for graph in dict.fromkeys(self.graph_uris))
+        named = " ".join(
+            f"FROM NAMED {_iri(graph)}" for graph in dict.fromkeys(self.graph_uris + context)
+        )
         return query[:position] + dataset + " " + named + " " + query[position:]
 
     def _select(self, query: str, *, exhaustive: bool = False) -> list[dict[str, Any]]:
@@ -410,7 +435,7 @@ class Hydrator:
         if type(limit) is not int or not 1 <= limit <= self.max_subjects:
             raise ValueError(f"Use a sample limit between 1 and {self.max_subjects}")
         class_iri = _iri(getattr(model, "rdf_class_iri", ""))
-        body = self._scope(f"?s a {class_iri} . FILTER(isIRI(?s))")
+        body = self._scope(self._subject_type("?s", class_iri) + " FILTER(isIRI(?s))")
         rows = self._select(f"SELECT DISTINCT ?s WHERE {{ {body} }} ORDER BY ?s LIMIT {limit}")
         iris = []
         for row in rows:
@@ -452,7 +477,7 @@ class Hydrator:
         for name in selected:
             if name not in paths:
                 raise ValueError(f"No RDF path for field {name}")
-        branches = [f'{{ ?s <{RDF_TYPE}> ?value . BIND("@type" AS ?field) }}']
+        branches = [f'{{ {self._subject_type("?s", "?value")} BIND("@type" AS ?field) }}']
         branches += [
             f"{{ ?s {path_to_sparql(paths[name])} ?value . BIND({Literal(name).n3()} AS ?field) }}"
             for name in selected

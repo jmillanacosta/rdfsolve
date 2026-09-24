@@ -121,7 +121,7 @@ class DatasetClient(Hydrator):
             raise ValueError(f"Use a limit between 1 and {self.max_subjects}")
         predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
         body = self._scope(
-            f"?s a {_iri(getattr(model, 'rdf_class_iri', ''))} . "
+            self._type_pattern("?s", _iri(getattr(model, "rdf_class_iri", ""))) + " "
             f"VALUES ?labelProperty {{ {predicates} }} ?s ?labelProperty ?label . "
             f"FILTER(isIRI(?s) && isLiteral(?label) && "
             f"CONTAINS(LCASE(STR(?label)), LCASE({Literal(text).n3()})))"
@@ -185,9 +185,10 @@ class DatasetClient(Hydrator):
             values = " ".join(_iri(iri) for iri in batch)
             body = self._scope(
                 f"VALUES ?source {{ {values} }} "
-                f"?source a {_iri(getattr(source_model, 'rdf_class_iri', ''))} ; "
-                f"{path_text} ?target . "
-                f"?target a {_iri(getattr(target, 'rdf_class_iri', ''))} . FILTER(isIRI(?target)) {text_filter}"
+                + self._type_pattern("?source", _iri(getattr(source_model, "rdf_class_iri", "")))
+                + f" ?source {path_text} ?target . "
+                + self._type_pattern("?target", _iri(getattr(target, "rdf_class_iri", "")))
+                + f" FILTER(isIRI(?target)) {text_filter}"
             )
             rows = self._select(
                 f"SELECT DISTINCT ?source ?target ?_graph WHERE {{ {body} }} "

@@ -132,8 +132,14 @@ class Fragment:
     basis: str = "saved schema"
     description: str | None = None
 
-    def render(self, args: list[str], allocate: Callable[[], str]) -> str:
+    def render(
+        self,
+        args: list[str],
+        allocate: Callable[[], str],
+        type_pattern: Callable[[str, str], str] | None = None,
+    ) -> str:
         """Expand bindings with fresh internal variables and exact terms."""
+        typed = type_pattern or (lambda node, cls: f"{node} a {cls} .")
         if any(not VAR.fullmatch(a) for a in args):
             raise ValueError("Fragment bindings must be SPARQL variables.")
         if self.kind == "term":
@@ -147,7 +153,7 @@ class Fragment:
         if self.kind == "type":
             if len(args) != 1 or self.iri is None:
                 raise ValueError("A class insert takes one variable.")
-            return f"{args[0]} a {_iri(self.iri)} ."
+            return typed(args[0], _iri(self.iri))
         if self.path is None or len(args) < 2:
             raise ValueError("A field/path insert takes two endpoint variables.")
         if self.steps:
@@ -165,9 +171,9 @@ class Fragment:
                 left, right = (nodes[i + 1], nodes[i]) if back else (nodes[i], nodes[i + 1])
                 lines.append(f"{left} {_iri(p)} {right} .")
                 if s:
-                    lines.append(f"{nodes[i]} a {_iri(s)} .")
+                    lines.append(typed(nodes[i], _iri(s)))
                 if o:
-                    lines.append(f"{nodes[i + 1]} a {_iri(o)} .")
+                    lines.append(typed(nodes[i + 1], _iri(o)))
         elif len(args) == 2:
             nodes = args
             lines = [f"{args[0]} {path_to_sparql(self.path)} {args[1]} ."]
@@ -183,9 +189,9 @@ class Fragment:
                 for i, (p, back) in enumerate(steps)
             ]
         if self.kind == "field" and self.owner:
-            lines.insert(0, f"{nodes[0]} a {_iri(self.owner)} .")
+            lines.insert(0, typed(nodes[0], _iri(self.owner)))
         for position, cls in self.endpoint_types.items():
-            lines.insert(0, f"{nodes[position]} a {_iri(cls)} .")
+            lines.insert(0, typed(nodes[position], _iri(cls)))
         for position, (kind, datatype) in self.term_kinds.items():
             variable = nodes[position]
             function = {"Literal": "isLiteral", "Resource": "isIRI", "BlankNode": "isBlank"}[kind]
@@ -565,7 +571,12 @@ def _expand_references(
 
 
 def compile_query(
-    template: str, fragments: dict[str, Fragment], scope: Callable[[str], str], known_iris: set[str]
+    template: str,
+    fragments: dict[str, Fragment],
+    scope: Callable[[str], str],
+    known_iris: set[str],
+    *,
+    type_pattern: Callable[[str, str], str] | None = None,
 ) -> PreparedQuery:
     """Expand retained fragments and parse a SELECT in its source scope."""
     if not template.strip():
@@ -584,12 +595,13 @@ def compile_query(
         return f"?__rdfsolve{counter}"
 
     uses: list[dict[str, Any]] = []
+    render_types: Callable[[str, str], str] | None = None
 
     def expand(ref: str, args: list[str]) -> str:
         """Render one fragment reference and record its use."""
         if ref not in fragments:
             raise ValueError(f"Unknown fragment {ref}; discover a retained class, field or entity.")
-        text = fragments[ref].render(args, allocate)
+        text = fragments[ref].render(args, allocate, render_types)
         uses.append(
             {
                 "ref": ref,
@@ -631,6 +643,11 @@ def compile_query(
             f"Ungrounded IRI(s): {unknown[:8]}. Discover the actual term or inspect a record; do not guess."
         )
 
+    if type_pattern is not None:
+        render_types = type_pattern
+        counter = 0
+        uses.clear()
+        text = _expand_references(template, fragments, expand)
     masked = PROTECTED.sub(lambda m: " " * len(m.group()), text)
     start = masked.find("{")
     depth, end = 0, None

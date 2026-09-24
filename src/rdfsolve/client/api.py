@@ -248,7 +248,7 @@ class Client(DatasetClient):
         output_variables requires the specified column names. Preparation makes
         no source request. Pass the artifact to select().
         """
-        from rdfsolve.client.query_fragments import identifier
+        from rdfsolve.client.query_fragments import compile_query, identifier
         from rdfsolve.client.retrieval import verify_query
 
         entries = (
@@ -267,6 +267,15 @@ class Client(DatasetClient):
                 self.catalogue,
                 output_variables=output_variables,
             )
+        if self._schema.about.type_context_graph_uris or self._schema.about.type_graph_uris:
+            scoped = compile_query(
+                sparql,
+                self.catalogue.fragments,
+                self._scope,
+                self.catalogue.known_iris,
+                type_pattern=self._type_pattern,
+            )
+            query.sparql, query.uses = scoped.sparql, scoped.uses
         query.sparql = self._scope_query(query.sparql)
         query.ref = identifier("q", query.sparql)
         self._prepared[query.ref] = query, self.source, tuple(self.graph_uris)
@@ -474,7 +483,10 @@ class Client(DatasetClient):
         model = self.model(kind)
         name = self.field_name(model, field)
         path = _path(model, name)
-        pattern = f"?subject a {_iri(class_iri(model))} ; {path_to_sparql(path)} ?value ."
+        pattern = (
+            self._type_pattern("?subject", _iri(class_iri(model)))
+            + f" ?subject {path_to_sparql(path)} ?value ."
+        )
         if text:
             pattern += f" FILTER(!isBlank(?value) && CONTAINS(LCASE(STR(?value)), LCASE({Literal(text).n3()})))"
         return self._select(
