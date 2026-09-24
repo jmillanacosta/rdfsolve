@@ -44,9 +44,8 @@ def typed_match(
     )
     return f"""EXISTS {{
 ?s ?p ?o .
-VALUES (?_coveredSubject ?_coveredPredicate ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
+VALUES (?_coveredSubject ?p ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 {subject_type}
-FILTER(?p = ?_coveredPredicate)
 FILTER(
   (isIRI(?_coveredObject) && EXISTS {{ {object_type} }}) ||
   (?_coveredObject = "Literal" && isLiteral(?o) &&
