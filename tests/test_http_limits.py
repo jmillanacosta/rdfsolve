@@ -2,6 +2,7 @@ import gzip
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
+from time import sleep
 
 import pytest
 from rdfsolve.sparql_helper import ResponseLimitError, SparqlHelper
@@ -20,11 +21,13 @@ def test_decompressed_response_limit_does_not_retry(monkeypatch):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             calls.append(self.path)
+            sleep(0.1)
             self.send_response(200)
             self.send_header("Content-Type", "text/turtle; charset=utf-8")
             self.send_header("Content-Encoding", "gzip")
             self.send_header("Content-Length", str(len(compressed)))
             self.end_headers()
+            sleep(0.1)
             self.wfile.write(compressed)
 
         def log_message(self, *args):
@@ -35,7 +38,7 @@ def test_decompressed_response_limit_does_not_retry(monkeypatch):
     thread.start()
     try:
         with SparqlHelper(
-            f"http://127.0.0.1:{server.server_port}", max_response_bytes=limit
+            f"http://127.0.0.1:{server.server_port}", timeout=0.02, max_response_bytes=limit
         ) as helper:
             helper.enable_query_collection()
             with pytest.raises(ResponseLimitError):

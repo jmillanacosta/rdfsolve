@@ -378,7 +378,7 @@ Examples:
         "--timeout",
         type=float,
         default=None,
-        help="Override query timeout in seconds (default: source setting)",
+        help="Connection and host-slot wait timeout in seconds (default: source setting)",
     )
     parser.add_argument("--endpoint-status-file", type=Path, help="Endpoint health check JSON")
     parser.add_argument("--download-status-file", type=Path, help="Download health check JSON")

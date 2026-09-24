@@ -172,7 +172,7 @@ class SparqlHelper:
         max_retries: Maximum number of retry attempts
         initial_backoff: Initial backoff delay in seconds
         max_backoff: Maximum backoff delay in seconds
-        timeout: Request timeout in seconds
+        timeout: Connection and host-slot wait timeout in seconds; query reads have no deadline
 
     Example:
         >>> helper = SparqlHelper("https://sparql.swisslipids.org/")
@@ -989,14 +989,13 @@ class SparqlHelper:
                 "application/sparql-query" if raw else "application/x-www-form-urlencoded"
             )
         self._last_error_body = ""
-        started = time.monotonic()
         with self._session.request(
             method,
             self.endpoint_url,
             params={"query": query} if method == "GET" else None,
             data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
             headers=headers,
-            timeout=self.timeout,
+            timeout=(self.timeout, None),
             stream=True,
         ) as response:
             body = bytearray()
@@ -1005,8 +1004,6 @@ class SparqlHelper:
                 min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
             )
             for chunk in response.iter_content(chunk_size=65536):
-                if time.monotonic() - started > self.timeout:
-                    raise EndpointTimeoutError("Response stream exceeded the request time budget")
                 available = limit - len(body)
                 body.extend(chunk[:available])
                 if len(chunk) > available:
