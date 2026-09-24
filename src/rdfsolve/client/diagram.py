@@ -28,9 +28,10 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
     edges = set()
     for model in models:
         for row in client.links(model).itertuples(index=False):
-            if str(row.target) in ids:
+            target = class_iri(client.model(str(row.target)))
+            if target in ids:
                 label = _text(client.link_name(model, str(row.field)))
-                edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[str(row.target)]}')
+                edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[target]}')
     return "```mermaid\n" + "\n".join([*lines, *sorted(edges)]) + "\n```"
 
 
