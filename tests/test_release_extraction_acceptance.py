@@ -26,7 +26,20 @@ def test_release_selects_verified_extraction(tmp_path):
     assert {r.mode: r.snapshot_id for r in record.extractions} == snapshots
     assert all(r.schema_path for r in record.extractions)
     assert record.snapshot_id is None, "Dataset record selected an arbitrary extraction"
+    from rdfsolve.release.model import ExtractionReleaseRecord
+    record.extractions.append(ExtractionReleaseRecord(
+        mode="remote", completion_state="failed", snapshot_id="failed-attempt"))
     write_release_manifest(manifest, tmp_path)
+    from rdfsolve.analysis.io import iter_extractions
+    attempts = list(iter_extractions(tmp_path))
+    assert [(name, attempt.mode, attempt.completion_state, schema is not None)
+            for name, attempt, schema in attempts] == [
+        ("fixture", "local", "complete", True),
+        ("fixture", "remote", "complete", True),
+        ("fixture", "remote", "failed", False),
+    ], "Keep each channel and failed attempt without choosing a schema"
+    assert {attempt.mode: schema.about.snapshot_id for _, attempt, schema in attempts
+            if schema is not None} == snapshots
     with pytest.raises(ValueError, match="extraction"):
         load_schemas(tmp_path)
     chosen = load_schemas(tmp_path, extraction_mode="local")
@@ -40,3 +53,6 @@ def test_release_selects_verified_extraction(tmp_path):
     path.write_text(json.dumps(raw, indent=4))
     with pytest.raises(ValueError, match="hash|digest"):
         load_schemas(tmp_path, extraction_mode="local")
+
+    with pytest.raises(ValueError, match="hash|digest"):
+        list(iter_extractions(tmp_path))
