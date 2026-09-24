@@ -15,9 +15,9 @@ class NavigationPath(BaseModel):
 
     steps: list[SchemaPattern] = Field(min_length=2, max_length=6)
     evidence: Literal["schema_composed"] = "schema_composed"
-    instance_support: Literal["not_checked", "matched", "no_match", "timeout", "error"] = (
-        "not_checked"
-    )
+    instance_support: Literal[
+        "not_checked", "matched", "no_match", "no_sources", "timeout", "error"
+    ] = "not_checked"
     source_count: int | None = Field(
         default=None, ge=0, description="Distinct focus nodes in the union of data graphs"
     )

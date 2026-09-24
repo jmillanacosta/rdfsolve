@@ -258,11 +258,12 @@ def observe_path(
         route.source_count = int(row["sources"]["value"])
         if not route.source_count:
             route.matched_sources = 0
+            route.instance_support = "no_sources"
         else:
             route.matched_sources = int(row["matched"]["value"])
             route.min_count = int(row["minimum"]["value"])
             route.max_count = int(row["maximum"]["value"])
-        route.instance_support = "matched" if route.matched_sources else "no_match"
+            route.instance_support = "matched" if route.matched_sources else "no_match"
     except Exception as exc:
         route.source_count = route.matched_sources = route.min_count = route.max_count = None
         route.instance_support = "timeout" if "timeout" in type(exc).__name__.lower() else "error"

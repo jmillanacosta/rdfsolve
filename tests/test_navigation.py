@@ -94,3 +94,7 @@ def test_path_probes_measure_joins_and_keep_zero_degree_sources():
     assert all(p.instance_support == "not_checked" for p in candidates.paths if p is not selected)
     assert candidates.probe_selection == "explicit"
     assert MinedSchema.from_dict(schema.to_dict()).navigation == candidates
+    with SchemaMiner.from_graph(Graph()) as empty:
+        observe_path(selected, empty.helper, [])
+    assert (selected.instance_support, selected.source_count) == ("no_sources", 0)
+    assert MinedSchema.from_dict(schema.to_dict()).navigation == candidates

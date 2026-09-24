@@ -212,3 +212,9 @@ selections update retained routes; unselected observations remain unchanged.
 ``probe_selection`` and ``probe_limit`` describe the latest selection.
 Canonical JSON preserves observations. A matched route establishes joined
 support in the queried scope; it does not establish SHACL or OWL validity.
+
+A path probe reports no_sources when its starting class has no instances in the
+queried data scope. It reports no_match when starting instances exist but none
+completes the route with the requested typing constraints. Missing context can
+cause either outcome; these statuses do not identify its cause. Timeout and error
+carry no support counts. Old saved no_match results retain their original status.
