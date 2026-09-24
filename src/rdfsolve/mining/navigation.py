@@ -216,6 +216,10 @@ def observe_path(
         f"{{ SELECT ?n0 (COUNT(DISTINCT ?n{len(route.steps)}) AS ?degree) "
         f"WHERE {{ {scoped} }} GROUP BY ?n0 }} }}"
     )
+    route.source_count = route.matched_sources = route.min_count = route.max_count = None
+    route.error = None
+    route.graph_uris = list(graphs)
+    route.type_context_graph_uris = list(type_context_graph_uris or [])
     route.query = query
     route.observed_at = datetime.now(timezone.utc).isoformat()
     try:
@@ -233,6 +237,7 @@ def observe_path(
             route.max_count = int(row["maximum"]["value"])
         route.instance_support = "matched" if route.matched_sources else "no_match"
     except Exception as exc:
+        route.source_count = route.matched_sources = route.min_count = route.max_count = None
         route.instance_support = "timeout" if "timeout" in type(exc).__name__.lower() else "error"
         route.error = f"{type(exc).__name__}: {exc}"
         import logging

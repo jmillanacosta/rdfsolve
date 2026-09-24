@@ -69,3 +69,19 @@ def test_path_probes_measure_joins_and_keep_zero_degree_sources():
     route = next(p for p in nav.paths if p.steps[0].subject_class == "urn:route:A"
                  and p.steps[-1].object_class == "urn:route:C")
     assert (route.matched_sources, route.source_count) == (1, 2), "Merge data graphs; keep context out of route populations"
+
+    assert route.graph_uris == ["urn:data:left", "urn:data:right"]
+    assert route.type_context_graph_uris == ["urn:types"]
+    assert MinedSchema.from_dict(schema.to_dict()).navigation == nav
+    from unittest.mock import patch
+    from rdfsolve.mining.navigation import observe_path
+
+    with SchemaMiner.from_graph(scoped) as probe:
+        with patch.object(probe.helper, "select_with_fallback", side_effect=TimeoutError("probe")):
+            observe_path(route, probe.helper, ["urn:data:left"])
+        assert route.instance_support == "timeout" and route.error
+        assert (route.source_count, route.matched_sources, route.min_count, route.max_count) == (None,) * 4
+        observe_path(route, probe.helper, ["urn:data:left", "urn:data:right"],
+                     type_context_graph_uris=["urn:types"])
+    assert route.instance_support == "matched" and route.error is None
+    assert (route.matched_sources, route.source_count) == (1, 2)

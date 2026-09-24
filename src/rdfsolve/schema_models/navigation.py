@@ -19,11 +19,13 @@ class NavigationPath(BaseModel):
         "not_checked"
     )
     source_count: int | None = Field(
-        default=None, ge=0, description="Focus nodes; graph/focus pairs for named graph scope"
+        default=None, ge=0, description="Distinct focus nodes in the union of data graphs"
     )
     matched_sources: int | None = Field(default=None, ge=0)
     min_count: int | None = Field(default=None, ge=0)
     max_count: int | None = Field(default=None, ge=0)
+    graph_uris: list[str] = Field(default_factory=list)
+    type_context_graph_uris: list[str] = Field(default_factory=list)
     query: str | None = None
     observed_at: str | None = None
     error: str | None = None
