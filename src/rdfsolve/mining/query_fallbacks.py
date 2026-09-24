@@ -166,23 +166,26 @@ def query_with_bisect(
         )
         return left.merge(right)
 
+    decomposed = None
+    if build_fn is _build_batched_typed_object_query:
+        decomposed = typed_object_by_property(
+            classes[0],
+            graph_uris,
+            purpose,
+            helper,
+            collect_bindings,
+            chunk_size,
+            unsafe_paging,
+            type_context_graph_uris,
+        )
+        if decomposed.state == "complete":
+            return decomposed
+
     query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging, **scope)
     paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
-    if paged.state == "complete" or build_fn is not _build_batched_typed_object_query:
+    if paged.state == "complete" or decomposed is None:
         return paged
 
-    decomposed = typed_object_by_property(
-        classes[0],
-        graph_uris,
-        purpose,
-        helper,
-        collect_bindings,
-        chunk_size,
-        unsafe_paging,
-        type_context_graph_uris,
-    )
-    if decomposed.state == "complete":
-        return decomposed
     combined = paged.merge(decomposed)
     combined.rows = _deduplicate(combined.rows)
     return combined

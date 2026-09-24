@@ -36,3 +36,21 @@ def test_bisection_preserves_success_and_failure():
     assert result.rows == rows
     assert result.state == "partial"
     assert result.failures[0].classes == ["urn:B"]
+
+
+    from rdfsolve.mining.query_builders import _build_batched_typed_object_query
+
+    typed = {"oc": {"type": "uri", "value": "urn:B"}}
+    helper = Mock(select=Mock(side_effect=[
+        EndpointTimeoutError("Class join exceeds the query budget"),
+        response([{"p": {"type": "uri", "value": "urn:p"}}]),
+        response([typed]),
+    ]))
+    collect = Mock(side_effect=AssertionError("Split the timed-out join before repeating pages"))
+    result = query_with_bisect(
+        ["urn:A"], ["urn:graph"], _build_batched_typed_object_query,
+        "test/typed", helper, collect, 100,
+    )
+    assert result.state == "complete", result.failures
+    assert result.rows == [binding(p={"type": "uri", "value": "urn:p"}, **typed)]
+    assert not collect.called
