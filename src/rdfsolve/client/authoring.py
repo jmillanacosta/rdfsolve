@@ -162,9 +162,13 @@ def create_record(
 
 def table_literal(value: Any, *, language: str | None, datatype: str | None) -> Any:
     """Apply column defaults to plain values; explicit RDF terms keep their metadata."""
+    import pandas as pd
+
     if language and datatype:
         raise ValueError("Choose language or datatype for a column")
-    if value is None or isinstance(value, (RdfTerm, Literal, URIRef, BNode)):
+    if value is None or (pd.api.types.is_scalar(value) and pd.isna(value)):
+        return None
+    if isinstance(value, (RdfTerm, Literal, URIRef, BNode)):
         return value
     if isinstance(value, list):
         return [table_literal(item, language=language, datatype=datatype) for item in value]

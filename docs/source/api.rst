@@ -28,14 +28,18 @@ remain convenient when the field has one unambiguous datatype.
    )
    item.to_graph().serialize("item.ttl", format="turtle")
 
+Use client.save("records.ttl", record, table_results) to save individual
+records and table results together.
+
 Omitting uri creates a fresh blank node. Reuse the same record to share
 an anonymous resource. For externally supplied blank-node labels, pass a
 shared blank_node_scope to create or from_table. Different scopes
 keep equal labels distinct.
 
 The from_table method uses the same record construction. Omit id_column for
-anonymous rows. The languages and datatypes mappings provide defaults keyed
-by model field name; explicit RDF terms in cells retain their own metadata.
+anonymous rows. Missing identifiers also create blank nodes; missing cells
+leave optional fields unset. The languages and datatypes mappings provide
+defaults keyed by model field name; explicit RDF terms in cells retain their own metadata.
 
 .. code-block:: python
 

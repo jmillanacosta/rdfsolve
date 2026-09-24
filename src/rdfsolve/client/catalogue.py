@@ -415,14 +415,22 @@ class Catalogue:
 
     def retain_records(self, result: Results) -> list[str]:
         """Retain typed identities and the names that actually matched their lookup."""
+        from rdfsolve.client.model_rdf import _resource
+
         refs: list[str] = []
         for record in result:
-            term = RdfTerm(kind="uri", value=str(vars(record)["uri"]))
+            scope = str(vars(record).get("rdf_source", {}).get("blank_node_scope", ""))
+            term = RdfTerm.from_rdf(_resource(str(vars(record)["uri"]), scope))
+            basis = (
+                "authored record"
+                if result.coverage.get("basis") == "Authored records"
+                else "typed entity retrieval"
+            )
             ref = self._put(
-                Fragment(
-                    "term", self.client.title(record), term=term, basis="typed entity retrieval"
-                ),
-                [class_iri(record), term.value],
+                Fragment("term", self.client.title(record), term=term, basis=basis),
+                [class_iri(record), term.value]
+                if term.kind == "uri"
+                else [class_iri(record), term.kind, term.value],
             )
             self.records[ref] = record
             lookups = result.coverage.get("terms", [result.coverage.get("text", "")])

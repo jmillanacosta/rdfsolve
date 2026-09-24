@@ -110,4 +110,27 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         mixed = client.create(str(E.Item), part=[left, Literal("other", lang="en")]).to_graph()
         assert set(mixed.subjects(RDF.type, E.Part)) <= set(mixed.objects(None, E.part))
         assert Literal("other", lang="en") in set(mixed.objects(None, E.part))
+        sparse = client.from_table(
+            str(E.Part),
+            pd.DataFrame([{"id": None, "text": pd.NA}, {"id": str(E.named), "text": "A"}]),
+            id_column="id",
+            languages={"label": "en"},
+            label="text",
+        )
+        assert sparse[0].uri.startswith("_:") and sparse[0].label is None
+        assert client.catalogue.fragments[sparse.references[0]].term.kind == "bnode"
+        scoped_refs = []
+        for scope in ("first", "second"):
+            group = client.from_table(
+                str(E.Part),
+                pd.DataFrame([{"id": BNode("same")}]),
+                id_column="id",
+                blank_node_scope=scope,
+            )
+            scoped_refs.extend(group.references)
+        assert len(set(scoped_refs)) == 2, "Blank-node scopes merged in the catalogue"
+        direct_path = tmp_path / "direct.ttl"
+        client.save(direct_path, item)
+        assert isomorphic(Graph().parse(direct_path), expected)
+        client.save(tmp_path / "sparse.ttl", sparse, left)
         assert not client.queries

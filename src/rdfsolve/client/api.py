@@ -766,8 +766,8 @@ class Client(DatasetClient):
     ) -> Results:
         """Create records from columns, with optional literal defaults keyed by field.
 
-        Omit id_column to create distinct blank nodes. Explicit RDF terms in cells
-        retain their language and datatype. Errors identify the input row.
+        Missing identifiers create distinct blank nodes; missing field values are
+        omitted. Explicit RDF terms retain their metadata. Errors identify the row.
         """
         from rdfsolve.client.authoring import create_record, table_literal
 
@@ -784,8 +784,12 @@ class Client(DatasetClient):
         records = []
         for position, (index, row) in enumerate(table.iterrows()):
             try:
-                identifier = row[id_column] if id_column is not None else None
-                if id_column is not None and not isinstance(identifier, (str, BNode)):
+                identifier = (
+                    table_literal(row[id_column], language=None, datatype=None)
+                    if id_column is not None
+                    else None
+                )
+                if identifier is not None and not isinstance(identifier, (str, BNode)):
                     raise ValueError("The identifier column must contain IRIs or blank nodes")
                 values = {
                     field: table_literal(
@@ -798,7 +802,7 @@ class Client(DatasetClient):
                 )
             except (TypeError, ValueError) as error:
                 raise ValueError(f"row {position} (index {index!r}): {error}") from error
-        return Results(self, records)
+        return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query."""
@@ -888,11 +892,19 @@ class Client(DatasetClient):
 
         return search_records(self, terms, kind, fields or [])
 
-    def save(self, path: str | Path, *groups: Results) -> None:
-        """Save selected records and direct links between them as RDF."""
-        records = [record for group in groups for record in group]
-        if any(group.client is not self for group in groups):
-            raise ValueError("Save results from one client at a time")
+    def save(self, path: str | Path, *groups: Results | BaseModel) -> None:
+        """Save individual records or result sets and retained direct links as RDF."""
+        records: list[BaseModel] = []
+        model_types = tuple(self.models.values())
+        for group in groups:
+            if isinstance(group, Results):
+                if group.client is not self:
+                    raise ValueError("Save results from one client at a time")
+                records.extend(group)
+            elif isinstance(group, model_types):
+                records.append(group)
+            else:
+                raise ValueError("Save records created with this client's models")
         graph = Graph()
         self._schema.bind_prefixes(graph)
         ids = {str(vars(record)["uri"]) for record in records}
