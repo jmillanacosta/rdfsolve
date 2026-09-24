@@ -110,3 +110,64 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
     assert summary["attempted_completion"] == {"complete": 1}
     assert summary["observed_evidence"]["patterns"] == 0
     assert summary["observed_evidence"]["structural_patterns"] > 0
+
+    mixed = Dataset(default_union=False)
+    mixed.graph(URIRef("urn:data")).parse(data='''
+        <urn:record> a <urn:Record>; <urn:context> <urn:context1> .
+        <urn:context1> <urn:growth> "starvation"; <urn:allele> <urn:gene> .
+        <urn:cross> <urn:value> "typed in another data graph" .
+    ''', format="turtle")
+    mixed.graph(URIRef("urn:types")).parse(
+        data='<urn:cross> a <urn:Record> .', format="turtle")
+    for strategy in ["two-phase", "one-shot", "single-pass"]:
+        with SchemaMiner.from_graph(mixed, graph_uris=["urn:data", "urn:types"],
+                strategy=strategy, delay=0) as miner:
+            result = miner.mine("mixed")
+            assert result.patterns, "Keep the typed schema"
+            assert {p.property_uri for p in result.structural_patterns} == {
+                "urn:growth", "urn:allele"}, "Only add uncovered subject records"
+            assert sum(p.count for p in result.structural_patterns) == 2
+            for p in result.structural_patterns:
+                assert miner.helper.select(p.witness_query)["results"]["bindings"]
+            assert miner.last_report.config["structural_coverage"][0]["untyped_subject_triples"] == 2
+
+    import rdfsolve.mining.structural_strategy as structural_module
+    monkeypatch.setattr(structural_module, "MAX_STRUCTURAL_PATTERNS", 3)
+    varied = Dataset(default_union=False)
+    varied.graph(URIRef("urn:data")).parse(data='''
+        <urn:typed> a <urn:Record>; <urn:value> "typed" .
+        <urn:a> <urn:p> "a" .
+        <urn:b> <urn:q> "b" .
+        <urn:c> <urn:p> "c"; <urn:q> "c" .
+    ''', format="turtle")
+    with SchemaMiner.from_graph(varied, graph_uris=["urn:data"], delay=0) as miner:
+        result = miner.mine("compact")
+        profiles = result.structural_patterns
+        assert len(profiles) == 2, "Merge shape variations into property profiles"
+        assert {p.shape_semantics for p in profiles} == {"property_profile"}
+        assert sum(p.count for p in profiles) == 4
+        for p in profiles:
+            rows = miner.helper.select(p.recount_query)["results"]["bindings"]
+            assert int(rows[0]["n"]["value"]) == p.count, "Recount only untyped subjects"
+        assert miner.last_report.completion_state == "complete"
+        path = tmp_path / "compact.json"
+        path.write_text(json.dumps(result.to_dict()))
+        assert MinedSchema.from_json(path).structural_patterns == profiles
+    varied.graph(URIRef("urn:data")).parse(
+        data='<urn:d> <urn:r> "d"; <urn:s> "d" .', format="turtle")
+    with SchemaMiner.from_graph(varied, graph_uris=["urn:data"], delay=0) as miner:
+        result = miner.mine("deferred")
+        assert result.patterns and not result.structural_patterns
+        assert miner.last_report.completion_state == "partial", "Never call capped detail complete"
+        coverage = miner.last_report.config["structural_coverage"][0]
+        assert coverage["state"] == "deferred" and coverage["untyped_subject_triples"] == 6
+    with SchemaMiner.from_graph(mixed, graph_uris=["urn:data"], delay=0) as miner:
+        select = miner.helper.select
+        def fail_coverage(query, purpose=""):
+            if purpose == "structural/coverage":
+                raise EndpointError("coverage unavailable")
+            return select(query, purpose)
+        monkeypatch.setattr(miner.helper, "select", fail_coverage)
+        with pytest.raises(EndpointError, match="coverage unavailable"):
+            miner.mine("failed coverage")
+        assert miner.last_report.completion_state != "complete"

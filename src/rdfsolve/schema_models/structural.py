@@ -10,7 +10,7 @@ from rdfsolve.schema_models.paths import PropertyPath
 
 
 class StructuralPattern(BaseModel):
-    """An edge classified by node kind and exact outgoing-property sets in one graph."""
+    """An observed edge profile with explicit shape and subject-selection semantics."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -22,6 +22,9 @@ class StructuralPattern(BaseModel):
     datatype: str | None = None
     language: str | None = None
     graph_uri: str | None = None
+    type_graph_uris: list[str] = Field(default_factory=list)
+    subject_selection: Literal["all", "untyped"] = "all"
+    shape_semantics: Literal["exact_property_sets", "property_profile"] = "exact_property_sets"
     count: int = Field(ge=0)
     distinct_subjects: int = Field(ge=0)
     distinct_objects: int = Field(ge=0)
@@ -31,7 +34,7 @@ class StructuralPattern(BaseModel):
     recount_query: str
     examples: list[dict[str, dict[str, str]]] = Field(default_factory=list)
 
-    @field_validator("subject_properties", "object_properties")
+    @field_validator("subject_properties", "object_properties", "type_graph_uris")
     @classmethod
     def check_properties(cls, values: list[str]) -> list[str]:
         """Validate and sort the property set."""

@@ -94,11 +94,9 @@ class TwoPhaseStrategy(MiningStrategy):
         if not classes and not context.graph_uris:
             classes = self._discover_classes_in_named_graphs(context)
         if not classes:
-            from rdfsolve.mining.structural_strategy import StructuralStrategy
-
             context.report.finish_phase(p1, items=0)
             context.report.report.config["class_schema_state"] = "no_observed_data_classes"
-            return StructuralStrategy().mine(context)
+            return []
 
         # Merge with ontology classes if available
         if context.ontology_classes:

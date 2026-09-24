@@ -340,6 +340,8 @@ class SchemaMiner:
 
         # Run strategy
         patterns = self._strategy.mine(context)
+        if not isinstance(self._strategy, StructuralStrategy):
+            StructuralStrategy(residual_only=True).mine(context)
         self._class_batches = context.class_batches
         if context.structural_patterns or any(
             p.name == "structural-patterns" for p in self._report.report.phases

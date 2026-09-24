@@ -76,7 +76,7 @@ def test_term_records_and_instances_keep_separate_witnesses(tmp_path):
     assert restored.term_patterns == terms
     plan = build_scientific_validation_plan(build_release_manifest(tmp_path), tmp_path,
                                            patterns_per_schema=100)
-    checks = [c for c in plan.pattern_checks if c.pattern["subject_class"] == "urn:T"
+    checks = [c for c in plan.pattern_checks if c.pattern.get("subject_class") == "urn:T"
               and c.pattern["property_uri"] == "urn:rel"]
     assert len(checks) == 2 and len({c.check_id for c in checks}) == 2, (
         "Validation must distinguish term and type bindings with the same IRIs"
