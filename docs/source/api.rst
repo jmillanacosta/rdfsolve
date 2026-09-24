@@ -245,3 +245,11 @@ No network requests, RDF edits, registry writes or equivalence assertions occur.
 A match establishes membership in the supplied set, not identifier validity,
 a further graph connection or ontology consistency. Preserve the target snapshot
 and its scope alongside the report; the hash alone cannot reconstruct it.
+
+Use report.to_sparql_values() inside a SELECT query to follow accepted matches.
+It binds ?resolution (the zero-based input position), ?input (the original RDF
+term), and ?target (the accepted IRI). Only exact or uniquely resolved inputs
+are included; inspect report.results for ambiguous and unresolved inputs.
+An empty accepted set yields FILTER(1 = 0). Keep the input rows and the
+report so returned resolution positions identify the original records.
+This prepares bindings only; callers retain query scope and execution budgets.

@@ -8,6 +8,7 @@ from collections.abc import Iterable, Sequence
 from typing import Literal
 
 from pydantic import BaseModel, Field
+from rdflib import URIRef
 
 from rdfsolve._uri import make_expander
 from rdfsolve.models.source_model import SourceModel
@@ -39,6 +40,22 @@ class IdentifierResolutionReport(BaseModel):
     target_count: int
     target_sha256: str
     results: list[IdentifierResolution]
+
+    def to_sparql_values(self) -> str:
+        """Bind accepted results as ?resolution, ?input and ?target; retain input order."""
+        rows = []
+        for index, result in enumerate(self.results):
+            if result.status not in {"exact", "resolved"}:
+                continue
+            if len(result.matches) != 1 or result.term.kind == "bnode":
+                raise ValueError("Accepted resolutions need one target and an addressable input")
+            if result.term.kind == "uri":
+                absolute_iri(result.term.value)
+            target = URIRef(absolute_iri(result.matches[0])).n3()
+            rows.append(f"({index} {result.term.to_rdf().n3()} {target})")
+        if not rows:
+            return "FILTER(1 = 0)"
+        return "VALUES (?resolution ?input ?target) {\n" + "\n".join(rows) + "\n}"
 
 
 def resolve_identifiers(

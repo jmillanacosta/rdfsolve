@@ -41,3 +41,14 @@ def test_identifier_policy_preserves_terms_and_reports_target_evidence():
     assert type(resolved).model_validate_json(resolved.model_dump_json()) == resolved
     assert [v.model_dump() for v in values] == original
     assert len(graph) == 4
+
+    query = """SELECT ?resolution ?input ?target ?gene WHERE {
+        %s
+        ?gene <https://example.org/ref> ?target .
+    }"""
+    rows = list(graph.query(query % resolved.to_sparql_values()))
+    assert {int(row.resolution) for row in rows} == {0, 3, 4}
+    assert all(row.gene == URIRef("https://example.org/gene") for row in rows)
+    assert next(row.input for row in rows if int(row.resolution) == 0) == Literal("MESH:D000001")
+    empty = resolve_identifiers(values[:1], source, target_iris=target)
+    assert not list(graph.query(query % empty.to_sparql_values()))
