@@ -127,7 +127,9 @@ or document["schema"]["collections"] in a canonical document.
 
 Client.links, field_name, type_name and link_name accept generated model
 classes, class names or full IRIs. Client.diagram() draws all models;
-pass class names or IRIs to select a smaller view.
+pass class names or IRIs to select a smaller view. Use
+client.diagram(fenced=False) for raw Mermaid suitable for embedding.
+This also applies to paths tables; partial-view notices become Mermaid comments.
 
 
 Use an approved model as a contract

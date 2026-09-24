@@ -184,3 +184,15 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert client.type_name(iri) == client.type_name(model)
         assert client.link_name(iri, "knows") == client.link_name(model, "knows")
         assert all(iri in client.diagram() for iri in people.get_classes())
+
+        raw = client.diagram(fenced=False)
+        assert client.diagram() == "```mermaid\n" + raw + "\n```"
+        assert raw.startswith("flowchart LR") and "-->" in raw
+        paths = pd.DataFrame([{
+            "Path": 1, "Step": 1, "From class": "Person",
+            "To class": "Person", "Link": "knows",
+        }])
+        paths.attrs.update(routes=[[(iri, str(E.knows), iri, False)]], truncated=True)
+        raw_path = client.diagram(paths=paths, fenced=False)
+        assert "```" not in raw_path and "-->" in raw_path
+        assert "%% Partial view" in raw_path

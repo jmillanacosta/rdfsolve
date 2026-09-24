@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
 
 
-def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
+def model_diagram(client: Client, kinds: tuple[str, ...], *, fenced: bool = True) -> str:
     """Draw generated model labels and retained field paths without source requests."""
     models = (
         list(dict.fromkeys(client.model(kind) for kind in kinds))
@@ -34,7 +34,8 @@ def model_diagram(client: Client, kinds: tuple[str, ...]) -> str:
             if target in ids:
                 label = _text(client.link_name(model, str(row.field)))
                 edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[target]}')
-    return "```mermaid\n" + "\n".join([*lines, *sorted(edges)]) + "\n```"
+    body = "\n".join([*lines, *sorted(edges)])
+    return "```mermaid\n" + body + "\n```" if fenced else body
 
 
 def path_diagram(
@@ -43,6 +44,7 @@ def path_diagram(
     *,
     path: int | None = None,
     instances: bool = True,
+    fenced: bool = True,
 ) -> str:
     """Draw only the retained path steps selected in the table."""
     routes = paths.attrs.get("routes")
@@ -98,7 +100,10 @@ def path_diagram(
     lines.extend(f'{name}["{label}"]' for name, label in nodes.values())
     lines.extend(f'{s} -->|"{_text(label)}"| {o}' for s, label, o in sorted(edges))
     notice = "Partial view: more connections exist.\n\n" if paths.attrs.get("truncated") else ""
-    return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
+    body = "\n".join(lines)
+    if not fenced:
+        return body + ("\n%% " + notice.strip() if notice else "")
+    return notice + "```mermaid\n" + body + "\n```"
 
 
 def connection_diagram(table: pd.DataFrame, *, instances: bool = False) -> str:

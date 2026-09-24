@@ -602,6 +602,7 @@ class Client(DatasetClient):
         paths: pd.DataFrame | None = None,
         path: int | None = None,
         instances: bool = True,
+        fenced: bool = True,
     ) -> str:
         """Draw selected models or the selected rows of a paths table, without queries."""
         from rdfsolve.client.diagram import model_diagram, path_diagram
@@ -609,10 +610,10 @@ class Client(DatasetClient):
         if paths is not None:
             if kinds:
                 raise ValueError("Choose model names or a paths table, not both")
-            return path_diagram(self, paths, path=path, instances=instances)
+            return path_diagram(self, paths, path=path, instances=instances, fenced=fenced)
         if path is not None:
             raise ValueError("Supply a paths table to choose a path")
-        return model_diagram(self, kinds)
+        return model_diagram(self, kinds, fenced=fenced)
 
     def query_log(self) -> QueryLog:
         """Show every session query and its retained response without running it again."""
