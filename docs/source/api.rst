@@ -28,6 +28,23 @@ remain convenient when the field has one unambiguous datatype.
    )
    item.to_graph().serialize("item.ttl", format="turtle")
 
+Use full class and predicate IRIs when local names overlap. Ambiguous class
+names raise an error listing the matching IRIs. Generated hash suffixes are
+implementation names; resolve them with client.field_name(model, predicate).
+
+.. code-block:: python
+
+   from rdflib.namespace import DCTERMS
+
+   item = client.create(
+       "https://example.org/Item",
+       **{DCTERMS.date: Literal("2026", datatype=XSD.gYear, normalize=False)},
+   )
+
+RDFLib can normalize lexical forms when Literal is constructed. Use
+normalize=False or RdfTerm when the original spelling matters; rdfsolve
+preserves the supplied term but cannot recover text already normalized.
+
 Use client.save("records.ttl", record, table_results) to save individual
 records and table results together.
 
@@ -62,7 +79,10 @@ Ordered RDF collections
 
 Use RDFList for an ordered collection. Ordinary Python lists still write
 multiple predicate values. Collections preserve order and duplicates, and
-an empty collection writes rdf:nil.
+an empty collection writes rdf:nil. Plain strings are literal members.
+Use URIRef("https://example.org/person") for an IRI reference, BNode for a
+blank node, or a generated record for a typed member. A reference alone
+does not establish the referenced resource's class.
 
 .. code-block:: python
 
@@ -85,7 +105,12 @@ To inspect a local snapshot against an existing schema, call
 schema.discover_collections(graph). Pass graph_uris=[] for the default
 graph, or supply a Dataset and named graph IRIs. Remote mining does not
 automatically fetch list contents. VoID exports omit collection profiles;
-keep canonical JSON for the full model.
+keep canonical JSON for the full model. Access profiles as schema.collections,
+or document["schema"]["collections"] in a canonical document.
+
+Client.links, field_name, type_name and link_name accept generated model
+classes, class names or full IRIs. Client.diagram() draws all models;
+pass class names or IRIs to select a smaller view.
 
 
 Use an approved model as a contract
@@ -131,3 +156,14 @@ Keep the approved snapshot separate from later mining output and review
 changes before generating a new contract. Generated model metadata retains
 the snapshot's schema version and source provenance. Canonical schema JSON
 is the shared definition for models and declared constraints.
+
+Observed SHACL exports
+----------------------
+
+schema.to_shacl() exports mined value-type templates as deactivated shapes
+and reports their number. They impose no validation requirements. To enforce
+the observed one-hop value types explicitly, use
+schema.to_shacl(activate_observed=True). This does not infer required fields
+or per-record cardinalities. Retained source constraints keep their activation
+state. Review the shapes before treating a conformance result as validation
+of an intended contract.

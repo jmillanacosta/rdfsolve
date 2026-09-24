@@ -42,6 +42,28 @@ pip install rdfsolve
 
 ## Quick Start
 
+### Mine a local RDF snapshot
+
+```python
+from rdflib import Graph
+from rdfsolve import SchemaMiner
+
+graph = Graph().parse("data.ttl", format="turtle")
+with SchemaMiner.from_graph(graph, strategy="one-shot", delay=0) as miner:
+    schema = miner.mine(dataset_name="example")
+    report = miner.last_report
+print(len(schema.patterns), len(schema.collections or []))
+```
+
+Local mining uses RDFLib queries. `one-shot` sends four unpaged discovery
+queries; `two-phase` batches classes. Runtime depends on graph structure;
+compare report phases before choosing a strategy. Counting is enabled by
+default. Set `counts=False` if the task needs model structure without
+population/count enrichment; structural coverage checks still run.
+
+Collection profiles are available as `schema.collections` and under
+`document["schema"]["collections"]` in canonical JSON.
+
 ### Mine an endpoint
 
 ```python
@@ -57,7 +79,7 @@ schema.enrichment = miner.query_enrichment(schema)
 # Export formats
 schema.to_void_graph()  # VoID RDF graph
 schema.to_linkml_yaml()  # LinkML schema YAML string
-schema.to_shacl()  # SHACL shapes
+schema.to_shacl()  # Deactivated observed SHACL templates
 schema.to_pydantic()  # Python source for dataset-specific Pydantic classes
 schema.to_dict()  # Versioned canonical document (dict)
 
