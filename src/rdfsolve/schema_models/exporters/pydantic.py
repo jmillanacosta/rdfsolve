@@ -283,6 +283,12 @@ def to_pydantic(
         seen_paths = set(grouped[iri])
         for profile in profiles.get(iri, []):
             for prop in profile["property_shapes"]:
+                if not prop["path"]:
+                    logging.getLogger(__name__).warning(
+                        "No sh:path for property shape %s; no client field generated",
+                        prop.get("uri"),
+                    )
+                    continue
                 from rdfsolve.schema_models.exporters.paths import path_to_sparql
                 from rdfsolve.schema_models.paths import PropertyPath
 

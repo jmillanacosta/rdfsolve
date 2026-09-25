@@ -41,7 +41,7 @@ def field_targets(model: type[BaseModel], field: str) -> dict[str, str]:
     }
     for shape in getattr(model, "rdf_shapes", []):
         for prop in shape.get("property_shapes", []):
-            if prop.get("deactivated"):
+            if prop.get("deactivated") or not prop.get("path"):
                 continue
             path = prop["path"]
             path = (
