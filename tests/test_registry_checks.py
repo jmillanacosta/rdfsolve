@@ -75,3 +75,15 @@ def test_registry_report_identifies_bad_inputs_without_writing_them(tmp_path, mo
             "detail": "0 resolver candidates; 0 unreviewed upstream pairs; 0 invalid rows; canonical count=1",
         }
     ], "Clean registry"
+
+    held = tmp_path / "held.yaml"
+    held.write_text(
+        "- name: release.one\n  endpoint: https://example.org/sparql\n"
+        "  skip_mining: true\n  graph_uris: [urn:unknown]\n"
+        "- name: release.two\n  endpoint: https://example.org/sparql\n"
+        "  skip_mining: true\n  graph_uris: [urn:unknown]\n"
+    )
+    held_findings = check_registry(held)
+    assert not any(r["severity"] == "error" for r in held_findings), held_findings
+    assert any(r["check_id"] == "B1" for r in held_findings), "Held conflicts stay visible"
+    assert any("canonical count=None" in r["detail"] for r in held_findings)

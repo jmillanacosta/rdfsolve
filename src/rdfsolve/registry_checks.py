@@ -163,13 +163,20 @@ def check_registry(
         if source.local_provider and source.mining_enabled:
             by_provider[source.local_provider].append(name)
 
+    enabled = {source.name for source in sources if source.mining_enabled}
     for endpoint, members in sorted(by_endpoint.items()):
         scopes: dict[tuple[str, ...], list[str]] = defaultdict(list)
         for source in members:
             scopes[tuple(sorted(set(source.graph_uris)))].append(source.name)
         for scope, scoped_names in scopes.items():
             if len(scoped_names) > 1:
-                add("B1", scoped_names, f"Identical scope: {list(scope)}", "error", endpoint)
+                add(
+                    "B1",
+                    scoped_names,
+                    f"Identical scope: {list(scope)}",
+                    "error" if len(enabled.intersection(scoped_names)) > 1 else "warn",
+                    endpoint,
+                )
         unscoped = scopes.get((), [])
         if unscoped and len(scopes) > 1:
             add(
@@ -188,7 +195,7 @@ def check_registry(
                     "B3",
                     [left.name, right.name],
                     "Overlapping graphs: " + ", ".join(sorted(a & b)),
-                    "error",
+                    "error" if left.mining_enabled and right.mining_enabled else "warn",
                     endpoint,
                 )
         settings = ("sparql_engine", "sparql_strategy", "supports_graph", "delay")
