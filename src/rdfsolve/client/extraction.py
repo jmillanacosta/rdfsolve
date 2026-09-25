@@ -106,6 +106,20 @@ def extraction_query(
             prefix += " " + _type_pattern(target, _iri(step.object_class), context)
             reaches[(step.object_class, target, prefix)] = None
             node = target
+    for reach_index, (owner, node, prefix) in enumerate(list(reaches)):
+        for profile_index, profile in enumerate(selection.collections or []):
+            if profile.subject_class != owner:
+                continue
+            for member_index, member_class in enumerate(profile.member_types):
+                if not any(cls == member_class for cls, _ in fields):
+                    continue
+                member = f"?member{reach_index}_{profile_index}_{member_index}"
+                route = (
+                    prefix
+                    + f" {node} {_iri(profile.property_uri)}/<{RDF}rest>*/<{RDF}first> {member} . "
+                    + _type_pattern(member, _iri(member_class), context)
+                )
+                reaches[(member_class, member, route)] = None
     unreachable = {owner for owner, _ in fields} - {owner for owner, _, _ in reaches}
     if unreachable:
         raise ValueError(f"Selected fields lack a path from the root: {sorted(unreachable)}")

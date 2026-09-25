@@ -7,7 +7,7 @@ def test_scoped_list_mining_and_extraction():
     data=Dataset().parse(data='''@prefix e: <urn:example:> .
       @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
       e:links { e:article e:author e:head . e:head rdf:first e:alice; rdf:rest e:tail . }
-      e:tailGraph { e:tail rdf:first e:bob; rdf:rest rdf:nil . }
+      e:tailGraph { e:tail rdf:first e:bob; rdf:rest rdf:nil . e:alice e:label "Alice" . e:bob e:label "Bob" . }
       e:types { e:article a e:Article . e:alice a e:Person . e:bob a e:Person .
                 e:head rdf:first e:noise . }
     ''',format="trig")
@@ -20,10 +20,12 @@ def test_scoped_list_mining_and_extraction():
     assert profile.min_length==profile.max_length==2
     assert profile.member_types==["urn:example:Person"]
     with Client(schema,data) as client:
-        result=client.extract(schema.select(fields=[("urn:example:Article","urn:example:author")]),
+        result=client.extract(schema.select(fields=[("urn:example:Article","urn:example:author"), ("urn:example:Person","urn:example:label")]),
                               root_class="urn:example:Article")
     saved=result.to_dataset()
     first=saved.graph(URIRef("urn:example:links")).value(URIRef("urn:example:head"),RDF.first)
     second=saved.graph(URIRef("urn:example:tailGraph")).value(URIRef("urn:example:tail"),RDF.first)
     assert (str(first),str(second))==("urn:example:alice","urn:example:bob")
     assert not any(q.object.value=="urn:example:noise" for q in result.quads)
+
+    assert {q.object.value for q in result.quads if q.predicate=="urn:example:label"}=={"Alice","Bob"}, "Retrieve selected member fields through the collection"
