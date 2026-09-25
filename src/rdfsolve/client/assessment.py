@@ -44,6 +44,8 @@ class SelectionAssessment(BaseModel):
     selection_rows: int
     active_shapes: int = 0
     deactivated_shapes: int = 0
+    focus_nodes: int = 0
+    focus_counts: dict[str, int] = Field(default_factory=dict)
     violations: list[ConstraintViolation] = Field(default_factory=list)
     scope_warnings: list[str] = Field(default_factory=list)
     comparisons: list[EvidenceComparison] = Field(default_factory=list)
@@ -141,7 +143,7 @@ def assess(
         if not result.active_shapes:
             result.message = "No active targeted shapes; conformance was not checked"
             return result
-        from pyshacl import validate
+        from pyshacl import ShapesGraph, validate
 
         result.engine["pyshacl"] = version("pyshacl")
         conforms, report, message = validate(
@@ -149,13 +151,24 @@ def assess(
             shacl_graph=shapes,
             ont_graph=ontology,
             inference=inference,
-            inplace=False,
+            inplace=True,
             do_owl_imports=False,
             advanced=False,
             js=False,
         )
         if not isinstance(report, Graph):
             raise ValueError(str(report))
+        focuses = {
+            str(shape.node): shape.focus_nodes(data)
+            for shape in ShapesGraph(shapes).shapes
+            if shape.node in roots - inactive
+        }
+        result.focus_counts = {shape: len(nodes) for shape, nodes in focuses.items()}
+        result.focus_nodes = len(set().union(*focuses.values()))
+        if not result.focus_nodes:
+            result.message = "No focus nodes matched the active shapes; conformance was not checked"
+            result.report_turtle = report.serialize(format="turtle")
+            return result
         result.conforms = bool(conforms)
         result.state = "conforms" if conforms else "violations"
         result.message = str(message)
