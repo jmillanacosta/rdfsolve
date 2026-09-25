@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
-from rdflib import RDF, XSD, BNode, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import absolute_iri
@@ -87,6 +87,8 @@ def coerce_value(
                 continue
         else:
             datatype = pattern.get("datatype") or str(XSD.string)
+            if datatype == str(RDFS.Literal):
+                continue  # any literal: accepted when explicit, never guessed
             if datatype == str(RDF.langString):
                 if not language or not isinstance(value, str):
                     continue
@@ -138,7 +140,9 @@ def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> No
         kind = pattern["object_class"]
         if term.kind == "literal" and kind == "Literal":
             datatype = str(RDF.langString) if term.language else term.datatype or str(XSD.string)
-            if datatype == (pattern.get("datatype") or str(XSD.string)):
+            if pattern.get("datatype") == str(RDFS.Literal) or datatype == (
+                pattern.get("datatype") or str(XSD.string)
+            ):
                 return
         elif term.kind != "literal" and kind != "Literal":
             if (

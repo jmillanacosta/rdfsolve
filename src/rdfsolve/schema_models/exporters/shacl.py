@@ -6,6 +6,8 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
+ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
+
 
 def minedschema_to_shacl(
     schema: MinedSchema,
@@ -69,7 +71,7 @@ def minedschema_to_shacl(
                 option = ShaclPropertyShape(path="")
                 if pattern.object_class == "Literal":
                     option.node_kind = "Literal"
-                    option.datatype = pattern.datatype
+                    option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
                 elif pattern.object_class == "Resource":
                     option.node_kind = "IRI"
                 elif pattern.object_class == "BlankNode":

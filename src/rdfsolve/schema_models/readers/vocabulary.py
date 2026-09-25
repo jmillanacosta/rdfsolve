@@ -34,8 +34,9 @@ DATATYPES: dict[str, tuple[str, ...]] = {
 def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -> MinedSchema:
     """Declare, for each class, every property whose domain is the class or an ancestor.
 
-    Ranges that are classes become object rows, XSD datatypes and schema.org data types
-    become literal rows, and URL becomes an IRI row. The rows are declarations, not
+    Properties without a domain apply to every class. Ranges that are classes become object
+    rows, XSD datatypes and schema.org data types become literal rows, rdfs:Literal admits any
+    literal, and URL becomes an IRI row. The rows are declarations, not
     observations (evidence_source "vocabulary").
     """
     graph = (
@@ -47,6 +48,13 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
     unknown = [str(c) for c in requested if not any(graph.triples((c, None, None)))]
     if unknown:
         raise ValueError(f"Classes not declared in the vocabulary: {unknown}")
+    # RDFS: a property without a declared domain may describe any resource.
+    anywhere = {
+        prop
+        for rng in RANGES
+        for prop in graph.subjects(rng, None)
+        if isinstance(prop, URIRef) and not any(graph.value(prop, d) for d in DOMAINS)
+    }
     patterns: list[SchemaPattern] = []
     for cls in requested:
         lineage = {cls, *graph.transitive_objects(cls, RDFS.subClassOf), *UNIVERSAL}
@@ -56,7 +64,7 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
             for ancestor in lineage
             for prop in graph.subjects(domain, ancestor)
             if isinstance(prop, URIRef)
-        }
+        } | anywhere
         for prop in sorted(properties):
             for target in sorted(
                 {r for rng in RANGES for r in graph.objects(prop, rng) if isinstance(r, URIRef)}
@@ -90,7 +98,8 @@ def _objects(graph: Graph, target: URIRef) -> list[tuple[str, str | None]]:
     if str(target).startswith(str(XSD)) or target == RDF.langString:
         return [("Literal", str(target))]
     if target == RDFS.Literal:
-        return [("Literal", datatype) for datatype in DATATYPES["Text"]]
+        # Any literal: plain text is written as text, explicit typed literals are accepted.
+        return [("Literal", datatype) for datatype in (*DATATYPES["Text"], str(RDFS.Literal))]
     lineage = {target, *graph.transitive_objects(target, RDFS.subClassOf)}
     names = {
         str(t).rsplit("/", 1)[-1]
