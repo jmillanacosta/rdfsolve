@@ -1,4 +1,4 @@
-"""Write generated model records as RDF without inventing path edges."""
+"""Write generated model records as RDF."""
 
 from __future__ import annotations
 
