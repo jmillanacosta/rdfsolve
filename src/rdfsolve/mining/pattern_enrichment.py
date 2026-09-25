@@ -154,6 +154,7 @@ def enrich_patterns_with_counts(
     delay: float,
     class_batches: list[list[str]] | None = None,
     type_context_graph_uris: list[str] | None = None,
+    shared_extensions: dict[str, str] | None = None,
 ) -> list[SchemaPattern]:
     """Run COUNT queries and merge counts into patterns.
 
@@ -176,12 +177,15 @@ def enrich_patterns_with_counts(
         delay: Delay between batches (seconds)
         class_batches: Batches planned during pattern mining; subject classes
             they do not cover are counted in fixed batches of *class_batch_size*
+        shared_extensions: Classes verified to have the same members as another
+            class; their counts are copied from that class instead of queried
 
     Returns:
         Patterns with count field populated
     """
     # Collect unique subject classes from already-mined patterns
-    subject_classes = sorted({p.subject_class for p in patterns})
+    shared = shared_extensions or {}
+    subject_classes = sorted({p.subject_class for p in patterns} - shared.keys())
     if not subject_classes:
         return patterns
 
@@ -257,6 +261,10 @@ def enrich_patterns_with_counts(
         if delay > 0:
             time.sleep(delay)
 
+    for copy, source in shared.items():
+        for (cls, prop, obj), metric in list(counts.items()):
+            if cls == source:
+                counts[(copy, prop, obj)] = metric
     logger.info(
         "Counting phase: collected %d count entries",
         len(counts),

@@ -28,6 +28,7 @@ __all__ = [
     "_build_literal_query_plain",
     "_build_object_kinds_query",
     "_build_properties_for_class_query",
+    "_build_same_members_query",
     "_build_typed_object_for_class_property_query",
     "_build_typed_object_query",
     "_build_typed_object_query_plain",
@@ -382,6 +383,22 @@ def _build_class_weight_query(
     query = f"""SELECT ?class (COUNT({distinct}?s) AS ?n) {dataset}
 WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}\nGROUP BY ?class\nORDER BY ?class"""
     return SparqlHelper.prepare_paginated_query(query)
+
+
+def _build_same_members_query(
+    first: str,
+    second: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count data subjects typed with both classes, to test identical member sets."""
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    both = (
+        _subject_type_pattern("?s", f"<{first}>", type_context_graph_uris)
+        + " "
+        + _subject_type_pattern("?s", f"<{second}>", type_context_graph_uris)
+    )
+    return f"SELECT (COUNT(DISTINCT ?s) AS ?n) {dataset} WHERE {{ {both} }}"
 
 
 def _build_class_discovery_query_plain(

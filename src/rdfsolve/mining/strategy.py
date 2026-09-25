@@ -70,6 +70,10 @@ class MiningContext:
         self.structural_patterns: list[StructuralPattern] = []
         # Completed class batches reused from an earlier run's checkpoint.
         self.resumed: dict[tuple[str, ...], list[dict[str, Any]]] = {}
+        # Typed-subject populations from batch planning, and classes whose member
+        # sets were verified identical to an already mined class (copy -> source).
+        self.class_weights: dict[str, int] = {}
+        self.shared_extensions: dict[str, str] = {}
 
 
 class MiningStrategy(ABC):

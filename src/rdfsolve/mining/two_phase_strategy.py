@@ -19,8 +19,9 @@ from rdfsolve.mining.query_builders import (
     _build_class_discovery_query,
     _build_class_discovery_query_plain,
     _build_class_weight_query,
+    _build_same_members_query,
 )
-from rdfsolve.mining.query_fallbacks import query_with_bisect
+from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import ResponseLimitError
@@ -152,6 +153,7 @@ class TwoPhaseStrategy(MiningStrategy):
             except (KeyError, TypeError, ValueError):
                 continue
         max_classes = size if len(classes) <= WEIGHTED_BATCHING_ABOVE else MAX_CLASSES_PER_BATCH
+        context.class_weights = weights
         batches = plan_class_batches(classes, weights, max_classes=max_classes)
         logger.info(
             "  -> %d classes packed into %d batches by instance count (was %d fixed batches)",
@@ -285,6 +287,7 @@ class TwoPhaseStrategy(MiningStrategy):
             return outcome
 
         done = 0
+        mined: dict[str, tuple[int, int]] = {}  # single mined class -> its pattern slice
         for batch_idx, batch in enumerate(batches):
             batch_label = (
                 f"batch {batch_idx + 1}/{n_batches} "
@@ -298,6 +301,20 @@ class TwoPhaseStrategy(MiningStrategy):
                 patterns.extend(SchemaPattern.model_validate(row) for row in rows)
                 context.report.report.config["resumed_batches"].append(list(batch))
                 context.report.checkpoint("patterns", batch, rows)
+                mined[batch[0]] = (first, len(patterns))
+                continue
+            source = _same_members(batch, mined, context)
+            if source:
+                start, end = mined[source]
+                copies = [
+                    p.model_copy(update={"subject_class": batch[0]}) for p in patterns[start:end]
+                ]
+                patterns.extend(copies)
+                context.shared_extensions[batch[0]] = source
+                context.report.report.config.setdefault("shared_extensions", {})[batch[0]] = source
+                context.report.checkpoint(
+                    "patterns", batch, [p.model_dump(mode="json") for p in copies]
+                )
                 continue
 
             # 2a. Typed-object patterns
@@ -405,6 +422,8 @@ class TwoPhaseStrategy(MiningStrategy):
             context.report.checkpoint(
                 "patterns", batch, [p.model_dump(mode="json") for p in patterns[first:]]
             )
+            if len(batch) == 1:
+                mined[batch[0]] = (first, len(patterns))
 
         if anonymous_classes:
             logger.info(
@@ -412,3 +431,27 @@ class TwoPhaseStrategy(MiningStrategy):
                 anonymous_classes,
             )
         return patterns, abort_reason
+
+
+def _same_members(
+    batch: list[str], mined: dict[str, tuple[int, int]], context: MiningContext
+) -> str | None:
+    """Return a mined class with exactly the same typed subjects as a one-class batch.
+
+    Equal populations are confirmed by counting subjects typed with both classes;
+    identical subject sets give identical class-property patterns and counts.
+    """
+    if len(batch) != 1 or batch[0] not in context.class_weights:
+        return None
+    size = context.class_weights[batch[0]]
+    for other in mined:
+        if context.class_weights.get(other) != size or other in context.shared_extensions:
+            continue
+        query = _build_same_members_query(
+            other, batch[0], context.graph_uris, context.type_context_graph_uris
+        )
+        outcome = select_outcome(query, "two-phase/same-members", context.helper, batch)
+        rows = outcome.rows if outcome.state == "complete" else []
+        if rows and rows[0].get("n", {}).get("value") == str(size):
+            return other
+    return None

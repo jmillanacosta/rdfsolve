@@ -148,6 +148,7 @@ class SchemaMiner:
         self._ontology_term_budget: int | None = None
         self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
+        self._shared_extensions: dict[str, str] = {}
         self._subsumed_classes: set[str] = set()
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
@@ -360,6 +361,7 @@ class SchemaMiner:
         if not isinstance(self._strategy, StructuralStrategy):
             StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
+        self._shared_extensions = dict(context.shared_extensions)
         if context.structural_patterns or any(
             p.name == "structural-patterns" for p in self._report.report.phases
         ):
@@ -416,6 +418,7 @@ class SchemaMiner:
                 self.delay,
                 class_batches=self._class_batches,
                 type_context_graph_uris=self.type_context_graph_uris,
+                shared_extensions=self._shared_extensions,
             )
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:
