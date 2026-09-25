@@ -54,3 +54,23 @@ def test_bisection_preserves_success_and_failure():
     assert result.state == "complete", result.failures
     assert result.rows == [binding(p={"type": "uri", "value": "urn:p"}, **typed)]
     assert not collect.called
+
+    from rdflib import Graph
+
+    from rdfsolve.mining.local_graph import LocalGraphHelper
+
+    graph = Graph().parse(data='<urn:a> a <urn:A>; <urn:p> "x" . <urn:b> a <urn:A>; <urn:q> 1 .', format="turtle")
+    local = LocalGraphHelper("local", graph)
+    select = local.select
+
+    def whole_class_times_out(query, **kwargs):
+        if "SELECT ?s WHERE" not in query:  # only member windows fit the budget
+            raise EndpointTimeoutError("Operation timed out")
+        return select(query, **kwargs)
+
+    local.select = whole_class_times_out
+    pages = Mock(side_effect=EndpointTimeoutError("Operation timed out"))
+    result = query_with_bisect(["urn:A"], None, _build_batched_literal_query, "test/literal", local, pages, 100)
+    assert {r["p"]["value"] for r in result.rows} == {"urn:p", "urn:q"}, "Windows still observe rows"
+    assert result.state == "partial" and result.failures[-1].category == "sampled", "Never complete"
+    assert "windows" in result.failures[-1].message

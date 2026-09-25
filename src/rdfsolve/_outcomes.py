@@ -6,7 +6,10 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 QueryState = Literal["complete", "partial", "failed"]
-FailureCategory = Literal["endpoint", "timeout", "truncated", "query", "invalid_response"]
+FailureCategory = Literal[
+    "endpoint", "timeout", "truncated", "query", "invalid_response", "sampled"
+]
+# "sampled": rows come from bounded member windows because the whole query exceeded its budget.
 Bindings = list[dict[str, Any]]
 
 

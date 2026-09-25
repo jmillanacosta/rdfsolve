@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.query_builders import (
@@ -196,12 +196,61 @@ def query_with_bisect(
 
     query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging, **scope)
     paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
-    if paged.state == "complete" or decomposed is None:
+    if paged.state == "complete":
         return paged
-
-    combined = paged.merge(decomposed)
+    combined = paged if decomposed is None else paged.merge(decomposed)
     combined.rows = _deduplicate(combined.rows)
+    if getattr(build_fn, "__name__", "") in WINDOWED and not combined.rows:
+        return query_windows(classes[0], graph_uris, build_fn, purpose, helper, combined, scope)
     return combined
+
+
+# Discovery builders that accept a member window.
+WINDOWED = frozenset(
+    f"_build_batched_{kind}_query"
+    for kind in ("typed_object", "literal", "untyped_uri", "blank_node")
+)
+WINDOW_SIZE = 1000
+WINDOW_OFFSETS = (0, 1_000, 10_000, 100_000, 1_000_000)
+
+
+def query_windows(
+    class_uri: str,
+    graph_uris: list[str] | None,
+    build_fn: Callable[..., str],
+    purpose: str,
+    helper: SparqlHelper,
+    failed: QueryOutcome,
+    scope: dict[str, Any],
+) -> QueryOutcome:
+    """Observe rows in bounded member windows after every whole-class strategy failed.
+
+    Windows are cheap slices near the start of the member list. They give positive
+    evidence only: the outcome is partial and says how the rows were obtained.
+    """
+    from rdfsolve.mining.query_builders import Window
+
+    rows: Bindings = []
+    used: list[int] = []
+    for offset in WINDOW_OFFSETS:
+        window = Window(WINDOW_SIZE, offset, run_first=helper.sparql_engine == "blazegraph")
+        query = build_fn([class_uri], graph_uris, window=window, **scope)
+        found = select_outcome(query, f"{purpose}/window", helper, [class_uri], graph_uris)
+        if found.state != "complete":
+            break
+        rows.extend(found.rows)
+        used.append(offset)
+    if not used:
+        return failed
+    note = QueryFailure(
+        "sampled",
+        f"The whole-class query exceeded its budget; rows come from {len(used)} windows of "
+        f"{WINDOW_SIZE} members at offsets {used}. Other members may add rows.",
+        purpose,
+        [class_uri],
+        graph_uris,
+    )
+    return QueryOutcome(_deduplicate(rows), "partial", [*failed.failures, note])
 
 
 def _select_or_page(

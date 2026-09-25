@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from rdfsolve.sparql_helper import SparqlHelper
 
 __all__ = [
     "_DECOMP_CHUNK",
+    "Window",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
     "_build_batched_literal_objects_query",
@@ -111,6 +113,33 @@ def _values_block(class_uris: list[str], property_uri: str | None = None) -> str
     entries = " ".join(f"<{u}>" for u in class_uris)
     properties = f" VALUES ?p {{ <{property_uri}> }}" if property_uri else ""
     return f"VALUES ?class {{ {entries} }}" + properties
+
+
+@dataclass(frozen=True)
+class Window:
+    """A bounded slice of one class's members, for when a whole-class query exceeds its budget.
+
+    run_first asks Blazegraph (Wikidata's engine) to evaluate the slice before joining it.
+    """
+
+    limit: int
+    offset: int = 0
+    run_first: bool = False
+
+
+def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
+    """Bind ?s to the class members, or to one window of them."""
+    pattern = _type_pattern("?s", cls, context)
+    if window is None:
+        return pattern
+    hint = (
+        " <http://www.bigdata.com/queryHints#Prior> <http://www.bigdata.com/queryHints#runFirst> true ."
+        if window.run_first
+        else ""
+    )
+    return (
+        f"{{ SELECT ?s WHERE {{ {pattern} }} LIMIT {window.limit} OFFSET {window.offset} }}{hint}"
+    )
 
 
 def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str, str, str, str]:
@@ -517,6 +546,7 @@ def _build_batched_typed_object_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Typed-object patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -529,7 +559,7 @@ WHERE {{
   {{
     SELECT DISTINCT ?class ?p ?o WHERE {{
       {values}
-      {_type_pattern("?s", cls, type_context_graph_uris)}
+      {_members(cls, type_context_graph_uris, window)}
       {g_open} ?s {prop} ?o . {g_close}{binds}
     }}
   }}
@@ -547,6 +577,7 @@ def _build_batched_literal_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Literal patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -557,7 +588,7 @@ SELECT {distinct}?class ?p (DATATYPE(?o) AS ?dt)
 {dataset}
 WHERE {{
   {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {_members(cls, type_context_graph_uris, window)}
   {g_open} ?s {prop} ?o . {g_close}{binds}
   FILTER(isLiteral(?o))
 }}"""
@@ -573,6 +604,7 @@ def _build_batched_untyped_uri_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Untyped-URI patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -583,7 +615,7 @@ SELECT {distinct}?class ?p
 {dataset}
 WHERE {{
   {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {_members(cls, type_context_graph_uris, window)}
   {g_open} ?s {prop} ?o . {g_close}{binds}
   FILTER(isURI(?o))
   FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
@@ -600,6 +632,7 @@ def _build_batched_blank_node_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Blank-node patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -610,7 +643,7 @@ SELECT {distinct}?class ?p ?bnPred
 {dataset}
 WHERE {{
   {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {_members(cls, type_context_graph_uris, window)}
   {g_open} ?s {prop} ?o . {g_close}{binds}
   FILTER(isBlank(?o))
   OPTIONAL {{ ?o ?bnPred ?bnObj }}
