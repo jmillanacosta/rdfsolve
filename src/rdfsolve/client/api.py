@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import asdict
-from functools import cached_property
+from functools import cache, cached_property
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -17,6 +17,7 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
+from rdfsolve._uri import uri_to_curie
 from rdfsolve.client.exploration import DatasetClient
 from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
 from rdfsolve.client.model_rdf import model_to_graph
@@ -40,6 +41,12 @@ if TYPE_CHECKING:
 
 def _key(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.casefold())
+
+
+@cache
+def _curie_key(iri: str) -> str:
+    """Match a CURIE written as ``foaf:name`` or ``foaf_name``."""
+    return _key(uri_to_curie(iri)[0])
 
 
 def _name(name: str) -> str:
@@ -849,6 +856,8 @@ class Client(DatasetClient):
                 isinstance(field.json_schema_extra, dict)
                 and (
                     field.json_schema_extra.get("rdf_property_iri") == text
+                    or _curie_key(str(field.json_schema_extra.get("rdf_property_iri", "")))
+                    == _key(text)
                     or (
                         isinstance(path := field.json_schema_extra.get("rdf_path"), dict)
                         and path.get("iri") == text

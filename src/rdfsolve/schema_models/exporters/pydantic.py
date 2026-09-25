@@ -29,8 +29,11 @@ def _identifier(text: str, *, class_name: bool = False) -> str:
     return name
 
 
-def _unique_name(base: str, iri: str, used: set[str]) -> str:
+def _unique_name(base: str, iri: str, used: set[str], prefixed: str | None = None) -> str:
+    """Keep *base*; on a clash prefer the vocabulary-prefixed name, then a hash."""
     name = base
+    if name in used and prefixed:
+        name = prefixed
     if name in used:
         name = f"{base}_{sha256(iri.encode()).hexdigest()[:8]}"
     while name in used:
@@ -125,11 +128,13 @@ def to_pydantic(
         "DATASET_METADATA",
     }
     names: dict[str, str] = {}
-    for iri in sorted(schema.get_classes()):
-        curie = uri_to_curie(iri)[0]
+    # Classes with rows name themselves first; a class seen only as a value yields its name.
+    for iri in sorted(schema.get_classes(), key=lambda i: (i not in grouped, i)):
+        curie, prefix, _ = uri_to_curie(iri)
         meaningful = sorted(label for label in labels[iri] if label not in {iri, curie})
         base = _identifier(meaningful[0] if meaningful else curie, class_name=True)
-        names[iri] = _unique_name(base, iri, used)
+        prefixed = _identifier(f"{prefix} {base}", class_name=True) if prefix else None
+        names[iri] = _unique_name(base, iri, used, prefixed)
 
     collections: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for collection_profile in schema.collections or []:
@@ -242,12 +247,16 @@ def to_pydantic(
                 "to_graph",
             }
         )
-        for prop, patterns in sorted(grouped[iri].items()):
-            local = re.split(r"[/#:]", prop)[-1]
-            field = _identifier(local)
+        namespace = uri_to_curie(iri)[2]
+        # Properties from the class's own vocabulary keep plain names; others take a prefix.
+        for prop, patterns in sorted(
+            grouped[iri].items(), key=lambda item: (not item[0].startswith(namespace), item[0])
+        ):
+            _, prefix, _ = uri_to_curie(prop)
+            field = _identifier(re.split(r"[/#:]", prop)[-1])
             if field.startswith("model_"):
                 field = "prop_" + field
-            field = _unique_name(field, prop, fields)
+            field = _unique_name(field, prop, fields, f"{prefix}_{field}" if prefix else None)
             types = sorted({part for p in patterns for part in _value_type(p, names).split(" | ")})
             collection_profiles = collections.get((iri, prop), [])
             if collection_profiles:
