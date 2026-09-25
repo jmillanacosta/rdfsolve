@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rdflib import Graph, URIRef
+from rdflib import RDF, Graph, URIRef
 
 from rdfsolve import MinedSchema
 
@@ -39,3 +39,10 @@ def test_generated_classes_hydrate_paths_and_preserve_terms():
         extended = client.with_paths(model, texts=["http://rdfs.org/ns/void#subset", DESCRIPTION])
         assert set(client.get(extended, ROOT, fields=["texts"]).texts) == expected
         assert "texts" not in model.model_fields
+        subjects = sorted(str(s) for s in graph.subjects(RDF.type, URIRef(DATASET)))[:2]
+        batch = client.get_many(model, subjects, fields=["description"])
+        assert [str(record.uri) for record in batch] == subjects
+        assert {str(record.uri): set(record.description) for record in batch} == {
+            subject: {str(v) for v in graph.objects(URIRef(subject), URIRef(DESCRIPTION))}
+            for subject in subjects
+        }, "Batched fields must remain attached to their requested records"

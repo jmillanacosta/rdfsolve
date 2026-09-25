@@ -344,7 +344,10 @@ class Hydrator:
 
     def _subject_type(self, node: str, cls: str) -> str:
         """Require a typed subject to have an outgoing data edge."""
-        return self._type_pattern(node, cls) + f" FILTER EXISTS {{ {node} ?_dataP ?_dataO }}"
+        pattern = self._type_pattern(node, cls)
+        if self._schema.about.type_graph_uris or self._schema.about.type_context_graph_uris:
+            pattern += f" FILTER EXISTS {{ {node} ?_dataP ?_dataO }}"
+        return pattern
 
     def _scope(self, body: str) -> str:
         """Scope one graph directly; multiple data graphs use a query dataset."""
@@ -477,9 +480,9 @@ class Hydrator:
         for name in selected:
             if name not in paths:
                 raise ValueError(f"No RDF path for field {name}")
-        branches = [f'{{ {self._subject_type("?s", "?value")} BIND("@type" AS ?field) }}']
+        branches = [f'{self._subject_type("?s", "?value")} BIND("@type" AS ?field)']
         branches += [
-            f"{{ ?s {path_to_sparql(paths[name])} ?value . BIND({Literal(name).n3()} AS ?field) }}"
+            f"?s {path_to_sparql(paths[name])} ?value . BIND({Literal(name).n3()} AS ?field)"
             for name in selected
         ]
         values: dict[str, dict[str, list[RdfTerm]]] = {iri: {} for iri in iris}
@@ -490,11 +493,9 @@ class Hydrator:
             batch = unique[start : start + self.batch_size]
             scope = uuid4().hex
             response_scopes.update(dict.fromkeys(batch, scope))
-            body = self._scope(" UNION ".join(branches))
-            query = (
-                f"SELECT DISTINCT ?s ?field ?value WHERE {{ VALUES ?s {{ {' '.join(_iri(iri) for iri in batch)} }} "
-                f"{body} }} LIMIT {self.max_rows + 1}"
-            )
+            bindings = f"VALUES ?s {{ {' '.join(_iri(iri) for iri in batch)} }}"
+            body = self._scope(" UNION ".join(f"{{ {bindings} {branch} }}" for branch in branches))
+            query = f"SELECT DISTINCT ?s ?field ?value WHERE {{ {body} }} LIMIT {self.max_rows + 1}"
             rows = self._select(query)
             query_ids.update(dict.fromkeys(batch, len(self._records())))
             if len(rows) > self.max_rows:
