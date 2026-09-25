@@ -79,6 +79,10 @@ class MiningContext:
 class MiningStrategy(ABC):
     """Abstract base class for schema mining strategies."""
 
+    # Classes come from this property instead of rdf:type (e.g. Wikibase "instance of").
+    # Phases that read rdf:type (structural coverage, counts) do not apply then.
+    membership_property: str | None = None
+
     @abstractmethod
     def mine(self, context: MiningContext) -> list[SchemaPattern]:
         """Execute the mining strategy.

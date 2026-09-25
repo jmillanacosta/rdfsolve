@@ -155,6 +155,11 @@ class SchemaMiner:
         self._structural_patterns: list[StructuralPattern] | None = None
 
     @property
+    def _membership(self) -> str | None:
+        """Property that classifies subjects when the strategy does not use rdf:type."""
+        return self._strategy.membership_property
+
+    @property
     def helper(self) -> SparqlHelper:
         """Expose the miner's helper for query recording and later exploration.
 
@@ -358,7 +363,7 @@ class SchemaMiner:
             context.resumed = self._resumed_batches(*self._resume)
         # Run strategy
         patterns = self._strategy.mine(context)
-        if not isinstance(self._strategy, StructuralStrategy):
+        if not isinstance(self._strategy, StructuralStrategy) and not self._membership:
             StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
         self._shared_extensions = dict(context.shared_extensions)
@@ -783,12 +788,18 @@ class SchemaMiner:
                     "Literal": PatternType.DATATYPE_PROPERTY,
                     "BlankNode": PatternType.BLANK_NODE_PROPERTY,
                 }.get(pattern.object_class, PatternType.OBJECT_PROPERTY)
-        if self.enrich:
+        if self._membership:
+            schema.enrichment = SchemaEnrichment(
+                state="partial",
+                labels=getattr(self._strategy, "labels", []),
+                examples=getattr(self._strategy, "examples", []),
+            )
+        elif self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
         entity_counts = {}
         entity_count_states: dict[str, QueryState] = {}
-        if self.counts:
+        if self.counts and not self._membership:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 
             # Subsumed representatives stand for many terms; their direct instance
@@ -841,6 +852,7 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.type_context_graph_uris = self.type_context_graph_uris or None
+        schema.about.membership_property = self._membership
         schema.about.ontology_graph_uris = self._ontology_graph_uris
         schema.about.class_entity_counts = entity_counts
         schema.about.class_entity_count_states = entity_count_states
@@ -880,7 +892,7 @@ class SchemaMiner:
             strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
-        if self.counts:
+        if self.counts and not self._membership:
             patterns = self._run_counts_phase(patterns)
 
         raw_patterns = None
