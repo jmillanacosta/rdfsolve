@@ -99,10 +99,12 @@ def compare_observed_with_declared_shacl(
         lambda: {"class": set(), "datatype": set(), "node_kind": set()}
     )
     for pattern in patterns:
-        if pattern.evidence_source != "mined":
+        if pattern.evidence_source != "mined" or pattern.subject_binding != "type":
             continue
         key = (pattern.subject_class, pattern.property_uri)
-        if pattern.object_class == "Literal":
+        if pattern.object_binding == "term":
+            observed[key]["node_kind"].add("IRI")
+        elif pattern.object_class == "Literal":
             observed[key]["node_kind"].add("Literal")
             if pattern.datatype:
                 observed[key]["datatype"].add(pattern.datatype)
@@ -111,7 +113,6 @@ def compare_observed_with_declared_shacl(
         elif pattern.object_class == "Resource":
             observed[key]["node_kind"].add("IRI")
         else:
-            observed[key]["node_kind"].add("IRI")
             observed[key]["class"].add(pattern.object_class)
 
     declared_by_key: dict[tuple[str, str], dict[str, set[str]]] = defaultdict(
@@ -161,7 +162,11 @@ def compare_observed_with_declared_shacl(
                     subject_class=subject_class,
                     property_uri=property_uri,
                     dimension=dimension,
-                    relation=_relation(observed_values, declared_values),
+                    relation=(
+                        "not_comparable"
+                        if dimension == "node_kind" and obs and obs["class"] and not observed_values
+                        else _relation(observed_values, declared_values)
+                    ),
                     observed_values=sorted(observed_values),
                     declared_values=sorted(declared_values),
                     observed_count=len(observed_values),

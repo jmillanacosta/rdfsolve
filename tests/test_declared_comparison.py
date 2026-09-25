@@ -38,7 +38,8 @@ def test_declared_comparison_reports_neutral_set_relationships():
     by_dim = {row.dimension: row for row in rows}
     assert by_dim["property"].relation == "both"
     assert by_dim["class"].relation == "declared_subset_of_observed"
-    assert by_dim["node_kind"].relation == "equal"
+    assert by_dim["node_kind"].relation == "not_comparable"
+    assert by_dim["node_kind"].observed_values == [], "A type does not establish node kind"
 
     g.add((ex.Shape, SH.property, ex.Name))
     g.add((ex.Name, SH.path, ex.name))
@@ -53,3 +54,30 @@ def test_declared_comparison_reports_neutral_set_relationships():
     properties = {row.property_uri: row for row in rows if row.dimension == "property"}
     assert set(properties) == {str(ex.p), str(ex.name), str(ex.note)}, "Retain paths without ranges"
     assert all(row.relation == "declared_only" for row in properties.values())
+
+    blank = SchemaPattern(
+        subject_class=str(ex.Person), property_uri=str(ex.p), object_class="BlankNode"
+    )
+    term = SchemaPattern(
+        subject_class=str(ex.Person),
+        property_uri=str(ex.p),
+        object_class=str(ex.Location),
+        object_binding="term",
+    )
+    record = SchemaPattern(
+        subject_class=str(ex.Term),
+        property_uri=str(ex.p),
+        object_class=str(ex.Place),
+        subject_binding="term",
+    )
+    rows = compare_observed_with_declared_shacl(
+        dataset_id="demo", patterns=patterns + [blank, term, record], declared=declared
+    )
+    assert all(row.subject_class != str(ex.Term) for row in rows), (
+        "A term IRI is not an instance class"
+    )
+    dimensions = {row.dimension: row for row in rows}
+    assert dimensions["class"].observed_values == [str(ex.City), str(ex.Place)]
+    assert dimensions["node_kind"].observed_values == ["BlankNode", "IRI"], (
+        "An exact IRI is kind evidence"
+    )
