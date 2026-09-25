@@ -668,7 +668,9 @@ class ShaclShapesGraph(BaseModel):
         )
         logger = logging.getLogger(__name__)
         if unknown:
-            logger.warning("SHACL reader does not retain these predicates: %s", unknown)
+            logger.warning(
+                "SHACL structured model does not represent these predicates: %s", unknown
+            )
         node_shapes = []
         nodes = set(graph.subjects(RDF.type, sh.NodeShape))
         nodes.update(graph.subjects(sh.targetClass, None))

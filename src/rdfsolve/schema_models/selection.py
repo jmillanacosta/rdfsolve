@@ -24,6 +24,14 @@ class SchemaSelection(BaseModel):
         """Require fields and paths present in the retained source."""
         available = {(p.subject_class, p.property_uri) for p in self.source.patterns}
         available.update((p.subject_class, p.property_uri) for p in self.source.collections or [])
+        if self.source.shapes is not None:
+            available.update(
+                (shape.target_class, prop.path)
+                for shape in self.source.shapes.node_shapes
+                if shape.target_class
+                for prop in shape.property_shapes
+                if isinstance(prop.path, str) and prop.path
+            )
         for field in self.fields:
             if field not in available:
                 raise ValueError(f"Unknown selected field: {field}")

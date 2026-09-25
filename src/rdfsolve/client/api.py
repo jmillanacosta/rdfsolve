@@ -773,7 +773,13 @@ class Client(DatasetClient):
             if _key(text) in {_key(name), _key(self.link_name(model, name))}
             or (
                 isinstance(field.json_schema_extra, dict)
-                and field.json_schema_extra.get("rdf_property_iri") == text
+                and (
+                    field.json_schema_extra.get("rdf_property_iri") == text
+                    or (
+                        isinstance(path := field.json_schema_extra.get("rdf_path"), dict)
+                        and path.get("iri") == text
+                    )
+                )
             )
         ]
         if not matches:
