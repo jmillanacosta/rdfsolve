@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import secrets
 import time
 import warnings
@@ -78,6 +79,16 @@ class QueryRecord:
 
 
 _active_record: ContextVar[QueryRecord | None] = ContextVar("sparql_query_record", default=None)
+
+
+def _default_agent() -> str:
+    """Name the software and its version; people add contact details through settings."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return f"rdfsolve/{version('rdfsolve')}"
+    except PackageNotFoundError:
+        return "rdfsolve"
 
 
 class SparqlHelperError(Exception):
@@ -310,8 +321,13 @@ class SparqlHelper:
         select_page_retries: int = 8,
         select_page_cooldown: float = 5.0,
         max_response_bytes: int = 64 * 1024 * 1024,
+        user_agent: str | None = None,
     ) -> None:
-        """Initialize SPARQL helper with retry logic and optional strategy hints."""
+        """Initialize SPARQL helper with retry logic and optional strategy hints.
+
+        user_agent identifies the client to endpoints; some, such as Wikidata, ask for
+        contact information in it. Defaults to $RDFSOLVE_USER_AGENT, else rdfsolve/<version>.
+        """
         if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
             raise ValueError("Use positive response/retry limits and nonnegative request delay")
         self.queries = QueryCollection()
@@ -322,6 +338,7 @@ class SparqlHelper:
         self.max_response_bytes = max_response_bytes
         self._last_error_body = ""
         self.endpoint_url = endpoint_url.rstrip("/")
+        self.user_agent = user_agent or os.environ.get("RDFSOLVE_USER_AGENT") or _default_agent()
         self.use_post = use_post
         self.max_retries = max_retries
         self.initial_backoff = initial_backoff
@@ -984,7 +1001,7 @@ class SparqlHelper:
         from rdfsolve._http_policy import defer_host, retry_after_seconds
 
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
-        headers = {"Accept": accept, "User-Agent": "rdfsolve (SPARQL client)"}
+        headers = {"Accept": accept, "User-Agent": self.user_agent}
         if method == "POST":
             headers["Content-Type"] = (
                 "application/sparql-query" if raw else "application/x-www-form-urlencoded"
