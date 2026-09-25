@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from rdfsolve.client.ontology import OntologyLookup
     from rdfsolve.client.query import QueryResult
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
+    from rdfsolve.client.resolution import Resolution
     from rdfsolve.schema_models.selection import SchemaSelection
 
 
@@ -251,15 +252,23 @@ class Client(DatasetClient):
         *,
         kind: str = "resource",
         identifier: str | None = None,
-        ontology_fallback: bool = False,
-    ) -> dict[str, Any]:
-        """Resolve a resource or class into an evidence-backed query reference."""
+        external_names: bool = False,
+    ) -> Resolution:
+        """Resolve a name, IRI or CURIE into a class or exact-resource constraint.
+
+        kind="class" constrains nodes typed with the class; kind="resource"
+        matches one exact RDF term. Every candidate from schema labels, source
+        labels, registered identifiers and (with external_names) external
+        ontology names is checked in the selected graphs. Nothing is chosen by
+        precedence: two eligible candidates give status "ambiguous". Read notes
+        for the meaning of the constraint and warnings for incomplete evidence.
+        """
         from rdfsolve.client.resolution import resolve_term
 
         result = resolve_term(
-            self, concept, kind=kind, identifier=identifier, ontology_fallback=ontology_fallback
+            self, concept, kind=kind, identifier=identifier, external_names=external_names
         )
-        self.resolutions.append(result)
+        self.resolutions.append(result.model_dump(mode="json"))
         return result
 
     def prepare(
@@ -376,7 +385,7 @@ class Client(DatasetClient):
         text: Mapping[str, str] | None = None,
         distinct: bool = True,
         resolve: bool = False,
-        ontology_fallback: bool = False,
+        external_names: bool = False,
         requirements: Mapping[str, Any] | Iterable[Any] = (),
         grounding: Mapping[str, dict[str, Any]] | None = None,
     ) -> PreparedQuery:
@@ -385,18 +394,21 @@ class Client(DatasetClient):
         Each QueryPattern names retained evidence and its roles. Reuse a role to
         share a node; expose every path port to constrain an intermediate record.
         Optional descendants remain inside their parent's optional scope.
-        resolve=True accepts class names and unique field names or descriptions.
-        ontology_fallback=True permits external labels with scoped source checks.
+        resolve=True accepts class names, IRIs or CURIEs (one binding) and field
+        names (two bindings). Unresolved or ambiguous classes raise ResolutionError.
+        external_names=True also considers external ontology class names.
         The supplied bindings define the network; resolution does not add edges.
+        Warnings state constraints the resolution added, such as a field owner type.
         """
         from rdfsolve.client.network_resolution import resolve_patterns
         from rdfsolve.client.query_fragments import network_query
 
         evidence: list[dict[str, Any]] = []
-        if ontology_fallback and not resolve:
-            raise ValueError("Ontology fallback requires resolve=True")
+        warnings: list[str] = []
+        if external_names and not resolve:
+            raise ValueError("external_names requires resolve=True")
         if resolve:
-            patterns, evidence = resolve_patterns(self, patterns, ontology_fallback)
+            patterns, evidence, warnings = resolve_patterns(self, patterns, external_names)
         query = network_query(
             self.catalogue, patterns, outputs, values=values, text=text, distinct=distinct
         )
@@ -404,6 +416,7 @@ class Client(DatasetClient):
             query, requirements=requirements, grounding=grounding, output_variables=outputs
         )
         prepared.diagnostics["resolutions"] = evidence
+        prepared.warnings.extend(w for w in warnings if w not in prepared.warnings)
         return prepared
 
     def prepare_path(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +27,19 @@ def words(text: str) -> set[str]:
     text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
     text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
     return {word.lower().rstrip("s") for word in re.findall(r"[^\W_]+", text)}
+
+
+def same_name(text: str, name: str) -> bool:
+    """Compare names by ordered words, ignoring case, width and punctuation only."""
+
+    def tokens(value: str) -> list[str]:
+        """Split camel case and punctuation into casefolded words."""
+        value = unicodedata.normalize("NFKC", value)
+        value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", value)
+        value = re.sub(r"([a-z])([A-Z])", r"\1 \2", value)
+        return re.findall(r"[^\W_]+", value.casefold())
+
+    return bool(tokens(name)) and tokens(text) == tokens(name)
 
 
 def score(text: str, query: str) -> float:

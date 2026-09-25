@@ -694,14 +694,23 @@ No schema patterns are added by this lookup.
 
 ### Resolve names when composing a query
 
-`client.resolve(name, kind="class", ontology_fallback=True)` returns a retained
-class reference with source-use and label evidence. Use `kind="resource"` for
-an exact resource, including a class IRI used as a resource. Resolution never
-changes a resource constraint into an instance-of constraint implicitly.
+`client.resolve(name, kind="class")` returns a `Resolution`: `status`
+(`resolved`, `ambiguous` or `unresolved`), every `candidate` with its origin
+(supplied IRI, registered identifier, schema label, source label or external
+ontology), whether it is used in the selected graphs and one witness. Nothing is
+chosen by precedence; two used candidates are ambiguous. `kind="class"` matches
+nodes typed with the class (not members of its subclasses); `kind="resource"`
+matches one exact RDF term, including a class IRI used as a value. CURIEs such as
+`CHEBI:53289` resolve through registered namespaces; a supplied IRI needs a
+statement in scope. `notes` state what the constraint means, `warnings` what the
+evidence does not cover (truncated searches, related-synonym matches).
+`external_names=True` adds external ontology class names to the candidates.
 
 `client.prepare_network(patterns, outputs=..., resolve=True)` accepts class
-names and unique field names, labels or descriptions. Shared bindings specify
-the joins. Class constraints narrow field owners; ambiguous fields raise an
-error. Add `ontology_fallback=True` to permit external class labels. Resolutions
-are recorded in the prepared query and saved session. Dataset-specific roles
-and graph topologies belong in the caller's patterns.
+names, IRIs or CURIEs and field names that match exactly (case, width and
+punctuation aside). Unresolved or ambiguous classes raise `ResolutionError`
+with the full resolution. A field declared for a class other than the bound one
+is allowed but adds its owner type; the prepared query's `warnings` say so.
+Shared bindings specify the joins. Resolutions are recorded in the prepared query
+and saved session. Dataset-specific roles and graph topologies belong in the
+caller's patterns.

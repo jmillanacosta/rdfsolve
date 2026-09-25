@@ -42,6 +42,10 @@ def test_external_label_is_separate_from_source_evidence(tmp_path):
         with patch.object(lookup, "search") as search:
             client.describe("Known", ontology_fallback=True)
             search.assert_not_called()
+        with patch.object(lookup, "search", return_value=[]) as search:
+            client.describe("Observation", ontology_fallback=True)
+            client.describe("Observation value", ontology_fallback=True)
+            assert search.call_count == 2, "Unused or partly matching schema classes do not suppress"
         with patch.object(client, "_select", side_effect=RuntimeError("source unavailable")), patch.object(lookup, "search") as search:
             with pytest.raises(RuntimeError, match="source unavailable"):
                 client.describe("Failure", ontology_fallback=True)
