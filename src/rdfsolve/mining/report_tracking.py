@@ -35,6 +35,9 @@ class ReportCollector:
         """Set up the collector with *report* and optional *report_path*."""
         self._report = report
         self._path = report_path
+        self._checkpoint = report_path.with_suffix(".checkpoint.jsonl") if report_path else None
+        if self._checkpoint:
+            self._checkpoint.unlink(missing_ok=True)
 
         # Resource-usage snapshots (populated in _snapshot_start)
         self._t0: float = 0.0
@@ -229,6 +232,20 @@ class ReportCollector:
         return r
 
     # I/O
+
+    def checkpoint(self, phase: str, classes: list[str], rows: list[dict[str, Any]]) -> None:
+        """Append one completed batch so an interrupted run keeps its evidence."""
+        self.flush()
+        if self._checkpoint is None:
+            return
+        line = {
+            "phase": phase,
+            "classes": classes,
+            "rows": rows,
+            "at": datetime.now(timezone.utc).isoformat(),
+        }
+        with self._checkpoint.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(line, default=str) + "\n")
 
     def flush(self) -> None:
         """Write current state to disk (if a path was given)."""

@@ -292,6 +292,7 @@ class TwoPhaseStrategy(MiningStrategy):
             )
             done += len(batch)
             logger.info("  %s", batch_label)
+            first = len(patterns)
 
             # 2a. Typed-object patterns
             t0 = time.monotonic()
@@ -395,6 +396,9 @@ class TwoPhaseStrategy(MiningStrategy):
                 success=blank_bindings.state == "complete",
             )
             patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
+            context.report.checkpoint(
+                "patterns", batch, [p.model_dump(mode="json") for p in patterns[first:]]
+            )
 
         if anonymous_classes:
             logger.info(
