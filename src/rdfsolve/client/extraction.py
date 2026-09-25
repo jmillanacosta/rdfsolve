@@ -173,6 +173,7 @@ def extraction_query(
             if roots
             else "FILTER(1 = 0) " + anchor
         )
+    branches = ["{ " + anchor + " " + branch[2:] for branch in branches]
     return (
         f"SELECT DISTINCT ?root ?s ?p ?o ?graph {dataset} WHERE {{ {anchor} "
         + " OPTIONAL { "

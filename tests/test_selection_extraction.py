@@ -35,6 +35,11 @@ def test_extract_selected_connected_records(tmp_path):
         assert len(saved.graph(URIRef("urn:example:labels")))==2
         only=client.extract(selection,root_class="Chemical",roots=["urn:example:missing"])
         assert len(only.roots)==1 and len(only.quads)==1
+        chosen=client.extract(selection,root_class="Chemical",roots=["urn:example:c"])
+        assert len(chosen.roots)==1 and len(chosen.quads)==7
+        assert all(q.subject.value!="urn:example:missing" for q in chosen.quads)
+        empty=client.extract(selection,root_class="Chemical",roots=[])
+        assert not empty.roots and not empty.quads, "An empty root selection retrieves nothing"
     with Client(schema,data,max_rows=1) as client:
         with pytest.raises(HydrationLimitError):
             client.extract(selection,root_class="urn:example:Chemical")
