@@ -27,14 +27,24 @@ def test_selection_assessment_retains_evidence_and_limits():
     """,
         format="turtle",
     )
+    shapes.parse(
+        data="""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:unmatched> a sh:NodeShape; sh:targetClass <urn:example:Other>;
+          sh:closed true; sh:property [sh:path <urn:irrelevant>; sh:minCount 1] .
+    """,
+        format="turtle",
+    )
     before = set(shapes)
     checked = selected.assess(shapes)
     assert checked.state == "violations" and checked.conforms is False
-    assert checked.focus_nodes == 2 and checked.focus_counts == {"urn:shape": 2}
+    assert checked.focus_nodes == 2 and checked.focus_counts == {"urn:shape": 2, "urn:unmatched": 0}
+    assert not any("urn:unmatched" in warning for warning in checked.scope_warnings)
     assert any(item.focus.value == "urn:example:b" for item in checked.violations)
     assert checked.source_conforms is None, "A selected export cannot certify its whole source"
     assert checked.selection_rows == 1 and checked.ontology_consistency == "not_checked"
     assert set(shapes) == before, "Validation must preserve declarations"
+    shapes.remove((URIRef("urn:unmatched"), None, None))
     shapes.set((URIRef("urn:shape"), SH.deactivated, Literal(True)))
     inactive = selected.assess(shapes)
     assert inactive.state == "not_checked" and inactive.conforms is None

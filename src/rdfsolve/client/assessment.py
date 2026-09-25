@@ -91,18 +91,6 @@ def assess(
     result.active_shapes = len(roots - inactive)
     result.deactivated_shapes = len(inactive)
     fields = selection._fields()
-    for shape in roots - inactive:
-        if bool(shapes.value(shape, SH.closed)):
-            result.scope_warnings.append(
-                f"{shape}: closed-shape conformance covers only extracted properties"
-            )
-        for cls in shapes.objects(shape, SH.targetClass):
-            for prop in shapes.objects(shape, SH.property):
-                path = shapes.value(prop, SH.path)
-                if not isinstance(path, URIRef) or (str(cls), str(path)) not in fields:
-                    result.scope_warnings.append(
-                        f"{shape}: constraint path {path} is outside selected simple fields"
-                    )
     digest = sha256(shape_text.encode()).hexdigest()
     dataset = selection.source.about.dataset_name or "selection"
     artifact = DeclaredArtifact(
@@ -165,6 +153,20 @@ def assess(
         }
         result.focus_counts = {shape: len(nodes) for shape, nodes in focuses.items()}
         result.focus_nodes = len(set().union(*focuses.values()))
+        for shape in roots - inactive:
+            if not result.focus_counts.get(str(shape)):
+                continue
+            if bool(shapes.value(shape, SH.closed)):
+                result.scope_warnings.append(
+                    f"{shape}: closed-shape conformance covers only extracted properties"
+                )
+            for cls in shapes.objects(shape, SH.targetClass):
+                for prop in shapes.objects(shape, SH.property):
+                    path = shapes.value(prop, SH.path)
+                    if not isinstance(path, URIRef) or (str(cls), str(path)) not in fields:
+                        result.scope_warnings.append(
+                            f"{shape}: constraint path {path} is outside selected simple fields"
+                        )
         if not result.focus_nodes:
             result.message = "No focus nodes matched the active shapes; conformance was not checked"
             result.report_turtle = report.serialize(format="turtle")
