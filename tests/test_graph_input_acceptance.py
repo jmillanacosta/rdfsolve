@@ -83,7 +83,7 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
         data.graph(graph).parse(data=text, format="turtle")
     miners = []
 
-    def local_miner(port, graph_uris, report_path, *, type_context_graph_uris):
+    def local_miner(port, graph_uris, report_path, *, type_context_graph_uris, resume_checkpoint=None):
         miner = SchemaMiner.from_graph(data, graph_uris=graph_uris, type_context_graph_uris=type_context_graph_uris, report_path=report_path, delay=0)
         miners.append(miner)
         return miner

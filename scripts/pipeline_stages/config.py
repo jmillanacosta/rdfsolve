@@ -119,6 +119,7 @@ class PipelineConfig:
     ontology_scope: str = "schema"
     ontology_as_data: bool = False
     ontology_term_budget: int = 300
+    resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused
     discover_ontology_graphs: bool = False
     ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False

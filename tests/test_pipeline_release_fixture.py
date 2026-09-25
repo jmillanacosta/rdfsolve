@@ -112,10 +112,11 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         stage = RemoteMiningStage
     else:
 
-        def local_miner(self, port, graph_uris, report_path, *, type_context_graph_uris=None):
+        def local_miner(self, port, graph_uris, report_path, *, type_context_graph_uris=None,
+                        resume_checkpoint=None):
             return factory(
                 graph_uris=graph_uris or [left_graph, right_graph], report_path=report_path, delay=0,
-                type_context_graph_uris=type_context_graph_uris
+                type_context_graph_uris=type_context_graph_uris, resume_checkpoint=resume_checkpoint
             )
 
         monkeypatch.setattr(LocalMiningStage, "_local_miner", local_miner)

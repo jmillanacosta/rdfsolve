@@ -226,9 +226,15 @@ class LocalMiningStage(Stage):
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
         report_path = output_dir / f"{source.name}{suffix}_report.json"
+        previous = (
+            self.config.resume_from / source.name / f"{source.name}{suffix}_report.checkpoint.jsonl"
+            if self.config.resume_from
+            else None
+        )
         miner = self._local_miner(
             port, graph_uris if graph_uris is not None else source.graph_uris or None,
             report_path, type_context_graph_uris=source.type_context_graph_uris,
+            resume_checkpoint=previous if previous and previous.is_file() else None,
         )
         schema = self._mine_schema(miner, source.name, output_dir,
                                    ontology_graph_uris=source.ontology_graph_uris or None)
@@ -237,7 +243,8 @@ class LocalMiningStage(Stage):
         self._require_complete(miner)
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
-                     *, type_context_graph_uris: list[str] | None = None):
+                     *, type_context_graph_uris: list[str] | None = None,
+                     resume_checkpoint: Path | None = None):
         """Create a miner for a local QLever instance."""
         from rdfsolve import SchemaMiner
 
@@ -256,6 +263,7 @@ class LocalMiningStage(Stage):
             examples_per_pattern=self.config.examples_per_pattern,
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
+            resume_checkpoint=resume_checkpoint,
         )
 
         return miner

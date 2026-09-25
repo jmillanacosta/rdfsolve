@@ -36,7 +36,7 @@ for arg in "$@"; do
         --output-dir*|--data-dir*|--sources-file*|--*-only)
             echo "Choose the wrapper mode; use OUTPUT_DIR, DATA_DIR, SOURCES_FILE for paths" >&2
             exit 2 ;;
-        --skip-completed) echo "Use a new output directory; resume is not validated" >&2; exit 2 ;;
+        --skip-completed) echo "Use a new output directory; --resume-from DIR reuses completed class batches" >&2; exit 2 ;;
     esac
 done
 args=(scripts/pipeline.py "$select" --sources-file "$registry"

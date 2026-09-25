@@ -293,6 +293,12 @@ class TwoPhaseStrategy(MiningStrategy):
             done += len(batch)
             logger.info("  %s", batch_label)
             first = len(patterns)
+            if tuple(batch) in context.resumed:
+                rows = context.resumed[tuple(batch)]
+                patterns.extend(SchemaPattern.model_validate(row) for row in rows)
+                context.report.report.config["resumed_batches"].append(list(batch))
+                context.report.checkpoint("patterns", batch, rows)
+                continue
 
             # 2a. Typed-object patterns
             t0 = time.monotonic()

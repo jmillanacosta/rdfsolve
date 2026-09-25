@@ -55,3 +55,20 @@ def test_interrupted_mining_keeps_completed_class_batches(tmp_path, monkeypatch)
     (cls,) = saved[0]["classes"]
     assert {(r["property_uri"], r["object_class"]) for r in saved[0]["rows"]} == expected[cls]
     assert json.loads(path.read_text())["completion_state"] != "complete"
+    checkpoint = path.with_suffix(".checkpoint.jsonl")
+    kept = tmp_path / "previous.checkpoint.jsonl"
+    kept.write_text(checkpoint.read_text())
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1, report_path=path,
+                                resume_checkpoint=kept) as miner:
+        select, sent = miner.helper.select, []
+        monkeypatch.setattr(
+            miner.helper, "select", lambda q, **kw: sent.append((kw.get("purpose", ""), q)) or select(q, **kw)
+        )
+        resumed = miner.mine("stop")
+        report = miner.last_report
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1) as fresh:
+        whole = fresh.mine("stop")
+    assert sorted(map(repr, resumed.patterns)) == sorted(map(repr, whole.patterns))
+    assert not [q for p, q in sent if p.startswith("two-phase/") and f"<{cls}>" in q], "Reused, not re-queried"
+    assert report.config["resumed_batches"] == [[cls]], "Record which evidence was reused"
+    assert len(checkpoint.read_text().splitlines()) == 2, "The new checkpoint holds every batch"

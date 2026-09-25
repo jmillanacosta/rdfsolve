@@ -53,7 +53,7 @@ def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
     miner.count_class_entities.return_value = ({"urn:A": 2}, {"urn:A": "complete"})
     miner.last_report.completion_state = "complete"
 
-    def local_miner(port, graph_uris, report_path, *, type_context_graph_uris):
+    def local_miner(port, graph_uris, report_path, *, type_context_graph_uris, resume_checkpoint=None):
         assert type_context_graph_uris == ["urn:types"]
         miners.append(graph_uris)
         return miner

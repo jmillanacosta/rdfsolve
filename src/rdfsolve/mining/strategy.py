@@ -68,6 +68,8 @@ class MiningContext:
         # Class batches chosen by the strategy; the counts phase reuses them.
         self.class_batches: list[list[str]] | None = None
         self.structural_patterns: list[StructuralPattern] = []
+        # Completed class batches reused from an earlier run's checkpoint.
+        self.resumed: dict[tuple[str, ...], list[dict[str, Any]]] = {}
 
 
 class MiningStrategy(ABC):

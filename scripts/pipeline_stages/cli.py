@@ -218,6 +218,13 @@ Examples:
         help="Most classes a schema keeps before ontology terms are subsumed (default: 300)",
     )
     parser.add_argument(
+        "--resume-from",
+        type=Path,
+        default=None,
+        help="Earlier output directory of the same sources and index; reuse its completed "
+        "class batches (recorded with the checkpoint hash in each report)",
+    )
+    parser.add_argument(
         "--get-graphs-from-store",
         action="store_true",
         help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors",
@@ -444,6 +451,7 @@ Examples:
     config.ontology_term_budget = args.ontology_term_budget
     if config.ontology_term_budget < 1:
         parser.error("--ontology-term-budget must be positive")
+    config.resume_from = args.resume_from
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
     if config.ontology_discovery_max_graphs < 1:

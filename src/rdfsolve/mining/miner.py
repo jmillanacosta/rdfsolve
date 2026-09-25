@@ -88,6 +88,7 @@ class SchemaMiner:
         excluded_graph_prefixes: tuple[str, ...] = (),
         type_context_graph_uris: list[str] | None = None,
         local_backend: LocalBackend = "oxigraph",
+        resume_checkpoint: str | Path | None = None,
     ) -> None:
         """Initialize a SchemaMiner."""
         self.endpoint_url = endpoint_url
@@ -136,6 +137,12 @@ class SchemaMiner:
             max_response_bytes=max_response_bytes,
         )
         self._report_path = Path(report_path) if report_path else None
+        # Read now: a report session clears its own checkpoint path when it starts.
+        self._resume = (
+            (str(resume_checkpoint), Path(resume_checkpoint).read_text(encoding="utf-8"))
+            if resume_checkpoint
+            else None
+        )
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
@@ -346,6 +353,8 @@ class SchemaMiner:
             ontology_graph_uris=self._ontology_graph_uris,
         )
 
+        if self._resume is not None:
+            context.resumed = self._resumed_batches(*self._resume)
         # Run strategy
         patterns = self._strategy.mine(context)
         if not isinstance(self._strategy, StructuralStrategy):
@@ -369,6 +378,23 @@ class SchemaMiner:
             one_shot_results = self._report.report.one_shot_results or []
 
         return patterns, one_shot_results
+
+    def _resumed_batches(self, path: str, text: str) -> dict[tuple[str, ...], list[dict[str, Any]]]:
+        """Reuse completed class batches from an earlier checkpoint of the same source."""
+        import hashlib
+        import json
+
+        batches = {
+            tuple(line["classes"]): line["rows"]
+            for line in map(json.loads, text.splitlines())
+            if line.get("phase") == "patterns"
+        }
+        self._report.report.config["resumed_from"] = {
+            "path": path,
+            "sha256": hashlib.sha256(text.encode()).hexdigest(),
+        }
+        self._report.report.config["resumed_batches"] = []
+        return batches
 
     def _run_counts_phase(
         self,
