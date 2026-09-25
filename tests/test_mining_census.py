@@ -3,7 +3,10 @@
 from rdflib import Dataset, Graph
 
 from rdfsolve import SchemaMiner
-from rdfsolve.mining.query_builders import _build_class_weight_query
+from rdfsolve.mining.query_builders import (
+    _build_class_weight_query,
+    _build_properties_for_class_query,
+)
 
 
 def test_census_counts_data_subjects_in_each_scope():
@@ -32,3 +35,14 @@ def test_census_counts_data_subjects_in_each_scope():
                 "urn:A": 2,
                 "urn:B": 1,
             }, "Counts exclude companion-only subjects and retain multiple types"
+
+            properties = miner.helper.select(
+                _build_properties_for_class_query("urn:A", graphs, type_context_graph_uris=context)
+            )["results"]["bindings"]
+            expected = (
+                {"urn:p"}
+                if context
+                else {"urn:p", "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}
+            )
+            assert {r["p"]["value"] for r in properties} == expected
+            assert len(properties) == len(expected), "One row per observed scoped property"

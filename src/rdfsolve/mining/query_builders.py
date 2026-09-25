@@ -404,14 +404,16 @@ def _build_properties_for_class_query(
         :func:`_build_batched_typed_object_query` for caveats.
     """
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    distinct = "" if (paginated and drop_distinct) else "DISTINCT "
+    grouped = not (paginated and drop_distinct)
     q = f"""\
-SELECT {distinct}?p
+SELECT ?p
 {dataset}
 WHERE {{
   {_type_pattern("?s", f"<{class_uri}>", type_context_graph_uris)}
   {g_open} ?s ?p ?o . {g_close}
 }}"""
+    if grouped:
+        q += "\nGROUP BY ?p"
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
