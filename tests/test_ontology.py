@@ -40,7 +40,9 @@ def provider(monkeypatch, **kwargs):
     def response(path, **params):
         if path == "/search":
             iri = canonical_iri(HUMAN) if params["q"] == "human" else MMO
-            return {"response": {"docs": [{"iri": iri, "label": "Homo sapiens"}]}}
+            docs = [{"iri": iri, "label": "Homo sapiens"}]
+            docs += [{"iri": "urn:other", "label": "human"}] if params["q"] == "human" else []
+            return {"response": {"docs": docs * (params["rows"] if params["q"] == "many" else 1)}}
         if path == "/terms":
             iri = params["iri"]
             return {
@@ -89,3 +91,10 @@ def test_cache_and_unavailable_are_distinct(monkeypatch, tmp_path):
         assert client.vocabulary(MMO) is None
         monkeypatch.setattr(failing, "_json", healthy._json)
         assert client.vocabulary(MMO)["label"] == "measurement method"
+    online = provider(monkeypatch)
+    online.lookup(HUMAN)
+    found = [term["iri"] for term in online.search("human")]
+    assert found == [canonical_iri(HUMAN), "urn:other"], "Retained terms must not replace a search"
+    assert online.events[-1]["possibly_truncated"] is False
+    online.search("many")
+    assert online.events[-1]["possibly_truncated"], "A full page may hide further candidates"

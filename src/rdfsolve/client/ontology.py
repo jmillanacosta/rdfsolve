@@ -87,6 +87,9 @@ def canonical_iri(iri: str) -> str:
     return _registered_iri(prefix, identifier) or iri if prefix and identifier else iri
 
 
+SEARCH_ROWS = 8
+
+
 class OntologyLookup:
     """Bounded OLS or Ontobee access with a reusable response cache."""
 
@@ -296,6 +299,45 @@ class OntologyLookup:
             raise ValueError("Use a vocabulary phrase of at most 200 characters")
         text = " ".join(text.split()).casefold()
 
+        def fetch() -> list[Term]:
+            """Search exact names at the configured provider."""
+            if self.provider == "ols":
+                params: dict[str, Any] = {
+                    "q": text,
+                    "queryFields": "label,synonym",
+                    "rows": SEARCH_ROWS,
+                    "exact": "true",
+                    "obsoletes": "false",
+                    "local": "true",
+                    "groupField": "iri",
+                }
+                if ontology:
+                    params["ontology"] = ontology
+                docs = self._json("/search", **params).get("response", {}).get("docs", [])
+                return [self._term(t) for t in docs]
+            literal = Literal(text).n3()
+            predicates = " ".join(f"<{p}>" for p in NAME_PREDICATES)
+            rows = self._sparql(
+                f"SELECT DISTINCT ?iri ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} ?iri ?p ?value . FILTER(isIRI(?iri) && isLiteral(?value) && LCASE(STR(?value)) = LCASE({literal})) }} LIMIT {SEARCH_ROWS}"
+            )
+            return [
+                {
+                    "iri": r["iri"]["value"],
+                    "label": r["value"]["value"] if r["p"]["value"] in LABEL_PREDICATES else "",
+                    "name_match": {
+                        "text": r["value"]["value"],
+                        "predicate": r["p"]["value"],
+                        "scope": SYNONYM_PREDICATES.get(r["p"]["value"], "label"),
+                    },
+                }
+                for r in rows
+            ]
+
+        found: list[Term] | None = self._request("search_names", [text, ontology], fetch)
+        if found is not None:
+            self.events[-1]["possibly_truncated"] = len(found) >= SEARCH_ROWS
+            return found
+        # The provider was not asked: fall back to terms already retained, never complete.
         matches = [
             entry["data"]
             for key, entry in self.cache.items()
@@ -323,47 +365,12 @@ class OntologyLookup:
                     "status": "matched",
                     "basis": "retained names and scoped synonyms",
                     "seconds": 0,
+                    "possibly_truncated": True,
                 }
             )
             logger.debug("Ontology search %s: retained names", text)
-            return matches[:8]
-
-        def fetch() -> list[Term]:
-            """Search exact names at the configured provider."""
-            if self.provider == "ols":
-                params: dict[str, Any] = {
-                    "q": text,
-                    "queryFields": "label,synonym",
-                    "rows": 8,
-                    "exact": "true",
-                    "obsoletes": "false",
-                    "local": "true",
-                    "groupField": "iri",
-                }
-                if ontology:
-                    params["ontology"] = ontology
-                docs = self._json("/search", **params).get("response", {}).get("docs", [])
-                return [self._term(t) for t in docs]
-            literal = Literal(text).n3()
-            predicates = " ".join(f"<{p}>" for p in NAME_PREDICATES)
-            rows = self._sparql(
-                f"SELECT DISTINCT ?iri ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} ?iri ?p ?value . FILTER(isIRI(?iri) && isLiteral(?value) && LCASE(STR(?value)) = LCASE({literal})) }} LIMIT 8"
-            )
-            return [
-                {
-                    "iri": r["iri"]["value"],
-                    "label": r["value"]["value"] if r["p"]["value"] in LABEL_PREDICATES else "",
-                    "name_match": {
-                        "text": r["value"]["value"],
-                        "predicate": r["p"]["value"],
-                        "scope": SYNONYM_PREDICATES.get(r["p"]["value"], "label"),
-                    },
-                }
-                for r in rows
-            ]
-
-        found: list[Term] = self._request("search_names", [text, ontology], fetch) or []
-        return found
+            return matches[:SEARCH_ROWS]
+        return []
 
     def parents(self, term: Term) -> list[Term]:
         """Retrieve a bounded direct hierarchy for explanation; leave query paths unchanged."""
