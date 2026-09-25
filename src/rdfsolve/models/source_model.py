@@ -385,7 +385,9 @@ class SourcesRegistry(BaseModel):
             raw = yaml.safe_load(fh)
         if not isinstance(raw, list):
             raise ValueError(f"Expected a YAML list in {p}, got {type(raw).__name__}")
-        entries = [SourceModel.model_validate(item) for item in raw]
+        from rdfsolve.source_metadata import with_source_metadata
+
+        entries = [SourceModel.model_validate(item) for item in with_source_metadata(raw, p)]
         return cls(sources=entries)
 
     def by_name(self, name: str) -> SourceModel | None:

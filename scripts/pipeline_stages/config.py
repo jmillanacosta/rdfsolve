@@ -284,6 +284,8 @@ class PipelineConfig:
             written[name] = str(target)
 
         copy_if_present(self.sources_file, "sources.yaml")
+        if self.sources_file is not None:
+            copy_if_present(self.sources_file.with_suffix(".metadata.json"), "sources.metadata.json")
         copy_if_present(self.sssom_sources_file, "sssom_sources.yaml")
         copy_if_present(self.endpoint_status_file, "endpoint_status.json")
         copy_if_present(self.download_status_file, "download_status.json")

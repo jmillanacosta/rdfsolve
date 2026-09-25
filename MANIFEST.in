@@ -14,6 +14,7 @@ include README.md LICENSE CITATION.cff ENDPOINT_HEALTH.md uv.lock
 
 # ── Source registry (needed at runtime by the package) ───────────
 include data/sources.yaml
+include data/sources.metadata.json
 include data/sssom_sources.yaml
 include data/identity_overrides.yaml
 include data/article_pilot.yaml
