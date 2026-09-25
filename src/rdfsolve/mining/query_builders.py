@@ -347,7 +347,8 @@ def _build_class_weight_query(
 ) -> str:
     """Read classes of subjects present in the selected data."""
     dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
-    query = f"""SELECT ?class (COUNT(DISTINCT ?s) AS ?n) {dataset}
+    distinct = "DISTINCT " if graph_uris or type_context_graph_uris else ""
+    query = f"""SELECT ?class (COUNT({distinct}?s) AS ?n) {dataset}
 WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}\nGROUP BY ?class\nORDER BY ?class"""
     return SparqlHelper.prepare_paginated_query(query)
 
