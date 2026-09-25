@@ -25,7 +25,7 @@ def words(text: str) -> set[str]:
     """Normalize schema labels for deterministic lexical retrieval."""
     text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
     text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
-    return {word.lower().rstrip("s") for word in re.findall(r"[A-Za-z0-9]+", text)}
+    return {word.lower().rstrip("s") for word in re.findall(r"[^\W_]+", text)}
 
 
 def score(text: str, query: str) -> float:
@@ -34,7 +34,7 @@ def score(text: str, query: str) -> float:
     if not terms:
         return 1
     found = words(text)
-    initials = "".join(word[0] for word in re.findall(r"[A-Za-z0-9]+", text)).casefold()
+    initials = "".join(word[0] for word in re.findall(r"[^\W_]+", text)).casefold()
     if len(initials) > 1 and query.casefold() == initials:
         return 4
     overlap = len(terms & found) / len(terms)

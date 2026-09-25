@@ -94,6 +94,7 @@ class Client(DatasetClient):
             raise TypeError("ontology_grounding must be a boolean or OntologyLookup")
         self.vocabulary_evidence: dict[str, dict[str, Any] | None] = {}
         self.description_lookups: list[dict[str, Any]] = []
+        self.resolutions: list[dict[str, Any]] = []
         self.source_id = source_id
         self.class_mappings = tuple(class_mappings)
         self.related_registries = tuple(related_registries)
@@ -155,6 +156,7 @@ class Client(DatasetClient):
                 else [],
             }
         data["description_lookups"] = self.description_lookups
+        data["resolutions"] = self.resolutions
         data["prepared_queries"] = {ref: asdict(q) for ref, (q, _, _) in self._prepared.items()}
         return data
 
@@ -254,9 +256,11 @@ class Client(DatasetClient):
         """Resolve a resource or class into an evidence-backed query reference."""
         from rdfsolve.client.resolution import resolve_term
 
-        return resolve_term(
+        result = resolve_term(
             self, concept, kind=kind, identifier=identifier, ontology_fallback=ontology_fallback
         )
+        self.resolutions.append(result)
+        return result
 
     def prepare(
         self,

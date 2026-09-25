@@ -11,9 +11,12 @@ def test_resolve_names_and_compose_a_network(tmp_path):
     schema = MinedSchema.from_shacl("""
       @prefix sh: <http://www.w3.org/ns/shacl#> .
       @prefix e: <urn:e:> .
-      e:P a sh:NodeShape; sh:targetClass e:Person;
+      e:Person <http://www.w3.org/2000/01/rdf-schema#label> "人物" .
+      e:Other <http://www.w3.org/2000/01/rdf-schema#label> "研究者" .
+      e:P a sh:NodeShape; sh:targetClass e:Person; sh:name "人物";
         sh:property [sh:path e:affiliation; sh:name "member of"; sh:nodeKind sh:IRI],
                     [sh:path e:name; sh:name "label"; sh:datatype <http://www.w3.org/2001/XMLSchema#string>] .
+      e:U a sh:NodeShape; sh:targetClass e:Other; sh:name "研究者" .
       e:O a sh:NodeShape; sh:targetClass e:Organisation;
         sh:property [sh:path e:title; sh:name "label"; sh:datatype <http://www.w3.org/2001/XMLSchema#string>] .
     """)
@@ -24,7 +27,7 @@ def test_resolve_names_and_compose_a_network(tmp_path):
         e:one a e:Person, e:External; e:affiliation e:org; e:name "Ada" .
         e:two a e:Person; e:affiliation e:other; e:name "Other" .
         e:org a e:Organisation; e:title "Institute" .
-        e:other a e:Organisation; e:title "Elsewhere" .
+        e:other a e:Organisation, e:Other; e:title "Elsewhere" .
         e:External rdfs:comment "A class without its requested name" .
       }
       e:excluded { e:three a e:External; e:affiliation e:other .
@@ -44,6 +47,7 @@ def test_resolve_names_and_compose_a_network(tmp_path):
         assert query.diagnostics["resolutions"][0]["method"] == "external ontology class"
         term = client.resolve("urn:e:External", kind="resource")
         assert client.catalogue.fragments[term["reference"]].kind == "term", "A class IRI may also be queried as a resource"
+        assert client.resolve("人物", kind="class")["iri"] == "urn:e:Person", "Keep distinct non-Latin class names"
         found = client.resolve("Ada", kind="resource")
         assert found["iri"] == "urn:e:one"
         with pytest.raises(ValueError, match="ambiguous"):
@@ -56,4 +60,5 @@ def test_resolve_names_and_compose_a_network(tmp_path):
         client.save_session(tmp_path / "session.json")
         saved = json.loads((tmp_path / "session.json").read_text())
         assert saved["prepared_queries"][query.ref]["diagnostics"]["resolutions"]
+        assert any(r["reference"] == found["reference"] for r in saved["resolutions"]), "Save standalone identity resolution too"
         assert client._schema == schema, "Resolutions must not rewrite the source contract"

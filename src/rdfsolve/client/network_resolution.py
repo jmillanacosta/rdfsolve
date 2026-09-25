@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve.client.catalogue import words
 from rdfsolve.client.query_fragments import QueryPattern
-from rdfsolve.client.resolution import resolve_term
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -31,8 +30,8 @@ def resolve_patterns(
             continue
         fragment = client.catalogue.fragments.get(pattern.reference)
         if fragment is None:
-            result = resolve_term(
-                client, pattern.reference, kind="class", ontology_fallback=ontology_fallback
+            result = client.resolve(
+                pattern.reference, kind="class", ontology_fallback=ontology_fallback
             )
             evidence.append(result)
             selected[index] = pattern.model_copy(update={"reference": result["reference"]})
