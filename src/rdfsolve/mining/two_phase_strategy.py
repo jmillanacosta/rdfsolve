@@ -129,7 +129,7 @@ class TwoPhaseStrategy(MiningStrategy):
         """Use fixed batches, or instance-count batches when there are many classes."""
         size = context.class_batch_size
         fixed = [classes[i : i + size] for i in range(0, len(classes), size)]
-        if len(classes) <= WEIGHTED_BATCHING_ABOVE:
+        if len(classes) <= WEIGHTED_BATCHING_ABOVE and context.helper.sparql_engine != "qlever":
             return fixed
         t0 = time.monotonic()
         try:
@@ -151,7 +151,8 @@ class TwoPhaseStrategy(MiningStrategy):
                 weights[row["class"]["value"]] = int(row["n"]["value"])
             except (KeyError, TypeError, ValueError):
                 continue
-        batches = plan_class_batches(classes, weights)
+        max_classes = size if len(classes) <= WEIGHTED_BATCHING_ABOVE else MAX_CLASSES_PER_BATCH
+        batches = plan_class_batches(classes, weights, max_classes=max_classes)
         logger.info(
             "  -> %d classes packed into %d batches by instance count (was %d fixed batches)",
             len(classes),

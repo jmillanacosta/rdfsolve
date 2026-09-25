@@ -104,10 +104,11 @@ def _subject_type_pattern(node: str, cls: str, context_graph_uris: list[str] | N
     return pattern
 
 
-def _values_block(class_uris: list[str]) -> str:
+def _values_block(class_uris: list[str], property_uri: str | None = None) -> str:
     """Build a ``VALUES ?class { <u1> <u2> … }`` clause."""
     entries = " ".join(f"<{u}>" for u in class_uris)
-    return f"VALUES ?class {{ {entries} }}"
+    properties = f" VALUES ?p {{ <{property_uri}> }}" if property_uri else ""
+    return f"VALUES ?class {{ {entries} }}" + properties
 
 
 def _build_typed_object_query(
@@ -468,10 +469,11 @@ def _build_batched_typed_object_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Typed-object patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p ?oc
@@ -497,10 +499,11 @@ def _build_batched_literal_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Literal patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p (DATATYPE(?o) AS ?dt)
@@ -522,10 +525,11 @@ def _build_batched_untyped_uri_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Untyped-URI patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p
@@ -548,10 +552,11 @@ def _build_batched_blank_node_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Blank-node patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p ?bnPred
@@ -574,10 +579,11 @@ def _build_batched_typed_count_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Typed-object COUNT grouped by ``(class, p, oc)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
 SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
@@ -600,10 +606,11 @@ def _build_batched_literal_count_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Literal triple and distinct-subject counts grouped by ``(class, p, dt)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
 SELECT ?class ?p ?dt{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?subjects)
@@ -633,10 +640,11 @@ def _build_batched_literal_objects_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Distinct literal objects grouped by ``(class, p, dt)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
 SELECT ?class ?p ?dt{graph_var} (COUNT(DISTINCT ?o) AS ?objects)
@@ -660,10 +668,11 @@ def _build_batched_untyped_count_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Untyped-URI COUNT grouped by ``(class, p)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
-    values = _values_block(class_uris)
+    values = _values_block(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
     q = f"""\
 SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
@@ -687,6 +696,7 @@ def _build_batched_blank_node_count_query(
     paginated: bool = False,
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
 ) -> str:
     """Count blank-node edges per class, property and graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -695,7 +705,7 @@ def _build_batched_blank_node_count_query(
        (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
-  {_values_block(class_uris)}
+  {_values_block(class_uris, property_uri)}
   {_type_pattern("?s", "?class", type_context_graph_uris)}
   {g_open} ?s ?p ?o . {g_close}
   FILTER(isBlank(?o))
