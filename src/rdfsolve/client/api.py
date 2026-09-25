@@ -215,29 +215,24 @@ class Client(DatasetClient):
         return build_registry(self, source_id)
 
     def describe(
-        self, concept: str = "", *, owners: Iterable[str] = (), targets: Iterable[str] = ()
+        self,
+        concept: str | Literal = "",
+        *,
+        owners: Iterable[str] = (),
+        targets: Iterable[str] = (),
+        source: bool = True,
     ) -> pd.DataFrame:
-        """Find relevant generated classes and fields without reading instances."""
-        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+        """Find schema entries and indexed literal matches in the selected source.
 
-        index = self.catalogue
-        return pd.DataFrame(
-            [
-                {
-                    "Reference": ref,
-                    "Kind": f.kind,
-                    "Label": f.label,
-                    "Class": f.iri or f.owner,
-                    "Field": f.field_name,
-                    "Path": path_to_sparql(f.path) if f.path else None,
-                    "Targets": index.metadata[ref].get("targets", []),
-                    "Description": f.description,
-                    "Ontology evidence": index.metadata[ref].get("ontology", []),
-                }
-                for ref in index.search(concept, owners=owners, targets=targets)
-                for f in [index.fragments[ref]]
-            ]
-        )
+        Strings try supplied, lower, upper and title case as plain literals.
+        An RDF Literal retains its language and datatype for exact matching.
+        Source matches retain identity, types, literal and graph evidence.
+        Set source=False for schema-only inspection. Target filters select schema
+        fields only. External ontology candidates require ontology_grounding.
+        """
+        from rdfsolve.client.description import describe
+
+        return describe(self, concept, tuple(owners), tuple(targets), source)
 
     def prepare(
         self,

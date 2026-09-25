@@ -303,8 +303,31 @@ Read the generated types and field paths without endpoint requests:
 
 ```python
 data.describe(owners=["Key Events"], targets=["cellular organisms"])
-data.describe("measurement", owners=["Key Events"])
+data.describe("measurement", owners=["Key Events"], source=False)
 ```
+
+Start with a label or literal when the relevant class is unknown:
+
+```python
+matches = data.describe("donepezil")
+matches[["Kind", "Resource", "Types", "Predicate", "Literal", "Graph"]]
+matches.attrs["coverage"]
+```
+
+The source lookup tries the supplied spelling, lowercase, uppercase and title
+case as exact plain RDF literals. It uses direct object lookups, with no automatic
+substring scan. Pass an RDFLib `Literal` to match a specific language or datatype,
+for example `data.describe(Literal("Donepezil", lang="en"))`. These finite variants
+do not cover every mixed-case spelling or language. Coverage records the literals
+searched and marks budget-limited results as partial.
+
+Resource matches retain reusable references for `prepare_network(values=...)`,
+including resources whose types have no generated model. Schema matches and
+external ontology candidates appear separately in `Kind`; ontology candidates
+require `ontology_grounding` and do not establish presence in the data source.
+Use `source=False` for schema-only inspection. A `targets` filter selects schema
+fields only. For broader text searches, use `search` with a selected class and
+fields.
 
 Names resolve within their class. Exact generated names remain usable when human
 labels collide. Missing metadata produces an empty description search; the
