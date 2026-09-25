@@ -54,3 +54,21 @@ def test_queries_count_edges_in_the_selected_graph():
         rows = [row.asdict() for row in data.query(query)]
         assert len(rows) == 2, f"{name}: repeated objects or types changed the row count: {rows}"
         assert {str(row["oc"]) for row in rows} == {"urn:B", "urn:C"}, name
+
+    from rdfsolve.mining.property_queries import PROPERTY_BUILDERS
+
+    def answer(query):
+        rows = [sorted((str(k), str(v)) for k, v in r.asdict().items()) for r in data.query(query)]
+        return sorted(r for r in rows if dict(r).get("class"))  # empty groups are not rows
+
+    found = 0
+    for build in PROPERTY_BUILDERS:
+        for prop in ("urn:p", "urn:text"):
+            context = {"type_context_graph_uris": ["urn:context"]}
+            bound = build(["urn:A"], scope, property_uri=prop, **context)
+            assert "VALUES ?class" not in bound and "VALUES ?p" not in bound, "Engines must see constants"
+            batch = answer(build(["urn:A", "urn:Z"], scope, **context))
+            expected = [r for r in batch if ("class", "urn:A") in r and ("p", prop) in r]
+            assert answer(bound) == expected, (build.__name__, prop)
+            found += len(expected)
+    assert found, "The comparison must cover returned rows"
