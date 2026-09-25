@@ -110,12 +110,13 @@ def build_property_usage_query(
     drop_distinct: bool = False,
     property_uri: str | None = None,
     type_context_graph_uris: list[str] | None = None,
+    subjects: bool = True,
 ) -> str:
     """Build class/property support query over the selected dataset scope."""
+    distinct_subjects = "\n       (COUNT(DISTINCT ?s) AS ?subjects)" if subjects else ""
     query = f"""\
 SELECT ?class ?p
-       (COUNT(*) AS ?triples)
-       (COUNT(DISTINCT ?s) AS ?subjects)
+       (COUNT(*) AS ?triples){distinct_subjects}
        (COUNT(DISTINCT ?o) AS ?objects)
 {_dataset_clause(graph_uris)}
 WHERE {{
@@ -323,8 +324,8 @@ def collect_property_usage_evidence(
                 continue
             try:
                 triples = int(row["triples"]["value"])
-                subjects = int(row["subjects"]["value"])
                 objects = int(row["objects"]["value"])
+                subjects = int(row["subjects"]["value"]) if "subjects" in row else None
             except (KeyError, TypeError, ValueError):
                 continue
             eligible = denominator.get(class_iri)

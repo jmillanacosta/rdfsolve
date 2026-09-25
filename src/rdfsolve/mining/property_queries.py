@@ -33,7 +33,13 @@ OBJECT_KINDS = {
 TYPE_EXCLUDED = frozenset(name for name in OBJECT_KINDS if name.startswith("build_"))
 # Count builders that can drop distinct subjects when that aggregate exceeds the budget.
 SUBJECT_COUNTS = frozenset(
-    f"_build_batched_{kind}_count_query" for kind in ("typed", "literal", "untyped", "blank_node")
+    [
+        *(
+            f"_build_batched_{kind}_count_query"
+            for kind in ("typed", "literal", "untyped", "blank_node")
+        ),
+        "build_property_usage_query",
+    ]
 )
 PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"

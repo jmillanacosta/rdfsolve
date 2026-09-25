@@ -1,6 +1,7 @@
 from rdflib import RDF, Dataset, URIRef
 from rdfsolve.evidence.observed import collect_property_usage_evidence
 from rdfsolve.mining.local_graph import LocalGraphHelper
+from rdfsolve.sparql_helper import EndpointTimeoutError
 
 
 def test_property_usage_uses_subject_denominator_and_union_scope():
@@ -46,17 +47,25 @@ def test_property_usage_uses_subject_denominator_and_union_scope():
     fields = ("subjects_with_property", "triple_count", "distinct_objects", "node_kind_counts",
               "datatype_counts", "value_count_histogram")
 
-    def evidence(engine):
+    def evidence(engine, slow=""):
         helper, sent = LocalGraphHelper("local", ds), []
         helper.sparql_engine, select = engine, helper.select
-        helper.select = lambda query, **kw: sent.append(kw.get("purpose", "")) or select(query, **kw)
+
+        def record(query, **kw):
+            sent.append(kw.get("purpose", ""))
+            if slow and slow in query:
+                raise EndpointTimeoutError("Operation timed out")
+            return select(query, **kw)
+
+        helper.select = record
         found = collect_property_usage_evidence(
             dataset_id="demo", classes=[str(A)], class_entity_counts={str(A): 2}, helper=helper,
             graph_uris=["urn:g1", "urn:g2"], batch_size=1, collect_histograms=True)
-        return {r.property_uri: [getattr(r, f) for f in fields] for r in found.records}, sent
+        states = {state.status for state in found.batch_states}
+        return {r.property_uri: [getattr(r, f) for f in fields] for r in found.records}, sent, states
 
-    batch, _ = evidence("generic")
-    per_property, sent = evidence("qlever")
+    batch, _, _ = evidence("generic")
+    per_property, sent, _ = evidence("qlever")
     assert per_property == batch, "Property decomposition must not change measurements"
     assert batch["urn:r"][-1] == {"2": 1, "0": 1} and batch[str(p)][-1] == {"1": 1, "0": 1}
     scoped = {kind: [s for s in sent if kind in s] for kind in ("histogram", "literal-profile")}
@@ -64,3 +73,5 @@ def test_property_usage_uses_subject_denominator_and_union_scope():
         "histogram": ["evidence/property-value-count-histogram/property/urn:r"],  # others: one value
         "literal-profile": ["evidence/property-literal-profile/property/urn:r"],  # others: IRIs
     }
+    limited, _, states = evidence("qlever", slow="COUNT(DISTINCT ?s)")
+    assert limited["urn:r"][:3] == [None, 2, 2] and "partial" in states, "Keep triples, flag subjects"
