@@ -344,3 +344,43 @@ sh:closed value; extraction and probing do not make that decision.
 For example, selecting cell-line references does not imply that every cell line
 has one. A minimum count of one can expose missing references; a minimum count
 of zero permits them. Keep that application decision separate from mined counts.
+
+Use a provider SHACL profile
+----------------------------
+
+A provider profile can supply client fields before mining. Import keeps its
+original RDF separately from the structured constraint projection. Required
+fields without a declared range remain selectable; no class or datatype is
+invented for them.
+
+.. code-block:: python
+
+   from pathlib import Path
+   from rdfsolve import MinedSchema
+   from rdfsolve.client.api import Client
+
+   schema = MinedSchema.from_shacl(Path("model_shacl.ttl").read_text())
+   book = "http://rdf.ncbi.nlm.nih.gov/pubchem/vocabulary#Book"
+   title = "http://purl.org/dc/terms/title"
+   selected = schema.select(fields=[(book, title)])
+
+   with Client(schema, endpoint) as client:
+       Book = client.model(book)
+       title_field = client.field_name(Book, title)
+       records = client.sample(Book, limit=5, fields=[title_field])
+       extracted = client.extract(
+           selected, root_class=Book, roots=[str(r.uri) for r in records]
+       )
+
+   report = extracted.assess(schema.get_metadata().to_rdf_graph())
+
+Pass the retained provider RDF to assessment to check constraints outside the
+structured projection, such as text patterns. Constraints on omitted fields
+can fail on this extraction; the report identifies this scope limitation.
+Neither a successful retrieval nor conformance on selected records proves that
+the complete source conforms.
+
+A property-shape reference without a supplied path remains in the retained
+profile. Model generation reports it and supplies no field for that reference.
+Load the complete provider profile and companion declarations before drawing
+conclusions about its constraints.
