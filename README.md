@@ -690,3 +690,18 @@ propagate; incomplete source results remain incomplete. Candidates remain
 separate from source identities and require review before query composition.
 `save_session()` records the lookup strategy, candidates and query evidence.
 No schema patterns are added by this lookup.
+
+
+### Resolve names when composing a query
+
+`client.resolve(name, kind="class", ontology_fallback=True)` returns a retained
+class reference with source-use and label evidence. Use `kind="resource"` for
+an exact resource, including a class IRI used as a resource. Resolution never
+changes a resource constraint into an instance-of constraint implicitly.
+
+`client.prepare_network(patterns, outputs=..., resolve=True)` accepts class
+names and unique field names, labels or descriptions. Shared bindings specify
+the joins. Class constraints narrow field owners; ambiguous fields raise an
+error. Add `ontology_fallback=True` to permit external class labels. Resolutions
+are recorded in the prepared query and saved session. Dataset-specific roles
+and graph topologies belong in the caller's patterns.

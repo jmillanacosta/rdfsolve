@@ -243,6 +243,21 @@ class Client(DatasetClient):
             self, concept, tuple(owners), tuple(targets), source, identifier, ontology_fallback
         )
 
+    def resolve(
+        self,
+        concept: str,
+        *,
+        kind: str = "resource",
+        identifier: str | None = None,
+        ontology_fallback: bool = False,
+    ) -> dict[str, Any]:
+        """Resolve a resource or class into an evidence-backed query reference."""
+        from rdfsolve.client.resolution import resolve_term
+
+        return resolve_term(
+            self, concept, kind=kind, identifier=identifier, ontology_fallback=ontology_fallback
+        )
+
     def prepare(
         self,
         sparql: str,
@@ -356,6 +371,8 @@ class Client(DatasetClient):
         values: Mapping[str, str] | None = None,
         text: Mapping[str, str] | None = None,
         distinct: bool = True,
+        resolve: bool = False,
+        ontology_fallback: bool = False,
         requirements: Mapping[str, Any] | Iterable[Any] = (),
         grounding: Mapping[str, dict[str, Any]] | None = None,
     ) -> PreparedQuery:
@@ -364,15 +381,26 @@ class Client(DatasetClient):
         Each QueryPattern names retained evidence and its roles. Reuse a role to
         share a node; expose every path port to constrain an intermediate record.
         Optional descendants remain inside their parent's optional scope.
+        resolve=True accepts class names and unique field names or descriptions.
+        ontology_fallback=True permits external labels with scoped source checks.
+        The supplied bindings define the network; resolution does not add edges.
         """
+        from rdfsolve.client.network_resolution import resolve_patterns
         from rdfsolve.client.query_fragments import network_query
 
+        evidence: list[dict[str, Any]] = []
+        if ontology_fallback and not resolve:
+            raise ValueError("Ontology fallback requires resolve=True")
+        if resolve:
+            patterns, evidence = resolve_patterns(self, patterns, ontology_fallback)
         query = network_query(
             self.catalogue, patterns, outputs, values=values, text=text, distinct=distinct
         )
-        return self.prepare(
+        prepared = self.prepare(
             query, requirements=requirements, grounding=grounding, output_variables=outputs
         )
+        prepared.diagnostics["resolutions"] = evidence
+        return prepared
 
     def prepare_path(
         self,
