@@ -123,11 +123,13 @@ def analyze_release(
             raise ValueError(f"Artifact hash differs from release: {relative}")
         return path
 
+    kinds = {dataset.dataset_id: dataset.dataset_kind for dataset in manifest.datasets}
     inventory: list[dict[str, Any]] = []
     schemas: dict[str, MinedSchema] = {}
     for dataset, attempt, schema in iter_extractions(root):
         row: dict[str, Any] = {
             "dataset_id": dataset,
+            "dataset_kind": kinds[dataset],
             **attempt.model_dump(),
             "views": None,
             "coverage": None,
@@ -181,6 +183,7 @@ def analyze_release(
         dataset_inventory.append(
             {
                 "dataset_id": dataset_record.dataset_id,
+                "dataset_kind": dataset_record.dataset_kind,
                 "extraction_records": len(attempts),
                 "schema_extractions": sum(row["views"] is not None for row in attempts),
                 "completion_states": dict(Counter(row["completion_state"] for row in attempts)),
@@ -212,6 +215,7 @@ def analyze_release(
         for (key, _), data in graph.nodes(data=True):
             data.update(
                 dataset=metadata[key]["dataset_id"],
+                dataset_kind=metadata[key]["dataset_kind"],
                 mode=mode,
                 schema_path=key,
                 snapshot_id=metadata[key]["snapshot_id"],
@@ -254,6 +258,10 @@ def analyze_release(
             "structural_view_scope": "retained_extraction",
             "dataset_unit": "registry_entry",
             "registry_dataset_entries": len(dataset_inventory),
+            "dataset_kinds": {
+                kind: sum(value == kind for value in kinds.values())
+                for kind in ("instance", "ontology", "unknown")
+            },
             "service_records": len(manifest.service_records),
             "identity_review_complete": manifest.identity_review_complete,
             "canonical_dataset_count": manifest.canonical_dataset_count,

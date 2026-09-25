@@ -36,6 +36,7 @@
   source_role: service
   notes: Publisher VoID and SHACL documents for PubChem. These are declared schema artifacts.
 - name: pubchem.ftp
+  dataset_kind: instance
   local_provider: pubchem
   endpoint: https://qlever.dev/api/pubchem
   sparql_engine: qlever
@@ -2426,6 +2427,7 @@
     before indexing.
 
 - name: aopwikirdf
+  dataset_kind: instance
   sparql_examples:
     shacl_dumps:
     - ../notebooks/mcp/examples/aopwiki.ttl
@@ -3457,6 +3459,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: bgee
+  dataset_kind: instance
   endpoint: https://www.bgee.org/sparql/
   void_iri: https://bgee.org/rdf_v15_2
   graph_uris: []
@@ -3681,6 +3684,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: drugbank
+  dataset_kind: instance
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3
   graph_uris:
@@ -4937,6 +4941,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: polyadenylation.magnaporthe
+  dataset_kind: instance
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
   download_ttl: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza.ttl
   keywords:
@@ -5000,6 +5005,7 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/void
   skip_remote: true
 - name: rdfportal.chebi
+  dataset_kind: ontology
   endpoint: https://rdfportal.org/ebi/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
   keywords:
@@ -5949,6 +5955,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pathophenodb
+  dataset_kind: instance
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
   notes: 'KG Registry: PathoPhenoDB'
   kg_registry_id: pathophenodb
@@ -6134,6 +6141,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: diseaseontology
+  dataset_kind: ontology
   endpoint: https://sparql.disease-ontology.org
   download_owl:
   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/doid.owl

@@ -477,6 +477,9 @@ def build_release_manifest(
         datasets.append(
             DatasetReleaseRecord(
                 dataset_id=dataset_id,
+                dataset_kind=SourceModel.model_validate(
+                    {"name": dataset_id, **source}
+                ).dataset_kind,
                 snapshot_id=_snapshot_id(dataset_id, about, report)
                 if len(extractions) <= 1
                 else None,

@@ -9,7 +9,9 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Self
 
-__all__ = ["PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
+__all__ = ["DatasetKind", "PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
+
+DatasetKind = Literal["instance", "ontology", "unknown"]
 
 
 class PublicationRef(BaseModel):
@@ -76,6 +78,8 @@ class SourceModel(BaseModel):
         Unique source identifier.
     source_role:
         Dataset or access service.
+    dataset_kind:
+        Curated instance or ontology resource classification; unknown until reviewed.
     skip_mining:
         Exclude this entry from pipeline mining.
     endpoint:
@@ -149,6 +153,7 @@ class SourceModel(BaseModel):
     name: str
     aliases: list[str] = Field(default_factory=list)
     source_role: Literal["dataset", "service"] = "dataset"
+    dataset_kind: DatasetKind = "unknown"
     skip_mining: bool = False
     endpoint: str = ""
     sparql_examples: SparqlExamples | None = None

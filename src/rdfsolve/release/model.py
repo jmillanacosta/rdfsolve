@@ -12,6 +12,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from rdfsolve.models.source_model import DatasetKind
+
 CompletionState = Literal["complete", "partial", "failed", "unfinished", "skipped", "unknown"]
 
 
@@ -82,6 +84,7 @@ class DatasetReleaseRecord(BaseModel):
     """One dataset snapshot of a release and its artifacts."""
 
     dataset_id: str
+    dataset_kind: DatasetKind = "unknown"
     snapshot_id: str | None = None
     source_version: str | None = None
     source_version_iri: str | None = None
