@@ -15,7 +15,7 @@ from typing import Literal as FormatLiteral
 
 import pandas as pd
 from pydantic import BaseModel
-from rdflib import BNode, Graph, Literal, URIRef
+from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from rdfsolve.client.exploration import DatasetClient
 from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
@@ -197,10 +197,15 @@ class Client(DatasetClient):
         if data_file is not None:
             if source is not None:
                 raise ValueError("Choose source or data_file, not both")
-            if kwargs.get("graph_uris"):
-                raise ValueError("A single local RDF graph has no named graph scope")
-            source = Graph().parse(data_file)
-            kwargs["graph_uris"] = []
+            dataset = Dataset().parse(data_file)
+            if not any(
+                graph.identifier != dataset.default_graph.identifier and len(graph)
+                for graph in dataset.graphs()
+            ):
+                if kwargs.get("graph_uris"):
+                    raise ValueError("A single local RDF graph has no named graph scope")
+                kwargs["graph_uris"] = []
+            source = dataset
         return cls(schema, source, **kwargs)
 
     def registry(self, *, source_id: str) -> Registry:
@@ -890,10 +895,7 @@ class Client(DatasetClient):
     ) -> Client:
         """Reuse a saved session's schema. Do not replay its queries."""
         session = json.loads(Path(path).read_text(encoding="utf-8"))
-        if data_file is not None:
-            kwargs["source"] = Graph().parse(data_file)
-            kwargs["graph_uris"] = []
-        return cls(MinedSchema.from_dict(session["schema"]), **kwargs)
+        return cls.open(MinedSchema.from_dict(session["schema"]), data_file=data_file, **kwargs)
 
     def find(
         self,

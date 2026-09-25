@@ -7,7 +7,7 @@ from rdfsolve import SchemaMiner
 from rdfsolve.client.api import Client
 
 
-def test_classification_client_joins_scoped_graphs():
+def test_classification_client_joins_scoped_graphs(tmp_path):
     data = Dataset(default_union=False)
     data.parse(data="""
         @prefix e: <urn:chemical:> .
@@ -42,6 +42,17 @@ def test_classification_client_joins_scoped_graphs():
         assert set(record.group_labels) == {"PFAS", "Other"}
         assert record.rdf_source["graph_uris"] == scope
         assert client.session_metadata()["local_backend"]["engine"] == "oxigraph"
+        client.save_session(tmp_path / "session.json")
+    data.serialize(tmp_path / "data.trig", format="trig")
+    for opened in (
+        Client.open(schema, data_file=tmp_path / "data.trig"),
+        Client.from_session(tmp_path / "session.json", data_file=tmp_path / "data.trig"),
+    ):
+        with opened as restored:
+            assert restored.graph_uris == scope, "Reopening must retain the selected named graphs"
+            model = restored.model("urn:chemical:Chemical")
+            view = restored.with_paths(model, group_labels=["urn:chemical:group", "urn:chemical:label"])
+            assert set(restored.get(view, "urn:chemical:c", fields=["group_labels"]).group_labels) == {"PFAS", "Other"}
     with SchemaMiner.from_graph(data, graph_uris=[scope[0]], delay=0) as miner:
         narrow = miner.mine("classification-links")
     with Client(narrow, data) as client:
