@@ -87,3 +87,12 @@ def test_registry_refresh_can_write_copy_without_touching_source(tmp_path: Path,
     with pytest.raises(ValueError, match="separate file"):
         enrich_registry_with_bioregistry(source, output=source)
     assert source.read_text() == original, "Source registry is read-only"
+    from rdfsolve.models.source_model import SourceModel
+    from rdfsolve.sources import enrich_source_with_bioregistry
+
+    explicit = SourceModel(name="unrelated", bioregistry_prefix="test")
+    assert enrich_source_with_bioregistry(explicit) == "test", "Curated identity takes precedence over display names"
+    guessed = SourceModel(name="test.component", local_provider="test")
+    assert enrich_source_with_bioregistry(guessed) is None, "A provider or name prefix is not a dataset identifier"
+    declared = SourceModel(name="bio2rdf.test")
+    assert enrich_source_with_bioregistry(declared) == "test", "A registry-declared provider correspondence remains usable"

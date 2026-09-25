@@ -58,56 +58,29 @@ def _get_extra_provider_index() -> dict[str, list[str]]:
 
 
 def _resolve_bioregistry_prefix(source: SourceModel) -> str | None:
-    """Resolve the canonical Bioregistry prefix for a source entry.
-
-    Resolution is attempted in the following order, stopping at the first hit:
-
-    1. **Exact name** - the source ``name`` is itself a valid Bioregistry
-       prefix (e.g. ``"chebi"`` -> ``"chebi"``).
-    2. **Root-prefix** - the first dot-separated segment of ``name``
-       resolves (e.g. ``"drugbank.drugs"`` -> ``"drugbank"``).
-    3. **local_provider field** - the entry declares ``local_provider``
-       which is a valid Bioregistry prefix (e.g. ``local_provider: pubchem``).
-    4. **Extra-provider reverse lookup** - the name follows
-       ``"{provider}.{dataset}"`` and the dataset resource lists that
-       provider code among its extra providers (e.g. ``"bio2rdf.uniprot"``
-       -> ``"uniprot"`` because ``uniprot`` has ``bio2rdf`` as an extra
-       provider).
-
-    Returns ``None`` when no match is found.
-    """
+    """Use curated identifiers, exact names or registered provider correspondences."""
     try:
         import bioregistry
     except ImportError:
         logger.debug("bioregistry not installed - skipping prefix resolution")
         return None
 
+    if source.bioregistry_prefix:
+        return (
+            source.bioregistry_prefix
+            if bioregistry.get_resource(source.bioregistry_prefix) is not None
+            else None
+        )
     name = source.name
-
-    # 1. Exact match
     if bioregistry.get_resource(name) is not None:
         return name
-
-    # 2. Root-prefix (first segment before '.')
     parts = name.split(".")
-    if len(parts) > 1:
-        root = parts[0]
-        if bioregistry.get_resource(root) is not None:
-            return root
-
-    # 3. local_provider field (e.g. 'pubchem', 'idsm')
-    local_provider = source.local_provider
-    if local_provider and bioregistry.get_resource(local_provider) is not None:
-        return local_provider
-
-    # 4. Extra-provider reverse lookup: "{provider_code}.{dataset_name}"
     if len(parts) == 2:
         provider_code, dataset_name = parts[0], parts[1]
         index = _get_extra_provider_index()
         candidates = index.get(provider_code, [])
         if dataset_name in candidates:
             return dataset_name
-        # Also try normalised (lowercase)
         lc = dataset_name.lower()
         for cand in candidates:
             if cand.lower() == lc:
