@@ -26,6 +26,11 @@ class Identification(BaseModel):
     predicate: str = Field(description="The property that carries it.")
     value: str = Field(description="The matched value as written in the source.")
     kind: str = Field(description="literal or uri: how the value is written.")
+    method: str = Field(
+        "any property",
+        description="schema property: asked only properties whose examples carry this "
+        "identifier type; any property: every property was searched.",
+    )
     intermediates: list[str] = Field(
         default_factory=list,
         description="Matched resources this one links to, such as qualified statements.",
@@ -48,30 +53,62 @@ def spellings(identifier: str) -> list[Any]:
     return list(dict.fromkeys(terms))
 
 
+def carriers(client: Client, prefix: str) -> list[str]:
+    """Properties whose example values in the schema are identifiers of this registered type."""
+    import bioregistry
+
+    resource = bioregistry.get_resource(prefix)
+    if resource is None:
+        return []
+    found = []
+    for example in client._schema.enrichment.examples:
+        value = example.value.value
+        parsed = bioregistry.parse_iri(value) if value.startswith(("http://", "https://")) else None
+        if (parsed and bioregistry.normalize_prefix(parsed[0]) == resource.prefix) or (
+            not parsed and resource.is_valid_identifier(value)
+        ):
+            found.append(example.property_uri)
+    return sorted(set(found))
+
+
 def identify(client: Client, identifiers: Iterable[str]) -> list[Identification]:
-    """Match every spelling of each identifier as an exact object term in the selected graphs."""
+    """Match every spelling of each identifier as an exact object term in the selected graphs.
+
+    When the schema's examples show which properties carry an identifier type, only those
+    properties are asked (an index lookup); otherwise every property is searched.
+    """
     wanted = list(dict.fromkeys(identifiers))
     found: list[Identification] = []
     for start in range(0, len(wanted), BATCH):
-        rows = " ".join(
-            f"({Literal(key).n3()} {term.n3()})"
-            for key in wanted[start : start + BATCH]
-            for term in spellings(key)
-        )
-        body = client._scope(f"VALUES (?key ?o) {{ {rows} }} ?s ?p ?o . FILTER(isIRI(?s))")
-        with client.step("Identify resources"):
-            bindings = client._select(f"SELECT DISTINCT ?key ?s ?p ?o WHERE {{ {body} }}")
-        for row in bindings:
-            value = _term(row["o"])
-            found.append(
-                Identification(
-                    identifier=row["key"]["value"],
-                    resource=row["s"]["value"],
-                    predicate=row["p"]["value"],
-                    value=value.value,
-                    kind=value.kind,
+        batch = wanted[start : start + BATCH]
+        groups: dict[tuple[str, ...], list[str]] = {}
+        for key in batch:
+            prefix = "" if key.startswith(("http://", "https://", "urn:")) else key.split(":", 1)[0]
+            groups.setdefault(tuple(carriers(client, prefix)) if prefix else (), []).append(key)
+        for predicates, keys in groups.items():
+            rows = " ".join(f"({Literal(k).n3()} {t.n3()})" for k in keys for t in spellings(k))
+            values = f"VALUES (?key ?o) {{ {rows} }}"
+            if predicates:
+                pattern = " UNION ".join(
+                    f"{{ {values} ?s {_iri(p)} ?o . BIND({_iri(p)} AS ?p) }}" for p in predicates
                 )
-            )
+            else:
+                pattern = f"{values} ?s ?p ?o ."
+            body = client._scope(f"{pattern} FILTER(isIRI(?s))")
+            with client.step("Identify resources"):
+                bindings = client._select(f"SELECT DISTINCT ?key ?s ?p ?o WHERE {{ {body} }}")
+            for row in bindings:
+                value = _term(row["o"])
+                found.append(
+                    Identification(
+                        identifier=row["key"]["value"],
+                        resource=row["s"]["value"],
+                        predicate=row["p"]["value"],
+                        value=value.value,
+                        kind=value.kind,
+                        method="schema property" if predicates else "any property",
+                    )
+                )
     return _without_intermediates(client, found)
 
 

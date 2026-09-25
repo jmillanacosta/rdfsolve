@@ -41,3 +41,21 @@ def test_identifiers_resolve_across_spellings_then_statements_follow():
         assert (URIRef("urn:item"), RDFS.label, Literal("Javier", lang="es")) not in graph, "Languages"
         assert graph.value(URIRef("urn:org"), RDFS.label) == Literal("Maastricht University", lang="en")
         assert (URIRef("urn:work"), URIRef("urn:cites"), URIRef("https://doi.org/10.1038/x")) in graph
+
+    from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, SchemaEnrichment
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    example = PatternExample(
+        subject_class="urn:Person", property_uri="urn:direct/orcid",
+        subject=RdfTerm(kind="uri", value="urn:someone"),
+        value=RdfTerm(kind="literal", value="0000-0001-7536-3744"),
+    )
+    schema = MinedSchema(
+        patterns=[SchemaPattern(subject_class="urn:Person", property_uri="urn:direct/orcid", object_class="Literal")],
+        enrichment=SchemaEnrichment(examples=[example]),
+    )
+    with Client(schema, data, graph_uris=["urn:g"]) as guided:
+        found = guided.identify(["orcid:0000-0002-4166-7093"])
+        sent = [q for q in guided.queries if "Identify" in q or "VALUES (?key ?o)" in q]
+        assert [(m.resource, m.method) for m in found] == [("urn:item", "schema property")]
+        assert sent and not [q for q in sent if "?s ?p ?o ." in q], "Ask only properties that carry ORCIDs"
