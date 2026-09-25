@@ -102,41 +102,6 @@ class DatasetClient(Hydrator):
         ]
         return pd.DataFrame(rows, columns=["field", "target", "predicate", "path", "basis"])
 
-    def search_names(
-        self,
-        model: type[Model],
-        text: str,
-        *,
-        fields: list[str] | None = None,
-        limit: int = 100,
-    ) -> list[Model]:
-        """Find typed IRIs whose name or synonym contains text, ignoring case.
-
-        Matching uses literal wording. Raise if the match count exceeds the limit.
-        """
-        self._check_model_scope(model)
-        if not text.strip():
-            raise ValueError("Supply search text")
-        if type(limit) is not int or not 1 <= limit <= self.max_subjects:
-            raise ValueError(f"Use a limit between 1 and {self.max_subjects}")
-        predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
-        body = self._scope(
-            self._type_pattern("?s", _iri(getattr(model, "rdf_class_iri", ""))) + " "
-            f"VALUES ?labelProperty {{ {predicates} }} ?s ?labelProperty ?label . "
-            f"FILTER(isIRI(?s) && isLiteral(?label) && "
-            f"CONTAINS(LCASE(STR(?label)), LCASE({Literal(text).n3()})))"
-        )
-        rows = self._select(f"SELECT DISTINCT ?s WHERE {{ {body} }} ORDER BY ?s LIMIT {limit + 1}")
-        if len(rows) > limit:
-            raise HydrationLimitError("Search limit exceeded; narrow the text or raise the limit")
-        iris = []
-        for row in rows:
-            term = _term(row.get("s", {}))
-            if term.kind != "uri":
-                raise EndpointError("Expected an IRI search result")
-            iris.append(term.value)
-        return self.get_many(model, iris, fields=fields)
-
     def follow(
         self,
         records: list[BaseModel],

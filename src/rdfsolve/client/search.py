@@ -78,11 +78,16 @@ def search_records(
                 direct.append(f"({_iri(cls)} {_iri(path.iri)})")
             else:
                 branches.append(
-                    f"{{ ?s a {_iri(cls)} ; {path_to_sparql(path)} ?text . BIND({_iri(cls)} AS ?type) BIND({Literal(key).n3()} AS ?p) }}"
+                    "{ "
+                    + client._type_pattern("?s", _iri(cls))
+                    + f" ?s {path_to_sparql(path)} ?text . BIND({_iri(cls)} AS ?type) BIND({Literal(key).n3()} AS ?p) }}"
                 )
     if direct:
         branches.insert(
-            0, f"{{ VALUES (?type ?p) {{ {' '.join(direct)} }} ?s a ?type ; ?p ?text . }}"
+            0,
+            f"{{ VALUES (?type ?p) {{ {' '.join(direct)} }} "
+            + client._type_pattern("?s", "?type")
+            + " ?s ?p ?text . }",
         )
     if not branches:
         raise ValueError("No searchable generated fields in the selected classes")

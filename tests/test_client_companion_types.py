@@ -36,3 +36,8 @@ def test_companion_types_across_client_operations():
         connections = client.connections(source[0], max_hops=1, both_directions=False)
         assert len(connections) == 1, "Companion properties must not become data links"
         assert connections.iloc[0]["To class"] == client.type_name(group)
+
+        found = client.find("PFAS", kind="urn:example:Group", field=label)
+        searched = client.search(["PFAS"], kind="urn:example:Group", fields=[label])
+        assert len(found) == len(searched) == 1, "Search must use the same companion types as follow"
+        assert not client.find("Excluded", kind="urn:example:Group", field=label)
