@@ -610,18 +610,36 @@ def _build_batched_typed_count_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
-    """Typed-object COUNT grouped by ``(class, p, oc)`` and edge graph."""
+    """Typed-object COUNT grouped by ``(class, p, oc)`` and edge graph.
+
+    Without *subjects*, edges are first counted per object, which keeps triple
+    and distinct-object counts exact when distinct subjects exceed a budget.
+    """
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
-    q = f"""\
+    edges = f"""{values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}"""
+    if subjects:
+        q = f"""\
 SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
-  {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
+}}
+GROUP BY ?class ?p ?oc{graph_var}"""
+    else:
+        q = f"""\
+SELECT ?class ?p ?oc{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?objects)
+{dataset}
+WHERE {{
+  {{ SELECT ?class ?p ?o{graph_var} (COUNT(*) AS ?k) WHERE {{
+  {edges}
+  }} GROUP BY ?class ?p ?o{graph_var} }}
   {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}
 GROUP BY ?class ?p ?oc{graph_var}"""
@@ -637,26 +655,37 @@ def _build_batched_literal_count_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
     """Literal triple and distinct-subject counts grouped by ``(class, p, dt)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
-    q = f"""\
+    edges = f"""{values}
+      {_type_pattern("?s", cls, type_context_graph_uris)}
+      {g_open} ?s {prop} ?o . {g_close}{binds}
+      FILTER(isLiteral(?o))
+      BIND(DATATYPE(?o) AS ?dt)"""
+    if subjects:
+        q = f"""\
 SELECT ?class ?p ?dt{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?subjects)
 {dataset}
 WHERE {{
   {{
     SELECT ?class ?p ?dt{graph_var} ?s (COUNT(*) AS ?k)
     WHERE {{
-      {values}
-      {_type_pattern("?s", cls, type_context_graph_uris)}
-      {g_open} ?s {prop} ?o . {g_close}{binds}
-      FILTER(isLiteral(?o))
-      BIND(DATATYPE(?o) AS ?dt)
+      {edges}
     }}
     GROUP BY ?class ?p ?dt{graph_var} ?s
   }}
+}}
+GROUP BY ?class ?p ?dt{graph_var}"""
+    else:
+        q = f"""\
+SELECT ?class ?p ?dt{graph_var} (COUNT(*) AS ?cnt)
+{dataset}
+WHERE {{
+      {edges}
 }}
 GROUP BY ?class ?p ?dt{graph_var}"""
     if paginated:
@@ -699,13 +728,15 @@ def _build_batched_untyped_count_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
     """Untyped-URI COUNT grouped by ``(class, p)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
+    distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
     q = f"""\
-SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}
@@ -727,13 +758,15 @@ def _build_batched_blank_node_count_query(
     drop_distinct: bool = False,
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
     """Count blank-node edges per class, property and graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
+    distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
     query = f"""SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)
-       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+       {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
   {values}

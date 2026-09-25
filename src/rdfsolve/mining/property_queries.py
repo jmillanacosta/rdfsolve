@@ -31,6 +31,10 @@ OBJECT_KINDS = {
 }
 # Evidence builders measure data edges; rdf:type is class membership.
 TYPE_EXCLUDED = frozenset(name for name in OBJECT_KINDS if name.startswith("build_"))
+# Count builders that can drop distinct subjects when that aggregate exceeds the budget.
+SUBJECT_COUNTS = frozenset(
+    f"_build_batched_{kind}_count_query" for kind in ("typed", "literal", "untyped", "blank_node")
+)
 PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 _KINDS: WeakKeyDictionary[SparqlHelper, dict[tuple[str, ...], set[str] | None]] = (
@@ -97,7 +101,22 @@ def query_by_property(
         query = builder(
             [class_uri], graphs, property_uri=prop, type_context_graph_uris=context_graphs
         )
-        result = result.merge(
-            select_outcome(query, f"{purpose}/property/{prop}", helper, [class_uri], graphs)
-        )
+        found = select_outcome(query, f"{purpose}/property/{prop}", helper, [class_uri], graphs)
+        if builder.__name__ in SUBJECT_COUNTS and any(
+            f.category == "timeout" for f in found.failures
+        ):
+            # Distinct subjects are the costly part; keep triple and object counts without them.
+            lighter = builder(
+                [class_uri],
+                graphs,
+                property_uri=prop,
+                type_context_graph_uris=context_graphs,
+                subjects=False,
+            )
+            retry = select_outcome(
+                lighter, f"{purpose}/property/{prop}/without-subjects", helper, [class_uri], graphs
+            )
+            if retry.rows:
+                found = QueryOutcome(retry.rows, "partial", found.failures + retry.failures)
+        result = result.merge(found)
     return result
