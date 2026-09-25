@@ -79,3 +79,42 @@ def resolve_patterns(
             }
         )
     return selected, evidence, warnings
+
+
+def describe_network(
+    client: Client, patterns: Sequence[QueryPattern | dict[str, Any]]
+) -> dict[str, Any]:
+    """State each role's type constraints and each link the query requires or allows.
+
+    This is the network a natural-language question was compressed into: which
+    role a field connects to which, so that e.g. a participant of a context is
+    not read as a participant of each record in that context.
+    """
+    from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
+    roles: dict[str, list[str]] = defaultdict(list)
+    links: list[dict[str, Any]] = []
+    for pattern in patterns:
+        item = (
+            pattern if isinstance(pattern, QueryPattern) else QueryPattern.model_validate(pattern)
+        )
+        fragment = client.catalogue.fragments[item.reference]
+        types = {0: fragment.iri} if fragment.kind == "type" else dict(fragment.endpoint_types)
+        if fragment.kind == "field" and fragment.owner:
+            types.setdefault(0, fragment.owner)
+        for position, cls in types.items():
+            role = item.bindings[position]
+            if cls and cls not in roles[role]:
+                roles[role].append(cls)
+        if fragment.kind != "type" and fragment.path is not None:
+            links.append(
+                {
+                    "from": item.bindings[0],
+                    "to": item.bindings[-1],
+                    "label": fragment.label,
+                    "name": fragment.description,
+                    "path": path_to_sparql(fragment.path),
+                    "optional": item.optional,
+                }
+            )
+    return {"roles": {role: sorted(classes) for role, classes in roles.items()}, "links": links}

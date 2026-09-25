@@ -399,8 +399,9 @@ class Client(DatasetClient):
         external_names=True also considers external ontology class names.
         The supplied bindings define the network; resolution does not add edges.
         Warnings state constraints the resolution added, such as a field owner type.
+        diagnostics["network"] lists each role's classes and each field or path link.
         """
-        from rdfsolve.client.network_resolution import resolve_patterns
+        from rdfsolve.client.network_resolution import describe_network, resolve_patterns
         from rdfsolve.client.query_fragments import network_query
 
         evidence: list[dict[str, Any]] = []
@@ -416,6 +417,7 @@ class Client(DatasetClient):
             query, requirements=requirements, grounding=grounding, output_variables=outputs
         )
         prepared.diagnostics["resolutions"] = evidence
+        prepared.diagnostics["network"] = describe_network(self, patterns)
         prepared.warnings.extend(w for w in warnings if w not in prepared.warnings)
         return prepared
 

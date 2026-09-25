@@ -74,6 +74,10 @@ def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
         assert [row["r"].value for row in client.select(query).rows] == ["urn:e:one"]
         assert any("urn:e:Person" in w for w in query.warnings), (
             "Say that a field from another class adds its owner type")
+        network = query.diagnostics["network"]
+        assert network["roles"]["r"] == ["urn:e:External", "urn:e:Person"], "All type constraints"
+        assert network["links"] == [{"from": "r", "to": "org", "label": "Affiliation", "name": "member of",
+                                     "path": "<urn:e:affiliation>", "optional": False}]
 
         client.save_session(tmp_path / "session.json")
 
