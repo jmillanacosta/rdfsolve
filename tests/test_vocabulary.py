@@ -22,6 +22,7 @@ schema:birthDate rdfs:label "birthDate"; schema:domainIncludes schema:Person; sc
 schema:affiliation rdfs:label "affiliation"; schema:domainIncludes schema:Person;
     schema:rangeIncludes schema:Organization .
 ex:rank rdfs:label "rank"; rdfs:domain schema:Person; rdfs:range xsd:integer .
+ex:nick rdfs:label "nick"; rdfs:domain <http://www.w3.org/2002/07/owl#Thing>; rdfs:range rdfs:Literal .
 """
 
 
@@ -46,5 +47,8 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog):
     assert graph.value(URIRef("urn:org"), S.name) == Literal("Institute", datatype=XSD.string)
     assert graph.value(ada_iri, URIRef("urn:ex:rank")) == Literal(1, datatype=XSD.integer)
     assert "A person." in (client.model("Person").__doc__ or ""), "Definitions document the model"
+    tagged = client.create("Organization", uri="urn:en", name="Institute", nick="I", language="en")
+    assert tagged.to_graph().value(URIRef("urn:en"), S.name) == Literal("Institute", lang="en")
+    assert tagged.to_graph().value(URIRef("urn:en"), URIRef("urn:ex:nick")) == Literal("I", lang="en"), "owl:Thing"
     with pytest.raises(ValueError, match="urn:ex:Unknown"):
         MinedSchema.from_vocabulary(VOCABULARY, classes=["urn:ex:Unknown"])

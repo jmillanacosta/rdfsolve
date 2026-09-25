@@ -107,6 +107,11 @@ def coerce_value(
             except ValueError:
                 continue
         candidates[(term.kind, term.datatype, term.language)] = term
+    if language and len(candidates) == 2:
+        tagged = [t for t in candidates.values() if t.language]
+        plain = [t for t in candidates.values() if not t.language and t.datatype == str(XSD.string)]
+        if len(tagged) == 1 and len(plain) == 1:
+            return tagged[0]  # a language default makes text a language-tagged literal
     if len(candidates) == 1:
         return next(iter(candidates.values()))
     if candidates:

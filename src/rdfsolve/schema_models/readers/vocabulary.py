@@ -12,13 +12,15 @@ from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import SchemaPattern
 
 SCHEMA = Namespace("https://schema.org/")
+# Every class is an owl:Thing and an rdfs:Resource: properties with these domains apply to all.
+UNIVERSAL = (URIRef("http://www.w3.org/2002/07/owl#Thing"), RDFS.Resource)
 DOMAINS = (RDFS.domain, SCHEMA.domainIncludes, URIRef("http://schema.org/domainIncludes"))
 RANGES = (RDFS.range, SCHEMA.rangeIncludes, URIRef("http://schema.org/rangeIncludes"))
 
 # schema.org data types as RDF literal datatypes (https://schema.org/docs/datamodel.html).
 # Date allows the partial ISO 8601 forms schema.org accepts.
 DATATYPES: dict[str, tuple[str, ...]] = {
-    "Text": (str(XSD.string),),
+    "Text": (str(XSD.string), str(RDF.langString)),
     "Date": (str(XSD.date), str(XSD.gYearMonth), str(XSD.gYear)),
     "DateTime": (str(XSD.dateTime),),
     "Time": (str(XSD.time),),
@@ -47,7 +49,7 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
         raise ValueError(f"Classes not declared in the vocabulary: {unknown}")
     patterns: list[SchemaPattern] = []
     for cls in requested:
-        lineage = {cls, *graph.transitive_objects(cls, RDFS.subClassOf)}
+        lineage = {cls, *graph.transitive_objects(cls, RDFS.subClassOf), *UNIVERSAL}
         properties = {
             prop
             for domain in DOMAINS
@@ -88,7 +90,7 @@ def _objects(graph: Graph, target: URIRef) -> list[tuple[str, str | None]]:
     if str(target).startswith(str(XSD)) or target == RDF.langString:
         return [("Literal", str(target))]
     if target == RDFS.Literal:
-        return [("Literal", None)]
+        return [("Literal", datatype) for datatype in DATATYPES["Text"]]
     lineage = {target, *graph.transitive_objects(target, RDFS.subClassOf)}
     names = {
         str(t).rsplit("/", 1)[-1]
