@@ -26,6 +26,7 @@ __all__ = [
     "_build_label_query",
     "_build_literal_query",
     "_build_literal_query_plain",
+    "_build_object_kinds_query",
     "_build_properties_for_class_query",
     "_build_typed_object_for_class_property_query",
     "_build_typed_object_query",
@@ -123,6 +124,21 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
     if property_uri:
         binds += f" BIND({prop} AS ?p)"
     return values, cls, prop, binds
+
+
+def _build_object_kinds_query(
+    property_uri: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Probe which RDF term kinds occur as objects of one property in the selected data."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    branches = " UNION ".join(
+        f"{{ {{ SELECT ?o WHERE {{ {g_open} ?s <{property_uri}> ?o . {g_close} "
+        f'FILTER({test}(?o)) }} LIMIT 1 }} BIND("{kind}" AS ?kind) }}'
+        for kind, test in (("literal", "isLiteral"), ("iri", "isIRI"), ("blank", "isBlank"))
+    )
+    return f"SELECT ?kind {dataset} WHERE {{ {branches} }}"
 
 
 def _build_typed_object_query(
