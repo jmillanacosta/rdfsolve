@@ -45,8 +45,8 @@ def _key(name: str) -> str:
 
 @cache
 def _curie_key(iri: str) -> str:
-    """Match a CURIE written as ``foaf:name`` or ``foaf_name``."""
-    return _key(uri_to_curie(iri)[0])
+    """Spell a property's CURIE without punctuation: ``foaf:name`` and ``foaf_name`` match."""
+    return re.sub(r"[^A-Za-z0-9]", "", uri_to_curie(iri)[0])
 
 
 def _name(name: str) -> str:
@@ -848,6 +848,16 @@ class Client(DatasetClient):
         model = self.model(model) if isinstance(model, str) else model
         if text in model.model_fields:
             return text
+        spelled = re.sub(r"[^A-Za-z0-9]", "", text)
+        exact = [
+            name
+            for name, field in model.model_fields.items()
+            if isinstance(field.json_schema_extra, dict)
+            and (iri := str(field.json_schema_extra.get("rdf_property_iri", "")))
+            and (iri == text or _curie_key(iri) == spelled)
+        ]
+        if len(exact) == 1:
+            return exact[0]  # an IRI or CURIE names one property exactly
         matches = [
             name
             for name, field in model.model_fields.items()
@@ -856,8 +866,6 @@ class Client(DatasetClient):
                 isinstance(field.json_schema_extra, dict)
                 and (
                     field.json_schema_extra.get("rdf_property_iri") == text
-                    or _curie_key(str(field.json_schema_extra.get("rdf_property_iri", "")))
-                    == _key(text)
                     or (
                         isinstance(path := field.json_schema_extra.get("rdf_path"), dict)
                         and path.get("iri") == text
