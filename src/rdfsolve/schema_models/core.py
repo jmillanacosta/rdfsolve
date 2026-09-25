@@ -442,6 +442,17 @@ class MinedSchema(BaseModel):
 
         return shacl_to_minedschema(shacl_ttl)
 
+    @classmethod
+    def from_vocabulary(cls, vocabulary: str | Any, classes: Any) -> MinedSchema:
+        """Read declared rows for classes of a published vocabulary (Turtle text or a Graph).
+
+        Each class gets every property whose domain is the class or an ancestor,
+        with each declared range. Use it as a contract to author records.
+        """
+        from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+
+        return vocabulary_to_minedschema(vocabulary, classes)
+
     # NetworkX export
 
     def to_networkx(self, *, trim_descriptions: int | None = None) -> Any:

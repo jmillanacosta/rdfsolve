@@ -135,12 +135,15 @@ class SchemaPattern(BaseModel):
         le=1.0,
         description="Confidence score (0.0-1.0) for this pattern",
     )
-    evidence_source: Literal["mined", "void", "shacl", "imported", "inferred"] = Field(
-        default="mined",
-        description=(
-            "Where the pattern comes from: mined from instance data, read from published "
-            "VoID or SHACL, imported, or inferred. Only 'mined' is observed evidence."
-        ),
+    evidence_source: Literal["mined", "void", "shacl", "vocabulary", "imported", "inferred"] = (
+        Field(
+            default="mined",
+            description=(
+                "Where the pattern comes from: mined from instance data, read from published "
+                "VoID, SHACL or vocabulary declarations, imported, or inferred. Only 'mined' is "
+                "observed evidence."
+            ),
+        )
     )
 
     # Labels
