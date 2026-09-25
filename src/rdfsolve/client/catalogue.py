@@ -219,7 +219,12 @@ class Catalogue:
         self.schema_documents[ref] = self._schema_document(ref)
 
     def search(
-        self, concept: str = "", *, owners: Iterable[str] = (), targets: Iterable[str] = ()
+        self,
+        concept: str = "",
+        *,
+        owners: Iterable[str] = (),
+        targets: Iterable[str] = (),
+        ontology: bool = True,
     ) -> list[str]:
         """Find generated classes or fields by meaning and structural endpoints."""
         owner_iris = {self._type(o) for o in owners}
@@ -235,7 +240,7 @@ class Catalogue:
         ]
         if not refs:
             return []
-        if concept and self.client.ontology:
+        if concept and ontology and self.client.ontology:
             from rdfsolve.client.ontology import term_key
 
             iris: set[str] = set()

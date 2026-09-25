@@ -93,6 +93,7 @@ class Client(DatasetClient):
         else:
             raise TypeError("ontology_grounding must be a boolean or OntologyLookup")
         self.vocabulary_evidence: dict[str, dict[str, Any] | None] = {}
+        self.description_lookups: list[dict[str, Any]] = []
         self.source_id = source_id
         self.class_mappings = tuple(class_mappings)
         self.related_registries = tuple(related_registries)
@@ -153,6 +154,7 @@ class Client(DatasetClient):
                 if self.ontology.helper
                 else [],
             }
+        data["description_lookups"] = self.description_lookups
         data["prepared_queries"] = {ref: asdict(q) for ref, (q, _, _) in self._prepared.items()}
         return data
 
@@ -222,6 +224,7 @@ class Client(DatasetClient):
         targets: Iterable[str] = (),
         source: bool = True,
         identifier: str | None = None,
+        ontology_fallback: bool = False,
     ) -> pd.DataFrame:
         """Find schema entries and indexed literal matches in the selected source.
 
@@ -230,11 +233,15 @@ class Client(DatasetClient):
         identifier restricts source subjects to an IRI or registered CURIE.
         Source matches retain identity, types, literal and graph evidence.
         Set source=False for schema-only inspection. Target filters select schema
-        fields only. External ontology candidates require ontology_grounding.
+        fields only. ontology_fallback verifies externally named classes in the
+        selected source when no class label matches. External names and source
+        checks remain separate evidence in the table and saved session.
         """
         from rdfsolve.client.description import describe
 
-        return describe(self, concept, tuple(owners), tuple(targets), source, identifier)
+        return describe(
+            self, concept, tuple(owners), tuple(targets), source, identifier, ontology_fallback
+        )
 
     def prepare(
         self,

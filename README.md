@@ -673,3 +673,20 @@ construct queries and returns summaries; custom SPARQL remains available through
 Python.
 
 Schema connectivity and mapping analysis: [workflow and evidence](docs/source/analysis.rst).
+
+
+### External labels during source discovery
+
+`client.describe("IC50", ontology_fallback=True)` checks an ontology service
+when no matching source-used class is found. Labelled measurement instances
+do not count as a class match. Each external candidate retains its provider,
+a scoped literal check on the candidate IRI and a class-use witness.
+Use `ontology_grounding=OntologyLookup(...)` to configure caching, offline use
+and the request budget.
+
+An external label does not become a source label. A negative literal check
+applies only to the recorded literal forms and graph scope. Source errors
+propagate; incomplete source results remain incomplete. Candidates remain
+separate from source identities and require review before query composition.
+`save_session()` records the lookup strategy, candidates and query evidence.
+No schema patterns are added by this lookup.

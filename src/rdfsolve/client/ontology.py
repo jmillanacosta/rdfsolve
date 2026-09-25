@@ -161,6 +161,8 @@ class OntologyLookup:
             except (requests.RequestException, SparqlHelperError, ValueError, OSError) as exc:
                 data = None
                 event.update(status="unavailable", error=f"{type(exc).__name__}: {exc}")
+        if key in self.cache:
+            event["fetched_at"] = self.cache[key]["fetched_at"]
         event["seconds"] = round(time.monotonic() - started, 4)
         self.events.append(event)
         log = logger.debug if event["cached"] else logger.info

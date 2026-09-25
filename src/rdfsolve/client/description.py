@@ -43,10 +43,15 @@ def describe(
     targets: tuple[str, ...],
     source: bool,
     identifier: str | None,
+    ontology_fallback: bool = False,
 ) -> pd.DataFrame:
     """Combine schema matches with scoped literal evidence and ontology candidates."""
     if concept and (not concept.strip() or len(concept) > 200):
         raise ValueError("Use a nonempty phrase of at most 200 characters")
+    if ontology_fallback and (not source or owners or targets or not concept):
+        raise ValueError(
+            "Ontology fallback requires source class discovery without owner or target filters"
+        )
     from rdfsolve.client.ontology import identifier_candidates
 
     candidates: list[str] = []
@@ -69,7 +74,9 @@ def describe(
             "Ontology evidence": index.metadata[ref].get("ontology", []),
             "Basis": "schema",
         }
-        for ref in index.search(str(concept), owners=owners, targets=targets)
+        for ref in index.search(
+            str(concept), owners=owners, targets=targets, ontology=not ontology_fallback
+        )
         for f in [index.fragments[ref]]
         if not candidates or f.iri in candidates
     ]
@@ -77,7 +84,11 @@ def describe(
     if (isinstance(concept, Literal) or concept) and source and not targets:
         matches, coverage = literal_matches(client, concept, owners, candidates)
         rows.extend(matches)
-        if client.ontology:
+        if ontology_fallback:
+            from rdfsolve.client.description_lookup import ontology_matches
+
+            rows.extend(ontology_matches(client, concept, rows, coverage, candidates))
+        elif client.ontology:
             for candidate in client.ontology.search(str(concept)):
                 if candidates and candidate["iri"] not in candidates:
                     continue
