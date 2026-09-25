@@ -33,18 +33,6 @@ Relation = Literal[
 # Decided relations that make two registry entries one canonical dataset.
 JOINING: frozenset[str] = frozenset({"same_dataset", "distribution_of"})
 
-# Catalog membership from the registry name prefix or the endpoint host.
-CATALOG_NAME_PREFIXES = {
-    "rdfportal.": "rdfportal",
-    "bio2rdf.": "bio2rdf",
-    "pubchem.ftp.": "pubchem_ftp",
-}
-CATALOG_HOSTS = {
-    "rdfportal.org": "rdfportal",
-    "bio2rdf.org": "bio2rdf",
-    "idsm.elixir-czech.cz": "idsm",
-}
-
 
 class DatasetIdentity(BaseModel):
     """One registry entry with its access routes and catalog provenance."""
@@ -59,6 +47,7 @@ class DatasetIdentity(BaseModel):
     distributions: list[str] = Field(default_factory=list)
     aliases: list[str] = Field(default_factory=list)
     catalogs: list[str] = Field(default_factory=list)
+    catalog_local_name: str = ""
 
     @classmethod
     def from_entry(cls, entry: Mapping[str, Any]) -> DatasetIdentity:
@@ -90,16 +79,14 @@ class DatasetIdentity(BaseModel):
             graph_uris=sorted(set(source.graph_uris)),
             distributions=downloads,
             aliases=source.aliases,
-            catalogs=catalogs(source.name, source.endpoint),
+            catalogs=source.catalogs,
+            catalog_local_name=source.catalog_local_name,
         )
 
     @property
     def local_name(self) -> str:
-        """Return the registry name without its catalog prefix."""
-        for prefix in CATALOG_NAME_PREFIXES:
-            if self.dataset_id.startswith(prefix):
-                return self.dataset_id[len(prefix) :]
-        return self.dataset_id
+        """Return the recorded catalogue name or the registry identity."""
+        return self.catalog_local_name or self.dataset_id
 
 
 class IdentityRelation(BaseModel):
@@ -152,18 +139,6 @@ class IdentityResolution(BaseModel):
             writer.writerow(["left", "right", "candidate_relation", "basis"])
             for item in self.candidates:
                 writer.writerow([item.left, item.right, item.relation, item.basis])
-
-
-def catalogs(name: str, endpoint: str) -> list[str]:
-    """Derive catalog memberships from the registry name and endpoint host."""
-    found = {value for prefix, value in CATALOG_NAME_PREFIXES.items() if name.startswith(prefix)}
-    host = urlsplit(endpoint).hostname or ""
-    found.update(
-        value
-        for suffix, value in CATALOG_HOSTS.items()
-        if host == suffix or host.endswith("." + suffix)
-    )
-    return sorted(found)
 
 
 def _endpoint(url: str) -> str:

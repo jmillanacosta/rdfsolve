@@ -42,3 +42,14 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
     )
     with pytest.raises(ValueError, match="more than once"):
         resolve_identity([entry("a"), entry("b")], [overrides[0], overrides[0]])
+    catalogs = resolve_identity([
+        entry("first.record", "https://one.example/sparql", catalogs=["custom"], catalog_local_name="shared"),
+        entry("second.record", "https://two.example/sparql", catalogs=["another"], catalog_local_name="shared"),
+    ])
+    assert len(catalogs.candidates) == 1, "Explicit catalogue identities work for any provider"
+    assert catalogs.entries[0].catalogs == ["custom"]
+    unannotated = resolve_identity([
+        entry("rdfportal.shared", "https://one.example/sparql"),
+        entry("shared", "https://two.example/sparql"),
+    ])
+    assert not unannotated.candidates, "Provider-looking names must not create implicit identity evidence"

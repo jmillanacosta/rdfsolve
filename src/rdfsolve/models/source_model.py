@@ -152,6 +152,8 @@ class SourceModel(BaseModel):
 
     name: str
     aliases: list[str] = Field(default_factory=list)
+    catalogs: list[str] = Field(default_factory=list)
+    catalog_local_name: str = ""
     source_role: Literal["dataset", "service"] = "dataset"
     dataset_kind: DatasetKind = "unknown"
     skip_mining: bool = False
@@ -263,6 +265,7 @@ class SourceModel(BaseModel):
 
     @field_validator(
         "aliases",
+        "catalogs",
         "graph_uris",
         "type_context_graph_uris",
         "ontology_graph_uris",

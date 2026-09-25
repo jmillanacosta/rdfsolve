@@ -18,6 +18,8 @@
     Pin input hashes and ontology versions for local runs. Recipe equivalence
     does not establish equality with the live endpoint snapshot.
 - name: pubchem.ftp.schema
+  catalogs: ["pubchem_ftp"]
+  catalog_local_name: schema
   graph_uris: []
   download_ttl:
   - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/schema/model_shacl.ttl
@@ -2484,6 +2486,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.taxonomy
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
   graph_uris:
@@ -2507,6 +2510,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.endpoint
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
   graph_uris:
@@ -2530,6 +2534,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.measuregroup
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
   graph_uris:
@@ -2553,6 +2558,7 @@
   supports_graph: true
   skip_remote: true
 - name: iocb.ontology
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://bioinfo.iocb.cz/dataset/ontology
   graph_uris:
@@ -2566,6 +2572,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.gene
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/gene
   graph_uris:
@@ -2589,6 +2596,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.bioassay
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
   graph_uris:
@@ -2609,6 +2617,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.substance
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
   graph_uris:
@@ -2632,6 +2641,7 @@
   supports_graph: true
   skip_remote: true
 - name: drugbank.drugs
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
   graph_uris:
@@ -2651,6 +2661,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.descriptor.substance
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
   graph_uris:
@@ -2673,6 +2684,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chebi.idsm
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chebi
   graph_uris:
@@ -2708,6 +2720,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.pathway
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
   graph_uris:
@@ -2731,6 +2744,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.cell
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
   graph_uris:
@@ -2748,6 +2762,7 @@
   supports_graph: true
   skip_remote: true
 - name: isdb
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
   graph_uris:
@@ -2762,6 +2777,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.anatomy
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
   graph_uris:
@@ -2785,6 +2801,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.conserveddomain
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
   graph_uris:
@@ -2808,6 +2825,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.organization
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
   graph_uris:
@@ -2831,6 +2849,7 @@
   supports_graph: true
   skip_remote: true
 - name: mona
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/mona/
   graph_uris:
@@ -2845,6 +2864,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chembl
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chembl
   graph_uris:
@@ -2888,6 +2908,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.journal
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/journal
   graph_uris:
@@ -2911,6 +2932,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.author
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
   graph_uris:
@@ -2934,6 +2956,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.disease
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
   graph_uris:
@@ -2957,6 +2980,7 @@
   supports_graph: true
   skip_remote: true
 - name: wikidata.idsm.entity
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://www.wikidata.org/entity/
   graph_uris:
@@ -2970,6 +2994,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.book
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/book
   graph_uris:
@@ -2993,6 +3018,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.inchikey
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
   graph_uris:
@@ -3016,6 +3042,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.descriptor.compound
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
   graph_uris:
@@ -3038,6 +3065,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.grant
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/grant
   graph_uris:
@@ -3061,6 +3089,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.concept
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
   graph_uris:
@@ -3084,6 +3113,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.source
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
   graph_uris:
@@ -3107,6 +3137,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.protein
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
   graph_uris:
@@ -3130,6 +3161,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.reference
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
   graph_uris:
@@ -3153,6 +3185,7 @@
   supports_graph: true
   skip_remote: true
 - name: mesh.heading
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://id.nlm.nih.gov/mesh/heading
   graph_uris:
@@ -3170,6 +3203,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.synonym
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
   graph_uris:
@@ -3193,6 +3227,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.compound
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/compound
   graph_uris:
@@ -3216,6 +3251,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.cooccurrence
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
   graph_uris:
@@ -3239,6 +3275,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.patent
+  catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
   graph_uris:
@@ -3272,6 +3309,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.uniprot
+  catalogs: ["rdfportal"]
+  catalog_local_name: uniprot
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://sparql.uniprot.org/citationmapping
@@ -3487,6 +3526,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pdb.graph
+  catalogs: ["rdfportal"]
+  catalog_local_name: pdb.graph
   endpoint: https://rdfportal.org/pdb/sparql
   void_iri: http://rdfportal.org/dataset/pdbj
   graph_uris:
@@ -3507,6 +3548,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pubcasefinder
+  catalogs: ["rdfportal"]
+  catalog_local_name: pubcasefinder
   endpoint: https://rdfportal.org/primary/sparql
   void_iri: https://pubcasefinder.dbcls.jp/rdf
   graph_uris:
@@ -3525,6 +3568,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.medgen
+  catalogs: ["rdfportal"]
+  catalog_local_name: medgen
   endpoint: https://rdfportal.org/ncbi/sparql
   void_iri: http://rdfportal.org/dataset/medgen
   graph_uris:
@@ -3564,6 +3609,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.jpost
+  catalogs: ["rdfportal"]
+  catalog_local_name: jpost
   endpoint: https://rdfportal.org/primary/sparql
   void_iri: http://jpost.org/graph/database
   graph_uris:
@@ -3583,6 +3630,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.affymetrix
+  catalogs: ["bio2rdf", "rdfportal"]
+  catalog_local_name: affymetrix
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/affymetrix_resource:bio2rdf.dataset.affymetrix.R3
   graph_uris:
@@ -3595,6 +3644,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: clinicaltrials
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3
   graph_uris:
@@ -3610,6 +3660,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ctd
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3
   graph_uris:
@@ -3636,6 +3687,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: kegg
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3
   graph_uris:
@@ -3670,6 +3722,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: irefindex
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3
   graph_uris:
@@ -3684,6 +3737,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: drugbank
+  catalogs: ["bio2rdf"]
   dataset_kind: instance
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/drugbank_resource:bio2rdf.dataset.drugbank.R3
@@ -3703,6 +3757,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: homologene
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3
   graph_uris:
@@ -3722,6 +3777,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ncbigene
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3
   graph_uris:
@@ -3749,6 +3805,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: goa
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3
   graph_uris:
@@ -3779,6 +3836,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: hgnc
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3
   graph_uris:
@@ -3799,6 +3857,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: interpro
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3
   graph_uris:
@@ -3816,6 +3875,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: lsr
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3
   graph_uris:
@@ -3828,6 +3888,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: mgi
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3
   graph_uris:
@@ -3871,6 +3932,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: mesh
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3
   graph_uris:
@@ -3890,6 +3952,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ndc
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3
   graph_uris:
@@ -3903,6 +3966,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: omim
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3
   graph_uris:
@@ -3929,6 +3993,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pharmgkb
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3
   graph_uris:
@@ -3952,6 +4017,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: bio2rdf.uniprot
+  catalogs: ["bio2rdf"]
+  catalog_local_name: uniprot
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://sparql.uniprot.org/
   graph_uris:
@@ -3966,6 +4033,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sgd
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3
   graph_uris:
@@ -3994,6 +4062,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: hp
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3
   graph_uris:
@@ -4010,6 +4079,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: eco
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3
   graph_uris:
@@ -4021,6 +4091,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: apo
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3
   graph_uris:
@@ -4032,6 +4103,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: taxonomy
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
   graph_uris:
@@ -4065,6 +4137,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sider
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3
   graph_uris:
@@ -4083,6 +4156,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: wormbase
+  catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3
   graph_uris:
@@ -4135,6 +4209,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: bio2rdf.biomodels
+  catalogs: ["bio2rdf"]
+  catalog_local_name: biomodels
   endpoint: http://cu.biomodels.bio2rdf.org/sparql
   notes: Bio2RDF mirror - BioModels
   download_nq: https://download.bio2rdf.org/files/release/3/biomodels/biomodels.nq.gz
@@ -4145,6 +4221,8 @@
   - interaction/pathway
   sparql_engine: virtuoso
 - name: bio2rdf.bioportal
+  catalogs: ["bio2rdf"]
+  catalog_local_name: bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
   notes: Bio2RDF mirror - BioPortal
   download_nq:
@@ -4464,6 +4542,8 @@
   - portal
   sparql_engine: virtuoso
 - name: bio2rdf.chembl
+  catalogs: ["bio2rdf"]
+  catalog_local_name: chembl
   endpoint: http://cu.chembl.bio2rdf.org/sparql
   notes: Bio2RDF mirror - ChEMBL
   download_owl: https://download.bio2rdf.org/files/release/3/chembl/chembl.schema.owl
@@ -4500,6 +4580,8 @@
   - protein
   sparql_engine: virtuoso
 - name: bio2rdf.dbsnp
+  catalogs: ["bio2rdf"]
+  catalog_local_name: dbsnp
   endpoint: http://cu.dbsnp.bio2rdf.org/sparql
   notes: Bio2RDF mirror - dbSNP
   download_nq:
@@ -4515,6 +4597,8 @@
   - variant
   sparql_engine: virtuoso
 - name: bio2rdf.genage
+  catalogs: ["bio2rdf"]
+  catalog_local_name: genage
   endpoint: http://cu.genage.bio2rdf.org/sparql
   notes: Bio2RDF mirror - GenAge
   download_nq:
@@ -4528,6 +4612,8 @@
   - biology
   sparql_engine: virtuoso
 - name: bio2rdf.gendr
+  catalogs: ["bio2rdf"]
+  catalog_local_name: gendr
   endpoint: http://cu.gendr.bio2rdf.org/sparql
   notes: Bio2RDF mirror - GenDR
   download_nq:
@@ -4541,6 +4627,8 @@
   - biology
   sparql_engine: virtuoso
 - name: bio2rdf.iproclass
+  catalogs: ["bio2rdf"]
+  catalog_local_name: iproclass
   endpoint: http://cu.iproclass.bio2rdf.org/sparql
   notes: Bio2RDF mirror - iProClass
   download_nq:
@@ -4626,6 +4714,8 @@
   - sequence
   sparql_engine: virtuoso
 - name: bio2rdf.linkedspl
+  catalogs: ["bio2rdf"]
+  catalog_local_name: linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
   notes: Bio2RDF mirror - LinkedSPL
   download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
@@ -4637,6 +4727,8 @@
   - label
   sparql_engine: virtuoso
 - name: bio2rdf.orphanet
+  catalogs: ["bio2rdf"]
+  catalog_local_name: orphanet
   endpoint: http://cu.orphanet.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Orphanet
   download_nq:
@@ -4653,6 +4745,8 @@
   - phenotype
   sparql_engine: virtuoso
 - name: bio2rdf.pathwaycommons
+  catalogs: ["bio2rdf"]
+  catalog_local_name: pathwaycommons
   endpoint: http://cu.pathwaycommons.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Pathway Commons
   download_owl: https://download.bio2rdf.org/files/release/3/pathwaycommons/pathwaycommons.schema.owl
@@ -4663,6 +4757,8 @@
   - pathway
   sparql_engine: virtuoso
 - name: bio2rdf.pubmed
+  catalogs: ["bio2rdf"]
+  catalog_local_name: pubmed
   endpoint: http://cu.pubmed.bio2rdf.org/sparql
   notes: Bio2RDF mirror - PubMed
   download_owl: https://download.bio2rdf.org/files/release/3/pubmed/pubmed.schema.owl
@@ -4674,6 +4770,8 @@
   - literature
   sparql_engine: virtuoso
 - name: bio2rdf.reactome
+  catalogs: ["bio2rdf"]
+  catalog_local_name: reactome
   endpoint: http://cu.reactome.bio2rdf.org/sparql
   notes: Bio2RDF mirror - Reactome
   download_owl:
@@ -4744,6 +4842,8 @@
   - sbml
   sparql_engine: virtuoso
 - name: bio2rdf.sabiork
+  catalogs: ["bio2rdf"]
+  catalog_local_name: sabiork
   endpoint: http://cu.sabiork.bio2rdf.org/sparql
   notes: Bio2RDF mirror - SABIO-RK
   download_nq: https://download.bio2rdf.org/files/release/3/sabiork/sabiork.nq.gz
@@ -4754,6 +4854,8 @@
   - biochemistry
   sparql_engine: virtuoso
 - name: bio2rdf.wikipathways
+  catalogs: ["bio2rdf"]
+  catalog_local_name: wikipathways
   endpoint: http://cu.wikipathways.bio2rdf.org/sparql
   notes: Bio2RDF mirror - WikiPathways
   download_owl:
@@ -4859,6 +4961,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.cellosaurus
+  catalogs: ["rdfportal"]
+  catalog_local_name: cellosaurus
   download_nt:
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_more_specific_than.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subclasses.nt.gz
@@ -4964,6 +5068,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pubchem
+  catalogs: ["rdfportal"]
+  catalog_local_name: pubchem
   endpoint: https://rdfportal.org/pubchem/sparql
   download_nt: https://rdfportal.org/ntriples/pubchem/latest/void.nt.gz
   keywords:
@@ -5005,6 +5111,8 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/void
   skip_remote: true
 - name: rdfportal.chebi
+  catalogs: ["rdfportal"]
+  catalog_local_name: chebi
   dataset_kind: ontology
   endpoint: https://rdfportal.org/ebi/sparql
   download_nt: https://rdfportal.org/ntriples/chebi/latest/chebi.nt.gz
@@ -5018,6 +5126,8 @@
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/chebi
 - name: rdfportal.primary
+  catalogs: ["rdfportal"]
+  catalog_local_name: primary
   source_role: service
   endpoint: https://rdfportal.org/primary/sparql
   keywords:
@@ -5171,6 +5281,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.sib
+  catalogs: ["rdfportal"]
+  catalog_local_name: sib
   source_role: service
   endpoint: https://rdfportal.org/sib/sparql
   keywords:
@@ -5215,6 +5327,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.kero
+  catalogs: ["rdfportal"]
+  catalog_local_name: kero
   endpoint: https://rdfportal.org/kero/sparql
   keywords:
   - Gene expression
@@ -5230,6 +5344,8 @@
   - http://kero.hgc.jp/ontology/kero.owl
   - http://rdfportal.org/dataset/kero/Cancer_Cell_Line
 - name: rdfportal.wikidata
+  catalogs: ["rdfportal"]
+  catalog_local_name: wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
   keywords:
   - biomedical science
@@ -5237,6 +5353,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pdb
+  catalogs: ["rdfportal"]
+  catalog_local_name: pdb
   source_role: service
   endpoint: https://rdfportal.org/pdb/sparql
   download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
@@ -5248,6 +5366,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.ebi
+  catalogs: ["rdfportal"]
+  catalog_local_name: ebi
   source_role: service
   endpoint: https://rdfportal.org/ebi/sparql
   keywords:
@@ -5256,6 +5376,8 @@
   sparql_strategy: post+form+json
   supports_graph: true
 - name: rdfportal.ncbi
+  catalogs: ["rdfportal"]
+  catalog_local_name: ncbi
   source_role: service
   endpoint: https://rdfportal.org/ncbi/sparql
   keywords:
@@ -5273,6 +5395,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.ddbj
+  catalogs: ["rdfportal"]
+  catalog_local_name: ddbj
   endpoint: https://rdfportal.org/ddbj/sparql
   keywords:
   - Gene
@@ -5294,6 +5418,8 @@
   - http://rdfportal.org/dataset/ddbj
   - http://rdfportal.org/ontology/taxonomy
 - name: rdfportal.bioportal
+  catalogs: ["rdfportal"]
+  catalog_local_name: bioportal
   source_role: service
   endpoint: https://rdfportal.org/bioportal/sparql
   keywords:
@@ -5434,6 +5560,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chebi
+  catalogs: ["idsm"]
   download_owl: https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.owl
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/chebi
   bioregistry_prefix: chebi
@@ -5465,6 +5592,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.mediadive
+  catalogs: ["rdfportal"]
+  catalog_local_name: mediadive
   download_nt: https://rdfportal.org/ntriples/mediadive/latest/rdf-mod-r.nt.gz
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -5482,6 +5611,8 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: rdfportal.glytoucan
+  catalogs: ["rdfportal"]
+  catalog_local_name: glytoucan
   download_nt:
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-09042015.nt.gz
   - https://rdfportal.org/ntriples/glytoucan/latest/rdf/graph-1/GlyTouCan-RDF-Monosaccharide-09042015.nt.gz
@@ -5540,6 +5671,8 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.bacdive
+  catalogs: ["rdfportal"]
+  catalog_local_name: bacdive
   endpoint: https://sparql.dsmz.de/api/bacdive
   download_nt:
   - https://rdfportal.org/ntriples/bacdive/latest/rdf-mod-r.0.nt.gz
@@ -5552,6 +5685,8 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: rdfportal.proteinatlas
+  catalogs: ["rdfportal"]
+  catalog_local_name: proteinatlas
   endpoint: https://rdfportal.org/proteinatlas/sparql
   keywords:
   - protein
@@ -5645,6 +5780,8 @@
   - virology
   sparql_engine: virtuoso
 - name: bio2rdf.kegg.cu
+  catalogs: ["bio2rdf"]
+  catalog_local_name: kegg.cu
   endpoint: http://cu.kegg.bio2rdf.org/sparql
   notes: Bio2RDF KEGG mirror (cu.kegg.bio2rdf.org)
   keywords:
@@ -5653,6 +5790,8 @@
   - chemical
   sparql_engine: virtuoso
 - name: rdfportal.nadd
+  catalogs: ["rdfportal"]
+  catalog_local_name: nadd
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/18/nadd/
@@ -6191,6 +6330,8 @@
   - nanomaterial
   - chemical
 - name: rdfportal.amrportal
+  catalogs: ["rdfportal"]
+  catalog_local_name: amrportal
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/amrportal
@@ -6198,6 +6339,8 @@
   - Microbes
   - Phenotype
 - name: rdfportal.bgee
+  catalogs: ["rdfportal"]
+  catalog_local_name: bgee
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://bgee.org
@@ -6205,17 +6348,23 @@
   - Gene
   - Gene expression
 - name: rdfportal.biomodels
+  catalogs: ["rdfportal"]
+  catalog_local_name: biomodels
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biomodels
   keywords:
   - Others
 - name: rdfportal.biosample
+  catalogs: ["rdfportal"]
+  catalog_local_name: biosample
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biosamples
   keywords: []
 - name: rdfportal.bmrb
+  catalogs: ["rdfportal"]
+  catalog_local_name: bmrb
   endpoint: https://rdfportal.org/pdb/sparql
   graph_uris:
   - http://bmrbpub.protein.osaka-u.ac.jp/rdf/bmr
@@ -6227,6 +6376,8 @@
   - Sequence
   - Structure
 - name: rdfportal.brenda
+  catalogs: ["rdfportal"]
+  catalog_local_name: brenda
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/brenda
@@ -6235,12 +6386,16 @@
   - Bioresource
   - Enzyme
 - name: rdfportal.chembl
+  catalogs: ["rdfportal"]
+  catalog_local_name: chembl
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/chembl
   keywords:
   - Drug/Chemical
 - name: rdfportal.clinvar
+  catalogs: ["rdfportal"]
+  catalog_local_name: clinvar
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/clinvar
@@ -6249,6 +6404,8 @@
   - Polymorphism
   - Sequence
 - name: rdfportal.dbcatalog
+  catalogs: ["rdfportal"]
+  catalog_local_name: dbcatalog
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/dbcatalog/main
@@ -6256,6 +6413,8 @@
   keywords:
   - Others
 - name: rdfportal.ensembl
+  catalogs: ["rdfportal"]
+  catalog_local_name: ensembl
   skip_mining: true
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -6264,6 +6423,8 @@
   - Gene
   - Protein
 - name: rdfportal.ensembl_grch37
+  catalogs: ["rdfportal"]
+  catalog_local_name: ensembl_grch37
   skip_mining: true
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
@@ -6272,6 +6433,8 @@
   - Gene
   - Protein
 - name: rdfportal.famsbase
+  catalogs: ["rdfportal"]
+  catalog_local_name: famsbase
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://fams.bio.chuo-u.ac.jp/GPCR/rdf/
@@ -6280,6 +6443,8 @@
   - Protein
   - Structure
 - name: rdfportal.glycoepitope
+  catalogs: ["rdfportal"]
+  catalog_local_name: glycoepitope
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdf.glycoinfo.org/glycoepitope
@@ -6288,6 +6453,8 @@
   - Other biomolecule
   - Structure
 - name: rdfportal.gtdb
+  catalogs: ["rdfportal"]
+  catalog_local_name: gtdb
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/gtdb
@@ -6296,6 +6463,8 @@
   - Bacteria
   - Taxonomy
 - name: rdfportal.gwas-catalog
+  catalogs: ["rdfportal"]
+  catalog_local_name: gwas-catalog
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/gwas_catalog
@@ -6303,12 +6472,16 @@
   - Genome
   - Variation
 - name: rdfportal.hco
+  catalogs: ["rdfportal"]
+  catalog_local_name: hco
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/hco
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.hgnc
+  catalogs: ["rdfportal"]
+  catalog_local_name: hgnc
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/hgnc
@@ -6316,6 +6489,8 @@
   - Gene
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.homologene
+  catalogs: ["rdfportal"]
+  catalog_local_name: homologene
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/homologene
@@ -6324,6 +6499,8 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.icgc
+  catalogs: ["rdfportal"]
+  catalog_local_name: icgc
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://icgc.link/release_20
@@ -6332,6 +6509,8 @@
   - Health/Disease
   - Sequence
 - name: rdfportal.jcm
+  catalogs: ["rdfportal"]
+  catalog_local_name: jcm
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://metadb.riken.jp/db/xsearch_jcm_brso
@@ -6339,6 +6518,8 @@
   - Bioresource
   - Organism
 - name: rdfportal.knapsack
+  catalogs: ["rdfportal"]
+  catalog_local_name: knapsack
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/knapsack/
@@ -6348,6 +6529,8 @@
   - Publication
   - Taxonomy
 - name: rdfportal.ligandbox
+  catalogs: ["rdfportal"]
+  catalog_local_name: ligandbox
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/5/ligandbox/
@@ -6356,12 +6539,16 @@
   - Drug/Chemical
   - Structure
 - name: rdfportal.massbank
+  catalogs: ["rdfportal"]
+  catalog_local_name: massbank
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/massbank
   keywords:
   - Compound
 - name: rdfportal.mbgd
+  catalogs: ["rdfportal"]
+  catalog_local_name: mbgd
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://mbgd.genome.ad.jp/rdf/resource/default
@@ -6380,18 +6567,24 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.mco
+  catalogs: ["rdfportal"]
+  catalog_local_name: mco
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/mco
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.mesh
+  catalogs: ["rdfportal"]
+  catalog_local_name: mesh
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://id.nlm.nih.gov/mesh
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.microbedbjp
+  catalogs: ["rdfportal"]
+  catalog_local_name: microbedbjp
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/microbedbjp
@@ -6399,6 +6592,8 @@
   - Metagenome
   - Microbe
 - name: rdfportal.mogplus
+  catalogs: ["rdfportal"]
+  catalog_local_name: mogplus
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/mogplus
@@ -6407,6 +6602,8 @@
   - Mouse
   - Variation
 - name: rdfportal.nando
+  catalogs: ["rdfportal"]
+  catalog_local_name: nando
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://nanbyodata.jp/ontology/nando
@@ -6415,6 +6612,8 @@
   - Ontology/Terminology/Nomenclature
   - Tag sequence (nucleic acid)
 - name: rdfportal.naro_genebank
+  catalogs: ["rdfportal"]
+  catalog_local_name: naro_genebank
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/naro_genebank
@@ -6422,6 +6621,8 @@
   - Bioresource
   - Organism
 - name: rdfportal.nbrc
+  catalogs: ["rdfportal"]
+  catalog_local_name: nbrc
   skip_mining: true
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
@@ -6432,12 +6633,16 @@
   - Cell
   - Organism
 - name: rdfportal.ncbigene
+  catalogs: ["rdfportal"]
+  catalog_local_name: ncbigene
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/ncbigene
   keywords:
   - Gene
 - name: rdfportal.nikkaji
+  catalogs: ["rdfportal"]
+  catalog_local_name: nikkaji
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/nikkaji/core
@@ -6452,6 +6657,8 @@
   - Others
   - Structure
 - name: rdfportal.nlm-catalog
+  catalogs: ["rdfportal"]
+  catalog_local_name: nlm-catalog
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/nlm_catalog
@@ -6459,6 +6666,8 @@
   - Journal article/Report/Bibliography
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.oma
+  catalogs: ["rdfportal"]
+  catalog_local_name: oma
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://rdfportal.org/dataset/oma
@@ -6467,6 +6676,8 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.opentggates
+  catalogs: ["rdfportal"]
+  catalog_local_name: opentggates
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/open-tggates
@@ -6476,6 +6687,8 @@
   - Gene expression
   - Health/Disease
 - name: rdfportal.paconto
+  catalogs: ["rdfportal"]
+  catalog_local_name: paconto
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://jcggdb.jp/rdf/diseases/paconto
@@ -6489,6 +6702,8 @@
   - http://jcggdb.jp/rdf/diseases/paconto.rdf
   - http://jcggdb.jp/rdf/diseases/paconto-schema.rdf
 - name: rdfportal.pgdbj
+  catalogs: ["rdfportal"]
+  catalog_local_name: pgdbj
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://pgdbj.jp/od/
@@ -6499,6 +6714,8 @@
   - Phylogeny/Classification
   - Sequence
 - name: rdfportal.polyinfo
+  catalogs: ["rdfportal"]
+  catalog_local_name: polyinfo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/polyinfo
@@ -6509,6 +6726,8 @@
   keywords:
   - Drug/Chemical
 - name: rdfportal.pubmed
+  catalogs: ["rdfportal"]
+  catalog_local_name: pubmed
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/pubmed
@@ -6516,6 +6735,8 @@
   - Journal article/Report/Bibliography
   - Others
 - name: rdfportal.pubtator
+  catalogs: ["rdfportal"]
+  catalog_local_name: pubtator
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/pubtator_central
@@ -6523,6 +6744,8 @@
   - Journal article/Report/Bibliography
   - Others
 - name: rdfportal.quanto
+  catalogs: ["rdfportal"]
+  catalog_local_name: quanto
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/01/quanto/ontology/sos#
@@ -6530,12 +6753,16 @@
   keywords:
   - Others
 - name: rdfportal.reactome
+  catalogs: ["rdfportal"]
+  catalog_local_name: reactome
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/reactome
   keywords:
   - Interaction/Pathway
 - name: rdfportal.refex
+  catalogs: ["rdfportal"]
+  catalog_local_name: refex
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/01/refexo
@@ -6546,6 +6773,8 @@
   - Gene expression
   - Tag sequence (nucleic acid)
 - name: rdfportal.rhea
+  catalogs: ["rdfportal"]
+  catalog_local_name: rhea
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://rdfportal.org/dataset/rhea
@@ -6553,6 +6782,8 @@
   - Enzyme
   - Protein
 - name: rdfportal.ssbd
+  catalogs: ["rdfportal"]
+  catalog_local_name: ssbd
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://metadb.riken.jp/db/SSBD
@@ -6572,6 +6803,8 @@
   graph_uris:
   - http://med2rdf.org/graph/dgidb
 - name: rdfportal.ggdonto
+  catalogs: ["rdfportal"]
+  catalog_local_name: ggdonto
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://jcggdb.jp/rdf/diseases/ggdonto
@@ -6580,31 +6813,45 @@
   - http://jcggdb.jp/rdf/diseases/ggdonto.rdf
   - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
 - name: rdfportal.go
+  catalogs: ["rdfportal"]
+  catalog_local_name: go
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/go
 - name: rdfportal.hpo
+  catalogs: ["rdfportal"]
+  catalog_local_name: hpo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/hp
 - name: rdfportal.linked_icgc
+  catalogs: ["rdfportal"]
+  catalog_local_name: linked_icgc
   skip_mining: true
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://icgc.link/release_20
 - name: rdfportal.mondo
+  catalogs: ["rdfportal"]
+  catalog_local_name: mondo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/mondo
 - name: rdfportal.mp
+  catalogs: ["rdfportal"]
+  catalog_local_name: mp
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/mp
 - name: rdfportal.ncit
+  catalogs: ["rdfportal"]
+  catalog_local_name: ncit
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/ncit
 - name: rdfportal.uberon
+  catalogs: ["rdfportal"]
+  catalog_local_name: uberon
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/uberon
