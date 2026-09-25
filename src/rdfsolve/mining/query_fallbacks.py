@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.query_builders import (
-    _DECOMP_CHUNK,
     _build_batched_typed_object_query,
     _build_properties_for_class_query,
     _build_typed_object_for_class_property_query,
@@ -182,26 +181,25 @@ def query_with_bisect(
     decomposed = None
     if build_fn is _build_batched_typed_object_query:
         decomposed = typed_object_by_property(
-            classes[0],
-            graph_uris,
-            purpose,
-            helper,
-            collect_bindings,
-            chunk_size,
-            unsafe_paging,
-            type_context_graph_uris,
+            classes[0], graph_uris, purpose, helper, type_context_graph_uris
         )
         if decomposed.state == "complete":
             return decomposed
 
+    if getattr(build_fn, "__name__", "") in WINDOWED:
+        # Discovery results are a few schema rows: a smaller page still needs the whole
+        # join, so observe member windows instead of paging.
+        if decomposed is not None and decomposed.rows:
+            return decomposed
+        return query_windows(
+            classes[0], graph_uris, build_fn, purpose, helper, decomposed or outcome, scope
+        )
     query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging, **scope)
     paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
-    if paged.state == "complete":
+    if paged.state == "complete" or decomposed is None:
         return paged
-    combined = paged if decomposed is None else paged.merge(decomposed)
+    combined = paged.merge(decomposed)
     combined.rows = _deduplicate(combined.rows)
-    if getattr(build_fn, "__name__", "") in WINDOWED and not combined.rows:
-        return query_windows(classes[0], graph_uris, build_fn, purpose, helper, combined, scope)
     return combined
 
 
@@ -253,59 +251,23 @@ def query_windows(
     return QueryOutcome(_deduplicate(rows), "partial", [*failed.failures, note])
 
 
-def _select_or_page(
-    query: str,
-    paged_query: str,
-    purpose: str,
-    helper: SparqlHelper,
-    collect_bindings: CollectBindings,
-    chunk_size: int,
-    class_uri: str,
-    graph_uris: list[str] | None,
-) -> QueryOutcome:
-    result = select_outcome(query, purpose, helper, [class_uri], graph_uris)
-    if result.failures and result.failures[0].category == "timeout":
-        return collect_outcome(
-            paged_query,
-            purpose,
-            collect_bindings,
-            chunk_size,
-            [class_uri],
-            graph_uris,
-        )
-    return result
-
-
 def enumerate_properties_for_class(
     class_uri: str,
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: CollectBindings,
-    unsafe_paging: bool = False,
     *,
-    chunk_size: int = _DECOMP_CHUNK,
     type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
-    """Return property bindings and the completion state of their enumeration."""
-    return _select_or_page(
-        _build_properties_for_class_query(
-            class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
-        ),
-        _build_properties_for_class_query(
-            class_uri,
-            graph_uris,
-            paginated=True,
-            drop_distinct=unsafe_paging,
-            type_context_graph_uris=type_context_graph_uris,
-        ),
-        f"{purpose}/properties",
-        helper,
-        collect_bindings,
-        chunk_size,
-        class_uri,
-        graph_uris,
+    """Return property bindings and the completion state of their enumeration.
+
+    A timeout is reported, not paged: the grouped result is small, so every page
+    would repeat the whole join.
+    """
+    query = _build_properties_for_class_query(
+        class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
     )
+    return select_outcome(query, f"{purpose}/properties", helper, [class_uri], graph_uris)
 
 
 def enumerate_oc_for_class_property(
@@ -314,32 +276,14 @@ def enumerate_oc_for_class_property(
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: CollectBindings,
-    unsafe_paging: bool = False,
-    type_context_graph_uris: list[str] | None = None,
     *,
-    chunk_size: int = _DECOMP_CHUNK,
+    type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
     """Return object-class bindings without hiding a failed property query."""
-    return _select_or_page(
-        _build_typed_object_for_class_property_query(
-            class_uri, prop_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
-        ),
-        _build_typed_object_for_class_property_query(
-            class_uri,
-            prop_uri,
-            graph_uris,
-            paginated=True,
-            drop_distinct=unsafe_paging,
-            type_context_graph_uris=type_context_graph_uris,
-        ),
-        f"{purpose}/property/{prop_uri}",
-        helper,
-        collect_bindings,
-        chunk_size,
-        class_uri,
-        graph_uris,
+    query = _build_typed_object_for_class_property_query(
+        class_uri, prop_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
     )
+    return select_outcome(query, f"{purpose}/property/{prop_uri}", helper, [class_uri], graph_uris)
 
 
 def typed_object_by_property(
@@ -347,21 +291,11 @@ def typed_object_by_property(
     graph_uris: list[str] | None,
     purpose: str,
     helper: SparqlHelper,
-    collect_bindings: CollectBindings,
-    chunk_size: int,
-    unsafe_paging: bool = False,
     type_context_graph_uris: list[str] | None = None,
 ) -> QueryOutcome:
     """Combine independent property queries and retain unresolved failures."""
     props = enumerate_properties_for_class(
-        class_uri,
-        graph_uris,
-        purpose,
-        helper,
-        collect_bindings,
-        unsafe_paging,
-        chunk_size=chunk_size,
-        type_context_graph_uris=type_context_graph_uris,
+        class_uri, graph_uris, purpose, helper, type_context_graph_uris=type_context_graph_uris
     )
     combined = QueryOutcome(state=props.state, failures=props.failures) if props.failures else None
     for prop_uri in dict.fromkeys(
@@ -373,10 +307,7 @@ def typed_object_by_property(
             graph_uris,
             purpose,
             helper,
-            collect_bindings,
-            unsafe_paging,
-            type_context_graph_uris,
-            chunk_size=chunk_size,
+            type_context_graph_uris=type_context_graph_uris,
         )
         result.rows = [
             {

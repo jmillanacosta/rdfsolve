@@ -88,13 +88,7 @@ def query_by_property(
     result = QueryOutcome()
     if properties is None:
         found = enumerate_properties_for_class(
-            class_uri,
-            graphs,
-            purpose,
-            helper,
-            collect,
-            chunk_size=chunk_size,
-            type_context_graph_uris=context_graphs,
+            class_uri, graphs, purpose, helper, type_context_graph_uris=context_graphs
         )
         result = QueryOutcome(state=found.state, failures=found.failures)
         properties = [r["p"]["value"] for r in found.rows if r.get("p", {}).get("type") == "uri"]

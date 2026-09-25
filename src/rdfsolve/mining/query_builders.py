@@ -8,7 +8,6 @@ from typing import Any
 from rdfsolve.sparql_helper import SparqlHelper
 
 __all__ = [
-    "_DECOMP_CHUNK",
     "Window",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
@@ -41,8 +40,6 @@ __all__ = [
     "_values_block",
     "pick_description",
 ]
-
-_DECOMP_CHUNK = 1_000
 
 
 def _graph_clause(
