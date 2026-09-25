@@ -30,6 +30,7 @@ from rdfsolve.sparql_helper import EndpointError, SparqlHelper
 if TYPE_CHECKING:
     from rdfsolve.client.catalogue import Catalogue
     from rdfsolve.client.extraction import Extraction
+    from rdfsolve.client.identify import Identification
     from rdfsolve.client.ontology import OntologyLookup
     from rdfsolve.client.query import QueryResult
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
@@ -270,6 +271,27 @@ class Client(DatasetClient):
         )
         self.resolutions.append(result.model_dump(mode="json"))
         return result
+
+    def identify(self, identifiers: Iterable[str]) -> list[Identification]:
+        """Find the resources that carry each identifier (CURIE or IRI) in the selected graphs.
+
+        Every registered spelling is tried: IRIs, IRIs written as strings, the bare
+        identifier and its case variants. Each match says which property carries it and
+        how the source writes it. A match that links to another match (a qualified
+        statement, for instance) keeps the other as an intermediate.
+        """
+        from rdfsolve.client.identify import identify
+
+        return identify(self, identifiers)
+
+    def statements(self, iris: Iterable[str], *, languages: Iterable[str] = ()) -> Graph:
+        """Read what the source states about these resources, with names of what they link to.
+
+        languages keeps language-tagged literals in those languages (untagged ones always).
+        """
+        from rdfsolve.client.identify import statements
+
+        return statements(self, iris, languages)
 
     def prepare(
         self,

@@ -72,7 +72,7 @@ class MinedSchema(BaseModel):
         None, description="Supported source SHACL profile, separate from observed triple patterns"
     )
     about: AboutMetadata = Field(
-        ...,
+        default_factory=AboutMetadata.build,
         description="Provenance metadata",
     )
 
