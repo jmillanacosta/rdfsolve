@@ -279,8 +279,13 @@ def collect_property_usage_evidence(
     collect_node_kinds: bool = True,
     collect_datatypes: bool = True,
     collect_histograms: bool = False,
+    shared_extensions: dict[str, str] | None = None,
 ) -> PropertyUsageCollection:
-    """Collect subject-level class/property support with bounded query fallback."""
+    """Collect subject-level class/property support with bounded query fallback.
+
+    shared_extensions maps a class to one verified to have the same members; its
+    records are copied from that class instead of measured again.
+    """
     graph_scope = list(graph_uris or [])
     semantics: Literal["endpoint_default_graph", "rdf_merge_selected_graphs"] = (
         "rdf_merge_selected_graphs" if graph_scope else "endpoint_default_graph"
@@ -302,8 +307,10 @@ def collect_property_usage_evidence(
     records: list[PropertyUsageEvidence] = []
     states: list[MeasurementState] = []
 
-    for offset in range(0, len(classes), max(1, batch_size)):
-        batch = classes[offset : offset + max(1, batch_size)]
+    shared = {k: v for k, v in (shared_extensions or {}).items() if v in classes}
+    measured = [c for c in classes if c not in shared]
+    for offset in range(0, len(measured), max(1, batch_size)):
+        batch = measured[offset : offset + max(1, batch_size)]
         outcome = query_with_bisect(
             batch,
             graph_scope or None,
@@ -463,6 +470,12 @@ def collect_property_usage_evidence(
 
         records.extend(batch_records.values())
 
+    for copy, source in shared.items():
+        records.extend(
+            r.model_copy(update={"subject_class": copy})
+            for r in records
+            if r.subject_class == source
+        )
     records.sort(key=lambda row: (row.subject_class, row.property_uri))
     return PropertyUsageCollection(
         dataset_id=dataset_id,

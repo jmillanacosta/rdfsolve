@@ -233,6 +233,8 @@ class Stage:
         from rdfsolve.evidence.observed import collect_property_usage_evidence
 
         classes = sorted({pattern.subject_class for pattern in schema.patterns})
+        report_path = output_dir / f"{name}{suffix}_report.json"
+        report = json.loads(report_path.read_text()) if report_path.is_file() else {}
         evidence = collect_property_usage_evidence(
             dataset_id=name,
             classes=classes,
@@ -245,6 +247,7 @@ class Stage:
             collect_node_kinds=self.config.collect_property_value_profiles,
             collect_datatypes=self.config.collect_property_value_profiles,
             collect_histograms=self.config.collect_property_value_histograms,
+            shared_extensions=(report.get("config") or {}).get("shared_extensions"),
         )
         path = output_dir / f"{name}{suffix}_property_usage.json"
         path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")

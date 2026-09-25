@@ -75,3 +75,15 @@ def test_property_usage_uses_subject_denominator_and_union_scope():
     }
     limited, _, states = evidence("qlever", slow="COUNT(DISTINCT ?s)")
     assert limited["urn:r"][:3] == [None, 2, 2] and "partial" in states, "Keep triples, flag subjects"
+    for graph in (g1, g2):
+        for member in (s1, s2):
+            graph.add((member, RDF.type, URIRef("urn:B")))  # B has exactly A's members
+    helper, sent = LocalGraphHelper("local", ds), []
+    select = helper.select
+    helper.select = lambda query, **kw: sent.append(query) or select(query, **kw)
+    shared = collect_property_usage_evidence(
+        dataset_id="demo", classes=[str(A), "urn:B"], class_entity_counts={str(A): 2, "urn:B": 2},
+        helper=helper, graph_uris=["urn:g1", "urn:g2"], shared_extensions={"urn:B": str(A)})
+    rows = {(r.subject_class, r.property_uri): r.model_dump(exclude={"subject_class"}) for r in shared.records}
+    assert all(rows[("urn:B", prop)] == rows[(str(A), prop)] for _, prop in rows), "Copied, identical"
+    assert not [q for q in sent if "<urn:B>" in q], "Identical member sets are not measured twice"
