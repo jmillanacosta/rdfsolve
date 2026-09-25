@@ -24,8 +24,15 @@ OBJECT_KINDS = {
     "_build_batched_untyped_count_query": {"iri"},
     "_build_batched_blank_node_query": {"blank"},
     "_build_batched_blank_node_count_query": {"blank"},
+    "build_property_usage_query": {"literal", "iri", "blank"},
+    "build_node_kind_query": {"literal", "iri", "blank"},
+    "build_literal_profile_query": {"literal"},
+    "build_value_count_histogram_query": {"literal", "iri", "blank"},
 }
-PROPERTY_BUILDERS = frozenset(getattr(builders, name) for name in OBJECT_KINDS)
+# Evidence builders measure data edges; rdf:type is class membership.
+TYPE_EXCLUDED = frozenset(name for name in OBJECT_KINDS if name.startswith("build_"))
+PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 _KINDS: WeakKeyDictionary[SparqlHelper, dict[tuple[str, ...], set[str] | None]] = (
     WeakKeyDictionary()
 )
@@ -48,6 +55,12 @@ def object_kinds(
     return cache[key]
 
 
+def decomposes(helper: SparqlHelper, classes: list[str], builder: Callable[..., str]) -> bool:
+    """Query one QLever class property by property, with constant bindings."""
+    name = getattr(builder, "__name__", "")
+    return len(classes) == 1 and helper.sparql_engine == "qlever" and name in OBJECT_KINDS
+
+
 def query_by_property(
     class_uri: str,
     graphs: list[str] | None,
@@ -57,23 +70,27 @@ def query_by_property(
     collect: CollectBindings,
     chunk_size: int,
     context_graphs: list[str] | None,
+    properties: list[str] | None = None,
 ) -> QueryOutcome:
-    """Enumerate all properties, then query those whose objects can match the builder."""
+    """Query the given or enumerated properties whose objects can match the builder."""
     from rdfsolve.mining.query_fallbacks import enumerate_properties_for_class, select_outcome
 
-    properties = enumerate_properties_for_class(
-        class_uri,
-        graphs,
-        purpose,
-        helper,
-        collect,
-        chunk_size=chunk_size,
-        type_context_graph_uris=context_graphs,
-    )
-    result = QueryOutcome(state=properties.state, failures=properties.failures)
-    for prop in dict.fromkeys(
-        row["p"]["value"] for row in properties.rows if row.get("p", {}).get("type") == "uri"
-    ):
+    result = QueryOutcome()
+    if properties is None:
+        found = enumerate_properties_for_class(
+            class_uri,
+            graphs,
+            purpose,
+            helper,
+            collect,
+            chunk_size=chunk_size,
+            type_context_graph_uris=context_graphs,
+        )
+        result = QueryOutcome(state=found.state, failures=found.failures)
+        properties = [r["p"]["value"] for r in found.rows if r.get("p", {}).get("type") == "uri"]
+    for prop in dict.fromkeys(properties):
+        if prop == RDF_TYPE and builder.__name__ in TYPE_EXCLUDED:
+            continue
         kinds = object_kinds(prop, graphs, context_graphs, helper)
         if kinds is not None and not kinds & OBJECT_KINDS[builder.__name__]:
             continue

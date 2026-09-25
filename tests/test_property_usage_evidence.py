@@ -38,3 +38,29 @@ def test_property_usage_uses_subject_denominator_and_union_scope():
     q_row = by_property[str(q)]
     assert q_row.subjects_with_property == 1
     assert q_row.support_fraction == 0.5
+
+    from rdflib import Literal
+
+    g2.add((s1, URIRef("urn:r"), Literal("x")))
+    g2.add((s1, URIRef("urn:r"), Literal("y")))
+    fields = ("subjects_with_property", "triple_count", "distinct_objects", "node_kind_counts",
+              "datatype_counts", "value_count_histogram")
+
+    def evidence(engine):
+        helper, sent = LocalGraphHelper("local", ds), []
+        helper.sparql_engine, select = engine, helper.select
+        helper.select = lambda query, **kw: sent.append(kw.get("purpose", "")) or select(query, **kw)
+        found = collect_property_usage_evidence(
+            dataset_id="demo", classes=[str(A)], class_entity_counts={str(A): 2}, helper=helper,
+            graph_uris=["urn:g1", "urn:g2"], batch_size=1, collect_histograms=True)
+        return {r.property_uri: [getattr(r, f) for f in fields] for r in found.records}, sent
+
+    batch, _ = evidence("generic")
+    per_property, sent = evidence("qlever")
+    assert per_property == batch, "Property decomposition must not change measurements"
+    assert batch["urn:r"][-1] == {"2": 1, "0": 1} and batch[str(p)][-1] == {"1": 1, "0": 1}
+    scoped = {kind: [s for s in sent if kind in s] for kind in ("histogram", "literal-profile")}
+    assert scoped == {
+        "histogram": ["evidence/property-value-count-histogram/property/urn:r"],  # others: one value
+        "literal-profile": ["evidence/property-literal-profile/property/urn:r"],  # others: IRIs
+    }

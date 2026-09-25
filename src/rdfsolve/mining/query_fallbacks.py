@@ -132,9 +132,9 @@ def query_with_bisect(
     """Retry timed-out class queries with smaller groups, then pages."""
     if not classes:
         return QueryOutcome()
-    from rdfsolve.mining.property_queries import PROPERTY_BUILDERS, query_by_property
+    from rdfsolve.mining.property_queries import decomposes, query_by_property
 
-    if len(classes) == 1 and helper.sparql_engine == "qlever" and build_fn in PROPERTY_BUILDERS:
+    if decomposes(helper, classes, build_fn):
         return query_by_property(
             classes[0],
             graph_uris,

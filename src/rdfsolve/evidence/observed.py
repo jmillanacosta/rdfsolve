@@ -6,8 +6,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
 
+from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.sparql_helper import SparqlHelper
+
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 CompletionState = Literal["complete", "partial", "failed", "not_run"]
 
@@ -80,8 +83,15 @@ class PropertyUsageCollection(BaseModel):
     batch_states: list[MeasurementState] = Field(default_factory=list)
 
 
-def _values_block(classes: list[str]) -> str:
-    return "VALUES ?class { " + " ".join(f"<{iri}>" for iri in classes) + " }"
+def _edges(classes: list[str], property_uri: str | None, context: list[str] | None) -> str:
+    """Match class members' edges other than rdf:type, with constants where possible."""
+    from rdfsolve.mining.query_builders import _bound
+
+    if context:
+        raise ValueError("Property evidence reads types from the selected data only")
+    values, cls, prop, binds = _bound(classes, property_uri)
+    rest = "" if property_uri else f" FILTER(?p != <{RDF_TYPE}>)"
+    return f"{values} ?s a {cls} . ?s {prop} ?o .{rest}{binds}"
 
 
 def _dataset_clause(graph_uris: list[str] | None) -> str:
@@ -98,6 +108,8 @@ def build_property_usage_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    property_uri: str | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Build class/property support query over the selected dataset scope."""
     query = f"""\
@@ -107,10 +119,7 @@ SELECT ?class ?p
        (COUNT(DISTINCT ?o) AS ?objects)
 {_dataset_clause(graph_uris)}
 WHERE {{
-  {_values_block(classes)}
-  ?s a ?class .
-  ?s ?p ?o .
-  FILTER(?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>)
+  {_edges(classes, property_uri, type_context_graph_uris)}
 }}
 GROUP BY ?class ?p"""
     if paginated:
@@ -123,16 +132,15 @@ def build_node_kind_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    property_uri: str | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Count IRI/literal/blank-node values per class/property."""
     query = f"""\
 SELECT ?class ?p ?kind (COUNT(*) AS ?values)
 {_dataset_clause(graph_uris)}
 WHERE {{
-  {_values_block(classes)}
-  ?s a ?class .
-  ?s ?p ?o .
-  FILTER(?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>)
+  {_edges(classes, property_uri, type_context_graph_uris)}
   BIND(IF(isIRI(?o), "IRI", IF(isBlank(?o), "BlankNode", "Literal")) AS ?kind)
 }}
 GROUP BY ?class ?p ?kind"""
@@ -146,16 +154,15 @@ def build_literal_profile_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    property_uri: str | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Count literal datatype and language-tag observations."""
     query = f"""\
 SELECT ?class ?p ?datatype ?lang (COUNT(*) AS ?values)
 {_dataset_clause(graph_uris)}
 WHERE {{
-  {_values_block(classes)}
-  ?s a ?class .
-  ?s ?p ?o .
-  FILTER(?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>)
+  {_edges(classes, property_uri, type_context_graph_uris)}
   FILTER(isLiteral(?o))
   BIND(DATATYPE(?o) AS ?datatype)
   BIND(LANG(?o) AS ?lang)
@@ -171,6 +178,8 @@ def build_value_count_histogram_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    property_uri: str | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Count subjects by distinct value cardinality for each class/property."""
     query = f"""\
@@ -180,10 +189,7 @@ WHERE {{
   {{
     SELECT ?class ?p ?s (COUNT(DISTINCT ?o) AS ?n)
     WHERE {{
-      {_values_block(classes)}
-      ?s a ?class .
-      ?s ?p ?o .
-      FILTER(?p != <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>)
+      {_edges(classes, property_uri, type_context_graph_uris)}
     }}
     GROUP BY ?class ?p ?s
   }}
@@ -220,16 +226,28 @@ def _detail_outcome(
     purpose: str,
     helper: SparqlHelper,
     chunk_size: int,
+    properties: list[str],
 ) -> Any:
+    from rdfsolve.mining.property_queries import decomposes, query_by_property
+
+    def collect(query: str, purpose: str, size: int | None) -> list[dict[str, Any]]:
+        """Collect every page of one evidence query."""
+        return _collect_pages(helper, query, purpose, size or chunk_size)
+
+    if decomposes(helper, batch, build_fn):
+        return query_by_property(
+            batch[0],
+            graph_scope or None,
+            build_fn,
+            purpose,
+            helper,
+            collect,
+            chunk_size,
+            None,
+            properties,
+        )
     return query_with_bisect(
-        batch,
-        graph_scope or None,
-        build_fn,
-        purpose,
-        helper,
-        lambda q, p, size: _collect_pages(helper, q, p, size or chunk_size),
-        chunk_size,
-        False,
+        batch, graph_scope or None, build_fn, purpose, helper, collect, chunk_size, False
     )
 
 
@@ -334,6 +352,7 @@ def collect_property_usage_evidence(
                 purpose="evidence/property-node-kind",
                 helper=helper,
                 chunk_size=chunk_size,
+                properties=sorted({prop for _, prop in batch_records}),
             )
             detail_state = _state_from_outcome(detail, "evidence/property-node-kind")
             states.append(detail_state)
@@ -358,6 +377,7 @@ def collect_property_usage_evidence(
                 purpose="evidence/property-literal-profile",
                 helper=helper,
                 chunk_size=chunk_size,
+                properties=sorted({prop for _, prop in batch_records}),
             )
             detail_state = _state_from_outcome(detail, "evidence/property-literal-profile")
             states.append(detail_state)
@@ -383,13 +403,28 @@ def collect_property_usage_evidence(
                     )
 
         if collect_histograms and batch_records:
-            detail = _detail_outcome(
-                batch=batch,
-                graph_scope=graph_scope,
-                build_fn=build_value_count_histogram_query,
-                purpose="evidence/property-value-count-histogram",
-                helper=helper,
-                chunk_size=chunk_size,
+            # A subject with one triple for a property has exactly one value.
+            single = {
+                key: r.subjects_with_property
+                for key, r in batch_records.items()
+                if r.subjects_with_property is not None
+                and r.triple_count == r.subjects_with_property
+            }
+            multiple = sorted(
+                {prop for key in batch_records if key not in single for prop in key[1:]}
+            )
+            detail = (
+                _detail_outcome(
+                    batch=batch,
+                    graph_scope=graph_scope,
+                    build_fn=build_value_count_histogram_query,
+                    purpose="evidence/property-value-count-histogram",
+                    helper=helper,
+                    chunk_size=chunk_size,
+                    properties=multiple,
+                )
+                if multiple
+                else QueryOutcome()
             )
             detail_state = _state_from_outcome(detail, "evidence/property-value-count-histogram")
             states.append(detail_state)
@@ -409,6 +444,8 @@ def collect_property_usage_evidence(
                     exact.setdefault(key, {}).get(bucket, 0) + subject_count
                 )
                 nonzero_subjects[key] = nonzero_subjects.get(key, 0) + subject_count
+            for key, subjects in single.items():
+                exact[key], nonzero_subjects[key] = {"1": subjects}, subjects
             for key, record in batch_records.items():
                 record.histogram_state = detail_state.model_copy(deep=True)
                 histogram = dict(exact.get(key, {}))
