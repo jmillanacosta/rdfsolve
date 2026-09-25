@@ -63,6 +63,7 @@ class EvidenceComparison(BaseModel):
     declared_values: list[str] = Field(default_factory=list)
     observed_count: int = 0
     declared_count: int = 0
+    channel: str | None = None
 
 
 def _relation(observed: set[str], declared: set[str]) -> SetRelation:

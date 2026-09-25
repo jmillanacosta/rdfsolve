@@ -27,9 +27,10 @@ def _release(tmp_path: Path):
             )
         ],
     )
-    (ds_dir / "demo_schema.json").write_text(
-        __import__("json").dumps(schema.to_dict(), indent=2), encoding="utf-8"
-    )
+    for channel in ("local", "remote"):  # two access channels, declared evidence for one
+        (ds_dir / f"demo_{channel}_schema.json").write_text(
+            __import__("json").dumps(schema.to_dict(), indent=2), encoding="utf-8"
+        )
     ex = Namespace("urn:ex:")
     graph = Graph()
     graph.add((ex.Shape, RDF.type, SH.NodeShape))
@@ -54,7 +55,7 @@ def _release(tmp_path: Path):
         artifacts=[artifact],
         evidence=project_declared_evidence(graph, artifact),
     )
-    (ds_dir / "demo_declared_artifacts.json").write_text(
+    (ds_dir / "demo_local_declared_artifacts.json").write_text(
         bundle.model_dump_json(indent=2), encoding="utf-8"
     )
     manifest = build_release_manifest(tmp_path, release_id="release:test")
@@ -65,7 +66,9 @@ def _release(tmp_path: Path):
 def test_release_declared_comparison_uses_frozen_artifacts_only(tmp_path):
     manifest = _release(tmp_path)
     result = build_release_declared_comparison(manifest, tmp_path)
-    assert result.compared_datasets == ["demo"]
+    assert result.compared_datasets == ["demo"], "Several channels do not exclude a dataset"
+    assert result.skipped == {"demo/demo_remote": "mined schema without declared artifacts"}
+    assert {row.channel for row in result.comparisons} == {"demo_local"}
     by_dim = {row.dimension: row for row in result.comparisons}
     assert by_dim["property"].relation == "both"
     assert by_dim["class"].relation == "equal"

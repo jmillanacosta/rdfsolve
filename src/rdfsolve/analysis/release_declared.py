@@ -47,44 +47,48 @@ def build_release_declared_comparison(
     manifest: ReleaseManifest,
     release_root: str | Path,
 ) -> ReleaseDeclaredComparison:
-    """Compare observed schemas with normalized SHACL declarations in one release.
+    """Compare each channel's observed schema with its normalized SHACL declarations.
 
-    A dataset is compared only when exactly one canonical schema and exactly one
-    declared-artifact index are present.  Ambiguity is reported rather than
-    silently choosing one of several artifacts.
+    A channel is a file stem shared by ``*_schema.json`` and
+    ``*_declared_artifacts.json`` (for example ``name_local``). A side without its
+    partner is reported in ``skipped`` rather than silently omitted.
     """
     root = Path(release_root)
     out = ReleaseDeclaredComparison(release_id=manifest.release_id)
     for dataset in sorted(manifest.datasets, key=lambda row: row.dataset_id):
-        schemas = _artifacts_for_dataset(manifest, dataset.dataset_id, "canonical_schema")
-        declared_indexes = _artifacts_for_dataset(
-            manifest, dataset.dataset_id, "declared_artifact_index"
-        )
-        if not schemas or not declared_indexes:
+        name = dataset.dataset_id
+        schemas = {
+            Path(p).name.removesuffix("_schema.json"): p
+            for p in _artifacts_for_dataset(manifest, name, "canonical_schema")
+        }
+        declared = {
+            Path(p).name.removesuffix("_declared_artifacts.json"): p
+            for p in _artifacts_for_dataset(manifest, name, "declared_artifact_index")
+        }
+        if not declared:
             continue
-        if len(schemas) != 1:
-            out.skipped[dataset.dataset_id] = f"expected one canonical schema, found {len(schemas)}"
-            continue
-        if len(declared_indexes) != 1:
-            out.skipped[dataset.dataset_id] = (
-                f"expected one declared-artifact index, found {len(declared_indexes)}"
+        for channel in sorted(schemas.keys() | declared.keys()):
+            key = f"{name}/{channel}"
+            if channel not in declared:
+                out.skipped[key] = "mined schema without declared artifacts"
+                continue
+            if channel not in schemas:
+                out.skipped[key] = "declared artifacts without a mined schema"
+                continue
+            try:
+                schema = MinedSchema.from_json(root / schemas[channel])
+                bundle = DeclaredArtifactBundle.model_validate_json(
+                    (root / declared[channel]).read_text(encoding="utf-8")
+                )
+            except Exception as exc:
+                out.skipped[key] = f"load failed: {type(exc).__name__}: {exc}"
+                continue
+            rows = compare_observed_with_declared_shacl(
+                dataset_id=name, patterns=schema.patterns, declared=bundle.evidence
             )
-            continue
-        try:
-            schema = MinedSchema.from_json(root / schemas[0])
-            bundle = DeclaredArtifactBundle.model_validate_json(
-                (root / declared_indexes[0]).read_text(encoding="utf-8")
-            )
-        except Exception as exc:
-            out.skipped[dataset.dataset_id] = f"load failed: {type(exc).__name__}: {exc}"
-            continue
-        rows = compare_observed_with_declared_shacl(
-            dataset_id=dataset.dataset_id,
-            patterns=schema.patterns,
-            declared=bundle.evidence,
-        )
-        out.comparisons.extend(rows)
-        out.compared_datasets.append(dataset.dataset_id)
+            out.comparisons.extend(row.model_copy(update={"channel": channel}) for row in rows)
+            if name not in out.compared_datasets:
+                out.compared_datasets.append(name)
     return out
 
 
@@ -104,6 +108,7 @@ def write_release_declared_comparison(
             handle,
             fieldnames=[
                 "dataset_id",
+                "channel",
                 "subject_class",
                 "property_uri",
                 "dimension",
@@ -120,6 +125,7 @@ def write_release_declared_comparison(
             writer.writerow(
                 {
                     "dataset_id": row.dataset_id,
+                    "channel": row.channel,
                     "subject_class": row.subject_class,
                     "property_uri": row.property_uri,
                     "dimension": row.dimension,
