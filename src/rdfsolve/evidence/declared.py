@@ -60,6 +60,7 @@ DeclarationType = Literal[
     "equivalent_property",
     "inverse_property",
     "disjoint_class",
+    "shacl_path",
     "shacl_class",
     "shacl_datatype",
     "shacl_node_kind",
@@ -192,6 +193,19 @@ def project_declared_evidence(
             except Exception:
                 continue
             property_uri = path.iri if path.operator == "predicate" else None
+            out.append(
+                _record(
+                    dataset_id=artifact.dataset_id,
+                    artifact=artifact,
+                    declaration_type="shacl_path",
+                    subject=prop_shape,
+                    predicate=SH.path,
+                    value=path_node,
+                    focus_class=str(target_class),
+                    property_uri=property_uri,
+                    path=path,
+                )
+            )
             for predicate, declaration_type in constraints.items():
                 for value in graph.objects(prop_shape, predicate):
                     out.append(

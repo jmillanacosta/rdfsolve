@@ -1,4 +1,4 @@
-from rdflib import RDF, SH, Graph, Namespace
+from rdflib import RDF, SH, Graph, Literal, Namespace
 from rdfsolve.analysis.declared_comparison import compare_observed_with_declared_shacl
 from rdfsolve.evidence.declared import DeclaredArtifact, project_declared_evidence
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -39,3 +39,17 @@ def test_declared_comparison_reports_neutral_set_relationships():
     assert by_dim["property"].relation == "both"
     assert by_dim["class"].relation == "declared_subset_of_observed"
     assert by_dim["node_kind"].relation == "equal"
+
+    g.add((ex.Shape, SH.property, ex.Name))
+    g.add((ex.Name, SH.path, ex.name))
+    g.add((ex.Name, SH.minCount, Literal(1)))
+    g.add((ex.Shape, SH.property, ex.Note))
+    g.add((ex.Note, SH.path, ex.note))
+    imported = [p.model_copy(update={"evidence_source": "shacl"}) for p in patterns]
+    rows = compare_observed_with_declared_shacl(
+        dataset_id="demo", patterns=imported, declared=project_declared_evidence(g, artifact)
+    )
+    assert all(row.observed_count == 0 for row in rows), "Declarations cannot confirm themselves"
+    properties = {row.property_uri: row for row in rows if row.dimension == "property"}
+    assert set(properties) == {str(ex.p), str(ex.name), str(ex.note)}, "Retain paths without ranges"
+    assert all(row.relation == "declared_only" for row in properties.values())

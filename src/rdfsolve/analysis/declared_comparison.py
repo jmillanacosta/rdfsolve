@@ -99,6 +99,8 @@ def compare_observed_with_declared_shacl(
         lambda: {"class": set(), "datatype": set(), "node_kind": set()}
     )
     for pattern in patterns:
+        if pattern.evidence_source != "mined":
+            continue
         key = (pattern.subject_class, pattern.property_uri)
         if pattern.object_class == "Literal":
             observed[key]["node_kind"].add("Literal")
@@ -122,11 +124,15 @@ def compare_observed_with_declared_shacl(
     }
     for item in declared:
         dimension = type_to_dimension.get(item.declaration_type)
-        if dimension is None or not item.focus_class or not item.property_uri:
+        if (
+            not item.declaration_type.startswith("shacl_")
+            or not item.focus_class
+            or not item.property_uri
+        ):
             continue
-        declared_by_key[(item.focus_class, item.property_uri)][dimension].update(
-            _declared_value_set(item)
-        )
+        entry = declared_by_key[(item.focus_class, item.property_uri)]
+        if dimension is not None:
+            entry[dimension].update(_declared_value_set(item))
 
     keys = sorted(set(observed) | set(declared_by_key))
     result: list[EvidenceComparison] = []
