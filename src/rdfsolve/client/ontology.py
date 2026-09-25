@@ -420,3 +420,31 @@ class OntologyLookup:
                 for e in self.events
             ),
         }
+
+
+def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
+    """Expand an exact IRI or registered CURIE into recorded namespace candidates."""
+    from importlib.metadata import version
+
+    import bioregistry
+
+    if value.startswith(("http://", "https://", "urn:")):
+        return [absolute_iri(value)], {"input": value, "basis": "exact IRI"}
+    prefix, separator, local = value.partition(":")
+    resource = bioregistry.get_resource(prefix) if separator else None
+    if resource is None:
+        raise ValueError("Use a full IRI or a registered CURIE identifier")
+    local = resource.standardize_identifier(local)
+    if not local or not resource.is_valid_identifier(local):
+        raise ValueError("Invalid registered identifier")
+    candidates = sorted(
+        {absolute_iri(template.replace("$1", local)) for template in resource.get_uri_formats()}
+    )
+    if not candidates:
+        raise ValueError("No registered IRI formats for this identifier")
+    return candidates, {
+        "input": value,
+        "basis": "registered namespace candidates",
+        "registry_version": version("bioregistry"),
+        "candidates": candidates,
+    }

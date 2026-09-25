@@ -42,10 +42,19 @@ def describe(
     owners: tuple[str, ...],
     targets: tuple[str, ...],
     source: bool,
+    identifier: str | None,
 ) -> pd.DataFrame:
     """Combine schema matches with scoped literal evidence and ontology candidates."""
     if concept and (not concept.strip() or len(concept) > 200):
         raise ValueError("Use a nonempty phrase of at most 200 characters")
+    from rdfsolve.client.ontology import identifier_candidates
+
+    candidates: list[str] = []
+    identity: dict[str, Any] = {}
+    if identifier is not None:
+        if not source or targets or not concept:
+            raise ValueError("An identifier requires a source name lookup without target filters")
+        candidates, identity = identifier_candidates(identifier)
     index = client.catalogue
     rows: list[dict[str, Any]] = [
         {
@@ -62,13 +71,16 @@ def describe(
         }
         for ref in index.search(str(concept), owners=owners, targets=targets)
         for f in [index.fragments[ref]]
+        if not candidates or f.iri in candidates
     ]
     coverage: dict[str, Any] = {"status": "not_requested", "basis": "schema"}
     if (isinstance(concept, Literal) or concept) and source and not targets:
-        matches, coverage = literal_matches(client, concept, owners)
+        matches, coverage = literal_matches(client, concept, owners, candidates)
         rows.extend(matches)
         if client.ontology:
             for candidate in client.ontology.search(str(concept)):
+                if candidates and candidate["iri"] not in candidates:
+                    continue
                 term = RdfTerm(kind="uri", value=candidate["iri"])
                 ref = index._put(
                     Fragment(
@@ -94,11 +106,24 @@ def describe(
             coverage["ontology"] = client.ontology.diagnostics()
     table = pd.DataFrame(rows, columns=COLUMNS)
     table.attrs["coverage"] = coverage
+    resources = sorted({row["Resource"] for row in rows if row["Kind"] == "resource"})
+    status = (
+        "partial"
+        if coverage["status"] == "partial"
+        else "unique"
+        if len(resources) == 1
+        else "ambiguous"
+        if resources
+        else "not_found"
+        if coverage["status"] == "complete"
+        else "not_requested"
+    )
+    table.attrs["resolution"] = {**identity, "status": status, "resources": resources}
     return table
 
 
 def literal_matches(
-    client: Client, concept: str | Literal, owners: tuple[str, ...]
+    client: Client, concept: str | Literal, owners: tuple[str, ...], candidates: list[str]
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Find literal subjects without requiring a generated model."""
     terms = (
@@ -116,8 +141,13 @@ def literal_matches(
             )
         ]
     )
+    subject_bindings = [(_iri(iri), f"BIND({_iri(iri)} AS ?s)") for iri in candidates] or [
+        ("?s", "")
+    ]
     match = " UNION ".join(
-        f"{{ ?s ?p {term.n3()} . BIND({term.n3()} AS ?text) }}" for term in terms
+        f"{{ {subject} ?p {term.n3()} . {binding} BIND({term.n3()} AS ?text) }}"
+        for subject, binding in subject_bindings
+        for term in terms
     )
     match = "{ " + match + " }"
     typing = "OPTIONAL { " + client._type_pattern("?s", "?type") + " }"
@@ -183,3 +213,22 @@ def literal_matches(
         "query_ids": client._steps[-1]["query_ids"],
         "graph_uris": list(client.graph_uris),
     }
+
+
+def description_resource(client: Client, table: pd.DataFrame) -> str:
+    """Require one complete, retained source identity before navigation."""
+    status = table.attrs.get("resolution", {}).get("status", "unverified")
+    if status != "unique":
+        raise ValueError(f"Description is {status}; resolve the source identity before navigation")
+    matches = table.loc[table.Kind == "resource"]
+    resources = set(matches.Resource)
+    if len(resources) != 1:
+        raise ValueError("Description does not contain one source resource")
+    (resource,) = resources
+    for ref in matches.Reference:
+        fragment = client.catalogue.fragments.get(ref)
+        if not fragment or not fragment.term or fragment.term.value != resource:
+            raise ValueError("Describe the resource with this client before navigation")
+        if fragment.term.kind != "uri":
+            raise ValueError("Blank-node identities require an anchored path in the same query")
+    return str(resource)

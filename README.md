@@ -321,6 +321,23 @@ for example `data.describe(Literal("Donepezil", lang="en"))`. These finite varia
 do not cover every mixed-case spelling or language. Coverage records the literals
 searched and marks budget-limited results as partial.
 
+Disambiguate a name with an identifier supplied by the user:
+
+```python
+chemical = data.describe("donepezil", identifier="CHEBI:53289")
+chemical.attrs["resolution"]
+```
+
+The identifier restricts the lookup before its row limit. Registered CURIEs
+use Bioregistry namespace candidates; full IRIs use exact identity. A candidate
+must also have matching literal evidence in the selected source. Multiple
+observed namespace forms remain ambiguous. Registry version and candidates
+are retained in the resolution metadata.
+
+`connections` accepts description tables directly when they contain one
+verified source identity. It rejects ambiguous, partial and external-only
+descriptions before querying; it never selects the first row.
+
 Resource matches retain reusable references for `prepare_network(values=...)`,
 including resources whose types have no generated model. Schema matches and
 external ontology candidates appear separately in `Kind`; ontology candidates

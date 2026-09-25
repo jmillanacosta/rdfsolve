@@ -221,18 +221,20 @@ class Client(DatasetClient):
         owners: Iterable[str] = (),
         targets: Iterable[str] = (),
         source: bool = True,
+        identifier: str | None = None,
     ) -> pd.DataFrame:
         """Find schema entries and indexed literal matches in the selected source.
 
         Strings try supplied, lower, upper and title case as plain literals.
         An RDF Literal retains its language and datatype for exact matching.
+        identifier restricts source subjects to an IRI or registered CURIE.
         Source matches retain identity, types, literal and graph evidence.
         Set source=False for schema-only inspection. Target filters select schema
         fields only. External ontology candidates require ontology_grounding.
         """
         from rdfsolve.client.description import describe
 
-        return describe(self, concept, tuple(owners), tuple(targets), source)
+        return describe(self, concept, tuple(owners), tuple(targets), source, identifier)
 
     def prepare(
         self,
@@ -600,8 +602,8 @@ class Client(DatasetClient):
 
     def connections(
         self,
-        source: str | BaseModel,
-        target: str | BaseModel | None = None,
+        source: str | BaseModel | pd.DataFrame,
+        target: str | BaseModel | pd.DataFrame | None = None,
         *,
         max_hops: int = 3,
         both_directions: bool = True,
@@ -609,6 +611,7 @@ class Client(DatasetClient):
     ) -> pd.DataFrame:
         """Find actual paths between records, or around one record.
 
+        Unique source descriptions are accepted as endpoints.
         Show every intermediate resource and link. Paths do not repeat resources
         and can cross selected data graphs. Requests run in sequence. By default, stop at
         the client's row budget and return a marked partial view with a warning.

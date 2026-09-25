@@ -304,8 +304,8 @@ def connection_query(source: str, target: str | None, hops: int, both_directions
 
 def resource_paths(
     client: Client,
-    source: str | BaseModel,
-    target: str | BaseModel | None,
+    source: str | BaseModel | pd.DataFrame,
+    target: str | BaseModel | pd.DataFrame | None,
     *,
     max_hops: int,
     both_directions: bool,
@@ -318,6 +318,12 @@ def resource_paths(
     Without a target, exclude rdf:type and literal leaves.
     Endpoint limits still apply; a successful response is not a completeness proof.
     """
+    from rdfsolve.client.description import description_resource
+
+    if isinstance(source, pd.DataFrame):
+        source = description_resource(client, source)
+    if isinstance(target, pd.DataFrame):
+        target = description_resource(client, target)
     budget = client.max_rows if max_paths is None else max_paths
     _budget(max_hops, budget)
     first = str(vars(source)["uri"]) if isinstance(source, BaseModel) else source
