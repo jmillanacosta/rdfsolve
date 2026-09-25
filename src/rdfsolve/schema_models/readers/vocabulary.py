@@ -69,7 +69,11 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
                             evidence_source="vocabulary",
                         )
                     )
-    schema = MinedSchema(patterns=patterns, about=AboutMetadata.build())
+    schema = MinedSchema(
+        patterns=patterns,
+        about=AboutMetadata.build(),
+        class_hierarchy=_hierarchy(graph, requested),
+    )
     schema.about.pattern_count = len(patterns)
     schema.about.class_count = len(schema.get_classes())
     schema.about.property_count = len(schema.get_properties())
@@ -97,3 +101,23 @@ def _objects(graph: Graph, target: URIRef) -> list[tuple[str, str | None]]:
         if name in names:
             return [("Literal", datatype) for datatype in datatypes]
     return [(str(target), None)]
+
+
+def _hierarchy(graph: Graph, classes: list[URIRef]) -> dict[str, list[str]]:
+    """Nearest requested ancestors of each requested class."""
+    requested = set(classes)
+    ancestors: dict[URIRef, set[URIRef]] = {
+        cls: {
+            a
+            for a in graph.transitive_objects(cls, RDFS.subClassOf)
+            if isinstance(a, URIRef) and a != cls
+        }
+        for cls in classes
+    }
+    hierarchy: dict[str, list[str]] = {}
+    for cls in classes:
+        candidates = ancestors[cls] & requested
+        nearest = {c for c in candidates if not any(c in ancestors[o] for o in candidates)}
+        if nearest:
+            hierarchy[str(cls)] = sorted(str(c) for c in nearest)
+    return hierarchy

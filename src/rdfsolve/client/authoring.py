@@ -92,6 +92,8 @@ def coerce_value(
                     continue
                 term = RdfTerm(kind="literal", value=value, language=language)
             else:
+                if _date_lexical(str(value), datatype) is False:
+                    continue  # check the date form before rdflib tries to parse it
                 literal = Literal(value, datatype=URIRef(datatype), normalize=False)
                 lexical = _date_lexical(str(literal), datatype)
                 parsed = Literal(str(literal), datatype=URIRef(datatype), normalize=False)

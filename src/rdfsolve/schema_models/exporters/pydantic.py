@@ -199,13 +199,22 @@ def to_pydantic(
         f"    model_config = ConfigDict(populate_by_name=True, extra={'forbid' if contract else 'allow'!r})",
         "",
     ]
-    for iri, name in names.items():
+    parents = {iri: [p for p in schema.class_hierarchy.get(iri, []) if p in names] for iri in names}
+    ordered: list[str] = []
+    while len(ordered) < len(names):  # parents are defined before their subclasses
+        ready = [i for i in names if i not in ordered and all(p in ordered for p in parents[i])]
+        if not ready:
+            raise ValueError("The class hierarchy has a cycle")
+        ordered.extend(ready)
+    for iri in ordered:
+        name = names[iri]
+        bases = ", ".join(names[p] for p in parents[iri]) or "RDFResource"
         class_examples = [
             {"@id": term.json_value()} for term in schema.enrichment.class_examples.get(iri, [])
         ]
         lines.extend(
             [
-                f"class {name}(RDFResource):",
+                f"class {name}({bases}):",
                 f"    {clip_description(schema.enrichment.description(iri) or ('Observed type ' + iri), trim_descriptions)!r}",
                 f"    rdf_class_iri: ClassVar[str] = {iri!r}",
                 f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",

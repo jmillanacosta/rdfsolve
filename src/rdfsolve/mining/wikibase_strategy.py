@@ -79,7 +79,9 @@ class WikibaseStrategy(MiningStrategy):
             if state == "sampled":
                 sampled.append(direct)
             patterns.extend(found)
-            context.report.checkpoint("patterns", [direct], [p.model_dump(mode="json") for p in found])
+            context.report.checkpoint(
+                "patterns", [direct], [p.model_dump(mode="json") for p in found]
+            )
         if sampled:
             context.report.record_outcome(
                 QueryOutcome(
@@ -132,14 +134,18 @@ class WikibaseStrategy(MiningStrategy):
             'BIND(IF(isLiteral(?o), "literal", IF(isBlank(?o), "bnode", "uri")) AS ?kind) '
             "BIND(DATATYPE(?o) AS ?dt)"
         )
-        project = "?sc ?oc ?kind ?dt (COUNT(*) AS ?n) (SAMPLE(?s) AS ?subject) (SAMPLE(?o) AS ?value)"
+        project = (
+            "?sc ?oc ?kind ?dt (COUNT(*) AS ?n) (SAMPLE(?s) AS ?subject) (SAMPLE(?o) AS ?value)"
+        )
         group = "GROUP BY ?sc ?oc ?kind ?dt"
         if context.helper.sparql_engine == "blazegraph":
             # Blazegraph evaluates a named subquery first; a plain subquery may be joined late.
             return f"SELECT {project} WITH {{ {window} }} AS %window WHERE {{ INCLUDE %window . {body} }} {group}"
         return f"SELECT {project} WHERE {{ {{ {window} }} {body} }} {group}"
 
-    def _rows(self, direct: str, rows: list[dict[str, Any]]) -> tuple[list[SchemaPattern], int, int]:
+    def _rows(
+        self, direct: str, rows: list[dict[str, Any]]
+    ) -> tuple[list[SchemaPattern], int, int]:
         """Turn grouped window rows into patterns and examples; count unclassified subjects."""
         patterns: dict[tuple[str, str, str | None], SchemaPattern] = {}
         statements = unclassified = 0
@@ -153,7 +159,10 @@ class WikibaseStrategy(MiningStrategy):
             kind = row["kind"]["value"]
             datatype = row.get("dt", {}).get("value") if kind == "literal" else None
             object_class = (
-                "Literal" if kind == "literal" else "BlankNode" if kind == "bnode"
+                "Literal"
+                if kind == "literal"
+                else "BlankNode"
+                if kind == "bnode"
                 else row.get("oc", {}).get("value", "Resource")
             )
             key = (subject_class, object_class, datatype)

@@ -68,6 +68,11 @@ class MinedSchema(BaseModel):
         None, description="Graph-scoped RDF list observations; None means not inspected"
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
+    class_hierarchy: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Nearest declared superclasses among the schema's classes; "
+        "generated models inherit from them, so a subclass record fills a parent's range",
+    )
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"
     )

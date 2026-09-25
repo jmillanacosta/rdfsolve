@@ -39,7 +39,16 @@ def validate_contract(record: BaseModel, graph: Graph) -> None:
 
     shapes = Graph()
     seen_shapes: set[str] = set()
-    for item in _records(record, set()):
+    records = list(_records(record, set()))
+    inherited: dict[Any, set[str]] = {}  # a record's node -> classes its model inherits
+    for item in records:
+        scope = str(vars(item).get("rdf_source", {}).get("blank_node_scope", ""))
+        resource = _resource(str(vars(item)["uri"]), scope)
+        for base in type(item).__mro__:
+            iri = getattr(base, "rdf_class_iri", None)
+            if isinstance(iri, str):
+                inherited.setdefault(resource, set()).add(iri)
+    for item in records:
         data = vars(item)
         scope = str(data.get("rdf_source", {}).get("blank_node_scope", ""))
         subject = _resource(str(data["uri"]), scope)
@@ -66,7 +75,9 @@ def validate_contract(record: BaseModel, graph: Graph) -> None:
                     continue
                 _check_term(RdfTerm.from_rdf(node), extra.get("rdf_patterns", []), name)
                 expected = {p["object_class"] for p in extra.get("rdf_patterns", [])}
-                actual = {str(cls) for cls in graph.objects(node, RDF.type)}
+                actual = {str(cls) for cls in graph.objects(node, RDF.type)} | inherited.get(
+                    node, set()
+                )
                 if (
                     expected
                     and actual
