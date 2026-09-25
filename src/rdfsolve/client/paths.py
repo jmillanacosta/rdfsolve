@@ -292,7 +292,7 @@ def connection_query(source: str, target: str | None, hops: int, both_directions
             body.append(f"FILTER(!isLiteral({nodes[i]}))")
         for i in range(hops + 1):
             for j in range(i):
-                body.append(f"FILTER(!sameTerm({nodes[i]}, {nodes[j]}))")
+                body.append(f"FILTER({nodes[i]} != {nodes[j]})")
         body.append(f"BIND({_iri(source)} AS ?n0)")
         if target is not None:
             body.append(f"BIND({_iri(target)} AS ?n{hops})")
