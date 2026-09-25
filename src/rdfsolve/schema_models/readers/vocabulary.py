@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from rdflib import RDF, RDFS, XSD, Graph, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, XSD, Graph, Namespace, URIRef
 
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
@@ -12,10 +12,28 @@ from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import SchemaPattern
 
 SCHEMA = Namespace("https://schema.org/")
+DCAM = Namespace("http://purl.org/dc/dcam/")
 # Every class is an owl:Thing and an rdfs:Resource: properties with these domains apply to all.
-UNIVERSAL = (URIRef("http://www.w3.org/2002/07/owl#Thing"), RDFS.Resource)
-DOMAINS = (RDFS.domain, SCHEMA.domainIncludes, URIRef("http://schema.org/domainIncludes"))
-RANGES = (RDFS.range, SCHEMA.rangeIncludes, URIRef("http://schema.org/rangeIncludes"))
+UNIVERSAL = (OWL.Thing, RDFS.Resource)
+DOMAINS = (
+    RDFS.domain,
+    SCHEMA.domainIncludes,
+    URIRef("http://schema.org/domainIncludes"),
+    DCAM.domainIncludes,
+)
+RANGES = (
+    RDFS.range,
+    SCHEMA.rangeIncludes,
+    URIRef("http://schema.org/rangeIncludes"),
+    DCAM.rangeIncludes,
+)
+DESCRIBED = (RDFS.label, RDFS.comment, RDFS.isDefinedBy)
+# A property without a declared range may take any value its kind of property allows.
+UNDECLARED_RANGE = {
+    OWL.DatatypeProperty: (RDFS.Literal,),
+    OWL.ObjectProperty: (RDFS.Resource,),
+    RDF.Property: (RDFS.Literal, RDFS.Resource),
+}
 
 # schema.org data types as RDF literal datatypes (https://schema.org/docs/datamodel.html).
 # Date allows the partial ISO 8601 forms schema.org accepts.
@@ -34,9 +52,10 @@ DATATYPES: dict[str, tuple[str, ...]] = {
 def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -> MinedSchema:
     """Declare, for each class, every property whose domain is the class or an ancestor.
 
-    Properties without a domain apply to every class. Ranges that are classes become object
-    rows, XSD datatypes and schema.org data types become literal rows, rdfs:Literal admits any
-    literal, and URL becomes an IRI row. The rows are declarations, not
+    Properties without a domain apply to every class; without a range they take any value
+    their kind allows. Ranges that are classes become object rows, XSD datatypes and schema.org
+    data types become literal rows, rdfs:Literal admits any literal, owl:Thing and
+    rdfs:Resource admit any IRI or blank node, and URL becomes an IRI row. The rows are declarations, not
     observations (evidence_source "vocabulary").
     """
     graph = (
@@ -48,13 +67,16 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
     unknown = [str(c) for c in requested if not any(graph.triples((c, None, None)))]
     if unknown:
         raise ValueError(f"Classes not declared in the vocabulary: {unknown}")
-    # RDFS: a property without a declared domain may describe any resource.
-    anywhere = {
+    # Defined here: a range, a label, a comment or a defining vocabulary. Vocabularies also
+    # type properties they only mention (schema.org lists its external equivalents).
+    declared = {
         prop
-        for rng in RANGES
-        for prop in graph.subjects(rng, None)
-        if isinstance(prop, URIRef) and not any(graph.value(prop, d) for d in DOMAINS)
+        for kind in UNDECLARED_RANGE
+        for prop in graph.subjects(RDF.type, kind)
+        if isinstance(prop, URIRef) and any(graph.value(prop, p) for p in (*RANGES, *DESCRIBED))
     }
+    # RDFS: a property without a declared domain may describe any resource.
+    anywhere = {prop for prop in declared if not any(graph.value(prop, d) for d in DOMAINS)}
     patterns: list[SchemaPattern] = []
     for cls in requested:
         lineage = {cls, *graph.transitive_objects(cls, RDFS.subClassOf), *UNIVERSAL}
@@ -66,9 +88,7 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
             if isinstance(prop, URIRef)
         } | anywhere
         for prop in sorted(properties):
-            for target in sorted(
-                {r for rng in RANGES for r in graph.objects(prop, rng) if isinstance(r, URIRef)}
-            ):
+            for target in sorted(_ranges(graph, prop)):
                 for object_class, datatype in _objects(graph, target):
                     patterns.append(
                         SchemaPattern(
@@ -93,10 +113,21 @@ def vocabulary_to_minedschema(vocabulary: str | Graph, classes: Iterable[str]) -
     return schema
 
 
+def _ranges(graph: Graph, prop: URIRef) -> set[URIRef]:
+    """Return declared ranges, or what the property's kind allows when none is declared."""
+    ranges = {r for rng in RANGES for r in graph.objects(prop, rng) if isinstance(r, URIRef)}
+    if ranges:
+        return ranges
+    kinds = [kind for kind in UNDECLARED_RANGE if (prop, RDF.type, kind) in graph]
+    return set(UNDECLARED_RANGE[kinds[0]]) if kinds else set()
+
+
 def _objects(graph: Graph, target: URIRef) -> list[tuple[str, str | None]]:
     """How values of one declared range are written in RDF."""
     if str(target).startswith(str(XSD)) or target == RDF.langString:
         return [("Literal", str(target))]
+    if target in UNIVERSAL:
+        return [("Resource", None), ("BlankNode", None)]
     if target == RDFS.Literal:
         # Any literal: plain text is written as text, explicit typed literals are accepted.
         return [("Literal", datatype) for datatype in (*DATATYPES["Text"], str(RDFS.Literal))]
