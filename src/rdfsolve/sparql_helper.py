@@ -23,7 +23,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
     from requests.adapters import HTTPAdapter
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, Variable
 from rdflib import Literal as RdfLiteral
 from typing_extensions import Self
 from urllib3.connection import HTTPConnection
@@ -1302,6 +1302,34 @@ class SparqlHelper:
             projected = [str(v) for v in prepareQuery(query).algebra["PV"]]
             if not projected:
                 raise QueryError("No projected variables to order for pagination")
+
+            def aggregate(node: Any) -> bool:
+                """Check whether a parsed expression uses an aggregate function."""
+                if str(getattr(node, "name", "")).startswith("Aggregate_"):
+                    return True
+                children = (
+                    node.values()
+                    if isinstance(node, dict)
+                    else node
+                    if isinstance(node, (list, tuple, ParseResults))
+                    else ()
+                )
+                return any(aggregate(child) for child in children)
+
+            # Groups are unique by their keys. Aggregate aliases are not used for the
+            # order, because some engines (Virtuoso) refuse them next to GROUP BY.
+            if "groupby" in parsed:
+                keys = []
+                for condition in parsed["groupby"]["condition"]:
+                    name = (
+                        condition if isinstance(condition, Variable) else dict.get(condition, "var")
+                    )
+                    if name is None:
+                        raise QueryError("Name each GROUP BY expression (expr AS ?var) to page it")
+                    keys.append(str(name))
+                projected = keys
+            elif aggregate(parsed["projection"]):
+                projected = []  # One group gives one row.
             # Locate the outer slice with the SPARQL grammar. Do not regex-rewrite
             # LIMIT/OFFSET inside strings, nested queries, IRIs or comments.
             body = (
@@ -1333,12 +1361,9 @@ class SparqlHelper:
                     f'COALESCE(ENCODE_FOR_URI(LANG(?{v})), ""), "|", '
                     f'COALESCE(ENCODE_FOR_URI(STR(DATATYPE(?{v}))), ""))), "U"))'
                 )
-            base = (
-                parts["body"]
-                + "\n"
-                + ("" if "orderby" in parsed else "ORDER BY ")
-                + " ".join(order)
-            )
+            base = parts["body"]
+            if order:
+                base += "\n" + ("" if "orderby" in parsed else "ORDER BY ") + " ".join(order)
             template = (
                 self.escape_sparql_for_format(base)
                 + "\nOFFSET {offset}\nLIMIT {limit}\n"
