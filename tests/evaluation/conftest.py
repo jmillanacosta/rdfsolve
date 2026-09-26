@@ -3,7 +3,7 @@
 import json
 
 import pytest
-from rdflib import DC, DCTERMS, FOAF, RDF, RDFS, Graph, Literal, Namespace
+from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, Graph, Literal, Namespace
 
 E = Namespace("https://evaluation-test.invalid/")
 
@@ -21,6 +21,10 @@ def graph():
         g.add((event, DCTERMS.description, Literal("Shared text")))
     g.add((E.gene, RDFS.label, Literal("TPO")))
     g.add((E.gene, E.hgnc, Literal("11040")))
+    g.add((E.gene, OWL.sameAs, E.ncbi))
+    g.add((E.ncbi, E.ncbiId, Literal("7173")))
+    g.add((E.gene, E.source, Literal("HGNC")))
+    g.add((E.ncbi, E.source, Literal("HGNC")))
     return g
 
 

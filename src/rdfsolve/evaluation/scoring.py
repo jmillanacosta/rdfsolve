@@ -2,10 +2,11 @@
 
 Level "term": a cell matches only the same RDF term (a plain and an xsd:string literal are
 the same term). Level "resource": a cell matches when both cells show the same resource
-(its IRI, a name, an identifier or a page of it), and numbers match by value. At both
-levels, equal rows count once, and each answer row can match one reference row: the score
-uses a maximum matching of rows. At level "resource", the fields that replace the fields of
-the reference are counted, for example "keid: rdfs:label -> dc:identifier".
+(its IRI, a name, an identifier, a page or a key field of it), and numbers match by value.
+Level "linked": as "resource", and resources linked by owl:sameAs or skos:exactMatch also
+match. At each level, equal rows count once, and each answer row can match one reference
+row: the score uses a maximum matching of rows. The fields that replace the fields of the
+reference are counted at level "resource", for example "keid: label -> identifier".
 """
 
 from __future__ import annotations
@@ -17,9 +18,9 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from rdfsolve.evaluation.views import NUMBERS, Key, View, resolve, term_key
+from rdfsolve.evaluation.views import FIELD_ORDER, NUMBERS, Key, View, resolve, term_key
 
-LEVELS = ("term", "resource")
+LEVELS = ("term", "resource", "linked")
 Row = dict[str, dict[str, str]]
 Cell = frozenset[Any]
 
@@ -61,13 +62,14 @@ def _cell(term: dict[str, str] | None, views: dict[Key, frozenset[View]], level:
     if term is None:
         return frozenset({("unbound",)})
     key = term_key(term)
-    if level == "resource" and key[3] in NUMBERS:
+    if level != "term" and key[3] in NUMBERS:
         try:
             return frozenset({("number", Decimal(key[1]))})
         except InvalidOperation:
             pass
-    if level == "resource" and key in views:
-        return frozenset(("entity", view.entity) for view in views[key])
+    shown = [v for v in views.get(key, ()) if level == "linked" or v.kind != "link"]
+    if level != "term" and shown:
+        return frozenset(("entity", view.entity) for view in shown)
     return frozenset({key})
 
 
@@ -154,20 +156,19 @@ def _substitution(
     if ref is None or ans is None or term_key(ref) == term_key(ans):
         return []
     ref_views, ans_views = (
-        views.get(term_key(ref), frozenset()),
-        views.get(term_key(ans), frozenset()),
+        [v for v in views.get(term_key(cell), ()) if v.kind != "link"] for cell in (ref, ans)
     )
     shared = {v.entity for v in ref_views} & {v.entity for v in ans_views}
-    order = {"self": 0}
-    before = sorted(
-        {_short(v.field) for v in ref_views if v.entity in shared},
-        key=lambda f: (order.get(f, 1), f),
-    )
-    after = sorted(
-        {_short(v.field) for v in ans_views if v.entity in shared},
-        key=lambda f: (order.get(f, 1), f),
-    )
-    before, after = before or ["value"], after or ["value"]
+
+    def best(found: list[View]) -> str:
+        """Give the preferred field of the views of the shared resource."""
+        fields = sorted(
+            {v.field for v in found if v.entity in shared},
+            key=lambda f: (FIELD_ORDER.get(f, 99), f),
+        )
+        return _short(fields[0]) if fields else "value"
+
+    before, after = [best(ref_views)], [best(ans_views)]
     return [f"{column}: {before[0]} -> {after[0]}"]
 
 
@@ -176,8 +177,9 @@ def score_levels(
     answer: Sequence[Row],
     columns: Sequence[str],
     select: Callable[[str], list[dict[str, Any]]],
+    key_cache: dict[str, bool] | None = None,
 ) -> dict[str, Score]:
     """Resolve the views of all cells with select, and score at each level."""
     cells = [row[c] for rows in (reference, answer) for row in rows for c in columns if c in row]
-    views = resolve(cells, select)
+    views = resolve(cells, select, key_cache=key_cache)
     return {level: score(reference, answer, columns, level=level, views=views) for level in LEVELS}

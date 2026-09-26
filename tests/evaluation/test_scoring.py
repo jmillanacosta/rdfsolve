@@ -40,3 +40,12 @@ def test_unbound_cells_duplicate_rows_and_empty_answers():
 def test_maximum_matching_finds_augmenting_paths():
     assert len(maximum_matching([[0, 1], [0], [1, 2]], 3)) == 3
     assert maximum_matching([[0], [0]], 1) in ({0: 0}, {1: 0})
+
+
+def test_linked_records_match_only_at_the_linked_level(select):
+    reference = [{"gene": uri(E.gene), "id": text("11040")}]
+    answer = [{"gene": uri(E.ncbi), "id": uri(E.gene)}]
+    levels = score_levels(reference, answer, ["gene", "id"], select)
+    assert [levels[level].matched for level in ("term", "resource", "linked")] == [0, 0, 1]
+    same = score_levels(reference, [{"gene": uri(E.gene), "id": uri(E.gene)}], ["gene", "id"], select)
+    assert same["resource"].exact and same["resource"].substitutions == {"id: hgnc -> self": 1}
