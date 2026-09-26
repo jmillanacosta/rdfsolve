@@ -280,29 +280,39 @@ def rdf_tuples(rows, columns):
     }
 
 
-def evaluate(answer, expected, columns):
-    """Score complete answers against independent reference tuples."""
+def evaluate(answer, reference, columns, select):
+    """Score an answer against the reference rows by RDF term and by resource.
+
+    select runs a SELECT on the source; it resolves the resources that the values show.
+    An answer that is not complete scores 0. f1 and exact are the resource level.
+    """
+    from rdfsolve.evaluation.scoring import score_levels
+
     state, bindings = (
         (answer["state"], answer["bindings"])
         if isinstance(answer, dict)
         else (answer.state, answer.bindings)
     )
-    actual = rdf_tuples(bindings, columns)
-    tp = len(actual & expected)
-    precision = tp / len(actual) if actual else float(not expected)
-    recall = tp / len(expected) if expected else float(not actual)
     complete = state == "complete"
-    return {
-        "expected": len(expected),
-        "actual": len(actual),
-        "true_positive": tp,
-        "precision": precision if complete else 0,
-        "recall": recall if complete else 0,
-        "f1": (2 * tp / (len(actual) + len(expected)) if actual or expected else 1)
-        if complete
-        else 0,
-        "exact": complete and actual == expected,
-    }
+    scores = score_levels(reference, bindings if complete else [], columns, select)
+    result = {"complete": complete, "expected": scores["term"].expected}
+    for level, found in scores.items():
+        result.update(
+            {
+                f"{level}_actual": found.actual,
+                f"{level}_matched": found.matched,
+                f"{level}_precision": found.precision if complete else 0.0,
+                f"{level}_recall": found.recall if complete else 0.0,
+                f"{level}_f1": found.f1 if complete else 0.0,
+                f"{level}_exact": complete and found.exact,
+            }
+        )
+    result.update(
+        f1=result["resource_f1"],
+        exact=result["resource_exact"],
+        substitutions=dict(scores["resource"].substitutions),
+    )
+    return result
 
 
 async def run_worker(command, payload, directory, seconds):
