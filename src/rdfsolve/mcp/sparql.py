@@ -25,12 +25,17 @@ def _masked(text: str) -> str:
     return PROTECTED.sub(lambda match: " " * len(match.group()), text)
 
 
-def add_prefixes(text: str, prefixes: dict[str, str]) -> tuple[str, list[str]]:
-    """Declare the known prefixes that a query uses but does not declare."""
+def undeclared_prefixes(text: str) -> list[str]:
+    """List the prefixes that a query uses but does not declare, in order of use."""
     masked = _masked(text)
     declared = set(re.findall(r"(?i)\bPREFIX\s+([A-Za-z][\w.-]*)?\s*:", masked))
     used = dict.fromkeys(match.group(1) or "" for match in _CURIE.finditer(masked))
-    added = [prefix for prefix in used if prefix not in declared and prefix in prefixes]
+    return [prefix for prefix in used if prefix not in declared]
+
+
+def add_prefixes(text: str, prefixes: dict[str, str]) -> tuple[str, list[str]]:
+    """Declare the known prefixes that a query uses but does not declare."""
+    added = [prefix for prefix in undeclared_prefixes(text) if prefix in prefixes]
     header = "".join(f"PREFIX {prefix}: <{prefixes[prefix]}>\n" for prefix in added)
     return header + text, added
 

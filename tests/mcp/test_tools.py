@@ -78,3 +78,11 @@ def test_a_source_error_in_the_diagnosis_keeps_the_empty_result(toolbox, monkeyp
     result = toolbox.run("SELECT ?aop ?label WHERE { ?aop ex:none ?label }")
     assert result["rows"] == []
     assert result["notes"][-1] == "The triple patterns could not be checked one by one: source error."
+
+
+def test_prefixes_of_bioregistry_complete_a_query_with_a_note(toolbox):
+    result = toolbox.run("SELECT ?x WHERE { ?x a edam:data_1027 }")
+    assert result["rows"] == []
+    assert "Namespaces from Bioregistry: edam: <http://edamontology.org/>." in result["notes"]
+    with pytest.raises(ValueError, match="Unknown namespace prefix"):
+        toolbox.run("SELECT ?x WHERE { ?x a unregistered:thing }")

@@ -8,6 +8,7 @@ from rdfsolve.mcp.sparql import (
     has_limit,
     parse,
     required_triples,
+    undeclared_prefixes,
     terms,
     with_graphs,
 )
@@ -21,6 +22,7 @@ def test_only_used_and_undeclared_known_prefixes_are_added():
     assert added == ["rdfs"], "Declared, quoted, bracketed and unknown prefixes are left alone"
     assert completed.startswith("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n")
     assert add_prefixes("SELECT ?s WHERE { ?s ?p ?o }", PREFIXES) == ("SELECT ?s WHERE { ?s ?p ?o }", [])
+    assert undeclared_prefixes(text) == ["rdfs", "un"]
 
 
 def test_parse_accepts_select_only_on_this_source():

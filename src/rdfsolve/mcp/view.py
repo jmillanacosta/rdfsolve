@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from difflib import get_close_matches
+from functools import lru_cache
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -34,6 +35,15 @@ _LOCAL = re.compile(r"[\w-](?:[\w.-]*[\w-])?")
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 # A route is a list of steps: (from class, property, to class, forward, count).
 Step = tuple[str, str, str, bool, int]
+
+
+@lru_cache(maxsize=1024)
+def registered_namespace(prefix: str) -> str | None:
+    """Give the RDF namespace that Bioregistry records for a prefix, if any."""
+    import bioregistry
+
+    resource = bioregistry.get_resource(prefix)
+    return resource.get_rdf_uri_prefix() if resource else None
 
 
 def _key(text: str) -> str:

@@ -17,8 +17,16 @@ from typing import TYPE_CHECKING, Any
 from rdfsolve.client.hydration import class_iri
 from rdfsolve.client.query_fragments import identifier
 from rdfsolve.client.retrieval import validate_outputs
-from rdfsolve.mcp.sparql import add_prefixes, diagnose, has_limit, parse, terms, with_graphs
-from rdfsolve.mcp.view import SchemaView
+from rdfsolve.mcp.sparql import (
+    add_prefixes,
+    diagnose,
+    has_limit,
+    parse,
+    terms,
+    undeclared_prefixes,
+    with_graphs,
+)
+from rdfsolve.mcp.view import SchemaView, registered_namespace
 from rdfsolve.sparql_helper import EndpointError, QueryError
 
 if TYPE_CHECKING:
@@ -192,9 +200,21 @@ class Toolbox:
 
     def _prepare(self, text: str) -> tuple[str, Any, list[str]]:
         """Complete the prefixes of a query, check it, and give notes on unknown terms."""
-        text, added = add_prefixes(text, self.view.prefixes)
+        namespaces = dict(self.view.prefixes)
+        registered: dict[str, str] = {}
+        for prefix in undeclared_prefixes(text):
+            namespace = None if prefix in namespaces else registered_namespace(prefix)
+            if namespace:
+                namespaces[prefix] = registered[prefix] = namespace
+        text, added = add_prefixes(text, namespaces)
         query = parse(text)
         notes = [f"Added PREFIX for {', '.join(added)}."] if added else []
+        if registered:
+            notes.append(
+                "Namespaces from Bioregistry: "
+                + ", ".join(f"{p}: <{ns}>" for p, ns in registered.items())
+                + "."
+            )
         classes, properties = terms(query)
         for iri, known, kind in (
             *((c, self.view.classes, "class") for c in sorted(classes)),
