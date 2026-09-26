@@ -1,9 +1,11 @@
+import pyoxigraph as ox
 import pytest
 from rdflib import BNode, Dataset, Graph, Literal, Namespace, RDF, XSD
 from rdflib.compare import isomorphic
 
 from rdfsolve import MinedSchema, SchemaMiner
 from rdfsolve.api import Client
+from rdfsolve.api import to_oxigraph
 from rdfsolve.local_rdf import LocalRdf
 
 E = Namespace("https://example.org/")
@@ -24,9 +26,12 @@ def test_local_backends_preserve_graphs_terms_and_schema():
     blank_graph = BNode("graph")
     data.graph(blank_graph).add((E.blank, E.text, Literal("blank graph")))
     inputs = set(data.quads((None, None, None, None)))
+    converted = to_oxigraph(data)
+    outside = ox.Quad(ox.NamedNode(str(E.s)), ox.NamedNode(str(E.text)), ox.Literal("outside"), ox.NamedNode(str(E.other)))
+    assert len(converted) == len(inputs) and outside in converted, "Named graphs stay named"
     schemas = []
-    for backend in ("rdflib", "oxigraph"):
-        engine = LocalRdf(data, backend=backend)
+    for source, backend in ((data, "rdflib"), (data, "oxigraph"), (converted, "oxigraph")):
+        engine = LocalRdf(source, backend=backend)
         assert engine.backend == backend
         assert {str(row.o) for row in engine.query("SELECT ?o WHERE { ?s ?p ?o }")} == {"default"}
         query = f"SELECT ?o FROM <{E.data}> WHERE {{ <{E.s}> <{E.text}> ?o }}"
@@ -35,7 +40,7 @@ def test_local_backends_preserve_graphs_terms_and_schema():
         found = engine.query(f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{E.data}> {{ ?s ?p ?o }} }}")
         assert isomorphic(found.graph, graph)
         assert list(engine.query(f"SELECT ?o WHERE {{ GRAPH ?g {{ <{E.blank}> ?p ?o }} }}"))[0].o == Literal("blank graph")
-        with SchemaMiner.from_graph(data, local_backend=backend,
+        with SchemaMiner.from_graph(source, local_backend=backend,
                 graph_uris=[str(E.data)], type_context_graph_uris=[str(E.context)],
                 delay=0) as miner:
             schema = miner.mine("backends")
@@ -45,7 +50,7 @@ def test_local_backends_preserve_graphs_terms_and_schema():
             assert any(p.object_class == str(E.Target) for p in schema.patterns)
             assert all(p.graph_uri == str(E.data) for p in schema.structural_patterns)
             schemas.append(schema)
-        with Client(schema, data, local_backend=backend, graph_uris=[str(E.data)]) as client:
+        with Client(schema, source, local_backend=backend, graph_uris=[str(E.data)]) as client:
             record = client.get(client.model(str(E.Record)), str(E.s))
             assert str(record.text[0]) == "hello"
             assert client.session_metadata()["local_backend"]["engine"] == backend
@@ -58,6 +63,7 @@ def test_local_backends_preserve_graphs_terms_and_schema():
             for field in ("patterns", "structural_patterns", "collections")
         }
     assert observations(schemas[0]) == observations(schemas[1]), "Backend changed schema evidence"
+    assert observations(schemas[2]) == observations(schemas[1]), "Oxigraph data needs no RDFLib graph"
     void = schemas[0].to_void_graph().serialize(format="turtle")
     assert observations(MinedSchema.from_void(void, local_backend="rdflib")) == (
         observations(MinedSchema.from_void(void, local_backend="oxigraph"))

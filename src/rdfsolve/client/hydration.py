@@ -17,6 +17,7 @@ from platform import python_version
 from typing import Any, TypeVar
 from uuid import uuid4
 
+import pyoxigraph as ox
 from pydantic import BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
 from rdflib import Graph, Literal
@@ -96,7 +97,7 @@ class Hydrator:
     def __init__(
         self,
         schema: MinedSchema,
-        source: str | SparqlHelper | Graph | None = None,
+        source: str | SparqlHelper | Graph | ox.Dataset | ox.Store | None = None,
         *,
         graph_uris: list[str] | None = None,
         timeout: float = 30,
@@ -109,7 +110,8 @@ class Hydrator:
         """Create models and budgets without making requests.
 
         None graph scope uses the schema scope. Pass [] for the default graph.
-        A supplied helper remains owned by the caller.
+        A supplied helper remains owned by the caller. Without a source or a schema
+        endpoint, the client writes records but cannot query.
         """
         if any(type(v) is not int or v < 1 for v in (batch_size, max_rows, max_subjects)):
             raise ValueError("Use positive integer hydration budgets")
@@ -120,8 +122,10 @@ class Hydrator:
             _iri(graph)
         if source is None:
             source = schema.about.endpoint
-        if source is None or source == "":
-            raise ValueError("Supply an endpoint, helper, or local RDF graph")
+        # Without a data source, records can be written but nothing can be queried.
+        self.queryable = source not in (None, "")
+        if not self.queryable:
+            source = Graph()
         self._owns_helper = isinstance(source, str)
         self.source = (
             SparqlHelper(source, timeout=timeout, max_retries=2, inter_request_delay=0.5)
@@ -129,7 +133,9 @@ class Hydrator:
             else source
         )
         self._local_rdf = (
-            LocalRdf(self.source, backend=local_backend) if isinstance(self.source, Graph) else None
+            LocalRdf(self.source, backend=local_backend)
+            if isinstance(self.source, (Graph, ox.Dataset, ox.Store))
+            else None
         )
         self.models = build_pydantic_classes(schema, contract=contract)
         self.batch_size = batch_size
@@ -387,14 +393,24 @@ class Hydrator:
         )
         return query[:position] + dataset + " " + named + " " + query[position:]
 
+    @property
+    def is_local(self) -> bool:
+        """Return True when the source is local RDF, not an endpoint."""
+        return self._local_rdf is not None
+
     def _select(self, query: str, *, exhaustive: bool = False) -> list[dict[str, Any]]:
         """Execute one bounded query and retain its text for inspection."""
+        if not self.queryable:
+            raise ValueError(
+                "No data source to query. Give the client an endpoint, a SPARQL helper or an "
+                "RDF graph."
+            )
         query = self._scope_query(query)
         self.queries.append(query)
         self.last_query_execution = {
-            "strategy": "local_graph" if isinstance(self.source, Graph) else "single_response"
+            "strategy": "local_graph" if self.is_local else "single_response"
         }
-        if isinstance(self.source, Graph):
+        if self.is_local:
             if self._local_rdf is None:
                 raise RuntimeError("Local RDF backend is not initialized")
             record = QueryRecord(query, "SELECT", "", success=False, purpose="hydrate")
@@ -413,7 +429,7 @@ class Hydrator:
                 raise
             finally:
                 record.elapsed_seconds = time.monotonic() - started
-        else:
+        elif isinstance(self.source, SparqlHelper):
             try:
                 result = self.source.select_with_fallback(
                     query, purpose="hydrate", **({"exhaustive": True} if exhaustive else {})
@@ -422,6 +438,8 @@ class Hydrator:
                 self.last_query_execution = deepcopy(
                     getattr(self.source, "last_select_execution", {})
                 )
+        else:
+            raise TypeError(f"Unknown data source: {type(self.source).__name__}")
         try:
             rows = result["results"]["bindings"]
         except (KeyError, TypeError) as error:

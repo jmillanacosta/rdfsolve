@@ -12,6 +12,7 @@ from rdflib import Graph
 
 from rdfsolve.client.exploration import field_targets
 from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.sparql_helper import SparqlHelper
 from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
@@ -146,7 +147,9 @@ def build_registry(client: Client, source_id: str) -> Registry:
         source_version=schema.about.source_version_iri or schema.about.source_version,
         binding={
             "protocol": "rdf",
-            "endpoint": None if isinstance(client.source, Graph) else client.source.endpoint_url,
+            "endpoint": client.source.endpoint_url
+            if isinstance(client.source, SparqlHelper)
+            else None,
             "graph_uris": list(client.graph_uris),
             "scope": "named graphs separately" if client.graph_uris else "default graph",
         },

@@ -11,6 +11,7 @@ from rdfsolve.client.ontology import OntologyLookup
 from rdfsolve.client.query import execute_sparql
 from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
 from rdfsolve.client.retrieval import Requirement
+from rdfsolve.local_rdf import to_oxigraph
 from rdfsolve.mappings.identifiers import resolve_identifiers
 from rdfsolve.metadata import query_metadata
 from rdfsolve.mining.miner import mine_schema
@@ -53,6 +54,7 @@ __all__ = [
     "mine_schema",
     "query_metadata",
     "resolve_identifiers",
+    "to_oxigraph",
 ]
 
 

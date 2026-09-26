@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+import pyoxigraph as ox
 from rdflib import Graph
 from typing_extensions import Self
 
@@ -169,13 +170,26 @@ class SchemaMiner:
 
     @classmethod
     def from_graph(
-        cls, graph: Graph, *, endpoint_url: str = "urn:rdfsolve:local", **kwargs: Any
+        cls,
+        graph: Graph | ox.Dataset | ox.Store,
+        *,
+        endpoint_url: str = "urn:rdfsolve:local",
+        **kwargs: Any,
     ) -> Self:
-        """Mine a bounded RDF snapshot using the existing SPARQL mining strategy."""
+        """Mine a bounded RDF snapshot using the existing SPARQL mining strategy.
+
+        The snapshot is an RDFLib graph or dataset, or Oxigraph data (for example
+        ``pyoxigraph.Dataset(pyoxigraph.parse(path="data.ttl"))``).
+        """
         from rdflib import Dataset
 
         from rdfsolve.mining.local_graph import LocalGraphHelper
 
+        if isinstance(graph, (ox.Dataset, ox.Store)):
+            miner = cls(endpoint_url, **kwargs)
+            miner._helper.close()
+            miner._helper = LocalGraphHelper(endpoint_url, graph, backend=miner.local_backend)
+            return miner
         dataset = graph if isinstance(graph, Dataset) else Dataset()
         if dataset is not graph:
             for prefix, namespace in graph.namespaces():
