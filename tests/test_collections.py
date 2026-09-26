@@ -1,4 +1,6 @@
 import json
+import sys
+from types import ModuleType
 
 import pytest
 from rdflib import RDF, XSD, BNode, Dataset, Graph, Literal, Namespace
@@ -86,11 +88,11 @@ def test_collection_profiles_and_ordered_records(tmp_path):
     snapshot = tmp_path / "approved-schema.json"
     snapshot.write_text(json.dumps(observed.to_dict()))
     approved = MinedSchema.from_json(snapshot)
-    namespace = {"__name__": "generated_authoring_workflow"}
-    exec(compile(approved.to_pydantic(contract=True), "models.py", "exec"), namespace)
+    module = sys.modules.setdefault("generated_models", ModuleType("generated_models"))
+    exec(compile(approved.to_pydantic(contract=True), "models.py", "exec"), module.__dict__)
     models = {
         value.rdf_class_iri: value
-        for value in namespace.values()
+        for value in vars(module).values()
         if isinstance(value, type) and hasattr(value, "rdf_class_iri")
     }
     lab = models["http://xmlns.com/foaf/0.1/Organization"](

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable, Iterable
+from functools import lru_cache
 
 _log = logging.getLogger(__name__)
 
@@ -33,9 +34,19 @@ def _prefix_from_ns(ns: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_]", "", slug)[:10]
 
 
+def curie_from_prefixes(uri: str, prefixes: dict[str, str]) -> tuple[str, str, str] | None:
+    """Return ``(curie, prefix, namespace)`` from the longest matching namespace, or None."""
+    matches = [(ns, pfx) for pfx, ns in prefixes.items() if ns and uri.startswith(ns)]
+    if not matches:
+        return None
+    namespace, prefix = max(matches, key=lambda match: len(match[0]))
+    return f"{prefix}:{uri[len(namespace) :]}", prefix, namespace
+
+
 # Public API: URI -> CURIE
 
 
+@lru_cache(maxsize=65536)
 def uri_to_curie(uri: str) -> tuple[str, str, str]:
     """Convert a URI to ``(curie, prefix, namespace)`` via bioregistry.
 

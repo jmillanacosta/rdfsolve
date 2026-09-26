@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import keyword
 import re
+import sys
 from collections import defaultdict
 from hashlib import sha256
+from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
-from rdfsolve._uri import uri_to_curie
+from rdfsolve._uri import curie_from_prefixes, uri_to_curie
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.exporters.text import clip_description
 
@@ -27,6 +29,20 @@ def _identifier(text: str, *, class_name: bool = False) -> str:
     if keyword.iskeyword(name):
         name += "_"
     return name
+
+
+_PLAIN_TYPES = {
+    "str",
+    "int",
+    "float",
+    "bool",
+    "Decimal",
+    "date",
+    "datetime",
+    "time",
+    "bytes",
+    "Any",
+}
 
 
 def _unique_name(base: str, iri: str, used: set[str], prefixed: str | None = None) -> str:
@@ -46,9 +62,11 @@ def _value_type(pattern: SchemaPattern, names: dict[str, str]) -> str:
     if pattern.object_class == "BlankNode":
         return "RDFResource | str"
     if pattern.object_class == "Resource":
-        return "str"
+        return "RDFResource | str"
     if pattern.object_class != "Literal":
         return f"{names[pattern.object_class]} | str"
+    if pattern.datatype == "http://www.w3.org/2000/01/rdf-schema#Literal":
+        return "Any"  # any literal: its datatype decides the Python value
     datatype = (pattern.datatype or "").rsplit("#", 1)[-1]
     if datatype in {
         "integer",
@@ -127,18 +145,24 @@ def to_pydantic(
         "list",
         "DATASET_METADATA",
     }
+    prefixes = schema.get_prefixes()
+
+    def curie(iri: str) -> tuple[str, str, str]:
+        """Return the CURIE parts from the prefixes of the schema, else from Bioregistry."""
+        return curie_from_prefixes(iri, prefixes) or uri_to_curie(iri)
+
     names: dict[str, str] = {}
-    # Classes with rows name themselves first; a class seen only as a value yields its name.
+    # Classes with rows get their names first. A class that is only a value gets a prefix.
     for iri in sorted(schema.get_classes(), key=lambda i: (i not in grouped, i)):
-        curie, prefix, _ = uri_to_curie(iri)
-        meaningful = sorted(label for label in labels[iri] if label not in {iri, curie})
-        base = _identifier(meaningful[0] if meaningful else curie, class_name=True)
+        curie_text, prefix, _ = curie(iri)
+        meaningful = sorted(label for label in labels[iri] if label not in {iri, curie_text})
+        base = _identifier(meaningful[0] if meaningful else curie_text, class_name=True)
         prefixed = _identifier(f"{prefix} {base}", class_name=True) if prefix else None
         names[iri] = _unique_name(base, iri, used, prefixed)
 
     collections: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for collection_profile in schema.collections or []:
-        if collection_profile.list_count:
+        if collection_profile.list_count or collection_profile.evidence_source == "vocabulary":
             collections[collection_profile.subject_class, collection_profile.property_uri].append(
                 collection_profile.model_dump(mode="json")
             )
@@ -186,14 +210,14 @@ def to_pydantic(
         "",
         "from datetime import date, datetime, time",
         "from decimal import Decimal",
-        "from typing import Any, ClassVar",
+        "from typing import Annotated, Any, ClassVar",
         "from pydantic import BaseModel, ConfigDict, Field",
-        "from rdfsolve.client.authoring import RDFRecord",
+        "from rdfsolve.client.authoring import LinkedValue, RDFRecord",
         "from rdfsolve.client.collections import RDFList",
         "from rdfsolve.schema_models.enrichment import RdfTerm",
         "",
         f"DATASET_METADATA = {metadata!r}",
-        f"RDF_PREFIXES = {schema.get_prefixes()!r}",
+        f"RDF_PREFIXES = {prefixes!r}",
         f"RDF_NAVIGATION = {routes!r}",
         f"RDF_NAVIGATION_SUMMARY = {summary!r}",
         f"SHACL_PROFILES = {profiles!r}",
@@ -201,7 +225,7 @@ def to_pydantic(
         "class RDFResource(RDFRecord):",
         "    rdf_prefixes: ClassVar[dict[str, str]] = RDF_PREFIXES",
         f"    rdf_contract: ClassVar[bool] = {contract!r}",
-        f"    model_config = ConfigDict(populate_by_name=True, extra={'forbid' if contract else 'allow'!r})",
+        f"    model_config = ConfigDict(defer_build=True, populate_by_name=True, extra={'forbid' if contract else 'allow'!r})",
         "",
     ]
     parents = {iri: [p for p in schema.class_hierarchy.get(iri, []) if p in names] for iri in names}
@@ -211,8 +235,20 @@ def to_pydantic(
         if not ready:
             raise ValueError("The class hierarchy has a cycle")
         ordered.extend(ready)
+    examples_by_field: dict[tuple[str, str], list[Any]] = defaultdict(list)
+    for example in schema.enrichment.examples:
+        examples_by_field[example.subject_class, example.property_uri].append(example)
+    # Per class: property -> (field name, value signature) of every field, own or inherited.
+    available: dict[str, dict[str, tuple[str, str]]] = {}
     for iri in ordered:
         name = names[iri]
+        inherited: dict[str, tuple[str, str] | None] = {}
+        for parent in parents[iri]:
+            for prop, definition in available[parent].items():
+                inherited[prop] = (
+                    definition if inherited.get(prop, definition) == definition else None
+                )
+        available[iri] = {p: d for p, d in inherited.items() if d is not None}
         bases = ", ".join(names[p] for p in parents[iri]) or "RDFResource"
         class_examples = [
             {"@id": term.json_value()} for term in schema.enrichment.class_examples.get(iri, [])
@@ -247,12 +283,12 @@ def to_pydantic(
                 "to_graph",
             }
         )
-        namespace = uri_to_curie(iri)[2]
-        # Properties from the class's own vocabulary keep plain names; others take a prefix.
+        namespace = curie(iri)[2]
+        # Properties of the vocabulary of the class keep plain names. Others get a prefix.
         for prop, patterns in sorted(
             grouped[iri].items(), key=lambda item: (not item[0].startswith(namespace), item[0])
         ):
-            _, prefix, _ = uri_to_curie(prop)
+            _, prefix, _ = curie(prop)
             field = _identifier(re.split(r"[/#:]", prop)[-1])
             if field.startswith("model_"):
                 field = "prop_" + field
@@ -273,29 +309,41 @@ def to_pydantic(
                     + "]"
                 )
             value_type = " | ".join(types)
+            signature = repr(
+                (
+                    sorted((p.object_class, p.datatype or "") for p in patterns),
+                    sorted(
+                        repr({k: v for k, v in c.items() if k != "subject_class"})
+                        for c in collection_profiles
+                    ),
+                )
+            )
+            if inherited.get(prop) == (field, signature):
+                continue  # The parent class defines this field in the same way.
+            for other, (used_name, _) in list(available[iri].items()):
+                if used_name == field:
+                    del available[iri][other]  # This field name now means another property.
+            available[iri][prop] = (field, signature)
             description = schema.enrichment.description(prop) or "; ".join(
                 sorted({p.property_label for p in patterns if p.property_label})
             )
             description = clip_description(description, trim_descriptions) or ""
             # Mining shows values, not a maximum count per subject.
-            examples = [
-                example.value.json_value()
-                for example in schema.enrichment.examples
-                if example.subject_class == iri and example.property_uri == prop
-            ]
+            field_examples = examples_by_field[iri, prop]
+            examples = [example.value.json_value() for example in field_examples]
             rdf_metadata = {
                 "rdf_property_iri": prop,
                 "rdf_path": {"operator": "predicate", "iri": prop, "items": []},
                 "rdf_patterns": [p.model_dump(mode="json") for p in patterns],
                 "rdf_collections": collection_profiles,
-                "rdf_examples": [
-                    e.model_dump(mode="json")
-                    for e in schema.enrichment.examples
-                    if e.subject_class == iri and e.property_uri == prop
-                ],
+                "rdf_examples": [e.model_dump(mode="json") for e in field_examples],
             }
+            hint = f"{value_type} | list[{value_type}] | None"
+            if any(t not in _PLAIN_TYPES for t in types):
+                # Linked records are checked by rdfsolve; the hint keeps the classes.
+                hint = f"Annotated[{hint}, LinkedValue]"
             lines.append(
-                f"    {field}: {value_type} | list[{value_type}] | None = Field(None, "
+                f"    {field}: {hint} = Field(None, "
                 f"alias={prop!r}, description={description!r}, examples={examples!r}, json_schema_extra={rdf_metadata!r})"
             )
         seen_paths = set(grouped[iri])
@@ -332,23 +380,28 @@ def to_pydantic(
                     f"    {field}: Any = Field(None, description={description!r}, json_schema_extra={path_metadata!r})"
                 )
         lines.append("")
-    for name in names.values():
-        lines.append(f"{name}.model_rebuild(_types_namespace=globals())")
     return "\n".join(lines) + "\n"
 
 
 def build_pydantic_classes(
     schema: MinedSchema, *, contract: bool = False
 ) -> dict[str, type[BaseModel]]:
-    """Load only code produced by this exporter, never supplied Python source."""
-    namespace: dict[str, Any] = {"__name__": "rdfsolve.generated"}
-    exec(  # noqa: S102
-        compile(to_pydantic(schema, contract=contract), "<rdfsolve generated models>", "exec"),
-        namespace,
-    )
+    """Load only code produced by this exporter, never supplied Python source.
+
+    Each distinct schema runs once, as module ``rdfsolve.generated_<digest>``. Models build
+    their validators on first use, resolving names in that module, so a large vocabulary
+    loads quickly and clients of one schema share its classes.
+    """
+    code = to_pydantic(schema, contract=contract)
+    module_name = "rdfsolve.generated_" + sha256(code.encode()).hexdigest()[:16]
+    module = sys.modules.get(module_name)
+    if module is None:
+        module = ModuleType(module_name)
+        exec(compile(code, "<rdfsolve generated models>", "exec"), module.__dict__)  # noqa: S102
+        sys.modules[module_name] = module
     return {
         name: value
-        for name, value in namespace.items()
+        for name, value in vars(module).items()
         if isinstance(value, type)
         and issubclass(value, BaseModel)
         and hasattr(value, "rdf_class_iri")
