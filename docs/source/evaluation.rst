@@ -79,7 +79,9 @@ mode under weakly informative priors (``mu, delta ~ N(0, 2.5^2)``; ``sigma_u`` a
 ``sigma_w`` half-normal with scale 2), with the marginal likelihood from Gauss-Hermite
 quadrature. The priors keep the estimates finite when a small pilot separates the
 conditions completely. ``power_table`` simulates studies with a number of questions and
-attempts and gives the share in which the sign-flip test rejects at the chosen level; at
-``delta = 0`` this share is the simulated type I error. ``minimum_detectable`` gives the
+attempts and gives the share in which the sign-flip test rejects at the chosen level. With a
+question-dependent effect, ``delta = 0`` does not give equal mean success rates;
+``null_shift`` gives the shift that does, and the simulated type I error is the share of
+rejections at that shift. ``minimum_detectable`` gives the
 smallest difference in mean success rate with power 0.8, and ``sensitivity`` gives it for
 other values of ``sigma_u``.

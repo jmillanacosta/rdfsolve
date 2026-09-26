@@ -14,6 +14,7 @@ from rdfsolve.evaluation.statistics import (
     holm,
     icc,
     minimum_detectable,
+    null_shift,
     power_table,
     sensitivity,
     sign_flip,
@@ -94,3 +95,12 @@ def test_sensitivity_gives_detectable_differences_for_each_spread():
     found = table.set_index("sigma_u")
     assert list(found.index) == [0.5, 3.0]
     assert found.delta[0.5] < found.delta[3.0], "A larger spread of difficulty needs a larger effect"
+
+
+def test_the_null_shift_gives_equal_mean_rates():
+    model = Components(mu=-2.5, delta=1.0, sigma_u=1.0, sigma_w=2.0)
+    assert model.rates(0.0)[1] > model.rates(0.0)[0] + 0.02, "A question-dependent effect moves the mean"
+    shift = null_shift(model)
+    rate_a, rate_b = model.rates(shift)
+    assert shift < 0 and rate_b == pytest.approx(rate_a, abs=1e-3)
+    assert null_shift(Components(0.0, 0.0, 1.0, 0.0)) == pytest.approx(0.0, abs=1e-3)

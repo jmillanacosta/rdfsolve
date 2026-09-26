@@ -216,6 +216,22 @@ class Components:
         return float(_expit(self.mu + u).mean()), float(_expit(self.mu + shift + u + w).mean())
 
 
+def null_shift(components: Components, *, tolerance: float = 1e-4) -> float:
+    """Give the shift (delta) at which both conditions have the same mean success rate.
+
+    With a question-dependent effect (sigma_w > 0), a shift of 0 does not give equal mean
+    rates. The type I error of a test is therefore simulated at this shift.
+    """
+    low, high = -20.0, 20.0
+    for _ in range(60):
+        middle = (low + high) / 2
+        rate_a, rate_b = components.rates(middle)
+        if abs(rate_b - rate_a) < tolerance:
+            break
+        low, high = (middle, high) if rate_b < rate_a else (low, middle)
+    return middle
+
+
 def fit_components(
     attempts: pd.DataFrame, metric: str, a: str, b: str, nodes: int = 24, prior: bool = True
 ) -> Components:

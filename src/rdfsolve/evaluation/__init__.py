@@ -11,6 +11,7 @@ from rdfsolve.evaluation.statistics import (
     bootstrap,
     compare,
     fit_components,
+    null_shift,
     power_table,
     simulate_power,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "bootstrap",
     "compare",
     "fit_components",
+    "null_shift",
     "power_table",
     "resolve",
     "score",
