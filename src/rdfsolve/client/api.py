@@ -127,6 +127,11 @@ class Client(DatasetClient):
             related_registries=self.related_registries,
         )
 
+    @property
+    def schema(self) -> MinedSchema:
+        """Give the mined schema of this client: its patterns, collections and metadata."""
+        return self._schema
+
     def vocabulary(self, iri: str) -> dict[str, Any] | None:
         """Explain a local vocabulary IRI through the configured ontology provider.
 
@@ -849,6 +854,56 @@ class Client(DatasetClient):
             if iri:
                 return _name(re.split(r"[/#:]", iri)[-1])
         return _name(field)
+
+    def fields(self, model: type[BaseModel] | str) -> pd.DataFrame:
+        """List the fields of a model: property, value types, targets, links and lists.
+
+        links is True when the field accepts IRIs (of a class, or of no class); list is True
+        when its values can be an ordered rdf:List. Values are datatypes as CURIEs, or
+        "IRI" for IRIs of no class. The table makes no source request.
+        """
+        from rdfsolve._uri import curie_from_prefixes
+        from rdfsolve.client.exploration import field_targets
+
+        model = self.model(model) if isinstance(model, str) else model
+        self._check_model_scope(model)
+        prefixes = self._schema.get_prefixes()
+
+        def short(iri: str) -> str:
+            """Write an IRI as a CURIE when a prefix is known."""
+            found = curie_from_prefixes(iri, prefixes)
+            return found[0] if found else iri
+
+        rows = []
+        for name, info in sorted(model.model_fields.items()):
+            meta = field_metadata(info)
+            if not meta.get("rdf_property_iri"):
+                continue
+            patterns = meta.get("rdf_patterns", [])
+            lists = meta.get("rdf_collections", [])
+            values = sorted(
+                {
+                    short(p["datatype"]) if p.get("datatype") else "Literal"
+                    for p in patterns
+                    if p.get("object_class") == "Literal"
+                }
+                | {"IRI" for p in patterns if p.get("object_class") in ("Resource", "BlankNode")}
+            )
+            targets = sorted(field_targets(model, name))
+            rows.append(
+                {
+                    "field": name,
+                    "property": meta["rdf_property_iri"],
+                    "curie": short(meta["rdf_property_iri"]),
+                    "label": self.link_name(model, name),
+                    "values": values,
+                    "targets": targets,
+                    "links": bool(targets or "IRI" in values),
+                    "list": bool(lists),
+                }
+            )
+        columns = ["field", "property", "curie", "label", "values", "targets", "links", "list"]
+        return pd.DataFrame(rows, columns=columns)
 
     def field_name(self, model: type[BaseModel] | str, text: str) -> str:
         """Resolve a field by its Python name, source label or exact predicate IRI."""
