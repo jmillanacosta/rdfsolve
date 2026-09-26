@@ -44,6 +44,10 @@ def test_run_shows_rows_and_notes(toolbox):
     assert typo["rows"] == []
     assert "ex:lable is not a property of the schema." in typo["notes"][1]
     assert "No data matches ?aop ex:lable ?label ." in typo["notes"]
+    loose = toolbox.run(
+        "SELECT ?e ?g ?s WHERE { ?e a ex:Event OPTIONAL { ?e ex:gene ?g } OPTIONAL { ?g ex:symbol ?s } }"
+    )
+    assert any(n.startswith("OPTIONAL patterns use ?g, which only another OPTIONAL binds") for n in loose["notes"])
     optional = toolbox.run("SELECT ?aop ?x WHERE { ?aop a ex:Pathway OPTIONAL { ?aop ex:none ?x } }")
     assert "No value in these rows for ?x." in optional["notes"]
     assert "The answer needs the variables ?label." in optional["notes"]

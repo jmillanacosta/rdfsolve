@@ -21,6 +21,7 @@ from rdfsolve.mcp.sparql import (
     add_prefixes,
     diagnose,
     has_limit,
+    loose_optionals,
     parse,
     terms,
     undeclared_prefixes,
@@ -214,6 +215,15 @@ class Toolbox:
                 "Namespaces from Bioregistry: "
                 + ", ".join(f"{p}: <{ns}>" for p, ns in registered.items())
                 + "."
+            )
+        loose = loose_optionals(query)
+        if loose:
+            notes.append(
+                "OPTIONAL patterns use "
+                + ", ".join("?" + v for v in loose)
+                + ", which only another OPTIONAL binds. When unbound, such a pattern matches"
+                " every value and can be very slow. Put it inside the OPTIONAL that binds the"
+                " variable: OPTIONAL { ?a p ?x OPTIONAL { ?x rdfs:label ?name } }."
             )
         classes, properties = terms(query)
         for iri, known, kind in (

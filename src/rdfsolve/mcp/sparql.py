@@ -101,6 +101,36 @@ def required_triples(node: Any) -> list[Triple]:
     return required_triples(node.p)
 
 
+def loose_optionals(query: Query) -> list[str]:
+    """Name the variables of an OPTIONAL that only another OPTIONAL binds.
+
+    When such a variable is unbound, the OPTIONAL matches every value in the data, which can
+    be very slow. The OPTIONAL belongs inside the OPTIONAL that binds the variable.
+    """
+    loose: set[str] = set()
+
+    def scope(node: Any) -> tuple[set[Variable], set[Variable]]:
+        """Give the variables that are always bound and those that can be unbound."""
+        if not isinstance(node, CompValue):
+            return set(), set()
+        if node.name == "BGP":
+            return {v for t in node.triples for v in t if isinstance(v, Variable)}, set()
+        if node.name not in {"Join", "LeftJoin", "Union"}:
+            return scope(node.p) if "p" in node else (set(), set())
+        left, left_optional = scope(node.p1)
+        right, right_optional = scope(node.p2)
+        if node.name == "LeftJoin":
+            if left_optional & right and not left & right:
+                loose.update(str(v) for v in left_optional & right)
+            return left, left_optional | right_optional | (right - left)
+        if node.name == "Union":
+            return left & right, left_optional | right_optional | (left ^ right)
+        return left | right, left_optional | right_optional
+
+    scope(query.algebra)
+    return sorted(loose)
+
+
 def _n3(term: Any) -> str:
     """Write one term of a triple pattern in SPARQL form."""
     return f"?{term}" if isinstance(term, Variable) else term.n3()
