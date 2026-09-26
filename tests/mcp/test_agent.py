@@ -1,91 +1,64 @@
+"""A model answers through the real stdio server; the caller gets all rows of the answer."""
+
 import asyncio
 import json
 
 from conftest import E
-from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from rdfsolve.api import ask_rdf
-from rdfsolve.mcp.workflow import launch_config
+
+AOPS = "SELECT ?aop ?label WHERE { ?aop a ex:Pathway ; rdfs:label ?label }"
 
 
-def files(session, folder):
-    schema, data = (folder / "schema.json", folder / "data.ttl")
-    schema.write_text(json.dumps(session.client._schema.to_dict()))
-    session.client.source.serialize(destination=data, format="turtle")
-    return (schema, data)
-
-
-def test_generic_api_and_real_stdio_preserve_data_boundary(session, tmp_path):
-    schema, data = files(session, tmp_path)
-    seen = []
+def scripted(steps, seen):
+    """Give one planned tool call, or text, per model request."""
 
     def model(messages, info):
-        encoded = json.dumps([str(m) for m in messages])
-        assert "Assay A" not in encoded and "Assay B" not in encoded
         seen.append(messages)
-        step = len(seen)
-        if step == 1:
-            name, args = (
-                "rdf_schema",
-                {
-                    "goals": [
-                        {
-                            "clause": "Return pathway identities",
-                            "kind": "output",
-                            "concept": "Adverse Outcome Pathway",
-                            "owner": "a",
-                        }
-                    ],
-                    "concepts": ["Adverse Outcome Pathway"],
-                },
-            )
-        elif step == 2:
-            name, args = (
-                "rdf_prepare",
-                {
-                    "patterns": [
-                        {"reference": session.catalogue.type_refs[str(E.AOP)], "bindings": ["a"]}
-                    ],
-                    "outputs": ["a"],
-                    "grounding": {
-                        "g1": {
-                            "project": ["a"],
-                            "evidence": [session.catalogue.type_refs[str(E.AOP)]],
-                        }
-                    },
-                },
-            )
-        elif step == 3:
-            results = [
-                p.content
-                for m in messages
-                for p in m.parts
-                if getattr(p, "tool_name", "") == "rdf_prepare" and hasattr(p, "content")
-            ]
-            name, args = ("rdf_finish", {"query_ref": results[-1]["query_ref"]})
-        else:
-            raise AssertionError("Unexpected model request after final execution")
-        return ModelResponse(parts=[ToolCallPart(name, args, tool_call_id=str(step))])
+        step = steps[min(len(seen), len(steps)) - 1]
+        if isinstance(step, str):
+            return ModelResponse(parts=[TextPart(step)])
+        return ModelResponse(parts=[ToolCallPart(step[0], step[1], tool_call_id=str(len(seen)))])
 
-    answer = asyncio.run(
+    return FunctionModel(model)
+
+
+def ask(files, tmp_path, steps, seen):
+    schema, data = files
+    return asyncio.run(
         ask_rdf(
-            "List pathways",
+            "List the pathways and their names.",
             schema=schema,
             data_file=data,
-            source_id="independent-local-database",
-            output_variables=["a"],
-            model=FunctionModel(model),
-            output_dir=tmp_path,
+            output_variables=["aop", "label"],
+            model=scripted(steps, seen),
+            output_dir=tmp_path / "out",
         )
     )
+
+
+def test_the_answer_rows_reach_the_caller_not_the_model(files, tmp_path):
+    seen = []
+    steps = [("schema", {"classes": ["Adverse Outcome Pathway"]}), ("run", {"sparql": AOPS, "limit": 1}),
+             ("answer", {"sparql": AOPS})]
+    answer = ask(files, tmp_path, steps, seen)
     assert answer.state == "complete", answer.error
-    assert {r["a"]["value"] for r in answer.bindings} == {
-        str(E.humanAOP),
-        str(E.mouseAOP),
-        str(E.noChemicalAOP),
-    }
+    assert {r["aop"]["value"] for r in answer.bindings} == {str(E.aop1), str(E.aop2)}
+    assert answer.query.startswith("PREFIX ex:") and answer.text == "Retrieved 2 rows. Notes: Added PREFIX for ex, rdfs."
     assert len(seen) == 3 and answer.usage.requests == 3
-    assert "3 rows" in answer.text
-    assert answer.package["source_queries"] == 1
-    assert len(list(tmp_path.glob("*.answer.json"))) == 1
-    assert "aopwikirdf" not in json.dumps(launch_config(schema, source_id="other"))
+    assert "Source summary:" in seen[0][0].instructions and "ex:Pathway" in seen[0][0].instructions
+    visible = json.dumps([str(m) for m in seen])
+    assert sum(name in visible for name in ["Liver pathway", "Thyroid pathway"]) == 1, "One row only"
+    assert answer.package["source_queries"] >= 2 and answer.diagnostics()["tool_calls"] == 3
+    saved = sorted(p.name.split(".")[1] for p in (tmp_path / "out").iterdir())
+    assert saved == ["answer", "calls", "package"]
+
+
+def test_repeated_calls_and_text_endings_are_blocked(files, tmp_path):
+    repeated = ask(files, tmp_path, [("run", {"sparql": AOPS})], [])
+    assert (repeated.state, repeated.error["code"]) == ("blocked", "no_progress")
+    assert len(repeated.calls) == 3
+    ended = ask(files, tmp_path, ["I cannot answer."], [])
+    assert (ended.state, ended.error["code"]) == ("blocked", "not_executed")
+    assert "I cannot answer." in ended.text and ended.bindings == []

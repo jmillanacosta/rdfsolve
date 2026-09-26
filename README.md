@@ -362,8 +362,8 @@ then close the connection with `data.close()`.
 
 [Example](notebooks/pydantic_clients/01_mine_explore.ipynb).
 
-Client operations live under `rdfsolve.client`; model workflows live under
-`rdfsolve.mcp`. `rdfsolve.api` exposes both for notebook use.
+Client operations are in `rdfsolve.client`; the model tools are in
+`rdfsolve.mcp`. `rdfsolve.api` gives both for notebook use.
 
 ### SparqlHelper
 
@@ -546,33 +546,47 @@ Create graphs showing dataset relationships via shared classes and mappings:
 python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
-### Grounded retrieval through MCP
+### Questions through MCP
 
-Install `rdfsolve[agents,mcp]`. The same workflow supports any saved schema:
+Install `rdfsolve[agents,mcp]`. A saved schema and one source (an endpoint or a
+local RDF file) are sufficient:
 
 ```python
 from rdfsolve.api import ask_rdf
 
 answer = await ask_rdf(
-    "Return pathways and their linked chemicals",
+    "Which Key Events of AOPs have NCBI gene identifiers?",
     schema="notebooks/mcp/schemas/aopwikirdf.schema.json",
-    source_id="aopwikirdf",
     base_url="http://127.0.0.1:8080/v1",
     model_name="qwen36-35b-a3b",
 )
 print(answer.text)
-print(answer.diagnostics())
 if answer.state == "complete":
     display(answer.table())
 ```
 
-`model=` accepts another PydanticAI model. `endpoint=`, `graph_uris=`,
-`data_file=` and `output_dir=` configure the source and artifacts explicitly.
-`mapping_file=` loads the existing mapping JSON-LD format; `related_registries=`
-loads source registry snapshots used for explanatory class metadata. Source IDs
-must agree with the mapping records.
+The model writes SPARQL SELECT queries. Five tools help it:
 
-Optional ontology grounding explains opaque vocabulary through OLS or Ontobee:
+| Tool     | Result                                                                                                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema` | The properties of classes, with value types, counts, example values and the links to each class. Search words find classes and properties.                                |
+| `find`   | Resources by name, words in their text, IRI or registered identifier.                                                                                                     |
+| `paths`  | The shortest chains of properties between two classes, as triple patterns.                                                                                                |
+| `run`    | The first rows of a query. Known prefixes are added. Notes tell about terms that are not in the schema, columns with no value, and the triple patterns that give no rows. |
+| `answer` | The final query is run on all data (in pages on an endpoint), and the task ends. The query must select the `output_variables`.                                            |
+
+All rows of the answer go to the caller (`answer.bindings`); the model sees
+only some rows. `answer.files` names the files of the tool calls, the answer
+and the source queries. When one tool call gives the same result three times,
+the task stops.
+
+`model=` accepts another PydanticAI model. `endpoint=`, `data_file=`,
+`graph_uris=` and `output_dir=` set the source and the files.
+`ontology_grounding=True` lets `find` use ontology names (OLS, or Ontobee with
+`ontology_provider="ontobee"`) when no name in the source matches.
+`ontology_cache=` and `ontology_offline=True` give reproducible runs.
+
+The client can use the same ontology lookup directly:
 
 ```python
 from rdfsolve.api import Client, OntologyLookup
@@ -583,56 +597,19 @@ with Client.open("schema.json", ontology_grounding=lookup) as data:
     print(data.trace()["ontology"])
 ```
 
-`Client.open(..., ontology_grounding=True)` uses OLS with an in-memory cache.
-`ask_rdf(..., ontology_grounding=True)` enables the same client behavior in MCP;
-`ontology_provider="ontobee"` selects Ontobee. `ontology_cache=` and
-`ontology_offline=True` support frozen, reproducible experiments. The stdio
-launcher accepts `--ontology-provider ols` and the corresponding cache options.
+External definitions, synonyms and direct parents are kept as separate
+evidence, with the provider, the basis of the IRI match and the fetch time. The
+mined schema does not change. An ontology alias is used only when a record of
+the source has the same IRI or registered identifier.
 
-The default is disabled. External definitions, synonyms and direct named parents
-remain separate evidence with provider, IRI-match basis and fetch time. Mined
-schemas are unchanged. Failed name searches can use an ontology alias only when
-an actual source record has the same IRI or registered namespace/identifier.
-Hierarchy hints explain vocabulary; local field paths and source scope still
-control retrieval. Missing or unavailable evidence remains visible in
-diagnostics. OLS uses its REST API; Ontobee queries use `SparqlHelper`.
-
-All model integration lives in `rdfsolve.mcp`. The core `Catalogue` indexes
-classes, mappings and full field paths. `retrieval.verify_query` expands one
-ordinary SELECT and checks its outputs, exact entity restrictions, field owners,
-connected bindings, optional scope and retrieval operators against declared
-goals. The initial semantic classification can be corrected before preparation.
-Corrections are recorded; accepted entity restrictions and requested values
-cannot be weakened. Requested concepts stay fixed while owners and availability
-can be corrected. Initial interpretation and semantic selection remain model
-decisions. A selected field without explanatory metadata or mapping evidence
-remains unresolved; choosing its handle cannot turn that missing evidence into a
-successful validation. The package infers witnesses from the query and generated
-metadata; explicit grounding is needed when more than one meaning remains
-possible.
-
-The eight MCP tools discover schema, ground selections, follow fields, evaluate
-paths, inspect evidence, prepare a query, probe it and explicitly finish.
-Complete bindings stay in local caller artifacts. Tools return compact evidence,
-profiles and execution receipts. Endpoint queries use the Client and shared
-SparqlHelper recovery.
-
-For Claude or another MCP host, configure a stdio server:
+For Claude or another MCP host, start a stdio server:
 
 ```bash
-python -m rdfsolve.mcp --schema /absolute/path/schema.json --source-id my-database --log /absolute/path/investigation.json
+python -m rdfsolve.mcp --schema /absolute/path/schema.json --endpoint https://example.org/sparql
 ```
 
-Each tool response includes its operation, status and source-query IDs. The
-incremental package journal retains complete query evidence for inspection
-outside the model context. `answer.files` identifies the calls, answer and
-package journals. Repeated unchanged failures stop with the unresolved issue
-recorded.
-
-The server supports SELECT retrieval with joins, optional patterns, alternatives
-and filters. Aggregation, BIND-based output transformations, nested SELECT,
-negation, final LIMIT/OFFSET, federation and model-selected source scope are
-rejected.
+The resource `rdfsolve://overview` gives a summary of the source for the
+instructions of the host. `rdfsolve://diagnostics` gives the source queries.
 
 ## Documentation
 

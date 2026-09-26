@@ -1,9 +1,8 @@
-"""Grounded RDF discovery, retrieval and model integration.
+"""Answer questions about one RDF source with a language model and the rdfsolve tools.
 
-ask_rdf(..., max_response_tokens=4096) caps each model response, including reasoning.
-Pass a positive integer to change the ceiling or None to disable it. Provider
-limits and whole-run usage_limits remain independent. External MCP hosts control
-their own model generation settings.
+ask_rdf starts the tool server of the source. The model writes SPARQL; the tools show
+the schema, find resources, check and run queries, and run the final query on all data.
+max_response_tokens limits each model reply, reasoning included; None removes the limit.
 """
 
 from rdfsolve.mcp.workflow import ask_rdf
