@@ -24,6 +24,13 @@ class PropertyPath(BaseModel):
     iri: str | None = None
     items: list[PropertyPath] = Field(default_factory=list)
 
+    @classmethod
+    def from_sparql(cls, text: str, prefixes: dict[str, str] | None = None) -> PropertyPath:
+        """Read SPARQL property path text, for example ``^schema:author/schema:name``."""
+        from rdfsolve.schema_models.readers.paths import read_sparql_path
+
+        return read_sparql_path(text, prefixes)
+
     @model_validator(mode="after")
     def check_expression(self) -> PropertyPath:
         """Check path arity and reject characters that change SPARQL syntax."""
