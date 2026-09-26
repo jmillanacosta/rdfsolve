@@ -50,9 +50,14 @@ def test_identifiers_resolve_across_spellings_then_statements_follow():
         subject=RdfTerm(kind="uri", value="urn:someone"),
         value=RdfTerm(kind="literal", value="0000-0001-7536-3744"),
     )
+    unregistered = PatternExample(
+        subject_class="urn:Person", property_uri="urn:homepage",
+        subject=RdfTerm(kind="uri", value="urn:someone"),
+        value=RdfTerm(kind="uri", value="http://example.org/unregistered"),
+    )
     schema = MinedSchema(
         patterns=[SchemaPattern(subject_class="urn:Person", property_uri="urn:direct/orcid", object_class="Literal")],
-        enrichment=SchemaEnrichment(examples=[example]),
+        enrichment=SchemaEnrichment(examples=[example, unregistered]),
     )
     with Client(schema, data, graph_uris=["urn:g"]) as guided:
         found = guided.identify(["orcid:0000-0002-4166-7093"])

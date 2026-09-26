@@ -63,10 +63,15 @@ def carriers(client: Client, prefix: str) -> list[str]:
     found = []
     for example in client._schema.enrichment.examples:
         value = example.value.value
-        parsed = bioregistry.parse_iri(value) if value.startswith(("http://", "https://")) else None
-        if (parsed and bioregistry.normalize_prefix(parsed[0]) == resource.prefix) or (
-            not parsed and resource.is_valid_identifier(value)
-        ):
+        if value.startswith(("http://", "https://")):
+            # parse_iri gives (None, None) for an IRI of no registered namespace.
+            registered = bioregistry.parse_iri(value)[0]
+            carries = registered is not None and (
+                bioregistry.normalize_prefix(registered) == resource.prefix
+            )
+        else:
+            carries = resource.is_valid_identifier(value)
+        if carries:
             found.append(example.property_uri)
     return sorted(set(found))
 
