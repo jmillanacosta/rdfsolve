@@ -21,6 +21,7 @@ Table of Contents
    miner
    schema_models
    mapping_models
+   evaluation
 
 .. toctree::
    :maxdepth: 2
