@@ -74,6 +74,8 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
     research = client.model("ResearchOrganization")
     assert "name" in research.model_fields and "name" not in research.__annotations__, "Inherited"
     assert "mentioned" not in client.model("Person").model_fields, "Mentioned, not described"
+    assert "number_of_children" in person.model_fields, "Python names: snake_case of the local name"
+    assert {client.field_name(person, n) for n in ("numberOfChildren", "numberofchildren")} == {"number_of_children"}
     year = Literal("1815-12-10", datatype=XSD.date)
     tagged = client.create("Person", uri="urn:en", name="Ada", foaf_name="Ada", foaf_givenName="A", familyName="L", numberOfChildren=3, dcterms_date=year, language="en")
     assert {(p, o) for _, p, o in tagged.to_graph()} >= {

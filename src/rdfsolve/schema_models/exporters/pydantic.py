@@ -22,7 +22,14 @@ if TYPE_CHECKING:
 
 
 def _identifier(text: str, *, class_name: bool = False) -> str:
-    words = re.findall(r"[a-zA-Z0-9]+", text)
+    """Make a class name (CamelCase) or a field name (snake_case) from a local name."""
+    # Split camelCase and acronyms too: geneDetectedByNER -> gene detected by NER.
+    pattern = (
+        r"[a-zA-Z0-9]+"
+        if class_name
+        else r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+[0-9]*|[A-Z]+[0-9]*|[0-9]+"
+    )
+    words = re.findall(pattern, text)
     name = "".join(w[:1].upper() + w[1:] for w in words) if class_name else "_".join(words).lower()
     if not name or name[0].isdigit():
         name = ("Class" if class_name else "prop_") + name

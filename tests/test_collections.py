@@ -103,7 +103,7 @@ def test_collection_profiles_and_ordered_records(tmp_path):
     record = models["http://www.w3.org/ns/dcat#Dataset"](
         uri=str(E.dataset),
         title=Literal("Measurements", lang="en"),
-        qualifiedattribution=attribution,
+        qualified_attribution=attribution,
         readings=RDFList(items=[1, 2, 1]),
     )
     output = tmp_path / "authored.ttl"
