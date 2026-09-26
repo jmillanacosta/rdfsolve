@@ -162,9 +162,9 @@ async def ask_rdf(
             artifact_dir=artifacts,
         )
         try:
-            async with MCPClient(
-                StdioServerParameters(**config), read_timeout_seconds=timeout * 4
-            ) as server:
+            # No time limit on one tool call: each source request has its own timeout,
+            # and the final query can need many pages. The caller limits the whole run.
+            async with MCPClient(StdioServerParameters(**config)) as server:
                 await ask(
                     server,
                     question,
