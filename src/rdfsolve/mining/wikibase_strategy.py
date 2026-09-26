@@ -57,20 +57,32 @@ class WikibaseStrategy(MiningStrategy):
         context.report.report.config["wikibase"] = summary
         patterns: list[SchemaPattern] = []
         sampled: list[str] = []
+        not_attempted: list[str] = []
         for direct in sorted(declared):
             if direct == self.membership_property:
+                continue
+            if not_attempted:
+                not_attempted.append(direct)
+                summary["properties"][direct] = {"statements": None, "state": "not_attempted"}
                 continue
             if (direct,) in context.resumed:
                 rows = context.resumed[(direct,)]
                 patterns.extend(SchemaPattern.model_validate(row) for row in rows)
                 context.report.checkpoint("patterns", [direct], rows)
+                summary["properties"][direct] = {"statements": None, "state": "resumed"}
                 continue
             outcome = select_outcome(
                 self._window_query(context, direct), "wikibase/window", context.helper, [direct]
             )
             if outcome.state != "complete":
                 context.report.record_outcome(outcome)
-                summary["properties"][direct] = {"statements": None, "state": "failed"}
+                limited = any(f.category == "rate_limited" for f in outcome.failures)
+                state = "rate_limited" if limited else "failed"
+                summary["properties"][direct] = {"statements": None, "state": state}
+                if limited:
+                    # The endpoint asked for a longer pause than the client waits. Every next
+                    # request is refused too, so the run stops; the checkpoint allows a resume.
+                    not_attempted.append(direct)
                 continue
             found, statements, unclassified = self._rows(direct, outcome.rows)
             summary["unclassified_subject_statements"] += unclassified
@@ -81,6 +93,22 @@ class WikibaseStrategy(MiningStrategy):
             patterns.extend(found)
             context.report.checkpoint(
                 "patterns", [direct], [p.model_dump(mode="json") for p in found]
+            )
+        if len(not_attempted) > 1:
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="partial",
+                    failures=[
+                        QueryFailure(
+                            "rate_limited",
+                            f"The endpoint asked for a pause longer than the wait budget; "
+                            f"{len(not_attempted) - 1} properties were not attempted. "
+                            "Resume from the checkpoint.",
+                            "wikibase/window",
+                            not_attempted[1:],
+                        )
+                    ],
+                )
             )
         if sampled:
             context.report.record_outcome(

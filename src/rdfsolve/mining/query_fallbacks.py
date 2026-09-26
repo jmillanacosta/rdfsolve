@@ -15,6 +15,7 @@ from rdfsolve.mining.query_builders import (
 )
 from rdfsolve.sparql_helper import (
     EndpointError,
+    EndpointRateLimitError,
     EndpointTimeoutError,
     PaginationTruncatedError,
     SparqlHelperError,
@@ -45,6 +46,8 @@ def _failure(
     category: FailureCategory
     if isinstance(error, PaginationTruncatedError):
         category = "truncated"
+    elif isinstance(error, EndpointRateLimitError):
+        category = "rate_limited"
     elif isinstance(error, EndpointTimeoutError):
         category = "timeout"
     elif isinstance(error, EndpointError):

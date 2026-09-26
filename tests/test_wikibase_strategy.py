@@ -4,6 +4,7 @@ from rdflib import Dataset
 
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.wikibase_strategy import WikibaseStrategy
+from rdfsolve.sparql_helper import EndpointRateLimitError
 
 WD, WDT = "http://www.wikidata.org/entity/", "http://www.wikidata.org/prop/direct/"
 DATA = """
@@ -15,6 +16,7 @@ wd:P50 a wikibase:Property; wikibase:propertyType wikibase:WikibaseItem; wikibas
     rdfs:label "author"@en, "auteur"@fr .
 wd:P496 a wikibase:Property; wikibase:propertyType wikibase:ExternalId; wikibase:directClaim wdt:P496;
     rdfs:label "ORCID iD"@en .
+wd:P6 a wikibase:Property; wikibase:propertyType wikibase:WikibaseItem; wikibase:directClaim wdt:P6 .
 wd:Q1 wdt:P31 wd:Q13442814; wdt:P50 wd:Q2, wd:Q4 .
 wd:Q2 wdt:P31 wd:Q5; wdt:P496 "0000-0002-4166-7093" .
 wd:Q3 wdt:P50 wd:Q2 .
@@ -43,3 +45,23 @@ def test_declared_properties_and_windows_become_membership_classed_rows():
     assert windows[WDT + "P50"] == {"statements": 3, "state": "sampled"}, "A full window may miss rows"
     assert report.config["wikibase"]["unclassified_subject_statements"] == 1, "Counted, not dropped"
     assert report.completion_state == "partial", "Sampled properties keep the run partial"
+
+
+def test_a_rate_limit_stops_the_run_and_leaves_the_rest_for_a_resume(monkeypatch):
+    strategy = WikibaseStrategy(membership=WDT + "P31", window=3)
+    data = Dataset().parse(data=DATA, format="turtle")
+    with SchemaMiner.from_graph(data, strategy=strategy, delay=0) as miner:
+        answer = miner._helper.select
+
+        def select(query, purpose=""):
+            if purpose == "wikibase/window" and "P50>" in query:  # P496, then P50, then P6
+                raise EndpointRateLimitError("Host cooldown exceeds wait budget: example.org")
+            return answer(query, purpose=purpose)
+
+        monkeypatch.setattr(miner._helper, "select", select)
+        miner.mine("wikibase")
+        report = miner.last_report
+    windows = report.config["wikibase"]["properties"]
+    assert windows[WDT + "P496"]["state"] == "complete" and windows[WDT + "P50"]["state"] == "rate_limited"
+    assert windows[WDT + "P6"] == {"statements": None, "state": "not_attempted"}, "Not failed one by one"
+    assert report.completion_state == "partial"

@@ -3,7 +3,8 @@ from unittest.mock import Mock
 
 from rdflib import RDF, Dataset, Namespace, URIRef
 from rdfsolve.mining.miner import SchemaMiner
-from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
+from rdfsolve.mining.pattern_enrichment import enrich_patterns_with_labels, query_class_entity_counts
+from rdfsolve.sparql_helper import EndpointRateLimitError
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
 
@@ -58,3 +59,16 @@ def test_entity_counts_are_distinct_scoped_and_queryable():
     cp = graph.value(predicate=void["class"], object=URIRef("urn:A"))
     assert graph.value(cp, void.triples) is None
     assert not list(graph.subjects(RDF.type, void.Linkset))
+
+
+def test_labels_stop_at_the_first_rate_limit():
+    helper = Mock()
+    helper.select.side_effect = EndpointRateLimitError("Host cooldown exceeds wait budget: example.org")
+    miner = SchemaMiner("https://example.org/sparql", counts=False)
+    miner._init_report("test", "test", "2026-09-07T00:00:00+00:00")
+    patterns = [
+        SchemaPattern(subject_class=f"urn:C{i}", property_uri="urn:p", object_class="Literal")
+        for i in range(120)  # three batches of labels
+    ]
+    assert len(enrich_patterns_with_labels(patterns, helper, None, miner._report)) == 120
+    assert helper.select.call_count == 1, "The other batches are not sent to a host that refuses"

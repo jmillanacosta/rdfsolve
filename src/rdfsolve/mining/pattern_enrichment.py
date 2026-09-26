@@ -22,6 +22,7 @@ from rdfsolve.mining.query_builders import (
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.models import SchemaPattern
+from rdfsolve.sparql_helper import EndpointRateLimitError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -574,7 +575,13 @@ def enrich_patterns_with_labels(
 
     for start in range(0, len(uri_list), batch_size):
         batch = uri_list[start : start + batch_size]
-        _fetch_label_batch(batch, label_map, helper, graph_uris, report)
+        if not _fetch_label_batch(batch, label_map, helper, graph_uris, report):
+            logger.warning(
+                "Labels stopped: the endpoint asked for a longer pause than the wait budget; "
+                "%d IRIs keep their local names",
+                len(uri_list) - start,
+            )
+            break
 
     # Fill in labels using local name as fallback
     enriched = _enrich_with_local(patterns, label_map)
@@ -588,8 +595,11 @@ def _fetch_label_batch(
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     report: ReportCollector,
-) -> None:
+) -> bool:
     """Query labels for one batch of URIs and update label_map in place.
+
+    Return False when the endpoint refuses because of a rate limit, so that no more batches
+    are sent.
 
     Args:
         batch: URIs to look up labels for
@@ -635,7 +645,10 @@ def _fetch_label_batch(
             time.monotonic() - t0,
             success=False,
         )
+        if isinstance(e, EndpointRateLimitError):
+            return False  # The next batches would be refused too.
         logger.warning("Label batch failed (%d IRIs): %s", len(batch), type(e).__name__)
+    return True
 
 
 def _enrich_with_local(
