@@ -59,3 +59,24 @@ def test_member_classes_of_a_list_are_link_targets():
     schema.collections[0].member_types = ["https://fields-test.invalid/Person"]
     author = Client(schema).links("Work").set_index("field").loc["author"]
     assert (author.target, author.basis) == (client.model("Person").__name__, "list member")
+
+
+def test_properties_with_code_names_are_named_by_their_labels():
+    codes = """
+    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+    @prefix wdt: <http://www.wikidata.org/prop/direct/> .
+    @prefix ex: <https://fields-test.invalid/> .
+    ex:Event a rdfs:Class .
+    wdt:P580 a rdf:Property ; rdfs:label "start time"@en, "Startzeit"@de ; rdfs:domain ex:Event ; rdfs:range xsd:dateTime .
+    wdt:P9 a rdf:Property ; rdfs:domain ex:Event ; rdfs:range xsd:string .
+    wdt:P2037 a rdf:Property ; rdfs:label "GitHub account" ; rdfs:domain ex:Event ; rdfs:range xsd:string .
+    wdt:P496 a rdf:Property ; rdfs:label "ORCID iD" ; rdfs:domain ex:Event ; rdfs:range xsd:string .
+    ex:givenName a rdf:Property ; rdfs:label "first name" ; rdfs:domain ex:Event ; rdfs:range xsd:string .
+    """
+    client = Client(MinedSchema.from_vocabulary([codes], ["https://fields-test.invalid/Event"]))
+    fields = set(client.model("Event").model_fields)
+    assert {"start_time", "p9", "given_name"} <= fields, "A label names a code; a word keeps its name"
+    assert {"github_account", "orcid_id"} <= fields, "The words of a label are not split further"
+    assert {client.field_name("Event", n) for n in ("P580", "wdt:P580", "start time")} == {"start_time"}

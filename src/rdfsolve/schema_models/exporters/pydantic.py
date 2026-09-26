@@ -21,12 +21,13 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.pattern import SchemaPattern
 
 
-def _identifier(text: str, *, class_name: bool = False) -> str:
-    """Make a class name (CamelCase) or a field name (snake_case) from a local name."""
-    # Split camelCase and acronyms too: geneDetectedByNER -> gene detected by NER.
+def _identifier(text: str, *, class_name: bool = False, label: bool = False) -> str:
+    """Make a class name (CamelCase) or a field name (snake_case) from a name or a label."""
+    # Split camelCase and acronyms of a name too: geneDetectedByNER -> gene detected by NER.
+    # The words of a label stay whole: GitHub account -> github_account.
     pattern = (
         r"[a-zA-Z0-9]+"
-        if class_name
+        if class_name or label
         else r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+[0-9]*|[A-Z]+[0-9]*|[0-9]+"
     )
     words = re.findall(pattern, text)
@@ -50,6 +51,9 @@ _PLAIN_TYPES = {
     "bytes",
     "Any",
 }
+
+
+_CODE = re.compile(r"[A-Za-z]{0,16}[_-]?[0-9]+")
 
 
 def _unique_name(base: str, iri: str, used: set[str], prefixed: str | None = None) -> str:
@@ -122,8 +126,11 @@ def to_pydantic(
             if iri not in _SENTINEL_OBJECTS and label:
                 labels[iri].add(label)
 
+    english: dict[str, set[str]] = defaultdict(set)
     for annotation in schema.enrichment.labels:
         labels[annotation.term_iri].add(annotation.text.value)
+        if annotation.text.language in (None, "", "en"):
+            english[annotation.term_iri].add(annotation.text.value)
 
     used = {
         "RDFResource",
@@ -296,7 +303,11 @@ def to_pydantic(
             grouped[iri].items(), key=lambda item: (not item[0].startswith(namespace), item[0])
         ):
             _, prefix, _ = curie(prop)
-            field = _identifier(re.split(r"[/#:]", prop)[-1])
+            local = re.split(r"[/#:]", prop)[-1]
+            # A code (P580, GO_0008150, data_1025) is named by the label of its property.
+            named = sorted(english[prop] or labels[prop] - {prop, local})
+            coded = bool(named) and bool(_CODE.fullmatch(local))
+            field = _identifier(named[0] if coded else local, label=coded)
             if field.startswith("model_"):
                 field = "prop_" + field
             field = _unique_name(field, prop, fields, f"{prefix}_{field}" if prefix else None)
