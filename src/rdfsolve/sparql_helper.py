@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import secrets
+import socket
 import time
 import warnings
 from contextvars import ContextVar
@@ -21,9 +22,11 @@ from urllib.parse import urlsplit
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
+    from requests.adapters import HTTPAdapter
 from rdflib import Graph, URIRef
 from rdflib import Literal as RdfLiteral
 from typing_extensions import Self
+from urllib3.connection import HTTPConnection
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
 from rdfsolve.schema_models.paths import PropertyPath
@@ -89,6 +92,35 @@ def _default_agent() -> str:
         return f"rdfsolve/{version('rdfsolve')}"
     except PackageNotFoundError:
         return "rdfsolve"
+
+
+class _KeepaliveAdapter(HTTPAdapter):
+    """An HTTP adapter whose connections send TCP keepalive probes.
+
+    A long query can be silent for minutes, and a live server answers the probes during that
+    time. When the peer is gone without a reset (for example after a network change), the
+    probes fail and the read ends in about two minutes. Without them, the read waits for ever.
+    """
+
+    SOCKET_OPTIONS: ClassVar[list[tuple[int, int, int]]] = [
+        *HTTPConnection.default_socket_options,
+        (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1),
+        *(
+            (socket.IPPROTO_TCP, getattr(socket, name), value)
+            for name, value in (
+                ("TCP_KEEPIDLE", 60),
+                ("TCP_KEEPALIVE", 60),
+                ("TCP_KEEPINTVL", 15),
+                ("TCP_KEEPCNT", 4),
+            )
+            if hasattr(socket, name)
+        ),
+    ]
+
+    def init_poolmanager(self, *args: Any, **kwargs: Any) -> None:
+        """Give the socket options to every connection pool."""
+        kwargs["socket_options"] = self.SOCKET_OPTIONS
+        super().init_poolmanager(*args, **kwargs)
 
 
 class SparqlHelperError(Exception):
@@ -183,7 +215,11 @@ class SparqlHelper:
         max_retries: Maximum number of retry attempts
         initial_backoff: Initial backoff delay in seconds
         max_backoff: Maximum backoff delay in seconds
-        timeout: Connection and host-slot wait timeout in seconds; query reads have no deadline
+        timeout: Connection and host-slot wait timeout in seconds
+        read_timeout: Longest silence while a response is read; None (the default) lets a long
+            query run. TCP keepalive probes find a dead connection in about two minutes.
+        rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429 or 503
+            with Retry-After). A longer cooldown raises EndpointRateLimitError.
 
     Example:
         >>> helper = SparqlHelper("https://sparql.swisslipids.org/")
@@ -322,6 +358,8 @@ class SparqlHelper:
         select_page_cooldown: float = 5.0,
         max_response_bytes: int = 64 * 1024 * 1024,
         user_agent: str | None = None,
+        read_timeout: float | None = None,
+        rate_limit_wait: float = 600.0,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints.
 
@@ -344,6 +382,8 @@ class SparqlHelper:
         self.initial_backoff = initial_backoff
         self.max_backoff = max_backoff
         self.timeout = timeout
+        self.read_timeout = read_timeout
+        self.rate_limit_wait = rate_limit_wait
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
         self.inter_request_delay = inter_request_delay
@@ -366,8 +406,10 @@ class SparqlHelper:
         # Track if we've detected this endpoint requires POST
         self._requires_post = use_post
 
-        # Session for connection pooling
+        # Session for connection pooling. Connections send TCP keepalive probes.
         self._session = requests.Session()
+        for scheme in ("http://", "https://"):
+            self._session.mount(scheme, _KeepaliveAdapter())
         if urlsplit(self.endpoint_url).hostname in ("localhost", "127.0.0.1", "::1"):
             self._session.trust_env = False
 
@@ -983,7 +1025,12 @@ class SparqlHelper:
         started = time.monotonic()
         request_started = None
         try:
-            with host_request(host, timeout=self.timeout, interval=self.inter_request_delay):
+            with host_request(
+                host,
+                timeout=self.timeout,
+                interval=self.inter_request_delay,
+                cooldown_wait=self.rate_limit_wait,
+            ):
                 request_started = time.monotonic()
                 return self._request_serial(method, query, accept, raw=raw)
         except HostBusyError as error:
@@ -1013,7 +1060,7 @@ class SparqlHelper:
             params={"query": query} if method == "GET" else None,
             data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
             headers=headers,
-            timeout=(self.timeout, None),
+            timeout=(self.timeout, self.read_timeout),
             stream=True,
         ) as response:
             body = bytearray()
