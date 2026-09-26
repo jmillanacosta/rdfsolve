@@ -20,6 +20,7 @@ from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, TermAnnotation
+from rdfsolve.sparql_helper import SparqlHelper
 
 LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
@@ -208,9 +209,18 @@ class ScopeStrategy(MiningStrategy):
         """Return the FROM clauses of the data graphs, if the miner selected graphs."""
         return " ".join(f"FROM <{graph}>" for graph in context.graph_uris or [])
 
-    def _select(self, context: MiningContext, query: str, purpose: str) -> list[dict[str, Any]]:
-        """Return the rows of a query; record a failed query and give no rows."""
-        outcome = select_outcome(query, purpose, context.helper, [])
+    def _select(
+        self,
+        context: MiningContext,
+        query: str,
+        purpose: str,
+        helper: SparqlHelper | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return the rows of a query (at another endpoint when *helper* is given).
+
+        A failed query is recorded and gives no rows.
+        """
+        outcome = select_outcome(query, purpose, helper or context.helper, [])
         if outcome.state != "complete":
             context.report.record_outcome(outcome)
             return []

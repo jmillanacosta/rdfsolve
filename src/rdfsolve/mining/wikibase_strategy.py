@@ -1,13 +1,4 @@
-"""Mine Wikibase endpoints (Wikidata and other instances) from declarations and windows.
-
-Wikibase publishes its properties in RDF: each wikibase:Property states its value type,
-its direct predicate (wdt:) and its labels. Items carry no rdf:type; they are classified
-by a membership property (P31, "instance of", on Wikidata). This strategy reads every
-declared property, then observes one bounded window of each property's direct statements,
-classifying subjects and objects by the membership property. A window smaller than its
-limit observed the property completely; a full window is a sample and the run says so.
-WikibaseScopeStrategy mines a scope of a Wikibase instead (see ScopeStrategy).
-"""
+"""Mine Wikibase endpoints (Wikidata and other instances) from declarations and windows."""
 
 from __future__ import annotations
 
@@ -22,6 +13,7 @@ from rdfsolve.mining.scope_strategy import ScopeStrategy, _batches
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, TermAnnotation
+from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +224,16 @@ class WikibaseStrategy(MiningStrategy):
 class WikibaseScopeStrategy(ScopeStrategy):
     """A scope of a Wikibase, with each predicate named after the label of its property."""
 
+    def __init__(self, *args: Any, declarations: str | None = None, **options: Any) -> None:
+        """Mine a scope (see ScopeStrategy).
+
+        *declarations* is the endpoint that declares the properties, when the mined endpoint
+        does not: the scholarly graph of the Wikidata Query Service has no declarations, and
+        the main graph has them.
+        """
+        super().__init__(*args, **options)
+        self.declarations = declarations
+
     @property
     def name(self) -> str:
         """Return the strategy name for reporting."""
@@ -241,16 +243,20 @@ class WikibaseScopeStrategy(ScopeStrategy):
         """Return a label for each predicate from the label of the property that it is of."""
         language = Literal(self.language).n3()
         links = " ".join(f"<{WIKIBASE}{link}>" for link in LINKS)
+        helper = SparqlHelper(self.declarations) if self.declarations else None
+        dataset = "" if helper else self._dataset(context)
         found: dict[str, str] = {}
         for batch in _batches(sorted(predicates)):
             query = (
-                f"SELECT ?term ?link ?label {self._dataset(context)} WHERE {{ "
+                f"SELECT ?term ?link ?label {dataset} WHERE {{ "
                 f"VALUES ?term {{ {batch} }} VALUES ?link {{ {links} }} "
                 f"?property ?link ?term ; <{LABEL}> ?label FILTER(LANG(?label) = {language}) }}"
             )
-            for row in self._select(context, query, "scope/labels"):
+            for row in self._select(context, query, "scope/labels", helper):
                 link = row["link"]["value"].removeprefix(WIKIBASE)
                 found[row["term"]["value"]] = LINKS[link].format(row["label"]["value"])
+        if helper:
+            helper.close()
         return {**super().predicate_labels(context, predicates - found.keys()), **found}
 
 

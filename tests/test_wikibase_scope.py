@@ -2,6 +2,7 @@
 
 from rdflib import Dataset
 
+from rdfsolve.mining import wikibase_strategy
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.wikibase_strategy import WikibaseScopeStrategy
 from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
@@ -33,9 +34,9 @@ wd:Q4 wdt:P31 wd:Q5; wdt:P2 "two" .
 """
 
 
-def mine(strategy):
+def mine(strategy, data=DATA):
     with SchemaMiner.from_graph(
-        Dataset().parse(data=DATA, format="turtle"), strategy=strategy, delay=0
+        Dataset().parse(data=data, format="turtle"), strategy=strategy, delay=0
     ) as miner:
         return miner.mine("scope"), miner.last_report
 
@@ -76,3 +77,18 @@ def test_seeds_and_one_hop_become_rows_of_member_stated_and_implied_classes():
     scope = report.config["scope"]
     assert scope["subjects"] == 2 and scope["followed"] == 2 and scope["classes"] == {}
     assert report.completion_state == "complete", "Every statement of the scope was read"
+
+
+def test_another_endpoint_can_declare_the_properties(monkeypatch):
+    """The scholarly graph of the Wikidata Query Service has no property declarations."""
+    items, lines = DATA.split("wd:P31 a")[0], DATA.splitlines()
+    works = items + "\n".join(line for line in lines if line.startswith(("wd:Q1 ", "wds:Q1-a")))
+    declared = Dataset().parse(data=DATA, format="turtle")
+    with SchemaMiner.from_graph(declared, delay=0) as main:
+        monkeypatch.setattr(wikibase_strategy, "SparqlHelper", lambda url, **options: main.helper)
+        strategy = WikibaseScopeStrategy(
+            [WD + "Q1"], follow=[P + "P50"], prefix_classes=CLASSES, declarations="https://main"
+        )
+        schema, _ = mine(strategy, works)
+    labels = {a.term_iri: a.text.value for a in schema.enrichment.labels}
+    assert labels[P + "P50"] == "author statement" and labels[PQ + "P1545"] == "series ordinal"
