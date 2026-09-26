@@ -277,10 +277,15 @@ class Toolbox:
         scoped = with_graphs(text, self.client.graph_uris)
         try:
             rows = self.client._select(scoped, exhaustive=True)
-        except QueryError:
-            # Pages cannot be joined for GROUP_CONCAT, SAMPLE and random values.
+        except (QueryError, EndpointError) as exc:
+            # Pages cannot be joined for GROUP_CONCAT, SAMPLE and random values, and the order
+            # that pages need can cost more than the source allows.
             rows = self.client._select(scoped)
-            notes.append("The query was run in one request, not in pages.")
+            notes.append(f"The query was run in one request, not in pages ({str(exc)[:160]}).")
+            if len(rows) >= 1000 and len(rows) % 1000 == 0:
+                notes.append(
+                    f"{len(rows)} rows can be a size limit of the source: the rows can be incomplete."
+                )
         columns = [str(v) for v in query.algebra["PV"]]
         ref = identifier("result", scoped)
         self.final = {

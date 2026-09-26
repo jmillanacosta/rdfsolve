@@ -86,3 +86,20 @@ def test_prefixes_of_bioregistry_complete_a_query_with_a_note(toolbox):
     assert "Namespaces from Bioregistry: edam: <http://edamontology.org/>." in result["notes"]
     with pytest.raises(ValueError, match="Unknown namespace prefix"):
         toolbox.run("SELECT ?x WHERE { ?x a unregistered:thing }")
+
+
+def test_answer_uses_one_request_when_ordered_pages_cannot_run(toolbox, monkeypatch):
+    from rdfsolve.sparql_helper import PaginationTruncatedError
+
+    real = toolbox.client._select
+
+    def select(query, *, exhaustive=False):
+        if exhaustive:
+            raise PaginationTruncatedError("Virtuoso 42000 Error The estimated execution time exceeds the limit")
+        return real(query)
+
+    monkeypatch.setattr(toolbox.client, "_select", select)
+    done = toolbox.answer(AOPS)
+    assert done["rows"] == 2
+    assert any(n.startswith("The query was run in one request, not in pages") for n in done["notes"])
+    assert not any("can be incomplete" in n for n in done["notes"]), "2 rows is not a size limit"
