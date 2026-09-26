@@ -61,6 +61,32 @@ compare report phases before choosing a strategy. Counting is enabled by
 default. Set `counts=False` if the task needs model structure without
 population/count enrichment; structural coverage checks still run.
 
+### Mine around chosen resources
+
+A large endpoint does not have to be mined completely when a client reads only
+some resources. `ScopeStrategy` reads every statement of seed subjects, of a
+sample of the members of chosen classes, and of the resources that chosen
+predicates reach from them in one hop. The schema is small, and a new run shows
+when the statements of these resources change. On Wikidata, items have no
+rdf:type: they are classified by P31, and by the class that an IRI prefix gives.
+`WikibaseScopeStrategy` also names each predicate after its property label
+(`wdt:P50` is `author`, `p:P50` is `author statement`).
+
+```python
+from rdfsolve import SchemaMiner
+from rdfsolve.mining.wikibase_strategy import WikibaseScopeStrategy
+
+WD = "http://www.wikidata.org/entity/"
+strategy = WikibaseScopeStrategy(
+    [WD + "Q42"],
+    follow=["http://www.wikidata.org/prop/P50"],
+    membership="http://www.wikidata.org/prop/direct/P31",
+    prefix_classes={WD + "Q": "http://wikiba.se/ontology#Item"},
+)
+with SchemaMiner("https://query.wikidata.org/sparql", strategy=strategy, counts=False) as miner:
+    schema = miner.mine(dataset_name="wikidata-around-q42")
+```
+
 Local SPARQL uses Oxigraph by default. Choose `local_backend="rdflib"` on
 `SchemaMiner.from_graph(...)`, `Client(...)`, `Client.open(...)`, or
 `MinedSchema.from_void(...)` to use RDFLib. Graph Store downloads use the

@@ -6,6 +6,7 @@ by a membership property (P31, "instance of", on Wikidata). This strategy reads 
 declared property, then observes one bounded window of each property's direct statements,
 classifying subjects and objects by the membership property. A window smaller than its
 limit observed the property completely; a full window is a sample and the run says so.
+WikibaseScopeStrategy mines a scope of a Wikibase instead (see ScopeStrategy).
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from rdflib import Literal
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.query_fallbacks import select_outcome
+from rdfsolve.mining.scope_strategy import ScopeStrategy, _batches
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, TermAnnotation
@@ -26,6 +28,21 @@ logger = logging.getLogger(__name__)
 WIKIBASE = "http://wikiba.se/ontology#"
 LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# The Wikibase RDF format gives each property several predicates; each is named after its label.
+LINKS = {
+    "directClaim": "{}",
+    "directClaimNormalized": "{} normalized",
+    "claim": "{} statement",
+    "statementProperty": "{}",
+    "statementValue": "{} value",
+    "statementValueNormalized": "{} normalized value",
+    "qualifier": "{}",
+    "qualifierValue": "{} value",
+    "qualifierValueNormalized": "{} normalized value",
+    "reference": "{}",
+    "referenceValue": "{} value",
+    "referenceValueNormalized": "{} normalized value",
+}
 
 
 class WikibaseStrategy(MiningStrategy):
@@ -210,6 +227,31 @@ class WikibaseStrategy(MiningStrategy):
                     )
                 )
         return list(patterns.values()), statements, unclassified
+
+
+class WikibaseScopeStrategy(ScopeStrategy):
+    """A scope of a Wikibase, with each predicate named after the label of its property."""
+
+    @property
+    def name(self) -> str:
+        """Return the strategy name for reporting."""
+        return "wikibase-scope"
+
+    def predicate_labels(self, context: MiningContext, predicates: set[str]) -> dict[str, str]:
+        """Return a label for each predicate from the label of the property that it is of."""
+        language = Literal(self.language).n3()
+        links = " ".join(f"<{WIKIBASE}{link}>" for link in LINKS)
+        found: dict[str, str] = {}
+        for batch in _batches(sorted(predicates)):
+            query = (
+                f"SELECT ?term ?link ?label {self._dataset(context)} WHERE {{ "
+                f"VALUES ?term {{ {batch} }} VALUES ?link {{ {links} }} "
+                f"?property ?link ?term ; <{LABEL}> ?label FILTER(LANG(?label) = {language}) }}"
+            )
+            for row in self._select(context, query, "scope/labels"):
+                link = row["link"]["value"].removeprefix(WIKIBASE)
+                found[row["term"]["value"]] = LINKS[link].format(row["label"]["value"])
+        return {**super().predicate_labels(context, predicates - found.keys()), **found}
 
 
 def _term(binding: dict[str, Any]) -> dict[str, Any]:

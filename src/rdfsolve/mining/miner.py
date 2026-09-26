@@ -161,6 +161,11 @@ class SchemaMiner:
         return self._strategy.membership_property
 
     @property
+    def _own_view(self) -> bool:
+        """Whether the strategy classifies and describes its rows without whole-data phases."""
+        return bool(self._membership) or self._strategy.scoped
+
+    @property
     def helper(self) -> SparqlHelper:
         """Expose the miner's helper for query recording and later exploration.
 
@@ -377,7 +382,7 @@ class SchemaMiner:
             context.resumed = self._resumed_batches(*self._resume)
         # Run strategy
         patterns = self._strategy.mine(context)
-        if not isinstance(self._strategy, StructuralStrategy) and not self._membership:
+        if not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
             StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
         self._shared_extensions = dict(context.shared_extensions)
@@ -802,7 +807,7 @@ class SchemaMiner:
                     "Literal": PatternType.DATATYPE_PROPERTY,
                     "BlankNode": PatternType.BLANK_NODE_PROPERTY,
                 }.get(pattern.object_class, PatternType.OBJECT_PROPERTY)
-        if self._membership:
+        if self._own_view:
             schema.enrichment = SchemaEnrichment(
                 state="partial",
                 labels=getattr(self._strategy, "labels", []),
@@ -813,7 +818,7 @@ class SchemaMiner:
         classes, properties = self._collect_class_property_sets(schema.patterns)
         entity_counts = {}
         entity_count_states: dict[str, QueryState] = {}
-        if self.counts and not self._membership:
+        if self.counts and not self._own_view:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 
             # Subsumed representatives stand for many terms; their direct instance
@@ -906,7 +911,7 @@ class SchemaMiner:
             strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
-        if self.counts and not self._membership:
+        if self.counts and not self._own_view:
             patterns = self._run_counts_phase(patterns)
 
         raw_patterns = None

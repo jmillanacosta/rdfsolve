@@ -82,6 +82,10 @@ class MiningStrategy(ABC):
     # Classes come from this property instead of rdf:type (e.g. Wikibase "instance of").
     # Phases that read rdf:type (structural coverage, counts) do not apply then.
     membership_property: str | None = None
+    # The rows describe a part of the data that the strategy chose, with its own labels and
+    # examples. Phases that read all the data (structural coverage, counts, enrichment) do not
+    # apply then.
+    scoped: bool = False
 
     @abstractmethod
     def mine(self, context: MiningContext) -> list[SchemaPattern]:
