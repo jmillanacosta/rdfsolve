@@ -47,7 +47,9 @@ def test_the_answer_rows_reach_the_caller_not_the_model(files, tmp_path):
     assert {r["aop"]["value"] for r in answer.bindings} == {str(E.aop1), str(E.aop2)}
     assert answer.query.startswith("PREFIX ex:") and answer.text == "Retrieved 2 rows. Notes: Added PREFIX for ex, rdfs."
     assert len(seen) == 3 and answer.usage.requests == 3
-    assert "Source summary:" in seen[0][0].instructions and "ex:Pathway" in seen[0][0].instructions
+    instructions = seen[0][0].instructions
+    assert "Source summary:" in instructions and "ex:Pathway" in instructions
+    assert "Do not put LIMIT in the final query" in instructions
     visible = json.dumps([str(m) for m in seen])
     assert sum(name in visible for name in ["Liver pathway", "Thyroid pathway"]) == 1, "One row only"
     assert answer.package["source_queries"] >= 2 and answer.diagnostics()["tool_calls"] == 3
