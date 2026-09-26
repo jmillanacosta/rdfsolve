@@ -37,6 +37,21 @@ def test_fields_show_properties_types_links_and_lists():
     assert client.field_name("Person", "givenName") == client.field_name("Person", "ex:givenName") == "given_name"
 
 
+def test_diagram_merges_parallel_links_and_selects_namespaces():
+    client = Client(MinedSchema.from_vocabulary([VOCABULARY], CLASSES))
+    raw = client.diagram(fenced=False)
+    assert "ex:Person" in raw and "https://fields-test.invalid/Person" not in raw, "CURIEs by default"
+    edges = [line for line in raw.splitlines() if "-->" in line]
+    work_person = [e for e in edges if "author" in e.lower()]
+    assert len(work_person) == 1 and "editor" in work_person[0].lower(), "One edge per pair of classes"
+    assert client.links("Work").set_index("field").target["author"] == client.model("Person").__name__
+    assert "other" not in client.diagram(namespaces=["ex"], fenced=False)
+    assert client.diagram(namespaces=["https://other-test.invalid/"], fenced=False).count("[") == 1
+    assert "https://fields-test.invalid/Person" in client.diagram(iris="full", fenced=False)
+    assert "ex:" not in client.diagram(iris="none", fenced=False)
+    assert len([e for e in client.diagram(merge=False, fenced=False).splitlines() if "-->" in e]) == len(edges) + 1
+
+
 def test_member_classes_of_a_list_are_link_targets():
     schema = MinedSchema.from_vocabulary([VOCABULARY.replace("ex:Person, rdf:List", "rdf:List")], CLASSES)
     client = Client(schema)

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
+from rdfsolve._uri import curie_from_prefixes
 from rdfsolve.client.hydration import class_iri
 
 if TYPE_CHECKING:
@@ -14,27 +16,58 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
 
 
-def model_diagram(client: Client, kinds: tuple[str, ...], *, fenced: bool = True) -> str:
-    """Draw generated model labels and retained field paths without source requests."""
-    models = (
-        list(dict.fromkeys(client.model(kind) for kind in kinds))
-        if kinds
-        else list(client.models.values())
-    )
+def model_diagram(
+    client: Client,
+    kinds: tuple[str, ...],
+    *,
+    fenced: bool = True,
+    namespaces: Iterable[str] = (),
+    iris: str = "curie",
+    merge: bool = True,
+) -> str:
+    """Draw generated models and their links without source requests.
+
+    namespaces keeps the classes in these namespaces (IRIs or prefixes of the schema).
+    iris shows the class IRI as "curie", "full" or "none". merge draws one edge per pair of
+    classes, with the names of all links between them.
+    """
+    if iris not in {"curie", "full", "none"}:
+        raise ValueError('Use iris="curie", "full" or "none"')
+    prefixes = client.schema.get_prefixes()
+    wanted = [prefixes.get(n, n) for n in namespaces]
+    models = [
+        model
+        for model in (
+            list(dict.fromkeys(client.model(kind) for kind in kinds))
+            if kinds
+            else list(client.models.values())
+        )
+        if not wanted or class_iri(model).startswith(tuple(wanted))
+    ]
     ids = {class_iri(model): f"C{i}" for i, model in enumerate(models)}
     lines = ["flowchart LR"]
     for model in models:
         iri = class_iri(model)
-        label = _text(client.type_name(model)) + "<br/>" + _text(iri)
+        found = curie_from_prefixes(iri, prefixes) if iris == "curie" else None
+        shown = {"full": iri, "curie": found[0] if found else iri, "none": ""}[iris]
+        label = _text(client.type_name(model)) + (f"<br/>{_text(shown)}" if shown else "")
         lines.append(f'{ids[iri]}["{label}"]')
-    edges = set()
+    edges: dict[tuple[str, str], list[str]] = {}
     for model in models:
         for row in client.links(model).itertuples(index=False):
             target = class_iri(client.models[str(row.target)])
             if target in ids:
                 label = _text(client.link_name(model, str(row.field)))
-                edges.add(f'{ids[class_iri(model)]} -->|"{label}"| {ids[target]}')
-    body = "\n".join([*lines, *sorted(edges)])
+                pair = edges.setdefault((ids[class_iri(model)], ids[target]), [])
+                if label not in pair:
+                    pair.append(label)
+    drawn = sorted(
+        f'{a} -->|"{"<br/>".join(sorted(labels))}"| {b}'
+        if merge
+        else "\n".join(f'{a} -->|"{label}"| {b}' for label in sorted(labels))
+        for (a, b), labels in edges.items()
+    )
+    body = "\n".join([*lines, *drawn])
     return "```mermaid\n" + body + "\n```" if fenced else body
 
 

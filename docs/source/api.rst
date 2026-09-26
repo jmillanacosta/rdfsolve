@@ -29,8 +29,13 @@ remain convenient when the field has one unambiguous datatype.
    item.to_graph().serialize("item.ttl", format="turtle")
 
 Use full class and predicate IRIs when local names overlap. Ambiguous class
-names raise an error listing the matching IRIs. Generated hash suffixes are
-implementation names; resolve them with client.field_name(model, predicate).
+names raise an error listing the matching IRIs. A field name is the snake_case
+form of the local name of its property (givenName becomes given_name); when two
+properties give the same name, the vocabulary prefix is added (foaf_name).
+create() and client.field_name(model, text) also accept the local name, a CURIE,
+the property IRI or a label. client.fields(model) lists each field with its
+property IRI and CURIE, its value types and link targets, and whether it accepts
+links (IRIs) or ordered lists.
 
 .. code-block:: python
 
@@ -122,13 +127,18 @@ To inspect a local snapshot against an existing schema, call
 schema.discover_collections(graph). Pass graph_uris=[] for the default
 graph, or supply a Dataset and named graph IRIs. Remote mining does not
 automatically fetch list contents. VoID exports omit collection profiles;
-keep canonical JSON for the full model. Access profiles as schema.collections,
-or document["schema"]["collections"] in a canonical document.
+keep canonical JSON for the full model. Access profiles as schema.collections
+and the mined patterns as schema.patterns; a client gives its schema as
+client.schema.
 
-Client.links, field_name, type_name and link_name accept generated model
-classes, class names or full IRIs. Client.diagram() draws all models;
-pass class names or IRIs to select a smaller view. Use
-client.diagram(fenced=False) for raw Mermaid suitable for embedding.
+Client.links, fields, field_name, type_name and link_name accept generated
+model classes, class names or full IRIs. Client.diagram() draws all models;
+pass class names or IRIs to select a smaller view, or namespaces (prefixes or
+namespace IRIs) to keep the classes of some vocabularies. Class IRIs show as
+CURIEs (iris="curie"), in full (iris="full") or not at all (iris="none"), and
+the links between two classes are drawn as one edge (merge=False draws one edge
+per link). Use client.diagram(fenced=False) for raw Mermaid suitable for
+embedding.
 This also applies to paths tables; partial-view notices become Mermaid comments.
 
 

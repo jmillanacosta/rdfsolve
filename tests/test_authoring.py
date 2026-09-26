@@ -189,7 +189,7 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert client.field_name(iri, str(E.knows)) == client.field_name(model, str(E.knows))
         assert client.type_name(iri) == client.type_name(model)
         assert client.link_name(iri, "knows") == client.link_name(model, "knows")
-        assert all(iri in client.diagram() for iri in people.get_classes())
+        assert all(iri in client.diagram(iris="full") for iri in people.get_classes())
 
         raw = client.diagram(fenced=False)
         assert client.diagram() == "```mermaid\n" + raw + "\n```"

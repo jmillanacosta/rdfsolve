@@ -732,8 +732,16 @@ class Client(DatasetClient):
         path: int | None = None,
         instances: bool = True,
         fenced: bool = True,
+        namespaces: Iterable[str] = (),
+        iris: str = "curie",
+        merge: bool = True,
     ) -> str:
-        """Draw selected models or the selected rows of a paths table, without queries."""
+        """Draw selected models or the selected rows of a paths table, without queries.
+
+        For models: namespaces keeps the classes in these namespaces (IRIs or prefixes);
+        iris shows class IRIs as "curie", "full" or "none"; merge draws one edge per pair
+        of classes with the names of all their links.
+        """
         from rdfsolve.client.diagram import model_diagram, path_diagram
 
         if paths is not None:
@@ -742,7 +750,9 @@ class Client(DatasetClient):
             return path_diagram(self, paths, path=path, instances=instances, fenced=fenced)
         if path is not None:
             raise ValueError("Supply a paths table to choose a path")
-        return model_diagram(self, kinds, fenced=fenced)
+        return model_diagram(
+            self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge
+        )
 
     def query_log(self) -> QueryLog:
         """Show every session query and its retained response without running it again."""
