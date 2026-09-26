@@ -6,7 +6,7 @@ import json
 import keyword
 import logging
 import time
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import asdict
@@ -471,14 +471,25 @@ class Hydrator:
         return self.get_many(model, [iri], fields=fields)[0]
 
     def get_many(
-        self, model: type[Model], iris: list[str], *, fields: list[str] | None = None
+        self,
+        model: type[Model],
+        iris: list[str],
+        *,
+        fields: list[str] | None = None,
+        languages: Iterable[str] = (),
+        missing: str = "raise",
     ) -> list[Model]:
         """Retrieve fields in sequential subject batches, without cross products.
 
         Requested fields are lists, including [] when no values were returned.
         Unrequested fields stay None. Raw terms keep language and datatype.
         Blank-node labels are scoped to their response and cannot be followed.
+        languages keeps literals in these languages and literals with no language
+        (all literals when empty). An IRI with no values raises LookupError, or is
+        left out with missing="skip".
         """
+        if missing not in {"raise", "skip"}:
+            raise ValueError('Use missing="raise" or missing="skip"')
         self._check_model_scope(model)
         if len(iris) > self.max_subjects:
             raise HydrationLimitError("Too many subjects; use smaller calls")
@@ -499,8 +510,13 @@ class Hydrator:
             if name not in paths:
                 raise ValueError(f"No RDF path for field {name}")
         branches = [f'{self._subject_type("?s", "?value")} BIND("@type" AS ?field)']
+        tags = ", ".join(Literal(tag.lower()).n3() for tag in languages)
+        keep = (
+            f" FILTER(!isLiteral(?value) || LANG(?value) = '' || LCASE(LANG(?value)) IN ({tags}))"
+        )
         branches += [
-            f"?s {path_to_sparql(paths[name])} ?value . BIND({Literal(name).n3()} AS ?field)"
+            f"?s {path_to_sparql(paths[name])} ?value .{keep if tags else ''} "
+            f"BIND({Literal(name).n3()} AS ?field)"
             for name in selected
         ]
         values: dict[str, dict[str, list[RdfTerm]]] = {iri: {} for iri in iris}
@@ -534,6 +550,8 @@ class Hydrator:
                     terms.append(term)
         objects = {}
         for iri, found in values.items():
+            if not found and missing == "skip":
+                continue
             if not found:
                 raise LookupError(f"No requested values or types returned for {iri}")
             payload: dict[str, Any] = {
@@ -574,7 +592,7 @@ class Hydrator:
             model.__name__,
             len(selected),
         )
-        return [objects[iri] for iri in iris]
+        return [objects[iri] for iri in iris if iri in objects]
 
     def close(self) -> None:
         """Close only the helper created by this client."""

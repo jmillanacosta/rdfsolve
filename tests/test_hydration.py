@@ -46,3 +46,26 @@ def test_generated_classes_hydrate_paths_and_preserve_terms():
             subject: {str(v) for v in graph.objects(URIRef(subject), URIRef(DESCRIPTION))}
             for subject in subjects
         }, "Batched fields must remain attached to their requested records"
+
+
+def test_languages_are_filtered_and_missing_subjects_can_be_skipped():
+    import pytest
+    from rdflib import RDFS, Literal
+
+    from rdfsolve.api import Client
+
+    vocabulary = """@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    <urn:C> a rdfs:Class . rdfs:label rdfs:domain <urn:C> ; rdfs:range rdfs:Literal ."""
+    graph = Graph()
+    graph.add((URIRef("urn:a"), RDF.type, URIRef("urn:C")))
+    for language in ("en", "de", None):
+        graph.add((URIRef("urn:a"), RDFS.label, Literal(f"A {language}", lang=language)))
+    client = Client(MinedSchema.from_vocabulary([vocabulary], ["urn:C"]), graph)
+    model = client.model("urn:C")
+    (record,) = client.get_many(model, ["urn:a"], languages=["EN"])
+    assert sorted(record.label) == ["A None", "A en"], "Untagged literals are kept"
+    with pytest.raises(LookupError):
+        client.get_many(model, ["urn:a", "urn:gone"])
+    assert [str(r.uri) for r in client.get_many(model, ["urn:gone", "urn:a"], missing="skip")] == ["urn:a"]
+    with pytest.raises(ValueError, match="missing"):
+        client.get_many(model, ["urn:a"], missing="ignore")
