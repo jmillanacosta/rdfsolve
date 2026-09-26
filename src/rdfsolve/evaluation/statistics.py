@@ -217,9 +217,14 @@ class Components:
 
 
 def fit_components(
-    attempts: pd.DataFrame, metric: str, a: str, b: str, nodes: int = 24
+    attempts: pd.DataFrame, metric: str, a: str, b: str, nodes: int = 24, prior: bool = True
 ) -> Components:
-    """Fit the planning model to 0/1 outcomes of conditions a and b by marginal likelihood."""
+    """Fit the planning model to 0/1 outcomes of conditions a and b by marginal likelihood.
+
+    With prior=True the fit is the posterior mode under weakly informative priors: mu and
+    delta ~ N(0, 2.5^2), and sigma_u and sigma_w ~ half-normal with scale 2. The priors keep
+    the estimates finite when a pilot separates the conditions completely.
+    """
     counts = attempts[attempts.condition.isin([a, b])].groupby(["question", "condition"])[metric]
     table = counts.agg(["sum", "count"]).unstack("condition").dropna()
     y_a, k_a = table[("sum", a)].to_numpy(), table[("count", a)].to_numpy()
@@ -237,7 +242,12 @@ def fit_components(
         part_b = y_b[:, None, None] * _log(p_b) + (k_b - y_b)[:, None, None] * _log(1 - p_b)
         terms = part_a[:, :, None] + part_b + log_weights[:, None] + log_weights[None, :]
         top = terms.max(axis=(1, 2), keepdims=True)
-        return float(-np.sum(np.log(np.exp(terms - top).sum(axis=(1, 2))) + top[:, 0, 0]))
+        likelihood = np.sum(np.log(np.exp(terms - top).sum(axis=(1, 2))) + top[:, 0, 0])
+        if prior:
+            # Normal priors on mu and delta; half-normal priors on the SDs, on the log scale.
+            likelihood -= (mu**2 + delta**2) / (2 * 2.5**2)
+            likelihood -= (sigma_u**2 + sigma_w**2) / (2 * 2.0**2) - math.log(sigma_u * sigma_w)
+        return float(-likelihood)
 
     rate_a = (y_a.sum() + 0.5) / (k_a.sum() + 1)
     rate_b = (y_b.sum() + 0.5) / (k_b.sum() + 1)
@@ -312,4 +322,21 @@ def minimum_detectable(table: pd.DataFrame, power: float = 0.8) -> pd.DataFrame:
     """Give the smallest difference in success rate that reaches the power, per design."""
     reached = table[(table.power >= power) & (table.delta > 0)]
     best = reached.sort_values("delta").groupby(["questions", "repeats"], as_index=False).first()
-    return best[["questions", "repeats", "difference", "power"]]
+    return best[["questions", "repeats", "delta", "difference", "power"]]
+
+
+def sensitivity(
+    components: Components,
+    questions: Sequence[int],
+    repeats: Sequence[int],
+    sigmas: Sequence[float],
+    deltas: Sequence[float],
+    **options: float,
+) -> pd.DataFrame:
+    """Give the smallest detectable difference for other SDs of the difficulty of questions."""
+    tables = []
+    for sigma in sigmas:
+        varied = Components(components.mu, components.delta, sigma, components.sigma_w)
+        table = power_table(varied, questions, repeats, deltas, **options)
+        tables.append(minimum_detectable(table).assign(sigma_u=sigma))
+    return pd.concat(tables, ignore_index=True)

@@ -17,16 +17,24 @@ Level ``term``
 Level ``resource``
    A cell matches when both cells show the same resource. A resource is shown by its IRI,
    by a name (``rdfs:label``, ``dc:title``, ``dcterms:title``, ``skos:prefLabel``,
-   ``skos:altLabel``, synonyms, ``dcterms:alternative``, ``schema:name``, ``foaf:name``),
+   ``schema:name``, ``foaf:name``, ``dcterms:alternative``, ``skos:altLabel`` and synonyms),
    by an identifier (``dc:identifier``, ``dcterms:identifier``, ``skos:notation``,
-   ``schema:identifier``) or by a web page (``foaf:page``, ``foaf:isPrimaryTopicOf``,
-   ``schema:url``). The data resolves each value to the resources that have it as the
-   value of one of these fields. Numbers match by value. Other values (descriptions,
-   measurements, codes of other fields) match only as terms. Links between different
-   records (``owl:sameAs``, ``skos:exactMatch``) are not views: an HGNC identifier does not
-   match a UniProt identifier.
+   ``schema:identifier``), by a web page (``foaf:page``, ``foaf:isPrimaryTopicOf``,
+   ``schema:url``), or by the value of a key field of its class. A key field is found in
+   the data: its literal values have at most 64 characters, and for at least 98% of its
+   statements each resource has one value and each value belongs to one resource (for
+   example a CAS number, or an HGNC identifier). The data resolves each value to the
+   resources that have it as the value of one of these fields. Numbers match by value.
+   Other values (descriptions, measurements, values of fields that are not keys) match only
+   as terms.
 
-At both levels, rows that are the same count once, and each answer row can match one
+Level ``linked``
+   As ``resource``, and records linked by ``owl:sameAs`` or ``skos:exactMatch`` also match
+   (for example the HGNC and the NCBI Gene records of one gene). This level is a
+   sensitivity analysis: such links join records of different sources, not views of one
+   record.
+
+At each level, rows that are the same count once, and each answer row can match one
 reference row (a maximum bipartite matching). Precision, recall and F1 follow from the
 number of matched rows; an answer is an exact match when all rows match in both
 directions. An answer that the system did not complete scores 0. At the resource level,
@@ -66,8 +74,12 @@ Planning
 The success of an attempt (exact match at the resource level) is modelled on the logit
 scale: ``mu + u_q`` for condition A and ``mu + delta + u_q + w_q`` for condition B, with the
 difficulty of a question ``u_q ~ N(0, sigma_u^2)`` and a question-dependent effect
-``w_q ~ N(0, sigma_w^2)``. ``fit_components`` fits the model to a pilot by maximum marginal
-likelihood (Gauss-Hermite quadrature). ``power_table`` simulates studies with a number of
-questions and attempts and gives the share in which the sign-flip test rejects at the
-chosen level; at ``delta = 0`` this share is the simulated type I error.
-``minimum_detectable`` gives the smallest difference in mean success rate with power 0.8.
+``w_q ~ N(0, sigma_w^2)``. ``fit_components`` fits the model to a pilot by the posterior
+mode under weakly informative priors (``mu, delta ~ N(0, 2.5^2)``; ``sigma_u`` and
+``sigma_w`` half-normal with scale 2), with the marginal likelihood from Gauss-Hermite
+quadrature. The priors keep the estimates finite when a small pilot separates the
+conditions completely. ``power_table`` simulates studies with a number of questions and
+attempts and gives the share in which the sign-flip test rejects at the chosen level; at
+``delta = 0`` this share is the simulated type I error. ``minimum_detectable`` gives the
+smallest difference in mean success rate with power 0.8, and ``sensitivity`` gives it for
+other values of ``sigma_u``.

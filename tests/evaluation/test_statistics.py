@@ -15,6 +15,7 @@ from rdfsolve.evaluation.statistics import (
     icc,
     minimum_detectable,
     power_table,
+    sensitivity,
     sign_flip,
     simulate_power,
 )
@@ -77,3 +78,19 @@ def test_simulated_power_is_calibrated_and_grows_with_questions():
     assert table.difference.iloc[0] == pytest.approx(0.0, abs=0.01)
     found = minimum_detectable(table)
     assert list(found.questions) == [60] and found.difference.iloc[0] > 0.2
+
+
+def test_priors_keep_the_fit_finite_under_complete_separation():
+    rows = [{"question": f"q{q}", "condition": c, "seed": s, "success": float(c == "B" or q % 2 == 0)}
+            for q in range(6) for c in "AB" for s in range(3)]
+    fitted = fit_components(pd.DataFrame(rows), "success", "A", "B")
+    assert 0 < fitted.delta < 10 and fitted.sigma_u < 10
+    assert fitted.rates()[1] > fitted.rates()[0]
+
+
+def test_sensitivity_gives_detectable_differences_for_each_spread():
+    model = Components(mu=0.0, delta=0.0, sigma_u=1.0, sigma_w=0.3)
+    table = sensitivity(model, [60], [3], [0.5, 3.0], [0.5, 1.0, 2.0, 3.0], sims=300, flips=300)
+    found = table.set_index("sigma_u")
+    assert list(found.index) == [0.5, 3.0]
+    assert found.delta[0.5] < found.delta[3.0], "A larger spread of difficulty needs a larger effect"
