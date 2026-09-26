@@ -293,8 +293,12 @@ class OntologyLookup:
             "fetched_at": self.cache[json.dumps([self.provider, "term", canonical])]["fetched_at"],
         }
 
-    def search(self, text: str, *, ontology: str | None = None) -> list[Term]:
-        """Return ontology candidates; membership in a dataset requires client verification."""
+    def search(self, text: str, *, ontology: str | None = None, exact: bool = True) -> list[Term]:
+        """Return ontology candidates; membership in a dataset requires client verification.
+
+        With ``exact=False`` the provider ranks terms whose names contain the words, for
+        example to review candidate IRIs for a phrase.
+        """
         if not text.strip() or len(text) > 200:
             raise ValueError("Use a vocabulary phrase of at most 200 characters")
         text = " ".join(text.split()).casefold()
@@ -306,7 +310,7 @@ class OntologyLookup:
                     "q": text,
                     "queryFields": "label,synonym",
                     "rows": SEARCH_ROWS,
-                    "exact": "true",
+                    "exact": "true" if exact else "false",
                     "obsoletes": "false",
                     "local": "true",
                     "groupField": "iri",
@@ -317,8 +321,11 @@ class OntologyLookup:
                 return [self._term(t) for t in docs]
             literal = Literal(text).n3()
             predicates = " ".join(f"<{p}>" for p in NAME_PREDICATES)
+            match = f"LCASE(STR(?value)) = LCASE({literal})"
+            if not exact:
+                match = f"CONTAINS(LCASE(STR(?value)), LCASE({literal}))"
             rows = self._sparql(
-                f"SELECT DISTINCT ?iri ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} ?iri ?p ?value . FILTER(isIRI(?iri) && isLiteral(?value) && LCASE(STR(?value)) = LCASE({literal})) }} LIMIT {SEARCH_ROWS}"
+                f"SELECT DISTINCT ?iri ?p ?value WHERE {{ VALUES ?p {{ {predicates} }} ?iri ?p ?value . FILTER(isIRI(?iri) && isLiteral(?value) && {match}) }} LIMIT {SEARCH_ROWS}"
             )
             return [
                 {
@@ -333,7 +340,8 @@ class OntologyLookup:
                 for r in rows
             ]
 
-        found: list[Term] | None = self._request("search_names", [text, ontology], fetch)
+        key = [text, ontology] if exact else [text, ontology, "candidates"]
+        found: list[Term] | None = self._request("search_names", key, fetch)
         if found is not None:
             self.events[-1]["possibly_truncated"] = len(found) >= SEARCH_ROWS
             return found
@@ -345,15 +353,17 @@ class OntologyLookup:
             and entry["data"]
             and (self.offline or time.time() - entry["fetched_at"] < 86400)
             and (not ontology or entry["data"].get("ontology") == ontology)
-            and text.casefold()
-            in {
-                v.casefold()
-                for v in [
-                    entry["data"]["label"],
-                    *entry["data"]["synonyms"],
-                    *[n["text"] for n in entry["data"].get("synonym_evidence", [])],
-                ]
-            }
+            and any(
+                text == name or (not exact and text in name)
+                for name in {
+                    v.casefold()
+                    for v in [
+                        entry["data"]["label"],
+                        *entry["data"]["synonyms"],
+                        *[n["text"] for n in entry["data"].get("synonym_evidence", [])],
+                    ]
+                }
+            )
         ]
         if matches:
             self.events.append(

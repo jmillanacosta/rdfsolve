@@ -18,26 +18,21 @@ def fixture(lookup=False):
         about={"dataset_name": "test"},
         patterns=[
             SchemaPattern(subject_class=EVENT, property_uri=MMO, object_class="Literal"),
-            SchemaPattern(
-                subject_class=TAXON, property_uri=str(RDFS.label), object_class="Literal"
-            ),
+            SchemaPattern(subject_class=TAXON, property_uri=str(RDFS.label), object_class="Literal"),
         ],
     )
     graph = Graph()
-    for triple in [
-        (URIRef(HUMAN), RDF.type, URIRef(TAXON)),
-        (URIRef(HUMAN), RDFS.label, Literal("Homo sapiens")),
-        (URIRef("urn:impostor"), RDF.type, URIRef(TAXON)),
-        (URIRef("urn:impostor"), RDFS.label, Literal("Homo sapiens")),
-    ]:
-        graph.add(triple)
+    for node in (URIRef(HUMAN), URIRef("urn:impostor")):  # The impostor has the name, not the IRI.
+        graph += [(node, RDF.type, URIRef(TAXON)), (node, RDFS.label, Literal("Homo sapiens"))]
     return Client(schema, graph, graph_uris=[], ontology_grounding=lookup)
 
 
 def provider(monkeypatch, **kwargs):
     lookup = OntologyLookup(**kwargs)
+    lookup.asked = []
 
     def response(path, **params):
+        lookup.asked.append(params)
         if path == "/search":
             iri = canonical_iri(HUMAN) if params["q"] == "human" else MMO
             docs = [{"iri": iri, "label": "Homo sapiens"}]
@@ -98,3 +93,6 @@ def test_cache_and_unavailable_are_distinct(monkeypatch, tmp_path):
     assert online.events[-1]["possibly_truncated"] is False
     online.search("many")
     assert online.events[-1]["possibly_truncated"], "A full page may hide further candidates"
+    asked = len(online.asked)
+    assert online.search("human", exact=False), "Candidates for a phrase"
+    assert len(online.asked) == asked + 1 and online.asked[-1]["exact"] == "false", "Not exact names"
