@@ -449,10 +449,12 @@ class MinedSchema(BaseModel):
 
     @classmethod
     def from_vocabulary(cls, vocabulary: str | Any, classes: Any) -> MinedSchema:
-        """Read declared rows for classes of a published vocabulary (Turtle text or a Graph).
+        """Read declared rows for classes of published vocabularies.
 
-        Each class gets every property whose domain is the class or an ancestor,
-        with each declared range. Use it as a contract to author records.
+        A vocabulary is a file path, an RDFLib graph, an Oxigraph store or Turtle text.
+        A list of them is read as one vocabulary. Each class gets every property whose
+        domain is the class or an ancestor, with each declared range. Use the result as
+        a contract to author records.
         """
         from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
 

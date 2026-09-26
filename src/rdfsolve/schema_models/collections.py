@@ -8,7 +8,11 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CollectionProfile(BaseModel):
-    """Observed list members and lengths for one class, predicate and graph."""
+    """List members and lengths for one class, predicate and graph.
+
+    Observed profiles count lists in data. Vocabulary profiles come from an rdf:List range
+    and count no lists.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -23,3 +27,4 @@ class CollectionProfile(BaseModel):
     max_length: int | None = Field(None, ge=0)
     list_count: int = Field(0, ge=0)
     invalid_count: int = Field(0, ge=0)
+    evidence_source: Literal["observed", "vocabulary"] = "observed"
