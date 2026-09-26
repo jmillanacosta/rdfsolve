@@ -33,6 +33,7 @@ from rdfsolve.evaluation.statistics import (  # noqa: E402
     fit_components,
     icc,
     minimum_detectable,
+    null_shift,
     power_table,
     sensitivity,
     simulate_power,
@@ -192,7 +193,11 @@ def plan(frame, out, a, b, *, questions=(20, 40, 80, 160, 320), repeats=(1, 3, 5
          for n in questions for k in repeats]
     )
     observed.to_csv(out / "power-observed.csv", index=False)
-    null = table[table.delta == 0][["questions", "repeats", "power"]].rename(columns={"power": "type_i_error"})
+    shift = null_shift(components)
+    null = pd.DataFrame(
+        [{"questions": n, "repeats": k, "type_i_error": simulate_power(components, n, k, delta=shift, sims=sims, flips=1000, seed=seed)}
+         for n in questions for k in repeats]
+    )
     rate_a, rate_b = components.rates()
     text = [
         "## Planning model (fitted to the pilot, weakly informative priors)", "",
@@ -200,7 +205,7 @@ def plan(frame, out, a, b, *, questions=(20, 40, 80, 160, 320), repeats=(1, 3, 5
         f"sigma_u = {components.sigma_u:.3f}, sigma_w = {components.sigma_w:.3f}; "
         f"mean success rate A = {rate_a:.3f}, B = {rate_b:.3f}.", "",
         "### Power at the fitted effect", "", observed.to_markdown(index=False, floatfmt=".3f"), "",
-        "### Type I error of the sign-flip test (simulated, delta = 0, alpha = 0.05)", "",
+        f"### Type I error of the sign-flip test (simulated at equal mean rates, delta = {shift:.3f}, alpha = 0.05)", "",
         null.to_markdown(index=False, floatfmt=".3f"), "",
         "### Smallest difference in success rate with power 0.8 (fitted variance)", "",
         detectable.to_markdown(index=False, floatfmt=".3f"), "",
