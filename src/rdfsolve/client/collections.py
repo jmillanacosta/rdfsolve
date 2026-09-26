@@ -5,7 +5,7 @@ from __future__ import annotations
 from hashlib import sha256
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from rdflib import RDF, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier
 
@@ -16,6 +16,10 @@ Member = TypeVar("Member")
 
 class RDFList(BaseModel, Generic[Member]):
     """An RDF collection whose members retain order and duplicates."""
+
+    # A list of records can be a field of the same record class. The build is deferred, so
+    # the two classes do not wait for each other.
+    model_config = ConfigDict(defer_build=True)
 
     items: list[Member]
     identifier: str = Field(default_factory=lambda: str(BNode()), repr=False)
@@ -55,6 +59,7 @@ def write_collection(
     graph: Graph,
     seen: set[int],
     field: str,
+    depth: int | None = None,
 ) -> Identifier:
     """Write one collection with stable cells and its nested records."""
     from rdfsolve.client.authoring import _check_term, coerce_value
@@ -84,7 +89,7 @@ def write_collection(
                 )
             node = _new_term(member, {}, "")
             term = RdfTerm.from_rdf(node)
-            _add_record(member, graph, seen)
+            _add_record(member, graph, seen, depth=depth)
         else:
             raise ValueError(f"{location}: got {member!r}; use RDF terms or typed records")
         kind = {"uri": "IRI", "bnode": "BlankNode", "literal": "Literal"}[term.kind]

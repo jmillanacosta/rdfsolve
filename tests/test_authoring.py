@@ -1,4 +1,5 @@
 import pandas as pd
+import pyoxigraph as ox
 import pytest
 from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.compare import isomorphic
@@ -65,6 +66,11 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
             "Direct records lost RDF terms or nested nodes"
         )
         assert isomorphic(direct.to_graph(), expected)
+        quads = item.to_oxigraph()
+        year = ox.Literal("2026", datatype=ox.NamedNode(str(XSD.gYear)))
+        assert ox.Quad(ox.NamedNode(str(E.one)), ox.NamedNode(str(E.date)), year) in quads
+        assert len(quads) == len(expected), "The same statements, also for Oxigraph"
+        assert sum(isinstance(q.object, ox.BlankNode) for q in quads) == 1, "Nested nodes stay blank"
         by_iri = client.create(
             str(E.Item), uri=str(E.one), part=part, label=Literal("One", lang="en"),
             **{E.date: Literal("2026", datatype=XSD.gYear, normalize=False)},

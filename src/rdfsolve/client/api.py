@@ -7,7 +7,7 @@ import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import asdict
-from functools import cache, cached_property
+from functools import cached_property
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -17,7 +17,7 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
-from rdfsolve._uri import uri_to_curie
+from rdfsolve._uri import curie_from_prefixes, uri_to_curie
 from rdfsolve.client.exploration import DatasetClient
 from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
 from rdfsolve.client.model_rdf import model_to_graph
@@ -43,10 +43,15 @@ def _key(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.casefold())
 
 
-@cache
-def _curie_key(iri: str) -> str:
-    """Spell a property's CURIE without punctuation: ``foaf:name`` and ``foaf_name`` match."""
-    return re.sub(r"[^A-Za-z0-9]", "", uri_to_curie(iri)[0])
+def _curie_key(iri: str, prefixes: dict[str, str]) -> str:
+    """Return the CURIE of a property without punctuation: ``foaf:name`` gives ``foafname``."""
+    found = curie_from_prefixes(iri, prefixes) or uri_to_curie(iri)
+    return re.sub(r"[^A-Za-z0-9]", "", found[0])
+
+
+def _namespace(iri: str) -> str:
+    """Return the IRI up to its last ``/``, ``#`` or ``:``."""
+    return re.sub(r"[^/#:]*$", "", iri)
 
 
 def _name(name: str) -> str:
@@ -108,6 +113,7 @@ class Client(DatasetClient):
         self.class_mappings = tuple(class_mappings)
         self.related_registries = tuple(related_registries)
         self._prepared: dict[str, tuple[PreparedQuery, Any, tuple[str, ...]]] = {}
+        self._field_names: dict[tuple[type[BaseModel], str], str] = {}
 
     @cached_property
     def catalogue(self) -> Catalogue:
@@ -547,7 +553,7 @@ class Client(DatasetClient):
             rows.append(row)
         return QueryResult(
             query=query,
-            endpoint="" if isinstance(self.source, Graph) else self.source.endpoint_url,
+            endpoint=self.source.endpoint_url if isinstance(self.source, SparqlHelper) else "",
             variables=variables,
             rows=rows,
             row_count=len(rows),
@@ -746,7 +752,9 @@ class Client(DatasetClient):
         """Explain the investigation using named steps and retained query identifiers."""
         records = self._records()
         return {
-            "source": "local RDF" if isinstance(self.source, Graph) else self.source.endpoint_url,
+            "source": self.source.endpoint_url
+            if isinstance(self.source, SparqlHelper)
+            else "local RDF",
             "graphs": list(self.graph_uris),
             "source_queries": len(records),
             "endpoint_requests": sum(r.attempts for r in records),
@@ -846,18 +854,40 @@ class Client(DatasetClient):
         """Resolve a field by its Python name, source label or exact predicate IRI."""
         text = str(text)
         model = self.model(model) if isinstance(model, str) else model
+        if (model, text) not in self._field_names:
+            self._field_names[model, text] = self._find_field_name(model, text)
+        return self._field_names[model, text]
+
+    def _find_field_name(self, model: type[BaseModel], text: str) -> str:
+        """Find a field: exact name, IRI or CURIE, local name, other spelling, then labels."""
         if text in model.model_fields:
             return text
         spelled = re.sub(r"[^A-Za-z0-9]", "", text)
-        exact = [
-            name
+        iris = {
+            name: str(field.json_schema_extra.get("rdf_property_iri"))
             for name, field in model.model_fields.items()
             if isinstance(field.json_schema_extra, dict)
-            and (iri := str(field.json_schema_extra.get("rdf_property_iri", "")))
-            and (iri == text or _curie_key(iri) == spelled)
+            and field.json_schema_extra.get("rdf_property_iri")
+        }
+        prefixes = getattr(model, "rdf_prefixes", {})
+        exact = [
+            name
+            for name, iri in iris.items()
+            if iri == text
+            or ((":" in text or "_" in text) and _curie_key(iri, prefixes) == spelled)
         ]
         if len(exact) == 1:
-            return exact[0]  # an IRI or CURIE names one property exactly
+            return exact[0]  # An IRI or a CURIE identifies one property.
+        local = [name for name, iri in iris.items() if re.split(r"[/#:]", iri)[-1] == text]
+        own = [name for name in local if iris[name].startswith(_namespace(class_iri(model)))]
+        for found in (own, local):
+            if len(found) == 1:
+                return found[
+                    0
+                ]  # The local name of the property, in the vocabulary of the class first.
+        spelled_names = [name for name in model.model_fields if _key(name) == _key(text)]
+        if len(spelled_names) == 1:
+            return spelled_names[0]  # A field name with a different spelling is used before labels.
         matches = [
             name
             for name, field in model.model_fields.items()

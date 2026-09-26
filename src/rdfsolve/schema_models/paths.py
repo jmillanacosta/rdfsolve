@@ -41,12 +41,15 @@ class PropertyPath(BaseModel):
         return self
 
 
+_INVALID_IRI_CHAR = re.compile(r'[\s<>"{}|^`\\\x00-\x1f]')
+
+
 def absolute_iri(value: str) -> str:
     """Validate an RDF IRI before serializing it into SPARQL."""
     if not isinstance(value, str) or not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", value):
         raise ValueError(
             "Expected an absolute RDF IRI; relative or blank-node identifiers need an anchored query."
         )
-    if any(char.isspace() or char in '<>"{}|^`\\' or ord(char) < 32 for char in value):
+    if _INVALID_IRI_CHAR.search(value):
         raise ValueError("Invalid character in an RDF IRI")
     return value

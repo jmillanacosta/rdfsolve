@@ -70,17 +70,33 @@ def model_to_graph(record: BaseModel, *, fields: list[str] | None = None) -> Gra
     return graph
 
 
+def check_record(record: BaseModel) -> None:
+    """Check the fields of one contract record. Linked records give only their types.
+
+    Linked records were checked when they were made. The whole tree is checked again
+    when it is written with ``to_graph``.
+    """
+    from rdfsolve.client.contract import validate_contract
+
+    graph = Graph()
+    _add_record(record, graph, set(), depth=1)
+    validate_contract(record, graph, deep=False)
+
+
 def _add_record(
     record: BaseModel,
     graph: Graph,
     seen: set[int],
     fields: list[str] | None = None,
+    depth: int | None = None,
 ) -> None:
+    """Add the statements of a record. At depth 0, only the types of the record are added."""
     if id(record) in seen:
         return
     seen.add(id(record))
-    for prefix, namespace in getattr(type(record), "rdf_prefixes", {}).items():
-        graph.bind(prefix, namespace)
+    if not seen - {id(record)}:  # The prefixes of the first record are bound once.
+        for prefix, namespace in getattr(type(record), "rdf_prefixes", {}).items():
+            graph.bind(prefix, namespace)
     data = vars(record)
     source = data.get("rdf_source", {})
     scope = str(source.get("blank_node_scope", ""))
@@ -91,6 +107,9 @@ def _add_record(
         types = [class_iri] if class_iri else []
     for iri in types:
         graph.add((subject, RDF.type, _resource(iri, scope)))
+    if depth == 0:
+        return
+    below = None if depth is None else depth - 1
     available = {
         name: info.json_schema_extra
         for name, info in type(record).model_fields.items()
@@ -136,7 +155,7 @@ def _add_record(
             ]
         else:
             nodes = [
-                write_collection(item, extra, graph, seen, name)
+                write_collection(item, extra, graph, seen, name, depth=below)
                 if isinstance(item, RDFList)
                 else _new_term(item, extra, scope)
                 for item in values
@@ -150,4 +169,4 @@ def _add_record(
                 graph.add((subject, URIRef(predicate), node))
         for item in values:
             if isinstance(item, BaseModel) and not isinstance(item, RDFList):
-                _add_record(item, graph, seen)
+                _add_record(item, graph, seen, depth=below)

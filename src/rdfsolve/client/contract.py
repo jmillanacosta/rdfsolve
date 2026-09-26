@@ -16,11 +16,13 @@ from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape
 
 
-def _records(record: BaseModel, seen: set[int]) -> Iterator[BaseModel]:
+def _records(record: BaseModel, seen: set[int], depth: int | None = None) -> Iterator[BaseModel]:
     if id(record) in seen:
         return
     seen.add(id(record))
     yield record
+    if depth == 0:
+        return
     for name in type(record).model_fields:
         if not field_metadata(type(record).model_fields[name]).get("rdf_path"):
             continue
@@ -30,16 +32,20 @@ def _records(record: BaseModel, seen: set[int]) -> Iterator[BaseModel]:
             members = item.items if isinstance(item, RDFList) else [item]
             for member in members:
                 if isinstance(member, BaseModel) and not isinstance(member, RdfTerm):
-                    yield from _records(member, seen)
+                    yield from _records(member, seen, None if depth is None else depth - 1)
 
 
-def validate_contract(record: BaseModel, graph: Graph) -> None:
-    """Check field RDF kinds and active declared constraints without source requests."""
+def validate_contract(record: BaseModel, graph: Graph, *, deep: bool = True) -> None:
+    """Check field RDF kinds and active declared constraints without source requests.
+
+    With ``deep=False`` only the fields of *record* are checked; linked records give
+    their classes.
+    """
     from rdfsolve.client.model_rdf import _resource
 
     shapes = Graph()
     seen_shapes: set[str] = set()
-    records = list(_records(record, set()))
+    records = list(_records(record, set(), None if deep else 1))
     inherited: dict[Any, set[str]] = {}  # a record's node -> classes its model inherits
     for item in records:
         scope = str(vars(item).get("rdf_source", {}).get("blank_node_scope", ""))
@@ -48,7 +54,7 @@ def validate_contract(record: BaseModel, graph: Graph) -> None:
             iri = getattr(base, "rdf_class_iri", None)
             if isinstance(iri, str):
                 inherited.setdefault(resource, set()).add(iri)
-    for item in records:
+    for item in records if deep else records[:1]:
         data = vars(item)
         scope = str(data.get("rdf_source", {}).get("blank_node_scope", ""))
         subject = _resource(str(data["uri"]), scope)
@@ -56,8 +62,8 @@ def validate_contract(record: BaseModel, graph: Graph) -> None:
             raise ValueError("The record must retain its model class in rdf_type")
         for name, info in type(item).model_fields.items():
             extra = field_metadata(info)
-            if not extra.get("rdf_path"):
-                continue
+            if not extra.get("rdf_path") or getattr(item, name, None) in (None, []):
+                continue  # Only the fields that have values are written, so only they are checked.
             path = PropertyPath.model_validate(extra["rdf_path"])
             reverse = path.operator == "inverse"
             predicate = path.items[0].iri if reverse else path.iri

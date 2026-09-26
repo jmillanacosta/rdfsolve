@@ -3,39 +3,92 @@
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import Mapping, Sequence
-from typing import Any, ClassVar
+from typing import Any, ClassVar, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
+import pyoxigraph as ox
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
+    TypeAdapter,
+    field_validator,
+    model_validator,
+)
+from pydantic_core import core_schema
 from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import absolute_iri
 
+_YEAR = r"(?P<year>-?(?:[0-9]{4}|[1-9][0-9]{4,}))"
+_DAY = r"-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})"
+_CLOCK = r"(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})(?:\.[0-9]+)?"
 
-def _date_lexical(text: str, datatype: str) -> bool | None:
-    """Check calendar fields and timezone offsets for XML Schema dates."""
-    suffix = {
-        str(XSD.gYear): "",
-        str(XSD.gYearMonth): r"-(?P<month>[0-9]{2})",
-        str(XSD.date): r"-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})",
+
+_INTEGER = r"[+-]?[0-9]+"
+_DECIMAL = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+# Numbers and booleans: the lexical forms of XML Schema. Other datatypes are not known here.
+_NUMBERS = {
+    str(XSD.boolean): r"true|false|1|0",
+    str(XSD.decimal): _DECIMAL,
+    str(XSD.double): _DECIMAL + r"(?:[eE][+-]?[0-9]+)?|[+-]?INF|NaN",
+    str(XSD.float): _DECIMAL + r"(?:[eE][+-]?[0-9]+)?|[+-]?INF|NaN",
+    **{
+        str(XSD[name]): _INTEGER
+        for name in (
+            "integer",
+            "int",
+            "long",
+            "short",
+            "byte",
+            "nonNegativeInteger",
+            "positiveInteger",
+            "nonPositiveInteger",
+            "negativeInteger",
+            "unsignedInt",
+            "unsignedLong",
+            "unsignedShort",
+            "unsignedByte",
+        )
+    },
+}
+
+
+def _lexical(text: str, datatype: str) -> bool | None:
+    """Check the lexical form of a literal for XML Schema dates, times, numbers and booleans.
+
+    None means that the datatype is not known here. The value is not parsed, so no parser
+    warnings are given for values that are only tried.
+    """
+    if datatype in _NUMBERS:
+        return re.fullmatch(_NUMBERS[datatype], text) is not None
+    form = {
+        str(XSD.gYear): _YEAR,
+        str(XSD.gYearMonth): _YEAR + r"-(?P<month>[0-9]{2})",
+        str(XSD.date): _YEAR + _DAY,
+        str(XSD.dateTime): _YEAR + _DAY + "T" + _CLOCK,
+        str(XSD.time): _CLOCK,
     }.get(datatype)
-    if suffix is None:
+    if form is None:
         return None
-    match = re.fullmatch(
-        r"(?P<year>-?(?:[0-9]{4}|[1-9][0-9]{4,}))" + suffix + r"(?P<zone>Z|[+-][0-9]{2}:[0-9]{2})?",
-        text,
-    )
+    match = re.fullmatch(form + r"(?P<zone>Z|[+-][0-9]{2}:[0-9]{2})?", text)
     if match is None:
         return False
     fields = match.groupdict()
+    clock = [int(fields.get(key) or 0) for key in ("hour", "minute", "second")]
+    if clock[0] > 23 or clock[1] > 59 or clock[2] > 59:
+        return False
     zone = fields.get("zone")
     if zone and zone != "Z":
         hours, minutes = map(int, zone[1:].split(":"))
         if hours > 14 or minutes > 59 or (hours == 14 and minutes):
             return False
     month = int(fields.get("month") or 1)
-    year = int(fields["year"])
+    year = int(fields.get("year") or 2000)
     if not 1 <= month <= 12:
         return False
     leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
@@ -55,6 +108,9 @@ def coerce_value(
     if value is None:
         return None
     if isinstance(value, list):
+        missing = [i for i, item in enumerate(value) if item is None]
+        if missing:
+            raise ValueError(f"{field}[{missing[0]}]: missing value; leave it out of the list")
         return [coerce_value(item, extra, field, language) for item in value]
     if isinstance(value, RDFList):
         metadata = {"rdf_patterns": member_patterns(extra)}
@@ -66,6 +122,9 @@ def coerce_value(
                 ]
             }
         )
+    if isinstance(value, BaseModel) and not isinstance(value, (RdfTerm, RDFList)):
+        _check_record(value, extra.get("rdf_patterns", []), field)
+        return value
     if isinstance(value, (RdfTerm, Literal, URIRef, BNode, BaseModel)):
         return value
     patterns = extra.get("rdf_patterns", [])
@@ -94,13 +153,15 @@ def coerce_value(
                     continue
                 term = RdfTerm(kind="literal", value=value, language=language)
             else:
-                if _date_lexical(str(value), datatype) is False:
+                if _lexical(str(value), datatype) is False:
                     continue  # check the date form before rdflib tries to parse it
                 literal = Literal(value, datatype=URIRef(datatype), normalize=False)
-                lexical = _date_lexical(str(literal), datatype)
+                lexical = _lexical(str(literal), datatype)
                 parsed = Literal(str(literal), datatype=URIRef(datatype), normalize=False)
                 if datatype != str(XSD.string) and (
-                    lexical is False or (lexical is None and parsed.ill_typed is not False)
+                    lexical is False
+                    or (lexical is None and parsed.ill_typed is not False)
+                    or parsed.ill_typed is True  # For example, -5 as a nonNegativeInteger.
                 ):
                     continue
                 term = RdfTerm.from_rdf(literal)
@@ -121,6 +182,20 @@ def coerce_value(
     raise ValueError(f"{field}: no valid RDF interpretation; check datatype, language or IRI")
 
 
+def _check_record(record: BaseModel, patterns: list[dict[str, Any]], field: str) -> None:
+    """Check that a linked record has a class that the field accepts."""
+    targets = {p["object_class"] for p in patterns} - {"Literal"}
+    if not patterns or targets & {"Resource", "BlankNode"}:
+        return
+    kinds = {getattr(k, "rdf_class_iri", None) for k in type(record).__mro__}
+    kinds |= set(vars(record).get("rdf_type") or [])
+    if targets & kinds:
+        return
+    names = sorted(re.split(r"[/#:]", target)[-1] for target in targets)
+    use = f"Use a record of {', '.join(names)}, or an IRI." if names else "Use a literal."
+    raise ValueError(f"{field}: a {type(record).__name__} record cannot be the value. {use}")
+
+
 def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> None:
     if term.kind == "uri":
         absolute_iri(term.value)
@@ -130,7 +205,7 @@ def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> No
         if term.datatype == str(RDF.langString) and not term.language:
             raise ValueError(f"{field}: rdf:langString needs a language")
         literal = term.to_rdf()
-        if (isinstance(literal, Literal) and literal.ill_typed) or _date_lexical(
+        if (isinstance(literal, Literal) and literal.ill_typed) or _lexical(
             term.value, term.datatype or ""
         ) is False:
             raise ValueError(f"{field}: invalid lexical form for {term.datatype}")
@@ -152,6 +227,65 @@ def _check_term(term: RdfTerm, patterns: list[dict[str, Any]], field: str) -> No
             ):
                 return
     raise ValueError(f"{field}: RDF term does not match its field definition")
+
+
+class LinkedValue:
+    """Mark a field whose values can be linked records.
+
+    The type hint names the classes of the linked records for readers and editors. The values
+    are checked by rdfsolve against the RDF patterns of the field, not by pydantic. Pydantic
+    then does not build a validator for each linked class, which is slow for large
+    vocabularies.
+    """
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source: Any, handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """Accept values as they are. Restore records and lists that are given as JSON objects."""
+        options = _leaf_types(source)
+        return core_schema.no_info_plain_validator_function(lambda value: _restore(value, options))
+
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> dict[str, Any]:
+        """Describe the value as one IRI or a list of IRIs."""
+        iri = {"type": "string", "description": "The IRI of a linked resource"}
+        return {"anyOf": [iri, {"type": "array", "items": iri}]}
+
+
+def _leaf_types(hint: Any) -> list[Any]:
+    """Return the types in a union, a list or an optional type hint."""
+    args = get_args(hint)
+    return [leaf for arg in args for leaf in _leaf_types(arg)] if args else [hint]
+
+
+def _restore(value: Any, options: list[Any]) -> Any:
+    """Make records and RDF lists from JSON objects, for example after ``model_dump_json``."""
+    from rdfsolve.client.collections import RDFList
+
+    if isinstance(value, list):
+        return [_restore(item, options) for item in value]
+    if not isinstance(value, dict):
+        return value
+    classes: list[type[BaseModel]] = [
+        o for o in options if isinstance(o, type) and issubclass(o, BaseModel)
+    ]
+    if "items" in value:
+        lists = [c for c in classes if issubclass(c, RDFList)]
+        return (lists[0] if lists else RDFList).model_validate(value)
+    types = set(value.get("@type") or value.get("rdf_type") or [])
+    modules = {sys.modules.get(c.__module__) for c in classes if hasattr(c, "rdf_class_iri")}
+    found = [
+        model
+        for module in modules
+        if module is not None
+        for model in vars(module).values()
+        if isinstance(model, type) and getattr(model, "rdf_class_iri", None) in types
+    ]
+    records: list[type[BaseModel]] = found or [c for c in classes if hasattr(c, "rdf_class_iri")]
+    return records[0].model_validate(value) if records else value
 
 
 class RDFRecord(BaseModel):
@@ -237,7 +371,9 @@ class RDFRecord(BaseModel):
     def check_contract(self) -> RDFRecord:
         """Validate authored contract records before returning them."""
         if self.rdf_contract:
-            self.to_graph()
+            from rdfsolve.client.model_rdf import check_record
+
+            check_record(self)
         return self
 
     def to_graph(self, *, fields: list[str] | None = None) -> Graph:
@@ -245,6 +381,12 @@ class RDFRecord(BaseModel):
         from rdfsolve.client.model_rdf import model_to_graph
 
         return model_to_graph(self, fields=fields)
+
+    def to_oxigraph(self, *, fields: list[str] | None = None) -> ox.Dataset:
+        """Write the statements of ``to_graph`` as an Oxigraph dataset."""
+        from rdfsolve.local_rdf import to_oxigraph
+
+        return to_oxigraph(self.to_graph(fields=fields))
 
 
 def create_record(
