@@ -50,6 +50,7 @@ def test_the_answer_rows_reach_the_caller_not_the_model(files, tmp_path):
     instructions = seen[0][0].instructions
     assert "Source summary:" in instructions and "ex:Pathway" in instructions
     assert "Do not put LIMIT in the final query" in instructions
+    assert "one row with the count" in instructions and "(< 1602 instances)" in instructions
     visible = json.dumps([str(m) for m in seen])
     assert sum(name in visible for name in ["Liver pathway", "Thyroid pathway"]) == 1, "One row only"
     assert answer.package["source_queries"] >= 2 and answer.diagnostics()["tool_calls"] == 3

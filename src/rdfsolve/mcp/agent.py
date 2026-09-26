@@ -46,7 +46,8 @@ Rules:
 - Use the classes and properties of the schema. The data can also have terms that are not in the schema; use run to see them.
 - Choose a property by its example values. For example, a name or a title is text, not a code.
 - Give resources as IRIs. Do not change IRIs into strings.
-- Use OPTIONAL for values that can be missing. Use DISTINCT when the question asks for unique values.
+- A property count below the number of instances, such as [1121] (< 1602 instances), means that some instances have no value. Use OPTIONAL for such a value, unless the question requires it.
+- Use DISTINCT when the question asks for unique values. When the question asks for a number, return one row with the count.
 - Use COUNT, GROUP BY, FILTER, NOT EXISTS and other SPARQL 1.1 features when the question needs them.
 - Do not put LIMIT in the final query, unless the question asks for a number of rows. The answer tool gets all rows.
 - You can leave out PREFIX declarations for the prefixes of the source.

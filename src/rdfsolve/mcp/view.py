@@ -207,9 +207,13 @@ class SchemaView:
         for prop, patterns in ranked[:limit]:
             patterns.sort(key=lambda p: -(p.count or 0))
             example = self.examples.get((iri, prop))
+            # Fewer values than instances: some instances have no value.
+            counted = all(p.count is not None for p in patterns)
+            fewer = counted and count is not None and sum(p.count or 0 for p in patterns) < count
             lines.append(
                 f"    {self.named(prop)} → "
                 + ", ".join(self._value(p) for p in patterns[:4])
+                + (f" (< {count} instances)" if fewer else "")
                 + (f"  e.g. {self.term(example)}" if example else "")
             )
         if len(ranked) > limit:

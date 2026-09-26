@@ -15,6 +15,9 @@ def test_overview_and_class_cards_show_counts_types_examples_and_links():
     assert 'ex:cas "CAS number" → literal xsd:string [1]  e.g. "51-52-5"' in card
     assert "ex:Pathway ex:stressor [1]" in card, "Links to the class are listed"
     assert "rdf:type" not in view.card(str(E.Event))
+    pathway = view.card(str(E.Pathway))
+    assert "ex:stressor → ex:Chemical [1] (< 2 instances)" in pathway, "Some pathways have no stressor"
+    assert '    ex:event → ex:Event "Key Event" [2]\n' in pathway, "No note when counts reach the instances"
 
 
 def test_names_curies_and_iris_give_classes():
