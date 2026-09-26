@@ -39,6 +39,10 @@ def field_targets(model: type[BaseModel], field: str) -> dict[str, str]:
         for p in extra.get("rdf_patterns", [])
         if p["object_class"] not in {"Literal", "Resource", "BlankNode"}
     }
+    for collection in extra.get("rdf_collections", []):
+        for member in collection.get("member_types", []):
+            if "://" in str(member):
+                targets.setdefault(member, "list member")
     for shape in getattr(model, "rdf_shapes", []):
         for prop in shape.get("property_shapes", []):
             if prop.get("deactivated") or not prop.get("path"):

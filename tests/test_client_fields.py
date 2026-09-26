@@ -35,3 +35,12 @@ def test_fields_show_properties_types_links_and_lists():
     author = client.fields("Work").set_index("field").loc["author"]
     assert author["list"] and author["links"]
     assert client.field_name("Person", "givenName") == client.field_name("Person", "ex:givenName") == "given_name"
+
+
+def test_member_classes_of_a_list_are_link_targets():
+    schema = MinedSchema.from_vocabulary([VOCABULARY.replace("ex:Person, rdf:List", "rdf:List")], CLASSES)
+    client = Client(schema)
+    assert not client.fields("Work").set_index("field").loc["author", "links"], "Members unknown"
+    schema.collections[0].member_types = ["https://fields-test.invalid/Person"]
+    author = Client(schema).links("Work").set_index("field").loc["author"]
+    assert (author.target, author.basis) == (client.model("Person").__name__, "list member")
