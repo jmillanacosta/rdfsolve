@@ -11,8 +11,8 @@ from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
 
 if TYPE_CHECKING:
-    from rdfsolve.mappings.derivation import ClassPair
     from rdfsolve.mappings.models.core import MappingEdge
+    from rdfsolve.mappings.signatures import LinkEvidence
     from rdfsolve.schema_models.core import MinedSchema
 
 
@@ -37,12 +37,12 @@ def build_connectivity(
     schemas: Mapping[str, MinedSchema],
     *,
     class_mappings: Sequence[MappingEdge] = (),
-    associations: Sequence[ClassPair] = (),
+    links: Sequence[LinkEvidence] = (),
 ) -> Any:
     """Build a directed multigraph with dataset-qualified class nodes.
 
-    Shared vocabulary, observed predicates, explicit class mappings and entity
-    associations remain distinct edges. No transitive mapping inference is run.
+    Shared vocabulary, observed predicates, explicit class mappings and verified links
+    (rdfsolve.mappings.signatures.verify) remain distinct edges. No transitive mapping inference is run.
     """
     import networkx as nx
 
@@ -65,11 +65,13 @@ def build_connectivity(
             )
 
     def add_evidence(
-        kind: str, edge: MappingEdge | ClassPair, predicate: str | None, evidence: dict[str, Any]
+        kind: str,
+        left: tuple[str, str | None],
+        right: tuple[str, str | None],
+        predicate: str | None,
+        evidence: dict[str, Any],
     ) -> None:
         """Add one evidence edge between two schema class nodes."""
-        left = (edge.source_dataset, edge.source_class)
-        right = (edge.target_dataset, edge.target_class)
         if left not in graph or right not in graph:
             raise ValueError(
                 f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"
@@ -79,7 +81,8 @@ def build_connectivity(
     for mapping in class_mappings:
         add_evidence(
             "explicit_mapping",
-            mapping,
+            (mapping.source_dataset, mapping.source_class),
+            (mapping.target_dataset, mapping.target_class),
             mapping.predicate,
             {
                 "confidence": mapping.confidence,
@@ -87,18 +90,21 @@ def build_connectivity(
                 "mapping_source": mapping.mapping_source,
             },
         )
-    for pair in associations:
+    for evidence in links:
+        link = evidence.link
         add_evidence(
-            "entity_association",
-            pair,
-            pair.class_relation,
+            "verified_link",
+            (link.source, link.source_class),
+            (link.target, link.target_class),
+            link.property,
             {
-                "supporting_entity_predicates": pair.supporting_entity_predicates,
-                "derivation_method": pair.derivation_method,
-                "instance_count": pair.instance_count,
-                "source_coverage": pair.source_coverage,
-                "target_coverage": pair.target_coverage,
-                "coverage_basis": "indexed entities",
+                "link_kind": link.kind,
+                "identifier_type": link.identifier_type,
+                "target_property": link.target_property,
+                "sampled": evidence.sampled,
+                "found": evidence.found,
+                "share": evidence.share,
+                "target_forms": evidence.target_forms,
             },
         )
     return graph

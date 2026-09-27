@@ -33,5 +33,5 @@ export PYTHONPATH="$RDFSOLVE_REPO/src${PYTHONPATH:+:$PYTHONPATH}"
 cd "$RDFSOLVE_REPO"
 
 python scripts/analyze_mappings.py "${RDFSOLVE_SCHEMAS:?Set the canonical schema directory}" \
-  --instances "${RDFSOLVE_INSTANCES:-$RDFSOLVE_REPO/output/mappings/instances}" \
+  --links ${RDFSOLVE_LINKS:?Set the verified link tables} \
   --output "${RDFSOLVE_ANALYSIS_OUTPUT:-$RDFSOLVE_BASE/results/mapping-analysis-${SLURM_JOB_ID:-local}}" "$@"

@@ -10,9 +10,12 @@ examples, and sampled lookups in the target decide whether it holds.
 
 from __future__ import annotations
 
+import csv
+import json
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 from rdfsolve.schema_models.core import MinedSchema
@@ -221,3 +224,67 @@ def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> L
         dict(forms),
         sorted((keys[key], term) for key, term in found.items()),
     )
+
+
+LINK_FIELDS = (
+    "kind",
+    "source",
+    "source_class",
+    "property",
+    "identifier_type",
+    "target",
+    "target_class",
+    "target_property",
+    "sampled",
+    "found",
+    "share",
+    "target_forms",
+    "examples",
+)
+
+
+def write_links(path: str | Path, links: Iterable[LinkEvidence]) -> None:
+    """Write verified links as a table (tab-separated, one link per row).
+
+    target_forms and examples are JSON; share is written for the reader and is not read back.
+    """
+    with Path(path).open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, LINK_FIELDS, delimiter="\t")
+        writer.writeheader()
+        for evidence in links:
+            link = evidence.link
+            writer.writerow(
+                {
+                    **{name: getattr(link, name) or "" for name in LINK_FIELDS[:8]},
+                    "sampled": evidence.sampled,
+                    "found": evidence.found,
+                    "share": "" if evidence.share is None else evidence.share,
+                    "target_forms": json.dumps(evidence.target_forms),
+                    "examples": json.dumps(evidence.examples),
+                }
+            )
+
+
+def read_links(path: str | Path) -> list[LinkEvidence]:
+    """Read a table of verified links. A row without a sample (a failed lookup) is skipped."""
+    with Path(path).open(newline="") as handle:
+        rows = [row for row in csv.DictReader(handle, delimiter="\t") if row["sampled"]]
+    return [
+        LinkEvidence(
+            Link(
+                row["kind"],  # type: ignore[arg-type]
+                row["source"],
+                row["source_class"],
+                row["property"],
+                row["identifier_type"],
+                row["target"],
+                row["target_class"] or None,
+                row["target_property"] or None,
+            ),
+            int(row["sampled"]),
+            int(row["found"]),
+            json.loads(row["target_forms"]),
+            [tuple(pair) for pair in json.loads(row["examples"])],
+        )
+        for row in rows
+    ]

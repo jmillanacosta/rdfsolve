@@ -1,41 +1,48 @@
-from rdfsolve.mappings import (
-    ClassIndex,
-    EntityClassInfo,
-    MappingEdge,
-    derive_class_mappings,
+"""Verified links between datasets become evidence edges of the connectivity graph."""
+
+import pytest
+
+from rdfsolve.analysis import build_connectivity
+from rdfsolve.mappings.signatures import Link, LinkEvidence, read_links, write_links
+from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+UP = "http://purl.uniprot.org/uniprot/"
+
+
+def schema(name, rows):
+    patterns = [SchemaPattern(subject_class=c, property_uri=p, object_class=o) for c, p, o in rows]
+    return MinedSchema(about=AboutMetadata.build(dataset_name=name), patterns=patterns)
+
+
+SCHEMAS = {
+    "genes": schema("genes", [("urn:Gene", "urn:xref", "Resource")]),
+    "proteins": schema("proteins", [("urn:Protein", "urn:name", "Literal")]),
+}
+EVIDENCE = LinkEvidence(
+    Link("join", "genes", "urn:Gene", "urn:xref", "uniprot", "proteins", "urn:Protein"),
+    sampled=50,
+    found=48,
+    target_forms={UP + "{id}": 48},
+    examples=[("https://identifiers.org/uniprot:P04637", UP + "P04637")],
 )
 
 
-def test_associations_deduplicate_entities_and_keep_dataset_types():
-    combined = ClassIndex(
-        endpoint_url="urn:local",
-        dataset_graphs={"a": ["urn:ga"], "b": ["urn:gb"]},
-        entities={
-            "urn:one": EntityClassInfo(
-                entity_iri="urn:one", graph_classes={"urn:ga": ["urn:A"], "urn:gb": ["urn:Wrong"]}
-            ),
-            "urn:two": EntityClassInfo(entity_iri="urn:two", graph_classes={"urn:gb": ["urn:B"]}),
-            "urn:three": EntityClassInfo(
-                entity_iri="urn:three", graph_classes={"urn:ga": ["urn:A"]}
-            ),
-        },
+def test_verified_links_survive_a_file_and_become_evidence_edges(tmp_path):
+    path = tmp_path / "links.tsv"
+    write_links(path, [EVIDENCE])
+    assert read_links(path) == [EVIDENCE], "The table keeps every field"
+    graph = build_connectivity(SCHEMAS, links=read_links(path))
+    (edge,) = [
+        (a, b, d) for a, b, d in graph.edges(data=True) if d["kind"] == "verified_link"
+    ]
+    assert edge[:2] == (("genes", "urn:Gene"), ("proteins", "urn:Protein"))
+    assert (edge[2]["predicate"], edge[2]["share"], edge[2]["sampled"]) == ("urn:xref", 0.96, 50)
+    assert edge[2]["target_forms"] == {UP + "{id}": 48}, "The rewrite that applies the link"
+
+
+def test_a_link_to_a_class_that_no_schema_has_is_refused():
+    other = LinkEvidence(
+        Link("join", "genes", "urn:Gene", "urn:xref", "uniprot", "proteins", "urn:Missing"), 1, 1, {}, []
     )
-    edge = MappingEdge(
-        source_class="urn:one",
-        target_class="urn:two",
-        source_dataset="a",
-        target_dataset="b",
-        predicate="urn:corresponds",
-    )
-    pairs, stats = derive_class_mappings([edge, edge], combined)
-    assert len(pairs) == 1
-    pair = pairs[0]
-    assert (pair.source_class, pair.target_class, pair.instance_count) == ("urn:A", "urn:B", 1)
-    assert pair.source_coverage == 0.5 and pair.target_coverage == 1
-    assert not hasattr(pair, "confidence")
-    assert pair.supporting_entity_predicates == {"urn:corresponds": 1}
-    assert pair.class_relation is None
-    assert pair.derivation_method == "mapped_instance_types"
-    assert stats["supporting_entity_predicates"] == {"urn:corresponds": 1}
-    assert stats["processed_edges"] == 2
-    assert derive_class_mappings([edge], combined, min_instance_count=2)[0] == []
+    with pytest.raises(ValueError, match="absent"):
+        build_connectivity(SCHEMAS, links=[other])

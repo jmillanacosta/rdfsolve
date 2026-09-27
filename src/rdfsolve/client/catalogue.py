@@ -109,7 +109,7 @@ class Catalogue:
     def _mapping_hints(
         self, mappings: Any, registries: Iterable[Registry]
     ) -> dict[str, dict[str, dict[str, Any]]]:
-        """Index ClassPair or MappingEdge evidence from supplied registries."""
+        """Index MappingEdge evidence from supplied registries."""
         lookup = {self.registry.source_id: self.registry}
         for registry in registries:
             if registry.source_id in lookup:

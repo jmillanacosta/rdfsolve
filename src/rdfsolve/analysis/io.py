@@ -70,8 +70,8 @@ def read_class_mappings(
 ) -> tuple[list[MappingEdge], dict[str, int]]:
     """Expand file CURIEs and retain each class mapping in every applicable dataset pair.
 
-    The input must contain class mappings. Entity mappings require type indexing
-    and derive_class_mappings instead. Unrepresented classes are counted separately.
+    The input must contain class mappings. Links between entities are inferred and
+    verified with rdfsolve.mappings.signatures instead. Unrepresented classes are counted separately.
     """
     from rdfsolve.mappings.sssom import project_mappings
 
