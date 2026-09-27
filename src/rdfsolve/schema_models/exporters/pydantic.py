@@ -176,7 +176,10 @@ def to_pydantic(
 
     collections: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for collection_profile in schema.collections or []:
-        if collection_profile.list_count or collection_profile.evidence_source == "vocabulary":
+        if collection_profile.list_count or collection_profile.evidence_source in (
+            "vocabulary",
+            "shacl",
+        ):
             collections[collection_profile.subject_class, collection_profile.property_uri].append(
                 collection_profile.model_dump(mode="json")
             )

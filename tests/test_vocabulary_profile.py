@@ -59,3 +59,28 @@ def test_a_profile_adds_rows_that_the_vocabulary_does_not_declare():
     assert (None, None, None) in record.to_graph()
     with pytest.raises(ValueError, match="not requested"):
         MinedSchema.from_vocabulary(CODE, [S + "Person"], profile=PROFILE)
+
+
+LISTS = """
+@prefix schema: <https://schema.org/> . @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+[] a sh:NodeShape ; sh:targetClass schema:SoftwareSourceCode ; sh:property [
+    sh:path schema:contributor ; sh:nodeKind sh:BlankNode ;
+    sh:property [ sh:path ( [ sh:zeroOrMorePath rdf:rest ] rdf:first ) ; sh:class schema:Person ] ] .
+"""
+
+
+def test_a_profile_can_declare_ordered_lists():
+    from rdfsolve.api import RDFList
+
+    schema = MinedSchema.from_vocabulary(
+        CODE, [S + "SoftwareSourceCode", S + "Person"], profile=LISTS
+    )
+    client = Client(schema)
+    people = [client.create(S + "Person", uri=f"urn:p{i}", name=f"P{i}") for i in (1, 2)]
+    code = client.create(
+        S + "SoftwareSourceCode", uri="urn:code", contributor=RDFList(items=people)
+    )
+    graph = code.to_graph()
+    head = next(o for _, p, o in graph if str(p) == S + "contributor")
+    assert [str(m) for m in graph.items(head)] == ["urn:p1", "urn:p2"], "In their order"
