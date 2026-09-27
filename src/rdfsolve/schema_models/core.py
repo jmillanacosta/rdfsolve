@@ -616,6 +616,7 @@ class MinedSchema(BaseModel):
         *,
         activate_observed: bool = False,
         trim_descriptions: int | None = None,
+        void: bool = True,
     ) -> str:
         """Convert to SHACL shapes.
 
@@ -624,6 +625,8 @@ class MinedSchema(BaseModel):
         Args:
             base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
             activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
+            void: Add the VoID description, so that from_shacl reads the patterns back. Leave it
+                out when the VoID is published on its own.
 
         Example:
             >>> schema = MinedSchema.from_jsonld("schema.jsonld")
@@ -641,7 +644,8 @@ class MinedSchema(BaseModel):
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
+        if void:
+            graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
         schema.annotate_rdf(graph)
         result: str = graph.serialize(format="turtle")
         return result

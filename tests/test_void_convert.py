@@ -28,3 +28,16 @@ def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
     from_void = void_to_minedschema(schema.to_void_graph().serialize(format="turtle"))
     assert {key(p) for p in from_void.patterns} == {key(p) for p in schema.patterns}
     assert len(MinedSchema.from_shacl(from_void.to_shacl()).patterns) == 4
+
+
+def test_shapes_can_be_written_without_the_void_description():
+    from rdflib import RDF, Graph, Namespace
+
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    sh, void = Namespace("http://www.w3.org/ns/shacl#"), Namespace("http://rdfs.org/ns/void#")
+    pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="d"), patterns=[pattern])
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    assert set(shapes.subjects(RDF.type, sh.NodeShape)), "The shapes stay"
+    assert not set(shapes.subjects(RDF.type, void.Dataset)), "The VoID is published on its own"
