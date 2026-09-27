@@ -38,12 +38,21 @@ def test_every_statement_of_the_seeds_and_of_one_hop_is_a_row():
     }, "Only the scope: no email of bob, no subject of the cited article, no rdf:type rows"
     labels = {a.term_iri: a.text.value for a in schema.enrichment.labels}
     assert labels == {S + "author": "author", PERSON: "Person"}
+    author = next(p for p in schema.patterns if p.property_uri == S + "author")
+    assert (author.property_label, author.object_label) == ("author", "Person"), "No label queries"
     examples = {(e.property_uri, e.value.value) for e in schema.enrichment.examples}
     assert (S + "knows", EX + "bob") in examples
     scope = report.config["scope"]
     assert scope["followed"] == 1 and scope["unclassified_subjects"] == 1, "Counted, not guessed"
     phases = {phase.name for phase in report.phases}
-    whole = {"counts", "class-entity-counts", "graph-census", "typed-coverage", "enrichment"}
+    whole = {
+        "counts",
+        "class-entity-counts",
+        "graph-census",
+        "typed-coverage",
+        "enrichment",
+        "labels",
+    }
     assert not phases & whole, "Phases that read all the data do not run"
     assert report.completion_state == "complete"
 

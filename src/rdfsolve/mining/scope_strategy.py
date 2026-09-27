@@ -25,6 +25,7 @@ from rdfsolve.sparql_helper import SparqlHelper
 LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 BATCH = 50
+LOOKUP = 250  # terms in one label lookup
 Key = tuple[str, str, str, str | None]
 
 
@@ -203,7 +204,7 @@ class ScopeStrategy(MiningStrategy):
         """Return the rdfs:label of each term in the language of the strategy."""
         language = Literal(self.language).n3()
         found: dict[str, str] = {}
-        for batch in _batches(sorted(terms)):
+        for batch in _batches(sorted(terms), LOOKUP):  # label lookups are cheap
             query = (
                 f"SELECT ?term ?label {self._dataset(context)} WHERE {{ VALUES ?term {{ {batch} }} "
                 f"?term <{LABEL}> ?label FILTER(LANG(?label) = {language}) }}"
@@ -234,10 +235,10 @@ class ScopeStrategy(MiningStrategy):
         return outcome.rows
 
 
-def _batches(iris: list[str]) -> Iterator[str]:
+def _batches(iris: list[str], size: int = BATCH) -> Iterator[str]:
     """Yield the IRIs as SPARQL terms, in groups that fit in one VALUES block."""
-    for start in range(0, len(iris), BATCH):
-        yield " ".join(URIRef(iri).n3() for iri in iris[start : start + BATCH])
+    for start in range(0, len(iris), size):
+        yield " ".join(URIRef(iri).n3() for iri in iris[start : start + size])
 
 
 def _term(binding: dict[str, Any]) -> dict[str, Any]:

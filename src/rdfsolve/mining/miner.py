@@ -530,7 +530,15 @@ class SchemaMiner:
         self,
         patterns: list[SchemaPattern],
     ) -> tuple[list[SchemaPattern], set[str]]:
-        """Run the labels phase and return (enriched patterns, uri set)."""
+        """Run the labels phase and return (enriched patterns, uri set).
+
+        A strategy with its own view gives the labels itself; they are copied, not queried.
+        """
+        if self._own_view:
+            from rdfsolve.mining.pattern_enrichment import _enrich_with_local
+
+            found = {a.term_iri: a.text.value for a in getattr(self._strategy, "labels", [])}
+            return _enrich_with_local(patterns, found), self._unique_uris(patterns)
         phase = self._report.start_phase("labels")
         logger.info("Fetching labels …")
         uris_before = self._unique_uris(patterns)

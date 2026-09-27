@@ -9,7 +9,7 @@ from rdflib import Literal
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.query_fallbacks import select_outcome
-from rdfsolve.mining.scope_strategy import ScopeStrategy, _batches
+from rdfsolve.mining.scope_strategy import LOOKUP, ScopeStrategy, _batches
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, TermAnnotation
@@ -246,7 +246,7 @@ class WikibaseScopeStrategy(ScopeStrategy):
         helper = SparqlHelper(self.declarations) if self.declarations else None
         dataset = "" if helper else self._dataset(context)
         found: dict[str, str] = {}
-        for batch in _batches(sorted(predicates)):
+        for batch in _batches(sorted(predicates), LOOKUP):
             query = (
                 f"SELECT ?term ?link ?label {dataset} WHERE {{ "
                 f"VALUES ?term {{ {batch} }} VALUES ?link {{ {links} }} "
