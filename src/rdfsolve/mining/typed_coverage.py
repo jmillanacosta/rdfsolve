@@ -31,9 +31,12 @@ def typed_match(
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
         "?_contextGraph", "?_objectAnyGraph"
     )
-    # The outer ?p is compared with the profile, not bound again: Virtuoso rejects a VALUES
-    # that binds an outer variable inside EXISTS (error SP031).
+    # The triple pattern joins the outer ?s ?p ?o: QLever and Virtuoso evaluate EXISTS as a
+    # join on the variables that its patterns bind, not by substitution. The property of the
+    # profile is compared, not bound again: Virtuoso rejects a VALUES that binds an outer
+    # variable inside EXISTS (error SP031).
     match = f"""EXISTS {{
+?s ?p ?o .
 VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 FILTER(?p = ?_coveredProperty)
 {subject_type}

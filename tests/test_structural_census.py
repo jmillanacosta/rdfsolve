@@ -48,3 +48,5 @@ def test_the_coverage_test_does_not_rebind_outer_variables():
     (header,) = re.findall(r"VALUES \(([^)]*)\)", match)
     assert not {"?s", "?p", "?o"} & set(header.split()), "Outer variables are compared, not bound"
     assert "IF(EXISTS" not in match.replace(" ", "")
+    body = match.split("EXISTS {", 1)[1]
+    assert body.lstrip().startswith("?s ?p ?o ."), "Engines that join EXISTS need the pattern"
