@@ -4987,6 +4987,25 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+- name: spsp
+  endpoint: https://spsp.sib.swiss/sparql
+  graph_uris:
+  - https://w3id.org/spsp/graph
+  keywords:
+  - epidemiology
+  - genomics
+  - pathogen surveillance
+  - virus
+  sparql_engine: virtuoso
+  sparql_strategy: get+json
+  supports_graph: true
+  notes: >-
+    Swiss Pathogen Surveillance Platform (SIB): SARS-CoV-2, influenza, other viruses and
+    wastewater data, with one class for each source table (covid_data, wastewater_data, ...).
+    No dump, VoID or Graph Store download (checked 2026-09-27); the local channel mines a
+    snapshot of the endpoint (article/experiments/spsp-20260927), which is not a provider
+    distribution. The endpoint also has 302 triples in a graph whose IRI contains a line
+    break (https://w3id.org/sps + newline + p/graph); they are outside the selected graph.
 - name: orthodb
   endpoint: https://sparql.orthodb.org/sparql
   bioregistry_prefix: orthodb
