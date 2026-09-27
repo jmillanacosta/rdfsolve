@@ -64,6 +64,18 @@ identifier type (a Bioregistry prefix) of subjects of another dataset (a join), 
 of values of another dataset (a shared reference). ``verify`` looks up a sample of
 the values in the target. The share is relative to the sample only.
 
+Identifiers can be resolved before the lookup. ``read_replacements`` reads the
+"term replaced by" rows (``IAO:0100001``) of an SSSOM mapping set, such as the
+secondary-to-primary sets of pysec2pri; withdrawn identifiers and splits are left
+out. ``verify(..., replacements=...)`` then looks up each secondary identifier by
+its primary identifier, and ``replaced`` counts how many sampled identifiers were
+rewritten.
+
+.. code-block:: python
+
+   replacements = read_replacements("uniprot.sssom.tsv")
+   evidence = verify(link, source, target, replacements=replacements)
+
 Run an analysis
 ---------------
 

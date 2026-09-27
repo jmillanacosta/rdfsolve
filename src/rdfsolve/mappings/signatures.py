@@ -154,7 +154,8 @@ class LinkEvidence:
     """Sampled values of a link's source property, and how many the target has.
 
     target_forms counts how the target writes the identifiers that it has ({id} marks the
-    local identifier): this is the rewrite that applies the link.
+    local identifier): this is the rewrite that applies the link. replaced counts the sampled
+    identifiers that were looked up through a replacement (see read_replacements).
     """
 
     link: Link
@@ -162,6 +163,7 @@ class LinkEvidence:
     found: int
     target_forms: dict[str, int]
     examples: list[tuple[str, str]]
+    replaced: int = 0
 
     @property
     def share(self) -> float | None:
@@ -180,12 +182,22 @@ def _local(value: str) -> tuple[str, str] | None:
     return bioregistry.normalize_prefix(parsed[0]) or parsed[0], parsed[1]
 
 
-def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> LinkEvidence:
+def verify(
+    link: Link,
+    source: Client,
+    target: Client,
+    *,
+    sample: int = 50,
+    replacements: Mapping[str, str] | None = None,
+) -> LinkEvidence:
     """Look up up to *sample* values of the link's source property in the target.
 
     A join looks for the identifiers as subjects of the target class; a shared reference
     looks for them as values of the target property. Every spelling of an identifier is tried.
+    An identifier in *replacements* (Bioregistry CURIEs, secondary to primary) is looked up
+    by its replacement.
     """
+    replacements = replacements or {}
     from rdflib import URIRef
 
     from rdfsolve.client.identify import spellings
@@ -202,10 +214,13 @@ def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> L
             keys[f"{parsed[0]}:{parsed[1]}"] = row["v"]["value"]
     if link.kind == "join":
         pattern = f"?t a {_iri(link.target_class or '')} ."
-        terms = {key: [t for t in spellings(key) if isinstance(t, URIRef)] for key in keys}
+        terms = {
+            key: [t for t in spellings(replacements.get(key, key)) if isinstance(t, URIRef)]
+            for key in keys
+        }
     else:
         pattern = f"?x {_iri(link.target_property or '')} ?t ."
-        terms = {key: spellings(key) for key in keys}
+        terms = {key: spellings(replacements.get(key, key)) for key in keys}
     found: dict[str, str] = {}
     pairs = [(key, term) for key, forms in terms.items() for term in forms]
     for start in range(0, len(pairs), 200):
@@ -215,7 +230,7 @@ def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> L
             found.setdefault(row["key"]["value"], row["t"]["value"])
     forms: dict[str, int] = defaultdict(int)
     for key, term in found.items():
-        local = key.split(":", 1)[1]
+        local = replacements.get(key, key).split(":", 1)[1]
         forms[term.replace(local, "{id}") if term.endswith(local) else "literal"] += 1
     return LinkEvidence(
         link,
@@ -223,7 +238,36 @@ def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> L
         len(found),
         dict(forms),
         sorted((keys[key], term) for key, term in found.items()),
+        sum(key in replacements for key in keys),
     )
+
+
+TERM_REPLACED_BY = "http://purl.obolibrary.org/obo/IAO_0100001"
+NO_TERM_FOUND = "https://w3id.org/sssom/NoTermFound"
+
+
+def read_replacements(path: str | Path) -> dict[str, str]:
+    """Read the identifier replacements of an SSSOM mapping set, such as pysec2pri writes.
+
+    A row with the predicate "term replaced by" (IAO:0100001) maps a secondary identifier
+    (subject) to its primary identifier (object). Identifiers are returned as Bioregistry
+    CURIEs. A withdrawn identifier (no object identifier) and a split (more than one
+    object) have no single replacement and are left out.
+    """
+    from sssom.parsers import parse_sssom_table
+
+    mapping_set = parse_sssom_table(path)
+    expand = mapping_set.converter.expand
+    targets: dict[str, set[str]] = defaultdict(set)
+    for row in mapping_set.df.itertuples():
+        if expand(str(row.predicate_id)) != TERM_REPLACED_BY:
+            continue
+        object_iri = expand(str(row.object_id)) or ""
+        old = _local(expand(str(row.subject_id)) or "")
+        new = None if object_iri == NO_TERM_FOUND else _local(object_iri)
+        if old:
+            targets[f"{old[0]}:{old[1]}"].add(f"{new[0]}:{new[1]}" if new else "")
+    return {old: next(iter(new)) for old, new in targets.items() if len(new) == 1 and "" not in new}
 
 
 LINK_FIELDS = (
@@ -240,6 +284,7 @@ LINK_FIELDS = (
     "share",
     "target_forms",
     "examples",
+    "replaced",
 )
 
 
@@ -261,6 +306,7 @@ def write_links(path: str | Path, links: Iterable[LinkEvidence]) -> None:
                     "share": "" if evidence.share is None else evidence.share,
                     "target_forms": json.dumps(evidence.target_forms),
                     "examples": json.dumps(evidence.examples),
+                    "replaced": evidence.replaced,
                 }
             )
 
@@ -285,6 +331,7 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
             int(row["found"]),
             json.loads(row["target_forms"]),
             [tuple(pair) for pair in json.loads(row["examples"])],
+            int(row["replaced"]),
         )
         for row in rows
     ]

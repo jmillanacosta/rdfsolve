@@ -6,6 +6,7 @@ from rdfsolve.mappings.signatures import (
     LinkEvidence,
     infer_links,
     read_links,
+    read_replacements,
     verify,
     write_links,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "MappingEdge",
     "infer_links",
     "read_links",
+    "read_replacements",
     "verify",
     "write_links",
 ]
