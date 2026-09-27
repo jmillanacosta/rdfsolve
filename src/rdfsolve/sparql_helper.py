@@ -277,20 +277,32 @@ class SparqlHelper:
         self._query_registry.clear()
 
     def _record_query(self, record: QueryRecord) -> None:
-        """Collect a query execution."""
+        """Collect a query execution; it becomes a portable example when queries is read."""
         if self._collect_queries:
             self._query_registry.append(record)
+            self._unsaved.append(record)
+
+    @property
+    def queries(self) -> QueryCollection:
+        """Return the named queries, with every recorded execution as a portable example.
+
+        Executions are saved here, not when they run: saving parses the query, and a query
+        with a large VALUES block takes seconds to parse.
+        """
+        while self._unsaved:
+            record = self._unsaved.pop(0)
             name = record.query_id()
             if not any(
                 q.name == name or (not q.prefixes and q.text == record.query)
-                for q in self.queries.shacl.queries
+                for q in self._queries.shacl.queries
             ):
                 try:
-                    self.queries.add(name, record.query, endpoint=record.endpoint_url)
+                    self._queries.add(name, record.query, endpoint=record.endpoint_url)
                 except Exception as export_error:
                     logger.warning(
                         "Cannot save query %s as a portable example: %s", name, export_error
                     )
+        return self._queries
 
     def add_query(self, name: str, query: str, *, description: str = "") -> SavedQuery:
         """Save a named read query without executing it."""
@@ -368,7 +380,8 @@ class SparqlHelper:
         """
         if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
             raise ValueError("Use positive response/retry limits and nonnegative request delay")
-        self.queries = QueryCollection()
+        self._queries = QueryCollection()
+        self._unsaved: list[QueryRecord] = []
         self.history: list[QueryRun] = []
         self._collect_results = False
         self._query_registry: list[QueryRecord] = []
