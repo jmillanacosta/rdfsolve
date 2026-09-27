@@ -42,13 +42,16 @@ class ScopeStrategy(MiningStrategy):
         window: int = 1000,
         membership: str | None = None,
         prefix_classes: Mapping[str, str] | None = None,
+        ignore_classes: Iterable[str] = (),
         language: str = "en",
     ) -> None:
         """Mine *subjects*, up to *window* members of each class, and what *follow* reaches.
 
         *membership* classifies resources in addition to rdf:type. *prefix_classes* gives
         the class of the IRIs that start with a prefix (the Wikidata Query Service leaves
-        out wikibase:Item and wikibase:Statement). Labels are read in *language*.
+        out wikibase:Item and wikibase:Statement). Types that start with a prefix in
+        *ignore_classes* are left out (Wikibase types an item that has no value for a
+        property as wdno:P...). Labels are read in *language*.
         """
         self.subjects = list(dict.fromkeys(subjects))
         self.classes = list(dict.fromkeys(classes))
@@ -56,6 +59,7 @@ class ScopeStrategy(MiningStrategy):
         self.window = window
         self.membership_property = membership
         self.prefix_classes = dict(prefix_classes or {})
+        self.ignore_classes = tuple(ignore_classes)
         self.language = language
         self.examples: list[PatternExample] = []
         self.labels: list[TermAnnotation] = []
@@ -104,7 +108,8 @@ class ScopeStrategy(MiningStrategy):
                 f"VALUES ?link {{ {values} }} ?s ?link ?c FILTER(isIRI(?c)) }}"
             )
             for row in self._select(context, query, "scope/classes"):
-                classes[row["s"]["value"]].add(row["c"]["value"])
+                if not row["c"]["value"].startswith(self.ignore_classes):
+                    classes[row["s"]["value"]].add(row["c"]["value"])
         patterns: dict[Key, SchemaPattern] = {}
         unclassified: set[str] = set()
         for batch in _batches(subjects):
@@ -148,7 +153,9 @@ class ScopeStrategy(MiningStrategy):
         kind = row["kind"]["value"]
         datatype = row.get("dt", {}).get("value") if kind == "literal" else None
         objects = {"literal": ["Literal"], "bnode": ["BlankNode"]}.get(kind) or [
-            row[key]["value"] for key in ("ot", "om", "on") if key in row
+            row[key]["value"]
+            for key in ("ot", "om", "on")
+            if key in row and not row[key]["value"].startswith(self.ignore_classes)
         ]
         for subject_class in classes:
             for object_class in objects or ["Resource"]:

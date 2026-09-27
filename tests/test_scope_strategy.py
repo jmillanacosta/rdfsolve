@@ -50,11 +50,15 @@ def test_every_statement_of_the_seeds_and_of_one_hop_is_a_row():
 
 def test_a_prefix_implies_a_class_and_a_full_class_sample_keeps_the_run_partial():
     strategy = ScopeStrategy(
-        classes=[PERSON], window=1, prefix_classes={EX + "lo": S + "Thing"}, subjects=[EX + "loose"]
+        [EX + "loose", EX + "paper"],
+        classes=[PERSON],
+        window=1,
+        prefix_classes={EX + "lo": S + "Thing"},
+        ignore_classes=[S + "Scholarly"],
     )
     schema, report = mine(strategy)
-    assert (S + "Thing", S + "name", LITERAL) in {
-        (p.subject_class, p.property_uri, p.object_class) for p in schema.patterns
-    }
+    rows = {(p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
+    assert (S + "Thing", S + "name", LITERAL) in rows
+    assert not {c for row in rows for c in row} & {ARTICLE}, "Ignored types are no classes"
     assert report.config["scope"]["classes"] == {PERSON: {"members": 1, "state": "sampled"}}
     assert report.completion_state == "partial", "Other members may add rows"
