@@ -13,9 +13,12 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from rdfsolve.schema_models.core import MinedSchema
+
+if TYPE_CHECKING:
+    from rdfsolve.client.api import Client
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 # Bioregistry prefixes of vocabularies: their terms describe data, they do not identify entities.
@@ -140,4 +143,81 @@ def infer_links(
             link.source_class,
             link.property,
         ),
+    )
+
+
+@dataclass
+class LinkEvidence:
+    """Sampled values of a link's source property, and how many the target has.
+
+    target_forms counts how the target writes the identifiers that it has ({id} marks the
+    local identifier): this is the rewrite that applies the link.
+    """
+
+    link: Link
+    sampled: int
+    found: int
+    target_forms: dict[str, int]
+    examples: list[tuple[str, str]]
+
+    @property
+    def share(self) -> float | None:
+        """Return the share of sampled values that the target has."""
+        return self.found / self.sampled if self.sampled else None
+
+
+def _local(value: str) -> tuple[str, str] | None:
+    """Return the Bioregistry prefix and the local identifier of an IRI or CURIE."""
+    import bioregistry
+
+    parsed = bioregistry.parse_iri(value) if value.startswith(("http://", "https://")) else None
+    parsed = parsed or bioregistry.parse_curie(value)
+    if not parsed or not parsed[0]:
+        return None
+    return bioregistry.normalize_prefix(parsed[0]) or parsed[0], parsed[1]
+
+
+def verify(link: Link, source: Client, target: Client, *, sample: int = 50) -> LinkEvidence:
+    """Look up up to *sample* values of the link's source property in the target.
+
+    A join looks for the identifiers as subjects of the target class; a shared reference
+    looks for them as values of the target property. Every spelling of an identifier is tried.
+    """
+    from rdflib import URIRef
+
+    from rdfsolve.client.identify import spellings
+
+    def _iri(value: str) -> str:
+        return URIRef(value).n3()
+
+    body = source._scope(f"?s a {_iri(link.source_class)} ; {_iri(link.property)} ?v .")
+    rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }} LIMIT {sample}")
+    keys: dict[str, str] = {}
+    for row in rows:
+        parsed = _local(row["v"]["value"])
+        if parsed and parsed[0] == link.identifier_type:
+            keys[f"{parsed[0]}:{parsed[1]}"] = row["v"]["value"]
+    if link.kind == "join":
+        pattern = f"?t a {_iri(link.target_class or '')} ."
+        terms = {key: [t for t in spellings(key) if isinstance(t, URIRef)] for key in keys}
+    else:
+        pattern = f"?x {_iri(link.target_property or '')} ?t ."
+        terms = {key: spellings(key) for key in keys}
+    found: dict[str, str] = {}
+    pairs = [(key, term) for key, forms in terms.items() for term in forms]
+    for start in range(0, len(pairs), 200):
+        values = " ".join(f'("{key}" {term.n3()})' for key, term in pairs[start : start + 200])
+        scoped = target._scope(f"VALUES (?key ?t) {{ {values} }} {pattern}")
+        for row in target._select(f"SELECT DISTINCT ?key ?t WHERE {{ {scoped} }}"):
+            found.setdefault(row["key"]["value"], row["t"]["value"])
+    forms: dict[str, int] = defaultdict(int)
+    for key, term in found.items():
+        local = key.split(":", 1)[1]
+        forms[term.replace(local, "{id}") if term.endswith(local) else "literal"] += 1
+    return LinkEvidence(
+        link,
+        len(keys),
+        len(found),
+        dict(forms),
+        sorted((keys[key], term) for key, term in found.items()),
     )

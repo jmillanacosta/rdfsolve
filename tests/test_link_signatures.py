@@ -67,3 +67,26 @@ def test_values_of_one_dataset_join_the_subjects_of_another():
     assert shared == {("genes", "proteins", "chebi")}, (
         "A CURIE literal and an OBO IRI name the same entity"
     )
+
+
+def test_a_join_is_verified_on_sampled_values_and_gives_the_target_form():
+    from rdflib import Dataset
+
+    from rdfsolve.api import Client
+    from rdfsolve.mappings.signatures import Link, verify
+
+    genes = Dataset().parse(
+        format="turtle",
+        data="""
+        <urn:gene/1> a <urn:Gene> ; <urn:xref> <https://identifiers.org/uniprot:P04637> .
+        <urn:gene/2> a <urn:Gene> ; <urn:xref> <https://identifiers.org/uniprot:P99999> .""",
+    )
+    proteins = Dataset().parse(format="turtle", data=f"<{UP}P04637> a <urn:Protein> .")
+    link = Link("join", "genes", "urn:Gene", "urn:xref", "uniprot", "proteins", "urn:Protein")
+    with Client(GENES, genes) as source, Client(PROTEINS, proteins) as target:
+        evidence = verify(link, source, target, sample=10)
+    assert (evidence.sampled, evidence.found) == (2, 1), "One of two identifiers is in the target"
+    assert evidence.target_forms == {UP + "{id}": 1}, (
+        "The target writes UniProt as purl.uniprot.org"
+    )
+    assert evidence.examples == [("https://identifiers.org/uniprot:P04637", UP + "P04637")]
