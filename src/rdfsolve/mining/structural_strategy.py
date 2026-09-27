@@ -16,6 +16,7 @@ from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
+from rdfsolve.sparql_helper import EndpointTimeoutError
 
 
 def _dataset(graph: str | None, type_graphs: list[str] | None = None) -> str:
@@ -122,6 +123,53 @@ def _select(context: MiningContext, query: str, purpose: str) -> list[dict[str, 
     return rows
 
 
+def _census_query(
+    graph: str | None, named: list[str], match: str, local: bool, predicate: str | None = None
+) -> str:
+    """Count triples by typed subject and, remotely, by coverage of the typed profiles."""
+    selection = "" if local else "?covered"
+    binding = "" if local else f"BIND({match} AS ?covered)"
+    edge = f"?s <{predicate}> ?o . BIND(<{predicate}> AS ?p)" if predicate else "?s ?p ?o ."
+    return f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
+{_dataset(graph, named)} WHERE {{ {edge}
+BIND(EXISTS {{ {_types(named)} }} AS ?typed)
+{binding}
+}} GROUP BY ?typed {selection}"""
+
+
+def _census(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    keys: list[tuple[str, str, str, str | None]],
+    local: bool,
+    entry: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Count the graph at once; when the endpoint refuses, count one property at a time.
+
+    A whole-graph census of a very large index can exceed the cost or memory limit of the
+    endpoint (QLever holds every triple of the scan). One constant property per query needs
+    only that property's triples, and the counts add up to the same totals.
+    """
+    match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
+    try:
+        rows = _select(context, _census_query(graph, named, match, local), "structural/coverage")
+        entry["census"] = "whole_graph"
+        return rows
+    except EndpointTimeoutError:
+        pass
+    listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
+    predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
+    rows = []
+    for predicate in predicates:
+        own = [key for key in keys if key[1] == predicate]
+        match = typed_match(own, context.graph_uris, context.type_context_graph_uris)
+        query = _census_query(graph, named, match, local, predicate)
+        rows += _select(context, query, "structural/coverage")
+    entry["census"] = "per_property"
+    return rows
+
+
 class StructuralStrategy(MiningStrategy):
     """Add exact structural evidence only for edges absent from typed profiles."""
 
@@ -170,17 +218,7 @@ class StructuralStrategy(MiningStrategy):
             coverage.append(entry)
             context.report.flush()
             try:
-                selection = "" if local else "?covered"
-                binding = "" if local else f"BIND({match} AS ?covered)"
-                rows = _select(
-                    context,
-                    f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
-{_dataset(graph, named)} WHERE {{ ?s ?p ?o .
-BIND(EXISTS {{ {_types(named)} }} AS ?typed)
-{binding}
-}} GROUP BY ?typed {selection}""",
-                    "structural/coverage",
-                )
+                rows = _census(context, graph, named, keys, local, entry)
                 total = sum(int(r["n"]["value"]) for r in rows)
                 untyped = sum(
                     int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"}
