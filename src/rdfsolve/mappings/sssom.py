@@ -43,7 +43,8 @@ def create_sssom_mappings(
         mapping_set_version: Version identifier (defaults to today's date)
         subject_source: VoID dataset URI for subject classes
         object_source: VoID dataset URI for object classes
-        creator_id: Tool/person that created mappings
+        creator_id: Person or agent that created the mappings (left out when not given)
+        creator_label: Name of the creator (left out when not given)
         license_uri: License URI
         mapping_provider: Source that provided the mapping
         mapping_tool: Tool used to generate mappings
@@ -55,12 +56,6 @@ def create_sssom_mappings(
     if mapping_set_version is None:
         mapping_set_version = str(datetime.now(timezone.utc).date())
 
-    if creator_id is None:
-        creator_id = "https://orcid.org/0000-0001-5608-781X"
-
-    if creator_label is None:
-        creator_label = "Javier Millan Acosta"
-
     if mapping_provider is None:
         mapping_provider = "https://github.com/jmillanacosta/rdfsolve"
 
@@ -68,8 +63,6 @@ def create_sssom_mappings(
     metadata = {
         "mapping_set_id": mapping_set_id,
         "mapping_set_version": mapping_set_version,
-        "creator_id": creator_id,
-        "creator_label": creator_label,
         "license": license_uri,
         "mapping_date": str(datetime.now(timezone.utc).date()),
         "mapping_provider": mapping_provider,
@@ -77,6 +70,10 @@ def create_sssom_mappings(
         "mapping_tool_version": mapping_tool_version,
     }
 
+    if creator_id:
+        metadata["creator_id"] = creator_id
+    if creator_label:
+        metadata["creator_label"] = creator_label
     # Add subject/object source if provided
     if subject_source:
         metadata["subject_source"] = subject_source

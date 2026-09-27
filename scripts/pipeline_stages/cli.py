@@ -180,6 +180,8 @@ Examples:
     )
     parser.add_argument("--sources", nargs="+", help="Specific source names")
     parser.add_argument("--sources-file", type=Path, help="Source registry YAML")
+    parser.add_argument("--creator-id", help="Creator IRI (for example an ORCID) for SSSOM output")
+    parser.add_argument("--creator-label", help="Creator name for SSSOM output")
     parser.add_argument(
         "--preflight", action="store_true", help="Check selected inputs without mining"
     )
@@ -402,6 +404,8 @@ Examples:
     config = PipelineConfig(base_dir=repo_dir.parent, repo_dir=repo_dir)
     if args.sources_file:
         config.sources_file = args.sources_file.resolve()
+    config.creator_id = args.creator_id
+    config.creator_label = args.creator_label
 
     if args.output_dir:
         config.output_dir = args.output_dir

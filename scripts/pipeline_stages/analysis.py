@@ -44,8 +44,8 @@ class SSSOMSeedingStage(Stage):
             schemas=schemas,
             dataset_void_uris=dataset_void_uris,
             output_dir=self.config.output_dir,
-            creator_id="https://orcid.org/0000-0001-5608-781X",
-            creator_label="Javier Millan Acosta",
+            creator_id=self.config.creator_id,
+            creator_label=self.config.creator_label,
         )
 
         total_enriched = sum(v for v in results.values() if v > 0)

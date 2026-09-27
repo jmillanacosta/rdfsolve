@@ -81,6 +81,8 @@ class PipelineConfig:
 
     sources_file: Path | None = None
     sssom_sources_file: Path | None = None
+    creator_id: str | None = None  # Written as the SSSOM creator; never assumed.
+    creator_label: str | None = None
     sources: list[Source] = field(default_factory=list)
 
     get_graphs_from_store: bool = False
