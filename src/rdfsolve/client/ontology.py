@@ -441,6 +441,14 @@ class OntologyLookup:
         }
 
 
+def _valid_iri(text: str) -> str | None:
+    """Return the IRI, or None when it is not valid (registries list some formats with spaces)."""
+    try:
+        return absolute_iri(text)
+    except ValueError:
+        return None
+
+
 def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
     """Expand an exact IRI or registered CURIE into recorded namespace candidates."""
     from importlib.metadata import version
@@ -457,7 +465,11 @@ def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
     if not local or not resource.is_valid_identifier(local):
         raise ValueError("Invalid registered identifier")
     candidates = sorted(
-        {absolute_iri(template.replace("$1", local)) for template in resource.get_uri_formats()}
+        {
+            iri
+            for template in resource.get_uri_formats()
+            if (iri := _valid_iri(template.replace("$1", local)))
+        }
     )
     if not candidates:
         raise ValueError("No registered IRI formats for this identifier")
