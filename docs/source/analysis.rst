@@ -76,7 +76,11 @@ Run an analysis
      --output ../results/connectivity
 
 Links with a share below ``--min-share`` are left out. The command writes the
-connectivity graph, vocabulary overlaps, and evidence counts. The mapping SLURM
+connectivity graph, vocabulary overlaps, evidence counts, and the links kept as an
+SSSOM mapping set (``verified_links.sssom.tsv``). In the mapping set, a link maps
+the source class to the target class with ``skos:relatedMatch``; the source
+property is the ``subject_match_field``, the share is the ``similarity_score``,
+and ``other`` holds the sample and the target forms as JSON. The mapping SLURM
 script runs this command; set ``RDFSOLVE_SCHEMAS`` and ``RDFSOLVE_LINKS`` before
 submission.
 

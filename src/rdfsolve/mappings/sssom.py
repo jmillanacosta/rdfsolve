@@ -19,7 +19,13 @@ from rdfsolve.config import get_base_uri
 from rdfsolve.mappings.models.core import MappingEdge
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping as MappingType
     from collections.abc import Sequence
+
+    from curies import Converter
+
+    from rdfsolve.mappings.signatures import LinkEvidence
+    from rdfsolve.schema_models.core import MinedSchema
 
 
 def create_sssom_mappings(
@@ -34,6 +40,7 @@ def create_sssom_mappings(
     mapping_provider: str | None = None,
     mapping_tool: str = "rdfsolve",
     mapping_tool_version: str = "0.3.0",
+    converter: Converter | None = None,
 ) -> MappingSetDataFrame:
     """Create SSSOM MappingSetDataFrame from individual mappings.
 
@@ -49,6 +56,7 @@ def create_sssom_mappings(
         mapping_provider: Source that provided the mapping
         mapping_tool: Tool used to generate mappings
         mapping_tool_version: Version of the tool
+        converter: Prefixes of the CURIEs in the mappings, added to the SSSOM built-in ones
 
     Returns:
         MappingSetDataFrame ready for serialization
@@ -81,7 +89,9 @@ def create_sssom_mappings(
         metadata["object_source"] = object_source
 
     # Create MappingSetDataFrame from mappings
-    msdf = MappingSetDataFrame.from_mappings(mappings=list(mappings), metadata=metadata)
+    msdf = MappingSetDataFrame.from_mappings(
+        mappings=list(mappings), converter=converter, metadata=metadata
+    )
 
     # Add custom prefixes for RDFSolve URIs
     msdf.converter.add_prefix("rdfsolve", get_base_uri(), merge=True)
@@ -164,3 +174,82 @@ def project_mappings(
         "unrepresented_rows": unmatched,
         "projected_edges": len(edges),
     }
+
+
+def links_to_sssom(
+    links: Sequence[LinkEvidence],
+    schemas: MappingType[str, MinedSchema],
+    mapping_set_id: str,
+    *,
+    min_share: float = 0.5,
+    **metadata: str,
+) -> MappingSetDataFrame:
+    """Return the verified links with a share of at least *min_share* as a mapping set.
+
+    A link maps its source class to its target class with skos:relatedMatch: the values of
+    the source property (subject_match_field) name the target subjects (a join) or the same
+    entities as the target property (object_match_field). similarity_score is the share of
+    sampled identifiers that the target has; other holds the sample and the target forms (the
+    rewrite that applies the link) as JSON. IRIs are written as CURIEs with the prefixes of
+    the schemas; a namespace without a prefix gets a new name. Other keyword arguments go to
+    create_sssom_mappings (for example creator_id).
+    """
+    import json
+
+    from curies import Converter
+
+    from rdfsolve._uri import prefix_map
+    from rdfsolve.config import mint
+
+    kept = [e for e in links if e.share is not None and e.share >= min_share]
+    retained: dict[str, str] = {"rdfsolve": get_base_uri()}
+    for schema in schemas.values():
+        for prefix, namespace in schema.get_prefixes().items():
+            if prefix not in retained and namespace not in retained.values():
+                retained[prefix] = namespace
+    iris = [mint("dataset", name) for name in schemas]
+    for e in kept:
+        link = e.link
+        iris += [
+            link.source_class,
+            link.property,
+            link.target_class or "",
+            link.target_property or "",
+        ]
+    converter = Converter.from_prefix_map(prefix_map([i for i in iris if i], retained))
+
+    def curie(iri: str | None) -> str | None:
+        """Return the CURIE of an IRI; every namespace has a prefix, so none is left long."""
+        return converter.compress(iri, strict=True) if iri else None
+
+    rows = []
+    for e in kept:
+        link = e.link
+        rows.append(
+            Mapping(
+                subject_id=curie(link.source_class),
+                subject_type="owl class",
+                subject_source=curie(mint("dataset", link.source)),
+                subject_match_field=[curie(link.property)],
+                predicate_id="skos:relatedMatch",
+                object_id=curie(link.target_class),
+                object_type="owl class",
+                object_source=curie(mint("dataset", link.target)),
+                object_match_field=[curie(link.target_property)] if link.target_property else None,
+                mapping_justification="semapv:InstanceBasedMatching",
+                similarity_score=round(e.share or 0.0, 4),
+                similarity_measure="share of sampled source identifiers found in the target",
+                comment=f"{link.kind} on {link.identifier_type}: {e.found} of {e.sampled} sampled",
+                other=json.dumps(
+                    {
+                        "kind": link.kind,
+                        "identifier_type": link.identifier_type,
+                        "sampled": e.sampled,
+                        "found": e.found,
+                        "target_forms": e.target_forms,
+                    },
+                    sort_keys=True,
+                ),
+            )
+        )
+    return create_sssom_mappings(rows, mapping_set_id, converter=converter, **metadata)
