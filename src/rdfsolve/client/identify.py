@@ -140,7 +140,9 @@ def _without_intermediates(client: Client, found: list[Identification]) -> list[
     return kept
 
 
-def statements(client: Client, iris: Iterable[str], languages: Iterable[str] = ()) -> Graph:
+def statements(
+    client: Client, iris: Iterable[str], languages: Iterable[str] = (), *, names: bool = True
+) -> Graph:
     """Read the resources' direct statements and the names of the resources they point to."""
     langs = [lang.lower() for lang in languages]
     keep = (
@@ -152,7 +154,7 @@ def statements(client: Client, iris: Iterable[str], languages: Iterable[str] = (
     )
     graph = Graph()
     subjects = list(dict.fromkeys(iris))
-    names = " ".join(_iri(p) for p in NAME_PREDICATES)
+    predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
     for start in range(0, len(subjects), BATCH):
         values = " ".join(_iri(s) for s in subjects[start : start + BATCH])
         body = client._scope(f"VALUES ?s {{ {values} }} ?s ?p ?o . {keep}")
@@ -162,12 +164,12 @@ def statements(client: Client, iris: Iterable[str], languages: Iterable[str] = (
             graph.add(
                 (URIRef(row["s"]["value"]), URIRef(row["p"]["value"]), _term(row["o"]).to_rdf())
             )
-    objects = sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)})
+    objects = sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)}) if names else []
     label_filter = keep.replace("?o", "?name")
     for start in range(0, len(objects), BATCH * 5):
         values = " ".join(_iri(o) for o in objects[start : start + BATCH * 5])
         body = client._scope(
-            f"VALUES ?o {{ {values} }} VALUES ?p {{ {names} }} ?o ?p ?name . {label_filter}"
+            f"VALUES ?o {{ {values} }} VALUES ?p {{ {predicates} }} ?o ?p ?name . {label_filter}"
         )
         with client.step("Read names"):
             rows = client._select(f"SELECT ?o ?p ?name WHERE {{ {body} }}", exhaustive=True)

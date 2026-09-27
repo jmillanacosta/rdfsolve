@@ -302,14 +302,18 @@ class Client(DatasetClient):
 
         return identify(self, identifiers)
 
-    def statements(self, iris: Iterable[str], *, languages: Iterable[str] = ()) -> Graph:
+    def statements(
+        self, iris: Iterable[str], *, languages: Iterable[str] = (), names: bool = True
+    ) -> Graph:
         """Read what the source states about these resources, with names of what they link to.
 
         languages keeps language-tagged literals in those languages (untagged ones always).
+        names=False leaves out the names of what they link to (one query less per batch of
+        values, and many pages less when names are in all languages).
         """
         from rdfsolve.client.identify import statements
 
-        return statements(self, iris, languages)
+        return statements(self, iris, languages, names=names)
 
     def prepare(
         self,
