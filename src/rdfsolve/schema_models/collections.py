@@ -27,4 +27,4 @@ class CollectionProfile(BaseModel):
     max_length: int | None = Field(None, ge=0)
     list_count: int = Field(0, ge=0)
     invalid_count: int = Field(0, ge=0)
-    evidence_source: Literal["observed", "vocabulary"] = "observed"
+    evidence_source: Literal["observed", "vocabulary", "shacl"] = "observed"

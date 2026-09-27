@@ -7,13 +7,32 @@ import logging
 from rdflib import RDF, RDFS, Graph, URIRef
 
 from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.pattern import SchemaPattern
-from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
+from rdfsolve.schema_models.shacl_model import ShaclPropertyShape, ShaclShapesGraph
 
 logger = logging.getLogger(__name__)
+
+
+def _list_members(option: ShaclPropertyShape) -> list[ShaclPropertyShape] | None:
+    """Return the member constraints of an RDF list option, or None for another option.
+
+    A list option is a blank node whose one nested property has the path rdf:rest*/rdf:first.
+    """
+    from rdflib import RDF
+
+    from rdfsolve.schema_models.paths import PropertyPath
+
+    members = PropertyPath.from_sparql("rdf:rest*/rdf:first", {"rdf": str(RDF)})
+    if option.node_kind != "BlankNode" or len(option.properties) != 1:
+        return None
+    (nested,) = option.properties
+    if nested.path != members:
+        return None
+    return nested.alternatives or [nested]
 
 
 def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
@@ -54,6 +73,7 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
         "BlankNodeOrLiteral": ("BlankNode", "Literal"),
         "IRIOrLiteral": ("Resource", "Literal"),
     }
+    lists: list[CollectionProfile] = []
     for shape in shapes.node_shapes:
         if (
             not shape.target_class
@@ -78,6 +98,30 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
             for option in prop.alternatives or [prop]:
                 if option.alternatives:
                     unrepresented += 1
+                    continue
+                listed = _list_members(option)
+                if listed is not None:
+                    lists.append(
+                        CollectionProfile(
+                            subject_class=shape.target_class,
+                            property_uri=prop.path,
+                            member_types=sorted(
+                                {m.class_constraint for m in listed if m.class_constraint}
+                            ),
+                            member_kinds=sorted(
+                                {"IRI", "BlankNode"}
+                                if any(m.class_constraint for m in listed)
+                                else set()
+                                | (
+                                    {"Literal"}
+                                    if any(m.node_kind == "Literal" for m in listed)
+                                    else set()
+                                )
+                            ),
+                            member_datatypes=sorted({m.datatype for m in listed if m.datatype}),
+                            evidence_source="shacl",
+                        )
+                    )
                     continue
                 datatype = option.datatype
                 object_classes: tuple[str, ...]
@@ -106,6 +150,8 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
                             evidence_source="shacl",
                         )
                     )
+    if lists:
+        schema.collections = [*(schema.collections or []), *lists]
     if unrepresented:
         logger.warning(
             "Retain %d SHACL branches in schema.shapes, not as triple patterns "

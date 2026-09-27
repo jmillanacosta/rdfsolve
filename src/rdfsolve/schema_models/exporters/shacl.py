@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+
+from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
@@ -48,7 +51,6 @@ def minedschema_to_shacl(
     if schema.shapes is not None:
         return _complete_shapes(schema, schema.shapes.model_copy(deep=True), base_uri)
 
-    from collections import defaultdict
     from hashlib import md5
 
     # Group patterns by subject class
@@ -56,6 +58,9 @@ def minedschema_to_shacl(
     for pat in schema.patterns:
         by_subject[pat.subject_class].append(pat)
 
+    lists: dict[tuple[str, str], list[CollectionProfile]] = defaultdict(list)
+    for profile in schema.collections or []:
+        lists[(profile.subject_class, profile.property_uri)].append(profile)
     node_shapes = []
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
@@ -80,6 +85,8 @@ def minedschema_to_shacl(
                     option.node_kind = "BlankNodeOrIRI"
                     option.class_constraint = pattern.object_class
                 options[(pattern.object_class, pattern.datatype)] = option
+            for profile in lists.get((subject_class, prop), []):
+                options[("List", None)] = _list_option(profile)
             alternatives = list(options.values())
             shape = (
                 alternatives[0]
@@ -115,6 +122,35 @@ def minedschema_to_shacl(
 
     return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
+    )
+
+
+LIST_MEMBERS = "rdf:rest*/rdf:first"
+
+
+def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
+    """Return the SHACL option for RDF list values: a list node whose members have the types.
+
+    The members are reached with the path ([sh:zeroOrMorePath rdf:rest] rdf:first).
+    """
+    from rdflib import RDF
+
+    from rdfsolve.schema_models.paths import PropertyPath
+
+    members: list[ShaclPropertyShape] = [
+        ShaclPropertyShape(path="", class_constraint=member) for member in profile.member_types
+    ]
+    members += [
+        ShaclPropertyShape(path="", node_kind="Literal", datatype=datatype)
+        for datatype in profile.member_datatypes
+    ]
+    if "Literal" in profile.member_kinds and not profile.member_datatypes:
+        members.append(ShaclPropertyShape(path="", node_kind="Literal"))
+    path = PropertyPath.from_sparql(LIST_MEMBERS, {"rdf": str(RDF)})
+    member = members[0] if len(members) == 1 else ShaclPropertyShape(path="", alternatives=members)
+    member.path = path
+    return ShaclPropertyShape(
+        path="", node_kind="BlankNode", properties=[member] if members else []
     )
 
 
