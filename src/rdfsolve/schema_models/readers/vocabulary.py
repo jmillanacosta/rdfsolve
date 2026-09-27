@@ -124,6 +124,31 @@ class Vocabulary:
             for q in self.dataset.quads_for_subject(ox.NamedNode(subject))
         )
 
+    def equivalents(self, cls: str) -> list[str]:
+        """Return the class and the classes that a vocabulary states to be equivalent to it.
+
+        owl:equivalentClass is symmetric and transitive, so it is followed both ways.
+        """
+        found, level = [cls], [cls]
+        while level:
+            level = [
+                other
+                for current in level
+                for other in (
+                    *self.objects(current, str(OWL.equivalentClass)),
+                    *self.subjects(str(OWL.equivalentClass), current),
+                )
+                if other not in found
+            ]
+            found.extend(dict.fromkeys(level))
+        return found
+
+    def applies(self, cls: str) -> list[str]:
+        """Return the classes whose properties apply to *cls*: its ancestors and those of its
+        equivalent classes. Equivalent classes are not ancestors in the class hierarchy.
+        """
+        return list(dict.fromkeys(a for same in self.equivalents(cls) for a in self.lineage(same)))
+
     def lineage(self, cls: str) -> list[str]:
         """Return the class and its ancestors, the nearest ancestors first."""
         found, level = [cls], [cls]
@@ -167,11 +192,15 @@ def _read(source: VocabularySource) -> tuple[list[ox.Quad], dict[str, str]]:
 
 
 def vocabulary_to_minedschema(
-    vocabulary: VocabularySource | Sequence[VocabularySource], classes: Iterable[str]
+    vocabulary: VocabularySource | Sequence[VocabularySource],
+    classes: Iterable[str],
+    *,
+    profile: str | Path | None = None,
 ) -> MinedSchema:
     """Declare, for each class, every property whose domain is the class or an ancestor.
 
-    Properties without a domain apply to every class. Without a range, a property can have any
+    Properties of an equivalent class (owl:equivalentClass) also apply. Properties without a
+    domain apply to every class. Without a range, a property can have any
     value that its kind allows. Ranges that are classes become object rows. XSD datatypes and
     schema.org data types become literal rows. rdfs:Literal allows any literal. owl:Thing and
     rdfs:Resource allow any IRI or blank node. URL becomes an IRI row. An rdf:List range
@@ -197,7 +226,7 @@ def vocabulary_to_minedschema(
     patterns: list[SchemaPattern] = []
     lists: list[CollectionProfile] = []
     for cls in requested:
-        lineage = {*vocab.lineage(cls), *UNIVERSAL}
+        lineage = {*vocab.applies(cls), *UNIVERSAL}
         properties = {
             prop
             for domain in DOMAINS
@@ -223,6 +252,15 @@ def vocabulary_to_minedschema(
             )
             if str(RDF.List) in ranges:
                 lists.append(_list_profile(cls, prop, rows))
+    if profile is not None:
+        extra = _profile(profile, requested)
+        known = {(p.subject_class, p.property_uri, p.object_class, p.datatype) for p in patterns}
+        patterns.extend(
+            p
+            for p in extra.patterns
+            if (p.subject_class, p.property_uri, p.object_class, p.datatype) not in known
+        )
+        lists.extend(extra.collections or [])
     schema = MinedSchema(
         patterns=patterns,
         about=AboutMetadata.build(),
@@ -248,6 +286,20 @@ def vocabulary_to_minedschema(
         vocab.dataset, schema.get_classes(), schema.get_properties()
     )
     return schema
+
+
+def _profile(profile: str | Path, requested: list[str]) -> MinedSchema:
+    """Return the rows of a SHACL application profile for the requested classes."""
+    from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
+
+    text = profile.read_text(encoding="utf-8") if isinstance(profile, Path) else profile
+    extra = shacl_to_minedschema(text)
+    targets = {p.subject_class for p in extra.patterns}
+    targets |= {c.subject_class for c in extra.collections or []}
+    other = sorted(targets - set(requested))
+    if other:
+        raise ValueError(f"The profile has shapes for classes that are not requested: {other}")
+    return extra
 
 
 def _list_profile(cls: str, prop: str, rows: list[tuple[str, str | None]]) -> CollectionProfile:

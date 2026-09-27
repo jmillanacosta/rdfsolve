@@ -448,17 +448,24 @@ class MinedSchema(BaseModel):
         return shacl_to_minedschema(shacl_ttl)
 
     @classmethod
-    def from_vocabulary(cls, vocabulary: str | Any, classes: Any) -> MinedSchema:
+    def from_vocabulary(
+        cls, vocabulary: str | Any, classes: Any, *, profile: str | Path | None = None
+    ) -> MinedSchema:
         """Read declared rows for classes of published vocabularies.
 
         A vocabulary is a file path, an RDFLib graph, an Oxigraph store or Turtle text.
         A list of them is read as one vocabulary. Each class gets every property whose
         domain is the class or an ancestor, with each declared range. Use the result as
         a contract to author records.
+
+        profile is a SHACL application profile (Turtle text or a file) that the user owns.
+        Its shapes add rows for properties that the vocabularies do not declare for a class,
+        without axioms about the vocabularies' terms. The added rows have evidence_source
+        "shacl".
         """
         from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
 
-        return vocabulary_to_minedschema(vocabulary, classes)
+        return vocabulary_to_minedschema(vocabulary, classes, profile=profile)
 
     # NetworkX export
 
