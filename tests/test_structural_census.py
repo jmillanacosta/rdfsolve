@@ -17,7 +17,7 @@ def test_a_refused_census_is_counted_by_property(monkeypatch):
     # The local helper is taken for a remote one, so that the per-profile census runs.
     monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
     with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
-        select = miner.helper.select_with_fallback
+        select, paged = miner.helper.select, miner.helper.select_with_fallback
         refused = []
 
         def limited(query, *args, purpose="", **kwargs):
@@ -26,7 +26,14 @@ def test_a_refused_census_is_counted_by_property(monkeypatch):
                 raise EndpointTimeoutError("Query cost/time limit")
             return select(query, *args, purpose=purpose, **kwargs)
 
-        monkeypatch.setattr(miner.helper, "select_with_fallback", limited)
+        def not_paged(query, *args, purpose="", **kwargs):
+            # Pages of an aggregate of a few groups cost as much as the whole query; the
+            # paged form also fails to compile on Virtuoso (SQ156).
+            assert purpose != "structural/coverage", "A census is sent as one query"
+            return paged(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", limited)
+        monkeypatch.setattr(miner.helper, "select_with_fallback", not_paged)
         miner.mine("census")
         report = miner.last_report
     (entry,) = report.config["structural_coverage"]

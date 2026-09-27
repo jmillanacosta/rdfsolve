@@ -111,10 +111,16 @@ def structural_queries(pattern: StructuralPattern) -> tuple[str, str]:
     )
 
 
-def _select(context: MiningContext, query: str, purpose: str) -> list[dict[str, Any]]:
+def _select(
+    context: MiningContext, query: str, purpose: str, *, paged: bool = True
+) -> list[dict[str, Any]]:
+    """Run a SELECT and record it; *paged* allows the helper to page a refused query."""
     started = time.monotonic()
     try:
-        response = context.helper.select_with_fallback(query, purpose=purpose)
+        if paged:
+            response = context.helper.select_with_fallback(query, purpose=purpose)
+        else:
+            response = context.helper.select(query, purpose=purpose)
         rows: list[dict[str, Any]] = response["results"]["bindings"]
     except Exception:
         context.report.record_query(purpose, time.monotonic() - started, success=False)
@@ -149,11 +155,13 @@ def _census(
 
     A whole-graph census of a very large index can exceed the cost or memory limit of the
     endpoint (QLever holds every triple of the scan). One constant property per query needs
-    only that property's triples, and the counts add up to the same totals.
+    only that property's triples, and the counts add up to the same totals. A census is not
+    paged: it has at most four groups, so a page costs as much as the whole query.
     """
     match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
     try:
-        rows = _select(context, _census_query(graph, named, match, local), "structural/coverage")
+        query = _census_query(graph, named, match, local)
+        rows = _select(context, query, "structural/coverage", paged=False)
         entry["census"] = "whole_graph"
         return rows
     except EndpointTimeoutError:
@@ -165,7 +173,7 @@ def _census(
         own = [key for key in keys if key[1] == predicate]
         match = typed_match(own, context.graph_uris, context.type_context_graph_uris)
         query = _census_query(graph, named, match, local, predicate)
-        rows += _select(context, query, "structural/coverage")
+        rows += _select(context, query, "structural/coverage", paged=False)
     entry["census"] = "per_property"
     return rows
 
