@@ -31,9 +31,11 @@ def typed_match(
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
         "?_contextGraph", "?_objectAnyGraph"
     )
+    # The outer ?p is compared with the profile, not bound again: Virtuoso rejects a VALUES
+    # that binds an outer variable inside EXISTS (error SP031).
     match = f"""EXISTS {{
-?s ?p ?o .
-VALUES (?_coveredSubject ?p ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
+VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
+FILTER(?p = ?_coveredProperty)
 {subject_type}
 FILTER(
   (isIRI(?_coveredObject) && EXISTS {{ {object_type} }}) ||
@@ -43,7 +45,9 @@ FILTER(
   (?_coveredObject = "BlankNode" && isBlank(?o))
 )
 }}"""
-    return f"IF(EXISTS {{ {subject_type} }}, {match}, false)"
+    # The test above already requires a subject type, so no IF(EXISTS ...) wraps it (Virtuoso
+    # rejects that form, error SQ156).
+    return match
 
 
 def uncovered_filter(

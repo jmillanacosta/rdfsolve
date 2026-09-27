@@ -35,3 +35,16 @@ def test_a_refused_census_is_counted_by_property(monkeypatch):
     assert entry["triple_count"] == 5, "The per-property counts add up to every triple"
     assert entry["untyped_subject_triples"] == 1
     assert entry["covered_triples"] + entry["uncovered_triples"] == 5
+
+
+def test_the_coverage_test_does_not_rebind_outer_variables():
+    """Virtuoso rejects VALUES that bind an outer variable inside EXISTS (SP031), and IF around
+    EXISTS (SQ156)."""
+    import re
+
+    from rdfsolve.mining.typed_coverage import typed_match
+
+    match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None)
+    (header,) = re.findall(r"VALUES \(([^)]*)\)", match)
+    assert not {"?s", "?p", "?o"} & set(header.split()), "Outer variables are compared, not bound"
+    assert "IF(EXISTS" not in match.replace(" ", "")
