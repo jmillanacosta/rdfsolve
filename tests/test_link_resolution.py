@@ -46,3 +46,18 @@ def test_a_secondary_identifier_is_found_through_its_primary_identifier():
     assert (resolved.found, resolved.replaced) == (2, 1), "The replaced identifier is counted"
     assert resolved.target_forms == {UP + "{id}": 2}
     assert ("https://identifiers.org/uniprot:P99999", UP + "P04637") in resolved.examples
+
+
+def test_a_value_that_is_not_a_valid_identifier_of_the_type_is_not_sampled():
+    """purl.uniprot.org also names entries (P53_HUMAN); such a value is not an accession."""
+    genes = Dataset().parse(
+        format="turtle",
+        data=f"""
+        <urn:gene/1> a <urn:Gene> ; <urn:xref> <{UP}P04637> .
+        <urn:gene/2> a <urn:Gene> ; <urn:xref> <{UP}P53_HUMAN> .""",
+    )
+    proteins = Dataset().parse(format="turtle", data=f"<{UP}P04637> a <urn:Protein> .")
+    link = Link("join", "genes", "urn:Gene", "urn:xref", "uniprot", "proteins", "urn:Protein")
+    with Client(GENES, genes) as source, Client(PROTEINS, proteins) as target:
+        evidence = verify(link, source, target)
+    assert (evidence.sampled, evidence.found) == (1, 1)

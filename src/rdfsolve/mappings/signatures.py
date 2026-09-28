@@ -172,14 +172,24 @@ class LinkEvidence:
 
 
 def _local(value: str) -> tuple[str, str] | None:
-    """Return the Bioregistry prefix and the local identifier of an IRI or CURIE."""
+    """Return the Bioregistry prefix and the local identifier of an IRI or CURIE.
+
+    A local identifier that is not valid for the prefix gives None: a namespace can also name
+    other things (purl.uniprot.org/uniprot/P53_HUMAN is an entry name, not an accession).
+    """
     import bioregistry
 
     parsed = bioregistry.parse_iri(value) if value.startswith(("http://", "https://")) else None
     parsed = parsed or bioregistry.parse_curie(value)
     if not parsed or not parsed[0]:
         return None
-    return bioregistry.normalize_prefix(parsed[0]) or parsed[0], parsed[1]
+    prefix = bioregistry.normalize_prefix(parsed[0]) or parsed[0]
+    resource = bioregistry.get_resource(prefix)
+    if resource is not None and not resource.is_valid_identifier(
+        resource.standardize_identifier(parsed[1])
+    ):
+        return None
+    return prefix, parsed[1]
 
 
 def verify(
