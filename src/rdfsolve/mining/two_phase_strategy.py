@@ -139,7 +139,15 @@ class TwoPhaseStrategy(MiningStrategy):
         budget, limit = context.ontology_term_budget, context.group_before_mining
         if budget is None or limit is None or len(classes) <= limit:
             return classes
-        from rdfsolve.mining.ontology_as_data import choose_representatives, fetch_superclasses
+        from collections import Counter
+
+        from rdfsolve.mining import ontology_as_data
+        from rdfsolve.mining.ontology_as_data import (
+            choose_representatives,
+            fetch_superclasses,
+            group_by_namespace,
+            term_namespace,
+        )
         from rdfsolve.mining.query_builders import Representative
 
         phase = context.report.start_phase("ontology-terms/group-before-mining")
@@ -147,7 +155,10 @@ class TwoPhaseStrategy(MiningStrategy):
             context.helper, classes, graph_uris=context.ontology_graph_uris
         )
         chosen = choose_representatives(classes, parents, budget)
+        # Terms that no ancestor can take are grouped by ontology namespace (documented below).
+        namespace_groups = group_by_namespace(chosen, parents)
         members = chosen.members()
+        without_parent = Counter(term_namespace(c) for c in classes if not parents.get(c))
         present = set(classes)
         grouped: list[str] = []
         for rep in sorted(set(chosen.representative.values())):
@@ -166,6 +177,12 @@ class TwoPhaseStrategy(MiningStrategy):
             "levels_lifted": chosen.levels_lifted,
             "over_budget": chosen.over_budget,
             "hierarchy_graph_uris": context.ontology_graph_uris,
+            "terms_without_parent_by_namespace": dict(without_parent.most_common()),
+            "namespace_group_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
+            "namespace_groups": {
+                group: {"namespace": namespace, "terms": len(members.get(group, []))}
+                for group, namespace in namespace_groups.items()
+            },
             "representative_members": members,
             "review_state": "unreviewed",
         }

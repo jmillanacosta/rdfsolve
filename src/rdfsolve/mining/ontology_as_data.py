@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -354,6 +355,55 @@ def choose_representatives(
     result.classes_after = size()
     return result
 
+
+
+# Fewest terms without a parent that make a namespace group (see group_by_namespace).
+NAMESPACE_GROUP_MIN_TERMS = 100
+
+
+def term_namespace(iri: str) -> str:
+    """Return the ontology namespace of a term: an OBO prefix (obo/MONDO_), else the IRI base."""
+    match = re.match(r"(.*/obo/[A-Za-z][A-Za-z0-9]*_)", iri)
+    if match:
+        return match.group(1)
+    return re.sub(r"[^/#:]*$", "", iri)
+
+
+def group_by_namespace(
+    chosen: Subsumption, parents: Mapping[str, set[str]], *, min_terms: int | None = None
+) -> dict[str, str]:
+    """Group the terms that no ancestor can take, by their ontology namespace; return the groups.
+
+    Used before mining when lifting leaves more classes than the budget. A term is a candidate
+    when it has no parent and stands only for itself; a representative with members keeps its
+    place. A namespace is grouped when it has at least *min_terms* candidates: a namespace with
+    few is more likely the vocabulary of the data (PubChem: 55 classes of its own vocabulary)
+    than an ontology used for typing. Each group gets an rdfsolve IRI; the rows of a group are
+    the rows of terms of one namespace, not of a class. *chosen* is changed in place.
+    """
+    from rdfsolve.config import mint
+
+    if not chosen.over_budget:
+        return {}
+    if min_terms is None:
+        min_terms = NAMESPACE_GROUP_MIN_TERMS
+    used: dict[str, int] = defaultdict(int)
+    for rep in chosen.representative.values():
+        used[rep] += 1
+    candidates: dict[str, list[str]] = defaultdict(list)
+    for term, rep in chosen.representative.items():
+        if rep == term and not parents.get(term) and used[term] == 1:
+            candidates[term_namespace(term)].append(term)
+    groups: dict[str, str] = {}
+    for namespace, terms in candidates.items():
+        if len(terms) < min_terms:
+            continue
+        group = mint("term-group", namespace)
+        groups[group] = namespace
+        for term in terms:
+            chosen.representative[term] = group
+    chosen.classes_after = len(set(chosen.representative.values()))
+    return dict(sorted(groups.items()))
 
 def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
     """Merge patterns that map to the same subsumed pattern."""
