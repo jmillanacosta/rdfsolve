@@ -2448,6 +2448,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: aopdb
+  dataset_kind: instance
   endpoint: https://aopdb.rdf.bigcat-bioinformatics.org/sparql
   void_iri: http://aopwiki.org/
   keywords:
@@ -2456,6 +2457,7 @@
   - efsa
   - biology
 - name: wikipathways
+  dataset_kind: instance
   sparql_examples:
     link_to_repository: https://github.com/wikipathways/sparql-examples
   endpoint: https://sparql.wikipathways.org/sparql/
@@ -2486,6 +2488,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.taxonomy
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
@@ -2510,6 +2513,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.endpoint
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
@@ -2534,6 +2538,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.measuregroup
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
@@ -2558,6 +2563,7 @@
   supports_graph: true
   skip_remote: true
 - name: iocb.ontology
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://bioinfo.iocb.cz/dataset/ontology
@@ -2572,6 +2578,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.gene
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/gene
@@ -2596,6 +2603,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.bioassay
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
@@ -2617,6 +2625,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.substance
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/substance
@@ -2641,6 +2650,7 @@
   supports_graph: true
   skip_remote: true
 - name: drugbank.drugs
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
@@ -2661,6 +2671,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.descriptor.substance
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
@@ -2684,6 +2695,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chebi.idsm
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chebi
@@ -2720,6 +2732,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.pathway
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
@@ -2744,6 +2757,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.cell
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cell
@@ -2762,6 +2776,7 @@
   supports_graph: true
   skip_remote: true
 - name: isdb
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
@@ -2777,6 +2792,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.anatomy
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
@@ -2801,6 +2817,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.conserveddomain
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
@@ -2825,6 +2842,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.organization
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/organization
@@ -2849,6 +2867,7 @@
   supports_graph: true
   skip_remote: true
 - name: mona
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/mona/
@@ -2864,6 +2883,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chembl
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chembl
@@ -2908,6 +2928,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.journal
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/journal
@@ -2932,6 +2953,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.author
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/author
@@ -2956,6 +2978,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.disease
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/disease
@@ -2980,6 +3003,7 @@
   supports_graph: true
   skip_remote: true
 - name: wikidata.idsm.entity
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://www.wikidata.org/entity/
@@ -2994,6 +3018,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.book
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/book
@@ -3018,6 +3043,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.inchikey
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
@@ -3042,6 +3068,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.descriptor.compound
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
@@ -3065,6 +3092,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.grant
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/grant
@@ -3089,6 +3117,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.concept
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/concept
@@ -3113,6 +3142,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.source
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/source
@@ -3137,6 +3167,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.protein
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/protein
@@ -3161,6 +3192,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.reference
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/reference
@@ -3185,6 +3217,7 @@
   supports_graph: true
   skip_remote: true
 - name: mesh.heading
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://id.nlm.nih.gov/mesh/heading
@@ -3203,6 +3236,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.synonym
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
@@ -3227,6 +3261,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.compound
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/compound
@@ -3251,6 +3286,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pubchem.cooccurrence
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
@@ -3275,6 +3311,7 @@
   supports_graph: true
   skip_remote: true
 - name: pubchem.patent
+  dataset_kind: instance
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ncbi.nlm.nih.gov/pubchem/patent
@@ -3299,6 +3336,7 @@
   supports_graph: true
   skip_remote: true
 - name: nanosafetyrdf
+  dataset_kind: instance
   endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
   graph_uris: []
   keywords:
@@ -3309,6 +3347,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.uniprot
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: uniprot
   endpoint: https://rdfportal.org/sib/sparql
@@ -3376,6 +3415,7 @@
   supports_graph: true
   skip_remote: true
 - name: uniprot.chebi
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
   graph_uris:
@@ -3390,6 +3430,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.citationmapping
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citationmapping
   graph_uris:
@@ -3404,6 +3445,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.citations
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citations
   graph_uris:
@@ -3418,6 +3460,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.database
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/database
   graph_uris:
@@ -3430,6 +3473,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.diseases
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/diseases
   graph_uris:
@@ -3444,6 +3488,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.enzymes
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/enzymes
   graph_uris:
@@ -3458,6 +3503,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.go
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/go
   graph_uris:
@@ -3472,6 +3518,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.core
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://purl.uniprot.org/core
   graph_uris:
@@ -3484,6 +3531,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.uniparc
+  dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/uniparc
   graph_uris:
@@ -3511,6 +3559,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rhea
+  dataset_kind: instance
   endpoint: https://sparql.rhea-db.org/sparql/
   void_iri: https://sparql.rhea-db.org/
   graph_uris: []
@@ -3526,6 +3575,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pdb.graph
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pdb.graph
   endpoint: https://rdfportal.org/pdb/sparql
@@ -3548,6 +3598,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pubcasefinder
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubcasefinder
   endpoint: https://rdfportal.org/primary/sparql
@@ -3568,6 +3619,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.medgen
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: medgen
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -3609,6 +3661,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.jpost
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: jpost
   endpoint: https://rdfportal.org/primary/sparql
@@ -3630,6 +3683,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.affymetrix
+  dataset_kind: instance
   catalogs: ["bio2rdf", "rdfportal"]
   catalog_local_name: affymetrix
   endpoint: https://bio2rdf.org/sparql
@@ -3644,6 +3698,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: clinicaltrials
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/clinicaltrials_resource:bio2rdf.dataset.clinicaltrials.R3
@@ -3660,6 +3715,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ctd
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ctd_resource:bio2rdf.dataset.ctd.R3
@@ -3687,6 +3743,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: kegg
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/kegg_resource:bio2rdf.dataset.kegg.R3
@@ -3722,6 +3779,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: irefindex
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/irefindex_resource:bio2rdf.dataset.irefindex.R3
@@ -3757,6 +3815,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: homologene
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/homologene_resource:bio2rdf.dataset.homologene.R3
@@ -3777,6 +3836,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ncbigene
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ncbigene_resource:bio2rdf.dataset.ncbigene.R3
@@ -3805,6 +3865,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: goa
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/goa_resource:bio2rdf.dataset.goa.R3
@@ -3836,6 +3897,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: hgnc
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hgnc_resource:bio2rdf.dataset.hgnc.R3
@@ -3857,6 +3919,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: interpro
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/interpro_resource:bio2rdf.dataset.interpro.R3
@@ -3875,6 +3938,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: lsr
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/lsr_resource:bio2rdf.dataset.lsr.R3
@@ -3888,6 +3952,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: mgi
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mgi_resource:bio2rdf.dataset.mgi.R3
@@ -3932,6 +3997,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: mesh
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/mesh_resource:bio2rdf.dataset.mesh.R3
@@ -3952,6 +4018,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ndc
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/ndc_resource:bio2rdf.dataset.ndc.R3
@@ -3966,6 +4033,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: omim
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/omim_resource:bio2rdf.dataset.omim.R3
@@ -3993,6 +4061,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: pharmgkb
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/pharmgkb_resource:bio2rdf.dataset.pharmgkb.R3
@@ -4017,6 +4086,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: bio2rdf.uniprot
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: uniprot
   endpoint: https://bio2rdf.org/sparql
@@ -4033,6 +4103,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sgd
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sgd_resource:bio2rdf.dataset.sgd.R3
@@ -4062,6 +4133,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: hp
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/hp_resource:bio2rdf.dataset.hp.R3
@@ -4079,6 +4151,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: eco
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/eco_resource:bio2rdf.dataset.eco.R3
@@ -4091,6 +4164,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: apo
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/apo_resource:bio2rdf.dataset.apo.R3
@@ -4103,6 +4177,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: taxonomy
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
@@ -4137,6 +4212,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sider
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/sider_resource:bio2rdf.dataset.sider.R3
@@ -4156,6 +4232,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: wormbase
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/wormbase_resource:bio2rdf.dataset.wormbase.R3
@@ -4209,6 +4286,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: bio2rdf.biomodels
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: biomodels
   endpoint: http://cu.biomodels.bio2rdf.org/sparql
@@ -4221,6 +4299,7 @@
   - interaction/pathway
   sparql_engine: virtuoso
 - name: bio2rdf.bioportal
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
@@ -4542,6 +4621,7 @@
   - portal
   sparql_engine: virtuoso
 - name: bio2rdf.chembl
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: chembl
   endpoint: http://cu.chembl.bio2rdf.org/sparql
@@ -4580,6 +4660,7 @@
   - protein
   sparql_engine: virtuoso
 - name: bio2rdf.dbsnp
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: dbsnp
   endpoint: http://cu.dbsnp.bio2rdf.org/sparql
@@ -4597,6 +4678,7 @@
   - variant
   sparql_engine: virtuoso
 - name: bio2rdf.genage
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: genage
   endpoint: http://cu.genage.bio2rdf.org/sparql
@@ -4612,6 +4694,7 @@
   - biology
   sparql_engine: virtuoso
 - name: bio2rdf.gendr
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: gendr
   endpoint: http://cu.gendr.bio2rdf.org/sparql
@@ -4627,6 +4710,7 @@
   - biology
   sparql_engine: virtuoso
 - name: bio2rdf.iproclass
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: iproclass
   endpoint: http://cu.iproclass.bio2rdf.org/sparql
@@ -4714,6 +4798,7 @@
   - sequence
   sparql_engine: virtuoso
 - name: bio2rdf.linkedspl
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
@@ -4727,6 +4812,7 @@
   - label
   sparql_engine: virtuoso
 - name: bio2rdf.orphanet
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: orphanet
   endpoint: http://cu.orphanet.bio2rdf.org/sparql
@@ -4745,6 +4831,7 @@
   - phenotype
   sparql_engine: virtuoso
 - name: bio2rdf.pathwaycommons
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: pathwaycommons
   endpoint: http://cu.pathwaycommons.bio2rdf.org/sparql
@@ -4757,6 +4844,7 @@
   - pathway
   sparql_engine: virtuoso
 - name: bio2rdf.pubmed
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: pubmed
   endpoint: http://cu.pubmed.bio2rdf.org/sparql
@@ -4770,6 +4858,7 @@
   - literature
   sparql_engine: virtuoso
 - name: bio2rdf.reactome
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: reactome
   endpoint: http://cu.reactome.bio2rdf.org/sparql
@@ -4842,6 +4931,7 @@
   - sbml
   sparql_engine: virtuoso
 - name: bio2rdf.sabiork
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: sabiork
   endpoint: http://cu.sabiork.bio2rdf.org/sparql
@@ -4854,6 +4944,7 @@
   - biochemistry
   sparql_engine: virtuoso
 - name: bio2rdf.wikipathways
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: wikipathways
   endpoint: http://cu.wikipathways.bio2rdf.org/sparql
@@ -4903,6 +4994,7 @@
   - virology
   sparql_engine: virtuoso
 - name: omabrowser
+  dataset_kind: instance
   endpoint: https://sparql.omabrowser.org/sparql/
   void_iri: https://sparql.omabrowser.org/
   download_tgz: https://omabrowser.org/All/oma-rdf-turtle.tgz
@@ -4914,6 +5006,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: swisslipids
+  dataset_kind: instance
   endpoint: https://beta.sparql.swisslipids.org/
   bioregistry_prefix: swisslipids
   keywords:
@@ -4926,6 +5019,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: earthmetabolome
+  dataset_kind: instance
   endpoint: https://kg.earthmetabolome.org/metrin/api/
   download_tgz: https://zenodo.org/api/records/15689187/files/metrin-kg.tar.gz/content
   keywords:
@@ -4936,6 +5030,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: stringdb
+  dataset_kind: instance
   endpoint: https://sparql.string-db.org/sparql
   keywords:
   - protein
@@ -4945,6 +5040,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: cellosaurus
+  dataset_kind: instance
   endpoint: https://sparql.cellosaurus.org/sparql
   download_obo:
   - https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo
@@ -4961,6 +5057,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.cellosaurus
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: cellosaurus
   download_nt:
@@ -4978,6 +5075,7 @@
   graph_uris:
   - http://rdfportal.org/dataset/cellosaurus
 - name: sibils
+  dataset_kind: instance
   endpoint: https://sparql.sibils.org/sparql
   download_ttl: https://sparql.sibils.org/ontology.ttl
   keywords:
@@ -4988,6 +5086,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: spsp
+  dataset_kind: instance
   endpoint: https://spsp.sib.swiss/sparql
   graph_uris:
   - https://w3id.org/spsp/graph
@@ -5007,6 +5106,7 @@
     distribution. The endpoint also has 302 triples in a graph whose IRI contains a line
     break (https://w3id.org/sps + newline + p/graph); they are outside the selected graph.
 - name: orthodb
+  dataset_kind: instance
   endpoint: https://sparql.orthodb.org/sparql
   bioregistry_prefix: orthodb
   keywords:
@@ -5018,6 +5118,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: compoundwiki
+  dataset_kind: instance
   endpoint: https://compoundcloud.wikibase.cloud/query
   keywords:
   - chemical
@@ -5027,6 +5128,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: plantmetwiki
+  dataset_kind: instance
   endpoint: https://plantmetwiki.bioinformatics.nl/sparql
   graph_uris: []
   keywords:
@@ -5037,6 +5139,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chembl.bigcat
+  dataset_kind: instance
   endpoint: https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: https://chemblmirror.rdf.bigcat-bioinformatics.org/
   graph_uris: []
@@ -5053,6 +5156,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: allie
+  dataset_kind: instance
   endpoint: http://data.allie.dbcls.jp/sparql
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/allie_rdf_nt_latest.gz
@@ -5075,6 +5179,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: lifesciencedict
+  dataset_kind: instance
   endpoint: http://lsd.dbcls.jp/sparql
   download_nt:
   - https://ftp.dbcls.jp/lsd/lsd_latest.nt.gz
@@ -5087,6 +5192,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.pubchem
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubchem
   endpoint: https://rdfportal.org/pubchem/sparql
@@ -5155,6 +5261,7 @@
   sparql_strategy: post+form+json
   supports_graph: true
 - name: mesh.nlm
+  dataset_kind: instance
   endpoint: https://id.nlm.nih.gov/mesh/sparql
   bioregistry_prefix: mesh
   keywords:
@@ -5172,6 +5279,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: glycosmos
+  dataset_kind: instance
   endpoint: https://ts.glycosmos.org/sparql
   download_ttl:
   - https://dumps.glycosmos.org/genomealliance/genomealliance_Orthology_rdf.ttl.gz
@@ -5291,6 +5399,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: fanavi
+  dataset_kind: instance
   endpoint: http://navi.first.lifesciencedb.jp/fanavi/sparql
   keywords:
   - gene expression
@@ -5311,6 +5420,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: colil
+  dataset_kind: instance
   endpoint: http://colil.dbcls.jp/sparql
   keywords:
   - bibliography/documents
@@ -5320,6 +5430,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: agrold
+  dataset_kind: instance
   endpoint: http://sparql.southgreen.fr/sparql
   keywords:
   - agriculture
@@ -5327,6 +5438,7 @@
   - genomics
   sparql_engine: virtuoso
 - name: biogateway
+  dataset_kind: instance
   endpoint: https://2407.biogateway.eu/sparql/
   keywords:
   - biomedical science
@@ -5334,6 +5446,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ideal
+  dataset_kind: instance
   endpoint: https://ideal-rdf.dbcls.jp/sparql
   bioregistry_prefix: ideal
   keywords:
@@ -5346,6 +5459,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.kero
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: kero
   endpoint: https://rdfportal.org/kero/sparql
@@ -5363,6 +5477,7 @@
   - http://kero.hgc.jp/ontology/kero.owl
   - http://rdfportal.org/dataset/kero/Cancer_Cell_Line
 - name: rdfportal.wikidata
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
@@ -5406,6 +5521,7 @@
   sparql_strategy: post+form+json
   supports_graph: true
 - name: linkdb
+  dataset_kind: instance
   endpoint: http://www.genome.jp/sparql/linkdb
   keywords:
   - database
@@ -5414,6 +5530,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.ddbj
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ddbj
   endpoint: https://rdfportal.org/ddbj/sparql
@@ -5447,6 +5564,7 @@
   sparql_strategy: post+form+json
   supports_graph: true
 - name: regulatorycircuits
+  dataset_kind: instance
   endpoint: https://regulatorycircuits-lod.genouest.org/sparql/
   keywords:
   - gene expression
@@ -5456,6 +5574,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: forum
+  dataset_kind: instance
   endpoint: https://forum.semantic-metabolomics.fr/sparql/
   keywords:
   - bibliography/documents
@@ -5463,6 +5582,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
 - name: glyconavi
+  dataset_kind: instance
   endpoint: https://sparql.glyconavi.org/sparql
   bioregistry_prefix: glyconavi
   keywords:
@@ -5473,6 +5593,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: coxpresdb
+  dataset_kind: instance
   endpoint: https://coxpresdb.jp/sparql
   download_n3:
   - https://zenodo.org/api/records/7252155/files/Hsa-u.c4-0.n3/content
@@ -5494,6 +5615,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: lipidmaps
+  dataset_kind: instance
   endpoint: https://lipidmaps.org/sparql
   bioregistry_prefix: lipidmaps
   keywords:
@@ -5508,6 +5630,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: imgtkg
+  dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
   keywords:
   - immunology
@@ -5517,21 +5640,25 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: imgt.mabkg
+  dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/MabkgKg/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
 - name: imgt.genekg
+  dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/GENEKG/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
 - name: imgt.inferences
+  dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/IMGTKGINFERENCES/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
 - name: brenda
+  dataset_kind: instance
   endpoint: https://sparql.dsmz.de/api/brenda
   download_nt:
   - https://rdfportal.org/ntriples/brenda/latest/rdf-mod-r.0.nt.gz
@@ -5543,6 +5670,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: bioresource.riken
+  dataset_kind: instance
   endpoint: https://knowledge.brc.riken.jp/sparql
   keywords:
   - biology
@@ -5551,12 +5679,14 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: riken.metadb
+  dataset_kind: instance
   endpoint: http://metadb.riken.jp/sparql
   keywords:
   - database
   - life science
   sparql_engine: virtuoso
 - name: agrovoc
+  dataset_kind: instance
   endpoint: https://agrovoc.fao.org/sparql
   bioregistry_prefix: agrovoc
   keywords:
@@ -5579,6 +5709,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chebi
+  dataset_kind: ontology
   catalogs: ["idsm"]
   download_owl: https://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.owl
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/chebi
@@ -5611,6 +5742,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.mediadive
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mediadive
   download_nt: https://rdfportal.org/ntriples/mediadive/latest/rdf-mod-r.nt.gz
@@ -5622,6 +5754,7 @@
   - Cell
   - Organism
 - name: mediadive
+  dataset_kind: instance
   endpoint: https://sparql.dsmz.de/api/mediadive
   keywords:
   - microbiology
@@ -5630,6 +5763,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: rdfportal.glytoucan
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: glytoucan
   download_nt:
@@ -5642,6 +5776,7 @@
   - http://rdf.glycoinfo.org/glytoucan
   - http://www.glytoucan.org/glyco/owl/glytoucan
 - name: glytoucan
+  dataset_kind: instance
   endpoint: https://ts.glytoucan.org/sparql
   bioregistry_prefix: glytoucan
   keywords:
@@ -5659,6 +5794,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: glyconnect
+  dataset_kind: instance
   endpoint: https://glyconnect.expasy.org/sparql
   keywords:
   - carbohydrate
@@ -5668,6 +5804,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: string
+  dataset_kind: instance
   endpoint: https://sparql.string-db.org/
   bioregistry_prefix: string
   keywords:
@@ -5681,6 +5818,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: attedii
+  dataset_kind: instance
   endpoint: https://atted.jp/sparql
   keywords:
   - gene expression
@@ -5690,6 +5828,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: rdfportal.bacdive
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: bacdive
   endpoint: https://sparql.dsmz.de/api/bacdive
@@ -5704,6 +5843,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: rdfportal.proteinatlas
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: proteinatlas
   endpoint: https://rdfportal.org/proteinatlas/sparql
@@ -5715,12 +5855,14 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: prokino
+  dataset_kind: instance
   endpoint: http://vulcan.cs.uga.edu/sparql
   keywords:
   - protein
   - kinase
   - sequence
 - name: linkeddrugs
+  dataset_kind: instance
   endpoint: http://linkeddata.finki.ukim.mk/sparql
   keywords:
   - drug
@@ -5728,6 +5870,7 @@
   - health
   - disease
 - name: pdbj.bmrb
+  dataset_kind: instance
   endpoint: https://bmrbpub.pdbj.org/search/rdf
   bioregistry_prefix: pdbj
   keywords:
@@ -5740,6 +5883,7 @@
   - structure
   sparql_engine: virtuoso
 - name: glic
+  dataset_kind: instance
   endpoint: https://sparql.glycoinfo.org/sparql
   keywords:
   - carbohydrate
@@ -5749,17 +5893,20 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: metabobank
+  dataset_kind: instance
   endpoint: https://mb2.ddbj.nig.ac.jp/sparql
   keywords:
   - metabolite
   - mass spectrometry
   sparql_engine: virtuoso
 - name: linkedlifedata
+  dataset_kind: instance
   endpoint: http://linkedlifedata.com/sparql
   keywords:
   - biomedical science
   sparql_engine: virtuoso
 - name: microbedb
+  dataset_kind: instance
   endpoint: http://genome.microbedb.jp/sparql
   keywords:
   - microbiology
@@ -5767,12 +5914,14 @@
   - organism
   sparql_engine: virtuoso
 - name: mbgd
+  dataset_kind: instance
   endpoint: http://sparql.nibb.ac.jp/sparql
   keywords:
   - microbiology
   - genome
   - orthology
 - name: gocam
+  dataset_kind: instance
   endpoint: http://rdf.geneontology.org/blazegraph/sparql
   keywords:
   - gene
@@ -5781,6 +5930,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chemdb
+  dataset_kind: instance
   endpoint: http://chemdb.semweb.csdb.cn/sparql
   notes: ChemDB - phase transition dataset
   bioregistry_prefix: chemdb
@@ -5790,6 +5940,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: covidontheweb
+  dataset_kind: instance
   endpoint: https://covidontheweb.inria.fr/sparql
   notes: COVID on the Web - INRIA
   keywords:
@@ -5799,6 +5950,7 @@
   - virology
   sparql_engine: virtuoso
 - name: bio2rdf.kegg.cu
+  dataset_kind: instance
   catalogs: ["bio2rdf"]
   catalog_local_name: kegg.cu
   endpoint: http://cu.kegg.bio2rdf.org/sparql
@@ -5809,6 +5961,7 @@
   - chemical
   sparql_engine: virtuoso
 - name: rdfportal.nadd
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nadd
   endpoint: https://rdfportal.org/primary/sparql
@@ -5828,6 +5981,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: biobricks-aopwiki
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
   notes: 'KG Registry: BioBricks AOP-Wiki'
   kg_registry_id: biobricks-aopwiki
@@ -5839,6 +5993,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: biobricks-ice
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-ice/sparql
   notes: 'KG Registry: BioBricks ICE'
   kg_registry_id: biobricks-ice
@@ -5849,6 +6004,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: biobricks-mesh
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-mesh/sparql
   notes: 'KG Registry: BioBricks MeSH'
   kg_registry_id: biobricks-mesh
@@ -5861,6 +6017,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: biobricks-pubchem-annotations
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-pubchem-annotations/sparql
   notes: 'KG Registry: BioBricks PubChem Annotations'
   kg_registry_id: biobricks-pubchem-annotations
@@ -5872,6 +6029,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: biobricks-tox21
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-tox21/sparql
   notes: 'KG Registry: BioBricks Tox21'
   kg_registry_id: biobricks-tox21
@@ -5883,6 +6041,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: biobricks-toxcast
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-toxcast/sparql
   notes: 'KG Registry: BioBricks ToxCast'
   kg_registry_id: biobricks-toxcast
@@ -5894,6 +6053,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: biohealth
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biohealth/sparql
   notes: 'KG Registry: Bio-Health KG'
   kg_registry_id: biohealth
@@ -5905,6 +6065,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: cam-kp
+  dataset_kind: instance
   endpoint: https://stars-app.renci.org/cam/sparql
   notes: 'KG Registry: CAM-KP (Causal Activity Models Knowledge Provider)'
   kg_registry_id: cam-kp
@@ -5913,6 +6074,7 @@
   - reasoning
   sparql_engine: blazegraph
 - name: climatemodelskg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/climatemodelskg/sparql
   notes: 'KG Registry: Climate Models KG'
   kg_registry_id: climatemodelskg
@@ -5924,6 +6086,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: dreamkg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/dreamkg/sparql
   notes: 'KG Registry: DREAM-KG'
   kg_registry_id: dreamkg
@@ -5935,6 +6098,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: emi
+  dataset_kind: instance
   endpoint: https://qlever.earthmetabolome.org/metrin-kg
   download_tgz: https://zenodo.org/records/18652487/files/metrin-kg.tar.gz
   notes: 'KG Registry: Earth Metabolome Initiative Ontology; shares QLever earthmetabolome endpoint. Zenodo archive contains emi.ttl.gz (ontology) plus KG files (enpkg-rdf-v4.tar.gz, examples_METRINKG-v0.1.ttl.gz,
@@ -5948,6 +6112,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: emikg
+  dataset_kind: instance
   skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: EMI KG; shares QLever earthmetabolome endpoint'
@@ -5959,6 +6124,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: fiokg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/fiokg/sparql
   notes: 'KG Registry: SAWGraph FIO KG'
   kg_registry_id: fiokg
@@ -5969,6 +6135,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: geoconnex
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/geoconnex/sparql
   notes: 'KG Registry: GEOCONNEX'
   kg_registry_id: geoconnex
@@ -5979,6 +6146,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
 - name: globi
+  dataset_kind: instance
   skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   download_nq: https://zenodo.org/record/14640564/files/interactions.nq.gz
@@ -5992,6 +6160,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: gtopdb
+  dataset_kind: instance
   download_ttl:
   - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp.ttl
   - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp2026.1.ttl
@@ -6004,6 +6173,7 @@
   - pharmacology
   - receptor
 - name: hpa
+  dataset_kind: instance
   download_trig: https://v19.proteinatlas.org/download/proteinatlas.trig.gz
   notes: 'Updates KG Registry: Human Protein Atlas'
   kg_registry_id: hpa
@@ -6013,6 +6183,7 @@
   - protein
   - structure
 - name: hra-kg
+  dataset_kind: instance
   download_ttl: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.ttl
   download_jsonld: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.json
   download_rdf: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.xml
@@ -6023,6 +6194,7 @@
   keywords:
   - cell line
 - name: metanetx
+  dataset_kind: instance
   endpoint: https://rdf.metanetx.org/sparql
   download_ttl:
   - https://www.metanetx.org/ftp/latest/MNXmnet.ttl.gz
@@ -6054,6 +6226,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: nasa-gesdisc-kg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/nasa-gesdisc-kg/sparql
   notes: 'KG Registry: NASA-GESDISC-KG'
   kg_registry_id: nasa-gesdisc-kg
@@ -6065,6 +6238,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: nde
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/nde/sparql
   notes: 'KG Registry: NIAID Data Ecosystem KG'
   kg_registry_id: nde
@@ -6075,6 +6249,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: oma
+  dataset_kind: instance
   endpoint: https://sparql.omabrowser.org/lode/sparql
   download_tgz: https://omabrowser.org/All/oma-rdf-turtle.tgz
   notes: 'Updates KG Registry: OMA'
@@ -6087,6 +6262,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: openbiodiv
+  dataset_kind: instance
   endpoint: http://graph.openbiodiv.net/
   download_ttl: https://raw.githubusercontent.com/pensoft/OpenBiodiv/refs/heads/master/ontology/openbiodiv-ontology-latest.ttl
   notes: 'KG Registry: OpenBiodiv'
@@ -6097,6 +6273,7 @@
   - bibliography/documents
   sparql_engine: graphdb
 - name: ordo
+  dataset_kind: instance
   endpoint: https://www.orphadata.com/ordo-sparql-endpoint/
   notes: 'KG Registry: Orphanet Rare Disease Ontology (ORDO)'
   kg_registry_id: ordo
@@ -6123,6 +6300,7 @@
   - phenotype
   - pathogen
 - name: pf1600
+  dataset_kind: instance
   skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: pf1600 Dataset; shares QLever earthmetabolome endpoint'
@@ -6134,6 +6312,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: reactome
+  dataset_kind: instance
   download_rdf:
   - https://download.reactome.org/95/biopax.zip
   notes: 'Updates KG Registry: Reactome'
@@ -6150,6 +6329,7 @@
   - reaction
   - sbml
 - name: ruralkg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/ruralkg/sparql
   notes: 'KG Registry: Rural Resilience KG'
   kg_registry_id: ruralkg
@@ -6160,6 +6340,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sawgraph
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sawgraph/sparql
   notes: 'KG Registry: SAWGraph PFAS graph'
   kg_registry_id: sawgraph
@@ -6171,6 +6352,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: scales
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/scales/sparql
   notes: 'KG Registry: SCALES'
   kg_registry_id: scales
@@ -6180,6 +6362,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: securechainkg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/securechainkg/sparql
   notes: 'KG Registry: SecureChain KG'
   kg_registry_id: securechainkg
@@ -6190,6 +6373,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: semopenalex
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/semopenalex/sparql
   notes: 'KG Registry: SemOpenAlex'
   kg_registry_id: semopenalex
@@ -6200,6 +6384,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: sockg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sockg/sparql
   notes: 'KG Registry: SOC-KG'
   kg_registry_id: sockg
@@ -6210,6 +6395,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: spatialkg
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spatialkg/sparql
   notes: 'KG Registry: SAWGraph Spatial KG'
   kg_registry_id: spatialkg
@@ -6220,6 +6406,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: spoke
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spoke-okn/sparql
   notes: 'KG Registry: SPOKE'
   kg_registry_id: spoke
@@ -6230,6 +6417,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: spoke-genelab
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spoke-genelab/sparql
   notes: 'KG Registry: SPOKE GeneLab'
   kg_registry_id: spoke-genelab
@@ -6241,6 +6429,7 @@
   sparql_strategy: get+json
   supports_graph: false
 - name: sudokn
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sudokn/sparql
   notes: 'KG Registry: SUDOKN'
   kg_registry_id: sudokn
@@ -6251,6 +6440,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: tera
+  dataset_kind: instance
   download_nt:
   - https://zenodo.org/records/4244313/files/ecotox_chemical.nt
   - https://zenodo.org/records/4244313/files/ecotox_taxonomy.nt
@@ -6264,6 +6454,7 @@
   - environment
   - ecology
 - name: try
+  dataset_kind: instance
   skip_mining: true
   endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   notes: 'KG Registry: TRY Plant Trait Database; shares QLever earthmetabolome endpoint'
@@ -6276,6 +6467,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: ubergraph
+  dataset_kind: instance
   endpoint: https://ubergraph.apps.renci.org/sparql
   download_nq: https://ubergraph.apps.renci.org/downloads/current/ubergraph.nq.gz
   notes: 'KG Registry: Ubergraph'
@@ -6288,6 +6480,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: wildlifekn
+  dataset_kind: instance
   endpoint: https://frink.apps.renci.org/wildlifekg/sparql
   notes: 'KG Registry: Wildlife-KN'
   kg_registry_id: wildlifekn
@@ -6313,6 +6506,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: dbcls.allie.pubmed
+  dataset_kind: instance
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/pubmed_rdf_nt_latest.gz
   notes: From ALLIE FTP
@@ -6321,6 +6515,7 @@
   - abbreviation
   - literature curation
 - name: lsd
+  dataset_kind: instance
   endpoint: https://lsd.spatialepidemiology.net/sparql
   download_nt: https://ftp.dbcls.jp/allie/allie_rdf/lsd_rdf_nt_latest.gz
   notes: Life Science Dictionary
@@ -6328,6 +6523,7 @@
   - life science
   - database
 - name: dbcls.mesh
+  dataset_kind: instance
   download_nt:
   - https://ftp.dbcls.jp/allie/allie_rdf/mesh_rdf_nt_latest.gz
   notes: From ALLIE FTP
@@ -6337,6 +6533,7 @@
   - health
   - disease
 - name: nanosolveit.rdf
+  dataset_kind: instance
   download_nq:
   - https://zenodo.org/records/13955050/files/dataset.nq
   - https://zenodo.org/records/13955059/files/dataset.nq
@@ -6349,6 +6546,7 @@
   - nanomaterial
   - chemical
 - name: rdfportal.amrportal
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: amrportal
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6358,6 +6556,7 @@
   - Microbes
   - Phenotype
 - name: rdfportal.bgee
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: bgee
   endpoint: https://rdfportal.org/sib/sparql
@@ -6367,6 +6566,7 @@
   - Gene
   - Gene expression
 - name: rdfportal.biomodels
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: biomodels
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6375,6 +6575,7 @@
   keywords:
   - Others
 - name: rdfportal.biosample
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: biosample
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6382,6 +6583,7 @@
   - http://rdf.ebi.ac.uk/dataset/biosamples
   keywords: []
 - name: rdfportal.bmrb
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: bmrb
   endpoint: https://rdfportal.org/pdb/sparql
@@ -6395,6 +6597,7 @@
   - Sequence
   - Structure
 - name: rdfportal.brenda
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: brenda
   endpoint: https://rdfportal.org/primary/sparql
@@ -6405,6 +6608,7 @@
   - Bioresource
   - Enzyme
 - name: rdfportal.chembl
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: chembl
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6413,6 +6617,7 @@
   keywords:
   - Drug/Chemical
 - name: rdfportal.clinvar
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: clinvar
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6423,6 +6628,7 @@
   - Polymorphism
   - Sequence
 - name: rdfportal.dbcatalog
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: dbcatalog
   endpoint: https://rdfportal.org/primary/sparql
@@ -6432,6 +6638,7 @@
   keywords:
   - Others
 - name: rdfportal.ensembl
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ensembl
   skip_mining: true
@@ -6442,6 +6649,7 @@
   - Gene
   - Protein
 - name: rdfportal.ensembl_grch37
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ensembl_grch37
   skip_mining: true
@@ -6452,6 +6660,7 @@
   - Gene
   - Protein
 - name: rdfportal.famsbase
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: famsbase
   endpoint: https://rdfportal.org/primary/sparql
@@ -6462,6 +6671,7 @@
   - Protein
   - Structure
 - name: rdfportal.glycoepitope
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: glycoepitope
   endpoint: https://rdfportal.org/primary/sparql
@@ -6472,6 +6682,7 @@
   - Other biomolecule
   - Structure
 - name: rdfportal.gtdb
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: gtdb
   endpoint: https://rdfportal.org/primary/sparql
@@ -6482,6 +6693,7 @@
   - Bacteria
   - Taxonomy
 - name: rdfportal.gwas-catalog
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: gwas-catalog
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6491,6 +6703,7 @@
   - Genome
   - Variation
 - name: rdfportal.hco
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: hco
   endpoint: https://rdfportal.org/primary/sparql
@@ -6499,6 +6712,7 @@
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.hgnc
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: hgnc
   endpoint: https://rdfportal.org/primary/sparql
@@ -6508,6 +6722,7 @@
   - Gene
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.homologene
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: homologene
   endpoint: https://rdfportal.org/primary/sparql
@@ -6518,6 +6733,7 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.icgc
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: icgc
   endpoint: https://rdfportal.org/primary/sparql
@@ -6528,6 +6744,7 @@
   - Health/Disease
   - Sequence
 - name: rdfportal.jcm
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: jcm
   endpoint: https://rdfportal.org/primary/sparql
@@ -6537,6 +6754,7 @@
   - Bioresource
   - Organism
 - name: rdfportal.knapsack
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: knapsack
   endpoint: https://rdfportal.org/primary/sparql
@@ -6548,6 +6766,7 @@
   - Publication
   - Taxonomy
 - name: rdfportal.ligandbox
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ligandbox
   endpoint: https://rdfportal.org/primary/sparql
@@ -6558,6 +6777,7 @@
   - Drug/Chemical
   - Structure
 - name: rdfportal.massbank
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: massbank
   endpoint: https://rdfportal.org/primary/sparql
@@ -6566,6 +6786,7 @@
   keywords:
   - Compound
 - name: rdfportal.mbgd
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mbgd
   endpoint: https://rdfportal.org/primary/sparql
@@ -6586,6 +6807,7 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.mco
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mco
   endpoint: https://rdfportal.org/primary/sparql
@@ -6594,6 +6816,7 @@
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.mesh
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mesh
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6602,6 +6825,7 @@
   keywords:
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.microbedbjp
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: microbedbjp
   endpoint: https://rdfportal.org/primary/sparql
@@ -6611,6 +6835,7 @@
   - Metagenome
   - Microbe
 - name: rdfportal.mogplus
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mogplus
   endpoint: https://rdfportal.org/primary/sparql
@@ -6621,6 +6846,7 @@
   - Mouse
   - Variation
 - name: rdfportal.nando
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nando
   endpoint: https://rdfportal.org/primary/sparql
@@ -6631,6 +6857,7 @@
   - Ontology/Terminology/Nomenclature
   - Tag sequence (nucleic acid)
 - name: rdfportal.naro_genebank
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: naro_genebank
   endpoint: https://rdfportal.org/primary/sparql
@@ -6640,6 +6867,7 @@
   - Bioresource
   - Organism
 - name: rdfportal.nbrc
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nbrc
   skip_mining: true
@@ -6652,6 +6880,7 @@
   - Cell
   - Organism
 - name: rdfportal.ncbigene
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ncbigene
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6660,6 +6889,7 @@
   keywords:
   - Gene
 - name: rdfportal.nikkaji
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nikkaji
   endpoint: https://rdfportal.org/primary/sparql
@@ -6676,6 +6906,7 @@
   - Others
   - Structure
 - name: rdfportal.nlm-catalog
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nlm-catalog
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6685,6 +6916,7 @@
   - Journal article/Report/Bibliography
   - Ontology/Terminology/Nomenclature
 - name: rdfportal.oma
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: oma
   endpoint: https://rdfportal.org/sib/sparql
@@ -6695,6 +6927,7 @@
   - Genome
   - Phylogeny/Classification
 - name: rdfportal.opentggates
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: opentggates
   endpoint: https://rdfportal.org/primary/sparql
@@ -6706,6 +6939,7 @@
   - Gene expression
   - Health/Disease
 - name: rdfportal.paconto
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: paconto
   endpoint: https://rdfportal.org/primary/sparql
@@ -6721,6 +6955,7 @@
   - http://jcggdb.jp/rdf/diseases/paconto.rdf
   - http://jcggdb.jp/rdf/diseases/paconto-schema.rdf
 - name: rdfportal.pgdbj
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pgdbj
   endpoint: https://rdfportal.org/primary/sparql
@@ -6733,6 +6968,7 @@
   - Phylogeny/Classification
   - Sequence
 - name: rdfportal.polyinfo
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: polyinfo
   endpoint: https://rdfportal.org/primary/sparql
@@ -6745,6 +6981,7 @@
   keywords:
   - Drug/Chemical
 - name: rdfportal.pubmed
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubmed
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6754,6 +6991,7 @@
   - Journal article/Report/Bibliography
   - Others
 - name: rdfportal.pubtator
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubtator
   endpoint: https://rdfportal.org/ncbi/sparql
@@ -6763,6 +7001,7 @@
   - Journal article/Report/Bibliography
   - Others
 - name: rdfportal.quanto
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: quanto
   endpoint: https://rdfportal.org/primary/sparql
@@ -6772,6 +7011,7 @@
   keywords:
   - Others
 - name: rdfportal.reactome
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: reactome
   endpoint: https://rdfportal.org/ebi/sparql
@@ -6780,6 +7020,7 @@
   keywords:
   - Interaction/Pathway
 - name: rdfportal.refex
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: refex
   endpoint: https://rdfportal.org/primary/sparql
@@ -6792,6 +7033,7 @@
   - Gene expression
   - Tag sequence (nucleic acid)
 - name: rdfportal.rhea
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: rhea
   endpoint: https://rdfportal.org/sib/sparql
@@ -6801,6 +7043,7 @@
   - Enzyme
   - Protein
 - name: rdfportal.ssbd
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ssbd
   endpoint: https://rdfportal.org/primary/sparql
@@ -6814,14 +7057,17 @@
   - Other biomolecule
   - Others
 - name: civic
+  dataset_kind: instance
   endpoint: http://sparql.med2rdf.org/sparql
   graph_uris:
   - http://med2rdf.org/graph/civic
 - name: dgidb
+  dataset_kind: instance
   endpoint: http://sparql.med2rdf.org/sparql
   graph_uris:
   - http://med2rdf.org/graph/dgidb
 - name: rdfportal.ggdonto
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ggdonto
   endpoint: https://rdfportal.org/primary/sparql
@@ -6832,18 +7078,21 @@
   - http://jcggdb.jp/rdf/diseases/ggdonto.rdf
   - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
 - name: rdfportal.go
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: go
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/go
 - name: rdfportal.hpo
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: hpo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/hp
 - name: rdfportal.linked_icgc
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: linked_icgc
   skip_mining: true
@@ -6851,24 +7100,28 @@
   graph_uris:
   - http://icgc.link/release_20
 - name: rdfportal.mondo
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mondo
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/mondo
 - name: rdfportal.mp
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mp
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/mp
 - name: rdfportal.ncit
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ncit
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/ncit
 - name: rdfportal.uberon
+  dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: uberon
   endpoint: https://rdfportal.org/bioportal/sparql
