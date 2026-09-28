@@ -80,6 +80,8 @@ def _role(path: Path) -> str | None:
         ("_ontology_discovery.json", "ontology_discovery"),
         ("_property_usage.json", "property_usage_evidence"),
         ("_declared_artifacts.json", "declared_artifact_index"),
+        ("_declared_identities.sssom.tsv", "declared_identities"),
+        ("_declared_identities.json", "declared_identities_summary"),
         ("_ontology_acquisition.json", "ontology_acquisition"),
         ("_ontology.ttl", "generated_ontology_slice"),
         ("_void.ttl", "generated_void"),
@@ -123,6 +125,21 @@ def _dataset_for_path(
     return parent
 
 
+def _quality(path: Path, role: str | None) -> tuple[str | None, str | None]:
+    """Return the verdict of declared identities and its reason, read from their summary."""
+    if role not in {"declared_identities", "declared_identities_summary"}:
+        return None, None
+    stem = path.name.split("_declared_identities")[0]
+    summary = _load_json(path.parent / f"{stem}_declared_identities.json")
+    if summary.get("verdict") not in {"good", "bad"}:
+        return None, None
+    note = (
+        f"{summary.get('failing')} of {summary.get('statements')} declared identities fail "
+        "the identity checks"
+    )
+    return summary["verdict"], note
+
+
 def inventory_artifacts(
     run_root: Path, *, dataset_ids: set[str] | None = None
 ) -> list[ReleaseArtifact]:
@@ -133,6 +150,8 @@ def inventory_artifacts(
             continue
         rel = path.relative_to(run_root)
         digest = sha256_file(path)
+        role = _role(path)
+        quality, quality_note = _quality(path, role)
         rows.append(
             ReleaseArtifact(
                 artifact_id=_artifact_id(rel, digest),
@@ -141,7 +160,9 @@ def inventory_artifacts(
                 byte_size=path.stat().st_size,
                 media_type=_media_type(path),
                 dataset_id=_dataset_for_path(path, run_root, dataset_ids),
-                role=_role(path),
+                role=role,
+                quality=quality,
+                quality_note=quality_note,
             )
         )
     return rows

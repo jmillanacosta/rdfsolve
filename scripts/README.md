@@ -55,6 +55,20 @@ python scripts/build_graphs.py \
     --mappings output/mappings/
 ```
 
+## Declared identities
+
+### `declared_identities.py`
+
+Reads every identity that a local source declares (Bio2RDF x-* cross-references,
+skos:exactMatch, owl:sameAs) from its QLever index and writes
+`<source>_declared_identities.sssom.tsv` with the flags of each statement, and
+`<source>_declared_identities.json` with the verdict. A file with a statement that fails the
+identity checks is bad; the release manifest carries the verdict.
+
+```bash
+python scripts/declared_identities.py hgnc aopwikirdf --data-dir ../data --output RUN_DIR
+```
+
 ## SLURM Jobs
 
 Set SLURM parameters (cpus, mem, time) from the slurm `.sh` files.

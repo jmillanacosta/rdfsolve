@@ -29,6 +29,8 @@ class ReleaseArtifact(BaseModel):
     role: str | None = None
     generated_by: str | None = None
     derived_from: list[str] = Field(default_factory=list)
+    quality: Literal["good", "bad"] | None = None
+    quality_note: str | None = None
 
 
 class OntologyReleaseRef(BaseModel):
