@@ -20,3 +20,6 @@ def test_an_identity_is_flagged_by_what_it_would_join():
     ]
     assert identity_flags("hgnc:1001", "uniprot:A0A0C4DH53") == ["kind:gene-protein"]
     assert identity_flags("hgnc:1001", "omim:100100") == ["kind:unknown"]
+    assert identity_flags("hgnc:7471", "ncbiprotein:NC_012920") == ["kind:gene-genomic region"], (
+        "Bioregistry reads Bio2RDF refseq IRIs as ncbiprotein: the same namespace"
+    )

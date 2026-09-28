@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 
-__all__ = ["KINDS", "identifier_kind", "identity_flags"]
+__all__ = ["ALIASES", "KINDS", "identifier_kind", "identity_flags"]
 
 # (prefix, local identifier pattern, kind). The first match wins; order specific before general.
 KINDS: tuple[tuple[str, str, str], ...] = (
@@ -31,6 +31,9 @@ KINDS: tuple[tuple[str, str, str], ...] = (
     ("uniprot", r"[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "protein"),
     ("ccds", r"CCDS\d+(\.\d+)?", "coding sequence"),
 )
+# Bioregistry prefixes that hold the identifiers of a KINDS namespace (Bioregistry reads
+# Bio2RDF refseq IRIs as ncbiprotein).
+ALIASES = {"ncbiprotein": "refseq"}
 # Prefixes whose patterns name a kind only by their letter code, so that a value filed under
 # another namespace can be recognised as theirs.
 RECOGNISABLE = ("ensembl", "refseq", "ccds")
@@ -39,6 +42,7 @@ RECOGNISABLE = ("ensembl", "refseq", "ccds")
 def identifier_kind(curie: str) -> tuple[str, str] | None:
     """Return the kind of entity and the namespace that an identifier's pattern belongs to."""
     prefix, _, local = curie.partition(":")
+    prefix = ALIASES.get(prefix, prefix)
     for owner, pattern, kind in KINDS:
         if owner == prefix and re.fullmatch(pattern, local):
             return kind, owner
@@ -54,7 +58,8 @@ def identity_flags(left: str, right: str) -> list[str]:
     kinds = []
     for curie in (left, right):
         found = identifier_kind(curie)
-        if found and found[1] != curie.partition(":")[0]:
+        declared = curie.partition(":")[0]
+        if found and found[1] != ALIASES.get(declared, declared):
             flags.append(f"namespace:{curie} is a {found[1]} identifier")
         kinds.append(found[0] if found else None)
     if None in kinds:
