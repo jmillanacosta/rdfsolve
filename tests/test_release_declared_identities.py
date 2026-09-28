@@ -12,7 +12,9 @@ def test_declared_identities_carry_their_verdict(tmp_path):
         {"s": {"value": "http://bio2rdf.org/hgnc:5"}, "p": {"value": XREF}, "o": {"value": obj}}
         for obj in ("http://bio2rdf.org/ensembl:ENSG00000121410", "http://bio2rdf.org/ensembl:NM_130786")
     ]
-    write_declared_identities(declared_identities(bindings, "hgnc"), tmp_path / "hgnc", "hgnc")
+    write_declared_identities(
+        declared_identities(bindings, "hgnc"), tmp_path / "hgnc", "hgnc", license_uri="https://spdx.org/licenses/CC0-1.0"
+    )
     (tmp_path / "hgnc" / "hgnc_schema.json").write_text("{}")
     by_role = {a.role: a for a in inventory_artifacts(tmp_path)}
     table = by_role["declared_identities"]

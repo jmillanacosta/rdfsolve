@@ -63,10 +63,12 @@ Reads every identity that a local source declares (Bio2RDF x-* cross-references,
 skos:exactMatch, owl:sameAs) from its QLever index and writes
 `<source>_declared_identities.sssom.tsv` with the flags of each statement, and
 `<source>_declared_identities.json` with the verdict. A file with a statement that fails the
-identity checks is bad; the release manifest carries the verdict.
+identity checks is bad; the release manifest carries the verdict. Each table carries the
+licence of its source, from a licence table (TSV: name, spdx, evidence_url).
 
 ```bash
-python scripts/declared_identities.py hgnc aopwikirdf --data-dir ../data --output RUN_DIR
+python scripts/declared_identities.py hgnc aopwikirdf --data-dir ../data --output RUN_DIR \
+    --licences ../article/licences/licences.tsv
 ```
 
 ## SLURM Jobs

@@ -110,12 +110,13 @@ def _kind(flag: str) -> str:
 
 
 def write_declared_identities(
-    rows: Iterable[DeclaredIdentity], out_dir: Path, name: str
+    rows: Iterable[DeclaredIdentity], out_dir: Path, name: str, *, license_uri: str
 ) -> dict[str, Any]:
     """Write <name>_declared_identities.sssom.tsv and a summary with the verdict of the file.
 
     The verdict is bad when a statement fails a check (a namespace flag, or two kinds of
-    entity). The flags of each statement are in the other column of the SSSOM table.
+    entity). The flags of each statement are in the other column of the SSSOM table. The
+    statements are the data of the source, so the table carries the licence of the source.
     """
     import bioregistry
     from curies import Converter
@@ -153,7 +154,10 @@ def write_declared_identities(
     out_dir.mkdir(parents=True, exist_ok=True)
     table = out_dir / f"{name}_declared_identities.sssom.tsv"
     msdf = create_sssom_mappings(
-        mappings, mint("mappings", f"declared-identities-{name}"), converter=converter
+        mappings,
+        mint("mappings", f"declared-identities-{name}"),
+        license_uri=license_uri,
+        converter=converter,
     )
     write_sssom_tsv(msdf, table)
     summary = {
@@ -163,6 +167,7 @@ def write_declared_identities(
         "verdict": "bad" if failing else "good",
         "flags": dict(counts.most_common()),
         "table": table.name,
+        "license": license_uri,
     }
     (out_dir / f"{name}_declared_identities.json").write_text(json.dumps(summary, indent=1))
     return summary

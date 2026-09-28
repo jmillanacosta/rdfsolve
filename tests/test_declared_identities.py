@@ -40,7 +40,7 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     clean, wrong = rows
     assert clean.flags == [] and clean.comment == "hgnc x-ensembl"
     assert wrong.flags == ["namespace:ensembl:NM_130786 is a refseq identifier", "kind:gene-transcript"]
-    summary = write_declared_identities(rows, tmp_path, "hgnc")
+    summary = write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC-BY-SA-4.0")
     assert summary["verdict"] == "bad"
     assert summary["statements"] == 2 and summary["failing"] == 1
     assert summary["flags"] == {"clean": 1, "namespace": 1, "kind:gene-transcript": 1}
@@ -48,13 +48,14 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     table = (tmp_path / "hgnc_declared_identities.sssom.tsv").read_text()
     assert "skos:exactMatch" in table and "kind:gene-transcript" in table
     assert "mapping_set_id:" in table
+    assert "license: https://spdx.org/licenses/CC-BY-SA-4.0" in table, "The licence of the source"
 
 
 def test_a_file_without_failing_statements_is_not_bad(tmp_path):
     rows = declared_identities(
         [binding("http://bio2rdf.org/hgnc:5", XREF, "http://bio2rdf.org/ensembl:ENSG00000121410")], "hgnc"
     )
-    assert write_declared_identities(rows, tmp_path, "hgnc")["verdict"] == "good"
+    assert write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC0-1.0")["verdict"] == "good"
 
 
 def test_an_identifier_restated_as_a_resolver_iri_is_not_a_cross_namespace_identity():
