@@ -156,7 +156,9 @@ def _census_queries(
     edge = f"?s <{predicate}> ?o . {restriction}" if predicate else "?s ?p ?o ."
     typed = f"{edge} {_types(named)}" if predicate else _types(named)
     tests = {"triples": "", "untypedTriples": f"FILTER NOT EXISTS {{ {typed} }}"}
-    if not local:
+    # Without typed profiles the test is "false" and nothing is covered: the count is not sent,
+    # because some engines answer COUNT(*) with FILTER(false) with no row (Rhea: 8 properties).
+    if not local and match != "false":
         tests["coveredTriples"] = f"FILTER({match})"
     return [
         f"SELECT (COUNT(*) AS ?{name}) {_dataset(graph, named)} WHERE {{ {edge} {test} }}"

@@ -92,3 +92,8 @@ def test_the_census_counts_with_filters():
         assert any(f"FILTER({match})" in q for q in queries)
     local = structural_strategy._census_queries(None, [], match, True)
     assert len(local) == 2, "A local census counts no coverage; discovery finds the rest"
+    untested = structural_strategy._census_queries(None, [], "false", False, "urn:p")
+    assert not any("?coveredTriples" in q for q in untested), (
+        "A property without typed profiles covers no edge; Rhea answers COUNT(*) with"
+        " FILTER(false) with no row"
+    )
