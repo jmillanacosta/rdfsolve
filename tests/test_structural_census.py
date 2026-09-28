@@ -52,6 +52,18 @@ def test_a_refused_census_is_counted_by_property(monkeypatch):
     assert entry["covered_triples"] + entry["uncovered_triples"] == 5
 
 
+def test_a_large_graph_is_counted_by_property(monkeypatch):
+    """Above CENSUS_WHOLE_GRAPH_TRIPLES the whole-graph test joins every triple with every typed
+    profile (Bgee: about 8e8 triples and 490 profiles; no answer in 2 h), so the census counts
+    one property at a time after the count of all triples."""
+    monkeypatch.setattr(structural_strategy, "CENSUS_WHOLE_GRAPH_TRIPLES", 4)
+    large, refused = census(monkeypatch, refuse=False)
+    whole, _ = census(monkeypatch, refuse=True)
+    assert not refused and large["census"] == "per_property"
+    for count in ("triple_count", "covered_triples", "untyped_subject_triples"):
+        assert large[count] == whole[count]
+
+
 def test_the_coverage_test_does_not_rebind_outer_variables():
     """Virtuoso rejects VALUES that bind an outer variable inside EXISTS (SP031), and IF around
     EXISTS (SQ156)."""

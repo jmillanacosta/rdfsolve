@@ -134,6 +134,9 @@ def _select(
 
 # Triples of one property in one census batch, when the census of the property is refused.
 CENSUS_BATCH_TRIPLES = 20_000_000
+# Above this many triples the census is counted per property: the whole-graph test joins every
+# triple with every typed profile (Bgee: about 8e8 triples, 490 profiles, no answer in 2 h).
+CENSUS_WHOLE_GRAPH_TRIPLES = 100_000_000
 
 
 def _census_queries(
@@ -191,10 +194,14 @@ def _census(
     paged: each query returns one count, so a page costs as much as the whole query.
     """
     match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
+    queries = _census_queries(graph, named, match, local)
     try:
-        counts = _count(context, _census_queries(graph, named, match, local))
-        entry["census"] = "whole_graph"
-        return counts
+        counts = _count(context, queries[:1])
+        if counts["triples"] <= CENSUS_WHOLE_GRAPH_TRIPLES:
+            counts.update(_count(context, queries[1:]))
+            entry["census"] = "whole_graph"
+            return counts
+        logger.info("Census: %d triples; counting one property at a time", counts["triples"])
     except EndpointTimeoutError:
         pass
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
