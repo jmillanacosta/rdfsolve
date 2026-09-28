@@ -220,6 +220,15 @@ Examples:
         help="Most classes a schema keeps before ontology terms are subsumed (default: 300)",
     )
     parser.add_argument(
+        "--ontology-group-before-mining",
+        type=int,
+        default=5000,
+        help=(
+            "With --ontology-as-data, group ontology terms under their ancestors before "
+            "per-class mining when more classes are found (default: 5000); 0 groups after"
+        ),
+    )
+    parser.add_argument(
         "--resume-from",
         type=Path,
         default=None,
@@ -455,6 +464,9 @@ Examples:
     config.ontology_term_budget = args.ontology_term_budget
     if config.ontology_term_budget < 1:
         parser.error("--ontology-term-budget must be positive")
+    if args.ontology_group_before_mining < 0:
+        parser.error("--ontology-group-before-mining must not be negative")
+    config.ontology_group_before_mining = args.ontology_group_before_mining or None
     config.resume_from = args.resume_from
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
