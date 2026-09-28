@@ -1027,6 +1027,17 @@ class SparqlHelper:
                     host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
                 )
             response.raise_for_status()
+            state = response.headers.get("X-SQL-State", "")
+            if response.status_code == 206 or state == "S1TAT":
+                # Virtuoso returns what it found before its ANYTIME limit as HTTP 206 with
+                # X-SQL-State S1TAT. The results are incomplete: a count is too low and a
+                # FILTER NOT EXISTS keeps rows that the rest of the query would remove.
+                message = response.headers.get("X-SQL-Message", "").strip()
+                raise EndpointTimeoutError(
+                    f"Query cost/time limit: incomplete results (HTTP {response.status_code}, "
+                    f"X-SQL-State {state or 'none'}): {message}",
+                    status_code=response.status_code,
+                )
             self._check_response_health(response, text)
             return text
 
