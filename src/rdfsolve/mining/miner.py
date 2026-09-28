@@ -48,6 +48,8 @@ from rdfsolve.sparql_helper import (
 )
 from rdfsolve.version import VERSION
 
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -841,6 +843,14 @@ class SchemaMiner:
                 states_out=entity_count_states,
                 type_context_graph_uris=self.type_context_graph_uris,
             )
+        # Class membership is not a data edge: rdf:type gives the subject class of every row and
+        # the member counts above, and a (C, rdf:type, X) row only states the type of the class
+        # IRI. The rows are left out after the classes are counted, so that a class whose
+        # members have only rdf:type keeps its count. The structural census, which ran before,
+        # counts rdf:type edges as covered by the typed profiles.
+        kept = [p for p in schema.patterns if p.property_uri != RDF_TYPE]
+        self._report.report.config["membership_rows_left_out"] = len(schema.patterns) - len(kept)
+        schema.patterns = kept
         dataset = getattr(self._helper, "dataset", None)
         if isinstance(dataset, Graph):
             phase = self._report.start_phase("collections")

@@ -102,9 +102,10 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
     article = json.loads((tmp_path / "extraction_inventory.json").read_text())
     article_local = next(r for r in article if r["dataset_id"] == "typed" and r["mode"] == "local")
     assert article_local["retained_views"] == inventory["typed", "local"]["views"]
-    assert article_local["views"]["patterns"]["rows"] == inventory["typed", "local"]["views"]["patterns"]["rows"] - 2
+    # The dcat:Dataset catalogue row (title) is excluded; its rdf:type row is not a schema row.
+    assert article_local["views"]["patterns"]["rows"] == inventory["typed", "local"]["views"]["patterns"]["rows"] - 1
     assert article_local["coverage_scope"] == "retained_extraction"
-    assert article_local["view_exclusions"]["patterns"] == 2
+    assert article_local["view_exclusions"]["patterns"] == 1
     article_graph = json.loads((tmp_path / "class_connectivity.json").read_text())["local"]
     assert all(n["iri"] != "http://www.w3.org/ns/dcat#Dataset" for n in article_graph["nodes"])
     assert any(n["iri"] == "http://www.w3.org/ns/dcat#Dataset" for n in result["class_connectivity"]["local"]["nodes"])
