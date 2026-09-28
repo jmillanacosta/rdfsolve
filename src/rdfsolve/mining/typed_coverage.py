@@ -34,7 +34,7 @@ def typed_match(
     subject_type = _context_pattern("?s a ?_coveredSubject .", objects).replace(
         "?_contextGraph", "?_subjectTypeGraph"
     )
-    object_type = _context_pattern("?o a ?_coveredObject .", objects).replace(
+    object_type = _context_pattern("?o a ?_objectType .", objects).replace(
         "?_contextGraph", "?_objectTypeGraph"
     )
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
@@ -54,7 +54,7 @@ VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{
 {same_property}
 {subject_type}"""
     match = f"""(EXISTS {{ {head}
-{object_type} }} || EXISTS {{ {head}
+{object_type} FILTER(?_objectType = ?_coveredObject) }} || EXISTS {{ {head}
 FILTER(
   (?_coveredObject = "Literal" && isLiteral(?o) &&
     (!BOUND(?_coveredDatatype) || DATATYPE(?o) = ?_coveredDatatype)) ||
@@ -67,7 +67,11 @@ FILTER(
     # evaluates an EXISTS inside the EXISTS on a variable of the VALUES as false (AOP-Wiki: 1 of
     # 23,729 owl:sameAs edges covered) and gives wrong counts for an OPTIONAL inside the EXISTS
     # (1 of 2 prov:used edges); RDFLib evaluates a UNION inside an EXISTS as false. The inner
-    # EXISTS of the untyped case uses no variable of the VALUES.
+    # EXISTS of the untyped case uses no variable of the VALUES. The object type is compared in
+    # a FILTER: when it is joined on ?_coveredObject, QLever joins the VALUES with the subject
+    # and object types, which share only variables of the VALUES, before the edge (HGNC
+    # has-approved-symbol: over 6.5 GB; 41,789 edges in 0.0 s with the FILTER). A group of the
+    # edge and the object type is refused by Virtuoso (error SQ156).
     return match
 
 

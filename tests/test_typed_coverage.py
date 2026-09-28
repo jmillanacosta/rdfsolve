@@ -42,3 +42,8 @@ def test_coverage_matches_edges_as_a_relation():
         assert "OPTIONAL" not in test, (
             "No OPTIONAL inside the test: Virtuoso counts 1 of 2 prov:used edges with it"
         )
+        typed = test.split(" || EXISTS")[0]
+        assert "?o a ?_objectType ." in typed and "FILTER(?_objectType = ?_coveredObject)" in typed, (
+            "The object type is compared, not joined on a variable of the VALUES: QLever joins the"
+            " VALUES with the types first otherwise (HGNC has-approved-symbol: over 6.5 GB)"
+        )
