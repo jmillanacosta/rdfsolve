@@ -149,6 +149,7 @@ class SchemaMiner:
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
+        self._group_before_mining: int | None = None
         self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
         self._shared_extensions: dict[str, str] = {}
@@ -378,6 +379,8 @@ class SchemaMiner:
             excluded_graph_prefixes=self.excluded_graph_prefixes,
             type_context_graph_uris=self.type_context_graph_uris,
             ontology_graph_uris=self._ontology_graph_uris,
+            ontology_term_budget=self._ontology_term_budget,
+            group_before_mining=self._group_before_mining,
         )
 
         if self._resume is not None:
@@ -387,6 +390,13 @@ class SchemaMiner:
         if not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
             StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
+        if context.grouped_members:
+            # A row of a representative is a grouping of its members' rows, not an observation
+            # of the representative itself, and its direct instances do not describe it.
+            self._subsumed_classes |= set(context.grouped_members)
+            for pattern in patterns:
+                if pattern.subject_class in context.grouped_members:
+                    pattern.evidence_source = "inferred"
         self._shared_extensions = dict(context.shared_extensions)
         if context.structural_patterns or any(
             p.name == "structural-patterns" for p in self._report.report.phases
@@ -738,6 +748,8 @@ class SchemaMiner:
         """Start one report before any phase and retain failures."""
         self._ontology_classes = None
         self._ontology_term_budget = None
+        self._group_before_mining = None
+        self._subsumed_classes = set()
         self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
         self._structural_patterns = None

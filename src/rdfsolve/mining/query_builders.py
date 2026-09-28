@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from typing_extensions import Self
+
 from rdfsolve.sparql_helper import SparqlHelper
 
 __all__ = [
@@ -139,10 +141,37 @@ def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
     )
 
 
+class Representative(str):
+    """An ontology term that stands for its member terms in the pattern queries.
+
+    Subjects typed by any member are counted under the representative; each member belongs
+    to one representative, so counts stay additive. The IRI is the representative's.
+    """
+
+    members: tuple[str, ...]
+
+    def __new__(cls, iri: str, members: list[str] | tuple[str, ...]) -> Self:
+        """Keep the representative IRI and its sorted member terms."""
+        value = super().__new__(cls, iri)
+        value.members = tuple(sorted(set(members)))
+        return value
+
+
 def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str, str, str, str]:
-    """Write one class or property as constants; BIND keeps their result columns."""
+    """Write one class or property as constants; BIND keeps their result columns.
+
+    A Representative among the classes binds ?class to the representative for subjects typed
+    by any of its members (VALUES (?_member ?class)).
+    """
     binds = ""
-    if len(class_uris) == 1:
+    if any(isinstance(c, Representative) for c in class_uris):
+        rows = " ".join(
+            f"(<{member}> <{c}>)"
+            for c in class_uris
+            for member in (c.members if isinstance(c, Representative) else (c,))
+        )
+        cls, values = "?_member", f"VALUES (?_member ?class) {{ {rows} }}"
+    elif len(class_uris) == 1:
         cls, values = f"<{class_uris[0]}>", ""
         binds += f" BIND({cls} AS ?class)"
     else:

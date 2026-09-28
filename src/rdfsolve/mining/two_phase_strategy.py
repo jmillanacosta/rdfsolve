@@ -109,6 +109,7 @@ class TwoPhaseStrategy(MiningStrategy):
             logger.info(f"  -> {len(classes)} total classes (data + ontology)")
 
         context.report.finish_phase(p1, items=len(classes))
+        classes = self._group_terms(classes, context)
         context.class_batches = self._plan_batches(classes, context)
 
         # Phase 2 - batched per-class pattern discovery
@@ -125,6 +126,52 @@ class TwoPhaseStrategy(MiningStrategy):
         if abort_reason:
             context.report.set_abort_reason(abort_reason)
         return patterns
+
+    def _group_terms(self, classes: list[str], context: MiningContext) -> list[str]:
+        """Group ontology terms under their ancestors before per-class mining.
+
+        Only when ontology-as-data is on and there are more classes than the configured limit
+        (for example about 181,000 ChEBI types in PubChem, which cannot be mined one by one).
+        The representatives are chosen as after mining (choose_representatives) and recorded
+        with their members for review; the rows of each representative are then mined over all
+        its member terms at once.
+        """
+        budget, limit = context.ontology_term_budget, context.group_before_mining
+        if budget is None or limit is None or len(classes) <= limit:
+            return classes
+        from rdfsolve.mining.ontology_as_data import choose_representatives, fetch_superclasses
+        from rdfsolve.mining.query_builders import Representative
+
+        phase = context.report.start_phase("ontology-terms/group-before-mining")
+        parents = fetch_superclasses(
+            context.helper, classes, graph_uris=context.ontology_graph_uris
+        )
+        chosen = choose_representatives(classes, parents, budget)
+        members = chosen.members()
+        present = set(classes)
+        grouped: list[str] = []
+        for rep in sorted(set(chosen.representative.values())):
+            terms = members.get(rep, [])
+            if terms:
+                grouped.append(Representative(rep, [*terms, *([rep] if rep in present else [])]))
+            else:
+                grouped.append(rep)
+        context.grouped_members = members
+        context.report.report.config["ontology_term_grouping"] = {
+            "before_mining": True,
+            "limit": limit,
+            "budget": budget,
+            "classes_before": chosen.classes_before,
+            "classes_after": chosen.classes_after,
+            "levels_lifted": chosen.levels_lifted,
+            "over_budget": chosen.over_budget,
+            "hierarchy_graph_uris": context.ontology_graph_uris,
+            "representative_members": members,
+            "review_state": "unreviewed",
+        }
+        context.report.finish_phase(phase, items=len(grouped))
+        logger.info("Grouped %d classes into %d before mining", len(classes), len(grouped))
+        return grouped
 
     def _plan_batches(self, classes: list[str], context: MiningContext) -> list[list[str]]:
         """Use fixed batches, or instance-count batches when there are many classes."""
@@ -152,6 +199,10 @@ class TwoPhaseStrategy(MiningStrategy):
                 weights[row["class"]["value"]] = int(row["n"]["value"])
             except (KeyError, TypeError, ValueError):
                 continue
+        for cls in classes:
+            members = getattr(cls, "members", None)
+            if members:
+                weights[cls] = sum(weights.get(member, 0) for member in members)
         max_classes = size if len(classes) <= WEIGHTED_BATCHING_ABOVE else MAX_CLASSES_PER_BATCH
         context.class_weights = weights
         batches = plan_class_batches(classes, weights, max_classes=max_classes)

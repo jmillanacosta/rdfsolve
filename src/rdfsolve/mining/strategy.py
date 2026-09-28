@@ -34,6 +34,8 @@ class MiningContext:
         excluded_graph_prefixes: tuple[str, ...] = (),
         type_context_graph_uris: list[str] | None = None,
         ontology_graph_uris: list[str] | None = None,
+        ontology_term_budget: int | None = None,
+        group_before_mining: int | None = None,
     ) -> None:
         """Initialize mining context.
 
@@ -51,6 +53,8 @@ class MiningContext:
             chunk_size: Page size for pattern queries
             unsafe_paging: Permit paging without a stable order
             excluded_graph_prefixes: Graph IRI prefixes to skip when discovering graphs
+            ontology_term_budget: Target class count when ontology terms are grouped
+            group_before_mining: Group terms before per-class mining above this class count
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -65,6 +69,10 @@ class MiningContext:
         self.chunk_size = chunk_size
         self.unsafe_paging = unsafe_paging
         self.excluded_graph_prefixes = excluded_graph_prefixes
+        self.ontology_term_budget = ontology_term_budget
+        self.group_before_mining = group_before_mining
+        # Representative -> member terms, when terms were grouped before mining.
+        self.grouped_members: dict[str, list[str]] = {}
         # Class batches chosen by the strategy; the counts phase reuses them.
         self.class_batches: list[list[str]] | None = None
         self.structural_patterns: list[StructuralPattern] = []

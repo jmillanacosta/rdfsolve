@@ -25,6 +25,7 @@ def mine_with_ontology(
     ontology_scope: Literal["schema", "full"] = "schema",
     ontology_as_data: bool = False,
     ontology_term_budget: int = 300,
+    ontology_group_before_mining: int | None = None,
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -37,6 +38,9 @@ def mine_with_ontology(
             their class count exceeds ontology_term_budget. Grouped patterns
             are inferred; exact term observations retain their original IRIs.
         ontology_term_budget: Target class count for the typed schema view.
+        ontology_group_before_mining: With ontology_as_data, group terms under their
+            ancestors before per-class mining when more classes than this are discovered
+            (for sources with too many term types to mine one by one). None groups after.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
             Named graphs must hold triples. None keeps extraction in the data
@@ -58,6 +62,7 @@ def mine_with_ontology(
             if ontology_term_budget < 1:
                 raise ValueError("ontology_term_budget must be positive")
             miner._ontology_term_budget = ontology_term_budget
+            miner._group_before_mining = ontology_group_before_mining
         result = _mine_with_ontology(
             miner,
             extract_ontology,
