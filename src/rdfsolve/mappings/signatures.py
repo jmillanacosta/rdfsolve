@@ -207,6 +207,45 @@ def _local(value: str) -> tuple[str, str] | None:
     return prefix, parsed[1]
 
 
+def _lookup(
+    link: Link,
+    target: Client,
+    keys: Iterable[str],
+    replacements: Mapping[str, str],
+    *,
+    in_target_class: bool = False,
+) -> dict[str, list[tuple[str, str]]]:
+    """Look up identifiers (Bioregistry CURIEs) in the target, in every spelling.
+
+    Return, for each identifier found, the target terms and their target subjects: the term
+    itself for a join, the subject that has the term as value of the target property for a
+    shared reference (with *in_target_class*, only subjects of the target class).
+    """
+    from rdflib import URIRef
+
+    from rdfsolve.client.identify import spellings
+
+    if link.kind == "join":
+        pattern = f"?t a {URIRef(link.target_class or '').n3()} . BIND(?t AS ?x)"
+        terms = {
+            key: [t for t in spellings(replacements.get(key, key)) if isinstance(t, URIRef)]
+            for key in keys
+        }
+    else:
+        pattern = f"?x {URIRef(link.target_property or '').n3()} ?t ."
+        if in_target_class and link.target_class:
+            pattern += f" ?x a {URIRef(link.target_class).n3()} ."
+        terms = {key: spellings(replacements.get(key, key)) for key in keys}
+    found: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    pairs = [(key, term) for key, forms in terms.items() for term in forms]
+    for start in range(0, len(pairs), 200):
+        values = " ".join(f'("{key}" {term.n3()})' for key, term in pairs[start : start + 200])
+        scoped = target._scope(f"VALUES (?key ?t) {{ {values} }} {pattern}")
+        for row in target._select(f"SELECT DISTINCT ?key ?t ?x WHERE {{ {scoped} }}"):
+            found[row["key"]["value"]].append((row["t"]["value"], row["x"]["value"]))
+    return dict(found)
+
+
 def verify(
     link: Link,
     source: Client,
@@ -228,8 +267,6 @@ def verify(
     replacements = replacements or {}
     from rdflib import URIRef
 
-    from rdfsolve.client.identify import spellings
-
     def _iri(value: str) -> str:
         return URIRef(value).n3()
 
@@ -247,22 +284,9 @@ def verify(
         parsed = _local(row["v"]["value"])
         if parsed and parsed[0] == link.identifier_type:
             keys[f"{parsed[0]}:{parsed[1]}"] = row["v"]["value"]
-    if link.kind == "join":
-        pattern = f"?t a {_iri(link.target_class or '')} ."
-        terms = {
-            key: [t for t in spellings(replacements.get(key, key)) if isinstance(t, URIRef)]
-            for key in keys
-        }
-    else:
-        pattern = f"?x {_iri(link.target_property or '')} ?t ."
-        terms = {key: spellings(replacements.get(key, key)) for key in keys}
-    found: dict[str, str] = {}
-    pairs = [(key, term) for key, forms in terms.items() for term in forms]
-    for start in range(0, len(pairs), 200):
-        values = " ".join(f'("{key}" {term.n3()})' for key, term in pairs[start : start + 200])
-        scoped = target._scope(f"VALUES (?key ?t) {{ {values} }} {pattern}")
-        for row in target._select(f"SELECT DISTINCT ?key ?t WHERE {{ {scoped} }}"):
-            found.setdefault(row["key"]["value"], row["t"]["value"])
+    found: dict[str, str] = {
+        key: matches[0][0] for key, matches in _lookup(link, target, keys, replacements).items()
+    }
     forms: dict[str, int] = defaultdict(int)
     for key, term in found.items():
         local = replacements.get(key, key).split(":", 1)[1]
@@ -378,3 +402,74 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
         )
         for row in rows
     ]
+
+
+@dataclass
+class ClassAssociation:
+    """The entity pairs that a verified link joins, and the members of each class that take part.
+
+    A source subject takes part when one of its values of the link property is found in the
+    target; a target subject when it is the target of such a value. Coverage is relative to all
+    members of the class in the scope of each client.
+    """
+
+    link: Link
+    pairs: list[tuple[str, str]]
+    source_subjects: int
+    source_members: int
+    target_subjects: int
+    target_members: int
+
+    @property
+    def source_coverage(self) -> float | None:
+        """Return the share of source class members that take part."""
+        return self.source_subjects / self.source_members if self.source_members else None
+
+    @property
+    def target_coverage(self) -> float | None:
+        """Return the share of target class members that take part."""
+        return self.target_subjects / self.target_members if self.target_members else None
+
+
+def class_association(
+    link: Link,
+    source: Client,
+    target: Client,
+    *,
+    replacements: Mapping[str, str] | None = None,
+) -> ClassAssociation:
+    """Read every value of the link along the link, and return the association of its classes."""
+    from rdflib import URIRef
+
+    replacements = replacements or {}
+    cls, prop = URIRef(link.source_class).n3(), URIRef(link.property).n3()
+    rows = source._select(
+        f"SELECT DISTINCT ?s ?v WHERE {{ {source._scope(f'?s a {cls} ; {prop} ?v .')} }}",
+        exhaustive=True,
+    )
+    subjects_of: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        parsed = _local(row["v"]["value"])
+        if parsed and parsed[0] == link.identifier_type:
+            subjects_of[f"{parsed[0]}:{parsed[1]}"].add(row["s"]["value"])
+    found = _lookup(link, target, subjects_of, replacements, in_target_class=True)
+    pairs = sorted(
+        {(s, x) for key, matches in found.items() for _, x in matches for s in subjects_of[key]}
+    )
+
+    def members(client: Client, iri: str | None) -> int:
+        """Count the members of a class in the scope of the client."""
+        if not iri:
+            return 0
+        body = client._scope(f"?m a {URIRef(iri).n3()} .")
+        rows = client._select(f"SELECT (COUNT(DISTINCT ?m) AS ?n) WHERE {{ {body} }}")
+        return int(rows[0]["n"]["value"]) if rows else 0
+
+    return ClassAssociation(
+        link,
+        pairs,
+        len({s for s, _ in pairs}),
+        members(source, link.source_class),
+        len({x for _, x in pairs}),
+        members(target, link.target_class),
+    )
