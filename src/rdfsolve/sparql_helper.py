@@ -238,6 +238,13 @@ class SparqlHelper:
     RETRY_STATUS_CODES = (500, 502, 503, 504, 429)
 
     # rejection from the endpoint (not a transient server error) raise EndpointTimeoutError.
+    # A connection closed without a response after this many seconds means that the server or
+    # a proxy gave up on the query: the caller must make it smaller, not repeat it.
+    DROPPED_AFTER_SECONDS: ClassVar[float] = 60.0
+    DROPPED_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "remotedisconnected",
+        "remote end closed connection without response",
+    )
     COST_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
         "estimated execution time",
         "exceeds the limit",
@@ -609,6 +616,7 @@ class SparqlHelper:
         while attempt < self.max_retries:
             attempt += 1
             requests_made += 1
+            attempt_started = time.monotonic()
             if record is not None:
                 record.attempts = requests_made
                 record.fallback_used = fallback_used
@@ -816,6 +824,22 @@ class SparqlHelper:
                     use_post = True
                     attempt -= 1
                     continue
+
+                waited = time.monotonic() - attempt_started
+                if waited >= self.DROPPED_AFTER_SECONDS and any(
+                    pat in error_msg for pat in self.DROPPED_PATTERNS
+                ):
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    logger.warning(
+                        "%s connection closed without a response after %.0f s on %s"
+                        " - not retrying the unchanged query",
+                        tag,
+                        waited,
+                        self.endpoint_url,
+                    )
+                    raise EndpointTimeoutError(
+                        f"Connection closed without a response after {waited:.0f} s: {e}"
+                    ) from e
 
                 # Handle transient network errors with retry
                 self._handle_retry(

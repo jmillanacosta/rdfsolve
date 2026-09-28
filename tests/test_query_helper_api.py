@@ -56,3 +56,28 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
     monkeypatch.setenv("RDFSOLVE_USER_AGENT", "my-project/1 (https://example.org/contact)")
     assert SparqlHelper("https://example.org/sparql").user_agent == "my-project/1 (https://example.org/contact)"
     assert SparqlHelper("https://example.org/sparql", user_agent="tool/2").user_agent == "tool/2"
+
+
+def test_a_connection_closed_after_a_long_wait_is_a_cost_limit(monkeypatch, tmp_path):
+    """A proxy or server that closes the connection after a long query gave up on the query.
+
+    The caller must make the query smaller, not repeat it (Rhea through a proxy: 16 minutes
+    per attempt). A connection closed at once is a network error and is retried.
+    """
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    dropped = requests.exceptions.ProxyError(
+        "Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')"
+    )
+    with SparqlHelper("https://example.org/sparql", max_retries=3) as helper:
+        helper.initial_backoff = 0
+        request = Mock(side_effect=dropped)
+        monkeypatch.setattr(helper._session, "request", request)
+        helper.DROPPED_AFTER_SECONDS = 0.0
+        with pytest.raises(EndpointTimeoutError, match="closed"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 1, "A query dropped after a long wait is not repeated"
+        helper.DROPPED_AFTER_SECONDS = 1e9
+        with pytest.raises(EndpointError):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 4, "A connection closed at once is retried"
