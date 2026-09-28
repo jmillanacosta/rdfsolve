@@ -50,9 +50,12 @@ class Pipeline:
         for stage in self.stages:
             self.results[stage.name] = stage.run()
 
-            if not self.results[stage.name].get("success"):
+            state = self.results[stage.name].get("state")
+            if state == "failed":
                 log.error(f"Pipeline aborted at stage: {stage.name}")
                 break
+            if state == "partial":
+                log.warning(f"Stage {stage.name} is partial; the next stages run")
 
         elapsed = time.time() - start
         self.results["total_elapsed_seconds"] = elapsed
@@ -153,6 +156,18 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
         "loadability is checked at startup",
         len(sources),
     )
+
+
+def exit_code(results: dict[str, Any]) -> int:
+    """Return 1 when a stage failed (produced nothing), else 0.
+
+    A partial stage (some sources failed) is not a failed run: its state and the reason for
+    each source are in the results, and jobs that depend on the run can go on.
+    """
+    for stage_results in results.values():
+        if isinstance(stage_results, dict) and stage_results.get("state") == "failed":
+            return 1
+    return 0
 
 
 def main():
@@ -523,9 +538,4 @@ Examples:
             pipeline.add_stage(AnalysisStage)
 
     results = pipeline.run()
-
-    for stage_results in results.values():
-        if isinstance(stage_results, dict) and not stage_results.get("success", True):
-            sys.exit(1)
-
-    sys.exit(0)
+    sys.exit(exit_code(results))
