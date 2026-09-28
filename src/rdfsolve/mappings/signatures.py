@@ -473,3 +473,43 @@ def class_association(
         len({x for _, x in pairs}),
         members(target, link.target_class),
     )
+
+
+ASSOCIATION_FIELDS = (
+    *LINK_FIELDS[:8],
+    "pairs",
+    "source_subjects",
+    "source_members",
+    "source_coverage",
+    "target_subjects",
+    "target_members",
+    "target_coverage",
+)
+
+
+def association_row(association: ClassAssociation) -> dict[str, object]:
+    """Return the table row of a class association (ASSOCIATION_FIELDS), without the pairs."""
+    link = association.link
+    return {
+        **{name: getattr(link, name) or "" for name in LINK_FIELDS[:8]},
+        "pairs": len(association.pairs),
+        "source_subjects": association.source_subjects,
+        "source_members": association.source_members,
+        "source_coverage": _blank(association.source_coverage),
+        "target_subjects": association.target_subjects,
+        "target_members": association.target_members,
+        "target_coverage": _blank(association.target_coverage),
+    }
+
+
+def write_associations(path: str | Path, associations: Iterable[ClassAssociation]) -> None:
+    """Write class associations as a table (tab-separated, one link per row), without the pairs."""
+    with Path(path).open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, ASSOCIATION_FIELDS, delimiter="\t")
+        writer.writeheader()
+        writer.writerows(association_row(a) for a in associations)
+
+
+def _blank(value: float | None) -> float | str:
+    """Return the value, or an empty cell for None."""
+    return "" if value is None else value

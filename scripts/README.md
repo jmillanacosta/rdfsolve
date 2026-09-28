@@ -55,6 +55,23 @@ python scripts/build_graphs.py \
     --mappings output/mappings/
 ```
 
+## Links between datasets
+
+### `verify_links.py`
+
+Infers the links between the datasets of runs or releases from their schemas and verifies each
+one: between two local indexes every value is looked up (exact share), otherwise a sample (share
+with a Wilson interval). For verified joins between local indexes it also writes the class
+associations (entity pairs and the coverage of each class). Local indexes are served on demand,
+at most `--servers` at a time. Writes `links.tsv`, `class_associations.tsv` and `failed.json`
+after each link and continues from them when run again. `analyze_mappings.py` then writes the
+SSSOM mapping set and the VoID linksets of the kept links.
+
+```bash
+python scripts/verify_links.py RUN_DIR... --data-dir ../data --output LINKS_DIR \
+    --replacements sets/*.sssom.tsv
+```
+
 ## Declared identities
 
 ### `declared_identities.py`

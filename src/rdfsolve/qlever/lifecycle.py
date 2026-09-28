@@ -168,3 +168,39 @@ def start_server(
     except BaseException:
         stop_server(process)
         raise
+
+
+class ServerPool:
+    """Serve the local indexes of a data directory on demand, at most *size* at a time.
+
+    When one more server is needed, the server used least recently is stopped. Each server
+    gets a new port, so that a port is not reused while a stopped server releases it.
+    """
+
+    def __init__(self, data_dir: Path, *, size: int = 2, base_port: int = 19700) -> None:
+        """Keep the data directory, the most servers that run at once, and the first port."""
+        self.data_dir = data_dir
+        self.size = size
+        self.next_port = base_port
+        self.running: dict[str, tuple[subprocess.Popen[bytes], int]] = {}
+
+    def endpoint(self, name: str) -> str:
+        """Return the endpoint of the index *name*, starting its server when it is not running."""
+        if name in self.running:
+            self.running[name] = self.running.pop(name)  # most recently used goes last
+        else:
+            while len(self.running) >= self.size:
+                oldest = next(iter(self.running))
+                stop_server(self.running.pop(oldest)[0])
+            workdir = self.data_dir / "qlever_workdirs" / name
+            index = index_name(workdir, name)
+            image = image_for_index(self.data_dir, workdir, index)
+            process = start_server(image, workdir, name, self.next_port)
+            self.running[name] = (process, self.next_port)
+            self.next_port += 1
+        return f"http://localhost:{self.running[name][1]}"
+
+    def close(self) -> None:
+        """Stop every server of the pool."""
+        while self.running:
+            stop_server(self.running.popitem()[1][0])
