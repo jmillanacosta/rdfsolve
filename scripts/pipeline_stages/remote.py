@@ -179,6 +179,7 @@ class RemoteMiningStage(Stage):
                     ontology_as_data=self.config.ontology_as_data,
                     ontology_term_budget=self.config.ontology_term_budget,
                     ontology_group_before_mining=self.config.ontology_group_before_mining,
+                    ontology_hierarchy_files=self.config.ontology_hierarchy_files,
                     extract_metadata=self.config.extract_metadata,
                     dataset_name=source.name,
                 )

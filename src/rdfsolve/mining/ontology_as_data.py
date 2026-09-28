@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import gzip
 import logging
 import re
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from rdfsolve.mining.query_builders import _context_pattern, _graph_scope, _type_pattern
@@ -354,6 +356,26 @@ def choose_representatives(
     result.representative = current
     result.classes_after = size()
     return result
+
+
+def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
+    """Read (child, parent) IRI pairs from tab-separated files, plain or gzip-compressed.
+
+    Lines that start with # are comments. The files give parents to terms whose ontology is not
+    in the data: PubChem types records with NCIt and PR terms, but the index holds no hierarchy
+    for them. A term is not its own parent.
+    """
+    parents: dict[str, set[str]] = defaultdict(set)
+    for path in paths:
+        opener = gzip.open if str(path).endswith(".gz") else open
+        with opener(path, "rt", encoding="utf-8") as lines:
+            for line in lines:
+                if not line.strip() or line.startswith("#"):
+                    continue
+                child, parent = line.rstrip("\n").split("\t")[:2]
+                if child != parent:
+                    parents[child].add(parent)
+    return dict(parents)
 
 
 # Fewest terms without a parent that make a namespace group (see group_by_namespace).

@@ -10,6 +10,9 @@ from rdfsolve.mining.ontology_extraction import OntologyMiner
 from rdfsolve.schema_models import MiningResult
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from pathlib import Path
+
     from rdfsolve.mining.miner import SchemaMiner
     from rdfsolve.sparql_helper import SparqlHelper
 
@@ -26,6 +29,7 @@ def mine_with_ontology(
     ontology_as_data: bool = False,
     ontology_term_budget: int = 300,
     ontology_group_before_mining: int | None = None,
+    ontology_hierarchy_files: Sequence[str | Path] = (),
 ) -> MiningResult:
     """Mine schema with optional ontology and metadata extraction.
 
@@ -41,6 +45,9 @@ def mine_with_ontology(
         ontology_group_before_mining: With ontology_as_data, group terms under their
             ancestors before per-class mining when more classes than this are discovered
             (for sources with too many term types to mine one by one). None groups after.
+        ontology_hierarchy_files: Tab-separated (child, parent) IRI files that give parents,
+            before grouping, to terms without a parent in the data (for example the NCIt
+            flat file for PubChem). The files and their pair counts are recorded.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
             Named graphs must hold triples. None keeps extraction in the data
@@ -63,6 +70,7 @@ def mine_with_ontology(
                 raise ValueError("ontology_term_budget must be positive")
             miner._ontology_term_budget = ontology_term_budget
             miner._group_before_mining = ontology_group_before_mining
+            miner._hierarchy_files = [str(path) for path in ontology_hierarchy_files]
         result = _mine_with_ontology(
             miner,
             extract_ontology,

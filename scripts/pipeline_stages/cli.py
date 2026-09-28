@@ -235,6 +235,18 @@ Examples:
         help="Most classes a schema keeps before ontology terms are subsumed (default: 300)",
     )
     parser.add_argument(
+        "--ontology-hierarchy",
+        action="append",
+        type=Path,
+        default=[],
+        metavar="FILE",
+        help=(
+            "With --ontology-as-data, a tab-separated file of (child, parent) IRIs, plain or "
+            "gzip; terms without a parent in the data take these parents before grouping "
+            "(repeatable)"
+        ),
+    )
+    parser.add_argument(
         "--ontology-group-before-mining",
         type=int,
         default=5000,
@@ -482,6 +494,7 @@ Examples:
     if args.ontology_group_before_mining < 0:
         parser.error("--ontology-group-before-mining must not be negative")
     config.ontology_group_before_mining = args.ontology_group_before_mining or None
+    config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs

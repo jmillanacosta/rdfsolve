@@ -146,6 +146,7 @@ class TwoPhaseStrategy(MiningStrategy):
             choose_representatives,
             fetch_superclasses,
             group_by_namespace,
+            read_hierarchy,
             term_namespace,
         )
         from rdfsolve.mining.query_builders import Representative
@@ -154,6 +155,21 @@ class TwoPhaseStrategy(MiningStrategy):
         parents = fetch_superclasses(
             context.helper, classes, graph_uris=context.ontology_graph_uris
         )
+        files = {path: read_hierarchy([path]) for path in context.ontology_hierarchy_files}
+        loaded: dict[str, set[str]] = {}
+        for table in files.values():
+            for term, ps in table.items():
+                loaded[term] = loaded.get(term, set()) | ps
+        # A term without a parent in the data takes the parents of the files, and so do its
+        # ancestors; a parent in the data is kept.
+        with_loaded = [c for c in classes if not parents.get(c) and c in loaded]
+        frontier = list(with_loaded)
+        while frontier:
+            term = frontier.pop()
+            if parents.get(term) or term not in loaded:
+                continue
+            parents[term] = set(loaded[term])
+            frontier.extend(loaded[term])
         chosen = choose_representatives(classes, parents, budget)
         # Terms that no ancestor can take are grouped by ontology namespace (documented below).
         namespace_groups = group_by_namespace(chosen, parents)
@@ -178,6 +194,13 @@ class TwoPhaseStrategy(MiningStrategy):
             "over_budget": chosen.over_budget,
             "hierarchy_graph_uris": context.ontology_graph_uris,
             "terms_without_parent_by_namespace": dict(without_parent.most_common()),
+            "hierarchy_files": [
+                {"path": path, "pairs": sum(len(ps) for ps in table.values())}
+                for path, table in files.items()
+            ],
+            "terms_with_loaded_parent_by_namespace": dict(
+                Counter(term_namespace(c) for c in with_loaded).most_common()
+            ),
             "namespace_group_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
             "namespace_groups": {
                 group: {"namespace": namespace, "terms": len(members.get(group, []))}

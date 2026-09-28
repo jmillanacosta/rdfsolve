@@ -150,6 +150,7 @@ class SchemaMiner:
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
         self._group_before_mining: int | None = None
+        self._hierarchy_files: list[str] = []
         self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
         self._shared_extensions: dict[str, str] = {}
@@ -381,6 +382,7 @@ class SchemaMiner:
             ontology_graph_uris=self._ontology_graph_uris,
             ontology_term_budget=self._ontology_term_budget,
             group_before_mining=self._group_before_mining,
+            ontology_hierarchy_files=self._hierarchy_files,
         )
 
         if self._resume is not None:
@@ -749,6 +751,7 @@ class SchemaMiner:
         self._ontology_classes = None
         self._ontology_term_budget = None
         self._group_before_mining = None
+        self._hierarchy_files = []
         self._subsumed_classes = set()
         self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
