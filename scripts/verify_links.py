@@ -2,9 +2,10 @@
 """Infer the links between the datasets of runs or releases, verify each one, and write the
 class associations of the verified joins.
 
-Schemas are read from RUN/<dataset>/<dataset>_{local,remote}_schema.json. A local schema is
-served from its QLever index in DATA_DIR (at most --servers at a time); a remote schema is read
-at its endpoint. Links between two channels of one dataset are left out.
+Schemas are read from RUN/<dataset>/<dataset>_{local,remote}_schema.json, one per dataset:
+the local one when a dataset has both, because its shares can be exact. Links are named by
+dataset, as in the release. A local schema is served from its QLever index in DATA_DIR (at
+most --servers at a time); a remote schema is read at its endpoint.
 
 Verification (rdfsolve.mappings.verify): between two local indexes every value is read, so the
 share is exact; otherwise --sample values are looked up and the share has a Wilson interval.
@@ -29,12 +30,12 @@ from rdfsolve.qlever.lifecycle import ServerPool
 
 
 def schemas_of(runs):
-    """Return {dataset_channel: schema path} for every schema of the runs."""
+    """Return {dataset: (channel, schema path)}, the local schema when a dataset has both."""
     found = {}
-    for run in runs:
-        for channel in ("local", "remote"):
+    for channel in ("remote", "local"):  # local last, so that it replaces remote
+        for run in runs:
             for path in sorted(run.glob(f"*/*_{channel}_schema.json")):
-                found[f"{path.parent.name}_{channel}"] = path
+                found[path.parent.name] = (channel, path)
     return found
 
 
@@ -51,10 +52,10 @@ def main():
     parser.add_argument("--timeout", type=int, default=300)
     args = parser.parse_args()
 
-    paths = schemas_of(args.runs)
-    schemas = {name: MinedSchema.from_json(path) for name, path in paths.items()}
-    dataset = {name: name.rsplit("_", 1)[0] for name in schemas}
-    local = {name for name in schemas if name.endswith("_local")}
+    found = schemas_of(args.runs)
+    schemas = {name: MinedSchema.from_json(path) for name, (_, path) in found.items()}
+    local = {name for name, (channel, _) in found.items() if channel == "local"}
+    print({name: channel for name, (channel, _) in found.items()}, flush=True)
     replacements = {}
     for path in args.replacements:
         replacements.update(read_replacements(path))
@@ -70,14 +71,14 @@ def main():
         with associations_path.open("w", newline="") as handle:
             csv.DictWriter(handle, ASSOCIATION_FIELDS, delimiter="\t").writeheader()
 
-    links = [l for l in infer_links(schemas) if dataset[l.source] != dataset[l.target]]
+    links = list(infer_links(schemas))
     links.sort(key=lambda l: (l.source, l.target))
     print(len(links), "candidate links;", len(seen), "already done", flush=True)
     pool = ServerPool(args.data_dir, size=args.servers, base_port=args.base_port)
 
     def client(name):
         """Return a client of a schema at its endpoint, starting its local server when needed."""
-        endpoint = pool.endpoint(dataset[name]) if name in local else schemas[name].about.endpoint
+        endpoint = pool.endpoint(name) if name in local else schemas[name].about.endpoint
         return Client(schemas[name], endpoint, timeout=args.timeout)
 
     def fail(link, stage, error):
