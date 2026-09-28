@@ -31,13 +31,25 @@ def index_name(workdir: Path, fallback: str) -> str:
 
 
 def _query_memory(value: str) -> str:
+    """Return the query memory of the Qleverfile, at most a share of the SLURM allocation.
+
+    The share is 0.6, or RDFSOLVE_QLEVER_MEMORY_SHARE (above 0, below 1) for a job whose
+    queries need more (Bgee: one census query needs more than 455 GB of a 740 GB job).
+    """
     match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*([KMGT])B?", value.upper())
     if not match:
         raise ValueError(f"Invalid QLever query memory limit: {value!r}")
     megabytes = float(match[1]) * {"K": 1 / 1024, "M": 1, "G": 1024, "T": 1024**2}[match[2]]
     allocation = os.environ.get("SLURM_MEM_PER_NODE")
     if allocation:
-        megabytes = min(megabytes, float(allocation) * 0.6)
+        text = os.environ.get("RDFSOLVE_QLEVER_MEMORY_SHARE", "0.6")
+        try:
+            share = float(text)
+        except ValueError:
+            share = 0.0
+        if not 0 < share < 1:
+            raise ValueError(f"RDFSOLVE_QLEVER_MEMORY_SHARE must be above 0 and below 1: {text!r}")
+        megabytes = min(megabytes, float(allocation) * share)
     return f"{max(1, int(megabytes))}MB"
 
 
