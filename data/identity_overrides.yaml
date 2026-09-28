@@ -291,3 +291,15 @@
   relation: distribution_of
   note: >-
     Both are the EBI Reactome RDF (graph rdf.ebi.ac.uk/dataset/reactome).
+
+# Decided 2026-09-28 after the bioregistry_prefix review (article/corpus/prefix_review.tsv).
+- left: ncbigene
+  right: pubchem.gene
+  relation: same_upstream
+  note: >-
+    Bio2RDF NCBI Gene and the PubChem gene graph are different RDF datasets built from NCBI Gene.
+- left: chebi
+  right: uniprot.chebi
+  relation: distribution_of
+  note: >-
+    The UniProt endpoint serves a copy of the ChEBI ontology in its graph sparql.uniprot.org/chebi.

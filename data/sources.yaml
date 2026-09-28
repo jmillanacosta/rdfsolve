@@ -2497,7 +2497,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: ncbitaxon
   keywords:
   - bibliography/documents
   - chemical
@@ -2522,7 +2522,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: pubchem.bioassay
   keywords:
   - bibliography/documents
   - chemical
@@ -2547,7 +2547,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: pubchem.bioassay
   keywords:
   - bibliography/documents
   - chemical
@@ -2587,7 +2587,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: ncbigene
   keywords:
   - bibliography/documents
   - chemical
@@ -2680,7 +2680,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: pubchem.substance
   keywords:
   - bibliography/documents
   - chemical
@@ -2741,7 +2741,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -2801,7 +2800,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -2826,7 +2824,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: cdd
   keywords:
   - bibliography/documents
   - chemical
@@ -2851,7 +2849,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -2937,7 +2934,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -2962,7 +2958,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -2987,7 +2982,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3027,7 +3021,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3052,7 +3045,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: inchikey
   keywords:
   - bibliography/documents
   - chemical
@@ -3077,7 +3070,7 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
+  bioregistry_prefix: pubchem.compound
   keywords:
   - bibliography/documents
   - chemical
@@ -3101,7 +3094,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3126,7 +3118,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3151,7 +3142,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3176,7 +3166,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3201,7 +3190,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3245,7 +3233,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3295,7 +3282,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3320,7 +3306,6 @@
   local_provider: idsm
   local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
-  bioregistry_prefix: pubchem
   keywords:
   - bibliography/documents
   - chemical
@@ -3420,7 +3405,7 @@
   void_iri: http://sparql.uniprot.org/chebi
   graph_uris:
   - http://sparql.uniprot.org/chebi
-  bioregistry_prefix: uniprot
+  bioregistry_prefix: chebi
   keywords:
   - biology
   - protein
@@ -3435,7 +3420,6 @@
   void_iri: http://sparql.uniprot.org/citationmapping
   graph_uris:
   - http://sparql.uniprot.org/citationmapping
-  bioregistry_prefix: uniprot
   keywords:
   - biology
   - protein
@@ -3450,7 +3434,6 @@
   void_iri: http://sparql.uniprot.org/citations
   graph_uris:
   - http://sparql.uniprot.org/citations
-  bioregistry_prefix: uniprot
   keywords:
   - biology
   - protein
@@ -3478,7 +3461,7 @@
   void_iri: http://sparql.uniprot.org/diseases
   graph_uris:
   - http://sparql.uniprot.org/diseases
-  bioregistry_prefix: uniprot
+  bioregistry_prefix: uniprot.disease
   keywords:
   - biology
   - protein
@@ -3493,7 +3476,7 @@
   void_iri: http://sparql.uniprot.org/enzymes
   graph_uris:
   - http://sparql.uniprot.org/enzymes
-  bioregistry_prefix: uniprot
+  bioregistry_prefix: eccode
   keywords:
   - biology
   - protein
@@ -3508,7 +3491,7 @@
   void_iri: http://sparql.uniprot.org/go
   graph_uris:
   - http://sparql.uniprot.org/go
-  bioregistry_prefix: uniprot
+  bioregistry_prefix: go
   keywords:
   - biology
   - protein
@@ -3536,7 +3519,7 @@
   void_iri: http://sparql.uniprot.org/uniparc
   graph_uris:
   - http://sparql.uniprot.org/uniparc
-  bioregistry_prefix: uniprot
+  bioregistry_prefix: uniparc
   keywords:
   - biology
   - protein
@@ -5872,7 +5855,7 @@
 - name: pdbj.bmrb
   dataset_kind: instance
   endpoint: https://bmrbpub.pdbj.org/search/rdf
-  bioregistry_prefix: pdbj
+  bioregistry_prefix: bmrb
   keywords:
   - 3d structure
   - 3d structure databases
