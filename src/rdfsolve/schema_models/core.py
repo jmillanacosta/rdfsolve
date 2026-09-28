@@ -259,6 +259,10 @@ class MinedSchema(BaseModel):
     ) -> MinedSchema:
         """Return a copy without patterns from the given namespaces or graphs.
 
+        ``about.cleaned`` records the rules, the removed patterns (with their counts and
+        graphs), and the patterns and triples removed for each namespace and graph, so a
+        cleaned schema still says which service or engine data the source served.
+
         A pattern is removed when any of its ``subject_class``,
         ``property_uri`` or ``object_class`` starts with one of *namespaces*,
         or when every graph in :attr:`SchemaPattern.graphs` starts with one of
@@ -280,16 +284,45 @@ class MinedSchema(BaseModel):
                 return drop_unattributed
             return all(graph.startswith(graphs) for graph in pattern.graphs)
 
-        kept = [
-            p
-            for p in self.patterns
-            if not (
-                _in_namespace(p.subject_class)
-                or _in_namespace(p.property_uri)
-                or (p.object_class not in _SENTINEL_OBJECTS and _in_namespace(p.object_class))
-                or _only_service_graphs(p)
+        def _namespace(p: SchemaPattern) -> str | None:
+            terms = [p.subject_class, p.property_uri]
+            if p.object_class not in _SENTINEL_OBJECTS:
+                terms.append(p.object_class)
+            return next((n for n in ns for term in terms if term.startswith(n)), None)
+
+        def _graph(p: SchemaPattern) -> str | None:
+            if not graphs or not _only_service_graphs(p):
+                return None
+            first = next(iter(p.graphs or {}), "")
+            return next((g for g in graphs if first.startswith(g)), "(no graph evidence)")
+
+        kept, removed = [], []
+        by_namespace: dict[str, dict[str, int]] = {}
+        by_graph: dict[str, dict[str, int]] = {}
+        for p in self.patterns:
+            namespace, graph = _namespace(p), None
+            if namespace is None:
+                graph = _graph(p)
+            if namespace is None and graph is None:
+                kept.append(p)
+                continue
+            group = (by_namespace if namespace else by_graph).setdefault(
+                namespace or graph or "", {"patterns": 0, "triples": 0}
             )
-        ]
+            group["patterns"] += 1
+            group["triples"] += p.count or 0
+            removed.append(
+                {
+                    "subject_class": p.subject_class,
+                    "property_uri": p.property_uri,
+                    "object_class": p.object_class,
+                    "count": p.count,
+                    "graphs": p.graphs,
+                    "matched": namespace or graph,
+                }
+            )
+        # The record says what the source served, so that cleaning never hides it: engine
+        # and service data are part of what an endpoint gives, not part of its data.
         about = self.about.model_copy(
             update={
                 "pattern_count": len(kept),
@@ -297,7 +330,10 @@ class MinedSchema(BaseModel):
                     "namespaces": list(ns),
                     "graph_uris": list(graphs),
                     "drop_unattributed": drop_unattributed,
-                    "patterns_removed": len(self.patterns) - len(kept),
+                    "patterns_removed": len(removed),
+                    "removed_by_namespace": by_namespace,
+                    "removed_by_graph": by_graph,
+                    "removed_patterns": removed,
                 },
             }
         )

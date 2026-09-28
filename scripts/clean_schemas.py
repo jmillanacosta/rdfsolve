@@ -75,6 +75,8 @@ def main() -> int:
             "patterns_before": len(schema.patterns),
             "patterns_after": len(cleaned.patterns),
             "removed": len(schema.patterns) - len(cleaned.patterns),
+            "removed_by_namespace": cleaned.about.cleaned["removed_by_namespace"],
+            "removed_by_graph": cleaned.about.cleaned["removed_by_graph"],
         }
         if not cleaned.patterns:
             report["datasets"][name]["state"] = "empty after cleaning"
