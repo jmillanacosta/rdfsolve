@@ -61,8 +61,8 @@ def _discovery_query(
     {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=" ") AS ?os)
        WHERE {{ ?o ?op ?ov }} GROUP BY ?o }}
   }}
-  BIND(IF(isIRI(?s), "IRI", "BlankNode") AS ?sk)
-  BIND(IF(isIRI(?o), "IRI", IF(isBlank(?o), "BlankNode", "Literal")) AS ?ok)
+  BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
+  BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
   BIND(DATATYPE(?o) AS ?dt)
   BIND(LANG(?o) AS ?lang)
 }}"""

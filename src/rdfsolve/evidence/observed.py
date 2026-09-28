@@ -142,7 +142,7 @@ SELECT ?class ?p ?kind (COUNT(*) AS ?values)
 {_dataset_clause(graph_uris)}
 WHERE {{
   {_edges(classes, property_uri, type_context_graph_uris)}
-  BIND(IF(isIRI(?o), "IRI", IF(isBlank(?o), "BlankNode", "Literal")) AS ?kind)
+  BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?kind)
 }}
 GROUP BY ?class ?p ?kind"""
     if paginated:
