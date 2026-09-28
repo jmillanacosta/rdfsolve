@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections import defaultdict
 from collections.abc import Sequence
@@ -13,6 +14,8 @@ from rdflib import Literal, URIRef
 from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+
+logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
@@ -181,8 +184,12 @@ def _census(
         pass
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
+    logger.info(
+        "Census of the whole graph refused; counting %d properties one at a time", len(predicates)
+    )
     rows = []
-    for predicate in predicates:
+    for number, predicate in enumerate(predicates, start=1):
+        logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
         own = [key for key in keys if key[1] == predicate]
         rows += _property_census(context, graph, named, own, local, predicate, entry)
     entry["census"] = "per_property"
@@ -247,6 +254,12 @@ def _property_census(
         pending[-1].append(term)
         size += triples
     pending = [batch for batch in pending if batch]
+    logger.info(
+        "Census: %s refused; counting %d objects in %d batches",
+        predicate,
+        len(objects),
+        len(pending),
+    )
     rows, batches = [], 0
     while pending:
         batch = pending.pop()
@@ -256,6 +269,9 @@ def _property_census(
         except EndpointTimeoutError:
             if len(batch) == 1:
                 raise
+            logger.info(
+                "Census: %s batch of %d objects refused; split in two", predicate, len(batch)
+            )
             pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
     if blank:
         rows += count("FILTER(isBlank(?o))")

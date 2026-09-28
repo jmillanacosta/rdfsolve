@@ -44,9 +44,19 @@ def too_large(query):
     return False
 
 
-def test_a_refused_property_is_counted_in_object_batches(monkeypatch):
+def test_a_refused_property_is_counted_in_object_batches(monkeypatch, caplog):
     monkeypatch.setattr(structural_strategy, "CENSUS_BATCH_TRIPLES", 2)
-    batched = census(monkeypatch, too_large)
+    with caplog.at_level("INFO", logger="rdfsolve.mining.structural_strategy"):
+        batched = census(monkeypatch, too_large)
+    log = caplog.text
+    assert "counting 3 properties one at a time" in log, "The fallback to properties is logged"
+    assert "property 2/3 urn:p" in log and "urn:p refused; counting 2 objects in 2 batches" in log
+    monkeypatch.setattr(structural_strategy, "CENSUS_BATCH_TRIPLES", 10)
+    caplog.clear()
+    with caplog.at_level("INFO", logger="rdfsolve.mining.structural_strategy"):
+        split = census(monkeypatch, too_large)
+    assert "urn:p batch of 2 objects refused; split in two" in caplog.text, "Each split is logged"
+    assert split["census_batches"] == {"urn:p": 3}, "A refused batch is split until it is counted"
     whole = census(monkeypatch, lambda query: False)
     assert batched["census_batches"] == {"urn:p": 3}, "Two single objects and the blank nodes"
     for count in ("triple_count", "covered_triples", "uncovered_triples", "untyped_subject_triples"):
