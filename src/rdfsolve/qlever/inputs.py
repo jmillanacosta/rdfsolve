@@ -13,40 +13,6 @@ _QLEVER_FORMATS = {"ttl": "ttl", "nt": "nt", "nq": "nq", "trig": "ttl"}
 _GZIP_MAGIC = b"\x1f\x8b"
 
 
-@dataclass(frozen=True)
-class InputCheck:
-    """Content digest and exact decoded size; not an RDF syntax check."""
-
-    path: str
-    stored_bytes: int
-    decoded_bytes: int
-    decoded_sha256: str
-
-
-def check_cached_input(path: Path) -> InputCheck:
-    """Stream the whole input and check gzip CRC without writing decoded data."""
-    before = path.stat()
-    if not path.is_file() or not before.st_size:
-        raise ValueError(f"Missing or empty cached input: {path}")
-    digest = hashlib.sha256()
-    decoded_bytes = 0
-    opener = gzip.open if path.suffix == ".gz" else open
-    with opener(path, "rb") as stream:
-        while chunk := stream.read(8 * 1024 * 1024):
-            decoded_bytes += len(chunk)
-            digest.update(chunk)
-    after = path.stat()
-    if (before.st_ino, before.st_size, before.st_mtime_ns) != (
-        after.st_ino,
-        after.st_size,
-        after.st_mtime_ns,
-    ):
-        raise ValueError(f"Cached input changed during inspection: {path}")
-    if not decoded_bytes:
-        raise ValueError(f"Cached input has no decoded content: {path}")
-    return InputCheck(str(path), before.st_size, decoded_bytes, digest.hexdigest())
-
-
 def qlever_format(path: Path) -> str:
     """Map a prepared input to a QLever input format."""
     suffix = path.suffix.lstrip(".").lower()
