@@ -247,6 +247,8 @@ class SparqlHelper:
         "execution time limit",
         "statement timeout",
         "cost limit exceeded",
+        # Virtuoso: "Query did not complete due to ANYTIME timeout" (S1TAT).
+        "anytime timeout",
         "sorted top clause",
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
