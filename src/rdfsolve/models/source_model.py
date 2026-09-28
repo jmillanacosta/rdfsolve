@@ -414,17 +414,3 @@ class SourcesRegistry(BaseModel):
             if s.name == name:
                 return s
         return None
-
-    def filter_by_domain(self, domain: str) -> list[SourceModel]:
-        """Return all sources whose ``bioregistry_domain`` equals *domain*.
-
-        Parameters
-        ----------
-        domain:
-            Domain string (e.g. ``"chemical"``).
-
-        Returns
-        -------
-        list[SourceModel]
-        """
-        return [s for s in self.sources if s.bioregistry_domain == domain]

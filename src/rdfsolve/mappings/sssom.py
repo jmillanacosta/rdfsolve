@@ -13,7 +13,7 @@ from math import isnan
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from sssom import Mapping, MappingSetDataFrame, write_rdf, write_tsv
+from sssom import Mapping, MappingSetDataFrame, write_tsv
 
 from rdfsolve.config import get_base_uri
 from rdfsolve.mappings.models.core import MappingEdge
@@ -111,17 +111,6 @@ def write_sssom_tsv(msdf: MappingSetDataFrame, output_path: Path) -> None:
         output_path: Path to output TSV file
     """
     write_tsv(msdf, output_path, embedded_mode=True)
-
-
-def write_sssom_rdf(msdf: MappingSetDataFrame, output_path: Path, format: str = "turtle") -> None:
-    """Write SSSOM MappingSetDataFrame to RDF file.
-
-    Args:
-        msdf: MappingSetDataFrame to write
-        output_path: Path to output RDF file
-        format: RDF serialization format (turtle, xml, nt, etc.)
-    """
-    write_rdf(msdf, output_path, serialisation=format)
 
 
 def project_mappings(

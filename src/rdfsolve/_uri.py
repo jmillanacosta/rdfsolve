@@ -151,40 +151,6 @@ def make_expander(
     return expand
 
 
-def expand_curie(curie: str, context: dict[str, str]) -> str:
-    """Expand a CURIE using the JSON-LD ``@context``, returning a URI."""
-    if curie.startswith(_URI_SCHEMES):
-        return curie
-    if ":" in curie:
-        prefix, local = curie.split(":", 1)
-        ns = context.get(prefix)
-        if ns and isinstance(ns, str):
-            return ns + local
-    return curie
-
-
-def expand_curie_bioregistry(value: str) -> str:
-    """Expand a CURIE to a full URI using **bioregistry** only.
-
-    If *value* is already a full URI it is returned unchanged.
-    If the prefix is unknown the original string is returned.
-    """
-    if value.startswith(_URI_SCHEMES):
-        return value
-    if ":" not in value:
-        return value
-    prefix, local = value.split(":", 1)
-    try:
-        import bioregistry
-
-        uri_prefix = bioregistry.get_uri_prefix(prefix)
-        if uri_prefix:
-            return str(uri_prefix) + local
-    except Exception as e:
-        _log.warning("Error expanding %s: %s", prefix, e)
-    return str(value)
-
-
 # Compaction & resolution helpers (migrated from utils.py)
 
 
@@ -201,43 +167,6 @@ def get_local_name(uri: str) -> str:
     if "#" in uri:
         return uri.split("#")[-1]
     return uri.rstrip("/").rsplit("/", 1)[-1] if "/" in uri else uri
-
-
-def compact_uri(uri: str, prefixes: dict[str, str]) -> str:
-    """Compact a URI using the given prefix map.
-
-    Returns ``prefix:localName`` if a match is found, otherwise the
-    original URI.
-    """
-    for pfx, ns in prefixes.items():
-        if uri.startswith(ns):
-            return f"{pfx}:{uri[len(ns) :]}"
-    return uri
-
-
-def resolve_curie(curie: str, prefixes: dict[str, str]) -> str | None:
-    """Convert CURIE to full IRI using given prefixes.
-
-    Returns full IRI wrapped in angle brackets, or ``None`` if not resolvable.
-    Handles special cases like blank nodes, "a" (rdf:type), etc.
-    """
-    if not curie or curie in ("BN", "null", "", "[]"):
-        return None
-
-    curie = str(curie).strip()
-
-    if curie.startswith("<") and curie.endswith(">"):
-        return curie
-    if curie.startswith("http"):
-        return f"<{curie}>"
-    if curie == "a":
-        return "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
-    if ":" in curie:
-        prefix, localname = curie.split(":", 1)
-        if prefix in prefixes:
-            base_uri = prefixes[prefix].strip("<>")
-            return f"<{base_uri}{localname}>"
-    return None
 
 
 # Label selection

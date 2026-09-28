@@ -264,17 +264,9 @@ class SparqlHelper:
         if clear:
             self._query_registry.clear()
 
-    def disable_query_collection(self) -> None:
-        """Stop automatic query collection."""
-        self._collect_queries = False
-
     def get_collected_queries(self) -> list[QueryRecord]:
         """Return execution records, not proof of complete results."""
         return self._query_registry.copy()
-
-    def clear_collected_queries(self) -> None:
-        """Clear request records. Keep the named query collection."""
-        self._query_registry.clear()
 
     def _record_query(self, record: QueryRecord) -> None:
         """Collect a query execution; it becomes a portable example when queries is read."""
@@ -525,84 +517,6 @@ class SparqlHelper:
     # Characters that are illegal inside a SPARQL ``<…>`` IRI literal.
     _IRI_UNSAFE_CHARS = frozenset('<>"{}|^`\\ \t\n\r')
 
-    def _next_safe_char(self, ch: str) -> str | None:
-        """Return next codepoint safe inside IRI literal (scans up to 16 forward)."""
-        for offset in range(1, 17):
-            candidate = chr(ord(ch) + offset)
-            if candidate not in self._IRI_UNSAFE_CHARS:
-                return candidate
-        return None
-
-    def find_classes_for_uri_pattern(self, uri_prefix: str) -> list[str]:
-        """Find rdf:type classes for instances matching URI prefix using IRI-range filter."""
-        if not uri_prefix:
-            return []
-
-        # Build the exclusive upper bound by finding the next IRI-safe char.
-        next_char = self._next_safe_char(uri_prefix[-1])
-        if next_char is None:
-            # Extremely rare: no safe char found - STRSTARTS fallback.
-            escaped = uri_prefix.replace("\\", "\\\\").replace('"', '\\"')
-            query = (
-                f'SELECT DISTINCT ?c WHERE {{ ?s a ?c . FILTER(STRSTARTS(STR(?s), "{escaped}")) }}'
-            )
-        else:
-            uri_prefix_next = uri_prefix[:-1] + next_char
-            query = (
-                "SELECT DISTINCT ?c\n"
-                "WHERE {\n"
-                "  ?s a ?c .\n"
-                "  FILTER(\n"
-                f"    ?s >= <{uri_prefix}> &&\n"
-                f"    ?s <  <{uri_prefix_next}>\n"
-                "  )\n"
-                "}"
-            )
-        try:
-            out = self.select(query)
-        except Exception:
-            return []
-        bindings = out.get("results", {}).get("bindings", [])
-        return [b["c"]["value"] for b in bindings if "c" in b]
-
-    def find_classes_for_iris_by_graph(
-        self,
-        iris: list[str],
-        values_batch_size: int = 50,
-    ) -> dict[str, dict[str, list[str]]]:
-        """Find rdf:type classes for IRIs grouped by named graph using VALUES batching."""
-        if values_batch_size < 1:
-            raise ValueError("Use a positive VALUES batch size")
-        for iri in iris:
-            PropertyPath(operator="predicate", iri=iri)
-        if not iris:
-            return {}
-
-        result: dict[str, dict[str, list[str]]] = {}
-        for batch_start in range(0, len(iris), values_batch_size):
-            batch = iris[batch_start : batch_start + values_batch_size]
-            values_block = "\n    ".join(f"<{iri}>" for iri in batch)
-            query = (
-                "SELECT DISTINCT ?s ?g ?c\n"
-                "WHERE {\n"
-                "  VALUES ?s {\n"
-                f"    {values_block}\n"
-                "  }\n"
-                "  GRAPH ?g { ?s a ?c }\n"
-                "}"
-            )
-            out = self.select(query)
-            for b in out.get("results", {}).get("bindings", []):
-                s = b.get("s", {}).get("value")
-                g = b.get("g", {}).get("value")
-                c = b.get("c", {}).get("value")
-                if not (s and g and c):
-                    continue
-                result.setdefault(s, {}).setdefault(g, [])
-                if c not in result[s][g]:
-                    result[s][g].append(c)
-        return result
-
     def find_classes_for_iris(
         self,
         iris: list[str],
@@ -638,26 +552,6 @@ class SparqlHelper:
                 result.setdefault(s, [])
                 if c not in result[s]:
                     result[s].append(c)
-        return result
-
-    def find_all_classes(self) -> dict[str, list[str]]:
-        """Return all rdf:type classes from endpoint with their instances (no filters)."""
-        query = "SELECT DISTINCT ?s ?c\nWHERE {\n  ?s a ?c .\n}"
-        try:
-            out = self.select(query)
-        except Exception:
-            return {}
-
-        bindings = out.get("results", {}).get("bindings", [])
-        result: dict[str, list[str]] = {}
-        for b in bindings:
-            s = b.get("s", {}).get("value")
-            c = b.get("c", {}).get("value")
-            if not (s and c):
-                continue
-            result.setdefault(s, [])
-            if c not in result[s]:
-                result[s].append(c)
         return result
 
     def _execute(
@@ -1192,36 +1086,6 @@ class SparqlHelper:
             return False
         stripped = content.strip()
         return any(stripped.startswith(marker) for marker in self.HTML_MARKERS)
-
-    def get_bindings(self, query: str, purpose: str = "") -> list[dict[str, str]]:
-        """
-        Execute SELECT query and return simplified bindings list.
-
-        Convenience method that extracts just the variable values.
-
-        Args:
-            query: SPARQL SELECT query string
-            purpose: Optional tag for log identification
-
-        Returns:
-            List of dicts mapping variable names to their values
-
-        Example:
-            >>> bindings = helper.get_bindings("SELECT ?s ?p { ?s ?p ?o }")
-            >>> for row in bindings:
-            ...     print(row["s"], row["p"])
-        """
-        results = self.select(query, purpose=purpose)
-        bindings = results.get("results", {}).get("bindings", [])
-
-        simplified = []
-        for binding in bindings:
-            row = {}
-            for var, val in binding.items():
-                row[var] = val.get("value", "")
-            simplified.append(row)
-
-        return simplified
 
     def select_with_fallback(
         self,
@@ -1777,47 +1641,3 @@ class SparqlHelper:
 
 
 # Convenience function for one-off queries
-def sparql_select(
-    endpoint_url: str,
-    query: str,
-    use_post: bool = False,
-    purpose: str = "",
-) -> dict[str, Any]:
-    """
-    Execute a one-off SELECT query.
-
-    Convenience function when you don't need to reuse the helper.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        query: SPARQL SELECT query
-        use_post: Force POST method
-        purpose: Optional tag for log identification
-
-    Returns:
-        SPARQL JSON results
-    """
-    with SparqlHelper(endpoint_url, use_post=use_post) as helper:
-        return helper.select(query, purpose=purpose)
-
-
-def sparql_construct(
-    endpoint_url: str,
-    query: str,
-    use_post: bool = False,
-) -> Graph:
-    """
-    Execute a one-off CONSTRUCT query.
-
-    Convenience function when you don't need to reuse the helper.
-
-    Args:
-        endpoint_url: SPARQL endpoint URL
-        query: SPARQL CONSTRUCT query
-        use_post: Force POST method
-
-    Returns:
-        RDFLib Graph with constructed triples
-    """
-    with SparqlHelper(endpoint_url, use_post=use_post) as helper:
-        return helper.construct_graph(query)
