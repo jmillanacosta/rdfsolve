@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Sequence
 from typing import Any
 
@@ -136,35 +136,41 @@ def _select(
 CENSUS_BATCH_TRIPLES = 20_000_000
 
 
-def _census_query(
+def _census_queries(
     graph: str | None,
     named: list[str],
     match: str,
     local: bool,
     predicate: str | None = None,
     restriction: str = "",
-) -> str:
-    """Count triples by typed subject and, remotely, by coverage of the typed profiles.
+) -> list[str]:
+    """Count all triples, the triples of untyped subjects and, remotely, the covered triples.
 
-    For one property, the typed test repeats the edge and its restriction. For each row the
-    test is the same, but QLever evaluates the group of EXISTS on its own before the join: a
-    group of only ``?s a ?_type`` reads every type triple of the graph for every batch (Bgee:
-    455.7 GB for each batch of RO_0002206), and with the edge it reads the types of the
-    subjects of the batch.
+    Each count filters the edges. No count is grouped by a value that BIND(EXISTS ...) sets:
+    Virtuoso gives wrong counts for that form (AOP-Wiki prov:used: 1 of 2 edges covered),
+    whereas the same test in a FILTER counts 2 of 2, as a query of each edge confirms. For one
+    property, the typed test repeats the edge and its restriction: QLever evaluates the group
+    of EXISTS on its own before the join, and a group of only ``?s a ?_type`` reads every type
+    triple of the graph for every batch (Bgee: 455.7 GB for each batch of RO_0002206).
     """
-    selection = "" if local else "?covered"
-    binding = "" if local else f"BIND({match} AS ?covered)"
-    edge = (
-        f"?s <{predicate}> ?o . {restriction} BIND(<{predicate}> AS ?p)"
-        if predicate
-        else "?s ?p ?o ."
-    )
-    typed = f"?s <{predicate}> ?o . {restriction} {_types(named)}" if predicate else _types(named)
-    return f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
-{_dataset(graph, named)} WHERE {{ {edge}
-BIND(EXISTS {{ {typed} }} AS ?typed)
-{binding}
-}} GROUP BY ?typed {selection}"""
+    edge = f"?s <{predicate}> ?o . {restriction}" if predicate else "?s ?p ?o ."
+    typed = f"{edge} {_types(named)}" if predicate else _types(named)
+    tests = {"triples": "", "untypedTriples": f"FILTER NOT EXISTS {{ {typed} }}"}
+    if not local:
+        tests["coveredTriples"] = f"FILTER({match})"
+    return [
+        f"SELECT (COUNT(*) AS ?{name}) {_dataset(graph, named)} WHERE {{ {edge} {test} }}"
+        for name, test in tests.items()
+    ]
+
+
+def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
+    """Run the census queries; each returns one count."""
+    counts: Counter[str] = Counter()
+    for query in queries:
+        (row,) = _select(context, query, "structural/coverage", paged=False)
+        counts.update({name: int(binding["value"]) for name, binding in row.items()})
+    return counts
 
 
 def _census(
@@ -174,20 +180,19 @@ def _census(
     keys: list[tuple[str, str, str, str | None]],
     local: bool,
     entry: dict[str, Any],
-) -> list[dict[str, Any]]:
+) -> Counter[str]:
     """Count the graph at once; when the endpoint refuses, count one property at a time.
 
     A whole-graph census of a very large index can exceed the cost or memory limit of the
     endpoint (QLever holds every triple of the scan). One constant property per query needs
     only that property's triples, and the counts add up to the same totals. A census is not
-    paged: it has at most four groups, so a page costs as much as the whole query.
+    paged: each query returns one count, so a page costs as much as the whole query.
     """
     match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
     try:
-        query = _census_query(graph, named, match, local)
-        rows = _select(context, query, "structural/coverage", paged=False)
+        counts = _count(context, _census_queries(graph, named, match, local))
         entry["census"] = "whole_graph"
-        return rows
+        return counts
     except EndpointTimeoutError:
         pass
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
@@ -195,13 +200,13 @@ def _census(
     logger.info(
         "Census of the whole graph refused; counting %d properties one at a time", len(predicates)
     )
-    rows = []
+    counts = Counter()
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
         own = [key for key in keys if key[1] == predicate]
-        rows += _property_census(context, graph, named, own, local, predicate, entry)
+        counts.update(_property_census(context, graph, named, own, local, predicate, entry))
     entry["census"] = "per_property"
-    return rows
+    return counts
 
 
 def _object_term(binding: dict[str, Any]) -> str:
@@ -220,7 +225,7 @@ def _property_census(
     local: bool,
     predicate: str,
     entry: dict[str, Any],
-) -> list[dict[str, Any]]:
+) -> Counter[str]:
     """Count one property; when the endpoint refuses, count it in batches of its objects.
 
     The objects are grouped into batches of about CENSUS_BATCH_TRIPLES triples, and a batch
@@ -231,13 +236,12 @@ def _property_census(
     add up to the counts of the property.
     """
 
-    def count(restriction: str) -> list[dict[str, Any]]:
+    def count(restriction: str) -> Counter[str]:
         """Count the edges of the property that *restriction* selects."""
         match = typed_match(
             keys, context.graph_uris, context.type_context_graph_uris, predicate, restriction
         )
-        query = _census_query(graph, named, match, local, predicate, restriction)
-        return _select(context, query, "structural/coverage", paged=False)
+        return _count(context, _census_queries(graph, named, match, local, predicate, restriction))
 
     try:
         return count("")
@@ -268,11 +272,12 @@ def _property_census(
         len(objects),
         len(pending),
     )
-    rows, batches = [], 0
+    counts: Counter[str] = Counter()
+    batches = 0
     while pending:
         batch = pending.pop()
         try:
-            rows += count(f"VALUES ?o {{ {' '.join(batch)} }}")
+            counts.update(count(f"VALUES ?o {{ {' '.join(batch)} }}"))
             batches += 1
         except EndpointTimeoutError:
             if len(batch) == 1:
@@ -282,10 +287,10 @@ def _property_census(
             )
             pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
     if blank:
-        rows += count("FILTER(isBlank(?o))")
+        counts.update(count("FILTER(isBlank(?o))"))
         batches += 1
     entry.setdefault("census_batches", {})[predicate] = batches
-    return rows
+    return counts
 
 
 class StructuralStrategy(MiningStrategy):
@@ -336,17 +341,12 @@ class StructuralStrategy(MiningStrategy):
             coverage.append(entry)
             context.report.flush()
             try:
-                rows = _census(context, graph, named, keys, local, entry)
-                total = sum(int(r["n"]["value"]) for r in rows)
-                untyped = sum(
-                    int(r["n"]["value"]) for r in rows if r["typed"]["value"] in {"false", "0"}
-                )
+                counts = _census(context, graph, named, keys, local, entry)
+                total, untyped = counts["triples"], counts["untypedTriples"]
                 if local:
                     entry.update(triple_count=total, untyped_subject_triples=untyped)
                     continue
-                covered = sum(
-                    int(r["n"]["value"]) for r in rows if r["covered"]["value"] in {"true", "1"}
-                )
+                covered = counts["coveredTriples"]
                 missing = total - covered
                 entry.update(
                     triple_count=total,

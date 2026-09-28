@@ -22,7 +22,7 @@ def census(monkeypatch, refuse):
         refused = []
 
         def limited(query, *args, purpose="", **kwargs):
-            whole = "?s ?p ?o ." in query.split("BIND")[0]
+            whole = "?s ?p ?o ." in query
             if refuse and purpose == "structural/coverage" and whole:
                 refused.append(query)
                 raise EndpointTimeoutError("Query cost/time limit")

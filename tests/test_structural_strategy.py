@@ -210,7 +210,8 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
             response = select(query, purpose)
             if purpose == "structural/coverage":
                 for row in response["results"]["bindings"]:
-                    row["covered"]["value"] = "false"
+                    if "coveredTriples" in row:
+                        row["coveredTriples"]["value"] = "0"
             return response
         monkeypatch.setattr(miner.helper, "select", zero_coverage)
         with pytest.raises(ValueError, match="Typed observations have zero edge coverage"):
