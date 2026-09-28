@@ -30,6 +30,40 @@ def index_name(workdir: Path, fallback: str) -> str:
     return name
 
 
+def index_build(workdir: Path, name: str) -> str | None:
+    """Return the QLever build (git hash) that made the index, from its metadata file."""
+    import json
+
+    path = workdir / f"{index_name(workdir, name)}.meta-data.json"
+    if not path.is_file():
+        return None
+    build = json.loads(path.read_text(encoding="utf-8")).get("git-hash")
+    return str(build) if build else None
+
+
+def image_for_index(data_dir: Path, workdir: Path, name: str) -> Path:
+    """Return the QLever image that serves an index: the image of the build that made it.
+
+    The image catalogue qlever_images.yaml in the data directory lists images and their builds
+    (- image: qlever.sif / git_hash: 9ec88a0). Without a catalogue the data directory's
+    qlever.sif is used. With one, an index whose build no image has is refused: a server of
+    another build cannot read its index format. Build hashes are compared by prefix, since an
+    index records a shorter hash than the server prints.
+    """
+    import yaml
+
+    catalogue = data_dir / "qlever_images.yaml"
+    if not catalogue.is_file():
+        return data_dir / "qlever.sif"
+    build = index_build(workdir, name)
+    for entry in yaml.safe_load(catalogue.read_text(encoding="utf-8")) or []:
+        known = str(entry.get("git_hash", ""))
+        if build and known and (known.startswith(build) or build.startswith(known)):
+            image = Path(entry["image"])
+            return image if image.is_absolute() else data_dir / image
+    raise ValueError(f"No image in {catalogue} for the build {build} of the index {name}")
+
+
 def _query_memory(value: str) -> str:
     """Return the query memory of the Qleverfile, at most a share of the SLURM allocation.
 

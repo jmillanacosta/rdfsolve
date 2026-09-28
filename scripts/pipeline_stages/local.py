@@ -370,10 +370,24 @@ class LocalMiningStage(Stage):
             raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
 
     def _qlever_start(self, workdir: Path, name: str, port: int) -> int:
-        from rdfsolve.qlever.lifecycle import start_server
+        import hashlib
 
+        from rdfsolve.qlever.lifecycle import image_for_index, index_build, start_server
+
+        image = image_for_index(self.config.data_dir, workdir, name)
+        engine = {
+            "image": str(image.resolve()),
+            "image_sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+            "index_build": index_build(workdir, name),
+        }
+        output_dir = self.config.output_dir / name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / f"{name}{self.config.output_suffix}_engine.json").write_text(
+            json.dumps(engine, indent=2)
+        )
+        log.info(f"    QLever image {image} for index build {engine['index_build']}")
         process = start_server(
-            self.config.data_dir / "qlever.sif",
+            image,
             workdir,
             name,
             port,
