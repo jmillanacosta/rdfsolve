@@ -60,8 +60,10 @@ def test_the_coverage_test_does_not_rebind_outer_variables():
     from rdfsolve.mining.typed_coverage import typed_match
 
     match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None)
-    (header,) = re.findall(r"VALUES \(([^)]*)\)", match)
-    assert not {"?s", "?p", "?o"} & set(header.split()), "Outer variables are compared, not bound"
+    headers = re.findall(r"VALUES \(([^)]*)\)", match)
+    assert headers and not any({"?s", "?p", "?o"} & set(h.split()) for h in headers), (
+        "Outer variables are compared, not bound"
+    )
     assert "IF(EXISTS" not in match.replace(" ", "")
     body = match.split("EXISTS {", 1)[1]
     assert body.lstrip().startswith("?s ?p ?o ."), "Engines that join EXISTS need the pattern"

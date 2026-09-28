@@ -33,7 +33,12 @@ def test_coverage_matches_edges_as_a_relation():
     assert joined == expected, "Coverage must classify the current edge"
     assert correlated == expected, "Type overlap must not change covered edge membership"
     for test in (expression, typed_match(keys, None, None, "urn:link", "VALUES ?o { <urn:typed> }")):
-        assert test.count("EXISTS") == 1, (
-            "No EXISTS inside the test: Virtuoso evaluates a nested EXISTS on a VALUES variable"
-            " as false (AOP-Wiki: 1 of 23,729 owl:sameAs edges covered)"
+        inner = [group.split("}")[0] for group in test.split("!EXISTS")[1:]]
+        assert inner and not any("?_covered" in group for group in inner), (
+            "No inner EXISTS on a VALUES variable: Virtuoso evaluates it as false"
+            " (AOP-Wiki: 1 of 23,729 owl:sameAs edges covered)"
+        )
+        assert "UNION" not in test, "RDFLib evaluates a UNION inside an EXISTS as false"
+        assert "OPTIONAL" not in test, (
+            "No OPTIONAL inside the test: Virtuoso counts 1 of 2 prov:used edges with it"
         )
