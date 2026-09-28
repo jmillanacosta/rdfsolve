@@ -108,3 +108,186 @@
     Owner decision, 2026-09-22: retain distinct datasets.
     Verify whether NBRC requires the MicrobeDB.jp graph as companion data;
     this part of the NBRC extraction scope remains unresolved.
+
+# Decided 2026-09-28 by evidence (article/corpus/decide_identity.py): Bio2RDF and other
+# conversions of one source are same_upstream; mirrors of a provider's RDF are distribution_of.
+- left: bio2rdf.wikipathways
+  right: wikipathways
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: drugbank
+  right: drugbank.drugs
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: chebi
+  right: chebi.idsm
+  relation: distribution_of
+  note: >-
+    Both on the IDSM endpoint; chebi.idsm is the graph of the ChEBI RDF there.
+- left: bio2rdf.chembl
+  right: chembl
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: chembl
+  right: chembl.bigcat
+  relation: distribution_of
+  note: >-
+    The BiGCaT endpoint is a mirror of the EBI ChEMBL RDF.
+- left: chembl
+  right: rdfportal.chembl
+  relation: distribution_of
+  note: >-
+    Both serve the EBI ChEMBL RDF graph http://rdf.ebi.ac.uk/dataset/chembl.
+- left: mesh
+  right: mesh.heading
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: rdfportal.uniprot
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.chebi
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.citationmapping
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.citations
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.diseases
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.enzymes
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.go
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.uniparc
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bgee
+  right: rdfportal.bgee
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Bgee RDF (graph http://bgee.org).
+- left: rdfportal.rhea
+  right: rhea
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Rhea RDF of SIB.
+- left: homologene
+  right: rdfportal.homologene
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: ncbigene
+  right: rdfportal.ncbigene
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: hgnc
+  right: rdfportal.hgnc
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: mesh
+  right: mesh.nlm
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: mesh
+  right: rdfportal.mesh
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.biomodels
+  right: rdfportal.biomodels
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.chembl
+  right: chembl.bigcat
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.chembl
+  right: rdfportal.chembl
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.pubmed
+  right: rdfportal.pubmed
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.reactome
+  right: reactome
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.reactome
+  right: rdfportal.reactome
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: cellosaurus
+  right: rdfportal.cellosaurus
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Cellosaurus RDF of SIB.
+- left: chebi
+  right: rdfportal.chebi
+  relation: distribution_of
+  note: >-
+    RDF Portal serves the EBI ChEBI RDF graph (rdf.ebi.ac.uk/dataset/chebi).
+- left: brenda
+  right: rdfportal.brenda
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the BRENDA RDF of DSMZ.
+- left: mediadive
+  right: rdfportal.mediadive
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the MediaDive RDF of DSMZ.
+- left: glytoucan
+  right: rdfportal.glytoucan
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the GlyTouCan RDF (graph rdf.glycoinfo.org/glytoucan).
+- left: mbgd
+  right: rdfportal.mbgd
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the MBGD RDF (graph mbgd.genome.ad.jp).
+- left: oma
+  right: rdfportal.oma
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the OMA RDF of SIB.
+- left: rdfportal.reactome
+  right: reactome
+  relation: distribution_of
+  note: >-
+    Both are the EBI Reactome RDF (graph rdf.ebi.ac.uk/dataset/reactome).
