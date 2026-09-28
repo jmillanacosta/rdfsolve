@@ -34,7 +34,7 @@ def typed_match(
     subject_type = _context_pattern("?s a ?_coveredSubject .", objects).replace(
         "?_contextGraph", "?_subjectTypeGraph"
     )
-    object_type = _context_pattern("?o a ?_coveredObject .", objects).replace(
+    object_type = _context_pattern("?o a ?_objectType .", objects).replace(
         "?_contextGraph", "?_objectTypeGraph"
     )
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
@@ -54,16 +54,20 @@ def typed_match(
 VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 {same_property}
 {subject_type}
+OPTIONAL {{ {object_type} FILTER(?_objectType = ?_coveredObject) }}
+OPTIONAL {{ {any_type} }}
 FILTER(
-  (isIRI(?_coveredObject) && EXISTS {{ {object_type} }}) ||
+  (isIRI(?_coveredObject) && BOUND(?_objectType)) ||
   (?_coveredObject = "Literal" && isLiteral(?o) &&
     (!BOUND(?_coveredDatatype) || DATATYPE(?o) = ?_coveredDatatype)) ||
-  (?_coveredObject = "Resource" && isIRI(?o) && !EXISTS {{ {any_type} }}) ||
+  (?_coveredObject = "Resource" && isIRI(?o) && !BOUND(?_anyObjectType)) ||
   (?_coveredObject = "BlankNode" && isBlank(?o))
 )
 }}"""
     # The test above already requires a subject type, so no IF(EXISTS ...) wraps it (Virtuoso
-    # rejects that form, error SQ156).
+    # rejects that form, error SQ156). The object tests are OPTIONAL patterns with BOUND, not an
+    # EXISTS inside the EXISTS: Virtuoso evaluates a nested EXISTS on a variable of the VALUES
+    # as false (AOP-Wiki: 1 of 23,729 owl:sameAs edges covered; all with OPTIONAL, as in QLever).
     return match
 
 
