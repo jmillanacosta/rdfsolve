@@ -356,7 +356,6 @@ def choose_representatives(
     return result
 
 
-
 # Fewest terms without a parent that make a namespace group (see group_by_namespace).
 NAMESPACE_GROUP_MIN_TERMS = 100
 
@@ -404,6 +403,7 @@ def group_by_namespace(
             chosen.representative[term] = group
     chosen.classes_after = len(set(chosen.representative.values()))
     return dict(sorted(groups.items()))
+
 
 def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
     """Merge patterns that map to the same subsumed pattern."""

@@ -55,5 +55,3 @@ def has_cached_index(workdir: Path, fallback: str) -> bool:
     if missing_files:
         raise ValueError(f"Incomplete index in {workdir}: missing or empty {missing_files}")
     return True
-
-
