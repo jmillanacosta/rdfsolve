@@ -144,7 +144,14 @@ def _census_query(
     predicate: str | None = None,
     restriction: str = "",
 ) -> str:
-    """Count triples by typed subject and, remotely, by coverage of the typed profiles."""
+    """Count triples by typed subject and, remotely, by coverage of the typed profiles.
+
+    For one property, the typed test repeats the edge and its restriction. For each row the
+    test is the same, but QLever evaluates the group of EXISTS on its own before the join: a
+    group of only ``?s a ?_type`` reads every type triple of the graph for every batch (Bgee:
+    455.7 GB for each batch of RO_0002206), and with the edge it reads the types of the
+    subjects of the batch.
+    """
     selection = "" if local else "?covered"
     binding = "" if local else f"BIND({match} AS ?covered)"
     edge = (
@@ -152,9 +159,10 @@ def _census_query(
         if predicate
         else "?s ?p ?o ."
     )
+    typed = f"?s <{predicate}> ?o . {restriction} {_types(named)}" if predicate else _types(named)
     return f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
 {_dataset(graph, named)} WHERE {{ {edge}
-BIND(EXISTS {{ {_types(named)} }} AS ?typed)
+BIND(EXISTS {{ {typed} }} AS ?typed)
 {binding}
 }} GROUP BY ?typed {selection}"""
 

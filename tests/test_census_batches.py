@@ -61,3 +61,16 @@ def test_a_refused_property_is_counted_in_object_batches(monkeypatch, caplog):
     assert batched["census_batches"] == {"urn:p": 3}, "Two single objects and the blank nodes"
     for count in ("triple_count", "covered_triples", "uncovered_triples", "untyped_subject_triples"):
         assert batched[count] == whole[count], f"{count}: the batches add up to the whole census"
+
+
+def test_the_typed_test_reads_only_the_edges_of_a_batch():
+    """The typed test repeats the edge and the batch, so that QLever reads the types of the
+    subjects of the batch only (Bgee RO_0002206: 455.7 GB for every batch without it)."""
+    query = structural_strategy._census_query(
+        None, [], "false", False, "urn:p", "VALUES ?o { <urn:b> }"
+    )
+    typed = query.split("BIND(EXISTS {")[1].split("} AS ?typed)")[0]
+    assert "?s <urn:p> ?o ." in typed and "VALUES ?o { <urn:b> }" in typed
+    whole = structural_strategy._census_query(None, [], "false", False)
+    assert "BIND(EXISTS { ?s a ?_type . } AS ?typed)" in whole, "The whole graph is unchanged"
+
