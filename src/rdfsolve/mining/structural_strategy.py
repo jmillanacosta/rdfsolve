@@ -134,9 +134,6 @@ def _select(
 
 # Triples of one property in one census batch, when the census of the property is refused.
 CENSUS_BATCH_TRIPLES = 20_000_000
-# Above this many triples the census is counted per property: the whole-graph test joins every
-# triple with every typed profile (Bgee: about 8e8 triples, 490 profiles, no answer in 2 h).
-CENSUS_WHOLE_GRAPH_TRIPLES = 100_000_000
 
 
 def _census_queries(
@@ -186,35 +183,36 @@ def _census(
     local: bool,
     entry: dict[str, Any],
 ) -> Counter[str]:
-    """Count the graph at once; when the endpoint refuses, count one property at a time.
+    """Count a local graph at once, and a graph behind an endpoint one property at a time.
 
-    A whole-graph census of a very large index can exceed the cost or memory limit of the
-    endpoint (QLever holds every triple of the scan). One constant property per query needs
-    only that property's triples, and the counts add up to the same totals. A census is not
-    paged: each query returns one count, so a page costs as much as the whole query.
+    Through an endpoint only the one-property test is used, the form that was checked against a
+    query of each edge (Virtuoso) and against the earlier nested form (QLever). Virtuoso evaluates
+    the whole-graph test, with ?p a variable, wrongly and without an error (AOP-Wiki: the
+    whole-graph discovery gave 9 rows for 8 properties, the discovery of virtrdf:item alone 41),
+    and the whole-graph test of a large graph joins every triple with every typed profile (Bgee:
+    no answer in 2 h). The counts of each property are recorded; the discovery of uncovered
+    edges uses them. A census is not paged: each query returns one count.
     """
-    match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
-    queries = _census_queries(graph, named, match, local)
-    try:
-        counts = _count(context, queries[:1])
-        if counts["triples"] <= CENSUS_WHOLE_GRAPH_TRIPLES:
-            counts.update(_count(context, queries[1:]))
-            entry["census"] = "whole_graph"
-            return counts
-        logger.info("Census: %d triples; counting one property at a time", counts["triples"])
-    except EndpointTimeoutError:
-        pass
+    if local:
+        match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
+        counts = _count(context, _census_queries(graph, named, match, local))
+        entry["census"] = "whole_graph"
+        return counts
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
-    logger.info(
-        "Census of the whole graph refused; counting %d properties one at a time", len(predicates)
-    )
-    counts = Counter()
+    logger.info("Census: counting %d properties one at a time", len(predicates))
+    counts = Counter[str]()
+    per_property: dict[str, dict[str, int]] = {}
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
         own = [key for key in keys if key[1] == predicate]
-        counts.update(_property_census(context, graph, named, own, local, predicate, entry))
+        found = _property_census(context, graph, named, own, local, predicate, entry)
+        per_property[predicate] = {
+            name: found[name] for name in ("triples", "untypedTriples", "coveredTriples")
+        }
+        counts.update(found)
     entry["census"] = "per_property"
+    entry["census_properties"] = per_property
     return counts
 
 
@@ -441,10 +439,19 @@ class StructuralStrategy(MiningStrategy):
         graph = entry["graph_uri"]
         bulk = rows is not None
         if rows is None:
-            residual = uncovered_filter(keys, context.graph_uris, context.type_context_graph_uris)
-            rows = _select(
-                context, _discovery_query(graph, named, residual), "structural/discovery"
-            )
+            # One query for each property with uncovered edges, with the one-property test of
+            # the census and the recount (see _census).
+            rows = []
+            for predicate, n in sorted(entry.get("census_properties", {}).items()):
+                if n["triples"] == n["coveredTriples"]:
+                    continue
+                own = [key for key in keys if key[1] == predicate]
+                residual = f"VALUES ?p {{ <{predicate}> }} " + uncovered_filter(
+                    own, context.graph_uris, context.type_context_graph_uris
+                )
+                rows += _select(
+                    context, _discovery_query(graph, named, residual), "structural/discovery"
+                )
         candidates: dict[str, StructuralPattern] = {}
         bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
