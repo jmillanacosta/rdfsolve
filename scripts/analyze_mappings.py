@@ -2,7 +2,8 @@
 """Compare schemas using explicit class mappings and verified links between datasets.
 
 Verified links come from rdfsolve.mappings.signatures (infer_links, then verify) and are
-read from the tables that write_links makes. The links kept are also written as SSSOM.
+read from the tables that write_links makes. The links kept are also written as SSSOM, and
+the direct ones (the source writes the terms of the target) as VoID linksets.
 """
 
 import argparse
@@ -15,6 +16,7 @@ from rdfsolve.analysis import build_connectivity, compare_schemas, load_schemas,
 from rdfsolve.config import mint
 from rdfsolve.mappings.signatures import read_links
 from rdfsolve.mappings.sssom import links_to_sssom, write_sssom_tsv
+from rdfsolve.mappings.void import links_to_void
 
 
 def main():
@@ -57,6 +59,8 @@ def main():
             **({"creator_id": args.creator_id} if args.creator_id else {}),
         )
         write_sssom_tsv(mapping_set, args.output / "verified_links.sssom.tsv")
+        linksets = links_to_void(links, min_share=args.min_share)
+        linksets.serialize(args.output / "verified_links.void.ttl", format="turtle")
     print(f"{len(schemas)} schemas, {len(mappings)} explicit class links, {len(links)} verified links")
 
 

@@ -10,12 +10,14 @@ from rdfsolve.mappings.signatures import (
     verify,
     write_links,
 )
+from rdfsolve.mappings.void import links_to_void
 
 __all__ = [
     "Link",
     "LinkEvidence",
     "MappingEdge",
     "infer_links",
+    "links_to_void",
     "read_links",
     "read_replacements",
     "verify",
