@@ -13,13 +13,15 @@ def typed_match(
     type_graphs: list[str] | None,
     context_graphs: list[str] | None,
     predicate: str | None = None,
+    restriction: str = "",
 ) -> str:
     """Return an existence test for the union of observed typed profiles.
 
     With *predicate*, the test is for edges of that one property: its group reads only that
     property. QLever evaluates the group of EXISTS on its own before the join, so a group that
     reads ?s ?p ?o reads the whole graph for each property (Bgee RO_0002162: 217 s, and 20 s
-    with the constant property; the same counts).
+    with the constant property; the same counts). *restriction* (for example VALUES ?o
+    {...}) follows the edge, so that the group reads only the edges of one census batch.
     """
     if not keys:
         return "false"
@@ -48,7 +50,7 @@ def typed_match(
     else:
         edge, same_property = "?s ?p ?o .", "FILTER(?p = ?_coveredProperty)"
     match = f"""EXISTS {{
-{edge}
+{edge} {restriction}
 VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
 {same_property}
 {subject_type}

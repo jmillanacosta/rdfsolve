@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any
 
-from rdflib import Literal
+from rdflib import Literal, URIRef
 
 from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
@@ -129,13 +129,26 @@ def _select(
     return rows
 
 
+# Triples of one property in one census batch, when the census of the property is refused.
+CENSUS_BATCH_TRIPLES = 20_000_000
+
+
 def _census_query(
-    graph: str | None, named: list[str], match: str, local: bool, predicate: str | None = None
+    graph: str | None,
+    named: list[str],
+    match: str,
+    local: bool,
+    predicate: str | None = None,
+    restriction: str = "",
 ) -> str:
     """Count triples by typed subject and, remotely, by coverage of the typed profiles."""
     selection = "" if local else "?covered"
     binding = "" if local else f"BIND({match} AS ?covered)"
-    edge = f"?s <{predicate}> ?o . BIND(<{predicate}> AS ?p)" if predicate else "?s ?p ?o ."
+    edge = (
+        f"?s <{predicate}> ?o . {restriction} BIND(<{predicate}> AS ?p)"
+        if predicate
+        else "?s ?p ?o ."
+    )
     return f"""SELECT ?typed {selection} (COUNT(*) AS ?n)
 {_dataset(graph, named)} WHERE {{ {edge}
 BIND(EXISTS {{ {_types(named)} }} AS ?typed)
@@ -171,10 +184,83 @@ def _census(
     rows = []
     for predicate in predicates:
         own = [key for key in keys if key[1] == predicate]
-        match = typed_match(own, context.graph_uris, context.type_context_graph_uris, predicate)
-        query = _census_query(graph, named, match, local, predicate)
-        rows += _select(context, query, "structural/coverage", paged=False)
+        rows += _property_census(context, graph, named, own, local, predicate, entry)
     entry["census"] = "per_property"
+    return rows
+
+
+def _object_term(binding: dict[str, Any]) -> str:
+    """Write an IRI or literal of a SPARQL JSON result as a SPARQL term."""
+    if binding["type"] == "uri":
+        return URIRef(binding["value"]).n3()
+    language, datatype = binding.get("xml:lang"), binding.get("datatype")
+    return Literal(binding["value"], lang=language, datatype=datatype).n3()
+
+
+def _property_census(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    keys: list[tuple[str, str, str, str | None]],
+    local: bool,
+    predicate: str,
+    entry: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Count one property; when the endpoint refuses, count it in batches of its objects.
+
+    The objects are grouped into batches of about CENSUS_BATCH_TRIPLES triples, and a batch
+    that the endpoint refuses is split in two. VALUES ?o restricts the query and its coverage
+    group, so that each reads only the edges of the batch (Bgee RO_0002206: 813,735,712
+    triples, 127,021 objects; one query needs more memory than a node has). Blank-node
+    objects cannot be listed in VALUES and are counted together. The counts of the batches
+    add up to the counts of the property.
+    """
+
+    def count(restriction: str) -> list[dict[str, Any]]:
+        """Count the edges of the property that *restriction* selects."""
+        match = typed_match(
+            keys, context.graph_uris, context.type_context_graph_uris, predicate, restriction
+        )
+        query = _census_query(graph, named, match, local, predicate, restriction)
+        return _select(context, query, "structural/coverage", paged=False)
+
+    try:
+        return count("")
+    except EndpointTimeoutError:
+        pass
+    listing = (
+        f"SELECT ?o (COUNT(*) AS ?n) {_dataset(graph, named)} "
+        f"WHERE {{ ?s <{predicate}> ?o }} GROUP BY ?o"
+    )
+    objects, blank = [], False
+    for row in _select(context, listing, "structural/objects"):
+        if row["o"]["type"] == "bnode":
+            blank = True
+        else:
+            objects.append((_object_term(row["o"]), int(row["n"]["value"])))
+    pending: list[list[str]] = [[]]
+    size = 0
+    for term, triples in sorted(objects):
+        if pending[-1] and size + triples > CENSUS_BATCH_TRIPLES:
+            pending.append([])
+            size = 0
+        pending[-1].append(term)
+        size += triples
+    pending = [batch for batch in pending if batch]
+    rows, batches = [], 0
+    while pending:
+        batch = pending.pop()
+        try:
+            rows += count(f"VALUES ?o {{ {' '.join(batch)} }}")
+            batches += 1
+        except EndpointTimeoutError:
+            if len(batch) == 1:
+                raise
+            pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
+    if blank:
+        rows += count("FILTER(isBlank(?o))")
+        batches += 1
+    entry.setdefault("census_batches", {})[predicate] = batches
     return rows
 
 
