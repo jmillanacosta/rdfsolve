@@ -115,6 +115,24 @@ def release_build(run_dir: Path, release_id: str | None) -> None:
     click.echo(f"Wrote {summary_tsv}")
 
 
+@release.command("assemble")
+@click.argument(
+    "run_dirs",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+@click.option(
+    "--output", required=True, type=click.Path(path_type=Path), help="New run directory to write."
+)
+def release_assemble(run_dirs: tuple[Path, ...], output: Path) -> None:
+    """Join the chunked runs of one frozen corpus into one run directory for release build."""
+    from rdfsolve.release.assemble import assemble_runs
+
+    out = assemble_runs(list(run_dirs), output)
+    click.echo(f"Wrote {out} from {len(run_dirs)} runs; see {out / 'assembly.json'}")
+
+
 @release.command("validate")
 @click.argument("run_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
 def release_validate(run_dir: Path) -> None:
