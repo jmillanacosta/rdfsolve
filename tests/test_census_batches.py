@@ -82,18 +82,20 @@ def test_the_typed_test_reads_only_the_edges_of_a_batch():
 
 
 def test_the_census_counts_with_filters():
-    """Virtuoso gives wrong counts for a group by a value that BIND(EXISTS ...) sets (AOP-Wiki
-    prov:used: 1 of 2 edges covered); the same test in a FILTER counts 2 of 2."""
+    """Virtuoso gives wrong counts for a group by BIND(EXISTS ...) (AOP-Wiki prov:used: 1 of 2).
+    Uncovered edges are counted with FILTER(!test), the filter of the discovery: Rhea counts
+    550,753 covered rdf:type edges of 550,634 with FILTER(test), and 0 with FILTER(!test)."""
     match = "(EXISTS { ?s a ?_t } || EXISTS { ?o a ?_t })"
     for scope in ((), ("urn:p", "VALUES ?o { <urn:b> }")):
         queries = structural_strategy._census_queries(None, [], match, False, *scope)
         assert len(queries) == 3, "All triples, triples of untyped subjects, covered triples"
         assert not any("BIND" in q or "GROUP BY" in q for q in queries)
-        assert any(f"FILTER({match})" in q for q in queries)
+        assert any(f"FILTER(!{match})" in q for q in queries)
+        assert not any(f"FILTER({match})" in q for q in queries), "No covered count"
     local = structural_strategy._census_queries(None, [], match, True)
     assert len(local) == 2, "A local census counts no coverage; discovery finds the rest"
     untested = structural_strategy._census_queries(None, [], "false", False, "urn:p")
-    assert not any("?coveredTriples" in q for q in untested), (
-        "A property without typed profiles covers no edge; Rhea answers COUNT(*) with"
-        " FILTER(false) with no row"
+    assert not any("FILTER(!false)" in q or "FILTER(false)" in q for q in untested), (
+        "A property without typed profiles has only uncovered edges; Rhea answers COUNT(*)"
+        " with FILTER(false) with no row"
     )

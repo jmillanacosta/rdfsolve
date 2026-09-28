@@ -53,7 +53,7 @@ def test_an_endpoint_census_is_counted_by_property(monkeypatch):
     for count in ("triple_count", "covered_triples", "uncovered_triples", "untyped_subject_triples"):
         assert entry[count] == local[count], f"{count}: the same as the local census"
     assert entry["census_properties"]["urn:p"] == {
-        "triples": 2, "untypedTriples": 1, "coveredTriples": 1
+        "triples": 2, "untypedTriples": 1, "uncoveredTriples": 1
     }, "The counts of each property are recorded"
     assert sorted(p.model_dump_json() for p in result.structural_patterns) == sorted(
         p.model_dump_json() for p in local_result.structural_patterns
@@ -63,9 +63,7 @@ def test_an_endpoint_census_is_counted_by_property(monkeypatch):
 def test_uncovered_edges_are_discovered_by_property(monkeypatch):
     entry, sent, _ = census(monkeypatch)
     discovery = {q for purpose, q in sent if purpose == "structural/discovery"}
-    uncovered = {
-        prop for prop, n in entry["census_properties"].items() if n["triples"] > n["coveredTriples"]
-    }
+    uncovered = {prop for prop, n in entry["census_properties"].items() if n["uncoveredTriples"]}
     assert uncovered and len(discovery) == len(uncovered), "One query for each property with uncovered edges"
     assert {q.split("VALUES ?p { <", 1)[1].split(">", 1)[0] for q in discovery} == uncovered
 

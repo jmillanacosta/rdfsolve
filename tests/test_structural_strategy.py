@@ -207,12 +207,8 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         miner._helper = SparqlHelper("https://example.org/sparql")
         def zero_coverage(query, purpose=""):
             assert purpose != "structural/discovery", "Contradictory coverage must stop extraction"
-            response = select(query, purpose)
-            if purpose == "structural/coverage":
-                for row in response["results"]["bindings"]:
-                    if "coveredTriples" in row:
-                        row["coveredTriples"]["value"] = "0"
-            return response
+            # Every edge is counted as uncovered, so no typed observation covers an edge.
+            return select(query.replace("FILTER(!", "FILTER(true || !"), purpose)
         monkeypatch.setattr(miner.helper, "select", zero_coverage)
         with pytest.raises(ValueError, match="Typed observations have zero edge coverage"):
             miner.mine("contradictory coverage")

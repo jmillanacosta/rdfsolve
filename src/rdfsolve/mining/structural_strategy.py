@@ -144,7 +144,7 @@ def _census_queries(
     predicate: str | None = None,
     restriction: str = "",
 ) -> list[str]:
-    """Count all triples, the triples of untyped subjects and, remotely, the covered triples.
+    """Count all triples, the triples of untyped subjects and, remotely, the uncovered triples.
 
     Each count filters the edges. No count is grouped by a value that BIND(EXISTS ...) sets:
     Virtuoso gives wrong counts for that form (AOP-Wiki prov:used: 1 of 2 edges covered),
@@ -156,10 +156,13 @@ def _census_queries(
     edge = f"?s <{predicate}> ?o . {restriction}" if predicate else "?s ?p ?o ."
     typed = f"{edge} {_types(named)}" if predicate else _types(named)
     tests = {"triples": "", "untypedTriples": f"FILTER NOT EXISTS {{ {typed} }}"}
-    # Without typed profiles the test is "false" and nothing is covered: the count is not sent,
-    # because some engines answer COUNT(*) with FILTER(false) with no row (Rhea: 8 properties).
-    if not local and match != "false":
-        tests["coveredTriples"] = f"FILTER({match})"
+    # The uncovered edges are counted with the negated test, the filter of the discovery, and the
+    # covered edges follow by subtraction: Rhea counts 550,753 covered rdf:type edges of 550,634
+    # with FILTER(test) (duplicates), and 0 uncovered with FILTER(!test). Without typed profiles
+    # every edge is uncovered and no filter is sent, because Rhea answers COUNT(*) with
+    # FILTER(false) with no row.
+    if not local:
+        tests["uncoveredTriples"] = "" if match == "false" else f"FILTER(!{match})"
     return [
         f"SELECT (COUNT(*) AS ?{name}) {_dataset(graph, named)} WHERE {{ {edge} {test} }}"
         for name, test in tests.items()
@@ -208,7 +211,7 @@ def _census(
         own = [key for key in keys if key[1] == predicate]
         found = _property_census(context, graph, named, own, local, predicate, entry)
         per_property[predicate] = {
-            name: found[name] for name in ("triples", "untypedTriples", "coveredTriples")
+            name: found[name] for name in ("triples", "untypedTriples", "uncoveredTriples")
         }
         counts.update(found)
     entry["census"] = "per_property"
@@ -353,8 +356,8 @@ class StructuralStrategy(MiningStrategy):
                 if local:
                     entry.update(triple_count=total, untyped_subject_triples=untyped)
                     continue
-                covered = counts["coveredTriples"]
-                missing = total - covered
+                missing = counts["uncoveredTriples"]
+                covered = total - missing
                 entry.update(
                     triple_count=total,
                     untyped_subject_triples=untyped,
@@ -443,7 +446,7 @@ class StructuralStrategy(MiningStrategy):
             # the census and the recount (see _census).
             rows = []
             for predicate, n in sorted(entry.get("census_properties", {}).items()):
-                if n["triples"] == n["coveredTriples"]:
+                if not n["uncoveredTriples"]:
                     continue
                 own = [key for key in keys if key[1] == predicate]
                 residual = f"VALUES ?p {{ <{predicate}> }} " + uncovered_filter(
