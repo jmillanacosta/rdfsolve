@@ -171,7 +171,7 @@ def _census(
     rows = []
     for predicate in predicates:
         own = [key for key in keys if key[1] == predicate]
-        match = typed_match(own, context.graph_uris, context.type_context_graph_uris)
+        match = typed_match(own, context.graph_uris, context.type_context_graph_uris, predicate)
         query = _census_query(graph, named, match, local, predicate)
         rows += _select(context, query, "structural/coverage", paged=False)
     entry["census"] = "per_property"
