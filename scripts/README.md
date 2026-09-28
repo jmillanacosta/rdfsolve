@@ -76,30 +76,6 @@ sbatch scripts/slurm_local.sh
 ```
 
 
-### `slurm_graphs.sh`
-
-Build connectivity graphs.
-
-```bash
-sbatch scripts/slurm_graphs.sh
-```
-
-### `slurm_full.sh`
-
-Run complete pipeline.
-
-```bash
-sbatch scripts/slurm_full.sh
-```
-
-### `slurm_void_discovery.sh`
-
-Discover VoID descriptions.
-
-```bash
-sbatch scripts/slurm_void_discovery.sh
-```
-
 ## Environment Variables
 
 Override defaults via environment:
