@@ -30,3 +30,10 @@ def test_the_image_of_the_index_build_is_chosen(tmp_path):
     unknown = workdir(tmp_path / "third", "abc1234")
     with pytest.raises(ValueError, match="abc1234"):
         image_for_index(tmp_path, unknown, "src")
+
+
+def test_an_index_not_yet_built_gets_the_default_image(tmp_path):
+    (tmp_path / "qlever_images.yaml").write_text("- image: fixed.sif\n  git_hash: 388f365\n")
+    new = tmp_path / "workdirs" / "src"
+    new.mkdir(parents=True)
+    assert image_for_index(tmp_path, new, "src") == tmp_path / "qlever.sif"
