@@ -155,7 +155,9 @@ class LinkEvidence:
 
     target_forms counts how the target writes the identifiers that it has ({id} marks the
     local identifier): this is the rewrite that applies the link. replaced counts the sampled
-    identifiers that were looked up through a replacement (see read_replacements).
+    identifiers that were looked up through a replacement (see read_replacements). population
+    is the number of distinct values of the property on the class, of any kind; complete says
+    that every value was read, so that the share is exact and not an estimate.
     """
 
     link: Link
@@ -164,11 +166,24 @@ class LinkEvidence:
     target_forms: dict[str, int]
     examples: list[tuple[str, str]]
     replaced: int = 0
+    population: int | None = None
+    complete: bool = False
 
     @property
     def share(self) -> float | None:
         """Return the share of sampled values that the target has."""
         return self.found / self.sampled if self.sampled else None
+
+    def interval(self, z: float = 1.96) -> tuple[float, float] | None:
+        """Return the share itself when every value was read, else its Wilson interval."""
+        if not self.sampled:
+            return None
+        p, n = self.found / self.sampled, self.sampled
+        if self.complete:
+            return p, p
+        centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+        half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+        return max(0.0, centre - half), min(1.0, centre + half)
 
 
 def _local(value: str) -> tuple[str, str] | None:
@@ -197,10 +212,13 @@ def verify(
     source: Client,
     target: Client,
     *,
-    sample: int = 50,
+    sample: int | None = 50,
     replacements: Mapping[str, str] | None = None,
 ) -> LinkEvidence:
     """Look up up to *sample* values of the link's source property in the target.
+
+    With *sample* None every value is read and looked up, and the share is exact; otherwise
+    the number of distinct values is counted, so that the sample can be put in proportion.
 
     A join looks for the identifiers as subjects of the target class; a shared reference
     looks for them as values of the target property. Every spelling of an identifier is tried.
@@ -216,7 +234,14 @@ def verify(
         return URIRef(value).n3()
 
     body = source._scope(f"?s a {_iri(link.source_class)} ; {_iri(link.property)} ?v .")
-    rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }} LIMIT {sample}")
+    population: int | None
+    if sample is None:
+        rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }}", exhaustive=True)
+        population = len(rows)
+    else:
+        rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }} LIMIT {sample}")
+        counted = source._select(f"SELECT (COUNT(DISTINCT ?v) AS ?n) WHERE {{ {body} }}")
+        population = int(counted[0]["n"]["value"]) if counted else None
     keys: dict[str, str] = {}
     for row in rows:
         parsed = _local(row["v"]["value"])
@@ -249,6 +274,8 @@ def verify(
         dict(forms),
         sorted((keys[key], term) for key, term in found.items()),
         sum(key in replacements for key in keys),
+        population,
+        sample is None,
     )
 
 
@@ -295,6 +322,8 @@ LINK_FIELDS = (
     "target_forms",
     "examples",
     "replaced",
+    "population",
+    "complete",
 )
 
 
@@ -317,6 +346,8 @@ def write_links(path: str | Path, links: Iterable[LinkEvidence]) -> None:
                     "target_forms": json.dumps(evidence.target_forms),
                     "examples": json.dumps(evidence.examples),
                     "replaced": evidence.replaced,
+                    "population": "" if evidence.population is None else evidence.population,
+                    "complete": evidence.complete,
                 }
             )
 
@@ -342,6 +373,8 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
             json.loads(row["target_forms"]),
             [tuple(pair) for pair in json.loads(row["examples"])],
             int(row["replaced"]),
+            int(row["population"]) if row.get("population") else None,
+            row.get("complete") == "True",
         )
         for row in rows
     ]
