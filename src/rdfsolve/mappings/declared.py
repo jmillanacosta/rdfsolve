@@ -67,13 +67,20 @@ def declared_query() -> str:
 
 
 def _curie(iri: str) -> str | None:
-    """Return the CURIE of an IRI with the namespace the source gave it (no validity check)."""
+    """Return the CURIE of an IRI with the namespace the source gave it (no validity check).
+
+    An identifiers.org IRI that Bioregistry does not read (http://identifiers.org/mgi/101757)
+    is read as namespace/identifier.
+    """
     import bioregistry
 
     parsed = bioregistry.parse_iri(iri)
     if not parsed or not parsed[0]:
         return None
-    return f"{bioregistry.normalize_prefix(parsed[0]) or parsed[0]}:{parsed[1]}"
+    prefix, local = parsed
+    if prefix == "idot" and "/" in local:
+        prefix, _, local = local.partition("/")
+    return f"{bioregistry.normalize_prefix(prefix) or prefix}:{local}"
 
 
 def declared_identities(
@@ -127,7 +134,9 @@ def write_declared_identities(
     prefixes = {c.partition(":")[0] for row in rows for c in (row.subject_id, row.object_id)}
     prefix_map = {"rdfsolve": get_base_uri()}
     for prefix in sorted(prefixes):
-        prefix_map[prefix] = bioregistry.get_uri_prefix(prefix) or f"https://bioregistry.io/{prefix}:"
+        prefix_map[prefix] = (
+            bioregistry.get_uri_prefix(prefix) or f"https://bioregistry.io/{prefix}:"
+        )
     converter = Converter.from_prefix_map(prefix_map)
     mappings = [
         SSSOMMapping(

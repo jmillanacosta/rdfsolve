@@ -55,3 +55,17 @@ def test_a_file_without_failing_statements_is_not_bad(tmp_path):
         [binding("http://bio2rdf.org/hgnc:5", XREF, "http://bio2rdf.org/ensembl:ENSG00000121410")], "hgnc"
     )
     assert write_declared_identities(rows, tmp_path, "hgnc")["verdict"] == "good"
+
+
+def test_an_identifier_restated_as_a_resolver_iri_is_not_a_cross_namespace_identity():
+    rows = declared_identities(
+        [
+            binding(
+                "http://bio2rdf.org/mgi:101757",
+                "http://bio2rdf.org/hgnc_vocabulary:x-identifiers.org",
+                "http://identifiers.org/mgi/101757",
+            )
+        ],
+        "hgnc",
+    )
+    assert rows == []
