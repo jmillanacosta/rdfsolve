@@ -102,7 +102,7 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
     article = json.loads((tmp_path / "extraction_inventory.json").read_text())
     article_local = next(r for r in article if r["dataset_id"] == "typed" and r["mode"] == "local")
     assert article_local["retained_views"] == inventory["typed", "local"]["views"]
-    # The dcat:Dataset catalogue row (title) is excluded; its rdf:type row is not a schema row.
+    # The dcat:Dataset catalogue row (title) is excluded; its (C, rdf:type, Resource) row is not a schema row.
     assert article_local["views"]["patterns"]["rows"] == inventory["typed", "local"]["views"]["patterns"]["rows"] - 1
     assert article_local["coverage_scope"] == "retained_extraction"
     assert article_local["view_exclusions"]["patterns"] == 1

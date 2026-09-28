@@ -843,12 +843,17 @@ class SchemaMiner:
                 states_out=entity_count_states,
                 type_context_graph_uris=self.type_context_graph_uris,
             )
-        # Class membership is not a data edge: rdf:type gives the subject class of every row and
-        # the member counts above, and a (C, rdf:type, X) row only states the type of the class
-        # IRI. The rows are left out after the classes are counted, so that a class whose
-        # members have only rdf:type keeps its count. The structural census, which ran before,
-        # counts rdf:type edges as covered by the typed profiles.
-        kept = [p for p in schema.patterns if p.property_uri != RDF_TYPE]
+        # A (C, rdf:type, Resource) row says only that the class IRI has no type of its own: the
+        # membership is already the subject class of every row and the member counts above. Such
+        # rows are left out after the classes are counted, so that a class whose members have
+        # only rdf:type keeps its count. A row whose type value has a class (for example
+        # (C, rdf:type, owl:Class)) describes the source's model and is kept. The structural
+        # census, which ran before, counts rdf:type edges as covered by the typed profiles.
+        kept = [
+            p
+            for p in schema.patterns
+            if not (p.property_uri == RDF_TYPE and p.object_class == "Resource")
+        ]
         self._report.report.config["membership_rows_left_out"] = len(schema.patterns) - len(kept)
         schema.patterns = kept
         dataset = getattr(self._helper, "dataset", None)

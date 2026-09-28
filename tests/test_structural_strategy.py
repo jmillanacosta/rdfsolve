@@ -227,7 +227,7 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
     with SchemaMiner.from_graph(lists, delay=0) as miner:
         result = miner.mine("lists and multiple types")
         rows = result.structural_patterns
-        assert len(result.patterns) == 4, "(A|B) x (value, items); rdf:type rows are left out"
+        assert len(result.patterns) == 4, "(A|B) x (value, items); (C, rdf:type, Resource) rows are left out"
         assert len(rows) == 3 and sum(p.count for p in rows) == 3
         assert len({(p.graph_uri, p.subject_kind, tuple(p.subject_properties)) for p in rows}) == 2
         assert len(result.collections) == 2
