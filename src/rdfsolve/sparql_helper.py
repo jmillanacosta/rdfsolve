@@ -1307,9 +1307,17 @@ class SparqlHelper:
                         "SELECT[%s] page %d; %d rows retained", purpose, meta["pages"], len(rows)
                     )
             except PaginationTruncatedError as error:
+                # Virtuoso sorts at most 10,000 rows for a page (SR353). Rows of SELECT DISTINCT,
+                # and of a GROUP BY on projected variables, are unique on those variables, so
+                # the pages continue with a cursor on them (SIBiLS: the objects of a property).
+                distinct = dict.get(parsed, "modifier") == "DISTINCT"
+                conditions = parsed["groupby"]["condition"] if "groupby" in parsed else []
+                group_keys = sorted(str(c) for c in conditions if isinstance(c, Variable))
+                if len(group_keys) != len(conditions) or not set(group_keys) <= set(projected):
+                    group_keys = []
                 if not (
                     "SR353" in str(error)
-                    and dict.get(parsed, "modifier") == "DISTINCT"
+                    and (distinct or group_keys)
                     and limit is None
                     and not offset
                     and "orderby" not in parsed
@@ -1321,6 +1329,7 @@ class SparqlHelper:
                 for page in self.select_chunked(
                     self.prepare_paginated_query(query),
                     pagination="cursor",
+                    cursor_keys=None if distinct else group_keys,
                     chunk_size=self.select_page_size,
                     max_pages=max_pages,
                     delay_between_chunks=self.inter_request_delay,
