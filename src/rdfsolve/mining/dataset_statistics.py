@@ -12,11 +12,17 @@ counts, so they are not counted there.
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from rdflib import URIRef
 
 from rdfsolve.sparql_helper import EndpointError
+
+# Seconds for the distinct subjects and objects of the properties (Bgee: 2,197 s for 48
+# properties). The properties are counted from the smallest; those left after the budget keep
+# their triples and are recorded as not counted.
+PARTITION_BUDGET_S = 7200.0
 
 
 def count_dataset(helper: Any, graph_uris: list[str] | None) -> dict[str, Any]:
@@ -61,8 +67,12 @@ def count_dataset(helper: Any, graph_uris: list[str] | None) -> dict[str, Any]:
     # A refused count of one property is recorded; the counts of the others are kept.
     partitions: dict[str, dict[str, int]] = {}
     refused: dict[str, str] = {}
-    for prop, n in sorted(triples.items()):
+    started = time.monotonic()
+    for prop, n in sorted(triples.items(), key=lambda item: (item[1], item[0])):
         partitions[prop] = {"triples": n}
+        if time.monotonic() - started > PARTITION_BUDGET_S:
+            refused[prop] = f"not counted: time budget of {PARTITION_BUDGET_S:.0f} s"
+            continue
         for name, variable in (("distinct_subjects", "?s"), ("distinct_objects", "?o")):
             query = (
                 f"SELECT (COUNT(DISTINCT {variable}) AS ?n) WHERE {{ ?s {URIRef(prop).n3()} ?o }}"
@@ -78,6 +88,6 @@ def count_dataset(helper: Any, graph_uris: list[str] | None) -> dict[str, Any]:
         "distinct_subjects": subjects,
         "distinct_objects": objects,
         "distinct_properties": len(triples),
-        "property_partitions": partitions,
+        "property_partitions": dict(sorted(partitions.items())),
         "refused_partitions": refused,
     }
