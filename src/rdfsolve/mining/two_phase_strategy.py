@@ -226,10 +226,16 @@ class TwoPhaseStrategy(MiningStrategy):
         ]
         done = {str(c) for batch in kept for c in batch}
         rest = [c for c in classes if str(c) not in done]
-        return kept + self._plan_batches(rest, context) if rest else kept
+        # Every class is weighed: _same_members also checks the reused batches.
+        return kept + self._plan_batches(rest, context, weigh=classes)
 
-    def _plan_batches(self, classes: list[str], context: MiningContext) -> list[list[str]]:
-        """Use fixed batches, or instance-count batches when there are many classes."""
+    def _plan_batches(
+        self, classes: list[str], context: MiningContext, *, weigh: list[str] | None = None
+    ) -> list[list[str]]:
+        """Use fixed batches, or instance-count batches when there are many classes.
+
+        *weigh* are the classes whose weights are kept (the planned classes by default).
+        """
         size = context.class_batch_size
         fixed = [classes[i : i + size] for i in range(0, len(classes), size)]
         if len(classes) <= WEIGHTED_BATCHING_ABOVE and context.helper.sparql_engine != "qlever":
@@ -271,7 +277,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 weights[row["class"]["value"]] = int(row["n"]["value"])
             except (KeyError, TypeError, ValueError):
                 continue
-        for cls in classes:
+        for cls in weigh if weigh is not None else classes:
             members = getattr(cls, "members", None)
             if members:
                 weights[cls] = sum(weights.get(member, 0) for member in members)
@@ -428,6 +434,11 @@ class TwoPhaseStrategy(MiningStrategy):
                 patterns.extend(SchemaPattern.model_validate(row) for row in rows)
                 context.report.report.config["resumed_batches"].append(list(batch))
                 context.report.checkpoint("patterns", batch, rows)
+                source = _same_members(batch, mined, context)
+                if source:
+                    context.shared_extensions[batch[0]] = source
+                    config = context.report.report.config
+                    config.setdefault("shared_extensions", {})[batch[0]] = source
                 mined[batch[0]] = (first, len(patterns))
                 continue
             source = _same_members(batch, mined, context)
