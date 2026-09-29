@@ -45,6 +45,15 @@ def inputs(workdir: Path, pattern: str) -> list[Path]:
     return found
 
 
+def download_urls(entry: dict) -> list[str]:
+    """Return the download_* URLs of a registry entry; a value is one URL or a list."""
+    urls: list[str] = []
+    for key, value in entry.items():
+        if key.startswith("download_"):
+            urls += [value] if isinstance(value, str) else list(value)
+    return urls
+
+
 def main() -> None:
     """Fetch, count and delete the sources of each work directory."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -69,7 +78,7 @@ def main() -> None:
                 files = inputs(workdir, config.get("index", "INPUT_FILES", fallback="rdf/*"))
             else:
                 entry = registry.get(workdir.name, {})
-                urls = [u for key, value in entry.items() if key.startswith("download_") for u in value]
+                urls = download_urls(entry)
                 if not urls:
                     print(f"{workdir.name}: no GET_DATA_CMD and no download_* URLs; skipped", flush=True)
                     continue
