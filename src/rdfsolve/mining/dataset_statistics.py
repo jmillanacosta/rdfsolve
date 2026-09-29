@@ -52,6 +52,7 @@ def count_dataset(helper: Any, graph_uris: list[str] | None) -> dict[str, Any]:
         triples = {
             row["p"]["value"]: int(row["n"]["value"])
             for row in select("SELECT ?p (COUNT(*) AS ?n) WHERE { ?s ?p ?o } GROUP BY ?p")
+            if "p" in row  # RDFLib answers a grouped count without solutions with an empty row.
         }
         subjects = number("SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s ?p ?o }")
         objects = number("SELECT (COUNT(DISTINCT ?o) AS ?n) WHERE { ?s ?p ?o }")

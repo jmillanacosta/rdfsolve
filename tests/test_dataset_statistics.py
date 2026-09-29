@@ -81,3 +81,12 @@ def test_a_refused_property_count_keeps_the_other_counts(monkeypatch):
     assert record["state"] == "counted" and "54 GB" in record["refused_partitions"]["urn:q"]
     assert schema.about.distinct_object_count == 5
     assert schema.about.property_partitions["urn:q"] == {"triples": 2, "distinct_subjects": 2}
+
+
+def test_a_grouped_count_without_solutions_counts_nothing(monkeypatch):
+    """RDFLib (used for overlapping graphs) answers a grouped count without solutions with one
+    empty row; here the default graph, which the counts read, is empty."""
+    overlapping = "<urn:g> { <urn:a> <urn:p> <urn:b> . } <urn:h> { <urn:a> <urn:p> <urn:b> . }"
+    schema, record = mine(monkeypatch, overlapping, graphs=["urn:g", "urn:h"], fmt="trig")
+    assert record["state"] == "counted" and record["property_partitions"] == {}
+    assert schema.about.triple_count_estimate == 0
