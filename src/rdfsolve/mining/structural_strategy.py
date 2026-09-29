@@ -260,11 +260,12 @@ def _property_census(
     """Count one property; when the endpoint refuses, count it in batches of its objects.
 
     The objects are grouped into batches of about CENSUS_BATCH_TRIPLES triples, and a batch
-    that the endpoint refuses is split in two. VALUES ?o restricts the query and its coverage
-    group, so that each reads only the edges of the batch (Bgee RO_0002206: 813,735,712
-    triples, 127,021 objects; one query needs more memory than a node has). Blank-node
-    objects cannot be listed in VALUES and are counted together. The counts of the batches
-    add up to the counts of the property.
+    that the endpoint refuses is split in two. FILTER(?o IN ...) restricts the query and its
+    coverage group, so that each reads only the edges of the batch (Bgee RO_0002206:
+    813,735,712 triples, 127,021 objects; one query needs more memory than a node has). The
+    batch is not a VALUES: QLever evaluates an EXISTS group with a VALUES of 768 objects wrongly
+    (all 19,999,769 edges untyped; 0 with FILTER IN). Blank-node objects cannot be listed and
+    are counted together. The counts of the batches add up to the counts of the property.
     """
 
     def count(restriction: str) -> Counter[str]:
@@ -323,7 +324,7 @@ def _property_census(
     while pending:
         batch = pending.pop()
         try:
-            counts.update(count(f"VALUES ?o {{ {' '.join(batch)} }}"))
+            counts.update(count(f"FILTER(?o IN ({', '.join(batch)}))"))
             batches += 1
         except EndpointTimeoutError:
             if len(batch) == 1:

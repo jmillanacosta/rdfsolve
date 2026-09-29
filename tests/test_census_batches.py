@@ -35,15 +35,17 @@ def census(monkeypatch, refuse):
 
 
 def too_large(query):
-    """Refuse the whole graph, the whole of urn:p, and each batch of more than one object."""
+    """Refuse the whole graph, the whole of urn:p, and each batch of more than one object. QLever
+    evaluates EXISTS with a VALUES of 768 objects wrongly (Bgee), so a batch is a FILTER IN."""
+    assert "VALUES ?o" not in query
     edge = query.split("WHERE {", 1)[1].lstrip()
     if edge.startswith("?s ?p ?o ."):
         return True
     if edge.startswith("?s <urn:p> ?o . FILTER(isBlank(?o))"):
         return False
     if edge.startswith("?s <urn:p> ?o ."):
-        batch = re.match(r"\?s <urn:p> \?o \. VALUES \?o \{([^}]*)\}", edge)
-        return batch is None or len(batch.group(1).split()) > 1
+        batch = re.match(r"\?s <urn:p> \?o \. FILTER\(\?o IN \(([^)]*)\)\)", edge)
+        return batch is None or len(batch.group(1).split(",")) > 1
     return False
 
 
@@ -75,10 +77,8 @@ def test_the_typed_test_reads_only_the_edges_of_a_batch():
     untyped = next(q for q in queries if "?untypedTriples" in q)
     typed = untyped.split("FILTER NOT EXISTS {")[1]
     assert "?s <urn:p> ?o ." in typed and "VALUES ?o { <urn:b> }" in typed
-    whole = next(
-        q for q in structural_strategy._census_queries(None, [], "false", False)
-        if "?untypedTriples" in q
-    )
+    whole = next(q for q in structural_strategy._census_queries(None, [], "false", False)
+                 if "?untypedTriples" in q)
     assert "FILTER NOT EXISTS { ?s a ?_type . }" in whole, "The whole graph reads all types"
 
 
