@@ -724,6 +724,32 @@ GROUP BY ?class ?p ?oc{graph_var}"""
     return q
 
 
+def _build_class_property_total_query(
+    class_uris: list[str],
+    property_uri: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+    object_test: str = "",
+) -> str:
+    """Count the edges and distinct subjects of (class, property) and edge graph.
+
+    The edges are those of the count queries; *object_test* keeps the edges of one group.
+    """
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    return f"""\
+SELECT ?class{graph_var} (COUNT(*) AS ?cnt) (COUNT(DISTINCT ?s) AS ?subjects)
+{dataset}
+WHERE {{
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {object_test}
+}}
+GROUP BY ?class{graph_var}"""
+
+
 def _build_batched_literal_count_query(
     class_uris: list[str],
     graph_uris: list[str] | None,
