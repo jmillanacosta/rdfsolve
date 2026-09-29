@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 
 from rdfsolve.analysis.schema import extract_class_set
@@ -63,6 +63,28 @@ def load_schemas(
             raise ValueError(f"Select one extraction for {dataset}")
         schemas[dataset] = schema
     return schemas
+
+
+def load_channel_schemas(directories: Sequence[str | Path]) -> dict[str, MinedSchema]:
+    """Load one schema for each dataset from several releases, the local one when there are both.
+
+    The link stage (scripts/verify_links.py) takes the same schema for each dataset, so the
+    endpoints of its links are in the loaded schemas. Two schemas of one channel for a dataset
+    raise an error.
+    """
+    found: dict[str, tuple[bool, MinedSchema]] = {}
+    for directory in directories:
+        for dataset, extraction, schema in iter_extractions(directory):
+            if schema is None:
+                continue
+            local = extraction.mode == "local"
+            if dataset in found:
+                if found[dataset][0] == local:
+                    raise ValueError(f"Select one extraction for {dataset}")
+                if found[dataset][0]:
+                    continue
+            found[dataset] = (local, schema)
+    return {name: schema for name, (_, schema) in sorted(found.items())}
 
 
 def read_class_mappings(

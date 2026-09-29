@@ -13,6 +13,7 @@ from pathlib import Path
 from networkx import node_link_data
 
 from rdfsolve.analysis import build_connectivity, compare_schemas, load_schemas, read_class_mappings
+from rdfsolve.analysis.io import load_channel_schemas
 from rdfsolve.config import mint
 from rdfsolve.mappings.signatures import read_links
 from rdfsolve.mappings.sssom import links_to_sssom, write_sssom_tsv
@@ -21,7 +22,13 @@ from rdfsolve.mappings.void import links_to_void
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("schemas", type=Path)
+    parser.add_argument(
+        "schemas",
+        nargs="+",
+        type=Path,
+        help="Releases (for example the local release and the remote run); one schema is taken "
+        "for each dataset, the local one when there are both, as in the link stage",
+    )
     parser.add_argument("--links", nargs="*", type=Path, default=[])
     parser.add_argument("--min-share", type=float, default=0.5)
     parser.add_argument("--class-mappings", nargs="*", type=Path, default=[])
@@ -29,7 +36,15 @@ def main():
     parser.add_argument("--creator-id", help="Creator IRI (for example an ORCID) for SSSOM output")
     parser.add_argument("--extraction-mode", choices=["remote", "local", "grouped", "unknown"])
     args = parser.parse_args()
-    schemas = load_schemas(args.schemas, extraction_mode=args.extraction_mode)
+    if args.extraction_mode is None:
+        schemas = load_channel_schemas(args.schemas)
+    else:
+        schemas = {}
+        for directory in args.schemas:
+            for name, schema in load_schemas(directory, extraction_mode=args.extraction_mode).items():
+                if name in schemas:
+                    parser.error(f"Select one extraction for {name}")
+                schemas[name] = schema
     if not schemas:
         parser.error("Supply canonical schema snapshots")
     links, reports = [], {}
