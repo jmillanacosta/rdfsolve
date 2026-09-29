@@ -219,20 +219,35 @@ class TwoPhaseStrategy(MiningStrategy):
         fixed = [classes[i : i + size] for i in range(0, len(classes), size)]
         if len(classes) <= WEIGHTED_BATCHING_ABOVE and context.helper.sparql_engine != "qlever":
             return fixed
-        t0 = time.monotonic()
-        try:
-            rows = context.collect_bindings(
-                _build_class_weight_query(context.graph_uris, context.type_context_graph_uris),
-                "two-phase/class-weights",
-                context.chunk_size,
-            )
-        except Exception as error:
-            context.report.record_query(
-                "two-phase/class-weights", time.monotonic() - t0, success=False
-            )
-            logger.warning("Instance counts per class failed (%s); using fixed batches", error)
+        counts = {
+            "exact": _build_class_weight_query(context.graph_uris, context.type_context_graph_uris)
+        }
+        if context.helper.sparql_engine == "qlever" and (
+            context.graph_uris or context.type_context_graph_uris
+        ):
+            # The rdf:type triples of each class in the whole index bound its subjects in the
+            # scope. The weights only plan batches, and _same_members confirms a match with a
+            # count of the scope (PubChem: COUNT(DISTINCT) with 26 FROM clauses asked 68.8 GB;
+            # the bound took 1.6 s).
+            counts["upper_bound"] = _build_class_weight_query(None)
+        rows = None
+        for state, query in counts.items():
+            t0 = time.monotonic()
+            try:
+                rows = context.collect_bindings(query, "two-phase/class-weights", context.chunk_size)
+            except Exception as error:
+                context.report.record_query(
+                    "two-phase/class-weights", time.monotonic() - t0, success=False
+                )
+                logger.warning("Instance counts per class (%s) failed: %s", state, error)
+                continue
+            context.report.record_query("two-phase/class-weights", time.monotonic() - t0)
+            context.report.report.config["class_weights"] = state
+            break
+        if rows is None:
+            logger.warning("Instance counts per class failed; using fixed batches")
+            context.report.report.config["class_weights"] = "failed"
             return fixed
-        context.report.record_query("two-phase/class-weights", time.monotonic() - t0)
         weights: dict[str, int] = {}
         for row in rows:
             try:
