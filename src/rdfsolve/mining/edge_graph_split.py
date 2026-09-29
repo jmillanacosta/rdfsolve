@@ -104,6 +104,8 @@ def split_by_edge_graph(
             else None,
             "navigation": None,
             "source_metadata": None,
+            # Measured over the whole scope, not for one graph.
+            "class_extensions": None,
         }
     )
 

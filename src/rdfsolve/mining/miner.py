@@ -622,6 +622,17 @@ class SchemaMiner:
             logger.warning("Class declarations unavailable: %s", e)
         return declared
 
+    def _measure_class_extensions(self, classes: list[str], sizes: dict[str, int]) -> Any:
+        """Measure the relations between the member sets of the classes (QLever)."""
+        from rdfsolve.mining.class_extensions import measure_class_extensions
+
+        phase = self._report.start_phase("class-extensions")
+        found = measure_class_extensions(
+            self._helper, classes, sizes, self.graph_uris, self.type_context_graph_uris
+        )
+        self._report.finish_phase(phase, items=len(found.members) if found else 0)
+        return found
+
     def _count_dataset(self) -> None:
         """Record the exact dataset statistics of a QLever index (rdfsolve.mining.dataset_statistics)."""
         from rdfsolve.mining.dataset_statistics import count_dataset
@@ -875,6 +886,9 @@ class SchemaMiner:
                 self.delay,
                 states_out=entity_count_states,
                 type_context_graph_uris=self.type_context_graph_uris,
+            )
+            schema.class_extensions = self._measure_class_extensions(
+                sorted(classes - self._subsumed_classes), entity_counts
             )
         # A (C, rdf:type, Resource) row says only that the class IRI has no type of its own: the
         # membership is already the subject class of every row and the member counts above. Such

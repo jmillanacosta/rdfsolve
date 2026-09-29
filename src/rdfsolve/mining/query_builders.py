@@ -440,6 +440,28 @@ WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}\nGR
     return SparqlHelper.prepare_paginated_query(query)
 
 
+def _build_class_overlap_query(
+    cls: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count the members of a class that are members of each class, the class itself included.
+
+    The (member, class) pairs are made distinct before the count: a grouped COUNT(DISTINCT) of
+    genex:Expression (709,482,280 members) reached 600 s on QLever, the distinct pairs 133 s.
+    """
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    both = (
+        _subject_type_pattern("?s", f"<{cls}>", type_context_graph_uris)
+        + " "
+        + _subject_type_pattern("?s", "?other", type_context_graph_uris)
+    )
+    return (
+        f"SELECT ?other (COUNT(?s) AS ?n) {dataset} "
+        f"WHERE {{ {{ SELECT DISTINCT ?s ?other WHERE {{ {both} }} }} }} GROUP BY ?other"
+    )
+
+
 def _build_same_members_query(
     first: str,
     second: str,
