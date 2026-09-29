@@ -8,7 +8,8 @@ dataset, as in the release. A local schema is served from its QLever index in DA
 most --servers at a time); a remote schema is read at its endpoint.
 
 Verification (rdfsolve.mappings.verify): between two local indexes every value is read, so the
-share is exact; otherwise --sample values are looked up and the share has a Wilson interval.
+share is exact, and the terms of the target are read once and matched (verify(read_target=True));
+otherwise --sample values are looked up and the share has a Wilson interval.
 Identifiers in --replacements (SSSOM sets of term replaced by) are looked up by their current
 identifier. For a join between two local indexes with a share of at least --min-share, the
 class association (entity pairs and the coverage of each class) is read as well.
@@ -101,6 +102,7 @@ def main():
                     target,
                     sample=None if both_local else args.sample,
                     replacements=replacements,
+                    read_target=both_local,
                 )
             except Exception as error:  # noqa: BLE001 - a failed link is reported, not hidden
                 print(i + 1, len(links), link.source, link.target, fail(link, "verify", error))

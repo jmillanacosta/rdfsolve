@@ -16,7 +16,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.schema_models.core import MinedSchema
 
@@ -246,6 +246,85 @@ def _lookup(
     return dict(found)
 
 
+# Most distinct target terms that verify(read_target=True) reads at once; above, lookups.
+TARGET_READ_LIMIT = 2_000_000
+XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
+
+
+def _term_key(
+    kind: str, value: str, datatype: str | None = None, lang: str | None = None
+) -> tuple[str | None, ...]:
+    """Identify an RDF term as a VALUES join does; a plain literal is an xsd:string (RDF 1.1)."""
+    if kind == "uri":
+        return ("uri", value)
+    if kind == "bnode":
+        return ("bnode", value)
+    return ("literal", value, None if lang else (datatype or XSD_STRING), lang or None)
+
+
+def _read_all(client: Client, query: str, expected: int | None) -> list[dict[str, Any]]:
+    """Read a whole result in one response when its rows match the count, else page to the end.
+
+    Paging sorts the whole result for every page (a local target of 45,000 terms: about 350 s);
+    a local QLever index answers in one response.
+    """
+    rows = client._select(query)
+    if expected is None or len(rows) != expected:
+        rows = client._select(query, exhaustive=True)
+    return rows
+
+
+def _read_target(
+    link: Link,
+    target: Client,
+    keys: Iterable[str],
+    replacements: Mapping[str, str],
+    *,
+    in_target_class: bool = False,
+) -> dict[str, list[tuple[str, str]]] | None:
+    """Match identifiers against every term of the target, read once, as _lookup does per spelling.
+
+    Return None when the target has more than TARGET_READ_LIMIT distinct terms.
+    The spellings of an identifier are tried in their order, so the first match is fixed.
+    """
+    from rdflib import Literal, URIRef
+
+    from rdfsolve.client.identify import spellings
+
+    if link.kind == "join":
+        pattern = f"?t a {URIRef(link.target_class or '').n3()} . BIND(?t AS ?x)"
+    else:
+        pattern = f"?x {URIRef(link.target_property or '').n3()} ?t ."
+        if in_target_class and link.target_class:
+            pattern += f" ?x a {URIRef(link.target_class).n3()} ."
+    # Only the terms are read: verify() keeps the matched term, and a blank node (a subject, or a
+    # value) cannot be paged and equals no spelling of an identifier.
+    scoped = target._scope(pattern) + " FILTER(!isBlank(?t))"
+    counted = target._select(f"SELECT (COUNT(DISTINCT ?t) AS ?n) WHERE {{ {scoped} }}")
+    if not counted or int(counted[0]["n"]["value"]) > TARGET_READ_LIMIT:
+        return None
+    rows = _read_all(
+        target, f"SELECT DISTINCT ?t WHERE {{ {scoped} }}", int(counted[0]["n"]["value"])
+    )
+    held = {
+        _term_key(r["t"]["type"], r["t"]["value"], r["t"].get("datatype"), r["t"].get("xml:lang"))
+        for r in rows
+    }
+    found: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for key in keys:
+        for term in spellings(replacements.get(key, key)):
+            if link.kind == "join" and not isinstance(term, URIRef):
+                continue
+            if isinstance(term, Literal):
+                datatype = str(term.datatype) if term.datatype else None
+                identity = _term_key("literal", str(term), datatype, term.language)
+            else:
+                identity = _term_key("uri", str(term))
+            if identity in held:
+                found[key].append((str(term), str(term)))
+    return {key: matches for key, matches in found.items() if matches}
+
+
 def verify(
     link: Link,
     source: Client,
@@ -253,6 +332,7 @@ def verify(
     *,
     sample: int | None = 50,
     replacements: Mapping[str, str] | None = None,
+    read_target: bool = False,
 ) -> LinkEvidence:
     """Look up up to *sample* values of the link's source property in the target.
 
@@ -262,7 +342,8 @@ def verify(
     A join looks for the identifiers as subjects of the target class; a shared reference
     looks for them as values of the target property. Every spelling of an identifier is tried.
     An identifier in *replacements* (Bioregistry CURIEs, secondary to primary) is looked up
-    by its replacement.
+    by its replacement. With *read_target* (a local index), the terms of the target are read
+    once and matched in Python, with the term equality of the lookup (_read_target).
     """
     replacements = replacements or {}
     from rdflib import URIRef
@@ -273,7 +354,9 @@ def verify(
     body = source._scope(f"?s a {_iri(link.source_class)} ; {_iri(link.property)} ?v .")
     population: int | None
     if sample is None:
-        rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }}", exhaustive=True)
+        counted = source._select(f"SELECT (COUNT(DISTINCT ?v) AS ?n) WHERE {{ {body} }}")
+        expected = int(counted[0]["n"]["value"]) if counted else None
+        rows = _read_all(source, f"SELECT DISTINCT ?v WHERE {{ {body} }}", expected)
         population = len(rows)
     else:
         rows = source._select(f"SELECT DISTINCT ?v WHERE {{ {body} }} LIMIT {sample}")
@@ -284,9 +367,10 @@ def verify(
         parsed = _local(row["v"]["value"])
         if parsed and parsed[0] == link.identifier_type:
             keys[f"{parsed[0]}:{parsed[1]}"] = row["v"]["value"]
-    found: dict[str, str] = {
-        key: matches[0][0] for key, matches in _lookup(link, target, keys, replacements).items()
-    }
+    matched = _read_target(link, target, keys, replacements) if read_target else None
+    if matched is None:
+        matched = _lookup(link, target, keys, replacements)
+    found: dict[str, str] = {key: matches[0][0] for key, matches in matched.items()}
     forms: dict[str, int] = defaultdict(int)
     for key, term in found.items():
         local = replacements.get(key, key).split(":", 1)[1]
