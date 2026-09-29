@@ -19,6 +19,7 @@ DATA = """
 def census(monkeypatch, refuse):
     """Mine DATA with the per-profile census; *refuse* decides which census queries fail."""
     monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", 1)
     with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
         select = miner.helper.select
 
@@ -96,6 +97,4 @@ def test_the_census_counts_with_filters():
     assert len(local) == 2, "A local census counts no coverage; discovery finds the rest"
     untested = structural_strategy._census_queries(None, [], "false", False, "urn:p")
     assert not any("FILTER(!false)" in q or "FILTER(false)" in q for q in untested), (
-        "A property without typed profiles has only uncovered edges; Rhea answers COUNT(*)"
-        " with FILTER(false) with no row"
-    )
+        "Without typed profiles every edge is uncovered; Rhea answers FILTER(false) with no row")

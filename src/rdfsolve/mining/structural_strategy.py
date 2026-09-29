@@ -11,6 +11,7 @@ from typing import Any
 
 from rdflib import Literal, URIRef
 
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
@@ -134,6 +135,18 @@ def _select(
 
 # Triples of one property in one census batch, when the census of the property is refused.
 CENSUS_BATCH_TRIPLES = 20_000_000
+# Fewest triples per object for a census in batches of objects: with fewer, a batch names about
+# as many objects as it has triples (SIBiLS pattern#contains: one triple per object).
+CENSUS_MIN_TRIPLES_PER_OBJECT = 10
+
+
+class CensusRefusedError(Exception):
+    """The census of a property was refused and cannot be split into batches of objects."""
+
+    def __init__(self, triples: int | None, reason: str) -> None:
+        """Keep the triple count of the property, when it is known."""
+        super().__init__(reason)
+        self.triples = triples
 
 
 def _census_queries(
@@ -205,11 +218,19 @@ def _census(
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
     logger.info("Census: counting %d properties one at a time", len(predicates))
     counts = Counter[str]()
-    per_property: dict[str, dict[str, int]] = {}
+    per_property: dict[str, dict[str, Any]] = {}
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
         own = [key for key in keys if key[1] == predicate]
-        found = _property_census(context, graph, named, own, local, predicate, entry)
+        try:
+            found = _property_census(context, graph, named, own, local, predicate, entry)
+        except CensusRefusedError as refused:
+            logger.warning("Census: %s not counted: %s", predicate, refused)
+            failure = QueryFailure("timeout", f"{predicate}: {refused}", "structural/coverage")
+            context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+            per_property[predicate] = {"triples": refused.triples, "refused": str(refused)}
+            counts.update(triples=refused.triples or 0, uncheckedTriples=refused.triples or 0)
+            continue
         per_property[predicate] = {
             name: found[name] for name in ("triples", "untypedTriples", "uncoveredTriples")
         }
@@ -257,6 +278,21 @@ def _property_census(
         return count("")
     except EndpointTimeoutError:
         pass
+    size_query = (
+        f"SELECT (COUNT(*) AS ?triples) (COUNT(DISTINCT ?o) AS ?objects) {_dataset(graph, named)} "
+        f"WHERE {{ ?s <{predicate}> ?o }}"
+    )
+    try:
+        (row,) = _select(context, size_query, "structural/objects", paged=False)
+    except EndpointTimeoutError as error:
+        raise CensusRefusedError(None, f"census and size refused: {error}") from error
+    triples, distinct = int(row["triples"]["value"]), int(row["objects"]["value"])
+    if triples < CENSUS_MIN_TRIPLES_PER_OBJECT * distinct:
+        raise CensusRefusedError(
+            triples,
+            f"census refused; {triples} triples over {distinct} objects are too few per object"
+            " for batches of objects",
+        )
     listing = (
         f"SELECT ?o (COUNT(*) AS ?n) {_dataset(graph, named)} "
         f"WHERE {{ ?s <{predicate}> ?o }} GROUP BY ?o"
@@ -356,18 +392,23 @@ class StructuralStrategy(MiningStrategy):
                 if local:
                     entry.update(triple_count=total, untyped_subject_triples=untyped)
                     continue
-                missing = counts["uncoveredTriples"]
-                covered = total - missing
+                missing, unchecked = counts["uncoveredTriples"], counts["uncheckedTriples"]
+                covered = total - missing - unchecked
                 entry.update(
                     triple_count=total,
                     untyped_subject_triples=untyped,
                     excluded_subject_triples=0,
                     covered_triples=covered,
                     uncovered_triples=missing,
+                    unchecked_triples=unchecked,
                     type_graph_uris=named,
                     subject_selection="uncovered",
-                    state="needed" if missing else "not_needed",
+                    state="needed" if missing else ("partial" if unchecked else "not_needed"),
                 )
+                if unchecked:
+                    entry["census_refused"] = sorted(
+                        prop for prop, n in entry["census_properties"].items() if "refused" in n
+                    )
             except Exception:
                 entry["state"] = "failed"
                 raise
@@ -446,7 +487,7 @@ class StructuralStrategy(MiningStrategy):
             # the census and the recount (see _census).
             rows = []
             for predicate, n in sorted(entry.get("census_properties", {}).items()):
-                if not n["uncoveredTriples"]:
+                if not n.get("uncoveredTriples"):
                     continue
                 own = [key for key in keys if key[1] == predicate]
                 residual = f"VALUES ?p {{ <{predicate}> }} " + uncovered_filter(
@@ -510,5 +551,7 @@ class StructuralStrategy(MiningStrategy):
             raise ValueError("Structural patterns do not account for the uncovered edges")
         context.structural_patterns.extend(structural)
         entry.update(
-            state="complete", pattern_count=len(structural), representation="exact_property_sets"
+            state="partial" if entry.get("unchecked_triples") else "complete",
+            pattern_count=len(structural),
+            representation="exact_property_sets",
         )
