@@ -42,6 +42,10 @@ CENSUS_FILE = "literal-datatypes.json"
 # The datatype that QLever reports, and the source datatypes that it stands for.
 REPORTED = {XSD + "int": INTEGERS, XSD + "double": DECIMALS}
 NUMERIC = INTEGERS | DECIMALS
+# The suffixes of RDF files, also with .gz.
+RDF_SUFFIXES = (".ttl", ".nt", ".nq", ".trig", ".owl", ".rdf")
+# A member of a zip archive is written ARCHIVE.zip!MEMBER.
+MEMBER = ".zip!"
 
 
 def _format(name: str) -> Any:
@@ -59,6 +63,60 @@ def input_format(path: Path) -> str:
     return suffixes[-1] if suffixes else ""
 
 
+def zip_members(archive: Path) -> list[Path]:
+    """Return the RDF members of a zip archive, written ARCHIVE.zip!MEMBER, in name order."""
+    import zipfile
+
+    with zipfile.ZipFile(archive) as opened:
+        names = sorted(
+            info.filename
+            for info in opened.infolist()
+            if not info.is_dir()
+            and any(
+                info.filename.endswith(s) or info.filename.endswith(s + ".gz") for s in RDF_SUFFIXES
+            )
+        )
+    return [Path(f"{archive}!{name}") for name in names]
+
+
+def _open(path: Path, stack: Any) -> IO[bytes]:
+    """Open a file or a member of a zip archive, and decompress it when its name ends in .gz."""
+    import zipfile
+
+    text = str(path)
+    # The ExitStack of the caller closes every opened file.
+    if MEMBER in text:
+        archive, member = text.split(MEMBER, 1)
+        opened = stack.enter_context(zipfile.ZipFile(archive + ".zip"))
+        raw = stack.enter_context(opened.open(member))
+    else:
+        raw = stack.enter_context(open(path, "rb"))  # noqa: SIM115
+    if text.endswith(".gz"):
+        raw = stack.enter_context(gzip.open(raw, "rb"))  # noqa: SIM115
+    return cast(IO[bytes], raw)
+
+
+def _name(path: Path) -> str:
+    """Return the file name, or ARCHIVE.zip!MEMBER for a member of a zip archive."""
+    text = str(path)
+    if MEMBER not in text:
+        return Path(path).name
+    archive, member = text.split(MEMBER, 1)
+    return Path(archive).name + MEMBER + member
+
+
+def _size(path: Path) -> int:
+    """Return the size of a file, or the uncompressed size of a member of a zip archive."""
+    import zipfile
+
+    text = str(path)
+    if MEMBER not in text:
+        return Path(path).stat().st_size
+    archive, member = text.split(MEMBER, 1)
+    with zipfile.ZipFile(archive + ".zip") as opened:
+        return opened.getinfo(member).file_size
+
+
 def merge_counts(parts: Iterable[dict[str, dict[str, int]]]) -> dict[str, dict[str, int]]:
     """Add the counts of several files."""
     total: dict[str, Counter[str]] = defaultdict(Counter)
@@ -71,15 +129,18 @@ def merge_counts(parts: Iterable[dict[str, dict[str, int]]]) -> dict[str, dict[s
 def count_literal_datatypes(files: Iterable[tuple[Path, str]]) -> dict[str, dict[str, int]]:
     """Count the numeric literals of each property by datatype in the source files.
 
-    *files* are (path, QLever input format) pairs; a path may be gzip-compressed. The parser is
-    lenient, as QLever is (AOP-Wiki has IRIs without a scheme).
+    *files* are (path, QLever input format) pairs; a path may be gzip-compressed or a member of a
+    zip archive (zip_members). The parser is lenient, as QLever is (AOP-Wiki has IRIs without a
+    scheme).
     """
+    from contextlib import ExitStack
+
     from pyoxigraph import Literal, parse
 
     counts: dict[str, Counter[str]] = defaultdict(Counter)
     for path, name in files:
-        with gzip.open(path, "rb") if str(path).endswith(".gz") else open(path, "rb") as raw:
-            stream = cast(IO[bytes], raw)
+        with ExitStack() as stack:
+            stream = _open(path, stack)
             for statement in parse(stream, _format(name), lenient=True):
                 value = statement.object
                 if isinstance(value, Literal) and value.datatype.value in NUMERIC:
@@ -95,7 +156,7 @@ def write_census(
     fetched: str | None = None,
 ) -> None:
     """Write the counts with the names and sizes of the source files and when they were fetched."""
-    files = [{"file": Path(s).name, "bytes": Path(s).stat().st_size} for s in sources]
+    files = [{"file": _name(Path(s)), "bytes": _size(Path(s))} for s in sources]
     record = {"sources": files, "fetched": fetched, "properties": counts}
     path.write_text(json.dumps(record, indent=1, sort_keys=True))
 

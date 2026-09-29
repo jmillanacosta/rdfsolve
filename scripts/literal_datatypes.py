@@ -7,7 +7,8 @@ INPUT_FILES are counted, the census is written beside the index, and the fetched
 deleted. A fetch can give a newer release than the index; the census records its date.
 
 A source without a GET_DATA_CMD (built from the download_* URLs of its registry entry, such as
-the OWL files of the Disease Ontology) is fetched from those URLs, given with --sources.
+the OWL files of the Disease Ontology) is fetched from those URLs, given with --sources; the
+members of a zip archive are read from it (Bgee: rdf_easybgee.zip, 28.5 GB).
 
 Run: python scripts/literal_datatypes.py WORKDIR [WORKDIR ...] [--sources SOURCES_YAML] [--processes N]
 """
@@ -23,13 +24,13 @@ from pathlib import Path
 
 from rdfsolve.qlever.datatypes import (
     CENSUS_FILE,
+    RDF_SUFFIXES as SUFFIXES,
     count_literal_datatypes,
     input_format,
     merge_counts,
     write_census,
+    zip_members,
 )
-
-SUFFIXES = (".ttl", ".nt", ".nq", ".trig", ".owl", ".rdf")
 
 
 def inputs(workdir: Path, pattern: str) -> list[Path]:
@@ -78,7 +79,8 @@ def main() -> None:
                     name = Path(urllib.parse.urlparse(url).path).name or f"input{number}.ttl"
                     target = workdir / "rdf" / f"census-{number}-{name}"
                     subprocess.run(["curl", "-sSfL", "--retry", "3", "-o", str(target), url], check=True)
-                    files.append(target)
+                    # A zip archive (Bgee) is read member by member, without extraction.
+                    files.extend(zip_members(target) if name.endswith(".zip") else [target])
             with ProcessPoolExecutor(args.processes) as pool:
                 parts = pool.map(count_literal_datatypes, [[(p, input_format(p))] for p in files])
                 counts = merge_counts(parts)
