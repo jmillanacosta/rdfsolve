@@ -39,5 +39,7 @@ def listing(monkeypatch, engine):
 
 
 def test_the_properties_of_every_member_are_listed(monkeypatch):
-    found, state, _ = listing(monkeypatch, "virtuoso")
-    assert found == {"urn:p1", "urn:p2", "urn:p3"} and state == "complete"
+    for engine in ("virtuoso", "qlever"):
+        found, state, sent = listing(monkeypatch, engine)
+        assert found == {"urn:p1", "urn:p2", "urn:p3"} and state == "complete", engine
+        assert any("ql:has-predicate" in q for q in sent) == (engine == "qlever")

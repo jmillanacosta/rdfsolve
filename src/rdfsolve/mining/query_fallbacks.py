@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.query_builders import (
     _build_batched_typed_object_query,
+    _build_properties_for_class_patterns_query,
     _build_properties_for_class_query,
     _build_typed_object_for_class_property_query,
 )
@@ -254,6 +255,9 @@ def query_windows(
     return QueryOutcome(_deduplicate(rows), "partial", [*failed.failures, note])
 
 
+RDF_TYPE_IRI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
+
 def enumerate_properties_for_class(
     class_uri: str,
     graph_uris: list[str] | None,
@@ -265,8 +269,22 @@ def enumerate_properties_for_class(
     """Return property bindings and the completion state of their enumeration.
 
     A timeout is reported, not paged: the grouped result is small, so every page
-    would repeat the whole join.
+    would repeat the whole join. On QLever the property sets of the subjects are read first
+    (PubChem run 6: the listing of pubchem:Compound by its triples failed three times).
     """
+    if str(getattr(helper, "sparql_engine", "")).lower() == "qlever":
+        sets = select_outcome(
+            _build_properties_for_class_patterns_query(class_uri, type_context_graph_uris),
+            f"{purpose}/properties/sets",
+            helper,
+            [class_uri],
+            graph_uris,
+        )
+        # Every subject typed by the class has rdf:type in its property set: a list without it
+        # means that the property sets were not read (an engine without them answers no row).
+        listed = {row.get("p", {}).get("value") for row in sets.rows}
+        if sets.state == "complete" and RDF_TYPE_IRI in listed:
+            return sets
     query = _build_properties_for_class_query(
         class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris
     )
