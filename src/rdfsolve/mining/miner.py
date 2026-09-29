@@ -494,8 +494,9 @@ class SchemaMiner:
 
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int
-    ) -> tuple[list[SchemaPattern], list[SchemaPattern]]:
+    ) -> tuple[list[SchemaPattern], list[SchemaPattern] | None]:
         """Retain exact term probes and group typed patterns by ancestry."""
+        from rdfsolve._outcomes import QueryFailure, QueryOutcome
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
             fetch_superclasses,
@@ -503,21 +504,35 @@ class SchemaMiner:
             probe_term_patterns,
             subsume_patterns,
         )
+        from rdfsolve.sparql_helper import EndpointError
 
         phase = self._report.start_phase("ontology-terms")
         try:
-            probed = probe_term_patterns(
-                self._helper,
-                self.graph_uris,
-                self._collect_bindings,
-                self.chunk_size,
-                ontology_graph_uris=self._ontology_graph_uris,
-                type_context_graph_uris=self.type_context_graph_uris,
-            )
+            # A refused probe leaves the term patterns not probed; the typed patterns stay.
+            probed: list[SchemaPattern] | None
+            try:
+                probed = probe_term_patterns(
+                    self._helper,
+                    self.graph_uris,
+                    self._collect_bindings,
+                    self.chunk_size,
+                    ontology_graph_uris=self._ontology_graph_uris,
+                    type_context_graph_uris=self.type_context_graph_uris,
+                    typed=patterns,
+                    classes={str(c): c for batch in self._class_batches or [] for c in batch},
+                )
+            except EndpointError as error:
+                failure = QueryFailure("timeout", str(error)[:500], "ontology-terms")
+                self._report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+                self._report.report.config["ontology_term_probe"] = {
+                    "state": "not_probed",
+                    "reason": str(error)[:500],
+                }
+                probed = None
             classes = pattern_classes(patterns)
             summary: dict[str, Any] = {
                 "budget": budget,
-                "probed_patterns": len(probed),
+                "probed_patterns": len(probed) if probed is not None else None,
                 "classes_before": len(classes),
                 "classes_after": len(classes),
                 "subsumed": False,

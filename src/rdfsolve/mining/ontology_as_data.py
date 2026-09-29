@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from rdfsolve.mining.query_builders import _context_pattern, _graph_scope, _type_pattern
+from rdfsolve.mining.query_builders import _bound, _context_pattern, _graph_scope, _type_pattern
 from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -91,22 +91,70 @@ GROUP BY ?sc ?p ?t{graph_var}
 ORDER BY ?sc ?p ?t{graph_var}"""
 
 
+def build_term_object_pair_query(
+    class_uri: str,
+    property_uri: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count the ontology terms that are values of one property of one class.
+
+    The pairs come from the typed patterns whose object class is owl:Class or rdfs:Class, so
+    that only the edges of such pairs are read. A group of ontology terms is read through its
+    members.
+    """
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, _, _ = _bound([class_uri])
+    graph_var = " ?_g" if g_open else ""
+    return f"""\
+SELECT ?t{graph_var} (COUNT(*) AS ?n)
+{dataset}
+WHERE {{
+  {values} VALUES ?p {{ <{property_uri}> }}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s ?p ?t . {g_close}
+  {_term_filter("?t", None)}
+  FILTER(isIRI(?s) && isIRI(?t))
+  FILTER NOT EXISTS {{ ?s a <{OWL_CLASS}> }}
+  FILTER NOT EXISTS {{ ?s a <{RDFS_CLASS}> }}
+  {_data_predicate(None)}
+}}
+GROUP BY ?t{graph_var}"""
+
+
+def _is_data_predicate(iri: str) -> bool:
+    """Return False for a predicate of ontology structure or annotation."""
+    return not iri.startswith(_NON_DATA_PREDICATE_NAMESPACES)
+
+
 def build_term_subject_query(
     graph_uris: list[str] | None,
     ontology_graph_uris: list[str] | None = None,
     type_context_graph_uris: list[str] | None = None,
+    *,
+    terms_first: bool = False,
 ) -> str:
-    """Ontology terms described with data properties, grouped per term and value kind."""
+    """Ontology terms described with data properties, grouped per term and value kind.
+
+    With *terms_first* (QLever) the set of terms is read before their edges; the filter form
+    reads every triple of the graph.
+    """
     dataset, g_open, g_close = _graph_scope(
         graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
     )
     graph_var = " ?_g" if g_open else ""
+    terms = f"{{ {{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }} }}"
+    edge = (
+        f"{{ SELECT DISTINCT ?t WHERE {_context_pattern(terms, ontology_graph_uris)} }}\n"
+        f"  {g_open} ?t ?p ?o . {g_close}"
+        if terms_first
+        else f"{g_open} ?t ?p ?o . {g_close}\n  {_term_filter('?t', ontology_graph_uris)}"
+    )
     return f"""\
 SELECT ?t ?p ?kind ?oc ?dt ?object_binding{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
-  {g_open} ?t ?p ?o . {g_close}
-  {_term_filter("?t", ontology_graph_uris)}
+  {edge}
   FILTER(isIRI(?t))
   {_data_predicate(ontology_graph_uris)}
   OPTIONAL {{
@@ -144,10 +192,16 @@ def probe_term_patterns(
     chunk_size: int,
     ontology_graph_uris: list[str] | None = None,
     type_context_graph_uris: list[str] | None = None,
+    typed: Iterable[SchemaPattern] | None = None,
+    classes: Mapping[str, str] | None = None,
 ) -> list[SchemaPattern]:
     """Return every observed pattern that uses an ontology term as value or subject.
 
-    Results are paged to completion. Each pattern carries its triple count.
+    Each pattern carries its triple count. With the *typed* patterns, and no separate ontology
+    graphs, the terms that are values are read only for the (class, property) pairs whose
+    object class is owl:Class or rdfs:Class (Bgee: none; the filter over every triple asked for
+    54 GB); *classes* gives the class objects (groups of ontology terms) by name. Results are
+    paged to completion.
     """
     patterns: dict[tuple[str, str, str, str | None, str, str], SchemaPattern] = {}
 
@@ -183,27 +237,54 @@ def probe_term_patterns(
         )
         previous.graphs = {**(previous.graphs or {}), **(pattern.graphs or {})} or None
 
-    rows = collect(
-        SparqlHelper.prepare_paginated_query(
-            build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
-        ),
-        "ontology-terms/object",
-        chunk_size,
-    )
-    for row in rows:
-        sc = row.get("sc", {}).get("value")
-        p = row.get("p", {}).get("value")
-        t = row.get("t", {}).get("value")
-        if sc and p and t:
-            add(
-                SchemaPattern(
-                    subject_class=sc, property_uri=p, object_class=t, object_binding="term"
-                ),
-                row,
+    if typed is not None and not ontology_graph_uris:
+        pairs = sorted(
+            {
+                (p.subject_class, p.property_uri)
+                for p in typed
+                if p.object_class in (OWL_CLASS, RDFS_CLASS) and _is_data_predicate(p.property_uri)
+            }
+        )
+        for sc, p in pairs:
+            query = build_term_object_pair_query(
+                (classes or {}).get(sc, sc), p, graph_uris, type_context_graph_uris
             )
+            for row in collect(
+                SparqlHelper.prepare_paginated_query(query), "ontology-terms/object", chunk_size
+            ):
+                t = row.get("t", {}).get("value")
+                if t:
+                    add(
+                        SchemaPattern(
+                            subject_class=sc, property_uri=p, object_class=t, object_binding="term"
+                        ),
+                        row,
+                    )
+    else:
+        rows = collect(
+            SparqlHelper.prepare_paginated_query(
+                build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
+            ),
+            "ontology-terms/object",
+            chunk_size,
+        )
+        for row in rows:
+            sc = row.get("sc", {}).get("value")
+            p = row.get("p", {}).get("value")
+            t = row.get("t", {}).get("value")
+            if sc and p and t:
+                add(
+                    SchemaPattern(
+                        subject_class=sc, property_uri=p, object_class=t, object_binding="term"
+                    ),
+                    row,
+                )
+    terms_first = str(getattr(helper, "sparql_engine", "")).lower() == "qlever"
     rows = collect(
         SparqlHelper.prepare_paginated_query(
-            build_term_subject_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
+            build_term_subject_query(
+                graph_uris, ontology_graph_uris, type_context_graph_uris, terms_first=terms_first
+            )
         ),
         "ontology-terms/subject",
         chunk_size,
