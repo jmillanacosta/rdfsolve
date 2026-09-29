@@ -140,6 +140,12 @@ class RemoteMiningStage(Stage):
             from rdfsolve.evidence.declared_sources import empirical_graph_scope
 
             empirical_graphs = empirical_graph_scope(source)
+            # The class batches of an earlier run are reused, as in a local run.
+            previous = (
+                self.config.resume_from / source.name / f"{source.name}{suffix}_report.checkpoint.jsonl"
+                if self.config.resume_from
+                else None
+            )
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
                 get_graphs_from_store=use_graph_store,
@@ -166,6 +172,7 @@ class RemoteMiningStage(Stage):
                 max_response_bytes=self.config.max_response_bytes,
                 excluded_graph_prefixes=self.config.exclude_graph_prefixes,
                 report_path=str(report_path),
+                resume_checkpoint=previous if previous and previous.is_file() else None,
             )
 
             if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
