@@ -334,15 +334,24 @@ class SchemaView:
         """Find the shortest chains of properties from one class to another.
 
         Routes with the same properties and other classes on the middle nodes are
-        given as one group.
+        given as one group. Classes with the same members are one node, the shown class.
         """
+        source, target = self.canonical(source), self.canonical(target)
         edges: dict[str, list[Step]] = defaultdict(list)
+        seen_steps: set[tuple[str, str, str, bool]] = set()
         for pattern in self.schema.patterns:
             if pattern.object_class in self.classes and pattern.property_uri != RDF_TYPE:
-                a, b, count = pattern.subject_class, pattern.object_class, pattern.count or 0
-                edges[a].append((a, pattern.property_uri, b, True, count))
-                if a != b:
-                    edges[b].append((b, pattern.property_uri, a, False, count))
+                a, b = self.canonical(pattern.subject_class), self.canonical(pattern.object_class)
+                count = pattern.count or 0
+                for here, there, forward in ((a, b, True), (b, a, False)):
+                    if (forward or a != b) and (
+                        here,
+                        pattern.property_uri,
+                        there,
+                        forward,
+                    ) not in seen_steps:
+                        seen_steps.add((here, pattern.property_uri, there, forward))
+                        edges[here].append((here, pattern.property_uri, there, forward, count))
         for steps in edges.values():
             steps.sort(key=lambda step: -step[4])
         groups: dict[tuple[tuple[str, bool], ...], list[list[Step]]] = {}

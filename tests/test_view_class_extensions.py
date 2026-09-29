@@ -41,3 +41,10 @@ def test_classes_with_the_same_members_are_shown_once():
     anatomy = view().card(PART)
     assert "All instances are also instances of: bfo:0000004" in anatomy
     assert "Classes whose instances are all instances of it: <urn:x:Anatomy>" in view().card(WHOLE)
+
+
+def test_routes_go_through_the_shown_class():
+    groups = view().routes(CODE, PART)
+    assert len(groups) == 1 and len(groups[0]) == 1, "One route, not one for each name"
+    (step,) = groups[0][0]
+    assert (step[0], step[1], step[2]) == (GENE, "urn:x:in", PART)
