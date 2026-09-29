@@ -110,7 +110,7 @@ class TwoPhaseStrategy(MiningStrategy):
 
         context.report.finish_phase(p1, items=len(classes))
         classes = self._group_terms(classes, context)
-        context.class_batches = self._plan_batches(classes, context)
+        context.class_batches = self._plan_resumed(classes, context)
 
         # Phase 2 - batched per-class pattern discovery
         p2 = context.report.start_phase("per-class-patterns")
@@ -213,6 +213,21 @@ class TwoPhaseStrategy(MiningStrategy):
         logger.info("Grouped %d classes into %d before mining", len(classes), len(grouped))
         return grouped
 
+    def _plan_resumed(self, classes: list[str], context: MiningContext) -> list[list[str]]:
+        """Keep the completed batches of an earlier run and plan only the other classes.
+
+        A pattern row belongs to one subject class, so a completed batch is reused when all its
+        classes are classes of this run, also under another plan (PubChem run 6 was planned in
+        fixed batches after its weight count was refused).
+        """
+        by_name = {str(c): c for c in classes}
+        kept = [
+            [by_name[c] for c in batch] for batch in context.resumed if set(batch) <= set(by_name)
+        ]
+        done = {str(c) for batch in kept for c in batch}
+        rest = [c for c in classes if str(c) not in done]
+        return kept + self._plan_batches(rest, context) if rest else kept
+
     def _plan_batches(self, classes: list[str], context: MiningContext) -> list[list[str]]:
         """Use fixed batches, or instance-count batches when there are many classes."""
         size = context.class_batch_size
@@ -234,7 +249,9 @@ class TwoPhaseStrategy(MiningStrategy):
         for state, query in counts.items():
             t0 = time.monotonic()
             try:
-                rows = context.collect_bindings(query, "two-phase/class-weights", context.chunk_size)
+                rows = context.collect_bindings(
+                    query, "two-phase/class-weights", context.chunk_size
+                )
             except Exception as error:
                 context.report.record_query(
                     "two-phase/class-weights", time.monotonic() - t0, success=False
