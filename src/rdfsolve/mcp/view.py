@@ -56,6 +56,10 @@ def _local(iri: str) -> str:
     return re.split(r"[#/]", iri.rstrip("/#"))[-1]
 
 
+# The local name of an ontology code, such as SO_0000704 or NCIT_C14250.
+_CODE = re.compile(r"[A-Za-z]+_[A-Za-z]?\d+|\d+")
+
+
 class SchemaView:
     """The classes, properties, counts and example values of one mined schema."""
 
@@ -72,6 +76,18 @@ class SchemaView:
         )
         self.counts = dict(schema.about.class_entity_counts or {})
         self.classes = set(schema.get_classes())
+        # Classes with the same members are shown as one, named by a readable name first
+        # (orth:Gene before SO_0000704); contained_in gives the nearest containing classes.
+        extensions = schema.class_extensions
+        self.names: dict[str, list[str]] = {}
+        self.shown: dict[str, str] = {}
+        for group in extensions.same_members if extensions else []:
+            first, *rest = sorted(
+                group, key=lambda c: (bool(_CODE.fullmatch(_local(c))), self.curie(c))
+            )
+            self.names[first] = rest
+            self.shown.update(dict.fromkeys(group, first))
+        self.within = dict(extensions.contained_in) if extensions else {}
         self.properties = set(schema.get_properties())
         self.labels: dict[str, str] = {}
         self.outgoing: dict[str, list[SchemaPattern]] = defaultdict(list)
@@ -97,6 +113,15 @@ class SchemaView:
             for example in schema.enrichment.examples:
                 key = (example.subject_class, example.property_uri)
                 self.examples.setdefault(key, example.value)
+
+    def canonical(self, iri: str) -> str:
+        """Return the class shown for a class with the same members as others."""
+        return self.shown.get(iri, iri)
+
+    def _group(self, iri: str) -> list[str]:
+        """Return the shown class and its other names."""
+        shown = self.canonical(iri)
+        return [shown, *self.names.get(shown, [])]
 
     def curie(self, iri: str) -> str:
         """Write an IRI as a CURIE when a prefix is known, else in angle brackets."""
@@ -169,10 +194,24 @@ class SchemaView:
             f"Source: {about.dataset_name or 'RDF data'}"
             + (f" ({about.description})" if about.description else "")
         ]
-        classes = sorted(self.classes, key=lambda c: (-self.counts.get(c, 0), self.curie(c)))
-        lines.append(f"Classes ({len(classes)}), with number of instances:")
+        classes = sorted(
+            {self.canonical(c) for c in self.classes},
+            key=lambda c: (-self.counts.get(c, 0), self.curie(c)),
+        )
+        shown = f"{len(classes)} classes ({len(self.classes)} names)"
+        lines.append(
+            f"Classes: {shown}, with number of instances:"
+            if len(classes) < len(self.classes)
+            else f"Classes ({len(classes)}), with number of instances:"
+        )
         lines += [
-            f"  {self.named(c)}" + (f" {self.counts[c]}" if c in self.counts else "")
+            f"  {self.named(c)}"
+            + (f" {self.counts[c]}" if c in self.counts else "")
+            + (
+                f" (same members: {', '.join(self.curie(o) for o in self.names[c])})"
+                if c in self.names
+                else ""
+            )
             for c in classes[:limit]
         ]
         if len(classes) > limit:
@@ -188,19 +227,39 @@ class SchemaView:
         elif pattern.object_class == "Resource":
             kind = "IRI with no class"
         elif "://" in pattern.object_class:
-            kind = self.named(pattern.object_class)
+            kind = self.named(self.canonical(pattern.object_class))
         else:
             kind = pattern.object_class.lower()
         return kind + (f" [{pattern.count}]" if pattern.count is not None else "")
 
     def card(self, iri: str, limit: int = 30) -> str:
         """Describe one class: its properties, value types, counts and links to it."""
+        iri = self.canonical(iri)
         count = self.counts.get(iri)
         lines = [self.named(iri) + (f", instances: {count}" if count is not None else "")]
+        group = self._group(iri)
+        if len(group) > 1:
+            lines.append("  Same members: " + ", ".join(self.curie(o) for o in group[1:]))
+        outer = sorted({self.canonical(o) for o in self.within.get(iri, [])}, key=self.curie)
+        if outer:
+            lines.append(
+                "  All instances are also instances of: " + ", ".join(map(self.curie, outer))
+            )
+        inner = sorted(
+            {self.canonical(c) for c, outs in self.within.items() if set(outs) & set(group)},
+            key=self.curie,
+        )
+        if inner:
+            lines.append(
+                "  Classes whose instances are all instances of it: "
+                + ", ".join(map(self.curie, inner))
+            )
         groups: dict[str, list[SchemaPattern]] = defaultdict(list)
         for pattern in self.outgoing.get(iri, []):
             if pattern.property_uri != RDF_TYPE:
-                groups[pattern.property_uri].append(pattern)
+                values = [self.canonical(p.object_class) for p in groups[pattern.property_uri]]
+                if self.canonical(pattern.object_class) not in values:
+                    groups[pattern.property_uri].append(pattern)
         ranked = sorted(groups.items(), key=lambda item: -max(p.count or 0 for p in item[1]))
         if ranked:
             lines.append(f"  Properties (?x a {self.curie(iri)} ; property value):")
@@ -218,11 +277,19 @@ class SchemaView:
             )
         if len(ranked) > limit:
             lines.append(f"    … {len(ranked) - limit} more properties.")
-        links = sorted(self.incoming.get(iri, []), key=lambda p: -(p.count or 0))
+        seen: set[tuple[str, str]] = set()
+        links = []
+        for p in sorted(
+            (p for member in group for p in self.incoming.get(member, [])),
+            key=lambda p: -(p.count or 0),
+        ):
+            if (self.canonical(p.subject_class), p.property_uri) not in seen:
+                seen.add((self.canonical(p.subject_class), p.property_uri))
+                links.append(p)
         if links:
             lines.append(f"  Links to it (?y property ?x, with ?x a {self.curie(iri)}):")
         lines += [
-            f"    {self.curie(p.subject_class)} {self.curie(p.property_uri)}"
+            f"    {self.curie(self.canonical(p.subject_class))} {self.curie(p.property_uri)}"
             + (f" [{p.count}]" if p.count is not None else "")
             for p in links[:limit]
         ]
