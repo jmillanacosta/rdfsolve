@@ -215,10 +215,13 @@ def _patterns_census(
 def _patterns_discovery(
     context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
 ) -> list[dict[str, Any]]:
-    """Read the edges of untyped subjects with the property sets of their nodes, per property.
+    """Count the patterns of the edges of untyped subjects by the property sets of their nodes.
 
     The property sets come from ql:has-predicate, which reads one row per property of a node
-    instead of every triple of it. The rows have the form of _discovery_query with edges.
+    instead of every triple of it. The answer has one row for each pattern of a property, with
+    its triples, distinct subjects and distinct objects: one row for each edge, with the
+    property sets of both nodes, exceeded the response budget of 64 MiB for WikiPathways
+    gpml:hasDataNode (137,699 edges), and a query with GROUP_CONCAT is not paged.
     """
     rows: list[dict[str, Any]] = []
     for predicate, n in sorted(entry["census_properties"].items()):
@@ -227,8 +230,9 @@ def _patterns_discovery(
         prop = URIRef(predicate).n3()
         query = (
             QLEVER_PREFIX
-            + f"""SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang
-{_dataset(graph, named)} WHERE {{
+            + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
+  (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+{_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
   ?s {prop} ?o . {UNTYPED_SUBJECT}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
      WHERE {{ ?s {prop} ?_o . {UNTYPED_SUBJECT} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
@@ -241,7 +245,8 @@ def _patterns_discovery(
   BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
   BIND(DATATYPE(?o) AS ?dt)
   BIND(LANG(?o) AS ?lang)
-}}"""
+}} }} }}
+GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
         )
         rows += _select(context, query, "structural/discovery")
     return rows
@@ -649,7 +654,9 @@ class StructuralStrategy(MiningStrategy):
                 )
         if bulk:
             census = entry.get("census_properties", {})
-            found = Counter(row["p"]["value"] for row in rows)
+            found: Counter[str] = Counter()
+            for row in rows:  # A grouped row counts its edges (_patterns_discovery).
+                found[row["p"]["value"]] += int(row["n"]["value"]) if "n" in row else 1
             untyped = {p for p, n in found.items() if census.get(p, {}).get("untypedTriples") == n}
         candidates: dict[str, StructuralPattern] = {}
         bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -682,7 +689,21 @@ class StructuralStrategy(MiningStrategy):
         for key in sorted(candidates):
             pattern = candidates[key]
             pattern.witness_query, pattern.recount_query = structural_queries(pattern)
-            if bulk:
+            if bulk and "n" in bindings[key][0]:
+                # Rows of patterns (_patterns_discovery). Rows of one pattern with two spellings of
+                # a property set are recounted: their distinct objects do not add up.
+                group = bindings[key]
+                pattern.count = sum(int(row["n"]["value"]) for row in group)
+                if len(group) == 1:
+                    pattern.distinct_subjects = int(group[0]["subjects"]["value"])
+                    pattern.distinct_objects = int(group[0]["objects"]["value"])
+                else:
+                    (recount,) = _select(context, pattern.recount_query, "structural/count")
+                    pattern.count = int(recount["n"]["value"])
+                    pattern.distinct_subjects = int(recount["subjects"]["value"])
+                    pattern.distinct_objects = int(recount["objects"]["value"])
+                pattern.examples = _select(context, pattern.witness_query, "structural/witness")
+            elif bulk:
                 pairs = {
                     (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
                     for row in bindings[key]
