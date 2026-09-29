@@ -24,7 +24,7 @@ from rdfsolve.mining.query_builders import (
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
-from rdfsolve.sparql_helper import ResponseLimitError
+from rdfsolve.sparql_helper import EndpointTimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +267,10 @@ class TwoPhaseStrategy(MiningStrategy):
                 try:
                     result = context.helper.select(q, purpose="two-phase/classes")
                     class_bindings = result.get("results", {}).get("bindings", [])
-                except ResponseLimitError:
-                    logger.warning("Class listing exceeded the response limit; paging it")
+                except EndpointTimeoutError as error:
+                    # A response limit, a time limit, or an answer cut off at the time limit of
+                    # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
+                    logger.warning("Class listing refused (%s); paging it", error)
                     class_bindings = context.collect_bindings(
                         _build_class_discovery_query(
                             context.graph_uris, context.type_context_graph_uris
