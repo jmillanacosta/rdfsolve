@@ -107,7 +107,9 @@ def structural_queries(pattern: StructuralPattern) -> tuple[str, str]:
         )
     if pattern.datatype:
         clauses.append(f"FILTER(DATATYPE(?o) = <{pattern.datatype}>)")
-    if pattern.language is not None:
+    # A literal with a datatype other than rdf:langString has no language tag. Virtuoso answers
+    # 0 for DATATYPE(?o) = xsd:integer with LANG(?o) = "" (SIBiLS dc:extent; 771 for either).
+    if pattern.language is not None and (pattern.language or not pattern.datatype):
         clauses.append(f"FILTER(LANG(?o) = {Literal(pattern.language).n3()})")
     named = list(dict.fromkeys(pattern.type_graph_uris + pattern.object_type_graph_uris))
     body = f"{_dataset(pattern.graph_uri, named)} WHERE {{ {' '.join(clauses)} }}"
