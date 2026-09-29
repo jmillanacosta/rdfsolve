@@ -233,8 +233,18 @@ class ReportCollector:
 
     # I/O
 
-    def checkpoint(self, phase: str, classes: list[str], rows: list[dict[str, Any]]) -> None:
-        """Append one completed batch so an interrupted run keeps its evidence."""
+    def checkpoint(
+        self,
+        phase: str,
+        classes: list[str],
+        rows: list[dict[str, Any]],
+        state: str = "complete",
+    ) -> None:
+        """Append one finished batch so an interrupted run keeps its evidence.
+
+        *state* is partial when a query of the batch has an unresolved failure; a resumed run
+        mines such a batch again.
+        """
         self.flush()
         if self._checkpoint is None:
             return
@@ -242,6 +252,7 @@ class ReportCollector:
             "phase": phase,
             "classes": classes,
             "rows": rows,
+            "state": state,
             "at": datetime.now(timezone.utc).isoformat(),
         }
         with self._checkpoint.open("a", encoding="utf-8") as stream:

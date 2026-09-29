@@ -58,6 +58,23 @@ __all__ = [
 ]
 
 
+def _failed_classes(checkpoint: str | Path) -> set[str]:
+    """Return the classes with a two-phase failure in the report beside a checkpoint."""
+    import json
+
+    path = Path(str(checkpoint).removesuffix(".checkpoint.jsonl") + ".json")
+    try:
+        failures = json.loads(path.read_text(encoding="utf-8")).get("query_failures") or []
+    except (OSError, ValueError):
+        return set()
+    return {
+        str(c)
+        for f in failures
+        if str(f.get("purpose") or "").startswith("two-phase")
+        for c in f.get("classes") or []
+    }
+
+
 class SchemaMiner:
     """Mine RDF schema patterns from a SPARQL endpoint."""
 
@@ -146,6 +163,9 @@ class SchemaMiner:
             if resume_checkpoint
             else None
         )
+        # A checkpoint written before batch states were recorded is read with the report
+        # beside it: a batch with a class that has a two-phase failure there is mined again.
+        self._resume_failed = _failed_classes(resume_checkpoint) if resume_checkpoint else set()
         self._rc: ReportCollector | None = None
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
@@ -424,16 +444,24 @@ class SchemaMiner:
         import hashlib
         import json
 
-        batches = {
-            tuple(line["classes"]): line["rows"]
-            for line in map(json.loads, text.splitlines())
-            if line.get("phase") == "patterns"
-        }
+        batches = {}
+        skipped = []
+        for line in map(json.loads, text.splitlines()):
+            if line.get("phase") != "patterns":
+                continue
+            state = line.get("state")
+            if state is None and self._resume_failed & set(line["classes"]):
+                state = "partial"
+            if state in (None, "complete"):
+                batches[tuple(line["classes"])] = line["rows"]
+            else:
+                skipped.append(line["classes"])
         self._report.report.config["resumed_from"] = {
             "path": path,
             "sha256": hashlib.sha256(text.encode()).hexdigest(),
         }
         self._report.report.config["resumed_batches"] = []
+        self._report.report.config["resumed_partial_batches_mined_again"] = skipped
         return batches
 
     def _run_counts_phase(

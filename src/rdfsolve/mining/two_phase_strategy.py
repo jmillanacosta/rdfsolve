@@ -421,6 +421,7 @@ class TwoPhaseStrategy(MiningStrategy):
 
         done = 0
         mined: dict[str, tuple[int, int]] = {}  # single mined class -> its pattern slice
+        partial: set[str] = set()  # classes of batches with an unresolved failure
         for batch_idx, batch in enumerate(batches):
             batch_label = (
                 f"batch {batch_idx + 1}/{n_batches} "
@@ -429,6 +430,7 @@ class TwoPhaseStrategy(MiningStrategy):
             done += len(batch)
             logger.info("  %s", batch_label)
             first = len(patterns)
+            failures = len(context.report.report.query_failures)
             if tuple(batch) in context.resumed:
                 rows = context.resumed[tuple(batch)]
                 patterns.extend(SchemaPattern.model_validate(row) for row in rows)
@@ -451,7 +453,10 @@ class TwoPhaseStrategy(MiningStrategy):
                 context.shared_extensions[batch[0]] = source
                 context.report.report.config.setdefault("shared_extensions", {})[batch[0]] = source
                 context.report.checkpoint(
-                    "patterns", batch, [p.model_dump(mode="json") for p in copies]
+                    "patterns",
+                    batch,
+                    [p.model_dump(mode="json") for p in copies],
+                    "partial" if source in partial else "complete",
                 )
                 continue
 
@@ -557,8 +562,14 @@ class TwoPhaseStrategy(MiningStrategy):
                 success=blank_bindings.state == "complete",
             )
             patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
+            # A batch with an unresolved failure is partial: a resumed run mines it again.
+            state = (
+                "complete" if len(context.report.report.query_failures) == failures else "partial"
+            )
+            if state == "partial":
+                partial.update(batch)
             context.report.checkpoint(
-                "patterns", batch, [p.model_dump(mode="json") for p in patterns[first:]]
+                "patterns", batch, [p.model_dump(mode="json") for p in patterns[first:]], state
             )
             if len(batch) == 1:
                 mined[batch[0]] = (first, len(patterns))
