@@ -630,7 +630,7 @@ class SchemaMiner:
         statistics = count_dataset(self._helper, self.graph_uris)
         self._report.report.config["dataset_statistics"] = statistics
         self._report.flush()
-        self._report.finish_phase(phase, items=len(statistics.get("property_triples", ())))
+        self._report.finish_phase(phase, items=len(statistics.get("property_partitions", ())))
 
     def _build_about_metadata(
         self,
@@ -689,6 +689,7 @@ class SchemaMiner:
             distinct_subject_count=counted.get("distinct_subjects"),
             distinct_object_count=counted.get("distinct_objects"),
             distinct_predicate_count=counted.get("distinct_properties"),
+            property_partitions=counted.get("property_partitions"),
         )
 
     @staticmethod

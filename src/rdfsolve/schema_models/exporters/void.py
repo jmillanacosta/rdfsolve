@@ -305,6 +305,19 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
                 # Also mark the graph itself
                 g.add((graph_node, DCTERMS.type, URIRef("http://www.w3.org/2002/07/owl#Ontology")))
 
+    # Dataset property partitions: the exact counts of each property of the data.
+    names = {"triples": void.triples, "distinct_subjects": void.distinctSubjects}
+    names["distinct_objects"] = void.distinctObjects
+    for prop_uri, counts in sorted((schema.about.property_partitions or {}).items()):
+        prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+        dataset_partition = URIRef(f"{base}prop-{prop_hash}")
+        g.add((dataset_uri, void.propertyPartition, dataset_partition))
+        g.add((dataset_partition, void.property, URIRef(prop_uri)))
+        for name, term in names.items():
+            if counts.get(name) is not None:
+                number = RdfLiteral(counts[name], datatype=XSD.integer)
+                g.add((dataset_partition, term, number))
+
     # Group patterns by subject class for nested VoID structure
     # Structure: class partition -> property partition -> object/datatype partition
     from collections import defaultdict

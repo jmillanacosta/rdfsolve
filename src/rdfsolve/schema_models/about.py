@@ -221,6 +221,13 @@ class AboutMetadata(BaseModel):
         ge=0,
         description="COUNT(DISTINCT ?p) over all triples of the source data",
     )
+    property_partitions: dict[str, dict[str, int]] | None = Field(
+        None,
+        description=(
+            "Triples, distinct subjects and distinct objects of each property of the source "
+            "data (void:propertyPartition of the dataset), when counted exactly"
+        ),
+    )
     document_count: int | None = Field(
         None,
         ge=0,
@@ -315,6 +322,7 @@ class AboutMetadata(BaseModel):
         distinct_subject_count: int | None = None,
         distinct_object_count: int | None = None,
         distinct_predicate_count: int | None = None,
+        property_partitions: dict[str, dict[str, int]] | None = None,
         document_count: int | None = None,
         coverage_score: float | None = None,
         confidence_score: float | None = None,
@@ -393,6 +401,7 @@ class AboutMetadata(BaseModel):
             distinct_subject_count=distinct_subject_count,
             distinct_object_count=distinct_object_count,
             distinct_predicate_count=distinct_predicate_count,
+            property_partitions=property_partitions,
             document_count=document_count,
             # Quality
             coverage_score=coverage_score,
