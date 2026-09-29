@@ -47,3 +47,9 @@ def test_coverage_matches_edges_as_a_relation():
             "The object type is compared, not joined on a variable of the VALUES: QLever joins the"
             " VALUES with the types first otherwise (HGNC has-approved-symbol: over 6.5 GB)"
         )
+    batch = typed_match(keys, None, None, "urn:link", "VALUES ?o { <urn:typed> }")
+    untyped = batch.split("!EXISTS {", 1)[1].split("?o a ?_anyObjectType")[0]
+    assert "?s <urn:link> ?o ." in untyped and "VALUES ?o { <urn:typed> }" in untyped, (
+        "The test of an untyped object repeats the edge and the batch: QLever evaluates the group"
+        " on its own, and ?o a ?_anyObjectType alone reads every type triple (Bgee: 455.7 GB)"
+    )
