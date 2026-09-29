@@ -71,15 +71,10 @@ def test_uncovered_edges_are_discovered_by_property(monkeypatch):
 def test_the_coverage_test_does_not_rebind_outer_variables():
     """Virtuoso rejects VALUES that bind an outer variable inside EXISTS (SP031), and IF around
     EXISTS (SQ156)."""
-    import re
-
     from rdfsolve.mining.typed_coverage import typed_match
 
     match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None)
-    headers = re.findall(r"VALUES \(([^)]*)\)", match)
-    assert headers and not any({"?s", "?p", "?o"} & set(h.split()) for h in headers), (
-        "Outer variables are compared, not bound"
-    )
+    assert "VALUES" not in match and "?p = <urn:p>" in match, "The property is compared"
     assert "IF(EXISTS" not in match.replace(" ", "")
     body = match.split("EXISTS {", 1)[1]
     assert body.lstrip().startswith("?s ?p ?o ."), "Engines that join EXISTS need the pattern"

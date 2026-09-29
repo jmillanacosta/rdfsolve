@@ -32,24 +32,19 @@ def test_coverage_matches_edges_as_a_relation():
         f"SELECT ?s ?p ?o WHERE {{ ?s ?p ?o . FILTER({expression}) }}")}
     assert joined == expected, "Coverage must classify the current edge"
     assert correlated == expected, "Type overlap must not change covered edge membership"
-    for test in (expression, typed_match(keys, None, None, "urn:link", "VALUES ?o { <urn:typed> }")):
-        inner = [group.split("}")[0] for group in test.split("!EXISTS")[1:]]
-        assert inner and not any("?_covered" in group for group in inner), (
-            "No inner EXISTS on a VALUES variable: Virtuoso evaluates it as false"
-            " (AOP-Wiki: 1 of 23,729 owl:sameAs edges covered)"
+    batch = typed_match(keys, None, None, "urn:link", "FILTER(?o IN (<urn:typed>))")
+    for test in (expression, batch):
+        assert "VALUES" not in test, (
+            "No VALUES list of profiles: QLever joins it with every type triple (Bgee: 455.7 GB) and"
+            " evaluates EXISTS with a large VALUES wrongly; types are compared with IRIs"
         )
+        assert "?_subjectType = <urn:Record>" in test and "?_objectType = <urn:Target>" in test
         assert "UNION" not in test, "RDFLib evaluates a UNION inside an EXISTS as false"
         assert "OPTIONAL" not in test, (
             "No OPTIONAL inside the test: Virtuoso counts 1 of 2 prov:used edges with it"
         )
-        typed = test.split(" || EXISTS")[0]
-        assert "?o a ?_objectType ." in typed and "FILTER(?_objectType = ?_coveredObject)" in typed, (
-            "The object type is compared, not joined on a variable of the VALUES: QLever joins the"
-            " VALUES with the types first otherwise (HGNC has-approved-symbol: over 6.5 GB)"
-        )
-    batch = typed_match(keys, None, None, "urn:link", "VALUES ?o { <urn:typed> }")
     untyped = batch.split("!EXISTS {", 1)[1].split("?o a ?_anyObjectType")[0]
-    assert "?s <urn:link> ?o ." in untyped and "VALUES ?o { <urn:typed> }" in untyped, (
+    assert "?s <urn:link> ?o ." in untyped and "FILTER(?o IN (<urn:typed>))" in untyped, (
         "The test of an untyped object repeats the edge and the batch: QLever evaluates the group"
         " on its own, and ?o a ?_anyObjectType alone reads every type triple (Bgee: 455.7 GB)"
     )

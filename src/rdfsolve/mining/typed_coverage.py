@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
-from rdflib import Literal, URIRef
+from collections import defaultdict
+
+from rdflib import URIRef
 
 from rdfsolve.mining.query_builders import _context_pattern
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+
+
+def _is(variable: str, iris: set[str]) -> str:
+    """Compare a variable with one IRI or a list of IRIs."""
+    terms = sorted(URIRef(iri).n3() for iri in iris)
+    return f"{variable} = {terms[0]}" if len(terms) == 1 else f"{variable} IN ({', '.join(terms)})"
 
 
 def typed_match(
@@ -20,18 +28,27 @@ def typed_match(
     With *predicate*, the test is for edges of that one property: its group reads only that
     property. QLever evaluates the group of EXISTS on its own before the join, so a group that
     reads ?s ?p ?o reads the whole graph for each property (Bgee RO_0002162: 217 s, and 20 s
-    with the constant property; the same counts). *restriction* (for example VALUES ?o
-    {...}) follows the edge, so that the group reads only the edges of one census batch.
+    with the constant property; the same counts). *restriction* (for example FILTER(?o IN
+    ...)) follows the edge, so that the group reads only the edges of one census batch.
     """
+    keys = [key for key in keys if predicate is None or key[1] == predicate]
     if not keys:
         return "false"
-    values = []
-    for subject, prop, obj, datatype in sorted(set(keys), key=str):
-        target = Literal(obj).n3() if obj in _SENTINEL_OBJECTS else URIRef(obj).n3()
-        dt = URIRef(datatype).n3() if datatype else "UNDEF"
-        values.append(f"({URIRef(subject).n3()} {URIRef(prop).n3()} {target} {dt})")
+    typed: dict[tuple[str, str], set[str]] = defaultdict(set)
+    literal: dict[tuple[str, str], set[str | None]] = defaultdict(set)
+    untyped: dict[str, dict[str, set[str]]] = {
+        "Resource": defaultdict(set),
+        "BlankNode": defaultdict(set),
+    }
+    for subject, prop, obj, datatype in keys:
+        if obj == "Literal":
+            literal[prop, subject].add(datatype)
+        elif obj in _SENTINEL_OBJECTS:
+            untyped[obj][prop].add(subject)
+        else:
+            typed[prop, subject].add(obj)
     objects = list(dict.fromkeys((type_graphs or []) + (context_graphs or [])))
-    subject_type = _context_pattern("?s a ?_coveredSubject .", objects).replace(
+    subject_type = _context_pattern("?s a ?_subjectType .", objects).replace(
         "?_contextGraph", "?_subjectTypeGraph"
     )
     object_type = _context_pattern("?o a ?_objectType .", objects).replace(
@@ -40,42 +57,50 @@ def typed_match(
     any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
         "?_contextGraph", "?_objectAnyGraph"
     )
-    # The triple pattern joins the outer ?s ?p ?o: QLever and Virtuoso evaluate EXISTS as a
-    # join on the variables that its patterns bind, not by substitution. The property of the
-    # profile is compared, not bound again: Virtuoso rejects a VALUES that binds an outer
-    # variable inside EXISTS (error SP031).
     if predicate:
-        constant = URIRef(predicate).n3()
-        edge, same_property = f"?s {constant} ?o .", f"FILTER(?_coveredProperty = {constant})"
+        edge = f"?s {URIRef(predicate).n3()} ?o . {restriction}"
     else:
-        edge, same_property = "?s ?p ?o .", "FILTER(?p = ?_coveredProperty)"
-    head = f"""{edge} {restriction}
-VALUES (?_coveredSubject ?_coveredProperty ?_coveredObject ?_coveredDatatype) {{ {" ".join(values)} }}
-{same_property}
-{subject_type}"""
-    untyped_object = f"{edge} {restriction} {any_type}"
-    match = f"""(EXISTS {{ {head}
-{object_type} FILTER(?_objectType = ?_coveredObject) }} || EXISTS {{ {head}
-FILTER(
-  (?_coveredObject = "Literal" && isLiteral(?o) &&
-    (!BOUND(?_coveredDatatype) || DATATYPE(?o) = ?_coveredDatatype)) ||
-  (?_coveredObject = "Resource" && isIRI(?o) && !EXISTS {{ {untyped_object} }}) ||
-  (?_coveredObject = "BlankNode" && isBlank(?o))
-) }})"""
-    # The tests above already require a subject type, so no IF(EXISTS ...) wraps them (Virtuoso
-    # rejects that form, error SQ156). A typed object is joined with the type of the profile in
-    # one EXISTS; literals, untyped IRIs and blank nodes are tested in the other. Virtuoso
-    # evaluates an EXISTS inside the EXISTS on a variable of the VALUES as false (AOP-Wiki: 1 of
-    # 23,729 owl:sameAs edges covered) and gives wrong counts for an OPTIONAL inside the EXISTS
-    # (1 of 2 prov:used edges); RDFLib evaluates a UNION inside an EXISTS as false. The inner
-    # EXISTS of the untyped case uses no variable of the VALUES; it repeats the edge and its
-    # restriction, because QLever evaluates the group on its own and ?o a ?_anyObjectType alone
-    # reads every type triple of the graph (Bgee: 455.7 GB for every batch of RO_0002206). The
-    # object type is compared in a FILTER: when it is joined on ?_coveredObject, QLever joins
-    # the VALUES with the subject and object types, which share only variables of the VALUES,
-    # before the edge (HGNC has-approved-symbol: over 6.5 GB; 41,789 edges in 0.0 s with the
-    # FILTER). A group of the edge and the object type is refused by Virtuoso (error SQ156).
-    return match
+        edge = f"?s ?p ?o . {restriction}"
+
+    def on(prop: str, test: str) -> str:
+        """Add the comparison of the property when the test is for every property."""
+        return test if predicate else f"{_is('?p', {prop})} && {test}"
+
+    groups = []
+    if typed:
+        pairs = " ||\n  ".join(
+            f"({on(prop, _is('?_subjectType', {subject}))} && {_is('?_objectType', targets)})"
+            for (prop, subject), targets in sorted(typed.items())
+        )
+        groups.append(f"EXISTS {{ {edge} {subject_type} {object_type}\nFILTER(\n  {pairs}\n) }}")
+    tests: list[str] = []
+    for (prop, subject), datatypes in sorted(literal.items(), key=str):
+        kind = "isLiteral(?o)"
+        if None not in datatypes:
+            kind += f" && {_is('DATATYPE(?o)', {dt for dt in datatypes if dt})}"
+        tests.append(f"({on(prop, _is('?_subjectType', {subject}))} && {kind})")
+    for prop, subjects in sorted(untyped["Resource"].items()):
+        tests.append(
+            f"({on(prop, _is('?_subjectType', subjects))} && isIRI(?o) && "
+            f"!EXISTS {{ {edge} {any_type} }})"
+        )
+    for prop, subjects in sorted(untyped["BlankNode"].items()):
+        tests.append(f"({on(prop, _is('?_subjectType', subjects))} && isBlank(?o))")
+    if tests:
+        joined = " ||\n  ".join(tests)
+        groups.append(f"EXISTS {{ {edge} {subject_type}\nFILTER(\n  {joined}\n) }}")
+    # The types are compared with IRIs, grouped by property and subject class; no VALUES list
+    # of profiles is joined with them. QLever joins such a list with every type triple of the
+    # graph before the edge (Bgee RO_0002206: 455.7 GB for every batch; HGNC
+    # has-approved-symbol: over 6.5 GB) and evaluates an EXISTS group with a large VALUES
+    # wrongly (768 objects: every edge untyped). The tests already require a subject type, so
+    # no IF(EXISTS ...) wraps them (Virtuoso rejects that form, error SQ156). A typed object is
+    # tested in one EXISTS; literals, untyped IRIs and blank nodes in the other. The inner
+    # EXISTS of the untyped case repeats the edge and its restriction, because QLever evaluates
+    # the group on its own and ?o a ?_anyObjectType alone reads every type triple. Virtuoso
+    # gives wrong counts for an OPTIONAL inside the EXISTS (1 of 2 prov:used edges), and RDFLib
+    # evaluates a UNION inside an EXISTS as false.
+    return f"({' || '.join(groups)})"
 
 
 def uncovered_filter(
