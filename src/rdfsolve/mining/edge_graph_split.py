@@ -81,6 +81,7 @@ def split_by_edge_graph(
             "property_count": len(properties),
             "triple_count_estimate": None,
             "distinct_subject_count": None,
+            "distinct_object_count": None,
             "distinct_predicate_count": None,
             "class_entity_counts": dict(class_entity_counts or {}),
             "class_entity_count_states": dict(class_entity_count_states or {}),

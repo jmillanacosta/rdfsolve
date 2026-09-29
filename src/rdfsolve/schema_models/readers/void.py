@@ -234,6 +234,8 @@ def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> Abo
         class_count=optional_count(unique(VOID.classes)) or 0,
         property_count=optional_count(unique(VOID.properties)) or 0,
         triple_count_estimate=optional_count(unique(VOID.triples)),
+        distinct_subject_count=optional_count(unique(VOID.distinctSubjects)),
+        distinct_object_count=optional_count(unique(VOID.distinctObjects)),
         schema_version=str(schema_version) if schema_version is not None else None,
         finished_at=str(generated_at) if generated_at is not None else None,
     )

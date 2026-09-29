@@ -176,12 +176,14 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
                 RdfLiteral(schema.about.class_count, datatype=XSD.integer),
             )
         )
-    if schema.about.property_count:
+    # The distinct properties of the data, when counted, else those of the patterns.
+    properties = schema.about.distinct_predicate_count or schema.about.property_count
+    if properties:
         g.add(
             (
                 dataset_uri,
                 void.properties,
-                RdfLiteral(schema.about.property_count, datatype=XSD.integer),
+                RdfLiteral(properties, datatype=XSD.integer),
             )
         )
     if schema.about.triple_count_estimate:
@@ -198,6 +200,14 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
                 dataset_uri,
                 void.distinctSubjects,
                 RdfLiteral(schema.about.distinct_subject_count, datatype=XSD.integer),
+            )
+        )
+    if schema.about.distinct_object_count:
+        g.add(
+            (
+                dataset_uri,
+                void.distinctObjects,
+                RdfLiteral(schema.about.distinct_object_count, datatype=XSD.integer),
             )
         )
 

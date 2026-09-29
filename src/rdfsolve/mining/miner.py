@@ -622,6 +622,16 @@ class SchemaMiner:
             logger.warning("Class declarations unavailable: %s", e)
         return declared
 
+    def _count_dataset(self) -> None:
+        """Record the exact dataset statistics of a QLever index (rdfsolve.mining.dataset_statistics)."""
+        from rdfsolve.mining.dataset_statistics import count_dataset
+
+        phase = self._report.start_phase("dataset-statistics")
+        statistics = count_dataset(self._helper, self.graph_uris)
+        self._report.report.config["dataset_statistics"] = statistics
+        self._report.flush()
+        self._report.finish_phase(phase, items=len(statistics.get("property_triples", ())))
+
     def _build_about_metadata(
         self,
         dataset_name: str | None,
@@ -645,6 +655,9 @@ class SchemaMiner:
 
         # Merge discovered metadata (prefer discovered over None)
         discovered = discovered_metadata or {}
+        counted = self._report.report.config.get("dataset_statistics") or {}
+        if counted.get("state") != "counted":
+            counted = {}
 
         return AboutMetadata.build(
             endpoint=self.endpoint_url,
@@ -672,6 +685,10 @@ class SchemaMiner:
             source_publisher=discovered.get("source_publisher"),
             source_creator=discovered.get("source_creator"),
             homepage=discovered.get("homepage"),
+            triple_count_estimate=counted.get("triples"),
+            distinct_subject_count=counted.get("distinct_subjects"),
+            distinct_object_count=counted.get("distinct_objects"),
+            distinct_predicate_count=counted.get("distinct_properties"),
         )
 
     @staticmethod
@@ -1005,6 +1022,7 @@ class SchemaMiner:
             self._report.finish_phase(phase, error=str(e))
         else:
             self._report.finish_phase(phase, items=len(discovered_metadata))
+        self._count_dataset()
 
         about = self._build_about_metadata(
             dataset_name,

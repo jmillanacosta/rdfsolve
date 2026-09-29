@@ -201,17 +201,25 @@ class AboutMetadata(BaseModel):
     triple_count_estimate: int | None = Field(
         None,
         ge=0,
-        description="Estimated total triples in source data",
+        description=(
+            "Total triples in source data: exact when counted from a QLever index "
+            "(mining report config dataset_statistics), else an estimate"
+        ),
     )
     distinct_subject_count: int | None = Field(
         None,
         ge=0,
-        description="COUNT(DISTINCT ?s) across all patterns",
+        description="COUNT(DISTINCT ?s) over all triples of the source data",
+    )
+    distinct_object_count: int | None = Field(
+        None,
+        ge=0,
+        description="COUNT(DISTINCT ?o) over all triples of the source data",
     )
     distinct_predicate_count: int | None = Field(
         None,
         ge=0,
-        description="COUNT(DISTINCT ?p) across all patterns",
+        description="COUNT(DISTINCT ?p) over all triples of the source data",
     )
     document_count: int | None = Field(
         None,
@@ -305,6 +313,7 @@ class AboutMetadata(BaseModel):
         description: str | None = None,
         triple_count_estimate: int | None = None,
         distinct_subject_count: int | None = None,
+        distinct_object_count: int | None = None,
         distinct_predicate_count: int | None = None,
         document_count: int | None = None,
         coverage_score: float | None = None,
@@ -382,6 +391,7 @@ class AboutMetadata(BaseModel):
             property_count=property_count,
             triple_count_estimate=triple_count_estimate,
             distinct_subject_count=distinct_subject_count,
+            distinct_object_count=distinct_object_count,
             distinct_predicate_count=distinct_predicate_count,
             document_count=document_count,
             # Quality

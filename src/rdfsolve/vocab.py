@@ -26,8 +26,8 @@ VOCABULARIES: dict[str, str] = {
 
 _TERMS = {
     "http://rdfs.org/ns/void#": (
-        "Dataset DatasetDescription Linkset class classPartition classes distinctSubjects "
-        "documents entities exampleResource linkPredicate objectsTarget properties property "
+        "Dataset DatasetDescription Linkset class classPartition classes distinctObjects "
+        "distinctSubjects documents entities exampleResource linkPredicate objectsTarget properties property "
         "propertyPartition sparqlEndpoint subjectsTarget triples vocabulary"
     ),
     "http://ldf.fi/void-ext#": "datatype datatypePartition",
