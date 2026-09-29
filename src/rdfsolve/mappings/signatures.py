@@ -377,7 +377,12 @@ def write_links(path: str | Path, links: Iterable[LinkEvidence]) -> None:
 
 
 def read_links(path: str | Path) -> list[LinkEvidence]:
-    """Read a table of verified links. A row without a sample (a failed lookup) is skipped."""
+    """Read a table of verified links. A row without a sample (a failed lookup) is skipped.
+
+    The examples of an exact link hold every found pair, which can exceed the default field
+    limit of the csv module (HGNC to AOP-Wiki: 136,477 characters).
+    """
+    csv.field_size_limit(max(csv.field_size_limit(), 1 << 30))
     with Path(path).open(newline="") as handle:
         rows = [row for row in csv.DictReader(handle, delimiter="\t") if row["sampled"]]
     return [
