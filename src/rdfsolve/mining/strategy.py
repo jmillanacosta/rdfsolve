@@ -75,6 +75,9 @@ class MiningContext:
         self.ontology_term_budget = ontology_term_budget
         self.group_before_mining = group_before_mining
         self.ontology_hierarchy_files = ontology_hierarchy_files or []
+        # Classes that typed mining discovered, and type values that it skipped (not IRIs).
+        self.discovered_classes: list[str] | None = None
+        self.skipped_type_values = 0
         # Representative -> member terms, when terms were grouped before mining.
         self.grouped_members: dict[str, list[str]] = {}
         # Class batches chosen by the strategy; the counts phase reuses them.

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
-from rdfsolve.sparql_helper import EndpointTimeoutError
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
 
 
 def _dataset(graph: str | None, type_graphs: list[str] | None = None) -> str:
@@ -130,6 +130,113 @@ def _select(
         context.report.record_query(purpose, time.monotonic() - started, success=False)
         raise
     context.report.record_query(purpose, time.monotonic() - started)
+    return rows
+
+
+QLEVER_PREFIX = "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+UNTYPED_SUBJECT = f"MINUS {{ ?s ql:has-predicate <{RDF_TYPE}> }}"
+
+
+def _patterns_census(
+    context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
+) -> Counter[str] | None:
+    """Count the census with the precomputed patterns of QLever, when they decide it exactly.
+
+    QLever stores the set of properties of each subject; ?s ql:has-predicate rdf:type tells a
+    typed subject without reading the type triples. The triples and the untyped triples of every
+    property are two grouped queries (Bgee: 106 s and 148 s, against about 10 h for the test of
+    each edge). When typed mining mined every discovered class and skipped no type value, every
+    edge of a typed subject is in a typed profile, so the uncovered edges are the edges of
+    untyped subjects. The patterns cover the whole index, so the scope must hold every graph of
+    it. Otherwise None, and the exact census runs.
+    """
+    if str(getattr(context.helper, "sparql_engine", "")).lower() != "qlever":
+        return None
+    batches = context.class_batches or []
+    mined = {str(c) for batch in batches for c in batch}
+    mined |= {m for batch in batches for c in batch for m in getattr(c, "members", ())}
+    discovered = context.discovered_classes
+    if discovered is None or context.skipped_type_values or not set(discovered) <= mined:
+        return None
+    dataset = _dataset(graph, named)
+    scope = list(dict.fromkeys(([graph] if graph else []) + named))
+    try:
+        probe = QLEVER_PREFIX + "SELECT ?s WHERE { ?s ql:has-predicate ?p } LIMIT 1"
+        _select(context, probe, "structural/patterns", paged=False)
+        if scope:
+            listed = ", ".join(URIRef(g).n3() for g in scope)
+            outside = (
+                f"SELECT (COUNT(*) AS ?n) WHERE {{ GRAPH ?_g {{ ?s ?p ?o }} "
+                f"FILTER(?_g NOT IN ({listed})) }}"
+            )
+            (row,) = _select(context, outside, "structural/patterns", paged=False)
+            if int(row["n"]["value"]):
+                return None
+        triples = _select(
+            context,
+            f"SELECT ?p (COUNT(*) AS ?n) {dataset} WHERE {{ ?s ?p ?o }} GROUP BY ?p",
+            "structural/coverage",
+            paged=False,
+        )
+        untyped = _select(
+            context,
+            QLEVER_PREFIX + f"SELECT ?p (COUNT(*) AS ?n) {dataset} "
+            f"WHERE {{ ?s ?p ?o . {UNTYPED_SUBJECT} }} GROUP BY ?p",
+            "structural/coverage",
+            paged=False,
+        )
+    except EndpointError:
+        return None
+    by_property = {r["p"]["value"]: int(r["n"]["value"]) for r in untyped}
+    counts = Counter[str]()
+    per_property: dict[str, dict[str, Any]] = {}
+    for row in triples:
+        predicate, total = row["p"]["value"], int(row["n"]["value"])
+        missing = by_property.get(predicate, 0)
+        per_property[predicate] = {
+            "triples": total,
+            "untypedTriples": missing,
+            "uncoveredTriples": missing,
+        }
+        counts.update(triples=total, untypedTriples=missing, uncoveredTriples=missing)
+    entry["census"] = "qlever_patterns"
+    entry["census_properties"] = per_property
+    return counts
+
+
+def _patterns_discovery(
+    context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Read the edges of untyped subjects with the property sets of their nodes, per property.
+
+    The property sets come from ql:has-predicate, which reads one row per property of a node
+    instead of every triple of it. The rows have the form of _discovery_query with edges.
+    """
+    rows: list[dict[str, Any]] = []
+    for predicate, n in sorted(entry["census_properties"].items()):
+        if not n.get("uncoveredTriples"):
+            continue
+        prop = URIRef(predicate).n3()
+        query = (
+            QLEVER_PREFIX
+            + f"""SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang
+{_dataset(graph, named)} WHERE {{
+  ?s {prop} ?o . {UNTYPED_SUBJECT}
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
+     WHERE {{ ?s {prop} ?_o . {UNTYPED_SUBJECT} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
+  OPTIONAL {{
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=" ") AS ?os)
+       WHERE {{ ?s {prop} ?o . {UNTYPED_SUBJECT} ?o ql:has-predicate ?op }} GROUP BY ?o }}
+  }}
+  BIND({prop} AS ?p)
+  BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
+  BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
+  BIND(DATATYPE(?o) AS ?dt)
+  BIND(LANG(?o) AS ?lang)
+}}"""
+        )
+        rows += _select(context, query, "structural/discovery")
     return rows
 
 
@@ -390,7 +497,9 @@ class StructuralStrategy(MiningStrategy):
             coverage.append(entry)
             context.report.flush()
             try:
-                counts = _census(context, graph, named, keys, local, entry)
+                counts = None if local else _patterns_census(context, graph, named, entry)
+                if counts is None:
+                    counts = _census(context, graph, named, keys, local, entry)
                 total, untyped = counts["triples"], counts["untypedTriples"]
                 if local:
                     entry.update(triple_count=total, untyped_subject_triples=untyped)
@@ -467,7 +576,10 @@ class StructuralStrategy(MiningStrategy):
             if not entry["uncovered_triples"]:
                 continue
             try:
-                self._mine_graph(context, entry, keys, named, observations.get(entry["graph_uri"]))
+                rows = observations.get(entry["graph_uri"])
+                if rows is None and entry.get("census") == "qlever_patterns":
+                    rows = _patterns_discovery(context, entry["graph_uri"], named, entry)
+                self._mine_graph(context, entry, keys, named, rows)
             except Exception:
                 entry["state"] = "failed"
                 raise

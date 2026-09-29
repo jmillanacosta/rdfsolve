@@ -307,6 +307,8 @@ class TwoPhaseStrategy(MiningStrategy):
         if non_iri_count:
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
         logger.info(f"  -> {len(classes)} data classes found")
+        context.discovered_classes = list(classes)
+        context.skipped_type_values = non_iri_count
         return classes
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
