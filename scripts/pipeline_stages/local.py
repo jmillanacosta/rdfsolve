@@ -206,10 +206,30 @@ class LocalMiningStage(Stage):
             config.get("index", "STXXL_MEMORY", fallback="16GB"),
         ]
 
+        # QLever returns every integer type as xsd:int and a decimal as xsd:double; the numeric
+        # datatypes of the source are counted from the input files, beside the index, while
+        # it is built (rdfsolve.qlever.datatypes).
+        import os
+        from concurrent.futures import ProcessPoolExecutor
+
+        from rdfsolve.qlever.datatypes import (
+            CENSUS_FILE,
+            count_literal_datatypes,
+            input_format,
+            merge_counts,
+            write_census,
+        )
+
+        files = [(path, input_format(path)) for path, _ in mapped]
+        census = ProcessPoolExecutor(max(1, min(len(files), (os.cpu_count() or 2) // 2)))
         log.info(f"    Indexing {len(mapped)} files...")
         try:
+            counting = [census.submit(count_literal_datatypes, [item]) for item in files]
             subprocess.run(cmd, cwd=workdir, check=True)
+            counts = merge_counts(future.result() for future in counting)
+            write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
         finally:
+            census.shutdown(cancel_futures=True)
             for path in expanded:
                 path.unlink(missing_ok=True)
 
@@ -288,6 +308,7 @@ class LocalMiningStage(Stage):
                 dataset_name=name,
             )
             schema = result.data_schema
+            self._restore_literal_datatypes(miner, schema, name)
             report_path = output_dir / f"{name}{suffix}_report.json"
             with self._output_phase(miner, report_path):
                 schema_path = output_dir / f"{name}{suffix}_schema.json"
@@ -321,8 +342,27 @@ class LocalMiningStage(Stage):
                         raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=name)
+            self._restore_literal_datatypes(miner, schema, name)
 
         return schema
+
+    def _restore_literal_datatypes(self, miner, schema, name: str) -> None:
+        """Restore the numeric datatypes that the index folds, from the census of its sources."""
+        from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census, restore_datatypes
+
+        census = self.config.data_dir / "qlever_workdirs" / name / CENSUS_FILE
+        if census.is_file():
+            patterns = [*schema.patterns, *(schema.structural_patterns or [])]
+            record = {"state": "restored", "census": str(census)}
+            record.update(restore_datatypes(patterns, read_census(census)))
+        else:
+            record = {
+                "state": "not_restored",
+                "reason": "no census of the source files",
+                "rule": "QLever reports every integer type as xsd:int and a decimal as xsd:double",
+            }
+        if miner.last_report is not None:
+            miner.last_report.config["literal_datatypes"] = record
 
     def _save_dataset_outputs(
         self, source: Source, schema, output_dir: Path, helper, mining_context: str
