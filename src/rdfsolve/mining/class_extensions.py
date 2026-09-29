@@ -9,6 +9,7 @@ measured from the smallest; those left after the time budget are recorded as not
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 from rdfsolve.mining.query_builders import _build_class_overlap_query
@@ -25,8 +26,12 @@ def measure_class_extensions(
     sizes: dict[str, int],
     graph_uris: list[str] | None,
     type_context_graph_uris: list[str] | None,
+    record: Callable[[str, float, bool], None] | None = None,
 ) -> ClassExtensions | None:
-    """Return the relations of *classes*, or None on an engine other than QLever."""
+    """Return the relations of *classes*, or None on an engine other than QLever.
+
+    *record* receives the purpose, time and success of each query (the mining report).
+    """
     if str(getattr(helper, "sparql_engine", "")).lower() != "qlever":
         return None
     wanted = set(classes)
@@ -41,11 +46,16 @@ def measure_class_extensions(
             not_checked[str(cls)] = f"time budget of {BUDGET_S:.0f} s"
             continue
         query = _build_class_overlap_query(str(cls), graph_uris, type_context_graph_uris)
+        asked = time.monotonic()
         try:
             rows = helper.select(query, purpose="class-extensions")["results"]["bindings"]
         except (EndpointError, ValueError) as error:
+            if record:
+                record("class-extensions", time.monotonic() - asked, False)
             not_checked[str(cls)] = f"refused: {error}"
             continue
+        if record:
+            record("class-extensions", time.monotonic() - asked, True)
         overlaps[str(cls)] = {
             row["other"]["value"]: int(row["n"]["value"])
             for row in rows

@@ -13,6 +13,7 @@ counts, so they are not counted there.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 from rdflib import URIRef
@@ -25,16 +26,30 @@ from rdfsolve.sparql_helper import EndpointError
 PARTITION_BUDGET_S = 7200.0
 
 
-def count_dataset(helper: Any, graph_uris: list[str] | None) -> dict[str, Any]:
-    """Return the exact triples, distinct subjects, objects and properties, or why not."""
+def count_dataset(
+    helper: Any,
+    graph_uris: list[str] | None,
+    record: Callable[[str, float, bool], None] | None = None,
+) -> dict[str, Any]:
+    """Return the exact triples, distinct subjects, objects and properties, or why not.
+
+    *record* receives the purpose, time and success of each query (the mining report).
+    """
     if str(getattr(helper, "sparql_engine", "")).lower() != "qlever":
         return {"state": "not_counted", "reason": "only a QLever index keeps these counts"}
 
     def select(query: str) -> list[dict[str, Any]]:
         """Return the rows of a query."""
-        rows: list[dict[str, Any]] = helper.select(query, purpose="dataset-statistics")["results"][
-            "bindings"
-        ]
+        started = time.monotonic()
+        try:
+            answer = helper.select(query, purpose="dataset-statistics")
+        except Exception:
+            if record:
+                record("dataset-statistics", time.monotonic() - started, False)
+            raise
+        if record:
+            record("dataset-statistics", time.monotonic() - started, True)
+        rows: list[dict[str, Any]] = answer["results"]["bindings"]
         return rows
 
     def number(query: str) -> int:

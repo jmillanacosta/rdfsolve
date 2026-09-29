@@ -656,7 +656,12 @@ class SchemaMiner:
 
         phase = self._report.start_phase("class-extensions")
         found = measure_class_extensions(
-            self._helper, classes, sizes, self.graph_uris, self.type_context_graph_uris
+            self._helper,
+            classes,
+            sizes,
+            self.graph_uris,
+            self.type_context_graph_uris,
+            self._report.record_query,
         )
         self._report.finish_phase(phase, items=len(found.members) if found else 0)
         return found
@@ -666,7 +671,7 @@ class SchemaMiner:
         from rdfsolve.mining.dataset_statistics import count_dataset
 
         phase = self._report.start_phase("dataset-statistics")
-        statistics = count_dataset(self._helper, self.graph_uris)
+        statistics = count_dataset(self._helper, self.graph_uris, self._report.record_query)
         self._report.report.config["dataset_statistics"] = statistics
         self._report.flush()
         self._report.finish_phase(phase, items=len(statistics.get("property_partitions", ())))
