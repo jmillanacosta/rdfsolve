@@ -38,8 +38,13 @@ def _types(graphs: list[str] | None) -> str:
     return f"VALUES ?_typeGraph {{ {values} }} GRAPH ?_typeGraph {{ ?s a ?_type }}"
 
 
-def _untyped(graphs: list[str] | None) -> str:
-    return f"FILTER NOT EXISTS {{ {_types(graphs)} }}"
+def _untyped(graphs: list[str] | None, predicate: str) -> str:
+    """Test that the subject of an edge of *predicate* has no type.
+
+    The group repeats the edge, as the census does: QLever evaluates the group of EXISTS on
+    its own, and ``?s a ?_type`` alone reads every type triple of the graph.
+    """
+    return f"FILTER NOT EXISTS {{ ?s <{predicate}> ?o . {_types(graphs)} }}"
 
 
 def _discovery_query(
@@ -94,7 +99,7 @@ def structural_queries(pattern: StructuralPattern) -> tuple[str, str]:
         _shape("?o", pattern.object_properties, pattern.object_kind, exact=exact),
     ]
     if pattern.subject_selection == "untyped":
-        clauses.append(_untyped(pattern.type_graph_uris))
+        clauses.append(_untyped(pattern.type_graph_uris, pattern.property_uri))
     if pattern.subject_selection == "uncovered":
         keys = [(s, pattern.property_uri, o, dt) for s, o, dt in pattern.covered_types]
         clauses.append(
@@ -320,6 +325,25 @@ def _census(
         match = typed_match(keys, context.graph_uris, context.type_context_graph_uris)
         counts = _count(context, _census_queries(graph, named, match, local))
         entry["census"] = "whole_graph"
+        # The triples and the untyped triples of each property, which decide the subject
+        # selection of the patterns as through an endpoint (see _mine_graph). RDFLib answers a
+        # grouped count without solutions with one empty row.
+        grouped: dict[str, dict[str, Any]] = defaultdict(dict)
+        for name, test in (
+            ("triples", ""),
+            ("untypedTriples", f"FILTER NOT EXISTS {{ {_types(named)} }}"),
+        ):
+            query = (
+                f"SELECT ?p (COUNT(?o) AS ?n) {_dataset(graph, named)} "
+                f"WHERE {{ ?s ?p ?o . {test} }} GROUP BY ?p"
+            )
+            for row in _select(context, query, "structural/coverage", paged=False):
+                if "p" in row:
+                    grouped[row["p"]["value"]][name] = int(row["n"]["value"])
+        entry["census_properties"] = {
+            prop: {"triples": n.get("triples", 0), "untypedTriples": n.get("untypedTriples", 0)}
+            for prop, n in sorted(grouped.items())
+        }
         return counts
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
@@ -597,20 +621,34 @@ class StructuralStrategy(MiningStrategy):
     ) -> None:
         graph = entry["graph_uri"]
         bulk = rows is not None
+        untyped: set[str] = set()
         if rows is None:
             # One query for each property with uncovered edges, with the one-property test of
             # the census and the recount (see _census).
+            # When the uncovered edges of a property are as many as the edges of its untyped
+            # subjects, they are the same edges (an untyped subject has no typed profile), and
+            # the test of an untyped subject is used without the typed keys, whose filter
+            # Virtuoso refused (SIBiLS pattern#contains: SQ200, stack overflow in cost model).
             rows = []
             for predicate, n in sorted(entry.get("census_properties", {}).items()):
                 if not n.get("uncoveredTriples"):
                     continue
                 own = [key for key in keys if key[1] == predicate]
-                residual = f"VALUES ?p {{ <{predicate}> }} " + uncovered_filter(
-                    own, context.graph_uris, context.type_context_graph_uris
-                )
+                if n.get("untypedTriples") == n["uncoveredTriples"]:
+                    untyped.add(predicate)
+                    test = _untyped(named, predicate)
+                else:
+                    test = uncovered_filter(
+                        own, context.graph_uris, context.type_context_graph_uris
+                    )
+                residual = f"VALUES ?p {{ <{predicate}> }} " + test
                 rows += _select(
                     context, _discovery_query(graph, named, residual), "structural/discovery"
                 )
+        if bulk:
+            census = entry.get("census_properties", {})
+            found = Counter(row["p"]["value"] for row in rows)
+            untyped = {p for p, n in found.items() if census.get(p, {}).get("untypedTriples") == n}
         candidates: dict[str, StructuralPattern] = {}
         bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
@@ -627,7 +665,7 @@ class StructuralStrategy(MiningStrategy):
                 type_graph_uris=named,
                 object_type_graph_uris=context.type_context_graph_uris or [],
                 covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
-                subject_selection="uncovered",
+                subject_selection="untyped" if predicate in untyped else "uncovered",
                 count=0,
                 distinct_subjects=0,
                 distinct_objects=0,

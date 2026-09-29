@@ -183,7 +183,7 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         result = miner.mine("no arbitrary cutoff")
         profiles = result.structural_patterns
         assert len(profiles) == 105 and sum(p.count for p in profiles) == 105
-        assert all(p.subject_selection == "uncovered" for p in profiles)
+        assert all(p.subject_selection == "untyped" for p in profiles), "Every uncovered edge is untyped"
         assert miner.last_report.completion_state == "complete"
         assert "structural_pattern_budget" not in miner.last_report.config
         path = tmp_path / "profiles.json"
