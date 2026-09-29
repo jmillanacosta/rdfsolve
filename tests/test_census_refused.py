@@ -45,3 +45,24 @@ def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatc
     assert entry["state"] == "partial" and state == "partial", "Partial, not failed"
     assert not any("GROUP BY ?o" in q and "<urn:c>" in q for _, q in sent), "No object listing"
     assert {p.property_uri for p in result.structural_patterns} == {"urn:p"}, "urn:u is found"
+
+
+def test_a_refused_batch_of_one_object_leaves_the_property_not_checked(monkeypatch):
+    """SIBiLS rdf:type: batches of classes were refused down to one class (the proxy drops a
+    query after 900 s); the property is then not checked, and the source is partial."""
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", 1)
+    with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
+        select = miner.helper.select
+
+        def limited(query, *args, purpose="", **kwargs):
+            if purpose == "structural/coverage" and "<urn:c>" in query:
+                raise EndpointTimeoutError("Connection closed without a response after 902 s")
+            return select(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", limited)
+        miner.mine("refused batches")
+        (entry,) = miner.last_report.config["structural_coverage"]
+        state = miner.last_report.completion_state
+    assert "one object" in entry["census_properties"]["urn:c"]["refused"]
+    assert entry["unchecked_triples"] == 4 and state == "partial"

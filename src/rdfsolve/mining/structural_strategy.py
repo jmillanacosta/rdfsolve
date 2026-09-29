@@ -287,11 +287,11 @@ def _property_census(
         (row,) = _select(context, size_query, "structural/objects", paged=False)
     except EndpointTimeoutError as error:
         raise CensusRefusedError(None, f"census and size refused: {error}") from error
-    triples, distinct = int(row["triples"]["value"]), int(row["objects"]["value"])
-    if triples < CENSUS_MIN_TRIPLES_PER_OBJECT * distinct:
+    total, distinct = int(row["triples"]["value"]), int(row["objects"]["value"])
+    if total < CENSUS_MIN_TRIPLES_PER_OBJECT * distinct:
         raise CensusRefusedError(
-            triples,
-            f"census refused; {triples} triples over {distinct} objects are too few per object"
+            total,
+            f"census refused; {total} triples over {distinct} objects are too few per object"
             " for batches of objects",
         )
     listing = (
@@ -326,9 +326,11 @@ def _property_census(
         try:
             counts.update(count(f"FILTER(?o IN ({', '.join(batch)}))"))
             batches += 1
-        except EndpointTimeoutError:
+        except EndpointTimeoutError as error:
             if len(batch) == 1:
-                raise
+                raise CensusRefusedError(
+                    total, f"census refused for a batch of one object {batch[0]}: {error}"
+                ) from error
             logger.info(
                 "Census: %s batch of %d objects refused; split in two", predicate, len(batch)
             )
