@@ -530,11 +530,14 @@ def _build_properties_for_class_query(
     """
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     grouped = not (paginated and drop_distinct)
+    # The subjects typed by any member of a group of ontology terms, as in the pattern queries.
+    values, cls, _, _ = _bound([class_uri])
     q = f"""\
 SELECT ?p
 {dataset}
 WHERE {{
-  {_type_pattern("?s", f"<{class_uri}>", type_context_graph_uris)}
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
   {g_open} ?s ?p ?o . {g_close}
 }}"""
     if grouped:
@@ -542,6 +545,24 @@ WHERE {{
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
+
+
+def _build_properties_for_class_patterns_query(
+    class_uri: str,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """List the properties of the subjects of a class from their property sets (QLever).
+
+    A property set holds every property of a subject in the whole index, so the list holds the
+    properties of the class in any scope and can hold more; each listed property is then
+    queried in the scope.
+    """
+    values, cls, _, _ = _bound([class_uri])
+    return (
+        "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
+        f"SELECT ?p WHERE {{ {values} {_type_pattern('?s', cls, type_context_graph_uris)} "
+        "?s ql:has-predicate ?p } GROUP BY ?p"
+    )
 
 
 def _build_typed_object_for_class_property_query(
