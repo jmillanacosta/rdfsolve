@@ -2437,6 +2437,7 @@
   endpoint: https://aopwiki.rdf.bigcat-bioinformatics.org/sparql/
   void_iri: http://aopwiki.org/
   download_ttl:
+  - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Enriched.ttl
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Genes.ttl
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF-Void.ttl
   - https://raw.githubusercontent.com/marvinm2/AOPWikiRDF/refs/heads/master/data/AOPWikiRDF.ttl
