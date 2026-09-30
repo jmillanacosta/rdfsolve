@@ -614,7 +614,10 @@ def _build_get_data_steps(
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
-        " && ".join(_wget_cmd(u) for u in analysis.urls),
+        # A later step can end with '|| true'; the downloads end the script when one fails.
+        "{ "
+        + " && ".join(_wget_cmd(u) for u in analysis.urls)
+        + "; } || { echo 'A download failed' >&2; exit 1; }",
     ]
 
     steps.extend(_rename_mislabelled_steps(analysis))
