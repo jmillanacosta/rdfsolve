@@ -2465,10 +2465,10 @@
   void_iri: http://rdf.wikipathways.org/
   in_kamdar: true
   download_ttl:
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-wp.zip
-  - https://data.wikipathways.org/current/rdf/wikipathways-rdf-void.ttl
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-gpml.zip
-  - https://data.wikipathways.org/current/rdf/wikipathways-20260810-rdf-authors.zip
+  - https://data.wikipathways.org/20260810/rdf/wikipathways-20260810-rdf-wp.zip
+  - https://data.wikipathways.org/20260810/rdf/wikipathways-rdf-void.ttl
+  - https://data.wikipathways.org/20260810/rdf/wikipathways-20260810-rdf-gpml.zip
+  - https://data.wikipathways.org/20260810/rdf/wikipathways-20260810-rdf-authors.zip
   bioregistry_prefix: wikipathways
   keywords:
   - biological regulation
@@ -6146,10 +6146,10 @@
 - name: gtopdb
   dataset_kind: instance
   download_ttl:
-  - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp.ttl
-  - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp2026.1.ttl
+  - https://www.guidetopharmacology.org/DATA/rdf/2026.3/gtp.ttl
+  - https://www.guidetopharmacology.org/DATA/rdf/2026.3/gtp2026.3.ttl
   download_n3:
-  - https://www.guidetopharmacology.org/DATA/rdf/2026.1/gtp-rdf.n3
+  - https://www.guidetopharmacology.org/DATA/rdf/2026.3/gtp-rdf.n3
   notes: 'Updates KG Registry: Guide to Pharmacology'
   kg_registry_id: gtopdb
   keywords:
@@ -6168,11 +6168,11 @@
   - structure
 - name: hra-kg
   dataset_kind: instance
-  download_ttl: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.ttl
-  download_jsonld: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.json
-  download_rdf: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.xml
-  download_nt: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.nt
-  download_nq: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.nq
+  download_ttl: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.ttl
+  download_jsonld: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.json
+  download_rdf: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.xml
+  download_nt: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.nt
+  download_nq: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.nq
   notes: 'KG Registry: Human Reference Atlas Knowledge Graph (HRA KG)'
   kg_registry_id: hra-kg
   keywords:
