@@ -337,7 +337,9 @@ class LocalMiningStage(Stage):
             graph_uris=graph_uris,
             type_context_graph_uris=type_context_graph_uris,
             timeout=self.config.timeout if self.config.timeout is not None else 600.0,
-            delay=self.config.delay,
+            # The run started this server itself: no wait between requests (the wait is
+            # for public endpoints).
+            delay=0.0,
             sparql_engine="qlever",
             chunk_size=self.config.chunk_size,
             class_batch_size=self.config.class_batch_size,
