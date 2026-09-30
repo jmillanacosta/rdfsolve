@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 import logging
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from rdfsolve.qlever import QleverConfig, build_qleverfile
+from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
 from rdfsolve.qlever.inputs import (
     expand_inputs, graph_input_directory, index_command, mapped_input_files, rdf_input_files,
 )
@@ -76,6 +78,7 @@ class LocalMiningStage(Stage):
                 continue
 
             try:
+                self._set_aside_when_updated(workdir, source)
                 has_index = self._has_qlever_index(workdir, source.name)
                 if not has_index and source.download_error and not self.config.no_download:
                     self._record_skip(source, source.download_error)
@@ -129,6 +132,36 @@ class LocalMiningStage(Stage):
 
         return results
 
+    def _set_aside_when_updated(self, workdir: Path, source: Source) -> None:
+        """With --update-downloads, keep the folder of a source only when it has no update.
+
+        The folder of a source with a changed file on the server, or with other URLs in the
+        registry entry than were downloaded, is renamed (kept), and an empty folder is made, so
+        that the source is downloaded and indexed again.
+        """
+        from rdfsolve.qlever.downloads import read_record, updated_urls
+
+        urls = list(source.download_urls)
+        if not self.config.update_downloads or self.config.no_download or not urls:
+            return
+        if not any(workdir.iterdir()):
+            return
+        record = read_record(workdir)
+        built = max((p.stat().st_mtime for p in workdir.glob("*.meta-data.json")), default=0.0)
+        if record is not None and list(record.get("urls", [])) != urls:
+            reason = "the registry entry has other URLs than were downloaded"
+        else:
+            changed = updated_urls(urls, record, built_at=built)
+            if not changed:
+                log.info("  No update on the server for %s", source.name)
+                return
+            reason = f"{len(changed)} of {len(urls)} files changed on the server"
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        kept = workdir.with_name(f"{workdir.name}.before-update-{stamp}")
+        workdir.rename(kept)
+        workdir.mkdir()
+        log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
+
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
         from rdfsolve.qlever.index_check import has_cached_index
@@ -179,10 +212,18 @@ class LocalMiningStage(Stage):
         directories = [graph_input_directory(workdir, graph) for graph in source.graph_sources] or [workdir]
         expanded = [path for directory in directories for path in expand_inputs(directory)]
         try:
-            if not all(rdf_input_files(directory) for directory in directories):
+            has_inputs = all(rdf_input_files(directory) for directory in directories)
+            urls = list(source.download_urls)
+            if needs_download(workdir, urls, has_inputs=has_inputs):
                 if not skip_download and not self.config.no_download:
                     get_data_cmd = config.get("data", "GET_DATA_CMD")
+                    # The marker stays when the download does not end, so the next run
+                    # downloads again and does not index a part of the files.
+                    (workdir / MARKER).touch()
                     subprocess.run(["bash"], input=get_data_cmd, text=True, check=True, cwd=workdir)
+                    # The server is asked about the files only in a run that asks for updates.
+                    head = server_state if self.config.update_downloads else (lambda url: None)
+                    write_record(workdir, urls, head)
                     expanded.extend(path for directory in directories for path in expand_inputs(directory))
             if source.graph_sources:
                 mapped = mapped_input_files(workdir, list(source.graph_sources))

@@ -218,6 +218,13 @@ Examples:
         "the removed patterns are recorded in the schema",
     )
     parser.add_argument(
+        "--update-downloads",
+        action="store_true",
+        help="Ask the server whether the files of each local source changed; a source with a "
+        "changed file is downloaded and indexed again (its old folder is kept beside it). "
+        "Without this option an index that is there is used as it is",
+    )
+    parser.add_argument(
         "--restriction-patterns",
         action="store_true",
         help="Mine the relations between terms that OWL restrictions state, as patterns",
@@ -481,6 +488,7 @@ Examples:
     if config.get_graphs_from_store and not config.graph_store_urls:
         parser.error("--get-graphs-from-store requires --graph-store-url SOURCE=URL")
     config.no_download = args.no_download
+    config.update_downloads = args.update_downloads
     config.no_index = args.no_index
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats

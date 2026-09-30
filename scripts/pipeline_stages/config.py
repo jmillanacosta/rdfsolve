@@ -106,6 +106,8 @@ class PipelineConfig:
     base_port: int = 7019
     qlever_startup_timeout: int = 600  # Seconds to load the index.
     no_download: bool = False
+    # Ask the server for updates of the files of a local source; download and index again
+    update_downloads: bool = False
     no_index: bool = False
 
     skip_remote: bool = False
