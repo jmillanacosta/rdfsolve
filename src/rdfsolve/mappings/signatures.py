@@ -13,7 +13,7 @@ from __future__ import annotations
 import csv
 import json
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -216,6 +216,10 @@ def _local(value: str) -> tuple[str, str] | None:
     return prefix, parsed[1]
 
 
+class LookupStoppedError(Exception):
+    """A lookup was stopped before its next query (the time budget of the caller ended)."""
+
+
 def _lookup(
     link: Link,
     target: Client,
@@ -224,13 +228,15 @@ def _lookup(
     *,
     in_target_class: bool = False,
     extra: str = "",
+    stop: Callable[[], bool] | None = None,
 ) -> dict[str, list[tuple[str, str]]]:
     """Look up identifiers (Bioregistry CURIEs) in the target, in every spelling.
 
     Return, for each identifier found, the target terms and their target subjects: the term
     itself for a join, the subject that has the term as value of the target property for a
     shared reference (with *in_target_class*, only subjects of the target class). *extra* is
-    a pattern that the target subject ?x must also match (the path of a route).
+    a pattern that the target subject ?x must also match (the path of a route). *stop* is
+    asked before each query; when it answers True, LookupStoppedError is raised.
     """
     from rdflib import URIRef
 
@@ -251,6 +257,8 @@ def _lookup(
     found: dict[str, list[tuple[str, str]]] = defaultdict(list)
     pairs = [(key, term) for key, forms in terms.items() for term in forms]
     for start in range(0, len(pairs), 200):
+        if stop is not None and stop():
+            raise LookupStoppedError(f"stopped after {start} of {len(pairs)} spellings")
         values = " ".join(f'("{key}" {term.n3()})' for key, term in pairs[start : start + 200])
         scoped = target._scope(f"VALUES (?key ?t) {{ {values} }} {pattern}")
         for row in target._select(f"SELECT DISTINCT ?key ?t ?x WHERE {{ {scoped} }}"):

@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from rdfsolve.mappings.signatures import (
     Link,
     LinkEvidence,
+    LookupStoppedError,
     _local,
     _lookup,
     _read_all,
@@ -213,7 +214,9 @@ def check_routes(
                 else None
             )
             if found is None:
-                found = _lookup(link, target, missing, replacements, **options)
+                found = _lookup(
+                    link, target, missing, replacements, stop=lambda: clock() >= deadline, **options
+                )
             known.update({key: key in found for key in missing})
         return {key for key in keys if known[key]}
 
@@ -236,7 +239,11 @@ def check_routes(
         keys = set().union(*values.values()) if values else set()
         for index, after in enumerate(afters):
             if not before and not after and not Route(link).resolved:
-                reach(index, keys)  # the link itself: its identifiers are looked up once
+                try:
+                    reach(index, keys)  # the link itself: its identifiers are looked up once
+                except LookupStoppedError:
+                    result.stop_reason = "budget"
+                    break
                 continue
             if clock() >= deadline:
                 result.stop_reason = "budget"
@@ -244,7 +251,11 @@ def check_routes(
             result.tested += 1
             if not values:
                 continue
-            found = reach(index, keys)
+            try:
+                found = reach(index, keys)
+            except LookupStoppedError:
+                result.stop_reason = "budget"
+                break
             matched = sum(1 for held in values.values() if held & found)
             if matched:
                 route = Route(link, before, after)
