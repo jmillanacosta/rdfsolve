@@ -21,6 +21,7 @@ a stopped run continues with the first link that is in none of them.
 
 import argparse
 import csv
+import dataclasses
 import json
 from pathlib import Path
 
@@ -95,7 +96,9 @@ def main():
     def fail(link, stage, error):
         """Record a failed link with its stage and error."""
         message = f"{type(error).__name__}: {error}"[:300]
-        failed.append({"link": repr(link), "stage": stage, "error": message})
+        failed.append(
+            {"link": repr(link), "fields": dataclasses.asdict(link), "stage": stage, "error": message}
+        )
         failed_path.write_text(json.dumps(failed, indent=1))
         return message
 

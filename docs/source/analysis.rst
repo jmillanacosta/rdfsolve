@@ -99,11 +99,25 @@ submission.
 Boundaries
 ----------
 
-The connectivity graph currently uses direct class-level patterns. Retained SHACL
-paths remain available to mining and the client; compound paths are not expanded
-into cross-dataset analysis edges. Property correspondence and transitive mapping
-inference are separate work. The optional inference script is not part of this
-validated analysis workflow.
+Each edge of the connectivity graph has a level of evidence:
+
+- ``confirmed``: seen in full on the data. A class-level pattern with its count, a path
+  over several steps that instances follow, and a link of which every value was read and the
+  share is at least the threshold.
+- ``tested``: checked on part of the data, or with a weak result. A link verified on a sample,
+  and a link read in full with a share under the threshold.
+- ``plausible``: stated or composed, and not tested on the data. The same class in two
+  datasets, an external mapping assertion, a proposed link, and a path composed from the
+  schema.
+
+A link of which no value was found is not an edge. A tested path is one edge (kind ``path``)
+from its first class to its last class, within one dataset. A route of several edges is a
+composition: each part can be confirmed, but no instance is known to follow the whole route,
+also across datasets. ``rdfsolve.analysis.best_route`` therefore gives such a route the
+evidence ``plausible`` with the level of its weakest edge (``weakest_segment``). It takes the
+strongest edges first, then the fewest edges. Property correspondence and transitive mapping
+inference are separate work. The optional inference script is not part of this validated
+analysis workflow.
 
 External class links can improve retrieval vocabulary without authorizing remote
 query predicates or proving entity identity. Explicit assertions and verified

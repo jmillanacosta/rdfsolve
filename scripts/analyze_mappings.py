@@ -8,6 +8,7 @@ the direct ones (the source writes the terms of the target) as VoID linksets.
 
 import argparse
 import json
+from collections import Counter
 from pathlib import Path
 
 from networkx import node_link_data
@@ -15,7 +16,8 @@ from networkx import node_link_data
 from rdfsolve.analysis import build_connectivity, compare_schemas, load_schemas, read_class_mappings
 from rdfsolve.analysis.io import load_channel_schemas
 from rdfsolve.config import mint
-from rdfsolve.mappings.signatures import read_links
+from rdfsolve.analysis.schema import extract_class_set
+from rdfsolve.mappings.signatures import Link, read_links
 from rdfsolve.mappings.sssom import links_to_sssom, write_sssom_tsv
 from rdfsolve.mappings.void import links_to_void
 
@@ -47,17 +49,40 @@ def main():
                 schemas[name] = schema
     if not schemas:
         parser.error("Supply canonical schema snapshots")
-    links, reports = [], {}
+    links, looked_up, proposed, reports = [], [], [], {}
     for path in args.links:
         read = read_links(path)
         kept = [e for e in read if e.share is not None and e.share >= args.min_share]
         reports[str(path)] = {"verified": len(read), "kept": len(kept), "min_share": args.min_share}
         links.extend(kept)
+        looked_up.extend(read)
+        # Links whose lookup failed are proposed links: plausible edges of the graph.
+        failed = path.parent / "failed.json"
+        if failed.exists():
+            rows = [row["fields"] for row in json.loads(failed.read_text()) if "fields" in row]
+            proposed.extend(Link(**fields) for fields in rows)
+            reports[str(path)]["lookup_failed"] = len(rows)
     mappings = []
     for path in args.class_mappings:
         edges, reports[str(path)] = read_class_mappings(path, schemas)
         mappings.extend(edges)
-    graph = build_connectivity(schemas, class_mappings=mappings, links=links)
+    # The graph takes every link that was looked up; each edge has its level of evidence
+    # (confirmed, tested or plausible). The SSSOM and VoID outputs keep the threshold.
+    known = {(name, cls) for name, schema in schemas.items() for cls in extract_class_set(schema)}
+    proposed = [
+        link
+        for link in proposed
+        if (link.source, link.source_class) in known and (link.target, link.target_class) in known
+    ]
+    graph = build_connectivity(
+        schemas,
+        class_mappings=mappings,
+        links=looked_up,
+        candidates=proposed,
+        min_share=args.min_share,
+    )
+    levels = Counter(data["evidence"] for *_, data in graph.edges(data=True))
+    reports["connectivity"] = {"edges_by_evidence": dict(levels)}
     args.output.mkdir(parents=True, exist_ok=True)
     for name, value in (
         ("class_connectivity", node_link_data(graph)),
