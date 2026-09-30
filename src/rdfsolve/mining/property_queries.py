@@ -111,11 +111,13 @@ def _subjects_from_total(
     by_graph = {row.get("_g", {}).get("value"): row for row in totals.rows}
     rows = []
     for row in groups.rows:
+        # The count builders name the edge count ?cnt; the property usage query names it ?triples.
+        edges = (row.get("cnt") or row.get("triples") or {}).get("value")
         graph = row.get("_g", {}).get("value")
         whole = by_graph.get(graph)
         if whole is None:
             return None
-        if row["cnt"]["value"] != whole["cnt"]["value"]:
+        if edges != whole["cnt"]["value"]:
             test = _group_test(builder, row, context_graphs)
             if test is None:
                 return None
@@ -126,7 +128,7 @@ def _subjects_from_total(
             if counted.state != "complete":
                 return None
             match = [r for r in counted.rows if r.get("_g", {}).get("value") == graph]
-            if len(match) != 1 or match[0]["cnt"]["value"] != row["cnt"]["value"]:
+            if len(match) != 1 or match[0]["cnt"]["value"] != edges:
                 return None
             whole = match[0]
         rows.append({**row, "subjects": whole["subjects"]})
