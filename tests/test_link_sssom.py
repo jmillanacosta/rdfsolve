@@ -43,4 +43,5 @@ def test_links_become_a_mapping_set_of_curies(tmp_path):
     other = json.loads(row["other"])
     assert (other["sampled"], other["found"], other["identifier_type"]) == (50, 48, "uniprot")
     assert other["target_forms"] == {"http://purl.uniprot.org/uniprot/{id}": 48}
+    assert other["identity_flags"] == {} and other["identity_statements_checked"] == 0
     assert "rdfsolve" in mapping_set.converter.prefix_map, "subject_source names the dataset"

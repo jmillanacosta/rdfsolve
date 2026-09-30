@@ -138,6 +138,7 @@ def build_connectivity(
                 "share": evidence.share,
                 "target_forms": evidence.target_forms,
                 "complete": evidence.complete,
+                "flags": evidence.flags,
                 "evidence": "confirmed" if evidence.complete and share >= min_share else "tested",
             },
         )
@@ -170,6 +171,8 @@ def build_connectivity(
             starts=tested.starts,
             matched=tested.matched,
             complete=tested.complete,
+            resolved_construct=route.resolved,
+            flags=tested.flags,
             evidence=tested.level,
         )
     return graph
@@ -210,17 +213,22 @@ def best_route(graph: Any, source: Any, target: Any) -> dict[str, Any] | None:
     all edges; among the routes of a level the one with the fewest edges is taken. A route of
     one edge has the level of that edge. A route of several edges is a composition: no instance
     is known to follow all of it, so its evidence is plausible, and weakest_segment gives the
-    level of its weakest edge. None when there is no route.
+    level of its weakest edge. An edge can carry the flags of a link over an identity property
+    that failed a check (a gene stated to be the same as a protein); at each level a route
+    without flagged edges is taken first, and flagged says whether the route has such an edge.
+    None when there is no route.
     """
     import networkx as nx
 
     if source not in graph or target not in graph:
         return None
-    for floor in reversed(range(len(LEVELS))):
+    # At each level, a route without flagged edges is looked for first.
+    searches = [(f, a) for f in reversed(range(len(LEVELS))) for a in (False, True)]
+    for floor, with_flagged in searches:
         simple: Any = nx.DiGraph()
         simple.add_nodes_from((source, target))
         for left, right, data in graph.edges(data=True):
-            if LEVELS.index(data["evidence"]) < floor:
+            if LEVELS.index(data["evidence"]) < floor or (data.get("flags") and not with_flagged):
                 continue
             ends = (
                 ((left, right), (right, left))
@@ -248,5 +256,6 @@ def best_route(graph: Any, source: Any, target: Any) -> dict[str, Any] | None:
             "composed": composed,
             "weakest_segment": weakest,
             "evidence": "plausible" if composed else weakest,
+            "flagged": any(e.get("flags") for e in edges),
         }
     return None

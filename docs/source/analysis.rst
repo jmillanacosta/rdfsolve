@@ -125,7 +125,19 @@ are counted. Between two local indexes every start instance is read and a matche
 ``confirmed``; when a dataset is read at its endpoint a sample is read and a matched route is
 ``tested``. A tested route is one edge (kind ``route``). The file ``routes.json`` holds the
 matched routes, each with a federated query that is generated from the record and is not
-executed. Routes over more than one link are not tested. Property correspondence and transitive mapping
+executed. Routes over more than one link are not tested.
+
+A link can reach an OWL construct that holds the identifier as a value: an
+``owl:Restriction`` or an ``owl:Axiom``. Such a route is resolved to the term that the
+construct describes (the subclass of the restriction, the annotated source of the axiom), so
+that it ends at an entity; ``resolved_construct`` names the construct. A path with an
+``rdf:type`` step is not tested.
+
+A link over an identity property (``owl:sameAs``, ``skos:exactMatch``) is checked as a
+declared identity is. A gene stated to be the same as a protein is a join that exists on the
+data, so the link keeps its level of evidence, and it records the failed checks (``flags``,
+for example ``kind:gene-protein``). Routes and edges that use the link carry the flags, and
+``best_route`` takes a route without flagged edges first (``flagged``). Property correspondence and transitive mapping
 inference are separate work. The optional inference script is not part of this validated
 analysis workflow.
 

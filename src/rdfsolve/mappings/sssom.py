@@ -239,6 +239,10 @@ def links_to_sssom(
                         "complete": e.complete,
                         "interval": e.interval(),
                         "target_forms": e.target_forms,
+                        # Failed checks of a link over an identity property, and how many
+                        # statements were checked (rdfsolve.mappings.identity).
+                        "identity_flags": e.flags,
+                        "identity_statements_checked": e.flag_checked,
                     },
                     sort_keys=True,
                 ),

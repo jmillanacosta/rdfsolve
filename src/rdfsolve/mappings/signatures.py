@@ -168,6 +168,15 @@ class LinkEvidence:
     replaced: int = 0
     population: int | None = None
     complete: bool = False
+    # For a link over an identity property: the failed checks of the statements (see
+    # rdfsolve.mappings.identity) with their counts, and the number of statements checked.
+    flags: dict[str, int] = field(default_factory=dict)
+    flag_checked: int = 0
+
+    @property
+    def flagged(self) -> bool:
+        """Tell whether a checked statement of the link failed an identity check."""
+        return bool(self.flags)
 
     @property
     def share(self) -> float | None:
@@ -247,6 +256,39 @@ def _lookup(
         for row in target._select(f"SELECT DISTINCT ?key ?t ?x WHERE {{ {scoped} }}"):
             found[row["key"]["value"]].append((row["t"]["value"], row["x"]["value"]))
     return dict(found)
+
+
+# Most statements of an identity link that are checked for their kinds of entity.
+FLAG_SAMPLE = 1000
+
+
+def _identity_flags(link: Link, source: Client, body: str) -> tuple[dict[str, int], int]:
+    """Check the statements of a link over an identity property, as declared identities are.
+
+    Return the failed checks with their counts, and the number of statements checked. A
+    statement is checked when its subject and its value are identifiers with a known prefix;
+    a kind that is not known is not a failed check. Other properties state no identity.
+    """
+    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES
+    from rdfsolve.mappings.identity import identity_flags
+
+    if link.property not in IDENTITY_PROPERTIES:
+        return {}, 0
+    rows = source._select(
+        f"SELECT DISTINCT ?s ?v WHERE {{ {body} FILTER(isIRI(?s)) }} LIMIT {FLAG_SAMPLE}"
+    )
+    counts: dict[str, int] = defaultdict(int)
+    checked = 0
+    for row in rows:
+        subject, value = _local(row["s"]["value"]), _local(row["v"]["value"])
+        if not subject or not value:
+            continue
+        checked += 1
+        flags = identity_flags(":".join(subject), ":".join(value))
+        for flag in {"namespace" if f.startswith("namespace:") else f for f in flags}:
+            if flag != "kind:unknown":
+                counts[flag] += 1
+    return dict(counts), checked
 
 
 # Most distinct target terms that verify(read_target=True) reads at once; above, lookups.
@@ -379,6 +421,7 @@ def verify(
     for key, term in found.items():
         local = replacements.get(key, key).split(":", 1)[1]
         forms[term.replace(local, "{id}") if term.endswith(local) else "literal"] += 1
+    flags, checked = _identity_flags(link, source, body)
     return LinkEvidence(
         link,
         len(keys),
@@ -388,6 +431,8 @@ def verify(
         sum(key in replacements for key in keys),
         population,
         sample is None,
+        flags,
+        checked,
     )
 
 
@@ -468,6 +513,8 @@ LINK_FIELDS = (
     "replaced",
     "population",
     "complete",
+    "flags",
+    "flag_checked",
 )
 
 
@@ -492,6 +539,8 @@ def write_links(path: str | Path, links: Iterable[LinkEvidence]) -> None:
                     "replaced": evidence.replaced,
                     "population": "" if evidence.population is None else evidence.population,
                     "complete": evidence.complete,
+                    "flags": json.dumps(evidence.flags),
+                    "flag_checked": evidence.flag_checked,
                 }
             )
 
@@ -524,6 +573,8 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
             int(row["replaced"]),
             int(row["population"]) if row.get("population") else None,
             row.get("complete") == "True",
+            json.loads(row.get("flags") or "{}"),
+            int(row.get("flag_checked") or 0),
         )
         for row in rows
     ]

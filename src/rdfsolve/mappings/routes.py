@@ -35,6 +35,16 @@ if TYPE_CHECKING:
     from rdfsolve.api import Client
 
 Segment = tuple[SchemaPattern, ...]
+OWL = "http://www.w3.org/2002/07/owl#"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+SUBCLASS_OF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+# OWL constructs that hold an identifier as a value and are not entities, with the pattern from
+# the construct ?x to the term ?e that it describes. A link that reaches a construct is
+# resolved to that term: the subclass of a restriction, the annotated source of an axiom.
+CONSTRUCTS = {
+    OWL + "Restriction": ("Restriction", f"?e <{SUBCLASS_OF}> ?x ."),
+    OWL + "Axiom": ("Axiom", f"?x <{OWL}annotatedSource> ?e ."),
+}
 
 
 @dataclass(frozen=True)
@@ -46,6 +56,16 @@ class Route:
     after: Segment = ()
 
     @property
+    def resolved(self) -> str | None:
+        """Return the OWL construct that the link reaches and that is resolved to its term."""
+        return CONSTRUCTS.get(self.link.target_class or "", (None, ""))[0]
+
+    @property
+    def reached_class(self) -> str:
+        """Return the class of the entity that the link reaches (the term of a construct)."""
+        return OWL + "Class" if self.resolved else (self.link.target_class or "")
+
+    @property
     def start_class(self) -> str:
         """Return the class of the start instances."""
         return self.before[0].subject_class if self.before else self.link.source_class
@@ -53,7 +73,7 @@ class Route:
     @property
     def end_class(self) -> str:
         """Return the class that the route reaches."""
-        return self.after[-1].object_class if self.after else (self.link.target_class or "")
+        return self.after[-1].object_class if self.after else self.reached_class
 
 
 @dataclass
@@ -64,6 +84,8 @@ class RouteEvidence:
     starts: int
     matched: int
     complete: bool = False
+    # The failed identity checks of the link (LinkEvidence.flags); the route carries them.
+    flags: dict[str, int] = field(default_factory=dict)
 
     @property
     def level(self) -> str:
@@ -87,17 +109,20 @@ def propose_segments(
 
     Before: each schema step and each tested path of the source that ends at the class of the
     link. After: each schema step and each tested path of the target that starts at the class
-    that the link reaches and ends at a class.
+    that the link reaches (the term, when the link reaches an OWL construct) and ends at a
+    class. A path with an rdf:type step is left out: it is not a relation between entities.
     """
 
     def paths(schema: MinedSchema) -> Iterable[Segment]:
         """Return each schema step and each matched tested path of a schema."""
-        for pattern in schema.patterns:
-            yield (pattern,)
+        found: list[Segment] = [(pattern,) for pattern in schema.patterns]
         if schema.navigation is not None:
-            for path in schema.navigation.paths:
-                if path.instance_support == "matched":
-                    yield tuple(path.steps)
+            found += [
+                tuple(path.steps)
+                for path in schema.navigation.paths
+                if path.instance_support == "matched"
+            ]
+        return [p for p in found if all(step.property_uri != RDF_TYPE for step in p)]
 
     def distinct(found: Iterable[Segment]) -> list[Segment]:
         """Return the empty path and each path once, in their order."""
@@ -106,11 +131,12 @@ def propose_segments(
             seen.setdefault(tuple(_triple(step) for step in path), path)
         return list(seen.values())
 
+    reached = Route(link).reached_class
     befores = (p for p in paths(source) if p[-1].object_class == link.source_class)
     afters = (
         p
         for p in paths(target)
-        if p[0].subject_class == link.target_class and p[-1].object_class not in _SENTINEL_OBJECTS
+        if p[0].subject_class == reached and p[-1].object_class not in _SENTINEL_OBJECTS
     )
     return distinct(befores), distinct(afters)
 
@@ -130,6 +156,13 @@ def _walk(steps: Segment, first: str, name: str) -> tuple[str, str]:
             parts.append(f"{reached} a <{step.object_class}> .")
         node = reached
     return " ".join(parts), node
+
+
+def _target_pattern(route: Route) -> str:
+    """Return the pattern from the target subject ?x of the link to the end of the route."""
+    resolve = CONSTRUCTS.get(route.link.target_class or "")
+    walk, _ = _walk(route.after, "?e" if resolve else "?x", "m")
+    return f"{resolve[1]} {walk}".strip() if resolve else walk
 
 
 def _source_pattern(route: Route) -> str:
@@ -158,7 +191,9 @@ def check_routes(
 
     With *sample* None every start instance is read, else up to *sample* pairs of a start
     instance and a value. A path after the link that no value reaches, and a path before the
-    link without start instances, are not combined further. The link alone is not a route.
+    link without start instances, are not combined further. The link alone is not a route, but a
+    link that reaches an OWL construct is resolved to the term of the construct, and that is
+    a route.
     """
     replacements = replacements or {}
     deadline = clock() + budget_s
@@ -170,7 +205,7 @@ def check_routes(
         known = reached[index]
         missing = sorted(keys - set(known))
         if missing:
-            extra, _ = _walk(afters[index], "?x", "m")
+            extra = _target_pattern(Route(link, (), afters[index]))
             options: dict[str, Any] = {"in_target_class": True, "extra": " " + extra}
             found = (
                 _read_target(link, target, missing, replacements, **options)
@@ -200,7 +235,7 @@ def check_routes(
                 values[row["n0"]["value"]].add(f"{parsed[0]}:{parsed[1]}")
         keys = set().union(*values.values()) if values else set()
         for index, after in enumerate(afters):
-            if not before and not after:
+            if not before and not after and not Route(link).resolved:
                 reach(index, keys)  # the link itself: its identifiers are looked up once
                 continue
             if clock() >= deadline:
@@ -237,7 +272,9 @@ def federated_query(
     while shared < min(len(value), len(term)) and value[-1 - shared] == term[-1 - shared]:
         shared += 1
     before, last = _walk(route.before, "?n0", "n")
-    after, _ = _walk(route.after, "?t" if route.link.kind == "join" else "?x", "m")
+    after = _target_pattern(route)
+    if route.link.kind == "join":
+        after = after.replace("?x ", "?t ")
     start = f"?n0 a <{route.start_class}> . {before} ".replace("  ", " ")
     if value == term:
         rewrite, held = "", "?t"
@@ -294,6 +331,8 @@ def write_routes(
                 "matched_instances": evidence.matched,
                 "complete": evidence.complete,
                 "evidence": evidence.level,
+                "resolved_construct": route.resolved,
+                "link_flags": evidence.flags or (by_link[link].flags if link in by_link else {}),
                 "federated_query": federated_query(route, by_link[link], endpoints)
                 if link in by_link
                 else None,
@@ -334,6 +373,12 @@ def read_routes(path: str | Path) -> list[RouteEvidence]:
         )
         route = Route(link, steps(row["before"]), steps(row["after"]))
         found.append(
-            RouteEvidence(route, row["start_instances"], row["matched_instances"], row["complete"])
+            RouteEvidence(
+                route,
+                row["start_instances"],
+                row["matched_instances"],
+                row["complete"],
+                row.get("link_flags") or {},
+            )
         )
     return found
