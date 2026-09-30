@@ -6598,7 +6598,6 @@
   download_owl:
   - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/doid.owl
   - http://purl.obolibrary.org/obo/doid/obo/ext.owl
-  - https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/refs/heads/main/src/ontology/HumanDO.owl
   keywords:
   - health
   - disease
