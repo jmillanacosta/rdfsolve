@@ -69,13 +69,16 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr("scripts.pipeline_stages.local.subprocess.run", lambda cmd, **kw: calls.append(cmd))
     stage._execute_qleverfile(workdir, source)
-    index = calls[-1]
+    assert calls[-1][-1] == str(workdir / "index-command.sh")
+    import shlex
+
+    index = shlex.split((workdir / "index-command.sh").read_text().splitlines()[-1])
     observed = {}
     for offset, value in enumerate(index):
         if value == "-f":
             assert index[offset + 2] == "-F"
             assert index[offset + 4] == "-g"
-            observed[index[offset + 5]] = Path(index[offset + 1]).read_text()
+            observed[index[offset + 5]] = (workdir / index[offset + 1]).read_text()
     assert set(observed) == set(row["graph_sources"]), "Index lost a graph assignment"
     assert observed == content
     data = Dataset(default_union=True)

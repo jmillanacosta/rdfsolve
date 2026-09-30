@@ -10,7 +10,7 @@ from typing import Any
 
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.inputs import (
-    expand_inputs, graph_input_directory, mapped_input_files, qlever_format, rdf_input_files,
+    expand_inputs, graph_input_directory, index_command, mapped_input_files, rdf_input_files,
 )
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
@@ -179,32 +179,19 @@ class LocalMiningStage(Stage):
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
-        file_flags = []
-        for path, graph in mapped:
-            file_flags.extend(["-f", str(path), "-F", qlever_format(path)])
-            if graph:
-                file_flags.extend(["-g", graph])
-
-        image_path = self.config.data_dir / "qlever.sif"
-        cmd = [
-            "singularity",
-            "exec",
-            "--bind",
-            f"{self.config.data_dir}:{self.config.data_dir}",
-            str(image_path),
-            "qlever-index",
-            "-i",
+        cmd = index_command(
+            self.config.data_dir / "qlever.sif",
+            self.config.data_dir,
+            workdir,
             config.get("data", "NAME", fallback=source.name),
-            "-s",
-            str(settings_path),
-            *file_flags,
-            "-p",
-            config.get("index", "PARALLEL_PARSING"),
-            "-b",
-            config.get("index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size),
-            "-m",
-            config.get("index", "STXXL_MEMORY", fallback="16GB"),
-        ]
+            settings_path,
+            mapped,
+            parallel=config.get("index", "PARALLEL_PARSING"),
+            buffer=config.get(
+                "index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size
+            ),
+            memory=config.get("index", "STXXL_MEMORY", fallback="16GB"),
+        )
 
         # QLever returns every integer type as xsd:int and a decimal as xsd:double; the numeric
         # datatypes of the source are counted from the input files, beside the index, while

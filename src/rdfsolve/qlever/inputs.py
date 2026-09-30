@@ -106,3 +106,47 @@ def mapped_input_files(workdir: Path, graphs: list[str]) -> list[tuple[Path, str
             raise ValueError(f"Mapped graph {graph} requires triple inputs")
         inputs.extend((path, graph) for path in files)
     return inputs
+
+
+def index_command(
+    image: Path,
+    data_dir: Path,
+    workdir: Path,
+    name: str,
+    settings_path: Path,
+    mapped: list[tuple[Path, str]],
+    *,
+    parallel: str,
+    buffer: str,
+    memory: str,
+) -> list[str]:
+    """Write the qlever-index command to WORKDIR/index-command.sh and return the command that runs it.
+
+    The inputs are given relative to the work folder, and the container runs the script, so the
+    file list does not pass through the command line of Singularity, which refuses a long one
+    (WikiPathways: 12,543 files). Each input stays its own file, so that blank nodes of different
+    documents stay apart.
+    """
+    import os
+    import shlex
+
+    args = ["qlever-index", "-i", name, "-s", str(settings_path)]
+    for path, graph in mapped:
+        args += ["-f", os.path.relpath(path, workdir), "-F", qlever_format(path)]
+        if graph:
+            args += ["-g", graph]
+    args += ["-p", parallel, "-b", buffer, "-m", memory]
+    script = workdir / "index-command.sh"
+    script.write_text(
+        "#!/bin/bash\n# Written by rdfsolve: the index command, run inside the container.\n"
+        f"set -euo pipefail\ncd {shlex.quote(str(workdir))}\nexec {shlex.join(args)}\n"
+    )
+    return [
+        "singularity",
+        "exec",
+        "--bind",
+        f"{data_dir}:{data_dir}",
+        str(image),
+        "bash",
+        str(script),
+    ]

@@ -52,7 +52,12 @@ def _format(name: str) -> Any:
     """Return the pyoxigraph format of a QLever input format (ttl, nt, nq)."""
     from pyoxigraph import RdfFormat
 
-    formats = {"ttl": RdfFormat.TURTLE, "nt": RdfFormat.N_TRIPLES, "nq": RdfFormat.N_QUADS}
+    formats = {
+        "ttl": RdfFormat.TURTLE,
+        "n3": RdfFormat.TURTLE,
+        "nt": RdfFormat.N_TRIPLES,
+        "nq": RdfFormat.N_QUADS,
+    }
     xml = {"owl": RdfFormat.RDF_XML, "rdf": RdfFormat.RDF_XML, "xml": RdfFormat.RDF_XML}
     return {**formats, **xml, "trig": RdfFormat.TRIG}[name]
 
