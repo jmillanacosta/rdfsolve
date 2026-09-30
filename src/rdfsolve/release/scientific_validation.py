@@ -246,12 +246,20 @@ def build_scientific_validation_plan(
             )
         if schema.navigation is None or routes_per_schema <= 0:
             continue
-        candidates = [path for path in schema.navigation.paths if path.query]
-        candidates.sort(key=lambda path: hashlib.sha256((path.query or "").encode()).hexdigest())
+        from rdfsolve.mining.navigation import support_query
+
+        # A tested path does not store its query; it is made again from its steps.
+        tested = schema.navigation.strategy == "tested"
+        queries = {
+            id(path): path.query or (support_query(path, schema.navigation) if tested else "")
+            for path in schema.navigation.paths
+        }
+        candidates = [path for path in schema.navigation.paths if queries[id(path)]]
+        candidates.sort(key=lambda path: hashlib.sha256(queries[id(path)].encode()).hexdigest())
         for path in candidates[:routes_per_schema]:
             route_checks.append(
                 RouteCheckPlan(
-                    check_id=_stable_id(snapshot, artifact.artifact_id, path.query or ""),
+                    check_id=_stable_id(snapshot, artifact.artifact_id, queries[id(path)]),
                     dataset_id=dataset.dataset_id,
                     snapshot_id=snapshot,
                     extraction_mode=mode,
@@ -261,7 +269,7 @@ def build_scientific_validation_plan(
                     expected_instance_support=path.instance_support,
                     expected_source_count=path.source_count,
                     expected_matched_sources=path.matched_sources,
-                    query=path.query or "",
+                    query=queries[id(path)],
                 )
             )
     return ScientificValidationPlan(

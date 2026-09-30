@@ -40,7 +40,7 @@ def test_only_paths_that_instances_follow_are_kept():
     assert all(route.instance_support == "matched" for route in nav.paths)
     route = kept[("A", "p", "B"), ("B", "q", "C")]
     assert (route.matched_sources, route.source_count) == (1, 2)
-    assert route.evidence == "instance_tested" and route.query
+    assert route.evidence == "instance_tested"
     assert nav.strategy == "tested" and nav.stop_reason is None
     assert nav.complete_lengths == [2, 3, 4]
     assert nav.matched_by_length[2] == 3 and nav.tested_by_length[2] == 4
@@ -62,17 +62,19 @@ def test_an_exhausted_budget_is_recorded():
 
 
 def test_the_shacl_holds_only_matched_paths():
-    schema = _mine(max_hops=3, budget_s=600)
-    shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
-    text = schema.to_shacl()
-    assert "Schema-composed" not in text and "Candidate" not in text
-    profiles = [s for s in shapes.subjects(RDF.type, SH.NodeShape) if "observed-route-" in str(s)]
-    assert len(profiles) == len(schema.navigation.paths)
-    assert all(bool(shapes.value(s, SH.deactivated)) for s in profiles)
     from rdflib.collection import Collection
 
+    schema = _mine(max_hops=3, budget_s=600)
+    text = schema.to_shacl(paths="only")
+    shapes = Graph().parse(data=text, format="turtle")
+    assert "Schema-composed" not in text and "Candidate" not in text
+    assert "1 of 2 start instances" in text, "Each path with its counts"
     sequences = [Collection(shapes, p) for p in shapes.objects(None, SH.path) if (p, RDF.first, None) in shapes]
     assert sequences and all(f"{E}r" not in {str(i) for i in items} for items in sequences)
+    assert not [s for s in shapes.subjects(RDF.type, SH.NodeShape) if "observed-route-" in str(s)]
+    classes_only = Graph().parse(data=schema.to_shacl(paths="without"), format="turtle")
+    assert not [p for p in classes_only.objects(None, SH.path) if (p, RDF.first, None) in classes_only]
+    assert len(set(classes_only.subjects(RDF.type, SH.NodeShape))) == 3, "One shape for each class with properties"
 
 
 def test_the_pipeline_tests_paths_within_a_budget(monkeypatch):

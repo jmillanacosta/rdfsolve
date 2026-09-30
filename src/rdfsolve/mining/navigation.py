@@ -546,7 +546,8 @@ def find_tested_paths(
             for edge in candidates:
                 if not _matched_starts(edge, rows, members):
                     continue
-                # The path is kept with its own query, which the release validation repeats.
+                # The path is kept when its own query matches; support_query makes that query
+                # again (the release validation repeats it), so it is not stored with the path.
                 if clock() >= deadline:
                     stop, whole = "budget", False
                     break
@@ -575,7 +576,6 @@ def find_tested_paths(
                         matched_sources=followed,
                         graph_uris=graphs,
                         type_context_graph_uris=context,
-                        query=support,
                         observed_at=observed_at,
                     )
                 )
@@ -588,7 +588,11 @@ def find_tested_paths(
         if stop:
             break
         frontier = extended
+    through = {s.subject_class for r in kept for s in r.steps} | {
+        s.object_class for r in kept for s in r.steps
+    }
     return NavigationSummary(
+        member_terms={c: list(members[c]) for c in sorted(through) if c in members},
         max_hops=max_hops,
         max_paths_per_length=0,
         edge_count=len(unique),
@@ -603,3 +607,15 @@ def find_tested_paths(
         query_count=queries,
         failed_queries=failed,
     )
+
+
+def support_query(route: NavigationPath, summary: NavigationSummary | None = None) -> str:
+    """Return the query that counts the start instances of a tested path and those that follow it.
+
+    It is the query that find_tested_paths sent for the path (one row: ?sources, ?matched). The
+    member terms of groups of ontology terms are taken from *summary*.
+    """
+    context = list(route.type_context_graph_uris)
+    dataset, _, _ = _graph_scope(list(route.graph_uris), context)
+    members = summary.member_terms if summary is not None else {}
+    return _support_query(route.steps, dataset, context or None, members)

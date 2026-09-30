@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_serializer, model_validator
 
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -77,3 +77,71 @@ class NavigationSummary(BaseModel):
     stop_reason: Literal["budget"] | None = None
     query_count: int = Field(default=0, ge=0)
     failed_queries: int = Field(default=0, ge=0)
+    # Member terms of the groups of ontology terms that kept paths go through (for their queries)
+    member_terms: dict[str, list[str]] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _read_packed_paths(cls, data: Any) -> Any:
+        """Read tested paths written as edge numbers (see _write_packed_paths)."""
+        if not isinstance(data, dict) or not isinstance(data.get("paths"), dict):
+            return data
+        packed = data["paths"]
+        edges = packed.get("edges", [])
+        shared = {
+            "evidence": "instance_tested",
+            "instance_support": "matched",
+            "graph_uris": packed.get("graph_uris", []),
+            "type_context_graph_uris": packed.get("type_context_graph_uris", []),
+        }
+        rows = [
+            {
+                **shared,
+                "steps": [edges[i] for i in row["edges"]],
+                "matched_sources": row.get("matched"),
+                "source_count": row.get("sources"),
+                "observed_at": row.get("at"),
+            }
+            for row in packed.get("rows", [])
+        ]
+        return {**data, "paths": rows}
+
+    @model_serializer(mode="wrap")
+    def _write_packed_paths(self, handler: Any) -> Any:
+        """Write tested paths compactly: each step once in a table, each path as edge numbers.
+
+        A path keeps its matched and start instance counts and the time of its test. Its query
+        is not written: rdfsolve.mining.navigation.support_query makes it from the steps. The
+        routes of a schema sample (strategy schema_sample) are written in full, as before.
+        """
+        data = handler(self)
+        if self.strategy != "tested" or not isinstance(data, dict):
+            return data
+        numbers: dict[tuple[str, str, str, str | None], int] = {}
+        edges: list[Any] = []
+        rows: list[dict[str, Any]] = []
+        for path, written in zip(self.paths, data["paths"], strict=True):
+            ids = []
+            for step, step_written in zip(path.steps, written["steps"], strict=True):
+                key = (step.subject_class, step.property_uri, step.object_class, step.datatype)
+                if key not in numbers:
+                    numbers[key] = len(edges)
+                    edges.append(step_written)
+                ids.append(numbers[key])
+            rows.append(
+                {
+                    "edges": ids,
+                    "matched": path.matched_sources,
+                    "sources": path.source_count,
+                    "at": path.observed_at,
+                }
+            )
+        first = self.paths[0] if self.paths else None
+        data["paths"] = {
+            "format": "edges-1",
+            "edges": edges,
+            "rows": rows,
+            "graph_uris": list(first.graph_uris) if first else [],
+            "type_context_graph_uris": list(first.type_context_graph_uris) if first else [],
+        }
+        return data

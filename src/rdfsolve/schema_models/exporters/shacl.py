@@ -175,6 +175,7 @@ def _complete_shapes(
     shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
+    tested = schema.navigation.strategy == "tested"
     grouped: dict[tuple[str, tuple[str, ...]], list[NavigationPath]] = defaultdict(list)
     for route in schema.navigation.paths:
         grouped[
@@ -184,7 +185,6 @@ def _complete_shapes(
             )
         ].append(route)
 
-    tested = schema.navigation.strategy == "tested"
     by_class: dict[str, list[ShaclPropertyShape]] = defaultdict(list)
     for (start, predicates), routes in sorted(grouped.items()):
         descriptions = []
@@ -196,7 +196,10 @@ def _complete_shapes(
                 steps.append(
                     f"{step.subject_label or step.subject_class} --{step.property_label or step.property_uri}--> {step.object_label or value} (edge triples: {count})"
                 )
-            descriptions.append("; ".join(steps))
+            text = "; ".join(steps)
+            if tested:
+                text += f" ({route.matched_sources} of {route.source_count} start instances)"
+            descriptions.append(text)
         identifier = sha256(repr((start, predicates)).encode()).hexdigest()[:20]
         by_class[start].append(
             ShaclPropertyShape(
@@ -244,7 +247,9 @@ def _complete_shapes(
             )
         )
     for route in schema.navigation.paths:
-        if route.instance_support != "matched":
+        # A tested path is given above with its counts; a nested profile for each of thousands
+        # of paths made the file too large (AOP-Wiki: 53 MB).
+        if tested or route.instance_support != "matched":
             continue
         child = None
         for step in reversed(route.steps):

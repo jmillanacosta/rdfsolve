@@ -5,7 +5,7 @@ from __future__ import annotations
 import json as _json
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -666,8 +666,12 @@ class MinedSchema(BaseModel):
         activate_observed: bool = False,
         trim_descriptions: int | None = None,
         void: bool = True,
+        paths: Literal["with", "without", "only"] = "with",
     ) -> str:
         """Convert to SHACL shapes.
+
+        *paths* selects the shapes of the paths over several steps: with the class shapes (the
+        default), without them, or only them (the pipeline writes them to a file of their own).
 
         Returns SHACL Turtle string.
 
@@ -686,6 +690,11 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
         schema = trim_export_text(self, trim_descriptions)
+        if paths == "without":
+            schema = schema.model_copy(update={"navigation": None})
+        elif paths == "only":
+            schema = schema.model_copy(update={"patterns": [], "shapes": None})
+            void = False
         shapes = minedschema_to_shacl(
             schema, base_uri=base_uri, activate_observed=activate_observed
         )

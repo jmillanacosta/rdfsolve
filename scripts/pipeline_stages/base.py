@@ -326,8 +326,16 @@ class Stage:
         if "shacl" in formats:
             path = output_dir / f"{name}{suffix}_shacl.ttl"
             try:
-                shacl_ttl = schema.to_shacl(trim_descriptions=self.config.trim_descriptions)
-                path.write_text(shacl_ttl, encoding="utf-8")
+                trim = self.config.trim_descriptions
+                # The class shapes, and the shapes of the tested paths in a file of their own.
+                path.write_text(
+                    schema.to_shacl(trim_descriptions=trim, paths="without"), encoding="utf-8"
+                )
+                if schema.navigation is not None and schema.navigation.paths:
+                    paths_file = output_dir / f"{name}{suffix}_paths.shacl.ttl"
+                    paths_file.write_text(
+                        schema.to_shacl(trim_descriptions=trim, paths="only"), encoding="utf-8"
+                    )
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate SHACL: {e}") from e
 
