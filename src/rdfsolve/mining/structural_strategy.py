@@ -221,7 +221,9 @@ def _patterns_discovery(
     instead of every triple of it. The answer has one row for each pattern of a property, with
     its triples, distinct subjects and distinct objects: one row for each edge, with the
     property sets of both nodes, exceeded the response budget of 64 MiB for WikiPathways
-    gpml:hasDataNode (137,699 edges), and a query with GROUP_CONCAT is not paged.
+    gpml:hasDataNode (137,699 edges), and a query with GROUP_CONCAT is not paged. The witness
+    of a pattern is one edge of its group: the kinds, datatype and language of the object are
+    keys of the group, so the text of the subject and object gives the edge.
     """
     rows: list[dict[str, Any]] = []
     for predicate, n in sorted(entry["census_properties"].items()):
@@ -232,6 +234,7 @@ def _patterns_discovery(
             QLEVER_PREFIX
             + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
   (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), " ", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
 {_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
   ?s {prop} ?o . {UNTYPED_SUBJECT}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
@@ -250,6 +253,32 @@ GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
         )
         rows += _select(context, query, "structural/discovery")
     return rows
+
+
+def _witness(row: dict[str, Any]) -> dict[str, Any]:
+    """Return the edge that a grouped discovery row samples, as SPARQL JSON bindings.
+
+    A blank node has no label that another query can use; it is given as a blank node only.
+    """
+    subject, value = row["witness"]["value"].split(" ", 1)
+    edge: dict[str, Any] = {
+        "s": {"type": "uri", "value": subject}
+        if row["sk"]["value"] == "IRI"
+        else {"type": "bnode", "value": "witness"}
+    }
+    kind = row["ok"]["value"]
+    if kind == "IRI":
+        edge["o"] = {"type": "uri", "value": value}
+    elif kind == "Literal":
+        edge["o"] = {"type": "literal", "value": value}
+        language = row.get("lang", {}).get("value")
+        if language:
+            edge["o"]["xml:lang"] = language
+        elif row.get("dt", {}).get("value"):
+            edge["o"]["datatype"] = row["dt"]["value"]
+    else:
+        edge["o"] = {"type": "bnode", "value": "witness"}
+    return edge
 
 
 # Triples of one property in one census batch, when the census of the property is refused.
@@ -702,7 +731,7 @@ class StructuralStrategy(MiningStrategy):
                     pattern.count = int(recount["n"]["value"])
                     pattern.distinct_subjects = int(recount["subjects"]["value"])
                     pattern.distinct_objects = int(recount["objects"]["value"])
-                pattern.examples = _select(context, pattern.witness_query, "structural/witness")
+                pattern.examples = [_witness(group[0])]
             elif bulk:
                 pairs = {
                     (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
