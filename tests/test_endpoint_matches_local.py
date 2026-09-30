@@ -67,3 +67,20 @@ def test_a_refused_property_list_falls_back_to_counts_of_each_property(monkeypat
     assert match.state == "partial" and match.remote_only is None
     assert match.differing == {} and match.properties_checked == 3
     assert "list of properties" in match.reason
+
+
+def test_the_data_graph_of_the_endpoint_is_found(monkeypatch):
+    """An endpoint that serves engine triples with general properties (rdf:type in the Virtuoso
+    graph) differs without a scope; the check then finds the graph with the local triple count
+    (AOP-Wiki: http://aopwiki.org/, 338,317 triples, equal in one more query)."""
+    from rdflib import Dataset, URIRef
+
+    data = Dataset(default_union=True)
+    data.graph(URIRef("urn:graph:data")).parse(data=DATA, format="turtle")
+    engine = data.graph(URIRef("http://www.openlinksw.com/schemas/virtrdf#"))
+    engine.parse(data="<urn:qm> a <urn:ex:QuadMap> ; <urn:ex:p> <urn:x> .", format="turtle")
+    with SchemaMiner.from_graph(data, delay=0) as endpoint:
+        match = check_endpoint_matches(_local(), endpoint.helper)
+    assert match.state == "equal"
+    assert match.graph_uris == ["urn:graph:data"] and match.graphs_found_by_the_check
+    assert match.differing == {} and match.remote_only == {}

@@ -21,7 +21,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from rdfsolve.mining.query_builders import _graph_scope
-from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_NAMESPACES
+from rdfsolve.schema_models._constants import (
+    SUGGESTED_SERVICE_GRAPHS,
+    SUGGESTED_SERVICE_NAMESPACES,
+)
 from rdfsolve.schema_models.core import MinedSchema
 
 logger = logging.getLogger(__name__)
@@ -33,6 +36,8 @@ class EndpointMatch(BaseModel):
     state: Literal["equal", "differs", "partial", "not_checked"]
     endpoint: str | None = None
     graph_uris: list[str] = Field(default_factory=list)
+    # True when no scope was given and the check found the graphs that hold the local data
+    graphs_found_by_the_check: bool = False
     checked_at: str
     properties_checked: int = 0
     # Properties with another triple count on the endpoint: {property: {local, remote}}
@@ -60,7 +65,69 @@ def _service(prop: str) -> bool:
     return prop.startswith(SUGGESTED_SERVICE_NAMESPACES)
 
 
+def _graph_sizes_query() -> str:
+    """Return the query of the triple count of each named graph of the endpoint."""
+    return "SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g"
+
+
+def _candidate_scopes(helper: Any, total: int) -> list[list[str]]:
+    """Return graph scopes of the endpoint that hold as many triples as the local record.
+
+    First each graph with the local triple count, then all graphs but the engine and service
+    graphs when they hold that count together.
+    """
+    try:
+        answer = helper.select(_graph_sizes_query(), purpose="endpoint-match/graphs")
+    except Exception as error:
+        logger.warning("The endpoint refused the list of its graphs: %s", error)
+        return []
+    sizes = {
+        row["g"]["value"]: int(row["n"]["value"])
+        for row in answer.get("results", {}).get("bindings", [])
+    }
+    scopes = [[graph] for graph, n in sorted(sizes.items()) if n == total]
+    data = sorted(g for g in sizes if not g.startswith(SUGGESTED_SERVICE_GRAPHS))
+    if len(data) > 1 and sum(sizes[g] for g in data) == total:
+        scopes.append(data)
+    return scopes
+
+
 def check_endpoint_matches(
+    local: MinedSchema,
+    helper: Any,
+    *,
+    graph_uris: list[str] | None = None,
+    budget_s: float = 900.0,
+    clock: Callable[[], float] = time.monotonic,
+) -> EndpointMatch:
+    """Compare the exact triple count of each property of *local* with the endpoint of *helper*.
+
+    Without *graph_uris*, an endpoint that differs is checked again in the graphs that hold as
+    many triples as the local record (an endpoint serves engine and service graphs beside the
+    data, with general properties such as rdf:type); when they are equal, the result names them.
+    """
+    result = _compare(local, helper, graph_uris=graph_uris, budget_s=budget_s, clock=clock)
+    if graph_uris or result.state != "differs":
+        return result
+    total = sum(
+        int(values["triples"])
+        for values in (local.about.property_partitions or {}).values()
+        if "triples" in values
+    )
+    for scope in _candidate_scopes(helper, total):
+        scoped = _compare(local, helper, graph_uris=scope, budget_s=budget_s, clock=clock)
+        scoped.query_count += result.query_count + 1
+        if scoped.state == "equal":
+            scoped.graphs_found_by_the_check = True
+            scoped.reason = (
+                "without a graph scope the endpoint differs (other graphs of the endpoint); "
+                "equal in the graphs named here"
+            )
+            return scoped
+    return result
+
+
+def _compare(
     local: MinedSchema,
     helper: Any,
     *,
