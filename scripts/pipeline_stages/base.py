@@ -83,6 +83,14 @@ class Stage:
             }, indent=2))
         return {"status": "skipped", "data": {"name": source.name, "reason": reason}}
 
+    @staticmethod
+    def _group_members(miner) -> dict[str, list[str]]:
+        """Return the member terms of each group of ontology terms in the report of a miner."""
+        config = getattr(getattr(miner, "last_report", None), "config", None)
+        grouping = config.get("ontology_term_grouping") if isinstance(config, dict) else None
+        members = grouping.get("representative_members") if isinstance(grouping, dict) else None
+        return dict(members) if isinstance(members, dict) else {}
+
     @contextmanager
     def _output_phase(self, miner, report_path):
         """Retain output failures in the mining report."""
@@ -259,6 +267,7 @@ class Stage:
         name: str,
         suffix: str,
         helper=None,
+        members: dict[str, list[str]] | None = None,
     ) -> None:
         """Save schema in requested output formats.
 
@@ -277,16 +286,16 @@ class Stage:
                 name,
                 self.config.trim_descriptions,
             )
-        if self.config.navigation_hops:
-            from rdfsolve.mining.navigation import discover_paths_with_fallback
+        if self.config.navigation_hops and helper is not None:
+            from rdfsolve.mining.navigation import find_tested_paths
 
-            schema.navigation = discover_paths_with_fallback(
+            # Only paths that instances of the data follow are written (owner, 2026-09-30).
+            schema.navigation = find_tested_paths(
                 schema,
+                helper,
                 max_hops=self.config.navigation_hops,
-                min_hops=min(self.config.navigation_min_hops, self.config.navigation_hops),
-                max_paths_per_length=self.config.navigation_limit,
-                helper=helper,
-                probe_limit=self.config.navigation_probes,
+                budget_s=self.config.navigation_budget,
+                members=members,
             )
 
         path = output_dir / f"{name}{suffix}_schema.json"

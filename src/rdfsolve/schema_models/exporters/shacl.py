@@ -184,6 +184,7 @@ def _complete_shapes(
             )
         ].append(route)
 
+    tested = schema.navigation.strategy == "tested"
     by_class: dict[str, list[ShaclPropertyShape]] = defaultdict(list)
     for (start, predicates), routes in sorted(grouped.items()):
         descriptions = []
@@ -202,7 +203,11 @@ def _complete_shapes(
                 uri=f"{base_uri}route-{identifier}",
                 path=routes[0].property_path(),
                 name="; ".join(sorted({route.label() for route in routes})),
-                description="Candidate class-qualified routes: "
+                description=(
+                    "Class-qualified paths followed by instances of the data: "
+                    if tested
+                    else "Candidate class-qualified routes: "
+                )
                 + " | ".join(sorted(set(descriptions))),
             )
         )
@@ -226,7 +231,11 @@ def _complete_shapes(
                     if r.steps[0].subject_class == class_iri
                 ),
                 description=(
-                    "Schema-composed paths. Instance support and coverage are unknown. "
+                    "Paths tested on the data; each was followed by at least one instance. "
+                    "Edge triple counts are not joined counts or per-entity cardinalities. "
+                    "The path omits intermediate class filters listed in each description."
+                    if tested
+                    else "Schema-composed paths. Instance support and coverage are unknown. "
                     "Edge triple counts are not joined counts or per-entity cardinalities. "
                     "The path omits intermediate class filters listed in each description. "
                     "Value types are candidate endpoints, not enforced constraints. " + omitted
@@ -262,9 +271,14 @@ def _complete_shapes(
                 deactivated=True,
                 property_shapes=[child],
                 name=route.label(),
-                description=f"Candidate query profile; {route.matched_sources}/{route.source_count} focus entries matched. "
-                f"Observed endpoint degree {route.min_count}..{route.max_count}; {route.observed_at}. "
-                "Qualified existence describes this route. It is not a dataset-wide requirement.",
+                description=(
+                    f"Tested path; {route.matched_sources} of {route.source_count} start "
+                    f"instances follow it; {route.observed_at}. "
+                    if tested
+                    else f"Candidate query profile; {route.matched_sources}/{route.source_count} focus entries matched. "
+                    f"Observed endpoint degree {route.min_count}..{route.max_count}; {route.observed_at}. "
+                )
+                + "Qualified existence describes this route. It is not a dataset-wide requirement.",
             )
         )
     logging.getLogger(__name__).warning(

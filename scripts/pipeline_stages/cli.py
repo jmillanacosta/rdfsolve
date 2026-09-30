@@ -339,26 +339,13 @@ Examples:
         type=int,
         choices=[0, 2, 3, 4, 5, 6],
         default=5,
-        help="Compose schema routes locally; 0 disables (no endpoint queries)",
+        help="Longest path tested on the data, in steps; 0 disables",
     )
     parser.add_argument(
-        "--navigation-min-hops",
-        type=int,
-        choices=[2, 3, 4, 5, 6],
-        default=3,
-        help="Lowest hop bound accepted when longer routes cannot be composed",
-    )
-    parser.add_argument(
-        "--navigation-probes",
-        type=int,
-        default=0,
-        help="Maximum joined-path support queries; zero keeps discovery local",
-    )
-    parser.add_argument(
-        "--navigation-limit",
-        type=int,
-        default=100,
-        help="Maximum saved candidate routes per hop length",
+        "--navigation-budget",
+        type=float,
+        default=1800.0,
+        help="Seconds for testing paths on the data, per dataset (default: 1800)",
     )
     parser.add_argument(
         "--examples-per-pattern",
@@ -510,14 +497,10 @@ Examples:
     config.trim_descriptions = args.trim_descriptions
     if config.trim_descriptions is not None and config.trim_descriptions < 0:
         parser.error("--trim-descriptions must be nonnegative")
-    config.navigation_probes = args.navigation_probes
-    if config.navigation_probes < 0 or (config.navigation_probes and not args.navigation_hops):
-        parser.error("--navigation-probes requires navigation hops and a nonnegative budget")
     config.navigation_hops = args.navigation_hops
-    config.navigation_min_hops = args.navigation_min_hops
-    config.navigation_limit = args.navigation_limit
-    if config.navigation_limit < 0:
-        parser.error("--navigation-limit must be nonnegative")
+    config.navigation_budget = args.navigation_budget
+    if config.navigation_budget < 0:
+        parser.error("--navigation-budget must be nonnegative")
 
     config.load_sources(args.sources, skip_providers=args.skip_providers)
 

@@ -99,9 +99,8 @@ class PipelineConfig:
     examples_per_pattern: int = 1
     trim_descriptions: int | None = None
     navigation_hops: int = 5
-    navigation_min_hops: int = 3
-    navigation_limit: int = 100
-    navigation_probes: int = 0
+    # Seconds for testing paths on the data; only paths that instances follow are written
+    navigation_budget: float = 1800.0
 
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019

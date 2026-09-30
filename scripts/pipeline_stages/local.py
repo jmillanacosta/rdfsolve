@@ -259,7 +259,10 @@ class LocalMiningStage(Stage):
         schema = self._mine_schema(miner, source.name, output_dir,
                                    ontology_graph_uris=source.ontology_graph_uris or None)
         with self._output_phase(miner, report_path):
-            self._save_dataset_outputs(source, schema, output_dir, miner.helper, mining_context)
+            self._save_dataset_outputs(
+                source, schema, output_dir, miner.helper, mining_context,
+                members=self._group_members(miner),
+            )
         self._require_complete(miner)
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
@@ -365,12 +368,20 @@ class LocalMiningStage(Stage):
             miner.last_report.config["literal_datatypes"] = record
 
     def _save_dataset_outputs(
-        self, source: Source, schema, output_dir: Path, helper, mining_context: str
+        self,
+        source: Source,
+        schema,
+        output_dir: Path,
+        helper,
+        mining_context: str,
+        members: dict[str, list[str]] | None = None,
     ) -> None:
         """Write one dataset's schema exports and its separate evidence files."""
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
-        self._save_schema_outputs(schema, output_dir, source.name, suffix, helper=helper)
+        self._save_schema_outputs(
+            schema, output_dir, source.name, suffix, helper=helper, members=members
+        )
         from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
 
         owl_urls = source.download_fields.get("download_owl") or []

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections import Counter, defaultdict, deque
-from collections.abc import Iterator, Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.mining.query_builders import _graph_scope, _subject_type_pattern, _type_pattern
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
@@ -58,27 +59,17 @@ def discover_paths_with_fallback(
     return summary
 
 
-def discover_paths(
-    schema: MinedSchema,
-    *,
-    max_hops: int = 3,
-    max_paths_per_length: int = 100,
-    helper: SparqlHelper | None = None,
-    probe_limit: int = 0,
-) -> NavigationSummary:
-    """Count schema walks with dynamic programming; retain a bounded sample.
+def _schema_graph(
+    schema: MinedSchema, max_hops: int
+) -> tuple[
+    dict[tuple[str, str, str, str], SchemaPattern],
+    dict[str, list[SchemaPattern]],
+    list[dict[str, int]],
+]:
+    """Return the distinct edges of a schema, the edges from each class, and the walk counts.
 
-    Optional helper probes measure bounded candidates. Cycles are allowed up to max_hops.
-    A shared class is a possible join, not evidence of shared entities.
-    Counts are exact for the supplied schema graph, not the source dataset.
-    Samples rotate across starting classes. Each step prefers predicates and
-    classes not yet used in that route; ties use lexical order.
-    They are bounded coverage samples, not frequency estimates.
+    suffix[h][class] counts all length-h walks from a class in the schema graph.
     """
-    if probe_limit < 0 or (probe_limit and helper is None):
-        raise ValueError("Path probes require a helper and a nonnegative probe_limit")
-    if not 2 <= max_hops <= 6 or max_paths_per_length < 0:
-        raise ValueError("Use 2..6 hops and a nonnegative path limit")
     unique: dict[tuple[str, str, str, str], SchemaPattern] = {}
     for pattern in schema.patterns:
         if pattern.count == 0:
@@ -112,6 +103,31 @@ def discover_paths(
                 for start, edges in outgoing.items()
             }
         )
+    return unique, outgoing, suffix
+
+
+def discover_paths(
+    schema: MinedSchema,
+    *,
+    max_hops: int = 3,
+    max_paths_per_length: int = 100,
+    helper: SparqlHelper | None = None,
+    probe_limit: int = 0,
+) -> NavigationSummary:
+    """Count schema walks with dynamic programming; retain a bounded sample.
+
+    Optional helper probes measure bounded candidates. Cycles are allowed up to max_hops.
+    A shared class is a possible join, not evidence of shared entities.
+    Counts are exact for the supplied schema graph, not the source dataset.
+    Samples rotate across starting classes. Each step prefers predicates and
+    classes not yet used in that route; ties use lexical order.
+    They are bounded coverage samples, not frequency estimates.
+    """
+    if probe_limit < 0 or (probe_limit and helper is None):
+        raise ValueError("Path probes require a helper and a nonnegative probe_limit")
+    if not 2 <= max_hops <= 6 or max_paths_per_length < 0:
+        raise ValueError("Use 2..6 hops and a nonnegative path limit")
+    unique, outgoing, suffix = _schema_graph(schema, max_hops)
 
     def walks(
         start: str, remaining: int, prefix: tuple[SchemaPattern, ...]
@@ -303,3 +319,287 @@ def observe_path(
         import logging
 
         logging.getLogger(__name__).warning("Path support probe failed: %s", route.error)
+
+
+# Integer and decimal types that QLever reports as xsd:int and xsd:double: a restored datatype
+# of the schema (for example xsd:integer) is the same step as the reported one.
+_XSD = "http://www.w3.org/2001/XMLSchema#"
+_INTEGERS = {
+    _XSD + t
+    for t in [
+        "int",
+        "integer",
+        "long",
+        "short",
+        "byte",
+        "nonNegativeInteger",
+        "positiveInteger",
+        "nonPositiveInteger",
+        "negativeInteger",
+        "unsignedLong",
+        "unsignedInt",
+        "unsignedShort",
+        "unsignedByte",
+    ]
+}
+_DECIMALS = {_XSD + t for t in ("decimal", "double", "float")}
+
+
+def _same_datatype(schema_type: str | None, found: str) -> bool:
+    """Tell whether a literal of the found datatype is a value of a step with *schema_type*."""
+    if not schema_type or schema_type == found:
+        return True
+    return any(schema_type in family and found in family for family in (_INTEGERS, _DECIMALS))
+
+
+def _typed(
+    node: str,
+    cls: str,
+    context: list[str] | None,
+    members: Mapping[str, Sequence[str]],
+    subject: bool = False,
+) -> str:
+    """Match a node of a class, or of any member term of a group of ontology terms."""
+    from rdfsolve.schema_models.paths import absolute_iri
+
+    terms = members.get(cls)
+    if terms:
+        variable = f"?_t{node[1:]}"
+        values = " ".join("<" + absolute_iri(term) + ">" for term in terms)
+        pattern = (_subject_type_pattern if subject else _type_pattern)(node, variable, context)
+        return f"VALUES {variable} {{ {values} }} {pattern}"
+    iri = "<" + absolute_iri(cls) + ">"
+    return (_subject_type_pattern if subject else _type_pattern)(node, iri, context)
+
+
+def _prefix_pattern(
+    steps: Sequence[SchemaPattern],
+    context: list[str] | None,
+    members: Mapping[str, Sequence[str]],
+    root: bool = True,
+) -> str:
+    """Return the pattern of the start class (with *root*) and the steps of a path.
+
+    A step to a class types its value; a step to a literal tests the datatype (with the
+    integer and decimal families of _same_datatype); a step to an IRI without a type, or to a
+    blank node, tests the node kind, blank nodes first.
+    """
+    from rdfsolve.schema_models.paths import absolute_iri
+
+    body = [_typed("?n0", steps[0].subject_class, context, members, subject=True)] if root else []
+    for i, step in enumerate(steps):
+        node = f"?n{i + 1}"
+        body.append(f"?n{i} <{absolute_iri(step.property_uri)}> {node} .")
+        if step.object_class == "Literal":
+            family = next((f for f in (_INTEGERS, _DECIMALS) if step.datatype in f), None)
+            types = sorted(family) if family else [step.datatype] if step.datatype else []
+            test = f"isLiteral({node})"
+            if types:
+                test += f" && DATATYPE({node}) IN ({', '.join(f'<{t}>' for t in types)})"
+            body.append(f"FILTER({test})")
+        elif step.object_class == "BlankNode":
+            body.append(f"FILTER(isBlank({node}))")
+        elif step.object_class == "Resource":
+            body.append(f"FILTER(!isBlank({node}) && isIRI({node}))")
+            body.append(f"FILTER NOT EXISTS {{ {_type_pattern(node, '?_anyType', context)} }}")
+        else:
+            body.append(_typed(node, step.object_class, context, members))
+    return " ".join(body)
+
+
+def _support_query(
+    steps: Sequence[SchemaPattern],
+    dataset: str,
+    context: list[str] | None,
+    members: Mapping[str, Sequence[str]],
+) -> str:
+    """Count the start instances of a path and those that follow the whole path (one row)."""
+    root = _typed("?n0", steps[0].subject_class, context, members, subject=True)
+    rest = _prefix_pattern(steps, context, members, root=False)
+    end = f"?n{len(steps)}"
+    return (
+        "SELECT (COUNT(*) AS ?sources) (SUM(IF(?degree > 0, 1, 0)) AS ?matched) "
+        f"{dataset} WHERE {{ {{ SELECT ?n0 (COUNT(DISTINCT {end}) AS ?degree) "
+        f"WHERE {{ {root} OPTIONAL {{ {rest} }} }} GROUP BY ?n0 }} }}"
+    )
+
+
+def _extension_query(
+    prefix: Sequence[SchemaPattern],
+    candidates: Sequence[SchemaPattern],
+    dataset: str,
+    context: list[str] | None,
+    members: Mapping[str, Sequence[str]],
+) -> str:
+    """Count the start instances that follow a path and then each candidate property.
+
+    One row for each property and value type: the class of the value (?t), or the node kind or
+    datatype of a value without a type (?kind). Blank nodes are tested with isBlank first,
+    because Virtuoso reads its blank nodes as IRIs with isIRI in a BIND.
+    """
+    from rdfsolve.schema_models.paths import absolute_iri
+
+    end = f"?n{len(prefix)}"
+    properties = " ".join(sorted({"<" + absolute_iri(e.property_uri) + ">" for e in candidates}))
+    return (
+        f"SELECT ?p ?t ?kind (COUNT(DISTINCT ?n0) AS ?starts) {dataset} WHERE {{ "
+        f"{_prefix_pattern(prefix, context, members)} "
+        f"VALUES ?p {{ {properties} }} {end} ?p ?x . "
+        f"OPTIONAL {{ {_type_pattern('?x', '?t', context)} }} "
+        'BIND(IF(isBlank(?x), "blank", IF(isLiteral(?x), STR(DATATYPE(?x)), "iri")) AS ?kind) '
+        "} GROUP BY ?p ?t ?kind"
+    )
+
+
+def _matched_starts(
+    edge: SchemaPattern, rows: Sequence[Mapping[str, Any]], members: Mapping[str, Sequence[str]]
+) -> int:
+    """Return the most start instances that follow a candidate step in the answer rows."""
+    best = 0
+    for row in rows:
+        if row.get("p", {}).get("value") != edge.property_uri:
+            continue
+        found_type = row.get("t", {}).get("value")
+        kind = row.get("kind", {}).get("value", "")
+        if edge.object_class == "Literal":
+            hit = kind not in {"blank", "iri"} and _same_datatype(edge.datatype, kind)
+        elif edge.object_class == "BlankNode":
+            hit = kind == "blank"
+        elif edge.object_class == "Resource":
+            hit = kind == "iri" and found_type is None
+        else:
+            hit = found_type in set(members.get(edge.object_class, ())) | {edge.object_class}
+        if hit:
+            best = max(best, int(row.get("starts", {}).get("value", 0)))
+    return best
+
+
+def find_tested_paths(
+    schema: MinedSchema,
+    helper: SparqlHelper,
+    *,
+    max_hops: int = 5,
+    budget_s: float = 1800.0,
+    members: Mapping[str, Sequence[str]] | None = None,
+    clock: Callable[[], float] = time.monotonic,
+) -> NavigationSummary:
+    """Find the paths of two to *max_hops* steps that instances of the data follow.
+
+    The paths are tested one step at a time. For each matched path (at first each edge of the
+    schema), one query counts the start instances that follow it and then each property that the
+    schema gives for its last class, by value type. A path is extended only from a matched path,
+    because a longer path cannot match when its start does not; a path does not repeat an edge.
+    Only matched paths are kept, with their number of matched start instances. The search stops
+    when the time budget is spent; a length is complete when every path of the shorter length
+    was extended without a failed query. *members* gives the member terms of each group of
+    ontology terms (the report of the mining), which the data use as types instead of the group.
+    """
+    from datetime import datetime, timezone
+
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    if not 2 <= max_hops <= 6 or budget_s < 0:
+        raise ValueError("Use 2..6 hops and a nonnegative budget")
+    members = members or {}
+    unique, outgoing, suffix = _schema_graph(schema, max_hops)
+    graphs = list(schema.about.graph_uris or [])
+    context = (schema.about.type_graph_uris or []) + (schema.about.type_context_graph_uris or [])
+    dataset, _, _ = _graph_scope(graphs, context)
+    deadline = clock() + budget_s
+
+    def key(edge: SchemaPattern) -> tuple[str, str, str, str]:
+        """Identify an edge of the schema graph."""
+        return (edge.subject_class, edge.property_uri, edge.object_class, edge.datatype or "")
+
+    tested: Counter[int] = Counter()
+    matched: Counter[int] = Counter()
+    kept: list[NavigationPath] = []
+    complete: list[int] = []
+    queries = failed = 0
+    stop: Literal["budget"] | None = None
+    frontier: list[tuple[SchemaPattern, ...]] = [
+        (unique[k],) for k in sorted(unique) if unique[k].object_class in outgoing
+    ]
+    for hops in range(2, max_hops + 1):
+        extended: list[tuple[SchemaPattern, ...]] = []
+        whole = not complete or complete[-1] == hops - 1
+        for prefix in frontier:
+            used = {key(step) for step in prefix}
+            candidates = [e for e in outgoing[prefix[-1].object_class] if key(e) not in used]
+            if not candidates:
+                continue
+            if clock() >= deadline:
+                stop, whole = "budget", False
+                break
+            query = _extension_query(prefix, candidates, dataset, context or None, members)
+            queries += 1
+            try:
+                result = helper.select_with_fallback(query, purpose="navigation/tested-paths")
+            except (SparqlHelperError, TimeoutError, OSError) as error:
+                logger.warning("Path extension query failed: %s", error)
+                failed += 1
+                whole = False
+                continue
+            rows = result.get("results", {}).get("bindings", [])
+            tested[hops] += len(candidates)
+            observed_at = datetime.now(timezone.utc).isoformat()
+            for edge in candidates:
+                if not _matched_starts(edge, rows, members):
+                    continue
+                # The path is kept with its own query, which the release validation repeats.
+                if clock() >= deadline:
+                    stop, whole = "budget", False
+                    break
+                steps = [*prefix, edge]
+                support = _support_query(steps, dataset, context or None, members)
+                queries += 1
+                try:
+                    answer = helper.select_with_fallback(support, purpose="navigation/path-support")
+                    row = answer.get("results", {}).get("bindings", [{}])[0]
+                    sources = int(row["sources"]["value"])
+                    followed = int(row["matched"]["value"]) if sources else 0
+                except (SparqlHelperError, TimeoutError, OSError, LookupError, ValueError) as error:
+                    logger.warning("Path support query failed: %s", error)
+                    failed += 1
+                    whole = False
+                    continue
+                if not followed:
+                    continue
+                matched[hops] += 1
+                kept.append(
+                    NavigationPath(
+                        steps=steps,
+                        evidence="instance_tested",
+                        instance_support="matched",
+                        source_count=sources,
+                        matched_sources=followed,
+                        graph_uris=graphs,
+                        type_context_graph_uris=context,
+                        query=support,
+                        observed_at=observed_at,
+                    )
+                )
+                if edge.object_class in outgoing:
+                    extended.append((*prefix, edge))
+            if stop:
+                break
+        if whole:
+            complete.append(hops)
+        if stop:
+            break
+        frontier = extended
+    return NavigationSummary(
+        max_hops=max_hops,
+        max_paths_per_length=0,
+        edge_count=len(unique),
+        walk_counts={hops: sum(suffix[hops].values()) for hops in range(1, max_hops + 1)},
+        paths=kept,
+        strategy="tested",
+        tested_by_length=dict(tested),
+        matched_by_length=dict(matched),
+        complete_lengths=complete,
+        budget_s=budget_s,
+        stop_reason=stop,
+        query_count=queries,
+        failed_queries=failed,
+    )

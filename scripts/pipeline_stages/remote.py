@@ -233,7 +233,12 @@ class RemoteMiningStage(Stage):
 
             with self._output_phase(miner, report_path):
                 self._save_schema_outputs(
-                    schema, source_output_dir, source.name, suffix, helper=miner.helper
+                    schema,
+                    source_output_dir,
+                    source.name,
+                    suffix,
+                    helper=miner.helper,
+                    members=self._group_members(miner),
                 )
                 self._save_ontology_discovery(
                     schema,

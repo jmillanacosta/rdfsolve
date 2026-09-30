@@ -367,7 +367,10 @@ class GroupedMiningStage(LocalMiningStage):
         member_reports: list[Path] = []
         try:
             with self._output_phase(miner, group_report):
-                self._save_schema_outputs(schema, group_dir, group_name, suffix, helper=miner.helper)
+                self._save_schema_outputs(
+                    schema, group_dir, group_name, suffix, helper=miner.helper,
+                    members=self._group_members(miner),
+                )
                 missing = unattributed_patterns(schema)
                 if missing:
                     from rdfsolve.mining.report_tracking import ReportCollector
