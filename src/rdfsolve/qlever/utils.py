@@ -434,7 +434,8 @@ def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
     if not renames:
         return []
     moves = " ".join(f'[ -f "{src}" ] && mv -f "{src}" "{dst}";' for src, dst in renames)
-    return ["echo 'Naming Turtle downloads by content ...'", f"{moves} true"]
+    # Grouped, so that its ';' does not split the '&&' chain of the download step.
+    return ["echo 'Naming Turtle downloads by content ...'", f"{{ {moves} true; }}"]
 
 
 def _extract_archives_steps() -> list[str]:
