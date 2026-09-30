@@ -86,9 +86,11 @@ def main():
                 break
             both_local = link.source in local and link.target in local
             befores, afters = propose_segments(link, schemas[link.source], schemas[link.target])
+            # A server that does not start stops the run: it is not a result of the link.
+            source, target = client(link.source), client(link.target)
             try:
                 result = check_routes(
-                    link, befores, afters, client(link.source), client(link.target),
+                    link, befores, afters, source, target,
                     sample=None if both_local else args.sample,
                     replacements=replacements, read_target=both_local, budget_s=args.budget,
                 )
