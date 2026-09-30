@@ -56,3 +56,23 @@ def test_reading_the_target_finds_what_the_lookups_find(monkeypatch):
     monkeypatch.setattr(signatures, "TARGET_READ_LIMIT", 1)
     read, sent = check(JOIN, read_target=True)
     assert read.found == 2 and any("VALUES (?key ?t)" in q for q in sent), "A large target is looked up"
+
+
+def test_a_target_that_cannot_be_read_at_once_is_looked_up(monkeypatch):
+    """The count of the distinct terms of HGNC reached the query memory of QLever (routes of
+    AOP-Wiki to HGNC, 2026-09-30); the identifiers are then looked up, as for a large target."""
+    from rdfsolve.sparql_helper import PaginationTruncatedError
+
+    genes = Dataset().parse(format="turtle", data=DATA)
+    proteins = Dataset().parse(format="turtle", data=TARGET)
+    with Client(GENES, genes) as source, Client(PROTEINS, proteins) as target:
+        select = target._select
+
+        def refuse_counts(query, *args, **kwargs):
+            if "COUNT(DISTINCT ?t)" in query:
+                raise PaginationTruncatedError("Tried to allocate 3.3 GB, but only 3.3 GB were available")
+            return select(query, *args, **kwargs)
+
+        target._select = refuse_counts
+        read = verify(JOIN, source, target, sample=None, read_target=True)
+    assert read.found == 2

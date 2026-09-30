@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -19,6 +20,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.schema_models.core import MinedSchema
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client
@@ -354,12 +357,19 @@ def _read_target(
     # Only the terms are read: verify() keeps the matched term, and a blank node (a subject, or a
     # value) cannot be paged and equals no spelling of an identifier.
     scoped = target._scope(pattern + extra) + " FILTER(!isBlank(?t))"
-    counted = target._select(f"SELECT (COUNT(DISTINCT ?t) AS ?n) WHERE {{ {scoped} }}")
-    if not counted or int(counted[0]["n"]["value"]) > TARGET_READ_LIMIT:
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    try:
+        counted = target._select(f"SELECT (COUNT(DISTINCT ?t) AS ?n) WHERE {{ {scoped} }}")
+        if not counted or int(counted[0]["n"]["value"]) > TARGET_READ_LIMIT:
+            return None
+        rows = _read_all(
+            target, f"SELECT DISTINCT ?t WHERE {{ {scoped} }}", int(counted[0]["n"]["value"])
+        )
+    except SparqlHelperError as error:
+        # A target that the engine cannot read at once (its query memory) is looked up.
+        logger.warning("The terms of %s were not read at once: %s", link.target, str(error)[:200])
         return None
-    rows = _read_all(
-        target, f"SELECT DISTINCT ?t WHERE {{ {scoped} }}", int(counted[0]["n"]["value"])
-    )
     held = {
         _term_key(r["t"]["type"], r["t"]["value"], r["t"].get("datatype"), r["t"].get("xml:lang"))
         for r in rows
