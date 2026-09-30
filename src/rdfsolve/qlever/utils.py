@@ -425,6 +425,9 @@ def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
     renames = []
     for url in analysis.urls_by_suffix.get("ttl", []):
         name = url.rstrip("/").rsplit("/", 1)[-1]
+        # An archive keeps its name: it is extracted, and its members carry their own names.
+        if name.endswith((".zip", ".tar.gz", ".tgz", ".gz", ".bz2", ".xz")):
+            continue
         if name and not name.endswith((".ttl", ".ttl.gz", ".n3")):
             stem = name.rsplit(".", 1)[0] if "." in name else name
             renames.append((name, f"{stem}.ttl"))
