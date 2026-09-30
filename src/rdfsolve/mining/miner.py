@@ -440,14 +440,18 @@ class SchemaMiner:
         return patterns, one_shot_results
 
     def _resumed_batches(self, path: str, text: str) -> dict[tuple[str, ...], list[dict[str, Any]]]:
-        """Reuse completed class batches from an earlier checkpoint of the same source."""
+        """Reuse completed class batches and census counts from an earlier checkpoint.
+
+        A census count is keyed by its queries ("census|" and their hash), so it is reused only
+        for the same queries.
+        """
         import hashlib
         import json
 
         batches = {}
         skipped = []
         for line in map(json.loads, text.splitlines()):
-            if line.get("phase") != "patterns":
+            if line.get("phase") not in ("patterns", "census"):
                 continue
             state = line.get("state")
             if state is None and self._resume_failed & set(line["classes"]):

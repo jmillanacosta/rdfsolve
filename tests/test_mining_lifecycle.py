@@ -71,4 +71,6 @@ def test_interrupted_mining_keeps_completed_class_batches(tmp_path, monkeypatch)
     assert sorted(map(repr, resumed.patterns)) == sorted(map(repr, whole.patterns))
     assert not [q for p, q in sent if p.startswith("two-phase/") and f"<{cls}>" in q], "Reused, not re-queried"
     assert report.config["resumed_batches"] == [[cls]], "Record which evidence was reused"
-    assert len(checkpoint.read_text().splitlines()) == 2, "The new checkpoint holds every batch"
+    phases = [json.loads(line)["phase"] for line in checkpoint.read_text().splitlines()]
+    assert phases.count("patterns") == 2, "The new checkpoint holds every batch"
+    assert set(phases) <= {"patterns", "census"}, "and the census counts"

@@ -393,11 +393,23 @@ def _census_queries(
 
 
 def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
-    """Run the census queries; each returns one count."""
-    counts: Counter[str] = Counter()
-    for query in queries:
-        (row,) = _select(context, query, "structural/coverage", paged=False)
-        counts.update({name: int(binding["value"]) for name, binding in row.items()})
+    """Run the census queries; each returns one count.
+
+    The counts are kept in the checkpoint of the run, keyed by the queries, and a resumed run
+    takes them from there (the census of Bgee RO_0002206 takes about 6.5 h).
+    """
+    import hashlib
+
+    key = ("census|" + hashlib.sha256("\n".join(queries).encode()).hexdigest(),)
+    resumed = getattr(context, "resumed", None) or {}
+    if key in resumed:
+        counts: Counter[str] = Counter(resumed[key][0])
+    else:
+        counts = Counter()
+        for query in queries:
+            (row,) = _select(context, query, "structural/coverage", paged=False)
+            counts.update({name: int(binding["value"]) for name, binding in row.items()})
+    context.report.checkpoint("census", list(key), [dict(counts)])
     return counts
 
 
