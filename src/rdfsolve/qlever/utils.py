@@ -373,11 +373,15 @@ def graph_uri_to_tar_folder(uri: str) -> str:
 # Shell-step builders returning list[str] of shell fragments
 
 
+# A download is tried again after a fault that passes; a missing file (404) is not.
+_RETRY = "--tries=5 --waitretry=20 --retry-connrefused --retry-on-http-error=429,500,502,503,504"
+
+
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
     if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
-        return f'wget -c -q "{url}"'
+        return f'wget -c -q {_RETRY} "{url}"'
     # Derive a filename from the URL path.
     parts = url.rstrip("/").split("/")
     derived = next(
@@ -385,8 +389,8 @@ def _wget_cmd(url: str) -> str:
         None,
     )
     if derived:
-        return f'wget -c -q -O "{derived}" "{url}"'
-    return f'wget -c -q --content-disposition "{url}"'
+        return f'wget -c -q {_RETRY} -O "{derived}" "{url}"'
+    return f'wget -c -q {_RETRY} --content-disposition "{url}"'
 
 
 def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
