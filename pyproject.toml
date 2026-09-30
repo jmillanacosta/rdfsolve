@@ -61,7 +61,6 @@ dependencies = [
     # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
     "pyoxigraph>=0.5.11,<0.6",
-    "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
 
     # JSON processing
     "ujson>=5.0.0",  # Fast JSON parser for large mapping files
