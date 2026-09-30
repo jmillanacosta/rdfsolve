@@ -377,6 +377,15 @@ def graph_uri_to_tar_folder(uri: str) -> str:
 _RETRY = "--tries=5 --waitretry=20 --retry-connrefused --retry-on-http-error=429,500,502,503,504"
 
 
+# wget does not try again after a failed connection (exit 4: network; exit 5: SSL). This shell
+# function tries such a file up to 5 times; another failure, as a missing file, ends at once.
+_WGET_AGAIN = (
+    'wget() { local c i; for i in 1 2 3 4 5; do command wget "$@"; c=$?; '
+    'case $c in 0) return 0;; 4|5) sleep "${RDFSOLVE_DOWNLOAD_WAIT:-20}";; *) return $c;; esac; '
+    "done; return $c; }"
+)
+
+
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
@@ -581,6 +590,7 @@ def tar_source_qleverfile_parts(
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
+        _WGET_AGAIN,
         # Discover tar root prefix from the first header block.
         (
             f'TAR_ROOT=$(curl -s --range 0-511 "{tar_url}" | '
@@ -618,6 +628,7 @@ def _build_get_data_steps(
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
+        _WGET_AGAIN,
         # A later step can end with '|| true'; the downloads end the script when one fails.
         "{ "
         + " && ".join(_wget_cmd(u) for u in analysis.urls)
