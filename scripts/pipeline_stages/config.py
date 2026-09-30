@@ -138,6 +138,8 @@ class PipelineConfig:
     exclude_graph_prefixes: tuple[str, ...] = SUGGESTED_SERVICE_GRAPHS
     # Remove the engine and service data of an endpoint from each schema before it is written
     clean_service_data: bool = False
+    # Mine the relations that the data states with OWL restrictions, as patterns of their own
+    restriction_patterns: bool = False
 
     output_suffix: str = ""
 

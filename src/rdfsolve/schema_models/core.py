@@ -18,6 +18,7 @@ from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_expo
 from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
 from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.restrictions import RestrictionPatterns
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 from rdfsolve.schema_models.structural import StructuralPattern
 
@@ -91,6 +92,11 @@ class MinedSchema(BaseModel):
         None, description="Original RDF evidence, separate from projected schema fields"
     )
     navigation: NavigationSummary | None = None
+    restriction_patterns: RestrictionPatterns | None = Field(
+        None,
+        description="Relations that the data states between terms with OWL restrictions; "
+        "None means not mined",
+    )
     prefixes: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("patterns", "raw_patterns")

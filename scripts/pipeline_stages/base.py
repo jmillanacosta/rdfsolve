@@ -20,6 +20,16 @@ class PartialMiningError(RuntimeError):
     """Saved patterns have incomplete evidence."""
 
 
+def restriction_scope(about: Any) -> list[str] | None:
+    """Return the graphs in which restrictions are mined: the data and the ontology graphs.
+
+    None (the whole dataset) when the schema has no graph scope.
+    """
+    if not about.graph_uris:
+        return None
+    return list(dict.fromkeys([*about.graph_uris, *(about.ontology_graph_uris or [])]))
+
+
 class Stage:
     """Base class for pipeline stages."""
 
@@ -316,6 +326,19 @@ class Stage:
                 max_hops=self.config.navigation_hops,
                 budget_s=self.config.navigation_budget,
                 members=members,
+            )
+
+        if self.config.restriction_patterns and helper is not None:
+            from rdfsolve.mining.restrictions import mine_restriction_patterns
+
+            schema.restriction_patterns = mine_restriction_patterns(
+                helper, graph_uris=restriction_scope(schema.about)
+            )
+            log.info(
+                "[%s] Restriction patterns: %d (%s)",
+                name,
+                len(schema.restriction_patterns.patterns),
+                schema.restriction_patterns.state,
             )
 
         path = output_dir / f"{name}{suffix}_schema.json"

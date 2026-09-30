@@ -27,6 +27,23 @@ None means a collection was not collected; an empty list means its queries
 found no patterns. Older files have no term-role evidence. Re-mine their source
 snapshot to obtain it; roles cannot be recovered from ambiguous IRIs alone.
 
+Restriction patterns
+--------------------
+
+An ontology states relations between its terms with OWL restrictions: a class is a subclass
+of "property some filler". A restriction is a blank node, so the class patterns show only that
+``owl:Class`` is a subclass of ``owl:Restriction``. With ``--restriction-patterns`` the
+relations are mined as patterns of their own (``restriction_patterns`` in the canonical JSON,
+``rdfsolve.mining.restrictions``). One grouped query is sent for each axiom (``SubClassOf``,
+and ``EquivalentTo`` for a restriction in an intersection) and each form (``some``, ``only``,
+``value``); the blank node is joined through and is not returned. Terms are grouped by the
+namespace of their IRI. Each pattern has the property, the form, the namespaces of the
+subject terms and of the fillers, the number of restrictions, the number of subject terms,
+one example, and a label in Manchester syntax with the label that the source gives to the
+property, for example ``DOID SubClassOf 'located in' some UBERON``. The IRIs are the record;
+the label is a view. None means not mined; a form whose query failed is listed and the state
+is partial.
+
 Core
 ----
 
