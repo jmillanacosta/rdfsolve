@@ -2469,6 +2469,13 @@
   - https://data.wikipathways.org/20260810/rdf/wikipathways-rdf-void.ttl
   - https://data.wikipathways.org/20260810/rdf/wikipathways-20260810-rdf-gpml.zip
   - https://data.wikipathways.org/20260810/rdf/wikipathways-20260810-rdf-authors.zip
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/CellOntology.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/DiseaseOntology.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/PathwayOntology.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/chebi-slim.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/gpmlvocab.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/wpvocab.ttl
+  - https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/337ca77975440bea59f43b1656d4ff04e4965438/data/ontology-void.ttl
   bioregistry_prefix: wikipathways
   keywords:
   - biological regulation
