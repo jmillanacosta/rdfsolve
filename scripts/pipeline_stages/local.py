@@ -20,6 +20,29 @@ from .config import Source
 log = logging.getLogger(__name__)
 
 
+# Download fields of files that hold triples without graphs.
+FILES_WITHOUT_GRAPHS = frozenset(
+    {"download_nt", "download_ttl", "download_owl", "download_rdf", "download_obo", "download_n3"}
+)
+
+
+def local_graph_scope(
+    graph_uris: list[str] | None, download_fields: dict, graph_sources: dict
+) -> list[str] | None:
+    """Return the graph scope to mine a local index with.
+
+    The scope of a registry entry describes the endpoint. An index built only from files
+    without graphs holds no named graph, and is mined as a whole (None). The scope is kept for
+    files that can hold graphs (N-Quads, archives), for files mapped to graphs, and when no
+    file is known; the miner then reports a graph that the index does not hold.
+    """
+    if not graph_uris:
+        return None
+    if download_fields and not graph_sources and set(download_fields) <= FILES_WITHOUT_GRAPHS:
+        return None
+    return graph_uris
+
+
 class LocalMiningStage(Stage):
     """Mine schemas from local RDF dumps using QLever."""
 
@@ -238,8 +261,17 @@ class LocalMiningStage(Stage):
             if self.config.resume_from
             else None
         )
+        scope = graph_uris if graph_uris is not None else source.graph_uris or None
+        if graph_uris is None and scope:
+            applied = local_graph_scope(scope, source.download_fields, source.graph_sources)
+            if applied is None:
+                log.info(
+                    "  The files of %s have no graphs; the graph scope of its endpoint is not "
+                    "applied and the whole index is mined", source.name,
+                )
+            scope = applied
         miner = self._local_miner(
-            port, graph_uris if graph_uris is not None else source.graph_uris or None,
+            port, scope,
             report_path, type_context_graph_uris=source.type_context_graph_uris,
             resume_checkpoint=previous if previous and previous.is_file() else None,
         )
