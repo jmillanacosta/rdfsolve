@@ -1,5 +1,5 @@
 """Declared identities (cross-references, exactMatch, sameAs) are written as SSSOM with the
-problems of each statement, and a file that holds statements that fail the checks is marked bad."""
+problems of each statement, and a file that holds statements that fail the checks is marked as having flagged statements."""
 
 import json
 
@@ -41,8 +41,8 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     assert clean.flags == [] and clean.comment == "hgnc x-ensembl"
     assert wrong.flags == ["namespace:ensembl:NM_130786 is a refseq identifier", "kind:gene-transcript"]
     summary = write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC-BY-SA-4.0")
-    assert summary["verdict"] == "bad"
-    assert summary["statements"] == 2 and summary["failing"] == 1
+    assert summary["check"] == "flagged_statements"
+    assert summary["statements"] == 2 and summary["flagged"] == 1
     assert summary["flags"] == {"clean": 1, "namespace": 1, "kind:gene-transcript": 1}
     assert json.loads((tmp_path / "hgnc_declared_identities.json").read_text()) == summary
     table = (tmp_path / "hgnc_declared_identities.sssom.tsv").read_text()
@@ -51,11 +51,11 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     assert "license: https://spdx.org/licenses/CC-BY-SA-4.0" in table, "The licence of the source"
 
 
-def test_a_file_without_failing_statements_is_not_bad(tmp_path):
+def test_a_file_without_flagged_statements_is_marked_so(tmp_path):
     rows = declared_identities(
         [binding("http://bio2rdf.org/hgnc:5", XREF, "http://bio2rdf.org/ensembl:ENSG00000121410")], "hgnc"
     )
-    assert write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC0-1.0")["verdict"] == "good"
+    assert write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC0-1.0")["check"] == "no_flagged_statements"
 
 
 def test_an_identifier_restated_as_a_resolver_iri_is_not_a_cross_namespace_identity():

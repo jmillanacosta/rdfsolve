@@ -125,19 +125,19 @@ def _dataset_for_path(
     return parent
 
 
-def _quality(path: Path, role: str | None) -> tuple[str | None, str | None]:
-    """Return the verdict of declared identities and its reason, read from their summary."""
+def _identity_check(path: Path, role: str | None) -> tuple[str | None, str | None]:
+    """Return the result of the checks of declared identities and its reason, from their summary."""
     if role not in {"declared_identities", "declared_identities_summary"}:
         return None, None
     stem = path.name.split("_declared_identities")[0]
     summary = _load_json(path.parent / f"{stem}_declared_identities.json")
-    if summary.get("verdict") not in {"good", "bad"}:
+    if summary.get("check") not in {"flagged_statements", "no_flagged_statements"}:
         return None, None
     note = (
-        f"{summary.get('failing')} of {summary.get('statements')} declared identities fail "
-        "the identity checks"
+        f"{summary.get('flagged')} of {summary.get('statements')} declared identities are "
+        "flagged by the identity checks"
     )
-    return summary["verdict"], note
+    return summary["check"], note
 
 
 def inventory_artifacts(
@@ -151,7 +151,7 @@ def inventory_artifacts(
         rel = path.relative_to(run_root)
         digest = sha256_file(path)
         role = _role(path)
-        quality, quality_note = _quality(path, role)
+        identity_check, identity_check_note = _identity_check(path, role)
         rows.append(
             ReleaseArtifact(
                 artifact_id=_artifact_id(rel, digest),
@@ -161,8 +161,8 @@ def inventory_artifacts(
                 media_type=_media_type(path),
                 dataset_id=_dataset_for_path(path, run_root, dataset_ids),
                 role=role,
-                quality=quality,
-                quality_note=quality_note,
+                identity_check=identity_check,
+                identity_check_note=identity_check_note,
             )
         )
     return rows

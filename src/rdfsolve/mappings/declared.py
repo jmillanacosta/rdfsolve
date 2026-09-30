@@ -4,8 +4,8 @@ of rdfsolve.mappings.identity on each statement.
 The statements are kept as the source gives them, also when they are wrong: they are what a user
 who treats cross-references as identity reads, and chaining them spreads their errors. Each
 statement carries its flags, and a file that holds a statement that fails a check (a value filed
-under another namespace, or two kinds of entity) is marked bad. A statement whose kind is unknown
-is not checked and does not make a file bad.
+under another namespace, or two kinds of entity) is marked as having flagged statements. A
+statement whose kind is unknown is not checked and is not counted as flagged.
 """
 
 from __future__ import annotations
@@ -112,10 +112,10 @@ def _kind(flag: str) -> str:
 def write_declared_identities(
     rows: Iterable[DeclaredIdentity], out_dir: Path, name: str, *, license_uri: str
 ) -> dict[str, Any]:
-    """Write <name>_declared_identities.sssom.tsv and a summary with the verdict of the file.
+    """Write <name>_declared_identities.sssom.tsv and a summary with the result of the checks.
 
-    The verdict is bad when a statement fails a check (a namespace flag, or two kinds of
-    entity). The flags of each statement are in the other column of the SSSOM table. The
+    The file has flagged statements when a statement fails a check (a namespace flag, or two
+    kinds of entity). The flags of each statement are in the other column of the SSSOM table. The
     statements are the data of the source, so the table carries the licence of the source.
     """
     import bioregistry
@@ -127,11 +127,11 @@ def write_declared_identities(
 
     rows = list(rows)
     counts: Counter[str] = Counter()
-    failing = 0
+    flagged = 0
     for row in rows:
         kinds = {_kind(f) for f in row.flags}
         counts.update(kinds or {"clean"})
-        failing += bool(kinds - {"kind:unknown"})
+        flagged += bool(kinds - {"kind:unknown"})
     prefixes = {c.partition(":")[0] for row in rows for c in (row.subject_id, row.object_id)}
     prefix_map = {"rdfsolve": get_base_uri()}
     for prefix in sorted(prefixes):
@@ -163,8 +163,8 @@ def write_declared_identities(
     summary = {
         "name": name,
         "statements": len(rows),
-        "failing": failing,
-        "verdict": "bad" if failing else "good",
+        "flagged": flagged,
+        "check": "flagged_statements" if flagged else "no_flagged_statements",
         "flags": dict(counts.most_common()),
         "table": table.name,
         "license": license_uri,

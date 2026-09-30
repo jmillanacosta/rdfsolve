@@ -3,7 +3,7 @@
 
 For each source, its QLever index is served, every declared identity is read
 (rdfsolve.mappings.declared), and <source>_declared_identities.sssom.tsv and
-<source>_declared_identities.json (the verdict) are written in OUTPUT/<source>/.
+<source>_declared_identities.json (the result of the checks) are written in OUTPUT/<source>/.
 
 The table carries the licence of its source, read from a licence table (TSV with the columns
 name, spdx and evidence_url). A source without a licence in the table is refused.
