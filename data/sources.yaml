@@ -5266,18 +5266,14 @@
   dataset_kind: instance
   endpoint: https://ts.glycosmos.org/sparql
   download_ttl:
-  - https://dumps.glycosmos.org/genomealliance/genomealliance_Orthology_rdf.ttl.gz
-  - https://dumps.glycosmos.org/genomealliance/genomealliance_RDF.ttl.gz
-  - https://dumps.glycosmos.org/genomealliance/genomealliance_disease_rdf.ttl.gz
-  - https://dumps.glycosmos.org/genomealliance/genomealliance_expression_rdf.ttl.gz
   - https://dumps.glycosmos.org/cazy/CAZy_RDF.ttl.gz
   - https://dumps.glycosmos.org/cazy/CAZy_label.ttl.gz
   - https://dumps.glycosmos.org/cazy/CAZy_uniprot_RDF.ttl.gz
   - https://dumps.glycosmos.org/disease/disease/glycosmos_disease_RDF.ttl.gz
   - https://dumps.glycosmos.org/disease/disease/glycosmos_disease_uniprot_RDF.ttl.gz
-  - https://dumps.glycosmos.org/disease/pubchem/Pubchem_disease.ttl.gz
   - https://dumps.glycosmos.org/disease/hpo/HPO_RDF.ttl.gz
   - https://dumps.glycosmos.org/disease/hpo/HPO_do_RDF.ttl.gz
+  - https://dumps.glycosmos.org/disease/pubchem/Pubchem_disease.ttl.gz
   - https://dumps.glycosmos.org/flyglycodb/fgdb.ttl.gz
   - https://dumps.glycosmos.org/flyglycodb/fgdb_activity.ttl.gz
   - https://dumps.glycosmos.org/flyglycodb/fgdb_mutant.ttl.gz
@@ -5286,50 +5282,150 @@
   - https://dumps.glycosmos.org/galaxy/galaxy_node_RDF.ttl.gz
   - https://dumps.glycosmos.org/galaxy/galaxy_reaction_RDF.ttl.gz
   - https://dumps.glycosmos.org/galaxy/galaxy_value_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycans/external/Glycan_external_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycans/glycosequence/glycosequence_000001.ttl.gz
-  - https://dumps.glycosmos.org/glycans/motif/motif.ttl.gz
-  - https://dumps.glycosmos.org/glycans/subsumption/subsumption_000001.ttl.gz
-  - https://dumps.glycosmos.org/glycans/taxon/glycan_taxon.ttl.gz
-  - https://dumps.glycosmos.org/glycans/trivialname/trivialname.ttl.gz
-  - https://dumps.glycosmos.org/glycans/wurcsrdf/wurcsrdf_000001.ttl.gz
-  - https://dumps.glycosmos.org/glycans/mcaw/mcaw.ttl.gz
-  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Human.ttl.gz
-  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Mouse.ttl.gz
-  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Zebrafish.ttl.gz
-  - https://dumps.glycosmos.org/pubmed/pubmed.ttl.gz
-  - https://dumps.glycosmos.org/glycobase/glycobase.ttl.gz
-  - https://dumps.glycosmos.org/glycostore/Glycostore_gtc_RDF.ttl.gz
-  - https://dumps.glycosmos.org/pmid36717059/pmid36717059_RDF.ttl.gz
-  - https://dumps.glycosmos.org/genes/gene/glycogene_RDF.ttl.gz
-  - https://dumps.glycosmos.org/genes/gene/glycogene_go_RDF.ttl.gz
-  - https://dumps.glycosmos.org/genes/gene/glycogene_go_uniprot_RDF.ttl.gz
   - https://dumps.glycosmos.org/genes/chipatlas/chipatlas_colo.ttl.gz
   - https://dumps.glycosmos.org/genes/chipatlas/chipatlas_genes.ttl.gz
-  - https://dumps.glycosmos.org/genes/rhea/glycogenes_enzyme_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycolipids/lipidmaps/lipidmaps_glycolipid.ttl.gz
-  - https://dumps.glycosmos.org/glycolipids/swisslipids/swisslipids_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycolipids/swisslipids/swisslipids_go_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_annotation_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_genename_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_go_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/glycan.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/uniprot_Proteoglycan_RDF.ttl.gz
-  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glyconnect_RDF.ttl.gz
-  - https://dumps.glycosmos.org/lectins/Lectins_RDF.ttl.gz
-  - https://dumps.glycosmos.org/lectins/uniprot_lectins_RDF.ttl.gz
-  - https://dumps.glycosmos.org/lectins/PUBMED_Lectin_RDF.ttl.gz
-  - https://dumps.glycosmos.org/lectins/carbogrove/carbogrove_RDF.ttl.gz
-  - https://dumps.glycosmos.org/lipidmaps/LIPIDMAPS_glycogene_RDF.ttl.gz
-  - https://dumps.glycosmos.org/matrixdb/biomolecules11_rdf.ttl.gz
-  - https://dumps.glycosmos.org/matrixdb/core_complete_ver11_rdf.ttl.gz
-  - https://dumps.glycosmos.org/matrixdb/full_complete_ver11_rdf.ttl.gz
-  - https://dumps.glycosmos.org/matrixdb/matrixdb_label.ttl.gz
+  - https://dumps.glycosmos.org/genes/gene/glycogene_RDF.ttl.gz
+  - https://dumps.glycosmos.org/genes/gene/glycogene_go_RDF.ttl.gz
   - https://dumps.glycosmos.org/genes/plantgarden/kegg_plantgarden_RDF.ttl.gz
   - https://dumps.glycosmos.org/genes/plantgarden/kegg_plantgarden_ko_RDF.ttl.gz
   - https://dumps.glycosmos.org/genes/plantgarden/kegg_plantgarden_uniprot_RDF.ttl.gz
   - https://dumps.glycosmos.org/genes/plantgarden/plantgarden_RDF.ttl.gz
+  - https://dumps.glycosmos.org/genes/rhea/glycogenes_enzyme_RDF.ttl.gz
+  - https://dumps.glycosmos.org/genomealliance/genomealliance_Orthology_rdf.ttl.gz
+  - https://dumps.glycosmos.org/genomealliance/genomealliance_RDF.ttl.gz
+  - https://dumps.glycosmos.org/genomealliance/genomealliance_disease_rdf.ttl.gz
+  - https://dumps.glycosmos.org/genomealliance/genomealliance_expression_rdf.ttl.gz
+  - https://dumps.glycosmos.org/glycans/external/Glycan_external_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycome-db/glycomedb_fixed.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Human.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Mouse.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycomeatlas/glycomeAtlas-Zebrafish.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycopost/glycopost_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycosequence/glycan_labels.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycosequence/glycosequence_000001.ttl.gz
+  - https://dumps.glycosmos.org/glycans/glycoshape/newGlycoShape.ttl.gz
+  - https://dumps.glycosmos.org/glycans/inference/Glycan_inference.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_glygen_pmid_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_glygen_reference_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_glytoucan_pmid_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_glytoucan_reference_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_pubchem_pmid1_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_pubchem_pmid2_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_pubchem_pmid3_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/literature/glycan_pubchem_reference_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycans/mcaw/mcaw.ttl.gz
+  - https://dumps.glycosmos.org/glycans/mcaw/uniprot2mcaw.ttl.gz
+  - https://dumps.glycosmos.org/glycans/motif/motif.ttl.gz
+  - https://dumps.glycosmos.org/glycans/subsumption/subsumption_000001.ttl.gz
+  - https://dumps.glycosmos.org/glycans/taxon/glycan_taxon.ttl.gz
+  - https://dumps.glycosmos.org/glycans/trivialname/trivialname.ttl.gz
+  - https://dumps.glycosmos.org/glycobase/glycobase.ttl.gz
+  - https://dumps.glycosmos.org/glycolipids/lipidmaps/lipidmaps_glycolipid.ttl.gz
+  - https://dumps.glycosmos.org/glycolipids/swisslipids/swisslipids_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycolipids/swisslipids/swisslipids_go_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycopaint/GlycoPAINT_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glyconnect_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_genename_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_go_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycostore/Glycostore_gtc_RDF.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/SIO_shorten.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/glycan.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/pathogen_base.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/patient.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/sample.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pathogen/sample_glycan.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/BioGrid0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/BioGrid1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/BioGrid2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/BioGrid3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/BioGrid4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/ChEMBL0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/ChEMBL1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/ChEMBL2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/ChEMBL3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/ChEMBL4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/EBI-GOA-miRNA0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/EBI-GOA-nonIntAct0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/HPIDb0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx5.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IMEx6.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct5.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/IntAct6.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/MBInfo0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/MINT0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/MINT1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/MPIDB0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/MatrixDB0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/Reactome-FIs0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/Reactome-FIs1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/Reactome-FIs2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/Reactome0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/Reactome1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/UniProt0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/VirHostNet0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/bhf-ucl0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex5.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex6.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex7.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex8.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/iRefIndex9.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha1.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha3.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha4.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha5.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha6.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/mentha7.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/psicquic_label.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/psicquic_taxon.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/psicquic/tfact2gene0.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/bioactivity_gene_s__cid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/bioactivity_gene_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/bioactivity_gene_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/bioactivity_gene_s__protein.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/bioactivity_gene_s__sid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/chembldrug_s__chemblid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/chembldrug_s__cid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/chembldrug_s__drugchemblid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/chembldrug_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/ctdchemicalgene_s.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/ctdchemicalgene_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/ctdchemicalgene_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/dgidb_s__chemblid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/dgidb_s__drugchemblid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/dgidb_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/dgidb_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/dgidb_s__sid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/drugbank_s__cid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/drugbank_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/drugbank_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/drugbank_s__protein2.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gene_disease_s__disease.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gene_disease_s__disease_mesh.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gene_disease_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gene_disease_s__gid_mesh.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gene_disease_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gtopdb_s__cid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gtopdb_s__gid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/gtopdb_s__pmid.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/pubchem/pathwayreaction_s.ttl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/agent.ttl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/area.ttl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/disease.ttl.gz
@@ -5338,24 +5434,38 @@
   - https://dumps.glycosmos.org/glycovid/sugarbind/pubmed.ttl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/referenced_interaction.ttl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/structure.ttl.gz
+  - https://dumps.glycosmos.org/glycovid/wurcsrdf.ttl.gz
+  - https://dumps.glycosmos.org/hpa/hpa.ttl.gz
+  - https://dumps.glycosmos.org/hpa/hpa_id.ttl.gz
+  - https://dumps.glycosmos.org/lectins/Lectin_go_RDF.ttl.gz
+  - https://dumps.glycosmos.org/lectins/Lectins_RDF.ttl.gz
+  - https://dumps.glycosmos.org/lectins/PUBMED_Lectin_RDF.ttl.gz
+  - https://dumps.glycosmos.org/lectins/carbogrove/carbogrove_RDF.ttl.gz
+  - https://dumps.glycosmos.org/lipidmaps/LIPIDMAPS_glycogene_RDF.ttl.gz
+  - https://dumps.glycosmos.org/matrixdb/biomolecules11_rdf.ttl.gz
+  - https://dumps.glycosmos.org/matrixdb/core_complete_ver11_rdf.ttl.gz
+  - https://dumps.glycosmos.org/matrixdb/full_complete_ver11_rdf.ttl.gz
+  - https://dumps.glycosmos.org/matrixdb/matrixdb_label.ttl.gz
+  - https://dumps.glycosmos.org/mbgd/dbcan_mbgd.ttl.gz
+  - https://dumps.glycosmos.org/mbgd/dbcan_mbgd_taxonomy.ttl.gz
+  - https://dumps.glycosmos.org/milkoligodb/milkoligodb_doi_data.ttl.gz
+  - https://dumps.glycosmos.org/milkoligodb/milkoligodb_glycan_data.ttl.gz
+  - https://dumps.glycosmos.org/milkoligodb/milkoligodb_junction_table.ttl.gz
   - https://dumps.glycosmos.org/pathways/glycosmos/Reactome_glycosmos.ttl.gz
-  - https://dumps.glycosmos.org/pathways/glycosmos/pathway_chebi_glytoucan_RDF.ttl.gz
-  - https://dumps.glycosmos.org/pathways/glycosmos/pathway_kegg_glytoucan_RDF.ttl.gz
-  - https://dumps.glycosmos.org/pathways/glycosmos/pathway_pubchem_glytoucan_RDF.ttl.gz
+  - https://dumps.glycosmos.org/pathways/glycosmos/pathway_DBlink_RDF.ttl.gz
   - https://dumps.glycosmos.org/pathways/glycosmos/reactome_uniprot.ttl.gz
-  - https://dumps.glycosmos.org/pathways/glycosmos/uniprot_to_organism_reactome.ttl.gz
   - https://dumps.glycosmos.org/pathways/inference/pathway_gtc.ttl.gz
   - https://dumps.glycosmos.org/pathways/inference/pathway_inference.ttl.gz
   - https://dumps.glycosmos.org/pathways/inference/pathway_uniprot.ttl.gz
   - https://dumps.glycosmos.org/pathways/inference/top_pathway_RDF.ttl.gz
   - https://dumps.glycosmos.org/pathways/lps/lps.ttl.gz
   - https://dumps.glycosmos.org/pathways/lps/lps_pathway_id.ttl.gz
-  - https://dumps.glycosmos.org/hpa/hpa.ttl.gz
-  - https://dumps.glycosmos.org/hpa/hpa_id.ttl.gz
-  - https://dumps.glycosmos.org/mbgd/dbcan_mbgd_taxonomy.ttl.gz
-  - https://dumps.glycosmos.org/mbgd/dbcan_mbgd.ttl.gz
+  - https://dumps.glycosmos.org/pmid30104209/pmid30104209_RDF.ttl.gz
+  - https://dumps.glycosmos.org/pmid36717059/pmid36717059_RDF.ttl.gz
+  - https://dumps.glycosmos.org/pubmed/pubmed.ttl.gz
   download_owl:
   - https://dumps.glycosmos.org/disease/hpo/hp.owl.gz
+  - https://dumps.glycosmos.org/do/doid.owl.gz
   - https://dumps.glycosmos.org/genes/rhea/chebi.owl.gz
   - https://dumps.glycosmos.org/glycovid/sugarbind/ontology.owl.gz
   - https://dumps.glycosmos.org/pathways/reactome/Bos_taurus.owl.gz
@@ -5375,6 +5485,10 @@
   - https://dumps.glycosmos.org/pathways/reactome/Xenopus_tropicalis.owl.gz
   download_rdf:
   - https://dumps.glycosmos.org/genes/rhea/rhea.rdf.gz
+  - https://dumps.glycosmos.org/glycovid/uniprot.rdf.gz
+  download_nt:
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/Glycoprotein_features_RDF.nt.gz
+  - https://dumps.glycosmos.org/glycoproteins/glycoprotein/glycan.nt.gz
   keywords:
   - carbohydrate
   - glycomics
@@ -6168,10 +6282,6 @@
   - structure
 - name: hra-kg
   dataset_kind: instance
-  download_ttl: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.ttl
-  download_jsonld: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.json
-  download_rdf: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.xml
-  download_nt: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.nt
   download_nq: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.nq
   notes: 'KG Registry: Human Reference Atlas Knowledge Graph (HRA KG)'
   kg_registry_id: hra-kg
