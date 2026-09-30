@@ -249,10 +249,11 @@ Examples:
     parser.add_argument(
         "--ontology-group-before-mining",
         type=int,
-        default=5000,
+        default=None,
         help=(
             "With --ontology-as-data, group ontology terms under their ancestors before "
-            "per-class mining when more classes are found (default: 5000); 0 groups after"
+            "per-class mining when more classes are found (default: the term budget); "
+            "0 groups after"
         ),
     )
     parser.add_argument(
@@ -491,9 +492,12 @@ Examples:
     config.ontology_term_budget = args.ontology_term_budget
     if config.ontology_term_budget < 1:
         parser.error("--ontology-term-budget must be positive")
-    if args.ontology_group_before_mining < 0:
+    if args.ontology_group_before_mining is not None and args.ontology_group_before_mining < 0:
         parser.error("--ontology-group-before-mining must not be negative")
-    config.ontology_group_before_mining = args.ontology_group_before_mining or None
+    if args.ontology_group_before_mining is None:
+        config.ontology_group_before_mining = config.ontology_term_budget
+    else:
+        config.ontology_group_before_mining = args.ontology_group_before_mining or None
     config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
     config.discover_ontology_graphs = args.discover_ontology_graphs

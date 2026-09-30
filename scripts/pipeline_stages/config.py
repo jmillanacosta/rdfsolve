@@ -121,7 +121,8 @@ class PipelineConfig:
     ontology_scope: str = "schema"
     ontology_as_data: bool = False
     ontology_term_budget: int = 300
-    ontology_group_before_mining: int | None = 5000
+    # Grouping before mining uses the term budget as its threshold unless it is set
+    ontology_group_before_mining: int | None = 300
     # Tab-separated (child, parent) IRI files for terms whose hierarchy is not in the data
     ontology_hierarchy_files: list[Path] = field(default_factory=list)
     resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused
