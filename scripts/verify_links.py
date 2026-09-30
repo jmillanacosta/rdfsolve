@@ -14,7 +14,8 @@ Identifiers in --replacements (SSSOM sets of term replaced by) are looked up by 
 identifier. For a join between two local indexes with a share of at least --min-share, the
 class association (entity pairs and the coverage of each class) is read as well.
 
-Writes OUTPUT/links.tsv, OUTPUT/class_associations.tsv and OUTPUT/failed.json after each link;
+Writes OUTPUT/replacement_sets.json (the replacement sets with their checksums), and
+OUTPUT/links.tsv, OUTPUT/class_associations.tsv and OUTPUT/failed.json after each link;
 a stopped run continues with the first link that is in none of them.
 """
 
@@ -26,7 +27,12 @@ from pathlib import Path
 from rdfsolve import MinedSchema
 from rdfsolve.api import Client
 from rdfsolve.mappings import infer_links, read_links, read_replacements, verify, write_links
-from rdfsolve.mappings.signatures import ASSOCIATION_FIELDS, association_row, class_association
+from rdfsolve.mappings.signatures import (
+    ASSOCIATION_FIELDS,
+    association_row,
+    class_association,
+    describe_replacement_sets,
+)
 from rdfsolve.qlever.lifecycle import ServerPool
 
 
@@ -63,6 +69,10 @@ def main():
 
     out = args.output
     out.mkdir(parents=True, exist_ok=True)
+    # The replacement sets (pysec2pri) with their checksums; the citation is a placeholder.
+    (out / "replacement_sets.json").write_text(
+        json.dumps(describe_replacement_sets(args.replacements), indent=1)
+    )
     links_path, failed_path = out / "links.tsv", out / "failed.json"
     associations_path = out / "class_associations.tsv"
     done = read_links(links_path) if links_path.exists() else []

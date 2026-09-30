@@ -391,6 +391,38 @@ TERM_REPLACED_BY = "http://purl.obolibrary.org/obo/IAO_0100001"
 NO_TERM_FOUND = "https://w3id.org/sssom/NoTermFound"
 
 
+def describe_replacement_sets(paths: Iterable[str | Path]) -> list[dict[str, Any]]:
+    """Describe the identifier replacement sets used by link verification, for the release.
+
+    Each set is given with its file name, checksum, and the mapping_set_id and
+    mapping_set_version of its SSSOM header. The citation is a placeholder: it stays empty until
+    the sets (pysec2pri) are deposited with a persistent identifier.
+    """
+    import hashlib
+    import re
+
+    described = []
+    for path in map(Path, paths):
+        data = path.read_bytes()
+        meta: dict[str, str] = {}
+        for line in data.decode("utf-8").splitlines():
+            if not line.startswith("#"):
+                break
+            found = re.match(r"#\s*(mapping_set_id|mapping_set_version):\s*(.+?)\s*$", line)
+            if found:
+                meta[found.group(1)] = found.group(2).strip("\"'")
+        described.append(
+            {
+                "file": path.name,
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "mapping_set_id": meta.get("mapping_set_id"),
+                "mapping_set_version": meta.get("mapping_set_version"),
+                "citation": None,
+            }
+        )
+    return described
+
+
 def read_replacements(path: str | Path) -> dict[str, str]:
     """Read the identifier replacements of an SSSOM mapping set, such as pysec2pri writes.
 
