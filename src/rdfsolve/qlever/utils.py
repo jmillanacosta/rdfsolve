@@ -442,20 +442,23 @@ def _extract_archives_steps() -> list[str]:
     """Shell steps: extract archives, collect, repeat for nested archives."""
     _tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
-        'echo "  extracting $f"; tar xzf "$f"; done'
+        'echo "  extracting $f"; tar xzf "$f"; echo "$f" >> .extracted-archives; done'
     )
     _zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
         'echo "  extracting $f"; '
         "python3 -c \"import zipfile; z=zipfile.ZipFile('$f'); z.extractall('.'); "
-        "print(f'Extracted {len(z.namelist())} files'); z.close()\"; done"
+        "print(f'Extracted {len(z.namelist())} files'); z.close()\"; "
+        'echo "$f" >> .extracted-archives; done'
     )
     _nested_tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
+        'grep -qxF -- "$f" .extracted-archives 2>/dev/null && continue; '
         'echo "  extracting nested $f"; tar xzf "$f" 2>/dev/null || true; done'
     )
     _nested_zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
+        'grep -qxF -- "$f" .extracted-archives 2>/dev/null && continue; '
         'echo "  extracting nested $f"; '
         "python3 -c \"import zipfile; z=zipfile.ZipFile('$f'); z.extractall('.'); "
         "print(f'Extracted {len(z.namelist())} files'); z.close()\" 2>/dev/null || true; done"
@@ -472,6 +475,7 @@ def _extract_archives_steps() -> list[str]:
         _nested_zip,
         "echo 'Collecting files from nested extraction ...'",
         _collect_from_subdirs_step(include_archives=False),
+        "rm -f .extracted-archives",
     ]
 
 
