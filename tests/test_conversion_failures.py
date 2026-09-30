@@ -1,0 +1,35 @@
+"""A failed conversion of a download stops the download step with a message, so that a file is
+not left out of the index without notice (2026-09-30: without rapper and Java on the compute
+nodes, the RDF/XML of ChEBI and the OBO of Cellosaurus would have been dropped silently)."""
+
+import os
+import subprocess
+
+from rdfsolve.qlever.utils import _convert_obo_steps, _convert_rdfxml_steps
+
+
+def _run(steps, tmp_path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    for tool in ("rapper", "java"):
+        (bin_dir / tool).write_text("#!/bin/sh\necho broken >&2\nexit 1\n")
+        (bin_dir / tool).chmod(0o755)
+    env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"}
+    return subprocess.run(
+        ["bash"], input=" && ".join(steps), text=True, cwd=tmp_path, env=env, capture_output=True
+    )
+
+
+def test_a_failed_rdfxml_conversion_stops_the_step(tmp_path):
+    (tmp_path / "data.owl").write_text("<rdf/>")
+    done = _run(_convert_rdfxml_steps(), tmp_path)
+    assert done.returncode != 0 and "Conversion failed: data.owl" in done.stderr
+    assert not (tmp_path / "data.nq").exists()
+
+
+def test_a_failed_obo_conversion_stops_the_step(tmp_path):
+    (tmp_path / "terms.obo").write_text("format-version: 1.2\n")
+    (tmp_path / "robot.jar").write_text("")
+    done = _run(_convert_obo_steps(), tmp_path)
+    assert done.returncode != 0 and "Conversion failed: terms.obo" in done.stderr
+    assert not (tmp_path / "terms.ttl").exists()

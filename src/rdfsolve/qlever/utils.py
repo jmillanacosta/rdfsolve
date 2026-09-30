@@ -514,7 +514,8 @@ def _convert_rdfxml_steps() -> list[str]:
             'for f in *.rdf *.owl *.xml; do [ -f "$f" ] || continue; '
             'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
             '[ -f "$nq" ] && continue; '
-            'rapper -q -i rdfxml -o nquads "$f" > "$nq" 2>/dev/null || rm -f "$nq"; done'
+            'rapper -q -i rdfxml -o nquads "$f" > "$nq" || '
+            '{ rm -f "$nq"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
     ]
 
@@ -531,7 +532,7 @@ def _convert_obo_steps() -> list[str]:
             'ttl=$(echo "$f" | sed "s/\\.[^.]*$/.ttl/"); '
             '[ -f "$ttl" ] && continue; '
             'java -jar robot.jar convert --input "$f" --output "$ttl" '
-            '--format ttl 2>/dev/null || rm -f "$ttl"; done'
+            '--format ttl || { rm -f "$ttl"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
         "rm -f robot.jar robot.log",
     ]
