@@ -43,7 +43,7 @@ CENSUS_FILE = "literal-datatypes.json"
 REPORTED = {XSD + "int": INTEGERS, XSD + "double": DECIMALS}
 NUMERIC = INTEGERS | DECIMALS
 # The suffixes of RDF files, also with .gz.
-RDF_SUFFIXES = (".ttl", ".nt", ".nq", ".trig", ".owl", ".rdf")
+RDF_SUFFIXES = (".ttl", ".nt", ".nq", ".trig", ".n3", ".owl", ".rdf")
 # A member of a zip archive is written ARCHIVE.zip!MEMBER.
 MEMBER = ".zip!"
 

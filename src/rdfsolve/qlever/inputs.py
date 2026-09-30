@@ -6,9 +6,10 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-RDF_SUFFIXES = ("ttl", "nt", "nq", "trig")
+RDF_SUFFIXES = ("ttl", "nt", "nq", "trig", "n3")
 
-_QLEVER_FORMATS = {"ttl": "ttl", "nt": "nt", "nq": "nq", "trig": "ttl"}
+# An .n3 download is read as Turtle: published .n3 dumps are Turtle or N-Triples (GtoPdb).
+_QLEVER_FORMATS = {"ttl": "ttl", "nt": "nt", "nq": "nq", "trig": "ttl", "n3": "ttl"}
 
 _GZIP_MAGIC = b"\x1f\x8b"
 
