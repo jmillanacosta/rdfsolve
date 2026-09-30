@@ -519,6 +519,9 @@ def _convert_rdfxml_steps() -> list[str]:
             'for f in *.rdf *.owl *.xml; do [ -f "$f" ] || continue; '
             'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
             '[ -f "$nq" ] && continue; '
+            # A file that starts as Turtle is Turtle under an RDF/XML name: it is named .ttl.
+            'if head -c 4096 "$f" | grep -q -E "^[[:space:]]*(@prefix|@base|PREFIX|BASE)[[:space:]]"; '
+            'then mv "$f" "$(echo "$f" | sed "s/\\.[^.]*$/.ttl/")"; continue; fi; '
             'rapper -q -i rdfxml -o nquads "$f" > "$nq" || '
             '{ rm -f "$nq"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
