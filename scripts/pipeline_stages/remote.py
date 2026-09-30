@@ -263,6 +263,7 @@ class RemoteMiningStage(Stage):
                 source.failure_count = 0
                 source.endpoint_down = False
 
+            schema = self._without_service_data(schema)
             with self._output_phase(miner, report_path):
                 self._save_schema_outputs(
                     schema,

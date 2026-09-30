@@ -209,7 +209,7 @@ class LsLodCloudStage(LocalMiningStage):
             report_path=str(report_path),
         )
 
-        schema = miner.mine(dataset_name="lslod_cloud")
+        schema = self._without_service_data(miner.mine(dataset_name="lslod_cloud"))
 
         self._save_schema_outputs(
             schema, output_dir, "lslod_cloud", self.config.output_suffix, helper=miner.helper

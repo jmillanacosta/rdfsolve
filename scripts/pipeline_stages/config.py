@@ -136,6 +136,8 @@ class PipelineConfig:
 
     parallelism: int = 4
     exclude_graph_prefixes: tuple[str, ...] = SUGGESTED_SERVICE_GRAPHS
+    # Remove the engine and service data of an endpoint from each schema before it is written
+    clean_service_data: bool = False
 
     output_suffix: str = ""
 

@@ -366,6 +366,7 @@ class LocalMiningStage(Stage):
         """Write one dataset's schema exports and its separate evidence files."""
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
+        schema = self._without_service_data(schema)
         self._save_schema_outputs(
             schema, output_dir, source.name, suffix, helper=helper, members=members
         )

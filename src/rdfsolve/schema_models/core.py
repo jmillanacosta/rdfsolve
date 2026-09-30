@@ -327,11 +327,70 @@ class MinedSchema(BaseModel):
                     "matched": namespace or graph,
                 }
             )
+
+        # The other parts of the schema that name classes and properties are cleaned by
+        # namespace, and by graph where the part records its graph.
+        def _pattern_out(p: SchemaPattern) -> bool:
+            return _namespace(p) is not None or _only_service_graphs(p)
+
+        def _keep(items: list[Any] | None, out: Any, part: str) -> list[Any] | None:
+            if items is None:
+                return None
+            rest = [item for item in items if not out(item)]
+            if len(rest) != len(items):
+                other[part] = len(items) - len(rest)
+            return rest
+
+        def _keep_keys(values: dict[str, Any] | None, part: str) -> dict[str, Any] | None:
+            if values is None:
+                return None
+            rest = {key: value for key, value in values.items() if not _in_namespace(key)}
+            if len(rest) != len(values) and part:
+                other[part] = len(values) - len(rest)
+            return rest
+
+        def _structural_out(p: StructuralPattern) -> bool:
+            terms = [p.property_uri, *p.subject_properties, *p.object_properties]
+            in_graph = bool(graphs) and (
+                p.graph_uri.startswith(graphs) if p.graph_uri is not None else drop_unattributed
+            )
+            return in_graph or any(_in_namespace(term) for term in terms)
+
+        other: dict[str, int] = {}
+        raw_patterns = _keep(self.raw_patterns, _pattern_out, "raw_patterns")
+        term_patterns = _keep(self.term_patterns, _pattern_out, "term_patterns")
+        structural = _keep(self.structural_patterns, _structural_out, "structural_patterns")
+        enrichment = self.enrichment.model_copy(
+            update={
+                "examples": _keep(
+                    self.enrichment.examples,
+                    lambda e: _in_namespace(e.subject_class) or _in_namespace(e.property_uri),
+                    "examples",
+                ),
+                "class_examples": _keep_keys(self.enrichment.class_examples, "class_examples"),
+                "labels": _keep(
+                    self.enrichment.labels, lambda a: _in_namespace(a.term_iri), "labels"
+                ),
+                "definitions": _keep(
+                    self.enrichment.definitions, lambda a: _in_namespace(a.term_iri), "definitions"
+                ),
+            }
+        )
+        navigation = self.navigation
+        if navigation is not None:
+            paths = _keep(
+                navigation.paths, lambda path: any(_pattern_out(s) for s in path.steps), "paths"
+            )
+            navigation = navigation.model_copy(update={"paths": paths})
         # The record says what the source served, so that cleaning never hides it: engine
         # and service data are part of what an endpoint gives, not part of its data.
         about = self.about.model_copy(
             update={
                 "pattern_count": len(kept),
+                "class_entity_counts": _keep_keys(
+                    self.about.class_entity_counts, "class_entity_counts"
+                ),
+                "class_entity_count_states": _keep_keys(self.about.class_entity_count_states, ""),
                 "cleaned": {
                     "namespaces": list(ns),
                     "graph_uris": list(graphs),
@@ -340,6 +399,7 @@ class MinedSchema(BaseModel):
                     "removed_by_namespace": by_namespace,
                     "removed_by_graph": by_graph,
                     "removed_patterns": removed,
+                    "removed_from_other_parts": other,
                 },
             }
         )
@@ -363,7 +423,16 @@ class MinedSchema(BaseModel):
             else None
         )
         return self.model_copy(
-            update={"patterns": kept, "about": about, "collections": collections}
+            update={
+                "patterns": kept,
+                "raw_patterns": raw_patterns,
+                "term_patterns": term_patterns,
+                "structural_patterns": structural,
+                "enrichment": enrichment,
+                "navigation": navigation,
+                "about": about,
+                "collections": collections,
+            }
         )
 
     # Queries -

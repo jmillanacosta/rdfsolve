@@ -364,6 +364,7 @@ class GroupedMiningStage(LocalMiningStage):
         log.info("  Mining %d dataset graphs of %s together", len(graphs), group_name)
         miner = self._local_miner(port, data_graphs, group_report, type_context_graph_uris=type_graphs)
         schema = self._mine_schema(miner, group_name, group_dir, ontology_graph_uris=ontology_graphs or None)
+        schema = self._without_service_data(schema)
         member_reports: list[Path] = []
         try:
             with self._output_phase(miner, group_report):

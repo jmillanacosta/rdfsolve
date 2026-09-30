@@ -211,6 +211,12 @@ Examples:
         metavar="PREFIX",
         help="Graph IRI prefix to skip when discovering graphs; repeat to replace the default list",
     )
+    parser.add_argument(
+        "--clean-service-data",
+        action="store_true",
+        help="Remove engine and service data (suggested namespaces and graphs) from each schema; "
+        "the removed patterns are recorded in the schema",
+    )
     parser.add_argument("--skip-mining", action="store_true", help="Skip mining stages")
     parser.add_argument("--skip-mappings", action="store_true", help="Skip mapping stages")
     parser.add_argument("--skip-inference", action="store_true", help="No effect; the pipeline has no mapping inference stage")
@@ -452,6 +458,7 @@ Examples:
     if args.timeout is not None and args.timeout <= 0:
         parser.error("--timeout must be positive")
     config.parallelism = args.parallelism
+    config.clean_service_data = args.clean_service_data
     if args.exclude_graph:
         config.exclude_graph_prefixes = tuple(args.exclude_graph)
     config.chunk_size = args.chunk_size

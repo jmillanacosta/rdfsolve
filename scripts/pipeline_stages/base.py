@@ -260,6 +260,26 @@ class Stage:
         path = output_dir / f"{name}{suffix}_property_usage.json"
         path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
 
+    def _without_service_data(self, schema: Any) -> Any:
+        """Return the schema without engine and service data when the run asks for it.
+
+        The removed patterns stay in the record of the cleaning (about.cleaned).
+        """
+        if not self.config.clean_service_data:
+            return schema
+        from rdfsolve.schema_models._constants import (
+            SUGGESTED_SERVICE_GRAPHS,
+            SUGGESTED_SERVICE_NAMESPACES,
+        )
+
+        cleaned = schema.clean_schema(
+            namespaces=SUGGESTED_SERVICE_NAMESPACES, graph_uris=SUGGESTED_SERVICE_GRAPHS
+        )
+        log.info(
+            "Engine and service data: %d patterns removed", cleaned.about.cleaned["patterns_removed"]
+        )
+        return cleaned
+
     def _save_schema_outputs(
         self,
         schema: Any,
