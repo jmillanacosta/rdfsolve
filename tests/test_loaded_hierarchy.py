@@ -25,7 +25,7 @@ def test_hierarchy_files_are_read_as_child_parent_pairs(tmp_path):
     }, "Comments, empty lines and a term as its own parent are left out"
 
 
-def test_loaded_parents_group_terms_before_namespace_groups(monkeypatch, tmp_path):
+def test_loaded_parents_group_terms_before_shape_groups(monkeypatch, tmp_path):
     monkeypatch.setattr(ontology_as_data, "NAMESPACE_GROUP_MIN_TERMS", 3)
     graph = Graph().parse(data=FIXTURE, format="turtle")
     graph.remove((None, RDFS.subClassOf, None))
@@ -47,7 +47,7 @@ def test_loaded_parents_group_terms_before_namespace_groups(monkeypatch, tmp_pat
     assert {T + "alcohol", T + "acid"} <= batches, "The terms are mined under their loaded parents"
     assert not {T + "ethanol", T + "methanol", T + "acetic"} & batches
     assert grouping["representative_members"][T + "alcohol"] == [T + "ethanol", T + "methanol"]
-    assert grouping["namespace_groups"] == {}, "No namespace keeps 3 terms without a parent"
+    assert grouping["shape_groups"] == {}, "No namespace keeps 3 terms without a parent"
     assert grouping["hierarchy_files"] == [{"path": str(path), "pairs": 4}]
     assert grouping["terms_with_loaded_parent_by_namespace"] == {T: 3}
     owl = "http://www.w3.org/2002/07/owl#"

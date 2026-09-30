@@ -144,8 +144,10 @@ class TwoPhaseStrategy(MiningStrategy):
         from rdfsolve.mining import ontology_as_data
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
+            fetch_shapes,
             fetch_superclasses,
-            group_by_namespace,
+            group_by_shape,
+            parentless_candidates,
             read_hierarchy,
             term_namespace,
         )
@@ -171,8 +173,12 @@ class TwoPhaseStrategy(MiningStrategy):
             parents[term] = set(loaded[term])
             frontier.extend(loaded[term])
         chosen = choose_representatives(classes, parents, budget)
-        # Terms that no ancestor can take are grouped by ontology namespace (documented below).
-        namespace_groups = group_by_namespace(chosen, parents)
+        # Terms that no ancestor can take are grouped by the shape of their instances (the owner
+        # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later.
+        shapes, unreadable = fetch_shapes(
+            context.helper, parentless_candidates(chosen, parents), graph_uris=context.graph_uris
+        )
+        shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
         members = chosen.members()
         without_parent = Counter(term_namespace(c) for c in classes if not parents.get(c))
         present = set(classes)
@@ -201,11 +207,27 @@ class TwoPhaseStrategy(MiningStrategy):
             "terms_with_loaded_parent_by_namespace": dict(
                 Counter(term_namespace(c) for c in with_loaded).most_common()
             ),
-            "namespace_group_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
-            "namespace_groups": {
-                group: {"namespace": namespace, "terms": len(members.get(group, []))}
-                for group, namespace in namespace_groups.items()
+            "grouping_of_terms_without_parent": "shape",
+            "namespace_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
+            "shape_groups": {
+                group: {
+                    "properties": sorted(shape),
+                    "terms": len(members.get(group, [])),
+                    "namespaces": dict(
+                        Counter(term_namespace(t) for t in members.get(group, [])).most_common()
+                    ),
+                    "instances": sum(shapes[t].instances for t in members.get(group, [])),
+                    "example_instance": next(
+                        (shapes[t].example for t in members.get(group, []) if shapes[t].example),
+                        None,
+                    ),
+                }
+                for group, shape in shape_groups.items()
             },
+            "terms_in_shapes_of_one_term": sum(
+                1 for t in shapes if chosen.representative.get(t) == t
+            ),
+            "unreadable_shape_terms": sorted(unreadable),
             "representative_members": members,
             "review_state": "unreviewed",
         }

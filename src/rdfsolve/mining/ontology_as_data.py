@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import logging
 import re
 from collections import defaultdict
@@ -24,6 +25,7 @@ Collect = Callable[[str, str, int | None], list[dict[str, Any]]]
 OWL_CLASS = "http://www.w3.org/2002/07/owl#Class"
 RDFS_CLASS = "http://www.w3.org/2000/01/rdf-schema#Class"
 RDFS_SUBCLASS_OF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 # Predicates that describe ontology structure or annotate terms, not data:
 # RDF/RDFS/OWL, the common ontology annotation vocabularies, and any property
@@ -459,7 +461,7 @@ def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
     return dict(parents)
 
 
-# Fewest terms without a parent that make a namespace group (see group_by_namespace).
+# Fewest terms without a parent that mark a namespace used for typing (see group_by_shape).
 NAMESPACE_GROUP_MIN_TERMS = 100
 
 
@@ -471,37 +473,148 @@ def term_namespace(iri: str) -> str:
     return re.sub(r"[^/#:]*$", "", iri)
 
 
-def group_by_namespace(
+def parentless_candidates(
     chosen: Subsumption, parents: Mapping[str, set[str]], *, min_terms: int | None = None
-) -> dict[str, str]:
-    """Group the terms that no ancestor can take, by their ontology namespace; return the groups.
+) -> list[str]:
+    """Return the terms that no ancestor can take, from namespaces used for typing.
 
-    Used before mining when lifting leaves more classes than the budget. A term is a candidate
-    when it has no parent and stands only for itself; a representative with members keeps its
-    place. A namespace is grouped when it has at least *min_terms* candidates: a namespace with
-    few is more likely the vocabulary of the data (PubChem: 55 classes of its own vocabulary)
-    than an ontology used for typing. Each group gets an rdfsolve IRI; the rows of a group are
-    the rows of terms of one namespace, not of a class. *chosen* is changed in place.
+    A term is a candidate when it has no parent and stands only for itself; a representative
+    with members keeps its place. Only namespaces with at least *min_terms* such terms count: a
+    namespace with few is more likely the vocabulary of the data (PubChem: 55 classes of its own
+    vocabulary) than an ontology used for typing.
     """
-    from rdfsolve.config import mint
-
     if not chosen.over_budget:
-        return {}
+        return []
     if min_terms is None:
         min_terms = NAMESPACE_GROUP_MIN_TERMS
     used: dict[str, int] = defaultdict(int)
     for rep in chosen.representative.values():
         used[rep] += 1
-    candidates: dict[str, list[str]] = defaultdict(list)
+    by_namespace: dict[str, list[str]] = defaultdict(list)
     for term, rep in chosen.representative.items():
         if rep == term and not parents.get(term) and used[term] == 1:
-            candidates[term_namespace(term)].append(term)
-    groups: dict[str, str] = {}
-    for namespace, terms in candidates.items():
-        if len(terms) < min_terms:
+            by_namespace[term_namespace(term)].append(term)
+    return sorted(t for terms in by_namespace.values() if len(terms) >= min_terms for t in terms)
+
+
+def shape_group_iri(properties: Iterable[str]) -> str:
+    """Return the rdfsolve IRI of the group of terms whose instances have these properties."""
+    from rdfsolve.config import mint
+
+    digest = hashlib.sha256("\n".join(sorted(set(properties))).encode("utf-8")).hexdigest()
+    return mint("term-shape", digest[:16])
+
+
+@dataclass
+class Shape:
+    """The properties that the instances of a term use, their number and one of them."""
+
+    properties: frozenset[str]
+    instances: int = 0
+    example: str | None = None
+
+
+def fetch_shapes(
+    helper: SparqlHelper,
+    terms: Iterable[str],
+    *,
+    batch_size: int = 100,
+    graph_uris: list[str] | None = None,
+    purpose: str = "ontology-terms/shapes",
+) -> tuple[dict[str, Shape], list[str]]:
+    """Return the shape of the instances of each term, and the terms that could not be read.
+
+    On QLever the properties come from the property set of each instance (ql:has-predicate),
+    which holds its properties in the whole index; elsewhere from the triples of the scope. A
+    batch that the endpoint refuses is halved, and a term refused alone is returned as
+    unreadable (PubChem, shapes-3: 9 of 31,675 terms).
+    """
+    from rdfsolve.sparql_helper import EndpointError
+
+    dataset, _, _ = _graph_scope(graph_uris)
+    qlever = helper.sparql_engine == "qlever"
+    shapes: dict[str, Shape] = {}
+    unreadable: list[str] = []
+
+    def rows(query: str) -> list[dict[str, Any]]:
+        """Return the rows of a query."""
+        result = helper.select(query, purpose=purpose)
+        bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
+        return bindings
+
+    def read(batch: list[str]) -> None:
+        """Read the shapes of a batch of terms; halve the batch when it is refused."""
+        values = " ".join(f"<{iri}>" for iri in batch)
+        if qlever:
+            props = (
+                "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
+                f"SELECT ?c ?p WHERE {{ VALUES ?c {{ {values} }} ?s a ?c . "
+                "?s ql:has-predicate ?p } GROUP BY ?c ?p"
+            )
+        else:
+            props = (
+                f"SELECT DISTINCT ?c ?p {dataset} WHERE {{ VALUES ?c {{ {values} }} "
+                "?s a ?c . ?s ?p ?o }"
+            )
+        counts = (
+            f"SELECT ?c (COUNT(DISTINCT ?s) AS ?n) (SAMPLE(?s) AS ?x) {dataset} "
+            f"WHERE {{ VALUES ?c {{ {values} }} ?s a ?c }} GROUP BY ?c"
+        )
+        try:
+            prop_rows, count_rows = rows(props), rows(counts)
+        except EndpointError as error:
+            logger.warning("Shape query refused for %d terms: %s", len(batch), error)
+            if len(batch) == 1:
+                unreadable.append(batch[0])
+                return
+            half = len(batch) // 2
+            read(batch[:half])
+            read(batch[half:])
+            return
+        found: dict[str, set[str]] = {iri: set() for iri in batch}
+        for row in prop_rows:
+            term, prop = row.get("c", {}).get("value"), row.get("p", {}).get("value")
+            if term in found and prop and prop != RDF_TYPE:
+                found[term].add(prop)
+        for iri in batch:
+            shapes[iri] = Shape(frozenset(found[iri]))
+        for row in count_rows:
+            term = row.get("c", {}).get("value")
+            if term in shapes:
+                shapes[term].instances = int(row.get("n", {}).get("value", 0))
+                shapes[term].example = row.get("x", {}).get("value")
+
+    ordered = sorted(set(terms))
+    for start in range(0, len(ordered), batch_size):
+        read(ordered[start : start + batch_size])
+    return shapes, unreadable
+
+
+def group_by_shape(
+    chosen: Subsumption,
+    parents: Mapping[str, set[str]],
+    shapes: Mapping[str, Iterable[str]],
+    *,
+    min_terms: int | None = None,
+) -> dict[str, frozenset[str]]:
+    """Group the terms that no ancestor can take by the shape of their instances; return the groups.
+
+    Used before mining when lifting leaves more classes than the budget. *shapes* gives the set
+    of properties (rdf:type left out) that the instances of each candidate use; terms with the
+    same set form one group, named by a hash of the set, and a term whose shape no other term has
+    stays its own class. A group is a shared unknown type, to be named later from links or from
+    the use of its terms, not a class of an ontology. *chosen* is changed in place.
+    """
+    by_shape: dict[frozenset[str], list[str]] = defaultdict(list)
+    for term in parentless_candidates(chosen, parents, min_terms=min_terms):
+        if term in shapes:
+            by_shape[frozenset(shapes[term])].append(term)
+    groups: dict[str, frozenset[str]] = {}
+    for shape, terms in by_shape.items():
+        if len(terms) < 2:
             continue
-        group = mint("term-group", namespace)
-        groups[group] = namespace
+        group = shape_group_iri(shape)
+        groups[group] = shape
         for term in terms:
             chosen.representative[term] = group
     chosen.classes_after = len(set(chosen.representative.values()))
