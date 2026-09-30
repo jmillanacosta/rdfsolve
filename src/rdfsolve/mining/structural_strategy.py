@@ -254,15 +254,58 @@ GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
         try:
             rows += _select(context, query, "structural/discovery")
         except (SparqlHelperError, ValueError) as error:
-            # The query groups with GROUP_CONCAT and cannot be read in pages; a refused
-            # property is recorded, and the source is partial (UberGraph: IAO_0000115).
-            logger.warning("Discovery: %s not discovered: %s", predicate, str(error)[:200])
-            n["discovery_refused"] = str(error)[:500]
-            failure = QueryFailure(
-                "timeout", f"{predicate}: structural discovery refused", "structural/discovery"
-            )
-            context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+            _refused(context, n, predicate, error)
     return rows
+
+
+def _refused(context: MiningContext, n: dict[str, Any], predicate: str, error: Exception) -> None:
+    """Record a property whose discovery was refused; the source is then partial.
+
+    The discovery query groups with GROUP_CONCAT and cannot be read in pages (UberGraph:
+    IAO_0000115).
+    """
+    logger.warning("Discovery: %s not discovered: %s", predicate, str(error)[:200])
+    n["discovery_refused"] = str(error)[:500]
+    failure = QueryFailure(
+        "timeout", f"{predicate}: structural discovery refused", "structural/discovery"
+    )
+    context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+
+
+def _property_discovery(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    keys: list[tuple[str, str, str, str | None]],
+    entry: dict[str, Any],
+) -> tuple[list[dict[str, Any]], set[str]]:
+    """Discover the uncovered edges with one query for each property.
+
+    Return the rows and the properties whose uncovered edges are those of untyped subjects.
+    Each query has the one-property test of the census and the recount (see _census). When
+    the uncovered edges of a property are as many as the edges of its untyped subjects, they
+    are the same edges (an untyped subject has no typed profile), and the test of an untyped
+    subject is used without the typed keys, whose filter Virtuoso refused (SIBiLS
+    pattern#contains: SQ200, stack overflow in cost model).
+    """
+    rows: list[dict[str, Any]] = []
+    untyped: set[str] = set()
+    for predicate, n in sorted(entry.get("census_properties", {}).items()):
+        if not n.get("uncoveredTriples"):
+            continue
+        own = [key for key in keys if key[1] == predicate]
+        if n.get("untypedTriples") == n["uncoveredTriples"]:
+            untyped.add(predicate)
+            test = _untyped(named, predicate)
+        else:
+            test = uncovered_filter(own, context.graph_uris, context.type_context_graph_uris)
+        residual = f"VALUES ?p {{ <{predicate}> }} " + test
+        query = _discovery_query(graph, named, residual)
+        try:
+            rows += _select(context, query, "structural/discovery")
+        except (SparqlHelperError, ValueError) as error:
+            _refused(context, n, predicate, error)
+    return rows, untyped
 
 
 def _undiscovered_triples(entry: dict[str, Any]) -> int:
@@ -678,28 +721,7 @@ class StructuralStrategy(MiningStrategy):
         bulk = rows is not None
         untyped: set[str] = set()
         if rows is None:
-            # One query for each property with uncovered edges, with the one-property test of
-            # the census and the recount (see _census).
-            # When the uncovered edges of a property are as many as the edges of its untyped
-            # subjects, they are the same edges (an untyped subject has no typed profile), and
-            # the test of an untyped subject is used without the typed keys, whose filter
-            # Virtuoso refused (SIBiLS pattern#contains: SQ200, stack overflow in cost model).
-            rows = []
-            for predicate, n in sorted(entry.get("census_properties", {}).items()):
-                if not n.get("uncoveredTriples"):
-                    continue
-                own = [key for key in keys if key[1] == predicate]
-                if n.get("untypedTriples") == n["uncoveredTriples"]:
-                    untyped.add(predicate)
-                    test = _untyped(named, predicate)
-                else:
-                    test = uncovered_filter(
-                        own, context.graph_uris, context.type_context_graph_uris
-                    )
-                residual = f"VALUES ?p {{ <{predicate}> }} " + test
-                rows += _select(
-                    context, _discovery_query(graph, named, residual), "structural/discovery"
-                )
+            rows, untyped = _property_discovery(context, graph, named, keys, entry)
         if bulk:
             census = entry.get("census_properties", {})
             found: Counter[str] = Counter()
