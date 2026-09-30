@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
-from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, SparqlHelperError
 
 
 def _dataset(graph: str | None, type_graphs: list[str] | None = None) -> str:
@@ -251,8 +251,27 @@ def _patterns_discovery(
 }} }} }}
 GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
         )
-        rows += _select(context, query, "structural/discovery")
+        try:
+            rows += _select(context, query, "structural/discovery")
+        except (SparqlHelperError, ValueError) as error:
+            # The query groups with GROUP_CONCAT and cannot be read in pages; a refused
+            # property is recorded, and the source is partial (UberGraph: IAO_0000115).
+            logger.warning("Discovery: %s not discovered: %s", predicate, str(error)[:200])
+            n["discovery_refused"] = str(error)[:500]
+            failure = QueryFailure(
+                "timeout", f"{predicate}: structural discovery refused", "structural/discovery"
+            )
+            context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
     return rows
+
+
+def _undiscovered_triples(entry: dict[str, Any]) -> int:
+    """Return the uncovered triples of the properties whose discovery was refused."""
+    return sum(
+        int(n.get("uncoveredTriples") or 0)
+        for n in (entry.get("census_properties") or {}).values()
+        if "discovery_refused" in n
+    )
 
 
 def _witness(row: dict[str, Any]) -> dict[str, Any]:
@@ -752,11 +771,13 @@ class StructuralStrategy(MiningStrategy):
             if pattern.count < 1 or len(pattern.examples) != 1:
                 raise ValueError("Structural discovery and witnesses disagree")
             structural.append(pattern)
-        if sum(p.count for p in structural) != entry["uncovered_triples"]:
+        undiscovered = _undiscovered_triples(entry)
+        if sum(p.count for p in structural) != entry["uncovered_triples"] - undiscovered:
             raise ValueError("Structural patterns do not account for the uncovered edges")
         context.structural_patterns.extend(structural)
         entry.update(
-            state="partial" if entry.get("unchecked_triples") else "complete",
+            undiscovered_triples=undiscovered,
+            state="partial" if entry.get("unchecked_triples") or undiscovered else "complete",
             pattern_count=len(structural),
             representation="exact_property_sets",
         )
