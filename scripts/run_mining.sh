@@ -11,6 +11,8 @@ repo="${RDFSOLVE_REPO:?Set RDFSOLVE_REPO to the checkout}"
 cd -- "$repo"
 repo="$PWD"
 python="${VENV_PATH:-$repo/.venv}/bin/python"
+# The download steps of generated Qleverfiles call python3 (for example rdflib to convert JSON-LD).
+export PATH="$(dirname -- "$python"):$PATH"
 data="${DATA_DIR:-$(dirname -- "$repo")/data}"
 registry="${SOURCES_FILE:-$repo/data/sources.yaml}"
 output="${OUTPUT_DIR:-$(dirname -- "$repo")/runs/${mode}-${SLURM_JOB_ID:-manual}-$(date -u +%Y%m%dT%H%M%S)-$$}"
