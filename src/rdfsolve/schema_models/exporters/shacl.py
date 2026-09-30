@@ -9,6 +9,8 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
 ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
 
 
@@ -70,6 +72,10 @@ def minedschema_to_shacl(
             by_property[pattern.property_uri].append(pattern)
         property_shapes = []
         for prop, patterns in sorted(by_property.items()):
+            # No constraint on rdf:type: the schema keeps the rows of type values that are
+            # declared classes and leaves out the others, so its rows do not give every type.
+            if prop == RDF_TYPE:
+                continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
             options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
             for pattern in patterns:
