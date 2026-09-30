@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
@@ -42,7 +44,9 @@ class RemoteMiningStage(Stage):
 
         from threading import Lock
 
-        results = {"mined": [], "partial": [], "failed": [], "skipped": []}
+        results: dict[str, list[Any]] = {
+            "mined": [], "matched_local": [], "partial": [], "failed": [], "skipped": []
+        }
         results_lock = Lock()
 
         def mine_host_sources(host: str, host_sources: list[Source]) -> None:
@@ -52,6 +56,8 @@ class RemoteMiningStage(Stage):
                 with results_lock:
                     if result["status"] == "mined":
                         results["mined"].append(result["data"])
+                    elif result["status"] == "matched_local":
+                        results["matched_local"].append(result["data"])
                     elif result["status"] == "failed":
                         results["failed"].append(result["data"])
                     elif result["status"] == "partial":
@@ -82,6 +88,29 @@ class RemoteMiningStage(Stage):
         )
 
         return results
+
+    def _matches_local(
+        self, source: Source, miner: Any, graph_uris: list[str], output_dir: Path, suffix: str
+    ) -> bool:
+        """Check the endpoint against the local record of the source; True when it is equal.
+
+        The check is written as <name><suffix>_endpoint_match.json. Without a local record, or
+        without --local-records, the endpoint is mined as before.
+        """
+        if self.config.local_records is None:
+            return False
+        record = self.config.local_records / source.name / f"{source.name}_local_schema.json"
+        if not record.is_file():
+            return False
+        from rdfsolve.mining.endpoint_match import check_endpoint_matches
+        from rdfsolve.schema_models.core import MinedSchema
+
+        local = MinedSchema.from_dict(json.loads(record.read_text(encoding="utf-8")))
+        match = check_endpoint_matches(local, miner.helper, graph_uris=graph_uris or None)
+        path = output_dir / f"{source.name}{suffix}_endpoint_match.json"
+        path.write_text(match.model_dump_json(indent=2), encoding="utf-8")
+        log.info(f"[{source.name}] Endpoint against the local record: {match.state}")
+        return match.state == "equal"
 
     def _mine_single_source(self, source: Source) -> dict[str, Any]:
         """Mine a single source. Returns dict with status and data."""
@@ -174,6 +203,9 @@ class RemoteMiningStage(Stage):
                 report_path=str(report_path),
                 resume_checkpoint=previous if previous and previous.is_file() else None,
             )
+            if self._matches_local(source, miner, empirical_graphs, source_output_dir, suffix):
+                miner.close()
+                return {"status": "matched_local", "data": source.name}
 
             if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
                 from rdfsolve.mining import mine_with_ontology

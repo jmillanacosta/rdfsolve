@@ -124,6 +124,8 @@ class PipelineConfig:
     # Tab-separated (child, parent) IRI files for terms whose hierarchy is not in the data
     ontology_hierarchy_files: list[Path] = field(default_factory=list)
     resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused
+    # Local run output whose records remote endpoints are checked against; equal ones are not mined
+    local_records: Path | None = None
     discover_ontology_graphs: bool = False
     ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False

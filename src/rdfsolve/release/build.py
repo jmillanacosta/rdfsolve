@@ -80,6 +80,7 @@ def _role(path: Path) -> str | None:
         ("_ontology_discovery.json", "ontology_discovery"),
         ("_property_usage.json", "property_usage_evidence"),
         ("_declared_artifacts.json", "declared_artifact_index"),
+        ("_endpoint_match.json", "endpoint_match"),
         ("_declared_identities.sssom.tsv", "declared_identities"),
         ("_declared_identities.json", "declared_identities_summary"),
         ("_ontology_acquisition.json", "ontology_acquisition"),

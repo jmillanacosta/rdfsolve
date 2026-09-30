@@ -263,6 +263,13 @@ Examples:
         "class batches (recorded with the checkpoint hash in each report)",
     )
     parser.add_argument(
+        "--local-records",
+        type=Path,
+        default=None,
+        help="Local run output: check each endpoint against the local record of its source "
+        "with cheap counts, and mine only the endpoints that serve other data",
+    )
+    parser.add_argument(
         "--get-graphs-from-store",
         action="store_true",
         help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors",
@@ -483,6 +490,7 @@ Examples:
     config.ontology_group_before_mining = args.ontology_group_before_mining or None
     config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
+    config.local_records = args.local_records
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
     if config.ontology_discovery_max_graphs < 1:
