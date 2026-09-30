@@ -17,6 +17,7 @@ from rdfsolve.analysis import build_connectivity, compare_schemas, load_schemas,
 from rdfsolve.analysis.io import load_channel_schemas
 from rdfsolve.config import mint
 from rdfsolve.analysis.schema import extract_class_set
+from rdfsolve.mappings.routes import read_routes
 from rdfsolve.mappings.signatures import Link, read_links
 from rdfsolve.mappings.sssom import links_to_sssom, write_sssom_tsv
 from rdfsolve.mappings.void import links_to_void
@@ -33,6 +34,7 @@ def main():
     )
     parser.add_argument("--links", nargs="*", type=Path, default=[])
     parser.add_argument("--min-share", type=float, default=0.5)
+    parser.add_argument("--routes", nargs="*", type=Path, default=[], help="routes.json files")
     parser.add_argument("--class-mappings", nargs="*", type=Path, default=[])
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--creator-id", help="Creator IRI (for example an ORCID) for SSSOM output")
@@ -74,11 +76,21 @@ def main():
         for link in proposed
         if (link.source, link.source_class) in known and (link.target, link.target_class) in known
     ]
+    # Routes across datasets that were tested on the data (check_routes.py): one edge each.
+    routes = [
+        route
+        for path in args.routes
+        for route in read_routes(path)
+        if (route.route.link.source, route.route.start_class) in known
+        and (route.route.link.target, route.route.end_class) in known
+    ]
+    reports["routes"] = {"tested_routes_in_graph": len(routes)}
     graph = build_connectivity(
         schemas,
         class_mappings=mappings,
         links=looked_up,
         candidates=proposed,
+        routes=routes,
         min_share=args.min_share,
     )
     levels = Counter(data["evidence"] for *_, data in graph.edges(data=True))

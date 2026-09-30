@@ -13,6 +13,7 @@ from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
 
 if TYPE_CHECKING:
     from rdfsolve.mappings.models.core import MappingEdge
+    from rdfsolve.mappings.routes import RouteEvidence
     from rdfsolve.mappings.signatures import Link, LinkEvidence
     from rdfsolve.schema_models.core import MinedSchema
 
@@ -49,6 +50,7 @@ def build_connectivity(
     class_mappings: Sequence[MappingEdge] = (),
     links: Sequence[LinkEvidence] = (),
     candidates: Sequence[Link] = (),
+    routes: Sequence[RouteEvidence] = (),
     min_share: float = 0.5,
 ) -> Any:
     """Build a directed multigraph with dataset-qualified class nodes.
@@ -56,7 +58,8 @@ def build_connectivity(
     Shared vocabulary, observed predicates, paths over several steps, explicit class mappings,
     verified links (rdfsolve.mappings.signatures.verify) and proposed links (*candidates*)
     remain distinct edges, each with its level of evidence (LEVELS). A link of which no value
-    was found is left out. No transitive mapping inference is run.
+    was found is left out. A route across two datasets that was tested on the data (*routes*,
+    rdfsolve.mappings.routes) is one edge. No transitive mapping inference is run.
     """
     import networkx as nx
 
@@ -150,6 +153,24 @@ def build_connectivity(
                 "target_property": link.target_property,
                 "evidence": "plausible",
             },
+        )
+    for tested in routes:
+        route = tested.route
+        left, right = (route.link.source, route.start_class), (route.link.target, route.end_class)
+        if not tested.matched or left not in graph or right not in graph:
+            continue
+        graph.add_edge(
+            left,
+            right,
+            kind="route",
+            predicate=route.link.property,
+            before=[step.property_uri for step in route.before],
+            after=[step.property_uri for step in route.after],
+            identifier_type=route.link.identifier_type,
+            starts=tested.starts,
+            matched=tested.matched,
+            complete=tested.complete,
+            evidence=tested.level,
         )
     return graph
 

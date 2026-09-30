@@ -115,7 +115,17 @@ from its first class to its last class, within one dataset. A route of several e
 composition: each part can be confirmed, but no instance is known to follow the whole route,
 also across datasets. ``rdfsolve.analysis.best_route`` therefore gives such a route the
 evidence ``plausible`` with the level of its weakest edge (``weakest_segment``). It takes the
-strongest edges first, then the fewest edges. Property correspondence and transitive mapping
+strongest edges first, then the fewest edges.
+
+A route across two datasets can be tested on the data (``scripts/check_routes.py``,
+``rdfsolve.mappings.routes``). A route is a path in the first dataset, a link, and a path in
+the second dataset. The start instances and their link values are read, the values are looked
+up in the second dataset together with its path, and the start instances that reach the end
+are counted. Between two local indexes every start instance is read and a matched route is
+``confirmed``; when a dataset is read at its endpoint a sample is read and a matched route is
+``tested``. A tested route is one edge (kind ``route``). The file ``routes.json`` holds the
+matched routes, each with a federated query that is generated from the record and is not
+executed. Routes over more than one link are not tested. Property correspondence and transitive mapping
 inference are separate work. The optional inference script is not part of this validated
 analysis workflow.
 

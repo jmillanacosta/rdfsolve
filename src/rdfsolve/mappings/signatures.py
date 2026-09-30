@@ -214,12 +214,14 @@ def _lookup(
     replacements: Mapping[str, str],
     *,
     in_target_class: bool = False,
+    extra: str = "",
 ) -> dict[str, list[tuple[str, str]]]:
     """Look up identifiers (Bioregistry CURIEs) in the target, in every spelling.
 
     Return, for each identifier found, the target terms and their target subjects: the term
     itself for a join, the subject that has the term as value of the target property for a
-    shared reference (with *in_target_class*, only subjects of the target class).
+    shared reference (with *in_target_class*, only subjects of the target class). *extra* is
+    a pattern that the target subject ?x must also match (the path of a route).
     """
     from rdflib import URIRef
 
@@ -236,6 +238,7 @@ def _lookup(
         if in_target_class and link.target_class:
             pattern += f" ?x a {URIRef(link.target_class).n3()} ."
         terms = {key: spellings(replacements.get(key, key)) for key in keys}
+    pattern += extra
     found: dict[str, list[tuple[str, str]]] = defaultdict(list)
     pairs = [(key, term) for key, forms in terms.items() for term in forms]
     for start in range(0, len(pairs), 200):
@@ -281,6 +284,7 @@ def _read_target(
     replacements: Mapping[str, str],
     *,
     in_target_class: bool = False,
+    extra: str = "",
 ) -> dict[str, list[tuple[str, str]]] | None:
     """Match identifiers against every term of the target, read once, as _lookup does per spelling.
 
@@ -299,7 +303,7 @@ def _read_target(
             pattern += f" ?x a {URIRef(link.target_class).n3()} ."
     # Only the terms are read: verify() keeps the matched term, and a blank node (a subject, or a
     # value) cannot be paged and equals no spelling of an identifier.
-    scoped = target._scope(pattern) + " FILTER(!isBlank(?t))"
+    scoped = target._scope(pattern + extra) + " FILTER(!isBlank(?t))"
     counted = target._select(f"SELECT (COUNT(DISTINCT ?t) AS ?n) WHERE {{ {scoped} }}")
     if not counted or int(counted[0]["n"]["value"]) > TARGET_READ_LIMIT:
         return None
