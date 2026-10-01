@@ -115,8 +115,8 @@ class NavigationSummary(BaseModel):
         routes of a schema sample (strategy schema_sample) are written in full, as before.
         """
         data = handler(self)
-        if self.strategy != "tested" or not isinstance(data, dict):
-            return data
+        if self.strategy != "tested" or not isinstance(data, dict) or "paths" not in data:
+            return data  # a dump without the paths (exclude) has nothing to pack
         numbers: dict[tuple[str, str, str, str | None], int] = {}
         edges: list[Any] = []
         rows: list[dict[str, Any]] = []
