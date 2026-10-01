@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Iterable
-from typing import Any
+from pathlib import Path
+from typing import IO, Any, cast
 from typing import Literal as Choice
 
 import pyoxigraph as ox
@@ -56,6 +57,30 @@ def to_oxigraph(graph: Graph) -> ox.Dataset:
     return ox.Dataset(ox.Quad(_node(s), ox.NamedNode(str(p)), _term(o)) for s, p, o in graph)
 
 
+def load_store(path: str | Path) -> ox.Store:
+    """Load an RDF file (gzip allowed) into an Oxigraph store, with Oxigraph's bulk loader.
+
+    The format comes from the extension; a format Oxigraph does not read is parsed by RDFLib.
+    """
+    import gzip
+
+    path = Path(path)
+    suffixes = [s.lstrip(".") for s in path.suffixes]
+    zipped = suffixes[-1:] == ["gz"]
+    extension = suffixes[-2] if zipped and len(suffixes) > 1 else suffixes[-1] if suffixes else ""
+    rdf_format = ox.RdfFormat.from_extension(extension)
+    store = ox.Store()
+    if rdf_format is None:
+        store.extend(to_oxigraph(Dataset().parse(path)))
+        return store
+    if zipped:
+        with gzip.open(path, "rb") as handle:
+            store.bulk_load(cast("IO[bytes]", handle), format=rdf_format)
+    else:
+        store.bulk_load(path=str(path), format=rdf_format)
+    return store
+
+
 def to_rdflib(quads: Iterable[ox.Quad]) -> Dataset:
     """Return Oxigraph statements as an RDFLib dataset. Named graphs stay named."""
     dataset = Dataset()
@@ -104,10 +129,15 @@ class LocalRdf:
         self.fallback_reason: str | None = None
         self._store: ox.Store | None = None
         self._literals: dict[ox.Literal, Literal] = {}
+        self.graph: Graph | None = None
+        if isinstance(graph, ox.Store) and backend == "oxigraph":
+            # Already stored by Oxigraph: queried as it is, without a copy.
+            self._store = graph
+            return
         if isinstance(graph, (ox.Dataset, ox.Store)):
             self._from_oxigraph(set(graph))
             return
-        self.graph: Graph | None = graph
+        self.graph = graph
         if backend == "rdflib":
             return
         try:

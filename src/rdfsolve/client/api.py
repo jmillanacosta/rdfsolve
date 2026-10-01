@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 from typing import Literal as FormatLiteral
 
 import pandas as pd
+import pyoxigraph as ox
 from pydantic import BaseModel
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
     from rdfsolve.client.query import QueryResult
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
     from rdfsolve.client.resolution import Resolution
+    from rdfsolve.property_graph import Conversion, Fold, PropertyGraph
     from rdfsolve.schema_models.selection import SchemaSelection
 
 
@@ -184,7 +186,7 @@ class Client(DatasetClient):
     def open(
         cls,
         schema: MinedSchema | str | Path,
-        source: str | SparqlHelper | Graph | None = None,
+        source: str | SparqlHelper | Graph | ox.Dataset | ox.Store | None = None,
         *,
         format: FormatLiteral["json", "shacl", "void"] | None = None,
         data_file: str | Path | None = None,
@@ -221,15 +223,14 @@ class Client(DatasetClient):
         if data_file is not None:
             if source is not None:
                 raise ValueError("Choose source or data_file, not both")
-            dataset = Dataset().parse(data_file)
-            if not any(
-                graph.identifier != dataset.default_graph.identifier and len(graph)
-                for graph in dataset.graphs()
-            ):
+            from rdfsolve.local_rdf import load_store
+
+            store = load_store(data_file)
+            if next(iter(store.named_graphs()), None) is None:
                 if kwargs.get("graph_uris"):
                     raise ValueError("A single local RDF graph has no named graph scope")
                 kwargs["graph_uris"] = []
-            source = dataset
+            source = store
         return cls(schema, source, **kwargs)
 
     def registry(self, *, source_id: str) -> Registry:
@@ -1166,6 +1167,10 @@ class Client(DatasetClient):
 
     def save(self, path: str | Path, *groups: Results | BaseModel) -> None:
         """Save individual records or result sets and retained direct links as RDF."""
+        self.to_graph(*groups).serialize(destination=path, format="turtle")
+
+    def to_graph(self, *groups: Results | BaseModel) -> Graph:
+        """Return records or result sets and their retained direct links as an RDF graph."""
         records: list[BaseModel] = []
         model_types = tuple(self.models.values())
         for group in groups:
@@ -1201,7 +1206,45 @@ class Client(DatasetClient):
         for prefix, namespace in prefix_map(iris, schema_prefixes).items():
             if prefix in schema_prefixes or bioregistry.get_resource(prefix) is not None:
                 graph.bind(prefix, namespace, replace=True)
-        graph.serialize(destination=path, format="turtle")
+        return graph
+
+    def to_oxigraph(self, *groups: Results | BaseModel) -> ox.Dataset:
+        """Return records or result sets and their retained direct links as an Oxigraph dataset."""
+        from rdfsolve.local_rdf import to_oxigraph
+
+        return to_oxigraph(self.to_graph(*groups))
+
+    def property_graph(
+        self,
+        *groups: Results | BaseModel,
+        folds: Iterable[Fold] = (),
+        types: Mapping[str, Conversion | None] | None = None,
+        native: bool = True,
+        names: Any = "local",
+    ) -> PropertyGraph:
+        """Return records or result sets as a property graph, checked against their RDF.
+
+        Folds turn n-ary nodes (a catalysis, an axiom) into edges with properties; see
+        suggest_folds. *types* overrides the literal conversions per datatype (None keeps the
+        lexical form) and native=False keeps every literal as written. *names*: "local" (the
+        default), "curie", "label", "iri", a function of the IRI, or a mapping of IRIs to names.
+        """
+        from rdfsolve.property_graph import PropertyGraph
+
+        return PropertyGraph.from_rdf(
+            self.to_oxigraph(*groups),
+            schema=self._schema,
+            folds=folds,
+            types=types,
+            native=native,
+            names=names,
+        )
+
+    def suggest_folds(self) -> list[Fold]:
+        """Propose classes whose instances can become edges, from the mined schema."""
+        from rdfsolve.property_graph import suggest_folds
+
+        return suggest_folds(self._schema)
 
 
 class Results:
