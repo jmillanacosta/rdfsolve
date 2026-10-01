@@ -17,7 +17,7 @@ import pandas as pd
 from pydantic import BaseModel
 from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
-from rdfsolve._uri import curie_from_prefixes, uri_to_curie
+from rdfsolve._uri import curie_from_prefixes, prefix_map, uri_to_curie
 from rdfsolve.client.exploration import DatasetClient
 from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
 from rdfsolve.client.model_rdf import model_to_graph
@@ -1178,7 +1178,6 @@ class Client(DatasetClient):
             else:
                 raise ValueError("Save records created with this client's models")
         graph = Graph()
-        self._schema.bind_prefixes(graph)
         ids = {str(vars(record)["uri"]) for record in records}
         for record in records:
             graph += model_to_graph(record)
@@ -1193,6 +1192,10 @@ class Client(DatasetClient):
             if path_model.operator != "predicate" or path_model.iri is None:
                 raise ValueError("Select the intermediate records before saving a multi-step link")
             graph.add((source, URIRef(path_model.iri), target))
+        # Schema prefixes, and registered names for the other namespaces of the records.
+        iris = {str(term) for triple in graph for term in triple if isinstance(term, URIRef)}
+        for prefix, namespace in prefix_map(iris, self._schema.get_prefixes()).items():
+            graph.bind(prefix, namespace, replace=True)
         graph.serialize(destination=path, format="turtle")
 
 

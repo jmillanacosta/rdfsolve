@@ -172,6 +172,9 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert isomorphic(Graph().parse(direct_path), expected)
         client.save(tmp_path / "sparse.ttl", sparse, left)
         assert not client.queries
+        chebi = client.create(str(E.Part), uri="http://purl.obolibrary.org/obo/CHEBI_17761")
+        client.save(tmp_path / "named.ttl", chebi)
+        assert "chebi:17761" in (tmp_path / "named.ttl").read_text(), "Name record namespaces"
 
     people = MinedSchema(about={"dataset_name": "api-check"}, patterns=[
         SchemaPattern(subject_class=iri, property_uri=str(E.knows), object_class=iri)
