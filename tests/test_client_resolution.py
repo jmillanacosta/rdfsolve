@@ -4,7 +4,7 @@ import json
 from unittest.mock import patch
 
 import pytest
-from rdflib import Dataset
+from rdflib import Dataset, URIRef
 
 from rdfsolve.client.api import Client
 from rdfsolve.client.ontology import OntologyLookup
@@ -59,6 +59,8 @@ def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
         assert chebi.candidates[0].origin == "registered identifier"
         other = client.resolve("https://identifiers.org/chebi/CHEBI:53289", kind="resource")
         assert other.iri == chebi.iri, "An IRI of a registered namespace is an identifier too"
+        term = client.resolve(URIRef("https://identifiers.org/chebi/CHEBI:53289"), kind="resource")
+        assert term.iri == chebi.iri, "An RDFLib IRI, as tables give, resolves like a string"
         missing = client.resolve("urn:e:missing", kind="resource")
         assert (missing.status, missing.candidates[0].use) == ("unresolved", "absent")
         assert client.resolve("Ada", kind="resource").iri == "urn:e:one"

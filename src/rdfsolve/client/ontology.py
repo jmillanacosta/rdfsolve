@@ -459,6 +459,7 @@ def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
 
     import bioregistry
 
+    value = str(value)  # an RDFLib URIRef is a str subclass that bioregistry does not parse
     if value.startswith(("http://", "https://", "urn:")):
         given = absolute_iri(value)
         registered, number = bioregistry.parse_iri(given)
