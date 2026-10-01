@@ -1192,10 +1192,15 @@ class Client(DatasetClient):
             if path_model.operator != "predicate" or path_model.iri is None:
                 raise ValueError("Select the intermediate records before saving a multi-step link")
             graph.add((source, URIRef(path_model.iri), target))
-        # Schema prefixes, and registered names for the other namespaces of the records.
+        # Schema prefixes, and registered names for the other namespaces of the records;
+        # a namespace without a registered name stays written in full.
+        import bioregistry
+
+        schema_prefixes = self._schema.get_prefixes()
         iris = {str(term) for triple in graph for term in triple if isinstance(term, URIRef)}
-        for prefix, namespace in prefix_map(iris, self._schema.get_prefixes()).items():
-            graph.bind(prefix, namespace, replace=True)
+        for prefix, namespace in prefix_map(iris, schema_prefixes).items():
+            if prefix in schema_prefixes or bioregistry.get_resource(prefix) is not None:
+                graph.bind(prefix, namespace, replace=True)
         graph.serialize(destination=path, format="turtle")
 
 
