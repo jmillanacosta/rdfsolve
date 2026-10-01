@@ -7,7 +7,7 @@ import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve._uri import curie_from_prefixes
+from rdfsolve._uri import curie_from_prefixes, uri_to_curie
 from rdfsolve.client.hydration import class_iri
 
 if TYPE_CHECKING:
@@ -92,6 +92,7 @@ def path_diagram(
         for item in paths.attrs.get("resource_classes", [])
     }
     unresolved = set(paths.attrs.get("unresolved_resources", []))
+    prefixes = client.schema.get_prefixes()
     nodes: dict[str, tuple[str, str]] = {}
     edges: set[tuple[str, str, str]] = set()
     for row in paths.to_dict(orient="records"):
@@ -126,7 +127,8 @@ def path_diagram(
             s, o = s or "", o or ""
         for key, iri, label in zip(keys, (s, o), labels, strict=True):
             if key not in nodes:
-                nodes[key] = (f"N{len(nodes)}", f"{_text(label)}<br/>{_text(iri)}")
+                shown = " | ".join(_curie(part, prefixes) for part in iri.split(" | "))
+                nodes[key] = (f"N{len(nodes)}", f"{_text(label)}<br/>{_text(shown)}")
         source, target = keys[::-1] if backward else keys
         edges.add((nodes[source][0], str(row["Link"]), nodes[target][0]))
     lines = ["flowchart LR"]
@@ -186,6 +188,14 @@ def connection_diagram(table: pd.DataFrame, *, instances: bool = False) -> str:
     if table.attrs.get("coverage", {}).get("status") == "partial":
         notice += "Retrieval was partial.\n\n"
     return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
+
+
+def _curie(iri: str, prefixes: dict[str, str]) -> str:
+    """Show an IRI as a CURIE of the schema prefixes, or of its registered namespace."""
+    if not iri.startswith(("http://", "https://", "urn:")):
+        return iri
+    found = curie_from_prefixes(iri, prefixes)
+    return found[0] if found else uri_to_curie(iri)[0]
 
 
 def _text(value: str) -> str:

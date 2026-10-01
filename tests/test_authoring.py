@@ -205,3 +205,4 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         raw_path = client.diagram(paths=paths, fenced=False)
         assert "```" not in raw_path and "-->" in raw_path
         assert "%% Partial view" in raw_path
+        assert "https://schema.org/Person" not in raw_path, "Path nodes show CURIEs"
