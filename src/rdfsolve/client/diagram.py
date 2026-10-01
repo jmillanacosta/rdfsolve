@@ -127,7 +127,7 @@ def path_diagram(
         for key, iri, label in zip(keys, (s, o), labels, strict=True):
             if key not in nodes:
                 shown = ", ".join(_short(_curie(part, prefixes)) for part in iri.split(" | "))
-                nodes[key] = (f"N{len(nodes)}", _node("", label.split(" | ")[0], shown))
+                nodes[key] = (f"N{len(nodes)}", _node("", _specific(client, label), shown))
         source, target = keys[::-1] if backward else keys
         edges.add((nodes[source][0], str(row["Link"]), nodes[target][0]))
     lines = ["flowchart LR"]
@@ -204,6 +204,19 @@ def _node(name: str, title: str, detail: str = "") -> str:
 def _md(value: str) -> str:
     """Escape text for a Mermaid markdown string."""
     return re.sub(r"[`\"*_<>]", lambda match: f"#{ord(match[0])};", value)
+
+
+def _specific(client: Client, names: str) -> str:
+    """Of the classes of a resource, name the one with the fewest instances (the most specific)."""
+    counts = client.schema.about.class_entity_counts or {}
+
+    def size(name: str) -> float:
+        try:
+            return counts.get(class_iri(client.model(name)), float("inf"))
+        except ValueError:
+            return float("inf")
+
+    return min(names.split(" | "), key=size)
 
 
 def _short(shown: str) -> str:
