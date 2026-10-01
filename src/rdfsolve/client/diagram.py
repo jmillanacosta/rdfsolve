@@ -7,7 +7,7 @@ import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve._uri import curie_from_prefixes, uri_to_curie
+from rdfsolve._uri import curie_from_prefixes
 from rdfsolve.client.hydration import class_iri
 
 if TYPE_CHECKING:
@@ -195,7 +195,11 @@ def _curie(iri: str, prefixes: dict[str, str]) -> str:
     if not iri.startswith(("http://", "https://", "urn:")):
         return iri
     found = curie_from_prefixes(iri, prefixes)
-    return found[0] if found else uri_to_curie(iri)[0]
+    if found:
+        return found[0]
+    import bioregistry
+
+    return bioregistry.curie_from_iri(iri) or iri
 
 
 def _text(value: str) -> str:
