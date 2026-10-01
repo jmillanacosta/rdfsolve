@@ -50,24 +50,23 @@ def model_diagram(
         iri = class_iri(model)
         found = curie_from_prefixes(iri, prefixes) if iris == "curie" else None
         shown = {"full": iri, "curie": found[0] if found else iri, "none": ""}[iris]
-        label = _text(client.type_name(model)) + (f"<br/>{_text(shown)}" if shown else "")
-        lines.append(f'{ids[iri]}["{label}"]')
+        lines.append(_node(ids[iri], client.type_name(model), shown))
     edges: dict[tuple[str, str], list[str]] = {}
     for model in models:
         for row in client.links(model).itertuples(index=False):
             target = class_iri(client.models[str(row.target)])
             if target in ids:
-                label = _text(client.link_name(model, str(row.field)))
+                label = _md(client.link_name(model, str(row.field)))
                 pair = edges.setdefault((ids[class_iri(model)], ids[target]), [])
                 if label not in pair:
                     pair.append(label)
     drawn = sorted(
-        f'{a} -->|"{"<br/>".join(sorted(labels))}"| {b}'
+        f'{a} -->|"`{chr(10).join(sorted(labels))}`"| {b}'
         if merge
-        else "\n".join(f'{a} -->|"{label}"| {b}' for label in sorted(labels))
+        else "\n".join(f'{a} -->|"`{label}`"| {b}' for label in sorted(labels))
         for (a, b), labels in edges.items()
     )
-    body = "\n".join([*lines, *drawn])
+    body = "\n".join([*lines, *drawn, *_STYLE[: 1 + bool(drawn)]])
     return "```mermaid\n" + body + "\n```" if fenced else body
 
 
@@ -127,15 +126,15 @@ def path_diagram(
             s, o = s or "", o or ""
         for key, iri, label in zip(keys, (s, o), labels, strict=True):
             if key not in nodes:
-                shown = " | ".join(_curie(part, prefixes) for part in iri.split(" | "))
-                nodes[key] = (f"N{len(nodes)}", f"{_text(label)}<br/>{_text(shown)}")
+                shown = ", ".join(_short(_curie(part, prefixes)) for part in iri.split(" | "))
+                nodes[key] = (f"N{len(nodes)}", _node("", label.split(" | ")[0], shown))
         source, target = keys[::-1] if backward else keys
         edges.add((nodes[source][0], str(row["Link"]), nodes[target][0]))
     lines = ["flowchart LR"]
-    lines.extend(f'{name}["{label}"]' for name, label in nodes.values())
+    lines.extend(name + label for name, label in nodes.values())
     lines.extend(f'{s} -->|"{_text(label)}"| {o}' for s, label, o in sorted(edges))
     notice = "Partial view: more connections exist.\n\n" if paths.attrs.get("truncated") else ""
-    body = "\n".join(lines)
+    body = "\n".join([*lines, *_STYLE[: 1 + bool(edges)]])
     if not fenced:
         return body + ("\n%% " + notice.strip() if notice else "")
     return notice + "```mermaid\n" + body + "\n```"
@@ -188,6 +187,30 @@ def connection_diagram(table: pd.DataFrame, *, instances: bool = False) -> str:
     if table.attrs.get("coverage", {}).get("status") == "partial":
         notice += "Retrieval was partial.\n\n"
     return notice + "```mermaid\n" + "\n".join(lines) + "\n```"
+
+
+_STYLE = (
+    "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
+    "linkStyle default stroke:#7a8aa0,stroke-width:1.5px",
+)
+
+
+def _node(name: str, title: str, detail: str = "") -> str:
+    """Draw a rounded node with the title in bold and the identifier on a second line."""
+    text = f"**{_md(title)}**" + (f"\n{_md(detail)}" if detail else "")
+    return f'{name}("`{text}`")'
+
+
+def _md(value: str) -> str:
+    """Escape text for a Mermaid markdown string."""
+    return re.sub(r"[`\"*_<>]", lambda match: f"#{ord(match[0])};", value)
+
+
+def _short(shown: str) -> str:
+    """Keep the last two segments of a long IRI that has no registered prefix."""
+    if not shown.startswith(("http://", "https://")) or len(shown) <= 48:
+        return shown
+    return "…/" + "/".join(shown.rstrip("/").split("/")[-2:])
 
 
 def _curie(iri: str, prefixes: dict[str, str]) -> str:
