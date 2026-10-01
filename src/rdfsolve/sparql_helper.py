@@ -671,7 +671,7 @@ class SparqlHelper:
                     record.status_code = status_code
                     record.response_excerpt = self._last_error_body[:2000]
                 body = self._last_error_body.lower()
-                detail = self._last_error_body.split("SPARQL query:", 1)[0].strip()[:500]
+                detail = _error_detail(self._last_error_body)
                 failure = EndpointError(
                     f"HTTP {status_code}: {detail or 'Endpoint request failed'}"
                 )
@@ -1687,3 +1687,18 @@ class SparqlHelper:
 
 
 # Convenience function for one-off queries
+
+
+def _error_detail(body: str) -> str:
+    """Give the reason of an endpoint error without the echoed query.
+
+    A JSON body (QLever) carries the reason in "exception", which itself may start with
+    "Invalid SPARQL query:"; other bodies are cut where the echoed query begins.
+    """
+    try:
+        reason = json.loads(body).get("exception")
+    except (ValueError, AttributeError):
+        reason = None
+    if isinstance(reason, str) and reason.strip():
+        return reason.strip()[:500]
+    return body.split("SPARQL query:", 1)[0].strip()[:500]

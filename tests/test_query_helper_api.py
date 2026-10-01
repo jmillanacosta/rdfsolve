@@ -81,3 +81,17 @@ def test_a_connection_closed_after_a_long_wait_is_a_cost_limit(monkeypatch, tmp_
         with pytest.raises(EndpointError):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
         assert request.call_count == 4, "A connection closed at once is retried"
+
+
+def test_json_error_reports_its_reason(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    response = requests.Response()
+    response.status_code = 400
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"exception":"Invalid SPARQL query: Built-in function sameterm"}'
+    response._content_consumed = True
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
+        monkeypatch.setattr(helper._session, "request", Mock(return_value=response))
+        with pytest.raises(EndpointError, match="Built-in function sameterm"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")

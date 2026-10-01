@@ -85,9 +85,8 @@ def value_paths(
                         f"BIND({_iri(predicate)} AS ?p{i})",
                         f"BIND({'true' if back else 'false'} AS ?back{i})",
                     ]
-                distinct = [
-                    f"FILTER(!sameTerm(?n{i}, ?n{j}))" for i in range(hops + 1) for j in range(i)
-                ]
+                # Path nodes are resources, for which != is term inequality; QLever has no sameTerm.
+                distinct = [f"FILTER(?n{i} != ?n{j})" for i in range(hops + 1) for j in range(i)]
                 bodies.append("{ " + " ".join([pattern, *distinct, *bindings]) + " }")
             variables = [
                 "?route",
