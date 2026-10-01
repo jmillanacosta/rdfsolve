@@ -57,6 +57,8 @@ def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
         chebi = client.resolve("CHEBI:53289", kind="resource")
         assert chebi.iri == "http://purl.obolibrary.org/obo/CHEBI_53289", "CURIEs are identifiers"
         assert chebi.candidates[0].origin == "registered identifier"
+        other = client.resolve("https://identifiers.org/chebi/CHEBI:53289", kind="resource")
+        assert other.iri == chebi.iri, "An IRI of a registered namespace is an identifier too"
         missing = client.resolve("urn:e:missing", kind="resource")
         assert (missing.status, missing.candidates[0].use) == ("unresolved", "absent")
         assert client.resolve("Ada", kind="resource").iri == "urn:e:one"

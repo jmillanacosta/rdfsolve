@@ -450,13 +450,31 @@ def _valid_iri(text: str) -> str | None:
 
 
 def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
-    """Expand an exact IRI or registered CURIE into recorded namespace candidates."""
+    """Expand an exact IRI or registered CURIE into recorded namespace candidates.
+
+    An IRI of a registered namespace (identifiers.org, OBO, ...) also gives the spellings
+    of its CURIE, since a source may write the identifier in another registered form.
+    """
     from importlib.metadata import version
 
     import bioregistry
 
     if value.startswith(("http://", "https://", "urn:")):
-        return [absolute_iri(value)], {"input": value, "basis": "exact IRI"}
+        given = absolute_iri(value)
+        registered, number = bioregistry.parse_iri(given)
+        if registered is None:
+            return [given], {"input": value, "basis": "exact IRI"}
+        try:
+            candidates, coverage = identifier_candidates(f"{registered}:{number}")
+        except ValueError:
+            return [given], {"input": value, "basis": "exact IRI"}
+        candidates = sorted({given, *candidates})
+        return candidates, {
+            **coverage,
+            "input": value,
+            "identifier": f"{registered}:{number}",
+            "candidates": candidates,
+        }
     prefix, separator, local = value.partition(":")
     resource = bioregistry.get_resource(prefix) if separator else None
     if resource is None:

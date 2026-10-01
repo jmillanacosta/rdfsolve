@@ -86,7 +86,7 @@ def resolve_term(
         if not iris:
             _iri(name)
             iris, origin = [name], "supplied IRI"
-        found = {iri: {"origin": origin} for iri in iris}
+        found = {iri: {"origin": "supplied IRI" if iri == name else origin} for iri in iris}
     else:
         found, coverage, warnings = _named(client, name, kind, external_names, identifier)
     checks = _witnesses(client, list(found), kind)
