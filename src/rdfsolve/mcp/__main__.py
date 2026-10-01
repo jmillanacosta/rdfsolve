@@ -21,6 +21,9 @@ def main() -> None:
     parser.add_argument("--graphs", type=json.loads, help="JSON list; [] for all data")
     parser.add_argument("--output-variables", type=json.loads, default=[])
     parser.add_argument("--timeout", type=float, default=900)
+    parser.add_argument(
+        "--probe-timeout", type=float, default=30, help="Seconds for a probe; 0: none"
+    )
     parser.add_argument("--artifact-dir", type=Path)
     parser.add_argument("--ontology-provider", choices=["ols", "ontobee"])
     parser.add_argument("--ontology-cache", type=Path)
@@ -45,7 +48,10 @@ def main() -> None:
         **scope,
     ) as client:
         toolbox = Toolbox(
-            client, output_variables=args.output_variables, artifact_dir=args.artifact_dir
+            client,
+            output_variables=args.output_variables,
+            artifact_dir=args.artifact_dir,
+            probe_timeout=args.probe_timeout or None,
         )
         asyncio.run(run_server(toolbox))
 

@@ -13,7 +13,7 @@ from pydantic_core import to_jsonable_python
 from rdfsolve.client.hydration import HydrationLimitError
 from rdfsolve.client.query_fragments import QuerySyntaxError
 from rdfsolve.client.retrieval import QueryValidationError
-from rdfsolve.sparql_helper import EndpointError
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
 
 if TYPE_CHECKING:
     from mcp.server import Server, ServerRequestContext
@@ -74,6 +74,13 @@ class AnswerArgs(Args):
     sparql: str = Field(min_length=1, max_length=20000)
 
 
+TOO_SLOW = (
+    "The source did not answer in time; the query was not run further. Make it cheaper: start "
+    "from known IRIs with VALUES (resolve identifiers first), put the most selective triple "
+    "pattern first, give variables their classes, leave out FILTER over text of many resources "
+    "and patterns with three variables, then run it again."
+)
+
 CONTRACTS: dict[str, type[Args]] = {
     "schema": SchemaArgs,
     "find": FindArgs,
@@ -92,7 +99,11 @@ def dispatch(toolbox: Toolbox, name: str, arguments: dict[str, Any]) -> dict[str
     try:
         values = CONTRACTS[name].model_validate(arguments).model_dump(exclude_none=True)
         with toolbox.lock:
-            value = getattr(toolbox, name)(**values)
+            if name == "answer":  # answer probes its first request itself
+                value = toolbox.answer(**values)
+            else:
+                with toolbox.probe():
+                    value = getattr(toolbox, name)(**values)
     except ValidationError as exc:
         details = exc.errors(include_input=False, include_url=False, include_context=False)
         value = {"error": {"code": "invalid_arguments", "details": details}}
@@ -104,6 +115,8 @@ def dispatch(toolbox: Toolbox, name: str, arguments: dict[str, Any]) -> dict[str
         value = {
             "error": {"code": "too_many_matches", "message": f"{exc} Give a class or more words."}
         }
+    except EndpointTimeoutError as exc:
+        value = {"error": {"code": "too_slow", "message": TOO_SLOW, "detail": str(exc)[:300]}}
     except EndpointError as exc:
         value = {"error": {"code": "source_error", "message": str(exc)[:1500]}}
     except ValueError as exc:

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any
@@ -28,7 +29,7 @@ from rdfsolve.mcp.sparql import (
     with_graphs,
 )
 from rdfsolve.mcp.view import SchemaView, registered_namespace
-from rdfsolve.sparql_helper import EndpointError, QueryError
+from rdfsolve.sparql_helper import EndpointError, QueryError, SparqlHelper
 
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client
@@ -45,14 +46,34 @@ class Toolbox:
         *,
         output_variables: Sequence[str] = (),
         artifact_dir: str | Path | None = None,
+        probe_timeout: float | None = 30,
+        page_size: int = 10000,
     ) -> None:
-        """Index the schema of the client; make no source request."""
+        """Index the schema of the client; make no source request.
+
+        With an endpoint, the tools probe: each request of schema, find, paths and run, and
+        the first request of answer, has *probe_timeout* seconds and no retries, so a query
+        that is too slow fails at once (too_slow) instead of being retried or paged. answer
+        reads one page of *page_size* rows, and pages through the rest only when it is full.
+        """
         self.client = client
+        self.probe_timeout = probe_timeout
+        self.page_size = page_size
         self.view = SchemaView(client._schema)
         self.output_variables = [v.lstrip("?$") for v in output_variables]
         self.artifact_dir = Path(artifact_dir).resolve() if artifact_dir else None
         self.final: dict[str, Any] | None = None
         self.lock = RLock()
+
+    @contextmanager
+    def probe(self) -> Iterator[None]:
+        """Give the requests of a tool the probe budget, when the source is an endpoint."""
+        source = self.client.source
+        if self.probe_timeout is None or not isinstance(source, SparqlHelper):
+            yield
+            return
+        with source.budget(self.probe_timeout):
+            yield
 
     def overview(self) -> str:
         """Describe the source, its classes, its graphs and the requested outputs."""
@@ -285,8 +306,17 @@ class Toolbox:
         text, query, notes = self._prepare(sparql)
         validate_outputs(query.algebra["PV"], self.output_variables)
         scoped = with_graphs(text, self.client.graph_uris)
+        if not has_limit(query):
+            with self.probe():
+                # A probe: a query that cannot give one row in time is not run on all data.
+                self.client._select(f"{scoped}\nLIMIT 1")
         try:
-            rows = self.client._select(scoped, exhaustive=True)
+            rows = self.client._select(
+                scoped if has_limit(query) else f"{scoped}\nLIMIT {self.page_size + 1}"
+            )
+            if len(rows) > self.page_size:
+                # A full page: the rest is read in pages.
+                rows = self.client._select(scoped, exhaustive=True)
         except (QueryError, EndpointError) as exc:
             # Pages cannot be joined for GROUP_CONCAT, SAMPLE and random values, and the order
             # that pages need can cost more than the source allows.

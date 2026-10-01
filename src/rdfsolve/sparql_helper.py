@@ -10,6 +10,8 @@ import secrets
 import socket
 import time
 import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -397,6 +399,8 @@ class SparqlHelper:
         self.max_backoff = max_backoff
         self.timeout = timeout
         self.read_timeout = read_timeout
+        # A timed-out SELECT is retried in adaptive pages, unless a budget turns that off.
+        self.page_recovery = True
         self.rate_limit_wait = rate_limit_wait
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
@@ -453,6 +457,21 @@ class SparqlHelper:
             inter_request_delay=float(entry.get("delay") or 0),
             max_response_bytes=int(entry.get("max_response_bytes", 64 * 1024 * 1024)),
         )
+
+    @contextmanager
+    def budget(self, seconds: float, *, retries: int = 1, recover: bool = False) -> Iterator[None]:
+        """Give each request in the block *seconds* and *retries* tries, without page recovery.
+
+        A probe: a query that does not answer in time raises EndpointTimeoutError at once,
+        instead of being retried and recovered in pages. The settings are restored after.
+        """
+        saved = (self.timeout, self.read_timeout, self.max_retries, self.page_recovery)
+        self.timeout, self.read_timeout = seconds, seconds
+        self.max_retries, self.page_recovery = max(1, retries), recover
+        try:
+            yield
+        finally:
+            self.timeout, self.read_timeout, self.max_retries, self.page_recovery = saved
 
     def select(
         self,
@@ -1171,6 +1190,9 @@ class SparqlHelper:
                     result = self.select(query, purpose=purpose)
                 except EndpointTimeoutError as error:
                     meta.update({"first_error": str(error)})
+                    if not self.page_recovery:
+                        meta.update({"status": "failed"})
+                        raise
                     logger.warning("SELECT[%s] switching to adaptive pages: %s", purpose, error)
                 else:
                     meta.update(

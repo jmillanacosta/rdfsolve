@@ -26,7 +26,9 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
         monkeypatch.setattr(helper._session, "request", request)
         with pytest.raises(EndpointError, match="query rejected"):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
-        response._content = b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+        response._content = (
+            b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+        )
         helper.max_retries = 3
         helper.initial_backoff = 0
         with pytest.raises(EndpointTimeoutError, match="Tried to allocate"):
@@ -54,7 +56,10 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
     sent = request.call_args.kwargs["headers"]["User-Agent"]
     assert sent.startswith("rdfsolve/") and "@" not in sent, "Identify the software, never a person"
     monkeypatch.setenv("RDFSOLVE_USER_AGENT", "my-project/1 (https://example.org/contact)")
-    assert SparqlHelper("https://example.org/sparql").user_agent == "my-project/1 (https://example.org/contact)"
+    assert (
+        SparqlHelper("https://example.org/sparql").user_agent
+        == "my-project/1 (https://example.org/contact)"
+    )
     assert SparqlHelper("https://example.org/sparql", user_agent="tool/2").user_agent == "tool/2"
 
 
@@ -95,3 +100,23 @@ def test_json_error_reports_its_reason(monkeypatch, tmp_path):
         monkeypatch.setattr(helper._session, "request", Mock(return_value=response))
         with pytest.raises(EndpointError, match="Built-in function sameterm"):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+
+
+def test_a_budget_gives_one_try_and_no_pages(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    response = requests.Response()
+    response.status_code = 500
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+    response._content_consumed = True
+    with SparqlHelper("https://example.org/sparql", max_retries=3, timeout=600) as helper:
+        helper.initial_backoff = 0
+        request = Mock(return_value=response)
+        monkeypatch.setattr(helper._session, "request", request)
+        with helper.budget(5):
+            assert (helper.timeout, helper.max_retries, helper.page_recovery) == (5, 1, False)
+            with pytest.raises(EndpointTimeoutError):
+                helper.select_with_fallback("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 1, "One request: no retry, no pages"
+        assert (helper.timeout, helper.max_retries, helper.page_recovery) == (600, 3, True)

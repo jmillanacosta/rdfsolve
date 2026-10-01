@@ -31,6 +31,7 @@ def launch_config(
     output_variables: Sequence[str] = (),
     source_id: str = "rdf",
     timeout: float = 900,
+    probe_timeout: float | None = 30,
     ontology_grounding: bool = False,
     ontology_provider: str = "ols",
     ontology_cache: str | Path | None = None,
@@ -44,6 +45,7 @@ def launch_config(
     )
     args = ["-m", "rdfsolve.mcp", "--schema", str(Path(schema).expanduser().resolve(strict=True))]
     args += ["--source-id", source_id, "--timeout", str(timeout)]
+    args += ["--probe-timeout", str(probe_timeout or 0)]
     if endpoint is not None:
         args += ["--endpoint", endpoint]
     if data_file is not None:
@@ -93,6 +95,7 @@ async def ask_rdf(
     max_response_tokens: int | None = 4096,
     usage_limits: UsageLimits | None = None,
     timeout: float = 900,
+    probe_timeout: float | None = 30,
     ontology_grounding: bool = False,
     ontology_provider: str = "ols",
     ontology_cache: str | Path | None = None,
@@ -105,7 +108,10 @@ async def ask_rdf(
     The model sees a summary of the rows; all rows of the final query are read
     from the result file of the tool server. output_variables are the columns
     that the final query must select. max_response_tokens limits each model reply,
-    reasoning included; None removes this limit.
+    reasoning included; None removes this limit. With an endpoint, each exploring request
+    and the first request of the answer have probe_timeout seconds and no retries: a query
+    that is too slow comes back as too_slow, with advice, for the model to make it cheaper.
+    timeout is for the answer on all data; None for probe_timeout turns probing off.
     """
     from mcp import Client as MCPClient
     from mcp import StdioServerParameters
@@ -155,6 +161,7 @@ async def ask_rdf(
             output_variables=output_variables,
             source_id=source_id,
             timeout=timeout,
+            probe_timeout=probe_timeout,
             ontology_grounding=ontology_grounding,
             ontology_provider=ontology_provider,
             ontology_cache=ontology_cache,

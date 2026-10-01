@@ -47,8 +47,13 @@ def test_run_shows_rows_and_notes(toolbox):
     loose = toolbox.run(
         "SELECT ?e ?g ?s WHERE { ?e a ex:Event OPTIONAL { ?e ex:gene ?g } OPTIONAL { ?g ex:symbol ?s } }"
     )
-    assert any(n.startswith("OPTIONAL patterns use ?g, which only another OPTIONAL binds") for n in loose["notes"])
-    optional = toolbox.run("SELECT ?aop ?x WHERE { ?aop a ex:Pathway OPTIONAL { ?aop ex:none ?x } }")
+    assert any(
+        n.startswith("OPTIONAL patterns use ?g, which only another OPTIONAL binds")
+        for n in loose["notes"]
+    )
+    optional = toolbox.run(
+        "SELECT ?aop ?x WHERE { ?aop a ex:Pathway OPTIONAL { ?aop ex:none ?x } }"
+    )
     assert "No value in these rows for ?x." in optional["notes"]
     assert "The answer needs the variables ?label." in optional["notes"]
 
@@ -81,7 +86,9 @@ def test_a_source_error_in_the_diagnosis_keeps_the_empty_result(toolbox, monkeyp
     monkeypatch.setattr(toolbox.client, "_select", select)
     result = toolbox.run("SELECT ?aop ?label WHERE { ?aop ex:none ?label }")
     assert result["rows"] == []
-    assert result["notes"][-1] == "The triple patterns could not be checked one by one: source error."
+    assert (
+        result["notes"][-1] == "The triple patterns could not be checked one by one: source error."
+    )
 
 
 def test_prefixes_of_bioregistry_complete_a_query_with_a_note(toolbox):
@@ -99,11 +106,45 @@ def test_answer_uses_one_request_when_ordered_pages_cannot_run(toolbox, monkeypa
 
     def select(query, *, exhaustive=False):
         if exhaustive:
-            raise PaginationTruncatedError("Virtuoso 42000 Error The estimated execution time exceeds the limit")
+            raise PaginationTruncatedError(
+                "Virtuoso 42000 Error The estimated execution time exceeds the limit"
+            )
         return real(query)
 
     monkeypatch.setattr(toolbox.client, "_select", select)
+    toolbox.page_size = 1  # a full first page: the rest is read in pages
     done = toolbox.answer(AOPS)
     assert done["rows"] == 2
-    assert any(n.startswith("The query was run in one request, not in pages") for n in done["notes"])
+    assert any(
+        n.startswith("The query was run in one request, not in pages") for n in done["notes"]
+    )
     assert not any("can be incomplete" in n for n in done["notes"]), "2 rows is not a size limit"
+
+
+def test_answer_reads_one_page_when_it_is_not_full(toolbox, monkeypatch):
+    calls = []
+    real = toolbox.client._select
+
+    def select(query, *, exhaustive=False):
+        calls.append((query.rsplit("\n", 1)[-1], exhaustive))
+        return real(query)
+
+    monkeypatch.setattr(toolbox.client, "_select", select)
+    assert toolbox.answer(AOPS)["rows"] == 2
+    assert calls == [("LIMIT 1", False), (f"LIMIT {toolbox.page_size + 1}", False)], (
+        "probe, one page"
+    )
+
+
+def test_a_slow_query_fails_fast_with_advice(toolbox, monkeypatch):
+    from rdfsolve.mcp.server import dispatch
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
+    def select(query, *, exhaustive=False):
+        raise EndpointTimeoutError("Read timed out after 30 s")
+
+    monkeypatch.setattr(toolbox.client, "_select", select)
+    for tool, arguments in (("run", {"sparql": AOPS}), ("answer", {"sparql": AOPS})):
+        error = dispatch(toolbox, tool, arguments)["error"]
+        assert error["code"] == "too_slow" and "VALUES" in error["message"], tool
+    assert toolbox.final is None, "A query that is too slow does not end the task"
