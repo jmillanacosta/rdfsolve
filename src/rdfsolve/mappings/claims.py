@@ -289,19 +289,23 @@ class Claims:
         return cls(found, invalid)
 
     @classmethod
-    def of(cls, client: Client, *results: Any, citing: Iterable[str] = ()) -> Claims:
+    def of(
+        cls,
+        client: Client,
+        *results: Any,
+        records: Iterable[Any] = (),
+        citing: Iterable[str] = (),
+    ) -> Claims:
         """Return what *client* states in these records about the identity of their identifiers.
 
-        The predicates are read from the records: a declared identity (owl:sameAs,
-        skos:exactMatch, Bio2RDF cross-references), or a predicate whose values are all
-        identifiers of one namespace that this source does not issue, some of them only cited
-        here, not described (WikiPathways' BridgeDb links; not dcterms:isPartOf, whose values
-        are WikiPathways' own, nor wp:source, whose enzymes the records describe), and that the
-        schema of the source lists as a cross-reference (Client.cross_references: not
-        dcterms:references, whose publications WikiPathways describes). *citing* adds every
-        link to identifiers of these namespaces, as evidence for check (UniProt's NCBI Gene id
-        of an accession).
+        *results* and *records* are client Results (either form). The predicates are read from
+        the records: a declared identity (owl:sameAs, skos:exactMatch, Bio2RDF
+        cross-references), or a predicate whose values are all identifiers of one namespace
+        that this source does not issue, some of them only cited here, not described, and that
+        the schema of the source lists as a cross-reference (Client.cross_references). *citing*
+        adds every link to identifiers of these namespaces, as evidence for check.
         """
+        results = (*results, *records)
         import pyoxigraph as ox
 
         from rdfsolve.mappings.declared import is_declared_property

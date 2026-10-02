@@ -1491,9 +1491,9 @@ def to_kgx(
         for nid, node in sorted(graph.nodes.items()):
             if nid in associations:
                 continue
-            categories = [term(c) for c in node.labels if c.startswith(base)] or [
-                "biolink:NamedThing"
-            ]
+            categories = list(
+                dict.fromkeys(term(c) for c in node.labels if c.startswith(base))
+            ) or ["biolink:NamedThing"]
             names = [v.lexical for v in node.properties.get(base + "name", [])]
             out.writerow([short(nid), "|".join(categories), names[0] if names else ""])
     qualifiers = sorted({k for row in rows for k in row} - {"subject", "predicate", "object"})

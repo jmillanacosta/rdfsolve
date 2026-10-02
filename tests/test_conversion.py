@@ -4,7 +4,7 @@ import pyoxigraph as ox
 import rdflib
 
 from rdfsolve.conversion import Profile, Query, Rule, rules_of
-from rdfsolve.property_graph import Fold, PropertyGraph
+from rdfsolve.property_graph import Fold, Identity, PropertyGraph
 
 WP = "http://vocabularies.wikipathways.org/wp#"
 BL = "https://w3id.org/biolink/vocab/"
@@ -410,13 +410,17 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
     biolink = Biolink.read(tmp_path / "b.yaml")
-    data = f"""<https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}name> "HMGCR" ;
+    data = f"""<https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}name> "HMGCR" .
+    <http://identifiers.org/ncbigene/3156> a <{BL}Gene> .
+    <https://identifiers.org/ncbigene/3156>
         <{BL}catalyzes> <urn:r1> .
     <urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <https://source-test.invalid/data/Complex/a2d92> .
     <https://source-test.invalid/data/Complex/a2d92> a <{BL}MacromolecularComplex> .
     <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/3156> ;
         <{BL}predicate> <{BL}regulates> ; <{BL}object> <urn:r1> ; <{BL}object_direction_qualifier> "decreased" ."""
-    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
+    graph = PropertyGraph.from_rdf(
+        ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)), identity=Identity()
+    )
     nodes, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test", local_prefix="src")
     node_rows = {r["id"]: r for r in csv.DictReader(nodes.open(), delimiter="\t")}
     assert node_rows["NCBIGene:3156"] == {
