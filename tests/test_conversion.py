@@ -495,3 +495,33 @@ def test_exact_kind_leaves_out_the_kinds_beside_and_below():
         schema=SimpleNamespace(class_extensions=SimpleNamespace(contained_in=contained_in))
     )
     assert _other_kinds(client, WP + "GeneProduct") == (WP + "Mrna", WP + "Protein", WP + "Rna")
+
+
+def test_an_end_of_a_rule_can_leave_out_a_class(tmp_path):
+    """Entities that take part in a pathway, other than pathways drawn in it: the subject's
+    exclusion goes through the query, the rules, SPARQL, SHACL and a written query."""
+    from rdfsolve.conversion import write_query
+
+    text = """# source: wp
+# target: biolink 4.4.5
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX biolink: <https://w3id.org/biolink/vocab/>
+CONSTRUCT { ?entity biolink:participates_in ?pathway . }
+WHERE { ?pathway a wp:Pathway . ?entity a wp:DataNode ; wp:partOf ?pathway . FILTER NOT EXISTS { ?entity a wp:Pathway } }
+"""
+    (tmp_path / "wp-biolink-p.rq").write_text(text)
+    rules = Query.read(tmp_path / "wp-biolink-p.rq").rules()
+    assert [r.subject_unless_classes for r in rules] == [(WP + "Pathway",)]
+    data = ox.Store()
+    data.load(
+        f"""@prefix wp: <{WP}> .
+    <urn:wp1> a wp:Pathway . <urn:wp2> a wp:Pathway, wp:DataNode ; wp:partOf <urn:wp1> .
+    <urn:g1> a wp:DataNode ; wp:partOf <urn:wp1> .""".encode(),
+        ox.RdfFormat.TURTLE,
+    )
+    found = {(t.subject.value, t.object.value) for t in data.query(rules[0].to_construct())}
+    assert found == {("urn:g1", "urn:wp1")}, "the drawn pathway is left out"
+    written = write_query(rules, title="p", prefixes={"wp": WP, "biolink": BL})
+    assert "FILTER NOT EXISTS { ?partof a wp:Pathway }" in written
+    shapes = rdflib.Graph().parse(data=Profile(name="p", rules=rules).to_shacl(), format="turtle")
+    assert len(list(shapes.objects(None, rdflib.SH["not"]))) == 1

@@ -141,6 +141,9 @@ class Rule:
     pairs: bool = False
     name: str | None = None
     unless_classes: tuple[str, ...] = ()
+    # Classes the ends may not have (the subject or the object is also left out when it is one).
+    subject_unless_classes: tuple[str, ...] = ()
+    object_unless_classes: tuple[str, ...] = ()
     literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
     # The names of the ends' variables in a query written from the rule (write_query).
     subject_as: str | None = field(default=None, compare=False)
@@ -165,6 +168,8 @@ class Rule:
         subject_as: str | None = None,
         object_as: str | None = None,
         unless_kinds: Sequence[str] = (),
+        subject_unless_kinds: Sequence[str] = (),
+        object_unless_kinds: Sequence[str] = (),
         exact_kind: bool = False,
         literal: bool = False,
         name: str | None = None,
@@ -177,7 +182,8 @@ class Rule:
         IRIs, CURIEs or "a" for rdf:type. *unless_kinds* leaves out focus nodes of these
         record types; *exact_kind* leaves out nodes that are also of a kind at the same level as
         the focus or below it, as the whole source's mined schema relates its classes, so the
-        rule is for nodes of exactly that kind.
+        rule is for nodes of exactly that kind. *subject_unless_kinds* and *object_unless_kinds*
+        leave out ends of these record types.
         """
         from rdfsolve.client.hydration import class_iri
 
@@ -228,6 +234,12 @@ class Rule:
             name=name,
             unless_classes=tuple(c for k in unless_kinds if (c := kind(k, first)))
             + (_other_kinds(client, focus_iri) if exact_kind else ()),
+            subject_unless_classes=tuple(
+                c for k in subject_unless_kinds if (c := kind(k, end(subject)))
+            ),
+            object_unless_classes=tuple(
+                c for k in object_unless_kinds if (c := kind(k, end(object)))
+            ),
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,
@@ -267,6 +279,11 @@ class Rule:
         for i, (path, cls) in enumerate(self.requires):
             typed = f" ?r{i} a <{cls}> ." if cls else ""
             lines.append(f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?r{i} .{typed} }}")
+        for unless in self.subject_unless_classes:
+            lines.append(f"FILTER NOT EXISTS {{ {subject} a <{unless}> }}")
+        if obj.startswith("?"):
+            for unless in self.object_unless_classes:
+                lines.append(f"FILTER NOT EXISTS {{ {obj} a <{unless}> }}")
         if self.subject_class and subject != "?x":
             lines.append(f"?s a <{self.subject_class}> .")
         if object_class and obj == "?o":
@@ -282,16 +299,23 @@ class Rule:
 
         from rdfsolve.schema_models.exporters.paths import path_to_rdf
 
-        def nodes(path: str | None, cls: str | None) -> Node:
-            """Return the node expression of the nodes a path reaches, filtered by a class."""
+        def nodes(path: str | None, cls: str | None, unless: Sequence[str] = ()) -> Node:
+            """Return the node expression of the nodes a path reaches, filtered by a class and
+            by the classes they may not have.
+            """
             if path is None:
                 return SH.this
             expression = BNode()
             graph.add((expression, SH.path, path_to_rdf(_path(path), graph)))
-            if not cls:
+            if not cls and not unless:
                 return expression
             filtered, condition = BNode(), BNode()
-            graph.add((condition, SH["class"], URIRef(cls)))
+            if cls:
+                graph.add((condition, SH["class"], URIRef(cls)))
+            for other in unless:
+                negated = BNode()
+                graph.add((negated, SH["class"], URIRef(other)))
+                graph.add((condition, SH["not"], negated))
             graph.add((filtered, SH.filterShape, condition))
             graph.add((filtered, SH.nodes, expression))
             return filtered
@@ -316,7 +340,9 @@ class Rule:
             graph.add((negated, SH["class"], URIRef(unless)))
             graph.add((condition, SH["not"], negated))
             graph.add((rule, SH.condition, condition))
-        graph.add((rule, SH.subject, nodes(self.subject, self.subject_class)))
+        graph.add(
+            (rule, SH.subject, nodes(self.subject, self.subject_class, self.subject_unless_classes))
+        )
         graph.add((rule, SH.predicate, URIRef(self.predicate)))
         if self.pairs:
             graph.add((rule, SH.object, nodes(self.subject, self.subject_class)))
@@ -325,7 +351,9 @@ class Rule:
                 (rule, SH.object, Literal(self.value) if self.literal else URIRef(self.value))
             )
         else:
-            graph.add((rule, SH.object, nodes(self.object, self.object_class)))
+            graph.add(
+                (rule, SH.object, nodes(self.object, self.object_class, self.object_unless_classes))
+            )
         return rule
 
 
@@ -780,6 +808,7 @@ class Query:
                 "subject_class": class_of(s),
                 "name": self.name,
                 "unless_classes": tuple(unless.get(focus, [])),
+                "subject_unless_classes": tuple(unless.get(s, [])) if s != focus else (),
                 "requires": requires,
             }
             if frozenset((s, o)) in pairs:
@@ -787,7 +816,10 @@ class Query:
             elif isinstance(o, Variable):
                 rules.append(
                     Rule(
-                        **common, object=None if o == focus else paths[o], object_class=class_of(o)
+                        **common,
+                        object=None if o == focus else paths[o],
+                        object_class=class_of(o),
+                        object_unless_classes=tuple(unless.get(o, [])) if o != focus else (),
                     )
                 )
             else:
@@ -1297,6 +1329,11 @@ def write_query(
         template.append(f"  {subject} {predicate} {obj} .")
         for unless in rule.unless_classes:
             filters.append(f"FILTER NOT EXISTS {{ {root} a {term(unless)} }}")
+        for unless in rule.subject_unless_classes:
+            filters.append(f"FILTER NOT EXISTS {{ {subject} a {term(unless)} }}")
+        if obj.startswith("?"):
+            for unless in rule.object_unless_classes:
+                filters.append(f"FILTER NOT EXISTS {{ {obj} a {term(unless)} }}")
     for path, name in names.items():
         if not path.endswith(" other"):
             where.append(f"{root} {path_text(path)} {name} .")

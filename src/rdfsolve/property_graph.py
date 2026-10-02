@@ -379,7 +379,10 @@ def provenance(
         made = f"rdfsolve {version('rdfsolve')}"
     except PackageNotFoundError:
         made = about.generated_by
-    release = about.source_version or about.source_issued or about.source_modified
+    # A release the source names (its version), else the day it was issued: the date the
+    # source gives the release, not the moment a timestamp records.
+    issued = about.source_issued or about.source_modified
+    release = about.source_version or (str(issued)[:10] if issued else None)
     snapshot = about.retrieved_at or about.generated_at
     return {
         "source": about.title or about.dataset_name,
@@ -970,6 +973,9 @@ class PropertyGraph:
             "nodes": len(self.nodes),
             "edges": len(self.edges),
             "node_types": dict(node_types.most_common()),
+            "edge_types": dict(
+                Counter(self._edge_type(e, namer) for e in self.edges).most_common()
+            ),
             "lossless": {
                 "passed": not missing and not extra and not self.named_graphs,
                 "missing": len(missing),
