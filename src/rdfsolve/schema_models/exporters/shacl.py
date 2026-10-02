@@ -14,6 +14,24 @@ RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
 
 
+def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
+    """Return the IRI of the node shape of *cls* in *dataset*, or of its property shape of *prop*.
+
+    The IRIs are hashes of the class and property IRIs, so a shape keeps its IRI across releases
+    while its class and property persist (mappings to it, such as SSSOM rows, keep holding).
+    """
+    from hashlib import md5
+
+    from rdfsolve.config import mint
+
+    def short(iri: str) -> str:
+        """Return the short hash of an IRI."""
+        return md5(iri.encode(), usedforsecurity=False).hexdigest()[:8]
+
+    base = mint("dataset", dataset or "unnamed") + "/shapes/"
+    return f"{base}ns-{short(cls)}" if prop is None else f"{base}ps-{short(cls)}-{short(prop)}"
+
+
 def minedschema_to_shacl(
     schema: MinedSchema,
     base_uri: str | None = None,

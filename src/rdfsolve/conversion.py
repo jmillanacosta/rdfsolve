@@ -16,8 +16,11 @@ provenance). Joins across sources are not rules: they go through the SSSOM resol
 
 from __future__ import annotations
 
+import re
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -28,7 +31,46 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
     from rdfsolve.schema_models.paths import PropertyPath
 
-__all__ = ["Profile", "Rule"]
+__all__ = ["Biolink", "Profile", "Query", "Rule", "write_query"]
+
+
+def _link(client: Client, name: str, focus: str) -> str:
+    """Return the property IRI of a link by field name, else by label: of the focus's record
+    type first, else the one property that the record types name so.
+    """
+
+    def key(text: str) -> str:
+        """Return a name compared without case, spaces or underscores."""
+        return re.sub(r"[\\s_]+", "", text).lower()
+
+    def found(table: Any) -> set[str]:
+        """Return the properties a field table names so: by field name, else by label."""
+        for column in ("field", "label"):
+            hits = {
+                str(r.property)
+                for r in table.itertuples()
+                if key(str(getattr(r, column))) == key(name)
+            }
+            if hits:
+                return hits
+        return set()
+
+    own = found(client.fields(focus))
+    if len(own) == 1:
+        return next(iter(own))
+    anywhere: set[str] = set()
+    for model in client.models.values():
+        anywhere |= found(client.fields(model))
+    if len(anywhere) != 1:
+        raise ValueError(
+            f"Link {name!r}: {'no' if not anywhere else 'several'} properties {sorted(anywhere)}"
+        )
+    return next(iter(anywhere))
+
+
+def _literal(text: str) -> str:
+    """Return a plain literal in SPARQL syntax."""
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 def _path(text: str) -> PropertyPath:
@@ -63,6 +105,73 @@ class Rule:
     pairs: bool = False
     name: str | None = None
     unless_class: str | None = None
+    literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
+    # The names of the ends in a query written from the rule (write_query): ?enzyme, ?reaction.
+    subject_as: str | None = field(default=None, compare=False)
+    object_as: str | None = field(default=None, compare=False)
+    # The rest of the query's pattern: (path from the focus, class or None) that must exist for
+    # the statement to be made, as in a CONSTRUCT whose WHERE must match as a whole.
+    requires: tuple[tuple[str, str | None], ...] = field(default=(), compare=False)
+
+    @classmethod
+    def between(
+        cls,
+        client: Client,
+        focus: str,
+        predicate: str,
+        *,
+        subject: str | None = None,
+        object: str | None = None,
+        value: str | None = None,
+        subject_kind: str | None = None,
+        object_kind: str | None = None,
+        pairs: bool = False,
+        subject_as: str | None = None,
+        object_as: str | None = None,
+        unless_kind: str | None = None,
+        literal: bool = False,
+        name: str | None = None,
+    ) -> Rule:
+        """Return a rule written with the names the client uses.
+
+        *focus* and the kinds are record types ("Catalysis"); *subject* and *object* are links
+        of the focus by field name or label ("source", "Is part of"), a path of them
+        ("target/source"), or a link that points to the focus ("^Is part of"); None is the
+        focus itself. *predicate* and *value* are the target's IRIs.
+        """
+        from rdfsolve.client.hydration import class_iri
+
+        def kind(name_or_iri: str | None) -> str | None:
+            """Return the class IRI of a record type."""
+            return class_iri(client.model(name_or_iri)) if name_or_iri else None
+
+        def path(text: str | None) -> str | None:
+            """Return a path of links as SPARQL path text, each step resolved by the client."""
+            if text is None:
+                return None
+            steps = []
+            for step in text.split("/"):
+                inverse = step.startswith("^")
+                steps.append(
+                    ("^" if inverse else "") + f"<{_link(client, step.lstrip('^'), focus)}>"
+                )
+            return "/".join(steps)
+
+        return cls(
+            kind(focus) or focus,
+            predicate,
+            subject=path(subject),
+            object=path(object),
+            value=value,
+            subject_class=kind(subject_kind),
+            object_class=kind(object_kind),
+            pairs=pairs,
+            name=name,
+            unless_class=kind(unless_kind),
+            literal=literal,
+            subject_as=subject_as,
+            object_as=object_as,
+        )
 
     def to_construct(self, scope: str = "") -> str:
         """Return the SPARQL CONSTRUCT of the rule; *scope* is a pattern on ?x (the focus)."""
@@ -86,7 +195,7 @@ class Rule:
             lines.append("FILTER(STR(?s) < STR(?o))")
             object_class = self.subject_class
         elif self.value is not None:
-            obj = f"<{self.value}>"
+            obj = _literal(self.value) if self.literal else f"<{self.value}>"
             object_class = None
         elif self.object is None:
             obj = "?x"
@@ -95,6 +204,9 @@ class Rule:
             obj = "?o"
             lines.append(f"?x {path_to_sparql(_path(self.object))} ?o .")
             object_class = self.object_class
+        for i, (path, cls) in enumerate(self.requires):
+            typed = f" ?r{i} a <{cls}> ." if cls else ""
+            lines.append(f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?r{i} .{typed} }}")
         if self.subject_class and subject != "?x":
             lines.append(f"?s a <{self.subject_class}> .")
         if object_class and obj == "?o":
@@ -102,9 +214,11 @@ class Rule:
         body = "\n  ".join(lines)
         return f"CONSTRUCT {{ {subject} <{self.predicate}> {obj} }}\nWHERE {{\n  {body}\n}}"
 
-    def add_shacl(self, graph: Graph, shape: Node) -> None:
-        """Add the rule to *shape* as a sh:TripleRule (subject and object node expressions)."""
-        from rdflib import RDF, SH, BNode, URIRef
+    def add_shacl(self, graph: Graph, shape: Node) -> Node:
+        """Add the rule to *shape* as a sh:TripleRule (subject and object node expressions);
+        return the rule's node.
+        """
+        from rdflib import RDF, SH, BNode, Literal, URIRef
 
         from rdfsolve.schema_models.exporters.paths import path_to_rdf
 
@@ -125,6 +239,18 @@ class Rule:
         rule = BNode()
         graph.add((shape, SH.rule, rule))
         graph.add((rule, RDF.type, SH.TripleRule))
+        for path, cls in self.requires:
+            condition, prop = BNode(), BNode()
+            graph.add((rule, SH.condition, condition))
+            graph.add((condition, SH.property, prop))
+            graph.add((prop, SH.path, path_to_rdf(_path(path), graph)))
+            if cls:
+                qualified = BNode()
+                graph.add((qualified, SH["class"], URIRef(cls)))
+                graph.add((prop, SH.qualifiedValueShape, qualified))
+                graph.add((prop, SH.qualifiedMinCount, Literal(1)))
+            else:
+                graph.add((prop, SH.minCount, Literal(1)))
         if self.unless_class:
             condition, negated = BNode(), BNode()
             graph.add((negated, SH["class"], URIRef(self.unless_class)))
@@ -135,9 +261,12 @@ class Rule:
         if self.pairs:
             graph.add((rule, SH.object, nodes(self.subject, self.subject_class)))
         elif self.value is not None:
-            graph.add((rule, SH.object, URIRef(self.value)))
+            graph.add(
+                (rule, SH.object, Literal(self.value) if self.literal else URIRef(self.value))
+            )
         else:
             graph.add((rule, SH.object, nodes(self.object, self.object_class)))
+        return rule
 
 
 @dataclass
@@ -149,6 +278,152 @@ class Profile:
     target: str | None = None
     target_version: str | None = None
     provenance: Mapping[str, str | None] = field(default_factory=dict)
+    queries: list[Query] = field(default_factory=list)
+    dataset: str | None = None  # the mined source whose shapes the rules attach to
+
+    @classmethod
+    def from_queries(
+        cls,
+        paths: Iterable[str | Path],
+        *,
+        name: str | None = None,
+        dataset: str | None = None,
+        provenance: Mapping[str, str | None] | None = None,
+    ) -> Profile:
+        """Return the profile of query files (Query): the rules of each, the target and its
+        version from their headers (``# target: biolink 4.4.5``). A query outside the plain
+        subset is kept and run whole.
+        """
+        queries = [Query.read(p) for p in sorted(map(str, paths))]
+        targets = {q.header.get("target", "") for q in queries}
+        if len(targets) > 1:
+            raise ValueError(f"The queries convert to different targets: {sorted(targets)}")
+        target, _, version = next(iter(targets), "").partition(" ")
+        sources = {q.header.get("source") for q in queries} - {None}
+        dataset = dataset or (next(iter(sources)) if len(sources) == 1 else None)
+        rules = [rule for q in queries for rule in q.rules()]
+        return cls(
+            name or f"{dataset or 'local'}-{target or 'target'}",
+            rules,
+            target or None,
+            version or None,
+            dict(provenance or {}),
+            queries,
+            dataset,
+        )
+
+    def whole(self) -> list[Query]:
+        """Return the queries outside the plain subset, which are run as written."""
+        return [q for q in self.queries if q.problem]
+
+    def to_sssom(self) -> Any:
+        """Return what the rules map, as an SSSOM mapping set derived from the queries.
+
+        - ``?x a C`` to ``?x a K``: C to K.
+        - A one-step link from the focus to a target predicate: the property shape (the link in
+          the context of the focus class) to the predicate (``biolink:subject`` and
+          ``biolink:object`` of an association too).
+        - A focus that stands for an edge (neither end of it, one step to each): its class to
+          the predicate, and its two property shapes to ``biolink:subject`` and
+          ``biolink:object``.
+
+        The predicate is skos:broadMatch (every instance of the subject is one of the object:
+        what the query states) unless the query's header says ``# match: exact`` or
+        ``close``. Longer paths and pairs map no single term: they are in the SHACL only. Each
+        row's curation rule is the query.
+        """
+        import bioregistry
+        from curies import Converter
+        from sssom import Mapping
+        from sssom.util import MappingSetDataFrame
+
+        from rdfsolve.config import get_base_uri, mint
+        from rdfsolve.mappings.sssom import create_sssom_mappings
+        from rdfsolve.schema_models.exporters.shacl import shape_iri
+
+        dataset = self.dataset or "local"
+        by_name = {q.name: q for q in self.queries}
+        found: dict[tuple[str, str], Rule] = {}
+
+        def step(path: str | None) -> str | None:
+            """Return the property IRI of a one-step forward path (``<p>``), else None."""
+            hit = re.fullmatch(r"<([^<>]+)>", path or "")
+            return hit.group(1) if hit else None
+
+        for rule in self.rules:
+            if rule.pairs:
+                continue
+            if rule.predicate == _TYPE and rule.subject is None and rule.value and not rule.literal:
+                found.setdefault((rule.focus, rule.value), rule)
+            elif rule.subject is None and (link := step(rule.object)):
+                found.setdefault((shape_iri(dataset, rule.focus, link), rule.predicate), rule)
+            elif (start := step(rule.subject)) and (end := step(rule.object)):
+                base = rule.predicate.rsplit("/", 1)[0] + "/"
+                found.setdefault((rule.focus, rule.predicate), rule)
+                found.setdefault((shape_iri(dataset, rule.focus, start), base + "subject"), rule)
+                found.setdefault((shape_iri(dataset, rule.focus, end), base + "object"), rule)
+        prefix_map = {
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "semapv": "https://w3id.org/semapv/vocab/",
+            "shape": mint("dataset", dataset) + "/shapes/",
+            "rdfsolve": get_base_uri(),
+        }
+        for iri in sorted({i for k in found for i in k}):
+            if any(iri.startswith(v) for v in prefix_map.values()):
+                continue
+            base = iri.rsplit("#", 1)[0] + "#" if "#" in iri else iri.rsplit("/", 1)[0] + "/"
+            # Bioregistry's prefix where it knows the namespace (biolink), else the last segment.
+            known = bioregistry.curie_from_iri(iri)
+            name = known.partition(":")[0] if known and iri.startswith(base) else None
+            name = name or base.rstrip("/#").rsplit("/", 1)[-1].lower().replace(".", "_") or "ns"
+            prefix_map.setdefault(name, base)
+        converter = Converter.from_prefix_map(prefix_map)
+        rows = []
+        for (subject, obj), rule in found.items():
+            query = by_name.get(rule.name or "")
+            match = (query.header.get("match", "broad") if query else "broad").lower()
+            rows.append(
+                Mapping(
+                    subject_id=converter.compress(subject, passthrough=True),
+                    predicate_id=f"skos:{match}Match",
+                    object_id=converter.compress(obj, passthrough=True),
+                    mapping_justification="semapv:ManualMappingCuration",
+                    curation_rule=[mint("conversion", dataset, rule.name or "rule")],
+                    curation_rule_text=[query.header.get("title", "")] if query else None,
+                )
+            )
+        msdf: MappingSetDataFrame = create_sssom_mappings(
+            rows, mint("mappings", self.name), converter=converter
+        )
+        return msdf
+
+    def rebuilds(self, client: Client, scope: str = "") -> list[dict[str, Any]]:
+        """Run each query as written and its compiled rules on *client* (with *scope*, a pattern
+        on ?x, the focus); return whether they give the same statements. A pair's two
+        directions count as one statement.
+        """
+        rows: list[dict[str, Any]] = []
+        for query in self.queries:
+            if query.problem:
+                rows.append({"query": query.name, "same": None, "note": query.problem})
+                continue
+
+            symmetric = {r.predicate for r in query.rules() if r.pairs}
+            written = _statements(
+                client.construct(query.scoped(scope) if scope else query.text), symmetric
+            )
+            compiled: set[tuple[str, str, str]] = set()
+            for rule in query.rules():
+                compiled |= _statements(client.construct(rule.to_construct(scope)), symmetric)
+            rows.append(
+                {
+                    "query": query.name,
+                    "as written": len(written),
+                    "compiled": len(compiled),
+                    "same": written == compiled,
+                }
+            )
+        return rows
 
     def to_shacl(self) -> str:
         """Return the profile as SHACL: a node shape per focus class with its rules, in Turtle.
@@ -190,14 +465,30 @@ class Profile:
         shapes: dict[str, URIRef] = {}
         for rule in self.rules:
             if rule.focus not in shapes:
+                from rdfsolve.schema_models.exporters.shacl import shape_iri
+
+                # The mined node shape of the focus class, when the source is known: the rules
+                # hang from the shapes the source was described with.
                 shape = URIRef(
-                    mint("profile", self.name, rule.focus.rsplit("#", 1)[-1].rsplit("/", 1)[-1])
+                    shape_iri(self.dataset, rule.focus)
+                    if self.dataset
+                    else mint(
+                        "profile", self.name, rule.focus.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                    )
                 )
                 shapes[rule.focus] = shape
                 graph.add((shape, RDF.type, SH.NodeShape))
                 graph.add((shape, SH.targetClass, URIRef(rule.focus)))
                 graph.add((shape, dcterms.isPartOf, profile))
-            rule.add_shacl(graph, shapes[rule.focus])
+            node = rule.add_shacl(graph, shapes[rule.focus])
+            if rule.name and rule.name in {q.name for q in self.queries}:
+                graph.add(
+                    (
+                        node,
+                        prov.wasDerivedFrom,
+                        URIRef(mint("conversion", self.dataset or "local", rule.name)),
+                    )
+                )
         comments = "".join(f"# {k}: {v}\n" for k, v in info.items())
         return comments + graph.serialize(format="turtle")
 
@@ -212,7 +503,7 @@ class Profile:
         import pyoxigraph as ox
 
         out = ox.Dataset()
-        for query in self.constructs(scope):
+        for query in [*self.constructs(scope), *(q.text for q in self.whole())]:
             for quad in client.construct(query):
                 out.add(quad)
         return out
@@ -252,3 +543,596 @@ def rules_of(folds: Sequence[Any]) -> list[Rule]:
                 )
             )
     return out
+
+
+# -- conversions written as SPARQL ------------------------------------------------------------
+
+_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
+
+@dataclass
+class Query:
+    """A conversion written as one SPARQL CONSTRUCT, with a header of ``# key: value`` lines.
+
+    The WHERE is the source pattern and the template the target's statements. The header
+    (title, description, source, target, endpoint) follows the SIB sparql-examples convention.
+    A query in the plain subset (triple patterns, rdf:type, property paths, ``FILTER(?a != ?b)``
+    for pairs, ``FILTER NOT EXISTS { ?x a C }``) is turned into rules (:meth:`rules`); any
+    other query is run whole, and :attr:`problem` says why.
+    """
+
+    path: Path
+    text: str
+    header: dict[str, str]
+    problem: str | None = None
+
+    @classmethod
+    def read(cls, path: str | Path) -> Query:
+        """Read a query file."""
+        path = Path(path)
+        text = path.read_text()
+        header = {}
+        for line in text.splitlines():
+            if not line.startswith("#"):
+                break
+            key, _, value = line[1:].partition(":")
+            if value:
+                header[key.strip()] = value.strip()
+        return cls(path, text, header)
+
+    @property
+    def name(self) -> str:
+        """Return the file name without its extension."""
+        return self.path.stem
+
+    def _parsed(self) -> Any:
+        from rdflib.plugins.sparql import prepareQuery
+
+        return prepareQuery(self.text).algebra
+
+    def executable(self) -> str:
+        """Return the query as a SHACL SPARQL executable in Turtle (the sparql-examples form)."""
+        from rdflib import RDF, RDFS, SH, Graph, Literal, Namespace, URIRef
+
+        from rdfsolve.config import mint
+
+        schema, dcterms = Namespace("https://schema.org/"), Namespace("http://purl.org/dc/terms/")
+        graph = Graph()
+        graph.bind("sh", SH)
+        graph.bind("schema", schema)
+        graph.bind("dcterms", dcterms)
+        node = URIRef(mint("conversion", self.header.get("source", "local"), self.name))
+        graph.add((node, RDF.type, SH.SPARQLExecutable))
+        graph.add((node, RDF.type, SH.SPARQLConstructExecutable))
+        if self.header.get("title"):
+            graph.add((node, RDFS.label, Literal(self.header["title"], lang="en")))
+        if self.header.get("description"):
+            graph.add((node, RDFS.comment, Literal(self.header["description"], lang="en")))
+        if self.header.get("endpoint"):
+            graph.add((node, schema.target, URIRef(self.header["endpoint"])))
+        if self.header.get("target"):
+            graph.add((node, dcterms.conformsTo, Literal(self.header["target"])))
+        body = "\n".join(line for line in self.text.splitlines() if not line.startswith("#"))
+        graph.add((node, SH.construct, Literal(body.strip())))
+        return graph.serialize(format="turtle")
+
+    def _where(self) -> str:
+        """Return the text of the query from its WHERE on."""
+        found = re.search(r"\bWHERE\b", self.text, re.IGNORECASE)
+        return self.text[found.start() :] if found else self.text
+
+    def _pattern(self) -> tuple[list[tuple[Any, Any, Any]], list[Any]]:
+        """Return the triple patterns and filters of the WHERE, or raise ValueError."""
+        triples: list[tuple[Any, Any, Any]] = []
+        filters: list[Any] = []
+
+        def walk(node: Any) -> None:
+            """Collect the triples and filters of a plain pattern."""
+            kind = getattr(node, "name", "")
+            if kind in ("Project", "Distinct"):
+                walk(node.p)
+            elif kind == "Filter":
+                filters.append(node.expr)
+                walk(node.p)
+            elif kind == "Join":
+                walk(node.p1)
+                walk(node.p2)
+            elif kind == "BGP":
+                triples.extend(node.triples)
+            else:
+                raise ValueError(f"{kind or type(node).__name__} is outside the plain subset")
+
+        walk(self._parsed().p)
+        return triples, filters
+
+    def rules(self) -> list[Rule]:
+        """Return the rules of the query; [] (with :attr:`problem`) outside the plain subset."""
+        from rdflib import Literal, URIRef, Variable
+
+        try:
+            triples, filters = self._pattern()
+        except ValueError as error:
+            self.problem = str(error)
+            return []
+        types: dict[Any, list[str]] = defaultdict(list)
+        links: list[tuple[Any, str, Any]] = []
+        for s, p, o in triples:
+            if str(p) == _TYPE and isinstance(o, URIRef):
+                types[s].append(str(o))
+            elif isinstance(s, Variable) and isinstance(o, Variable):
+                links.append((s, p.n3() if not isinstance(p, URIRef) else f"<{p}>", o))
+            else:
+                self.problem = f"{s.n3()} {p.n3()} {o.n3()}: a constant end is outside the subset"
+                return []
+        pairs, unless = set(), {}
+        for expr in filters:
+            kind = getattr(expr, "name", "")
+            if kind == "RelationalExpression" and expr.op == "!=":
+                pairs.add(frozenset((expr.expr, expr.other)))
+            elif kind == "Builtin_NOTEXISTS":
+                inner = [t for part in expr.graph.part for t in part.triples]
+                if len(inner) == 1 and str(inner[0][1]) == _TYPE:
+                    unless[inner[0][0]] = str(inner[0][2])
+                    continue
+                self.problem = "FILTER NOT EXISTS other than one rdf:type is outside the subset"
+                return []
+            else:
+                self.problem = f"FILTER {kind} is outside the subset"
+                return []
+        if any(len(found) > 1 for found in types.values()):
+            self.problem = "a variable with several classes is outside the subset"
+            return []
+        variables = {v for s, _, o in links for v in (s, o)} | set(types)
+        focus = _focus(
+            [v for v in types if not any(v in pair for pair in pairs)],
+            links,
+            variables,
+            self._where(),
+        )
+        if focus is None:
+            self.problem = "no typed variable reaches every other one"
+            return []
+        paths = _paths(focus, links)
+        cls = types[focus][0]
+
+        def class_of(v: Any) -> str | None:
+            """Return the class a variable other than the focus is kept to."""
+            return types[v][0] if v != focus and types.get(v) else None
+
+        rules = []
+        for s, p, o in self._parsed().template:
+            subject = None if s == focus else paths[s]
+            ends = {s, o} | {v for pair in pairs if s in pair or o in pair for v in pair}
+            requires = tuple(
+                (paths[v], types[v][0] if types.get(v) else None)
+                for v in sorted(variables, key=str)
+                if v != focus and v not in ends
+            )
+            common: dict[str, Any] = {
+                "focus": cls,
+                "predicate": str(p),
+                "subject": subject,
+                "subject_class": class_of(s),
+                "name": self.name,
+                "unless_class": unless.get(focus),
+                "requires": requires,
+            }
+            if frozenset((s, o)) in pairs:
+                rules.append(Rule(**common, pairs=True))
+            elif isinstance(o, Variable):
+                rules.append(
+                    Rule(
+                        **common, object=None if o == focus else paths[o], object_class=class_of(o)
+                    )
+                )
+            else:
+                rules.append(Rule(**common, value=str(o), literal=isinstance(o, Literal)))
+        return rules
+
+    def focus_variable(self) -> str | None:
+        """Return the name of the variable the rules hang from (the typed root)."""
+        from rdflib import URIRef, Variable
+
+        try:
+            triples, filters = self._pattern()
+        except ValueError:
+            return None
+        types = {s for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
+        links = [
+            (s, "", o) for s, p, o in triples if isinstance(s, Variable) and isinstance(o, Variable)
+        ]
+        pairs = {
+            v
+            for e in filters
+            if getattr(e, "name", "") == "RelationalExpression"
+            for v in (e.expr, e.other)
+        }
+        variables = {v for s, _, o in links for v in (s, o)} | types
+        found = _focus([v for v in types if v not in pairs], links, variables, self._where())
+        return str(found) if found is not None else None
+
+    def scoped(self, scope: str) -> str:
+        """Return the query with *scope* (a pattern on ?x) on its focus variable."""
+        focus = self.focus_variable()
+        if focus is None:
+            return self.text
+        found = re.search(r"\bWHERE\s*\{", self.text, re.IGNORECASE)
+        if found is None:
+            return self.text
+        where = re.sub(r"\?x\b", "?" + focus, scope)
+        return f"{self.text[: found.end()]}\n  {where}{self.text[found.end() :]}"
+
+    def check(self, schema: Any) -> list[dict[str, Any]]:
+        """Return each triple pattern of the WHERE against the mined *schema*: the property shape
+        it uses and how many statements the schema counted, or that the schema has none.
+        """
+        from rdflib import URIRef
+
+        from rdfsolve.schema_models.exporters.shacl import shape_iri
+
+        triples, _ = self._pattern()
+        types = {s: str(o) for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
+        counted: dict[tuple[str, str], int] = defaultdict(int)
+        for pattern in schema.patterns:
+            counted[(pattern.subject_class, pattern.property_uri)] += pattern.count or 0
+        classes = {pattern.subject_class for pattern in schema.patterns}
+        dataset = schema.about.dataset_name or "local"
+        rows: list[dict[str, Any]] = []
+        for s, p, o in triples:
+            if str(p) == _TYPE:
+                rows.append(
+                    {
+                        "pattern": f"?{s} a <{o}>",
+                        "shape": shape_iri(dataset, str(o)) if str(o) in classes else None,
+                        "statements": None,
+                        "found": str(o) in classes,
+                    }
+                )
+                continue
+            # A one-step inverse link (?pathway ^isPartOf ?entity) is the link of the other end.
+            if (
+                getattr(p, "arg", None) is not None
+                and isinstance(p.arg, URIRef)
+                and type(p).__name__ == "InvPath"
+            ):
+                s, p, o = o, p.arg, s
+            cls = types.get(s)
+            if cls is None or not isinstance(p, URIRef):
+                rows.append(
+                    {
+                        "pattern": f"?{s} {p.n3()} ?{o}",
+                        "shape": None,
+                        "statements": None,
+                        "found": None,
+                    }
+                )
+                continue
+            count = counted.get((cls, str(p)))
+            near = [
+                q
+                for c, q in counted
+                if c == cls
+                and q.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                == str(p).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                and q != str(p)
+            ]
+            rows.append(
+                {
+                    "pattern": f"?{s} <{p}> ?{o}",
+                    "shape": shape_iri(dataset, cls, str(p)) if count is not None else None,
+                    "statements": count,
+                    "found": count is not None,
+                    **({"did you mean": near} if count is None and near else {}),
+                }
+            )
+        return rows
+
+
+def _statements(dataset: Iterable[Any], symmetric: set[str]) -> set[tuple[str, str, str]]:
+    """Return the statements of *dataset*; one of a *symmetric* predicate counts both ways."""
+    out = set()
+    for quad in dataset:
+        s, p, o = str(quad.subject), quad.predicate.value, str(quad.object)
+        out.add((min(s, o), p, max(s, o)) if p in symmetric else (s, p, o))
+    return out
+
+
+def _focus(
+    candidates: list[Any], links: list[tuple[Any, str, Any]], variables: set[Any], where: str
+) -> Any:
+    """Return the first candidate written in *where* (the WHERE text) that reaches every
+    variable: the query's author chooses the node the rules hang from by writing it first.
+    """
+
+    def reach(start: Any) -> set[Any]:
+        """Return the variables reachable from *start*, either way along links."""
+        seen, todo = {start}, [start]
+        while todo:
+            v = todo.pop()
+            for s, _, o in links:
+                for a, b in ((s, o), (o, s)):
+                    if a == v and b not in seen:
+                        seen.add(b)
+                        todo.append(b)
+        return seen
+
+    def written(v: Any) -> int:
+        """Return where a variable is first written, or the end."""
+        found = re.search(rf"[?$]{re.escape(str(v))}\b", where)
+        return found.start() if found else len(where)
+
+    ranked = sorted(candidates, key=written)
+    return next((v for v in ranked if reach(v) >= variables), None)
+
+
+def _paths(focus: Any, links: list[tuple[Any, str, Any]]) -> dict[Any, str]:
+    """Return the SPARQL path from *focus* to each variable (forward steps first)."""
+    paths: dict[Any, str] = {focus: ""}
+    todo = [focus]
+    while todo:
+        v = todo.pop(0)
+        for s, p, o in links:
+            inverse = (
+                f"^{p}" if re.fullmatch(r"\^?<[^<>]+>", p) and not p.startswith("^") else f"^({p})"
+            )
+            for a, b, step in ((s, o, p), (o, s, inverse)):
+                if a == v and b not in paths:
+                    paths[b] = f"{paths[v]}/{step}" if paths[v] else step
+                    todo.append(b)
+    return paths
+
+
+@dataclass
+class Biolink:
+    """The Biolink Model at one version, read from its LinkML YAML: classes and slots."""
+
+    version: str
+    classes: dict[str, dict[str, Any]]
+    slots: dict[str, dict[str, Any]]
+
+    BASE = "https://w3id.org/biolink/vocab/"
+
+    @classmethod
+    def read(cls, path: str | Path) -> Biolink:
+        """Read biolink-model.yaml (a pinned copy)."""
+        import yaml
+
+        data = yaml.safe_load(Path(path).read_text())
+        return cls(str(data.get("version", "")), data.get("classes", {}), data.get("slots", {}))
+
+    def class_iri(self, name: str) -> str:
+        """Return the IRI of a class ("small molecule": biolink:SmallMolecule)."""
+        return self.BASE + "".join(w[:1].upper() + w[1:] for w in name.split(" "))
+
+    def slot_iri(self, name: str) -> str:
+        """Return the IRI of a slot ("has input": biolink:has_input)."""
+        return self.BASE + name.replace(" ", "_")
+
+    def ancestors(self, name: str) -> list[str]:
+        """Return a class's ancestors along is_a, nearest first."""
+        out, current = [], self.classes.get(name, {}).get("is_a")
+        while current and current not in out:
+            out.append(current)
+            current = self.classes.get(current, {}).get("is_a")
+        return out
+
+    def hierarchy(self) -> dict[str, set[str]]:
+        """Return the ancestors (IRIs) of each class IRI, for the most specific category."""
+        return {
+            self.class_iri(n): {self.class_iri(a) for a in self.ancestors(n)} for n in self.classes
+        }
+
+    def categories(self, prefix: str) -> list[str]:
+        """Return the categories (class IRIs, not mixins) where an identifier prefix belongs:
+        those that list it (compared as Bioregistry prefixes: UniProtKB is uniprot) while none
+        of their ancestors does. Biolink repeats a prefix on narrower classes (UniProtKB on
+        Protein and on ProteinIsoform); the prefix belongs to the broadest (Protein).
+        """
+        import bioregistry
+
+        wanted = bioregistry.normalize_prefix(prefix) or prefix.lower()
+        found = [
+            name
+            for name, c in self.classes.items()
+            if not c.get("mixin")
+            and any(
+                (bioregistry.normalize_prefix(p) or p.lower()) == wanted
+                for p in c.get("id_prefixes") or []
+            )
+        ]
+        listed = set(found)
+        return sorted(self.class_iri(n) for n in found if not listed & set(self.ancestors(n)))
+
+
+def categorize(
+    graph: Any, biolink: Biolink, pairs: Iterable[tuple[str, str]] = ()
+) -> dict[str, Any]:
+    """Give each node of *graph* (PropertyGraph) without a Biolink category the one its
+    identifiers allow: the categories Biolink lists for the prefix of each of its identifiers,
+    and of the identifiers decided to name the same entity (*pairs*, Resolution.pairs), shared
+    by all of them. An Ensembl id (Gene or Protein in Biolink) drawn for a protein that the
+    decision names with a UniProt id is a Protein. The category is a kind, not a statement: it is
+    not given back as RDF. Where the prefixes allow none or several, the node is listed.
+    """
+    from rdfsolve.identifiers import parse
+    from rdfsolve.property_graph import _UNSTATED
+
+    targets: dict[str, set[str]] = defaultdict(set)
+    for a, b in pairs:
+        targets[a].add(b)
+    given: Counter[str] = Counter()
+    left: dict[str, list[str]] = {}
+    for node in graph.nodes.values():
+        if any(label.startswith(biolink.BASE) for label in node.labels):
+            continue
+        iris = set(node.members or [node.id])
+        iris |= {t for i in list(iris) for t in targets.get(i, ())}
+        prefixes = {found.prefix for i in iris if (found := parse(i))}
+        if not prefixes:
+            continue
+        allowed = [set(biolink.categories(p)) for p in prefixes]
+        common = set.intersection(*allowed) if allowed else set()
+        if len(common) == 1:
+            category = next(iter(common))
+            # Each stated class keeps the IRI that stated it; the category states nothing.
+            node.label_origins = (node.label_origins or [node.id] * len(node.labels)) + [_UNSTATED]
+            node.labels.append(category)
+            given[category] += 1
+        else:
+            left[node.id] = sorted(prefixes)
+    graph._name = None  # names are made again with the new labels
+    return {
+        "given": dict(given.most_common()),
+        "left": left,
+        "basis": f"Biolink {biolink.version} id_prefixes of the node's identifiers and of those decided to name it",
+    }
+
+
+def identity_kept(source: Any, target: Any) -> dict[str, Any]:
+    """Return whether the converted graph *target* groups identifiers into nodes as *source*
+    does (each a PropertyGraph): a conversion must not merge or split entities.
+    """
+
+    def groups(graph: Any) -> dict[str, frozenset[str]]:
+        """Return each identifier's group of identifiers."""
+        from rdfsolve.identifiers import parse
+
+        out = {}
+        for node in graph.nodes.values():
+            keys = frozenset(
+                found.curie for i in (node.members or [node.id]) if (found := parse(i))
+            )
+            for key in keys:
+                out[key] = keys
+        return out
+
+    a, b = groups(source), groups(target)
+    shared = set(a) & set(b)
+    # The target may hold fewer identifiers of an entity (only those the queries name).
+    split = sorted(k for k in shared if not b[k] <= a[k])
+    return {
+        "passed": not split,
+        "identifiers compared": len(shared),
+        "merged differently": split[:10],
+    }
+
+
+def write_query(
+    rules: Sequence[Rule],
+    *,
+    title: str,
+    description: str = "",
+    source: str = "",
+    target: str = "",
+    endpoint: str = "",
+    prefixes: Mapping[str, str] | None = None,
+    focus_as: str | None = None,
+) -> str:
+    """Return the rules of one focus as a query file: a ``# key: value`` header and one plain
+    CONSTRUCT, which Query reads back into the same rules.
+
+    The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
+    after the last link of its path. *prefixes* abbreviate IRIs (those of the source's schema
+    and of the target).
+    """
+    if len({r.focus for r in rules}) != 1:
+        raise ValueError("A query has one focus: write one query per focus class")
+    known = dict(prefixes or {})
+
+    def term(iri: str) -> str:
+        """Return an IRI as a prefixed name where a prefix fits it, else <iri>."""
+        best = max(
+            ((p, ns) for p, ns in known.items() if iri.startswith(ns)),
+            key=lambda x: len(x[1]),
+            default=None,
+        )
+        if best and re.fullmatch(r"[A-Za-z_][\w.-]*", iri[len(best[1]) :] or "-"):
+            used.add(best[0])
+            return f"{best[0]}:{iri[len(best[1]) :]}"
+        return f"<{iri}>"
+
+    def short(iri: str) -> str:
+        """Return the local name of an IRI."""
+        return re.split(r"[/#]", iri.rstrip("/#>"))[-1]
+
+    def path_text(path: str) -> str:
+        """Return a path with its IRIs abbreviated."""
+        return re.sub(r"<([^<>]+)>", lambda m: term(m.group(1)), path)
+
+    used: set[str] = set()
+    focus = rules[0].focus
+    root = "?" + re.sub(r"\W+", "_", focus_as or short(focus)).lower()
+    names: dict[str, str] = {}
+    taken = {root}
+
+    def var(path: str, wanted: str | None) -> str:
+        """Return the variable at the end of a path, one per path."""
+        if path in names:
+            return names[path]
+        base = "?" + re.sub(r"\W+", "_", wanted or short(path.split("/")[-1].lstrip("^"))).lower()
+        name, n = base, 2
+        while name in taken:
+            name, n = f"{base}{n}", n + 1
+        taken.add(name)
+        names[path] = name
+        return name
+
+    where = [f"{root} a {term(focus)} ."]
+    template, filters, later = [], [], []
+    classes: dict[str, str] = {}
+    for rule in rules:
+        subject = root if rule.subject is None else var(rule.subject, rule.subject_as)
+        if rule.subject is not None and rule.subject_class:
+            classes[subject] = rule.subject_class
+        if rule.pairs and rule.subject is not None:
+            other = var(
+                rule.subject + " other", rule.object_as or (rule.subject_as or "other") + "_other"
+            )
+            later.append(f"{root} {path_text(rule.subject)} {other} .")
+            if rule.subject_class:
+                classes[other] = rule.subject_class
+            filters.append(f"FILTER({subject} != {other})")
+            obj = other
+        elif rule.value is not None:
+            obj = _literal(rule.value) if rule.literal else term(rule.value)
+        elif rule.object is None:
+            obj = root
+        else:
+            obj = var(rule.object, rule.object_as)
+            if rule.object_class:
+                classes[obj] = rule.object_class
+        for path, cls in rule.requires:
+            needed = var(path, None)
+            if cls:
+                classes[needed] = cls
+        predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)
+        template.append(f"  {subject} {predicate} {obj} .")
+        if rule.unless_class:
+            filters.append(f"FILTER NOT EXISTS {{ {root} a {term(rule.unless_class)} }}")
+    for path, name in names.items():
+        if not path.endswith(" other"):
+            where.append(f"{root} {path_text(path)} {name} .")
+    where += later
+    where += [f"{v} a {term(c)} ." for v, c in classes.items()]
+    where += sorted(set(filters))
+    header = {
+        "title": title,
+        "description": description,
+        "source": source,
+        "target": target,
+        "endpoint": endpoint,
+    }
+    lines = [f"# {k}: {v}" for k, v in header.items() if v]
+    lines += [f"PREFIX {p}: <{known[p]}>" for p in sorted(used)]
+    body = "\n".join(dict.fromkeys(template))
+    lines += [
+        "",
+        "CONSTRUCT {",
+        body,
+        "}",
+        "WHERE {",
+        *(f"  {w}" for w in dict.fromkeys(where)),
+        "}",
+        "",
+    ]
+    return "\n".join(lines)

@@ -136,6 +136,8 @@ def test_examples_filter_a_sample_and_ask_again_when_it_has_none(monkeypatch):
 
     def select(query, **kwargs):
         asked.append(query)
+        if "{ SELECT ?subject ?value WHERE" in query:  # a sample without the integer
+            return {"head": {"vars": ["subject", "value", "slot"]}, "results": {"bindings": []}}
         return json.loads(dataset.query(query).serialize(format="json"))
 
     helper = Mock(endpoint_url="https://example.org/sparql", select=Mock(side_effect=select))
