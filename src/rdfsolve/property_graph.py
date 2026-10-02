@@ -209,9 +209,13 @@ class Identity:
       both; without it they stay linked by an edge.
     - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
       WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
-      types. With "majority" it keeps the classes of the source that most nodes of the graph
-      share; a sequence of class IRIs keeps the first class it holds; "all" keeps every class.
-      The other classes become its ``type`` property (references), so the RDF is given back.
+      types. With "role" (the default) it keeps the classes its sources give it other than the
+      issuer kinds of *kinds*: the issuer's classes decide identity, the data's own classes are
+      its node type, so a metabolite is a Metabolite whether it was merged or not. "majority"
+      keeps the classes of the source that most nodes share (fragile: WP4726 has 70 ChEBI
+      classes and 67 metabolites); a sequence of class IRIs keeps the first class it holds;
+      "all" keeps every class. The other classes become its ``type`` property (references),
+      so the RDF is given back.
     """
 
     merge: bool = True
@@ -219,7 +223,7 @@ class Identity:
     attributes: bool = True
     mappings: Iterable[str] | None = None
     exact: bool = False
-    labels: str | Sequence[str] = "majority"
+    labels: str | Sequence[str] = "role"
 
 
 def _ox_id(term: ox.NamedNode | ox.BlankNode) -> str:
@@ -989,7 +993,8 @@ def _apply_identity(
             found_in.update(dict.fromkeys(members, keep))
             exact += 1
         internal += _retarget(nodes, edges, found_in)
-    relabelled = _reconcile_labels(nodes, identity.labels)
+    issuer_classes = {c for classes in issued.values() for c in classes}
+    relabelled = _reconcile_labels(nodes, identity.labels, issuer_classes)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
     for row in undecided:
@@ -1011,7 +1016,9 @@ def _apply_identity(
     }
 
 
-def _reconcile_labels(nodes: dict[str, PGNode], policy: str | Sequence[str]) -> dict[str, Any]:
+def _reconcile_labels(
+    nodes: dict[str, PGNode], policy: str | Sequence[str], issuer_classes: Iterable[str] = ()
+) -> dict[str, Any]:
     """Give each merged node the classes of one of its sources; the others become ``type``."""
     if policy == "all":
         return {"policy": "all", "nodes": 0}
@@ -1028,7 +1035,13 @@ def _reconcile_labels(nodes: dict[str, PGNode], policy: str | Sequence[str]) -> 
         candidates = {frozenset(found) for found in by_source.values() if found}
         if len(candidates) < 2:
             continue
-        if isinstance(policy, str):
+        if policy == "role":
+            roles = [c for c in candidates if not c & set(issuer_classes)]
+            if len(roles) != 1:
+                ties += 1
+                continue
+            chosen = roles[0]
+        elif isinstance(policy, str):
             support = {c: sum(c <= labels for labels in graph_labels) for c in candidates}
             best = max(support.values())
             top = [c for c in candidates if support[c] == best]
@@ -1057,6 +1070,7 @@ def _reconcile_labels(nodes: dict[str, PGNode], policy: str | Sequence[str]) -> 
         "kept_classes": dict(kept),
         "classes_moved_to_type": moved,
         "ties_kept_all": ties,
+        "basis": "the data's own classes; issuer kinds go to type" if policy == "role" else "",
     }
 
 

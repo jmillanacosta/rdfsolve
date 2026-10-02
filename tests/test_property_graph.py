@@ -267,7 +267,7 @@ def test_exact_identity_merges_two_identifiers_of_one_kind():
         "https://identifiers.org/chebi/CHEBI:15377",
         "https://identifiers.org/cas/7732-18-5",
     }
-    # One kind of entity, one node type: the classes most nodes share; the others are its type.
+    # One kind of entity, one node type: the data's own class; the issuer's class is its type.
     metabolite, owl_class = "http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"
     assert set(water.labels) == {metabolite}
     assert [v.lexical for v in water.properties["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]] == [owl_class]
@@ -297,3 +297,22 @@ def test_the_hierarchy_is_a_node_attribute():
     assert [e.target for e in pg.edges if e.source == "urn:serine"] == [next(i for i in pg.nodes if i.startswith("_:"))]
     edges = PropertyGraph.from_rdf(data, as_attributes=())
     assert {e.target for e in edges.edges if e.source == "urn:serine"} >= {"urn:amino-acid"}
+
+
+def test_a_merged_node_takes_the_data_class_not_the_majority():
+    """WP4726 had 70 ChEBI classes and 67 metabolites, so a majority made merged metabolites
+    Class and left unmerged ones Metabolite. The role rule keeps the data's own class."""
+    from rdfsolve.property_graph import Identity
+
+    extra = "".join(
+        f"<http://purl.obolibrary.org/obo/CHEBI_{n}> a <http://www.w3.org/2002/07/owl#Class> .\n" for n in range(1, 6)
+    )
+    data = ox.Dataset(ox.parse((IDS + extra).encode(), ox.RdfFormat.TURTLE))
+    chemical = ["http://www.w3.org/2002/07/owl#Class"]
+    kinds = {"chebi": chemical, "cas": chemical}
+    metabolite = "http://vocabularies.wikipathways.org/wp#Metabolite"
+    for policy, expected in (("role", metabolite), ("majority", chemical[0])):
+        pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=policy))
+        water = next(n for n in pg.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+        assert water.labels == [expected], policy
+        assert pg.report()["lossless"]["passed"]
