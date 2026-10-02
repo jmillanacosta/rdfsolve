@@ -36,9 +36,13 @@ uses them to validate its joins; they do not cover every namespace that SPARQL s
 (LIPID MAPS, for example).
 
 **KGX** (Biolink knowledge graph exchange) merges equivalent nodes (clique merge) and summarizes
-graphs (``kgx graph-summary``); **neosemantics** imports RDF into Neo4j. rdfsolve keeps its own
-RDF to property graph conversion, because it is built from the mined schema and gives the RDF
-back without loss, and reuses their conventions and summaries.
+graphs (``kgx graph-summary``); **neosemantics** imports RDF into Neo4j. **S3PG** [S3PG]_
+(KG2PG) transforms RDF into property graphs from SHACL shapes, without loss, and describes the
+result in **PG-Schema** [PGSchema]_. rdfsolve keeps its own RDF to property graph conversion,
+because it is built from the mined schema, keeps literals as typed properties, folds n-ary
+nodes into edges and merges the nodes of one entity from SSSOM decisions, and gives the RDF back
+without loss; it reuses the others' conventions, summaries and schema language. A comparison
+with S3PG on WP4726 is in the article's experiments (``s3pg-comparison-20261002``).
 
 What rdfsolve adds
 ------------------
@@ -66,6 +70,14 @@ References
 .. [Bioregistry] Hoyt CT, Balk M, Callahan TJ, et al. Unifying the identification of biomedical
    entities with the Bioregistry. *Scientific Data* 2022; 9: 714.
    https://doi.org/10.1038/s41597-022-01807-3
+
+.. [S3PG] Rabbani K, Lissandrini M, Bonifati A, Hose K. Transforming RDF Graphs to Property Graphs
+   using Standardized Schemas. *Proceedings of the ACM on Management of Data* 2024; 2(6).
+   https://doi.org/10.1145/3698817
+
+.. [PGSchema] Angles R, Bonifati A, Dumbrava S, Fletcher G, et al. PG-Schema: Schemas for Property
+   Graphs. *Proceedings of the ACM on Management of Data* 2023; 1(2).
+   https://doi.org/10.1145/3589778
 
 .. [Babel] Morris E, Vaidya G, Owen P, et al. The "I" in FAIR: Translating from Interoperability
    in Principle to Interoperation in Practice. arXiv:2601.10008 (2026).
