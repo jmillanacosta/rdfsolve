@@ -4,6 +4,19 @@ from __future__ import annotations
 
 import importlib
 
+from rdfsolve.ontology.structure import (
+    DisjointClassRelation,
+    DomainAssertion,
+    EquivalentClassRelation,
+    EquivalentPropertyRelation,
+    InverseRelation,
+    OntologyStructure,
+    PropertyCharacteristic,
+    RangeAssertion,
+    Restriction,
+    SubClassRelation,
+    SubPropertyRelation,
+)
 from rdfsolve.schema_models._constants import (
     _BLANK_NODE_URIS,
     _RESOURCE_URIS,
@@ -17,19 +30,6 @@ from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import MetadataDocument
-from rdfsolve.schema_models.ontology import (
-    DisjointClassRelation,
-    DomainAssertion,
-    EquivalentClassRelation,
-    EquivalentPropertyRelation,
-    InverseRelation,
-    OntologyStructure,
-    PropertyCharacteristic,
-    RangeAssertion,
-    Restriction,
-    SubClassRelation,
-    SubPropertyRelation,
-)
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 from rdfsolve.schema_models.readers.void import void_to_minedschema

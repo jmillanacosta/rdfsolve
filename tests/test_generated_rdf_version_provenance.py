@@ -1,6 +1,6 @@
 from rdflib import OWL, URIRef
 from rdfsolve.schema_models import AboutMetadata, MinedSchema
-from rdfsolve.schema_models.ontology import OntologyStructure
+from rdfsolve.ontology.structure import OntologyStructure
 
 
 def test_generated_ontology_annotation_has_no_owl_version_info():

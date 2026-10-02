@@ -1,4 +1,10 @@
-"""Ontology structure models (TBox)."""
+"""What an endpoint declares about the classes and properties that its data use: named
+subclass, subproperty, equivalence, disjointness, domain, range, inverse and characteristics,
+read by the --extract-ontology phase of mining (rdfsolve.mining.ontology_extraction). This is
+information about the endpoint, not an ontology mined from data.
+
+Ontology structure models (TBox).
+"""
 
 from __future__ import annotations
 

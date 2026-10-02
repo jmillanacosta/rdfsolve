@@ -19,6 +19,7 @@ Table of Contents
 
    api
    miner
+   ontology
    schema_models
    mapping_models
    evaluation

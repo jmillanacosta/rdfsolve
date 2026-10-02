@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from rdfsolve.mining.query_builders import _graph_clause
-from rdfsolve.schema_models.ontology import (
+from rdfsolve.ontology.structure import (
     DisjointClassRelation,
     DomainAssertion,
     EquivalentClassRelation,

@@ -60,14 +60,6 @@ Metadata Models
    :undoc-members:
    :show-inheritance:
 
-Ontology Models
----------------
-
-.. automodule:: rdfsolve.schema_models.ontology
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 LinkML Converter
 ----------------
 

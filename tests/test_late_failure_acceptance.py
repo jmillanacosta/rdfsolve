@@ -50,7 +50,7 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
 
     import pytest
     from rdfsolve.schema_models import MinedSchema
-    from rdfsolve.schema_models.ontology import OntologyStructure
+    from rdfsolve.ontology.structure import OntologyStructure
 
     export_dir = tmp_path / "export_failure"
     export_dir.mkdir()
