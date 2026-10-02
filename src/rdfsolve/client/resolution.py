@@ -13,6 +13,8 @@ from rdfsolve.client.query_fragments import Fragment
 from rdfsolve.schema_models.enrichment import SYNONYM_PREDICATES, RdfTerm
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from rdfsolve.client.api import Client
 
 Origin = Literal[
@@ -74,22 +76,67 @@ def resolve_term(
     coverage: dict[str, Any] = {}
     warnings: list[str] = []
     if identifier is None and ":" in name and " " not in name:
-        from rdfsolve import identifiers
-
-        try:
-            iris, coverage = identifiers.candidates(name)
-        except ValueError:
-            iris = []
-        origin: Origin = (
-            "supplied IRI" if coverage.get("basis") == "exact IRI" else ("registered identifier")
-        )
-        if not iris:
-            _iri(name)
-            iris, origin = [name], "supplied IRI"
-        found = {iri: {"origin": "supplied IRI" if iri == name else origin} for iri in iris}
+        found, coverage = _registered(name)
     else:
         found, coverage, warnings = _named(client, name, kind, external_names, identifier)
     checks = _witnesses(client, list(found), kind)
+    return _conclude(client, name, kind, found, checks, coverage, warnings)
+
+
+def _registered(name: str) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    """Return the IRI candidates of an IRI or CURIE, with what they are based on."""
+    from rdfsolve import identifiers
+
+    try:
+        iris, coverage = identifiers.candidates(name)
+    except ValueError:
+        iris, coverage = [], {}
+    origin: Origin = (
+        "supplied IRI" if coverage.get("basis") == "exact IRI" else ("registered identifier")
+    )
+    if not iris:
+        _iri(name)
+        iris, origin = [name], "supplied IRI"
+    return {iri: {"origin": "supplied IRI" if iri == name else origin} for iri in iris}, coverage
+
+
+def resolve_terms(
+    client: Client, names: Iterable[str], *, kind: str, batch: int = 200
+) -> dict[str, Resolution]:
+    """Resolve many names at once: the candidates of every IRI or CURIE are checked together.
+
+    The same decisions as :func:`resolve_term`, with one check query for each *batch* of
+    candidate IRIs instead of one for each name (134 identifiers of WP4726: 134 queries
+    before). A name that is not an IRI or CURIE is resolved on its own.
+    """
+    if kind not in {"class", "resource"}:
+        raise ValueError("Choose kind='class' (typed members) or kind='resource' (exact term)")
+    results: dict[str, Resolution] = {}
+    pending: dict[str, tuple[dict[str, dict[str, Any]], dict[str, Any]]] = {}
+    for name in dict.fromkeys(names):
+        if ":" in name and " " not in name:
+            pending[name] = _registered(name)
+        else:
+            results[name] = resolve_term(client, name, kind=kind)
+    iris = sorted({iri for found, _ in pending.values() for iri in found})
+    checks: dict[str, dict[str, Any]] = {}
+    for start in range(0, len(iris), batch):
+        checks.update(_witnesses(client, iris[start : start + batch], kind))
+    for name, (found, coverage) in pending.items():
+        results[name] = _conclude(client, name, kind, found, checks, coverage, [])
+    return results
+
+
+def _conclude(
+    client: Client,
+    name: str,
+    kind: str,
+    found: dict[str, dict[str, Any]],
+    checks: dict[str, dict[str, Any]],
+    coverage: dict[str, Any],
+    warnings: list[str],
+) -> Resolution:
+    """Decide a resolution from its candidates and their checks in the source."""
     candidates = [
         Candidate(iri=iri, **item, **checks[iri]) for iri, item in found.items() if iri in checks
     ]
@@ -157,29 +204,28 @@ def _named(
 
 
 def _witnesses(client: Client, iris: list[str], kind: str) -> dict[str, dict[str, Any]]:
-    """Return one scoped member (class) or statement (resource) for each IRI.
+    """Return one scoped member (class) or statement (resource) for each IRI, in one query.
 
-    Each LIMIT 1 subquery carries its own graph scope: engines differ in whether
-    a subquery inside GRAPH sees the active graph.
+    The IRIs are one VALUES list and each keeps one witness (SAMPLE). Before, each IRI was a
+    LIMIT 1 subquery in a UNION, which QLever answered slowly for many IRIs (66 ChEBI ids in
+    batches of 200 candidates: 93 s, against 23 s one by one).
     """
     if not iris:
         return {}
-    branches = []
-    for iri in iris:
-        term = _iri(iri)
-        body = (
-            client._subject_type("?w", term)
-            if kind == "class"
-            else f"{{ {term} ?_p ?w }} UNION {{ ?w ?_p {term} }}"
-        )
-        branches.append(
-            f"{{ {{ SELECT ?w WHERE {{ {client._scope(body)} }} LIMIT 1 }} "
-            f"BIND({term} AS ?candidate) }}"
-        )
+    values = " ".join(_iri(iri) for iri in iris)
+    body = (
+        client._subject_type("?w", "?candidate")
+        if kind == "class"
+        else "{ ?candidate ?_p ?w } UNION { ?w ?_p ?candidate }"
+    )
+    query = (
+        f"SELECT ?candidate (SAMPLE(?w) AS ?witness) WHERE {{ VALUES ?candidate {{ {values} }} "
+        f"{client._scope(body)} }} GROUP BY ?candidate"
+    )
     with client.step(f"Check {kind} candidates in scope"):
-        rows = client._select(f"SELECT ?candidate ?w WHERE {{ {' UNION '.join(branches)} }}")
+        rows = client._select(query)
     ids = list(client._steps[-1]["query_ids"])
-    seen = {row["candidate"]["value"]: row["w"]["value"] for row in rows}
+    seen = {row["candidate"]["value"]: row["witness"]["value"] for row in rows if "witness" in row}
     used, missing = (
         ("used as class", "not used as class")
         if kind == "class"

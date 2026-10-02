@@ -291,6 +291,20 @@ class Client(DatasetClient):
         self.resolutions.append(result.model_dump(mode="json"))
         return result
 
+    def resolve_many(
+        self, concepts: Iterable[str], *, kind: str = "resource", batch: int = 200
+    ) -> dict[str, Resolution]:
+        """Resolve many IRIs or CURIEs at once, as :meth:`resolve` does each.
+
+        The candidates of all of them are checked together, with one query for each *batch*
+        of candidate IRIs (a name that is not an IRI or CURIE is resolved on its own).
+        """
+        from rdfsolve.client.resolution import resolve_terms
+
+        results = resolve_terms(self, concepts, kind=kind, batch=batch)
+        self.resolutions.extend(r.model_dump(mode="json") for r in results.values())
+        return results
+
     def identify(self, identifiers: Iterable[str]) -> list[Identification]:
         """Find the resources that carry each identifier (CURIE or IRI) in the selected graphs.
 

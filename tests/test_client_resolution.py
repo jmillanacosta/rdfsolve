@@ -91,3 +91,19 @@ def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
         saved = json.loads((tmp_path / "session.json").read_text(), parse_constant=strict)
         assert [r["status"] for r in saved["resolutions"]][:2] == ["ambiguous", "resolved"]
         assert client._schema == schema, "Resolution never rewrites the source contract"
+
+
+def test_many_identifiers_are_resolved_with_one_check_query():
+    """resolve_many decides as resolve does, with the candidates of all names checked together
+    (WP4726: 134 identifiers were 134 check queries)."""
+    schema = MinedSchema.from_shacl(SHACL)
+    graph = Dataset().parse(data=DATA, format="trig")
+    names = ["CHEBI:53289", "https://identifiers.org/chebi/CHEBI:53289", "CHEBI:15377", "urn:e:org"]
+    with Client(schema, graph, graph_uris=["urn:e:data"]) as client:
+        one_by_one = {n: client.resolve(n).iri for n in names}
+        before = client.trace()["source_queries"]
+        many = client.resolve_many(names)
+        sent = client.trace()["source_queries"] - before
+    assert {n: r.iri for n, r in many.items()} == one_by_one
+    assert one_by_one["CHEBI:15377"] is None and one_by_one["urn:e:org"] == "urn:e:org"
+    assert sent == 1, sent
