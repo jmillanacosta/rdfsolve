@@ -4,7 +4,7 @@ A class pattern shows only that classes are subclasses of restrictions, because 
 is a blank node. Here each form is read with one grouped query that joins through the blank
 node and does not return it: a class that is a subclass of a restriction, and a class that is
 equivalent to an intersection with a restriction. Terms are grouped by the namespace of their
-IRI (the IRI without its last identifier part). A label in Manchester syntax is made for each
+IRI (rdfsolve.ontology.terms.namespace). A label in Manchester syntax is made for each
 pattern, with the labels that the source gives to the properties.
 """
 
@@ -15,6 +15,8 @@ import re
 from typing import Any
 
 from rdfsolve.mining.query_builders import _graph_scope
+from rdfsolve.ontology.terms import namespace_expression
+from rdfsolve.ontology.vocabulary import OWL, RDF, RDFS
 from rdfsolve.schema_models.restrictions import (
     CLASS_EXPRESSION,
     RestrictionPattern,
@@ -23,17 +25,12 @@ from rdfsolve.schema_models.restrictions import (
 
 logger = logging.getLogger(__name__)
 
-OWL = "http://www.w3.org/2002/07/owl#"
-RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-RDFS = "http://www.w3.org/2000/01/rdf-schema#"
 FORMS = {"some": OWL + "someValuesFrom", "only": OWL + "allValuesFrom", "value": OWL + "hasValue"}
 # How a class reaches its restriction: directly, or through an intersection.
 AXIOMS = {
     "SubClassOf": f"?c <{RDFS}subClassOf> ?r .",
     "EquivalentTo": f"?c <{OWL}equivalentClass>/<{OWL}intersectionOf>/<{RDF}rest>*/<{RDF}first> ?r .",
 }
-# The namespace of a term: its IRI without the last identifier part.
-NAMESPACE = r"[^/#_:]*$"
 
 
 def _query(axiom: str, form: str, dataset: str) -> str:
@@ -44,8 +41,8 @@ WHERE {{
   {AXIOMS[axiom]}
   ?r <{OWL}onProperty> ?p ; <{FORMS[form]}> ?v .
   FILTER(isIRI(?c) && isIRI(?p))
-  BIND(REPLACE(STR(?c), "{NAMESPACE}", "") AS ?sns)
-  BIND(IF(isIRI(?v), REPLACE(STR(?v), "{NAMESPACE}", ""), "{CLASS_EXPRESSION}") AS ?fns)
+  BIND({namespace_expression("?c")} AS ?sns)
+  BIND(IF(isIRI(?v), {namespace_expression("?v")}, "{CLASS_EXPRESSION}") AS ?fns)
 }}
 GROUP BY ?p ?sns ?fns"""
 

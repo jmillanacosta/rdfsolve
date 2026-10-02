@@ -1,11 +1,14 @@
 """Resolve external class labels against scoped source evidence."""
 import json
 from unittest.mock import patch
+
 import pytest
 from rdflib import Dataset
+
 from rdfsolve.client.api import Client
-from rdfsolve.client.ontology import OntologyLookup
+from rdfsolve.ontology import Ontologies
 from rdfsolve.schema_models import MinedSchema
+
 
 def test_external_label_is_separate_from_source_evidence(tmp_path):
     schema = MinedSchema.from_shacl("""
@@ -23,7 +26,7 @@ def test_external_label_is_separate_from_source_evidence(tmp_path):
                        <urn:other> a <urn:Absent> . }
     """, format="trig")
     term = {"iri": "urn:IC50", "label": "IC50"}
-    lookup = OntologyLookup(offline=True)
+    lookup = Ontologies(offline=True)
     with Client(schema, data, graph_uris=["urn:data"], ontology_grounding=lookup, max_rows=1) as client:
         with patch.object(lookup, "search", return_value=[term]) as search:
             found = client.describe("IC50", ontology_fallback=True)

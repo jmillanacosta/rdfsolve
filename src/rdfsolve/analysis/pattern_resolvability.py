@@ -15,11 +15,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 from rdflib import Graph
 
-from rdfsolve.analysis.ontology_resolvability import (
-    NamedOntologyIndex,
-    TermResolution,
-    resolve_term_against,
-)
+from rdfsolve.analysis.ontology_resolvability import TermResolution, resolve_term_against
+from rdfsolve.ontology.hierarchy import NamedOntologyIndex
 
 PatternResolutionKind = Literal[
     "exact",

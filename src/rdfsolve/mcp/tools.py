@@ -158,7 +158,7 @@ class Toolbox:
 
     def _resource(self, text: str) -> list[str]:
         """Describe an IRI, or a CURIE of a schema or registered prefix, that is a subject."""
-        from rdfsolve.client.ontology import identifier_candidates
+        from rdfsolve.mappings.identifiers import identifier_candidates
 
         iri = self.view.expand(text)
         try:

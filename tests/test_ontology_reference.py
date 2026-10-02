@@ -2,8 +2,9 @@ import json
 from pathlib import Path
 
 from rdflib import OWL, RDF, Graph, URIRef
-from rdfsolve.evidence.ontology_reference import acquire_reference_ontologies
-from rdfsolve.evidence.ontology_registry import OntologyRegistry
+
+from rdfsolve.ontology.artifacts import OntologyRegistry
+from rdfsolve.ontology.reference import acquire_reference_ontologies
 
 
 def _ontology_bytes() -> bytes:

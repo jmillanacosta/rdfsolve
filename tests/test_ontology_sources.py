@@ -1,5 +1,5 @@
-from rdfsolve.evidence.ontology import ObservedOntologyTerms
-from rdfsolve.evidence.ontology_sources import resolve_ontology_sources
+from rdfsolve.ontology.sources import resolve_ontology_sources
+from rdfsolve.ontology.usage import ObservedOntologyTerms
 
 
 def test_provider_or_registry_source_can_resolve_non_obo_namespace():

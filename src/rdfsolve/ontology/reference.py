@@ -18,15 +18,19 @@ from typing import Any
 from pydantic import BaseModel, Field
 from rdflib import Graph
 
-from rdfsolve.evidence.ontology import (
+from rdfsolve.ontology.artifacts import (
     OntologyArtifact,
+    OntologyRegistry,
+    archive_ontology_file,
+    fetch_and_archive_ontology,
+    parse_ontology_bytes,
+)
+from rdfsolve.ontology.sources import OntologyAcquisitionPlan, OntologyUsageCandidate
+from rdfsolve.ontology.usage import (
     OntologyUsage,
     assess_ontology_usage,
     observed_terms_from_patterns,
 )
-from rdfsolve.evidence.ontology_acquisition import OntologyAcquisitionPlan, OntologyUsageCandidate
-from rdfsolve.evidence.ontology_artifacts import fetch_and_archive_ontology
-from rdfsolve.evidence.ontology_registry import OntologyRegistry
 
 
 class OntologyReferenceRun(BaseModel):
@@ -136,8 +140,6 @@ def acquire_reference_ontologies(
         )
         try:
             if existing is not None:
-                from rdfsolve.evidence.ontology_artifacts import parse_ontology_bytes
-
                 artifact, existing_path = existing
                 graph = parse_ontology_bytes(existing_path.read_bytes(), source_name=source_url)
             else:
@@ -159,8 +161,6 @@ def acquire_reference_ontologies(
     # bytes used/prepared by the local run.  They are never silently refetched
     # here, because a later URL response may differ from the mined snapshot.
     local_artifacts: dict[tuple[Path, str], tuple[OntologyArtifact, Graph, str]] = {}
-    from rdfsolve.evidence.ontology_artifacts import archive_ontology_file
-
     for plan_path, plan in plan_rows:
         for source in plan.local_ontology_file_candidates:
             if not source.archived_path:

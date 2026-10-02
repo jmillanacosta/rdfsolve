@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 from rdfsolve.analysis.connectivity import build_connectivity, compare_schemas
 from rdfsolve.client.api import Client
 from rdfsolve.client.collections import RDFList
-from rdfsolve.client.ontology import OntologyLookup
 from rdfsolve.client.query import execute_sparql
 from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
 from rdfsolve.client.retrieval import Requirement
@@ -16,6 +15,7 @@ from rdfsolve.mappings.identifiers import resolve_identifiers
 from rdfsolve.metadata import query_metadata
 from rdfsolve.mining.miner import mine_schema
 from rdfsolve.models import MinedSchema
+from rdfsolve.ontology import Ontologies
 from rdfsolve.query_collection import QueryCollection
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.source_enrichment import enrich_source
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Client",
-    "OntologyLookup",
+    "Ontologies",
     "PreparedQuery",
     "QueryCollection",
     "QueryPattern",

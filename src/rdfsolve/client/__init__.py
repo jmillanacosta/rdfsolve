@@ -9,7 +9,6 @@ _EXPORTS = {
     "DatasetClient": ("exploration", "DatasetClient"),
     "Hydrator": ("hydration", "Hydrator"),
     "HydrationLimitError": ("hydration", "HydrationLimitError"),
-    "OntologyLookup": ("ontology", "OntologyLookup"),
     "PreparedQuery": ("query_fragments", "PreparedQuery"),
     "Requirement": ("retrieval", "Requirement"),
     "QueryResult": ("query", "QueryResult"),

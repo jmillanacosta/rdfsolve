@@ -1,6 +1,7 @@
 from rdflib import OWL, RDF, RDFS, Graph, URIRef
+
 from rdfsolve.analysis.ontology_resolvability import compare_usage_resolvability
-from rdfsolve.evidence.ontology import OntologyUsage
+from rdfsolve.ontology.usage import OntologyUsage
 
 
 def usage(dataset, classes=(), properties=()):

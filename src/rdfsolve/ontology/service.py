@@ -1,4 +1,10 @@
-"""Retrieve source-labelled ontology evidence without changing mined schemas."""
+"""Ontologies: answers about ontology terms from an ontology provider, cached, with provenance.
+
+OLS4 (default) or Ontobee: a term with its labels, definitions and scoped synonyms, a search
+by name, and the direct named parents. Each request is cached (one day, or always offline),
+bounded, and recorded as an event, so that ontology requests stay apart from the queries of a
+dataset.
+"""
 
 from __future__ import annotations
 
@@ -8,48 +14,24 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
 
 import requests
 from rdflib import Literal
 
+from rdfsolve.ontology.terms import Term, canonical_iri
+from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, SUBCLASS_OF
 from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES
-from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
 
 logger = logging.getLogger(__name__)
-# One ontology term or provider response, as retained in the JSON cache.
-Term = dict[str, Any]
 OLS = "https://www.ebi.ac.uk/ols4/api"
 ONTOBEE = "https://sparql.hegroup.org/sparql/"
-LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
-DEPRECATED = "http://www.w3.org/2002/07/owl#deprecated"
-PARENT = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
-DEFINITIONS = (
-    "http://purl.obolibrary.org/obo/IAO_0000115",
-    "http://www.w3.org/2004/02/skos/core#definition",
-)
+PARENT = SUBCLASS_OF
 
 
-def _parse_registered_iri(iri: str) -> tuple[str | None, str | None]:
-    """Use Bioregistry when installed; ontology lookup remains usable without it."""
-    try:
-        import bioregistry
-    except ImportError:
-        return None, None
-    return bioregistry.parse_iri(iri)
-
-
-def _registered_iri(prefix: str, identifier: str) -> str | None:
-    try:
-        import bioregistry
-    except ImportError:
-        return None
-    return bioregistry.get_iri(prefix, identifier)
-
-
-def synonym_evidence(value: Term) -> list[dict[str, str]]:
+def synonym_evidence(value: dict[str, Any]) -> list[dict[str, str]]:
     """Retain declared synonym scope from OLS annotations and OBO metadata."""
     annotations = value.get("annotation") or {}
     evidence: list[dict[str, str]] = []
@@ -74,23 +56,10 @@ def synonym_evidence(value: Term) -> list[dict[str, str]]:
     return evidence
 
 
-def term_key(iri: str) -> str:
-    """Use an exact IRI or a registered namespace/identifier correspondence."""
-    prefix, identifier = _parse_registered_iri(iri)
-    return f"{prefix}:{identifier}" if prefix and identifier else iri
-
-
-def canonical_iri(iri: str) -> str:
-    """Resolve registered IRI formats without guessing local namespaces."""
-    absolute_iri(iri)
-    prefix, identifier = _parse_registered_iri(iri)
-    return _registered_iri(prefix, identifier) or iri if prefix and identifier else iri
-
-
 SEARCH_ROWS = 8
 
 
-class OntologyLookup:
+class Ontologies:
     """Bounded OLS or Ontobee access with a reusable response cache."""
 
     def __init__(
@@ -114,7 +83,7 @@ class OntologyLookup:
         self.events: list[dict[str, Any]] = []
         self.requests = 0
         self.http = requests.Session()
-        self.http.headers["User-Agent"] = "rdfsolve ontology lookup"
+        self.http.headers["User-Agent"] = "rdfsolve ontologies"
         self.helper: SparqlHelper | None = None
 
     def close(self) -> None:
@@ -192,7 +161,7 @@ class OntologyLookup:
             return json.loads(content)
 
     @staticmethod
-    def _term(value: Term) -> Term:
+    def _term(value: dict[str, Any]) -> Term:
         names = synonym_evidence(value)
         return {
             "iri": value["iri"],
@@ -275,11 +244,14 @@ class OntologyLookup:
         data = self._request("term", canonical, fetch)
         if data is None:
             return None
-        data = {
-            **data,
-            "description": list(dict.fromkeys(data["description"])),
-            "synonyms": list(dict.fromkeys(data["synonyms"])),
-        }
+        data = cast(
+            Term,
+            {
+                **data,
+                "description": list(dict.fromkeys(data["description"])),
+                "synonyms": list(dict.fromkeys(data["synonyms"])),
+            },
+        )
         parents = self.parents(data) if hierarchy else []
         return {
             **data,
@@ -291,7 +263,7 @@ class OntologyLookup:
             "match": "exact_iri" if canonical == iri else "registry_identifier",
             "parents": parents,
             "fetched_at": self.cache[json.dumps([self.provider, "term", canonical])]["fetched_at"],
-        }
+        }  # type: ignore[return-value]
 
     def search(self, text: str, *, ontology: str | None = None, exact: bool = True) -> list[Term]:
         """Return ontology candidates; membership in a dataset requires client verification.
@@ -441,60 +413,4 @@ class OntologyLookup:
         }
 
 
-def _valid_iri(text: str) -> str | None:
-    """Return the IRI, or None when it is not valid (registries list some formats with spaces)."""
-    try:
-        return absolute_iri(text)
-    except ValueError:
-        return None
-
-
-def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
-    """Expand an exact IRI or registered CURIE into recorded namespace candidates.
-
-    An IRI of a registered namespace (identifiers.org, OBO, ...) also gives the spellings
-    of its CURIE, since a source may write the identifier in another registered form.
-    """
-    from importlib.metadata import version
-
-    import bioregistry
-
-    value = str(value)  # an RDFLib URIRef is a str subclass that bioregistry does not parse
-    if value.startswith(("http://", "https://", "urn:")):
-        given = absolute_iri(value)
-        registered, number = bioregistry.parse_iri(given)
-        if registered is None:
-            return [given], {"input": value, "basis": "exact IRI"}
-        try:
-            candidates, coverage = identifier_candidates(f"{registered}:{number}")
-        except ValueError:
-            return [given], {"input": value, "basis": "exact IRI"}
-        candidates = sorted({given, *candidates})
-        return candidates, {
-            **coverage,
-            "input": value,
-            "identifier": f"{registered}:{number}",
-            "candidates": candidates,
-        }
-    prefix, separator, local = value.partition(":")
-    resource = bioregistry.get_resource(prefix) if separator else None
-    if resource is None:
-        raise ValueError("Use a full IRI or a registered CURIE identifier")
-    local = resource.standardize_identifier(local)
-    if not local or not resource.is_valid_identifier(local):
-        raise ValueError("Invalid registered identifier")
-    candidates = sorted(
-        {
-            iri
-            for template in resource.get_uri_formats()
-            if (iri := _valid_iri(template.replace("$1", local)))
-        }
-    )
-    if not candidates:
-        raise ValueError("No registered IRI formats for this identifier")
-    return candidates, {
-        "input": value,
-        "basis": "registered namespace candidates",
-        "registry_version": version("bioregistry"),
-        "candidates": candidates,
-    }
+__all__ = ["Ontologies", "synonym_evidence"]

@@ -206,7 +206,7 @@ def release_compare_declared(run_dir: Path, output: Path | None) -> None:
 )
 def release_acquire_ontologies(run_dir: Path, max_artifacts: int | None) -> None:
     """Download unique configured/reference ontologies and write usage assessments."""
-    from rdfsolve.evidence.ontology_reference import acquire_reference_ontologies
+    from rdfsolve.ontology.reference import acquire_reference_ontologies
 
     result = acquire_reference_ontologies(run_dir, max_artifacts=max_artifacts)
     click.echo(result.model_dump_json(indent=2))

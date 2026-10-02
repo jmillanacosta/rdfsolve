@@ -51,11 +51,11 @@ def _validate_role_json(path: Path, role: str | None) -> None:
 
         DeclaredArtifactBundle.model_validate_json(path.read_text(encoding="utf-8"))
     elif role == "ontology_discovery":
-        from rdfsolve.mining.ontology_discovery import OntologyDiscoverySummary
+        from rdfsolve.ontology.discovery import OntologyDiscoverySummary
 
         OntologyDiscoverySummary.model_validate_json(path.read_text(encoding="utf-8"))
     elif role == "ontology_acquisition":
-        from rdfsolve.evidence.ontology_acquisition import OntologyAcquisitionPlan
+        from rdfsolve.ontology.sources import OntologyAcquisitionPlan
 
         OntologyAcquisitionPlan.model_validate_json(path.read_text(encoding="utf-8"))
 

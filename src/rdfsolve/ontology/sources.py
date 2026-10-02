@@ -1,36 +1,144 @@
-"""Plan ontology reference acquisition from empirical use and provider evidence.
+"""Which ontology each namespace of a data graph comes from, and the plan to acquire it.
 
-The planner keeps three facts separate:
+The acquisition plan keeps three facts apart: an empirical namespace is used by a dataset; a
+provider graph declares ontology material for it; a reference artifact can be retrieved.
 
-* an empirical namespace is used by a dataset;
-* a provider graph declares ontology material relevant to that namespace;
-* an external reference artifact can be retrieved for the ontology.
+Resolve observed ontology-like namespaces to retrievable ontology candidates.
 
-A provider graph is valuable declared/version evidence but is not assumed to be
-an authoritative or complete upstream ontology release. Likewise, a deterministic
-OBO download candidate does not prove that the dataset used that exact release.
+Only deterministic source rules live here. Unknown namespaces remain unresolved
+until a provider graph, registry (Bioregistry/OLS), or curated source record
+identifies an ontology artifact. No ontology usage is inferred merely from a
+namespace candidate.
 """
 
 from __future__ import annotations
 
 import hashlib
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from rdfsolve.evidence.ontology import (
-    ObservedOntologyTerms,
-    OntologyGraphCandidate,
-    OntologyVersionEvidence,
-)
-from rdfsolve.evidence.ontology_sources import (
-    INFRASTRUCTURE_NAMESPACES,
-    OntologySourceCandidate,
-    resolve_ontology_sources,
-    term_namespace,
-)
+from rdfsolve.ontology.artifacts import LocalOntologyFileCandidate
+from rdfsolve.ontology.discovery import OntologyGraphCandidate, OntologyVersionEvidence
+from rdfsolve.ontology.terms import namespace
+from rdfsolve.ontology.usage import ObservedOntologyTerms
+from rdfsolve.ontology.vocabulary import INFRASTRUCTURE_NAMESPACES, OBO, STANDARD_NAMESPACES
+
+
+class OntologySourceCandidate(BaseModel):
+    """An ontology source resolved from an observed namespace."""
+
+    ontology_id: str
+    namespace: str
+    source_url: str
+    resolution_basis: Literal["obo_purl_namespace", "explicit"]
+    observed_classes: list[str] = Field(default_factory=list)
+    observed_properties: list[str] = Field(default_factory=list)
+
+
+class UnresolvedOntologyNamespace(BaseModel):
+    """An observed namespace without a resolved ontology source."""
+
+    namespace: str
+    observed_classes: list[str] = Field(default_factory=list)
+    observed_properties: list[str] = Field(default_factory=list)
+
+
+class OntologySourceResolution(BaseModel):
+    """Resolved, unresolved and infrastructure namespaces of one dataset."""
+
+    resolved: list[OntologySourceCandidate] = Field(default_factory=list)
+    unresolved: list[UnresolvedOntologyNamespace] = Field(default_factory=list)
+    infrastructure: list[UnresolvedOntologyNamespace] = Field(default_factory=list)
+
+
+def _observed_namespace(iri: str) -> str | None:
+    """Return the namespace of an observed HTTP IRI; other IRIs are not ontology terms here."""
+    return namespace(iri) if iri.startswith(("http://", "https://")) else None
+
+
+def _is_standard(iri: str) -> bool:
+    return iri.startswith(STANDARD_NAMESPACES)
+
+
+def resolve_ontology_sources(
+    observed: ObservedOntologyTerms,
+    *,
+    explicit_sources: dict[str, tuple[str, str]] | None = None,
+) -> OntologySourceResolution:
+    """Resolve deterministic ontology source candidates from empirical terms.
+
+    ``explicit_sources`` maps an operational namespace to ``(ontology_id,
+    source_url)`` and is intended for provider/registry evidence. OBO term IRIs
+    are resolved by the stable OBO PURL convention. All other namespaces remain
+    unresolved rather than receiving a guessed download URL.
+    """
+    explicit_sources = explicit_sources or {}
+    classes: dict[str, set[str]] = defaultdict(set)
+    properties: dict[str, set[str]] = defaultdict(set)
+    for term in observed.classes:
+        if _is_standard(term):
+            continue
+        if ns := _observed_namespace(term):
+            classes[ns].add(term)
+    for term in observed.properties:
+        if _is_standard(term):
+            continue
+        if ns := _observed_namespace(term):
+            properties[ns].add(term)
+
+    resolved: list[OntologySourceCandidate] = []
+    unresolved: list[UnresolvedOntologyNamespace] = []
+    infrastructure: list[UnresolvedOntologyNamespace] = []
+    for space in sorted(set(classes) | set(properties)):
+        if space in INFRASTRUCTURE_NAMESPACES:
+            infrastructure.append(
+                UnresolvedOntologyNamespace(
+                    namespace=space,
+                    observed_classes=sorted(classes[space]),
+                    observed_properties=sorted(properties[space]),
+                )
+            )
+            continue
+        if space in explicit_sources:
+            ontology_id, source_url = explicit_sources[space]
+            resolved.append(
+                OntologySourceCandidate(
+                    ontology_id=ontology_id,
+                    namespace=space,
+                    source_url=source_url,
+                    resolution_basis="explicit",
+                    observed_classes=sorted(classes[space]),
+                    observed_properties=sorted(properties[space]),
+                )
+            )
+            continue
+        if space.startswith(OBO) and space.endswith("_"):
+            prefix = space[len(OBO) : -1].lower()
+            resolved.append(
+                OntologySourceCandidate(
+                    ontology_id=prefix,
+                    namespace=space,
+                    source_url=f"https://purl.obolibrary.org/obo/{prefix}.owl",
+                    resolution_basis="obo_purl_namespace",
+                    observed_classes=sorted(classes[space]),
+                    observed_properties=sorted(properties[space]),
+                )
+            )
+            continue
+        unresolved.append(
+            UnresolvedOntologyNamespace(
+                namespace=space,
+                observed_classes=sorted(classes[space]),
+                observed_properties=sorted(properties[space]),
+            )
+        )
+    return OntologySourceResolution(
+        resolved=resolved, unresolved=unresolved, infrastructure=infrastructure
+    )
+
 
 IdentityBasis = Literal[
     "reference_source",
@@ -53,24 +161,6 @@ class OntologyGraphEvidenceRef(BaseModel):
     observed_classes: list[str] = Field(default_factory=list)
     observed_properties: list[str] = Field(default_factory=list)
     discovery_status: str = "matched"
-
-
-class LocalOntologyFileCandidate(BaseModel):
-    """OWL-formatted file discovered in a local source distribution.
-
-    ``download_owl`` is a format/classification result from the downloadable
-    source bundle.  It does *not* establish that a remote endpoint exposes the
-    file, that the file is an authoritative ontology release, or even that the
-    file contains ``owl:Ontology``.  Those claims require inspection of the
-    retrieved artifact and empirical overlap with the locally mined dataset.
-    """
-
-    source_url: str
-    source_field: str = "download_owl"
-    source_dataset_id: str | None = None
-    archived_path: str | None = None
-    sha256: str | None = None
-    discovery_basis: Literal["local_distribution_format"] = "local_distribution_format"
 
 
 class OntologyUsageCandidate(BaseModel):
@@ -154,7 +244,7 @@ def build_ontology_acquisition_plan(
     infrastructure: set[str] = set()
 
     for term in observed.classes:
-        namespace = term_namespace(term)
+        namespace = _observed_namespace(term)
         if not namespace:
             continue
         if namespace in INFRASTRUCTURE_NAMESPACES:
@@ -162,7 +252,7 @@ def build_ontology_acquisition_plan(
             continue
         class_terms[namespace].add(term)
     for term in observed.properties:
-        namespace = term_namespace(term)
+        namespace = _observed_namespace(term)
         if not namespace:
             continue
         if namespace in INFRASTRUCTURE_NAMESPACES:
@@ -185,10 +275,10 @@ def build_ontology_acquisition_plan(
         overlap_classes: dict[str, list[str]] = defaultdict(list)
         overlap_props: dict[str, list[str]] = defaultdict(list)
         for term in graph.observed_class_overlap:
-            if ns := term_namespace(term):
+            if ns := _observed_namespace(term):
                 overlap_classes[ns].append(term)
         for term in graph.observed_property_overlap:
-            if ns := term_namespace(term):
+            if ns := _observed_namespace(term):
                 overlap_props[ns].append(term)
         ontology_id, basis = _stable_graph_identity(graph)
         for namespace in sorted(set(overlap_classes) | set(overlap_props)):
@@ -257,9 +347,13 @@ def build_ontology_acquisition_plan(
 
 
 __all__ = [
-    "LocalOntologyFileCandidate",
+    "INFRASTRUCTURE_NAMESPACES",
     "OntologyAcquisitionPlan",
     "OntologyGraphEvidenceRef",
+    "OntologySourceCandidate",
+    "OntologySourceResolution",
     "OntologyUsageCandidate",
+    "UnresolvedOntologyNamespace",
     "build_ontology_acquisition_plan",
+    "resolve_ontology_sources",
 ]

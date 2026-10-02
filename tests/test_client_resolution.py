@@ -7,8 +7,8 @@ import pytest
 from rdflib import Dataset, URIRef
 
 from rdfsolve.client.api import Client
-from rdfsolve.client.ontology import OntologyLookup
 from rdfsolve.client.resolution import ResolutionError
+from rdfsolve.ontology import Ontologies
 from rdfsolve.schema_models import MinedSchema
 
 SHACL = """
@@ -36,12 +36,12 @@ e:excluded { e:three a e:OtherExternal . }
 
 def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
     schema = MinedSchema.from_shacl(SHACL)
-    lookup = OntologyLookup(offline=True)
+    lookup = Ontologies(offline=True)
     graph = Dataset().parse(data=DATA, format="trig")
     external = [{"iri": "urn:e:External", "label": "Researcher"},
                 {"iri": "urn:e:OtherExternal", "label": "Researcher"}]
     with Client(schema, graph, graph_uris=["urn:e:data"]) as client:
-        with patch.object(OntologyLookup, "search", return_value=external):
+        with patch.object(Ontologies, "search", return_value=external):
             named = client.resolve("Researcher", kind="class", external_names=True)
         assert named.status == "ambiguous", "A schema, source or external name has no precedence"
         origins = {c.iri: (c.origin, c.use) for c in named.candidates}
@@ -66,7 +66,7 @@ def test_resolution_reports_candidates_semantics_and_evidence(tmp_path):
         assert client.resolve("Ada", kind="resource").iri == "urn:e:one"
 
         with pytest.raises(ResolutionError) as failure, patch.object(
-            OntologyLookup, "search", return_value=external
+            Ontologies, "search", return_value=external
         ):
             client.prepare_network([{"reference": "Researcher", "bindings": ["r"]}],
                                    outputs=["r"], resolve=True, external_names=True)

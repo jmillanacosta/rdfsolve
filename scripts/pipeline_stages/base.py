@@ -164,7 +164,7 @@ class Stage:
 
         graph_candidates = []
         if self.config.discover_ontology_graphs:
-            from rdfsolve.mining.ontology_discovery import discover_remote_ontology_graphs
+            from rdfsolve.ontology.discovery import discover_remote_ontology_graphs
 
             result = discover_remote_ontology_graphs(
                 helper,
@@ -188,8 +188,8 @@ class Stage:
         # attached only to endpoint/index discovery; OWL-formatted files from a
         # local source bundle are retained as local file candidates and are only
         # promoted after parsing + empirical overlap.
-        from rdfsolve.evidence.ontology import observed_terms_from_patterns
-        from rdfsolve.evidence.ontology_acquisition import build_ontology_acquisition_plan
+        from rdfsolve.ontology.sources import build_ontology_acquisition_plan
+        from rdfsolve.ontology.usage import observed_terms_from_patterns
 
         observed = observed_terms_from_patterns(schema.patterns)
         provider_endpoint = (

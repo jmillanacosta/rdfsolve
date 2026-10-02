@@ -1,5 +1,4 @@
-from rdfsolve.evidence.ontology import OntologyArtifact
-from rdfsolve.evidence.ontology_registry import OntologyRegistry
+from rdfsolve.ontology.artifacts import OntologyArtifact, OntologyRegistry
 
 
 def artifact(id_, sha, version=None):

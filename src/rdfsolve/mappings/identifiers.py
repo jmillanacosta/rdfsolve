@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable, Sequence
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from rdflib import URIRef
@@ -128,3 +128,62 @@ def resolve_identifiers(
         target_sha256=hashlib.sha256(json.dumps(sorted(targets)).encode()).hexdigest(),
         results=results,
     )
+
+
+def _valid_iri(text: str) -> str | None:
+    """Return the IRI, or None when it is not valid (registries list some formats with spaces)."""
+    try:
+        return absolute_iri(text)
+    except ValueError:
+        return None
+
+
+def identifier_candidates(value: str) -> tuple[list[str], dict[str, Any]]:
+    """Expand an exact IRI or registered CURIE into recorded namespace candidates.
+
+    An IRI of a registered namespace (identifiers.org, OBO, ...) also gives the spellings
+    of its CURIE, since a source may write the identifier in another registered form.
+    """
+    from importlib.metadata import version
+
+    import bioregistry
+
+    value = str(value)  # an RDFLib URIRef is a str subclass that bioregistry does not parse
+    if value.startswith(("http://", "https://", "urn:")):
+        given = absolute_iri(value)
+        registered, number = bioregistry.parse_iri(given)
+        if registered is None:
+            return [given], {"input": value, "basis": "exact IRI"}
+        try:
+            candidates, coverage = identifier_candidates(f"{registered}:{number}")
+        except ValueError:
+            return [given], {"input": value, "basis": "exact IRI"}
+        candidates = sorted({given, *candidates})
+        return candidates, {
+            **coverage,
+            "input": value,
+            "identifier": f"{registered}:{number}",
+            "candidates": candidates,
+        }
+    prefix, separator, local = value.partition(":")
+    resource = bioregistry.get_resource(prefix) if separator else None
+    if resource is None:
+        raise ValueError("Use a full IRI or a registered CURIE identifier")
+    local = resource.standardize_identifier(local)
+    if not local or not resource.is_valid_identifier(local):
+        raise ValueError("Invalid registered identifier")
+    candidates = sorted(
+        {
+            iri
+            for template in resource.get_uri_formats()
+            if (iri := _valid_iri(template.replace("$1", local)))
+        }
+    )
+    if not candidates:
+        raise ValueError("No registered IRI formats for this identifier")
+    return candidates, {
+        "input": value,
+        "basis": "registered namespace candidates",
+        "registry_version": version("bioregistry"),
+        "candidates": candidates,
+    }

@@ -145,13 +145,12 @@ class TwoPhaseStrategy(MiningStrategy):
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
             fetch_shapes,
-            fetch_superclasses,
             group_by_shape,
             parentless_candidates,
-            read_hierarchy,
-            term_namespace,
         )
         from rdfsolve.mining.query_builders import Representative
+        from rdfsolve.ontology.hierarchy import fetch_superclasses, read_hierarchy
+        from rdfsolve.ontology.terms import namespace
 
         phase = context.report.start_phase("ontology-terms/group-before-mining")
         parents = fetch_superclasses(
@@ -180,7 +179,7 @@ class TwoPhaseStrategy(MiningStrategy):
         )
         shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
         members = chosen.members()
-        without_parent = Counter(term_namespace(c) for c in classes if not parents.get(c))
+        without_parent = Counter(namespace(c) for c in classes if not parents.get(c))
         present = set(classes)
         grouped: list[str] = []
         for rep in sorted(set(chosen.representative.values())):
@@ -205,7 +204,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 for path, table in files.items()
             ],
             "terms_with_loaded_parent_by_namespace": dict(
-                Counter(term_namespace(c) for c in with_loaded).most_common()
+                Counter(namespace(c) for c in with_loaded).most_common()
             ),
             "grouping_of_terms_without_parent": "shape",
             "namespace_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
@@ -214,7 +213,7 @@ class TwoPhaseStrategy(MiningStrategy):
                     "properties": sorted(shape),
                     "terms": len(members.get(group, [])),
                     "namespaces": dict(
-                        Counter(term_namespace(t) for t in members.get(group, [])).most_common()
+                        Counter(namespace(t) for t in members.get(group, [])).most_common()
                     ),
                     "instances": sum(shapes[t].instances for t in members.get(group, [])),
                     "example_instance": next(

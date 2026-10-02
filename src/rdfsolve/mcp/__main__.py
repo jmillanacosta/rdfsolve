@@ -32,9 +32,9 @@ def main() -> None:
     logging.basicConfig(level=logging.WARNING)
     ontology: object = False
     if args.ontology_provider:
-        from rdfsolve.client.ontology import OntologyLookup
+        from rdfsolve.ontology import Ontologies
 
-        ontology = OntologyLookup(
+        ontology = Ontologies(
             args.ontology_provider, cache=args.ontology_cache, offline=args.ontology_offline
         )
     scope = {} if args.graphs is None else {"graph_uris": args.graphs}

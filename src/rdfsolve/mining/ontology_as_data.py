@@ -1,11 +1,13 @@
-"""Mine exact ontology-term bindings and group typed patterns by ancestry."""
+"""Mining strategy for the ontology terms of a data graph: exact term bindings, and grouping of
+the terms that data use as types (by ancestry from rdfsolve.ontology.hierarchy, then by shape).
+
+The ontology model (vocabulary, namespaces, hierarchy) is in rdfsolve.ontology.
+"""
 
 from __future__ import annotations
 
-import gzip
 import hashlib
 import logging
-import re
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -14,6 +16,8 @@ from typing import Any
 
 from rdfsolve.mining.query_builders import _bound, _context_pattern, _graph_scope, _type_pattern
 from rdfsolve.mining.types import ONTOLOGY_METACLASSES
+from rdfsolve.ontology.terms import namespace
+from rdfsolve.ontology.vocabulary import NON_DATA_NAMESPACES, OWL_CLASS, RDF_TYPE, RDFS_CLASS
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.sparql_helper import SparqlHelper
@@ -22,27 +26,9 @@ logger = logging.getLogger(__name__)
 
 Collect = Callable[[str, str, int | None], list[dict[str, Any]]]
 
-OWL_CLASS = "http://www.w3.org/2002/07/owl#Class"
-RDFS_CLASS = "http://www.w3.org/2000/01/rdf-schema#Class"
-RDFS_SUBCLASS_OF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
-RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-
-# Predicates that describe ontology structure or annotate terms, not data:
-# RDF/RDFS/OWL, the common ontology annotation vocabularies, and any property
-# the endpoint declares as owl:AnnotationProperty.
-_NON_DATA_PREDICATE_NAMESPACES = (
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    "http://www.w3.org/2000/01/rdf-schema#",
-    "http://www.w3.org/2002/07/owl#",
-    "http://www.geneontology.org/formats/oboInOwl#",
-    "http://purl.obolibrary.org/obo/IAO_",
-    "http://www.w3.org/2004/02/skos/core#",
-    "http://purl.org/dc/elements/1.1/",
-    "http://purl.org/dc/terms/",
-)
 
 _DATA_PREDICATE = "\n    ".join(
-    [f'FILTER(!STRSTARTS(STR(?p), "{ns}"))' for ns in _NON_DATA_PREDICATE_NAMESPACES]
+    [f'FILTER(!STRSTARTS(STR(?p), "{ns}"))' for ns in NON_DATA_NAMESPACES]
 )
 
 
@@ -126,7 +112,7 @@ GROUP BY ?t{graph_var}"""
 
 def _is_data_predicate(iri: str) -> bool:
     """Return False for a predicate of ontology structure or annotation."""
-    return not iri.startswith(_NON_DATA_PREDICATE_NAMESPACES)
+    return not iri.startswith(NON_DATA_NAMESPACES)
 
 
 def build_term_subject_query(
@@ -315,45 +301,6 @@ def probe_term_patterns(
     return list(patterns.values())
 
 
-def fetch_superclasses(
-    helper: SparqlHelper,
-    terms: Iterable[str],
-    *,
-    batch_size: int = 500,
-    purpose: str = "ontology-terms/superclasses",
-    graph_uris: list[str] | None = None,
-) -> dict[str, set[str]]:
-    """Return named ``rdfs:subClassOf`` parents for *terms* and all their ancestors.
-
-    Read the RDF merge of the selected graphs, or the endpoint default dataset.
-    """
-    dataset, _, _ = _graph_scope(graph_uris)
-    parents: dict[str, set[str]] = {}
-    frontier = sorted(set(terms))
-    while frontier:
-        for start in range(0, len(frontier), batch_size):
-            batch = frontier[start : start + batch_size]
-            values = " ".join(f"<{iri}>" for iri in batch)
-            query = f"""\
-SELECT ?c ?parent
-{dataset}
-WHERE {{
-  VALUES ?c {{ {values} }}
-  ?c <{RDFS_SUBCLASS_OF}> ?parent .
-  FILTER(isIRI(?parent) && ?parent != ?c)
-}}"""
-            result = helper.select(query, purpose=purpose)
-            for iri in batch:
-                parents.setdefault(iri, set())
-            for row in result.get("results", {}).get("bindings", []):
-                child = row.get("c", {}).get("value")
-                parent = row.get("parent", {}).get("value")
-                if child and parent and parent not in ONTOLOGY_METACLASSES:
-                    parents.setdefault(child, set()).add(parent)
-        frontier = sorted({p for ps in parents.values() for p in ps} - parents.keys())
-    return parents
-
-
 @dataclass
 class Subsumption:
     """Chosen representative for each subsumed term, and how it was reached."""
@@ -441,36 +388,8 @@ def choose_representatives(
     return result
 
 
-def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
-    """Read (child, parent) IRI pairs from tab-separated files, plain or gzip-compressed.
-
-    Lines that start with # are comments. The files give parents to terms whose ontology is not
-    in the data: PubChem types records with NCIt and PR terms, but the index holds no hierarchy
-    for them. A term is not its own parent.
-    """
-    parents: dict[str, set[str]] = defaultdict(set)
-    for path in paths:
-        opener = gzip.open if str(path).endswith(".gz") else open
-        with opener(path, "rt", encoding="utf-8") as lines:
-            for line in lines:
-                if not line.strip() or line.startswith("#"):
-                    continue
-                child, parent = line.rstrip("\n").split("\t")[:2]
-                if child != parent:
-                    parents[child].add(parent)
-    return dict(parents)
-
-
 # Fewest terms without a parent that mark a namespace used for typing (see group_by_shape).
 NAMESPACE_GROUP_MIN_TERMS = 100
-
-
-def term_namespace(iri: str) -> str:
-    """Return the ontology namespace of a term: an OBO prefix (obo/MONDO_), else the IRI base."""
-    match = re.match(r"(.*/obo/[A-Za-z][A-Za-z0-9]*_)", iri)
-    if match:
-        return match.group(1)
-    return re.sub(r"[^/#:]*$", "", iri)
 
 
 def parentless_candidates(
@@ -493,7 +412,7 @@ def parentless_candidates(
     by_namespace: dict[str, list[str]] = defaultdict(list)
     for term, rep in chosen.representative.items():
         if rep == term and not parents.get(term) and used[term] == 1:
-            by_namespace[term_namespace(term)].append(term)
+            by_namespace[namespace(term)].append(term)
     return sorted(t for terms in by_namespace.values() if len(terms) >= min_terms for t in terms)
 
 
@@ -686,7 +605,6 @@ __all__ = [
     "build_term_object_query",
     "build_term_subject_query",
     "choose_representatives",
-    "fetch_superclasses",
     "pattern_classes",
     "probe_term_patterns",
     "subsume_patterns",

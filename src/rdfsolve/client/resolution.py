@@ -74,7 +74,7 @@ def resolve_term(
     coverage: dict[str, Any] = {}
     warnings: list[str] = []
     if identifier is None and ":" in name and " " not in name:
-        from rdfsolve.client.ontology import identifier_candidates
+        from rdfsolve.mappings.identifiers import identifier_candidates
 
         try:
             iris, coverage = identifier_candidates(name)

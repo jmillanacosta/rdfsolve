@@ -33,10 +33,10 @@ if TYPE_CHECKING:
     from rdfsolve.client.catalogue import Catalogue
     from rdfsolve.client.extraction import Extraction
     from rdfsolve.client.identify import Identification
-    from rdfsolve.client.ontology import OntologyLookup
     from rdfsolve.client.query import QueryResult
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
     from rdfsolve.client.resolution import Resolution
+    from rdfsolve.ontology import Ontologies, Term
     from rdfsolve.property_graph import Conversion, Fold, PropertyGraph
     from rdfsolve.schema_models.selection import SchemaSelection
 
@@ -89,7 +89,7 @@ class Client(DatasetClient):
     def __init__(
         self,
         *args: Any,
-        ontology_grounding: bool | OntologyLookup = False,
+        ontology_grounding: bool | Ontologies = False,
         source_id: str = "rdf",
         class_mappings: Iterable[Any] = (),
         related_registries: Iterable[Registry] = (),
@@ -97,18 +97,18 @@ class Client(DatasetClient):
     ) -> None:
         """Open typed retrieval with optional, separately retained ontology evidence."""
         super().__init__(*args, **kwargs)
-        from rdfsolve.client.ontology import OntologyLookup
+        from rdfsolve.ontology import Ontologies
 
-        self.ontology: OntologyLookup | None
+        self.ontology: Ontologies | None
         if ontology_grounding is True:
-            self.ontology = OntologyLookup()
+            self.ontology = Ontologies()
         elif not ontology_grounding:
             self.ontology = None
-        elif isinstance(ontology_grounding, OntologyLookup):
+        elif isinstance(ontology_grounding, Ontologies):
             self.ontology = ontology_grounding
         else:
-            raise TypeError("ontology_grounding must be a boolean or OntologyLookup")
-        self.vocabulary_evidence: dict[str, dict[str, Any] | None] = {}
+            raise TypeError("ontology_grounding must be a boolean or Ontologies")
+        self.vocabulary_evidence: dict[str, Term | None] = {}
         self.description_lookups: list[dict[str, Any]] = []
         self.resolutions: list[dict[str, Any]] = []
         self.source_id = source_id
@@ -134,7 +134,7 @@ class Client(DatasetClient):
         """Give the mined schema of this client: its patterns, collections and metadata."""
         return self._schema
 
-    def vocabulary(self, iri: str) -> dict[str, Any] | None:
+    def vocabulary(self, iri: str) -> Term | None:
         """Explain a local vocabulary IRI through the configured ontology provider.
 
         External labels, definitions and named parents remain an evidence overlay.
@@ -1117,7 +1117,7 @@ class Client(DatasetClient):
             return result
         import bioregistry
 
-        from rdfsolve.client.ontology import term_key
+        from rdfsolve.ontology.terms import term_key
 
         prefix = bioregistry.parse_iri(class_iri(self.model(kind)))[0] if kind else None
         ontology = bioregistry.get_ols_prefix(prefix) if prefix else None

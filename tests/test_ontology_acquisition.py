@@ -1,5 +1,6 @@
-from rdfsolve.evidence.ontology import ObservedOntologyTerms, OntologyGraphCandidate
-from rdfsolve.evidence.ontology_acquisition import build_ontology_acquisition_plan
+from rdfsolve.ontology.discovery import OntologyGraphCandidate
+from rdfsolve.ontology.sources import build_ontology_acquisition_plan
+from rdfsolve.ontology.usage import ObservedOntologyTerms
 
 
 def test_obo_reference_and_provider_graph_are_kept_separate():

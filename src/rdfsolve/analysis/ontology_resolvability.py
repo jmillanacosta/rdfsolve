@@ -14,7 +14,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from rdflib import OWL, RDF, RDFS, Graph, URIRef
 
-from rdfsolve.evidence.ontology import OntologyUsage
+from rdfsolve.ontology.hierarchy import NamedOntologyIndex
+from rdfsolve.ontology.usage import OntologyUsage
 
 ResolutionKind = Literal[
     "exact",
@@ -51,77 +52,6 @@ class UsageResolvability(BaseModel):
     def resolved_fraction(self) -> float | None:
         """Return the share of source terms that resolve, or None when there are none."""
         return self.resolved_term_count / self.source_term_count if self.source_term_count else None
-
-
-def _named_edges(graph: Graph, predicate: URIRef) -> dict[str, set[str]]:
-    edges: dict[str, set[str]] = defaultdict(set)
-    for child, parent in graph.subject_objects(predicate):
-        if isinstance(child, URIRef) and isinstance(parent, URIRef):
-            edges[str(child)].add(str(parent))
-    return edges
-
-
-def _symmetric_edges(graph: Graph, predicate: URIRef) -> dict[str, set[str]]:
-    edges: dict[str, set[str]] = defaultdict(set)
-    for left, right in graph.subject_objects(predicate):
-        if isinstance(left, URIRef) and isinstance(right, URIRef):
-            edges[str(left)].add(str(right))
-            edges[str(right)].add(str(left))
-    return edges
-
-
-def _closure(start: str, edges: dict[str, set[str]]) -> set[str]:
-    seen: set[str] = set()
-    queue = deque([start])
-    while queue:
-        current = queue.popleft()
-        for nxt in edges.get(current, ()):
-            if nxt not in seen:
-                seen.add(nxt)
-                queue.append(nxt)
-    return seen
-
-
-class NamedOntologyIndex:
-    """Named-term semantic index for cheap, deterministic release analyses."""
-
-    def __init__(self, graph: Graph):
-        """Index the named class and property hierarchies of an ontology graph."""
-        self.graph = graph
-        self.class_parents = _named_edges(graph, RDFS.subClassOf)
-        self.property_parents = _named_edges(graph, RDFS.subPropertyOf)
-        self.class_equivalents = _symmetric_edges(graph, OWL.equivalentClass)
-        self.property_equivalents = _symmetric_edges(graph, OWL.equivalentProperty)
-        self.classes = (
-            self._signature((OWL.Class, RDFS.Class))
-            | set(self.class_parents)
-            | {term for values in self.class_parents.values() for term in values}
-        )
-        self.properties = (
-            self._signature(
-                (RDF.Property, OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty)
-            )
-            | set(self.property_parents)
-            | {term for values in self.property_parents.values() for term in values}
-        )
-
-    def _signature(self, kinds: tuple[URIRef, ...]) -> set[str]:
-        return {
-            str(subject)
-            for kind in kinds
-            for subject in self.graph.subjects(RDF.type, kind)
-            if isinstance(subject, URIRef)
-        }
-
-    def equivalents(self, term: str, *, kind: Literal["class", "property"]) -> set[str]:
-        """Return the terms equivalent to a term, transitively."""
-        return _closure(
-            term, self.class_equivalents if kind == "class" else self.property_equivalents
-        )
-
-    def ancestors(self, term: str, *, kind: Literal["class", "property"]) -> set[str]:
-        """Return the named ancestors of a term, transitively."""
-        return _closure(term, self.class_parents if kind == "class" else self.property_parents)
 
 
 def resolve_term_against(

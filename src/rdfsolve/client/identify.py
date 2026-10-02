@@ -41,7 +41,7 @@ def spellings(identifier: str) -> list[Any]:
     """Every way a source may write an identifier: registered IRIs, as IRIs or strings, and ids."""
     import bioregistry
 
-    from rdfsolve.client.ontology import identifier_candidates
+    from rdfsolve.mappings.identifiers import identifier_candidates
 
     iris, _ = identifier_candidates(identifier)
     terms: list[Any] = [URIRef(iri) for iri in iris] + [Literal(iri) for iri in iris]

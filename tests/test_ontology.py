@@ -2,8 +2,10 @@ import json
 
 import requests
 from rdflib import RDF, RDFS, Graph, Literal, URIRef
+
 from rdfsolve.api import Client
-from rdfsolve.client.ontology import OntologyLookup, canonical_iri
+from rdfsolve.ontology import Ontologies
+from rdfsolve.ontology.terms import canonical_iri
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 
@@ -28,7 +30,7 @@ def fixture(lookup=False):
 
 
 def provider(monkeypatch, **kwargs):
-    lookup = OntologyLookup(**kwargs)
+    lookup = Ontologies(**kwargs)
     lookup.asked = []
 
     def response(path, **params):
@@ -66,11 +68,11 @@ def test_cache_and_unavailable_are_distinct(monkeypatch, tmp_path):
     path = tmp_path / "ontology.json"
     lookup = provider(monkeypatch, cache=path)
     term = lookup.lookup(MMO)
-    frozen = OntologyLookup(cache=path, offline=True)
+    frozen = Ontologies(cache=path, offline=True)
     assert frozen.lookup(MMO)["label"] == term["label"]
     assert frozen.lookup("urn:missing") is None
     assert frozen.events[-1]["status"] == "cache_miss"
-    failing = OntologyLookup()
+    failing = Ontologies()
 
     def timeout(*args, **kwargs):
         raise requests.Timeout("provider timed out")

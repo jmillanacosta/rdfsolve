@@ -1,5 +1,5 @@
 from rdflib import OWL, RDF, Dataset, URIRef
-from rdfsolve.evidence import discover_ontology_graphs
+from rdfsolve.ontology.discovery import discover_ontology_graphs
 
 
 def test_usage_requires_overlap_with_observed_classes_or_properties():

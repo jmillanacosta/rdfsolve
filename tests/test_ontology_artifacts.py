@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from rdflib import OWL, RDF, Graph, Literal, URIRef
-from rdfsolve.evidence.ontology_artifacts import archive_ontology_bytes
+
+from rdfsolve.ontology.artifacts import archive_ontology_bytes
 
 
 def test_archive_preserves_provider_version_and_hashes_bytes(tmp_path: Path):

@@ -615,9 +615,9 @@ the task stops.
 The client can use the same ontology lookup directly:
 
 ```python
-from rdfsolve.api import Client, OntologyLookup
+from rdfsolve.api import Client, Ontologies
 
-lookup = OntologyLookup("ols", cache="ontology-cache.json")
+lookup = Ontologies("ols", cache="ontology-cache.json")
 with Client.open("schema.json", ontology_grounding=lookup) as data:
     display(data.describe("measurement method", owners=["Key Event"]))
     print(data.trace()["ontology"])
@@ -684,7 +684,7 @@ Schema connectivity and mapping analysis: [workflow and evidence](docs/source/an
 when no matching source-used class is found. Labelled measurement instances
 do not count as a class match. Each external candidate retains its provider,
 a scoped literal check on the candidate IRI and a class-use witness.
-Use `ontology_grounding=OntologyLookup(...)` to configure caching, offline use
+Use `ontology_grounding=Ontologies(...)` to configure caching, offline use
 and the request budget.
 
 An external label does not become a source label. A negative literal check

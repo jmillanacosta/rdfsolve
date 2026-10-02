@@ -8,8 +8,8 @@ from rdflib import Literal
 
 from rdfsolve.client.catalogue import same_name
 from rdfsolve.client.hydration import _iri
-from rdfsolve.client.ontology import OntologyLookup
 from rdfsolve.client.query_fragments import Fragment
+from rdfsolve.ontology import Ontologies
 from rdfsolve.schema_models.enrichment import RdfTerm
 
 CLASS_TYPES = {
@@ -78,7 +78,7 @@ def external_candidates(
     """Look up external class names and check each in the selected scope; retain the event."""
     from rdfsolve.client.description import literal_matches
 
-    lookup = client.ontology or OntologyLookup()
+    lookup = client.ontology or Ontologies()
     event: dict[str, Any] = {
         "strategy": strategy,
         "concept": str(concept),

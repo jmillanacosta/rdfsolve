@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 
 from rdflib import OWL, RDF, Dataset, Literal, URIRef
-from rdfsolve.mining.ontology_discovery import discover_remote_ontology_graphs
+
+from rdfsolve.ontology.discovery import discover_remote_ontology_graphs
 
 
 class DatasetHelper:

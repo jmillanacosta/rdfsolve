@@ -12,7 +12,11 @@ from typing import Any
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
 from rdfsolve.qlever.inputs import (
-    expand_inputs, graph_input_directory, index_command, mapped_input_files, rdf_input_files,
+    expand_inputs,
+    graph_input_directory,
+    index_command,
+    mapped_input_files,
+    rdf_input_files,
 )
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
@@ -447,7 +451,7 @@ class LocalMiningStage(Stage):
         self._save_schema_outputs(
             schema, output_dir, source.name, suffix, helper=helper, members=members
         )
-        from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
+        from rdfsolve.ontology.artifacts import archive_local_ontology_files
 
         owl_urls = source.download_fields.get("download_owl") or []
         if isinstance(owl_urls, str):

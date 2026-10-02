@@ -255,7 +255,7 @@ class Catalogue:
         if not refs:
             return []
         if concept and ontology and self.client.ontology:
-            from rdfsolve.client.ontology import term_key
+            from rdfsolve.ontology.terms import term_key
 
             iris: set[str] = set()
             for ref in refs:

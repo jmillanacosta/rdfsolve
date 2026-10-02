@@ -1,9 +1,9 @@
-"""Bounded discovery of provider ontology graphs.
+"""Ontology material in a dataset: which graphs hold ontology declarations, and their versions.
 
-Discovery is intentionally separate from ontology *usage*.  A named graph can
-contain ontology material without that ontology being used by the empirical RDF
-schema.  Usage is attributed only from overlap with observed class/property
-terms (and, in later analysis stages, observed ontology-valued data terms).
+Discovery is separate from ontology *usage* (rdfsolve.ontology.usage). A named graph can
+contain ontology material without the data using that ontology; usage is attributed only from
+overlap with observed class and property terms. Local graphs are inspected in full; a remote
+endpoint is probed with bounded queries.
 """
 
 from __future__ import annotations
@@ -11,40 +11,185 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-from rdflib import URIRef
+from rdflib import OWL, RDF, Dataset, Graph, URIRef
 
-from rdfsolve.evidence.ontology import (
+from rdfsolve.ontology.vocabulary import (
+    CLASS_TYPES,
+    PROPERTY_TYPES,
+    STRUCTURE_PREDICATES,
     VERSION_PREDICATES,
-    OntologyGraphCandidate,
-    OntologyVersionEvidence,
 )
+from rdfsolve.ontology.vocabulary import OWL as _OWL
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
 from rdfsolve.void_retrieval import discover_graph_names
 
-_OWL = "http://www.w3.org/2002/07/owl#"
-_RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-_RDFS = "http://www.w3.org/2000/01/rdf-schema#"
+_CLASS_KINDS = CLASS_TYPES
+_PROPERTY_KINDS = PROPERTY_TYPES
+_AXIOM_PREDICATES = STRUCTURE_PREDICATES
+_VERSION = tuple(URIRef(p) for p in VERSION_PREDICATES)
 
-_CLASS_KINDS = (_OWL + "Class", _RDFS + "Class")
-_PROPERTY_KINDS = (
-    _RDF + "Property",
-    _OWL + "ObjectProperty",
-    _OWL + "DatatypeProperty",
-    _OWL + "AnnotationProperty",
-)
-_AXIOM_PREDICATES = (
-    _RDFS + "subClassOf",
-    _RDFS + "subPropertyOf",
-    _RDFS + "domain",
-    _RDFS + "range",
-    _OWL + "equivalentClass",
-    _OWL + "equivalentProperty",
-    _OWL + "inverseOf",
-    _OWL + "disjointWith",
-)
+
+class OntologyVersionEvidence(BaseModel):
+    """A version statement associated with ontology or graph discovery.
+
+    Only ``scope="ontology"`` or ``scope="graph"`` should be used to identify
+    an ontology artifact version automatically. ``other`` is retained as context.
+    """
+
+    subject: str
+    predicate: str
+    value: str
+    scope: str
+
+
+class OntologyGraphCandidate(BaseModel):
+    """Evidence that one RDF graph contains ontology material.
+
+    ``used_by_schema`` is deliberately derived only from observed-term overlap.
+    A graph can be an ontology candidate without being used by the dataset.
+    """
+
+    graph_uri: str
+    explicit_ontology_iris: list[str] = Field(default_factory=list)
+    imports: list[str] = Field(default_factory=list)
+    version_evidence: list[OntologyVersionEvidence] = Field(default_factory=list)
+
+    declared_classes: int | None = None
+    declared_properties: int | None = None
+    candidate_reasons: list[str] = Field(default_factory=list)
+    discovery_status: Literal["matched", "hint_only", "timeout", "error"] = "matched"
+    discovery_error: str | None = None
+    observed_at: str | None = None
+    query_ids: list[str] = Field(default_factory=list)
+
+    observed_class_overlap: list[str] = Field(default_factory=list)
+    observed_property_overlap: list[str] = Field(default_factory=list)
+
+    @property
+    def used_by_schema(self) -> bool:
+        """Whether empirical class/property use overlaps this graph."""
+        return bool(self.observed_class_overlap or self.observed_property_overlap)
+
+
+def _declared_terms(graph: Graph, kinds: tuple[URIRef, ...]) -> set[str]:
+    terms: set[str] = set()
+    for kind in kinds:
+        terms.update(
+            str(subject)
+            for subject in graph.subjects(RDF.type, kind)
+            if isinstance(subject, URIRef)
+        )
+    return terms
+
+
+def _version_evidence(
+    graph: Graph, graph_uri: str, ontology_iris: set[str]
+) -> list[OntologyVersionEvidence]:
+    rows: set[tuple[str, str, str, str]] = set()
+    for predicate in _VERSION:
+        for subject, value in graph.subject_objects(predicate):
+            if not isinstance(subject, URIRef):
+                continue
+            subject_s = str(subject)
+            scope = (
+                "ontology"
+                if subject_s in ontology_iris
+                else "graph"
+                if subject_s == graph_uri
+                else "other"
+            )
+            rows.add((subject_s, str(predicate), str(value), scope))
+    return [
+        OntologyVersionEvidence(subject=s, predicate=p, value=v, scope=scope)
+        for s, p, v, scope in sorted(rows)
+    ]
+
+
+def inspect_ontology_graph(
+    graph: Graph,
+    graph_uri: str,
+    *,
+    observed_classes: Iterable[str] = (),
+    observed_properties: Iterable[str] = (),
+) -> OntologyGraphCandidate | None:
+    """Inspect one graph and return ontology-discovery evidence when present.
+
+    Version metadata by itself is not sufficient to classify a graph as an
+    ontology graph because dataset metadata graphs commonly publish versions.
+    """
+    ontology_iris = sorted(
+        str(subject)
+        for subject in graph.subjects(RDF.type, OWL.Ontology)
+        if isinstance(subject, URIRef)
+    )
+    classes = _declared_terms(graph, tuple(URIRef(t) for t in _CLASS_KINDS))
+    properties = _declared_terms(graph, tuple(URIRef(t) for t in _PROPERTY_KINDS))
+
+    reasons: list[str] = []
+    if ontology_iris:
+        reasons.append("owl_ontology_declaration")
+    if classes:
+        reasons.append("class_declarations")
+    if properties:
+        reasons.append("property_declarations")
+    lowered = graph_uri.lower()
+    if "ontology" in lowered or ".owl" in lowered:
+        reasons.append("graph_iri_hint")
+
+    # A graph-name hint alone is useful discovery evidence, but a plain metadata
+    # graph carrying only dcterms:issued/version is not an ontology candidate.
+    if not reasons:
+        return None
+
+    imports = sorted(
+        str(obj)
+        for ontology in graph.subjects(RDF.type, OWL.Ontology)
+        for obj in graph.objects(ontology, OWL.imports)
+        if isinstance(obj, URIRef)
+    )
+    observed_class_set = set(observed_classes)
+    observed_property_set = set(observed_properties)
+
+    return OntologyGraphCandidate(
+        graph_uri=graph_uri,
+        explicit_ontology_iris=ontology_iris,
+        imports=imports,
+        version_evidence=_version_evidence(graph, graph_uri, set(ontology_iris)),
+        declared_classes=len(classes),
+        declared_properties=len(properties),
+        candidate_reasons=sorted(set(reasons)),
+        observed_class_overlap=sorted(classes & observed_class_set),
+        observed_property_overlap=sorted(properties & observed_property_set),
+    )
+
+
+def discover_ontology_graphs(
+    dataset: Dataset,
+    *,
+    observed_classes: Iterable[str] = (),
+    observed_properties: Iterable[str] = (),
+) -> list[OntologyGraphCandidate]:
+    """Inspect named graphs in an RDFLib Dataset.
+
+    This is the local/artifact implementation. Remote endpoint discovery should
+    use the same evidence contract but apply bounded SPARQL probes instead of
+    downloading every graph.
+    """
+    candidates: list[OntologyGraphCandidate] = []
+    for graph in dataset.graphs():
+        identifier = str(graph.identifier)
+        candidate = inspect_ontology_graph(
+            graph,
+            identifier,
+            observed_classes=observed_classes,
+            observed_properties=observed_properties,
+        )
+        if candidate is not None:
+            candidates.append(candidate)
+    return sorted(candidates, key=lambda item: item.graph_uri)
 
 
 def _query_id(query: str) -> str:
@@ -355,6 +500,10 @@ def discover_remote_ontology_graphs(
 
 __all__ = [
     "OntologyDiscoverySummary",
+    "OntologyGraphCandidate",
+    "OntologyVersionEvidence",
+    "discover_ontology_graphs",
     "discover_remote_ontology_graphs",
+    "inspect_ontology_graph",
     "inspect_remote_ontology_graph",
 ]

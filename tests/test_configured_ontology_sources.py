@@ -2,12 +2,11 @@ import json
 from pathlib import Path
 
 from rdflib import OWL, RDF, Graph, URIRef
-from rdfsolve.evidence.ontology import ObservedOntologyTerms
-from rdfsolve.evidence.ontology_acquisition import (
-    LocalOntologyFileCandidate,
-    build_ontology_acquisition_plan,
-)
-from rdfsolve.evidence.ontology_reference import acquire_reference_ontologies
+
+from rdfsolve.ontology.artifacts import LocalOntologyFileCandidate
+from rdfsolve.ontology.reference import acquire_reference_ontologies
+from rdfsolve.ontology.sources import build_ontology_acquisition_plan
+from rdfsolve.ontology.usage import ObservedOntologyTerms
 
 
 def _provider_ontology() -> bytes:

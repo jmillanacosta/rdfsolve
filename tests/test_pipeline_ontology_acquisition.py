@@ -3,8 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from pydantic import BaseModel
-from rdfsolve.evidence.ontology import OntologyGraphCandidate
-from rdfsolve.mining.ontology_discovery import OntologyDiscoverySummary
+
+from rdfsolve.ontology.discovery import OntologyDiscoverySummary, OntologyGraphCandidate
 from scripts.pipeline_stages.base import Stage
 from scripts.pipeline_stages.config import PipelineConfig
 
@@ -54,7 +54,7 @@ def test_pipeline_writes_discovery_and_usage_scoped_acquisition(monkeypatch, tmp
         candidates=[candidate],
     )
     monkeypatch.setattr(
-        "rdfsolve.mining.ontology_discovery.discover_remote_ontology_graphs",
+        "rdfsolve.ontology.discovery.discover_remote_ontology_graphs",
         lambda *args, **kwargs: summary,
     )
     helper = SimpleNamespace(endpoint_url="https://example.org/sparql")
@@ -65,7 +65,7 @@ def test_pipeline_writes_discovery_and_usage_scoped_acquisition(monkeypatch, tmp
     assert (tmp_path / "demo_remote_ontology_discovery.json").exists()
     acquisition = json.loads((tmp_path / "demo_remote_ontology_acquisition.json").read_text())
     assert acquisition["dataset_id"] == "demo"
-    chebi = next((x for x in acquisition["candidates"] if x["namespace"].endswith("CHEBI_")))
+    chebi = next(x for x in acquisition["candidates"] if x["namespace"].endswith("CHEBI_"))
     assert chebi["ontology_id"] == "chebi"
     assert chebi["graph_evidence"][0]["graph_uri"] == "http://example.org/ontology"
     assert chebi["graph_evidence"][0]["access_context"] == "remote_endpoint"

@@ -52,7 +52,7 @@ def describe(
         raise ValueError(
             "Ontology fallback requires source class discovery without owner or target filters"
         )
-    from rdfsolve.client.ontology import identifier_candidates
+    from rdfsolve.mappings.identifiers import identifier_candidates
 
     candidates: list[str] = []
     identity: dict[str, Any] = {}

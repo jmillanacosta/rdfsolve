@@ -1,5 +1,6 @@
 from rdflib import OWL, RDF, Graph, URIRef
-from rdfsolve.evidence.ontology import assess_ontology_usage
+
+from rdfsolve.ontology.usage import assess_ontology_usage
 
 
 def test_usage_denominator_can_be_scoped_to_one_ontology_candidate():

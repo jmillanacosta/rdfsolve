@@ -1,7 +1,7 @@
 """The ontology namespace of a term, which tells the namespaces used for typing (those with many
 terms without a parent) from the vocabulary of the data, and is reported for each shape group."""
 
-from rdfsolve.mining.ontology_as_data import term_namespace
+from rdfsolve.ontology.terms import namespace as term_namespace
 
 OBO = "http://purl.obolibrary.org/obo/"
 NCIT = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"

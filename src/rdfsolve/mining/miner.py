@@ -503,11 +503,11 @@ class SchemaMiner:
         from rdfsolve._outcomes import QueryFailure, QueryOutcome
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
-            fetch_superclasses,
             pattern_classes,
             probe_term_patterns,
             subsume_patterns,
         )
+        from rdfsolve.ontology.hierarchy import fetch_superclasses
         from rdfsolve.sparql_helper import EndpointError
 
         phase = self._report.start_phase("ontology-terms")

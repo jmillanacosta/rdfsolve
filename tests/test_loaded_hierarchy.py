@@ -10,7 +10,7 @@ from rdflib.namespace import RDFS
 
 from rdfsolve.mining import mine_with_ontology, ontology_as_data
 from rdfsolve.mining.miner import SchemaMiner
-from rdfsolve.mining.ontology_as_data import read_hierarchy
+from rdfsolve.ontology.hierarchy import read_hierarchy
 from tests.test_ontology_term_subsumption import EX, FIXTURE, T
 
 
