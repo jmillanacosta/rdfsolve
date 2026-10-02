@@ -145,9 +145,9 @@ def link_diagram(
 ) -> str:
     """Draw one record type, the links of it that are named, and what each link reaches.
 
-    A link is a field name or label ("source", "Is part of"); "^Is part of" is a link that
-    points to the record type. The reached record types are those the mined schema counts for
-    the link, in the record type's own namespace (WikiPathways' drawing classes are left out),
+    A link is a field name or label; "^name" is a link that points to the record type. The
+    reached record types are those the mined schema counts for the link, in the record type's
+    own namespace (classes of other namespaces of the source are left out),
     with the number of statements; the *top* most counted per link, the others as one node.
     """
     from collections import defaultdict

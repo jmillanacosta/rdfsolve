@@ -1,12 +1,10 @@
 """Conversion profiles: rules that turn a source's RDF into a target property-graph schema.
 
-A rule is a path rule. For each instance of a focus class (WikiPathways' wp:Catalysis), it
-links the nodes that a subject path reaches (wp:source: the enzyme) to the nodes that an object
-path reaches (wp:target: the reaction), or to a constant (a Biolink category), with the target's
-predicate (biolink:catalyzes). Paths are SHACL property paths, written in SPARQL path syntax:
-sequences and inverses reach further (``<wp#target>/<wp#target>`` from a catalysis is the
-reaction's product). Class filters keep the ends of one class, and *pairs* links each pair of
-the nodes one path reaches (the proteins of a complex).
+A rule is a path rule. For each instance of a focus class, it links the nodes that a subject
+path reaches to the nodes that an object path reaches, or to a constant (a target class), with
+the target's predicate. Paths are SHACL property paths, written in SPARQL path syntax:
+sequences and inverses reach further than one link. Class filters keep the ends of one class,
+and *pairs* links each pair of the nodes one path reaches.
 
 A rule is written as SHACL (a node shape with a sh:TripleRule, SHACL Advanced Features) and
 compiled to a SPARQL CONSTRUCT that runs on one endpoint: no federation. A profile is the rules
@@ -53,6 +51,13 @@ def _expand(text: str, client: Client | None = None) -> str:
     if not base:
         raise ValueError(f"{text!r}: unknown prefix {prefix!r}")
     return base + local
+
+
+def _below(client: Client, cls: str) -> tuple[str, ...]:
+    """Return the classes of the source's mined schema that its vocabulary places below *cls*."""
+    classes = sorted(client.schema.get_classes())
+    above = client.superclasses(classes)
+    return tuple(c for c in classes if c != cls and cls in above.get(c, set()))
 
 
 def _link(client: Client, name: str, focus: str) -> str:
@@ -126,7 +131,7 @@ class Rule:
     name: str | None = None
     unless_classes: tuple[str, ...] = ()
     literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
-    # The names of the ends in a query written from the rule (write_query): ?enzyme, ?reaction.
+    # The names of the ends' variables in a query written from the rule (write_query).
     subject_as: str | None = field(default=None, compare=False)
     object_as: str | None = field(default=None, compare=False)
     # The rest of the query's pattern: (path from the focus, class or None) that must exist for
@@ -149,16 +154,18 @@ class Rule:
         subject_as: str | None = None,
         object_as: str | None = None,
         unless_kinds: Sequence[str] = (),
+        exact_kind: bool = False,
         literal: bool = False,
         name: str | None = None,
     ) -> Rule:
         """Return a rule written with the names the client uses.
 
-        *focus* and the kinds are record types ("Catalysis"); *subject* and *object* are links
-        of the focus by field name or label ("source", "Is part of"), a path of them
-        ("target/source"), or a link that points to the focus ("^Is part of"); None is the
-        focus itself. *predicate* and *value* are the target's terms: IRIs, CURIEs
-        ("biolink:catalyzes") or "a" for rdf:type.
+        *focus* and the kinds are record types; *subject* and *object* are links of the focus
+        by field name or label, a path of them ("a/b"), or a link that points to the focus
+        ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
+        IRIs, CURIEs or "a" for rdf:type. *unless_kinds* leaves out focus nodes of these
+        record types; *exact_kind* leaves out those of any record type the source places below
+        the focus (rdfs:subClassOf), so the rule is for nodes of exactly that kind.
         """
         from rdfsolve.client.hydration import class_iri
 
@@ -207,7 +214,8 @@ class Rule:
             ),
             pairs=pairs,
             name=name,
-            unless_classes=tuple(c for k in unless_kinds if (c := kind(k, first))),
+            unless_classes=tuple(c for k in unless_kinds if (c := kind(k, first)))
+            + (_below(client, focus_iri) if exact_kind else ()),
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,
@@ -367,11 +375,9 @@ class Profile:
 
         - ``?x a C`` to ``?x a K``: C to K.
         - A one-step link from the focus to a target predicate: the property shape (the link in
-          the context of the focus class) to the predicate (``biolink:subject`` and
-          ``biolink:object`` of an association too).
+          the context of the focus class) to the predicate.
         - A focus that stands for an edge (neither end of it, one step to each): its class to
-          the predicate, and its two property shapes to ``biolink:subject`` and
-          ``biolink:object``.
+          the predicate, and its two property shapes to the target's subject and object slots.
 
         The predicate is skos:broadMatch (every instance of the subject is one of the object:
         what the query states) unless the query's header says ``# match: exact`` or
@@ -836,7 +842,7 @@ class Query:
                     }
                 )
                 continue
-            # A one-step inverse link (?pathway ^isPartOf ?entity) is the link of the other end.
+            # A one-step inverse link (?a ^p ?b) is the link p of the other end (?b p ?a).
             if (
                 getattr(p, "arg", None) is not None
                 and isinstance(p.arg, URIRef)
@@ -973,11 +979,11 @@ class Biolink:
         return cls(str(data.get("version", "")), data.get("classes", {}), data.get("slots", {}))
 
     def class_iri(self, name: str) -> str:
-        """Return the IRI of a class ("small molecule": biolink:SmallMolecule)."""
+        """Return the IRI of a class, from its name in the model."""
         return self.BASE + "".join(w[:1].upper() + w[1:] for w in name.split(" "))
 
     def slot_iri(self, name: str) -> str:
-        """Return the IRI of a slot ("has input": biolink:has_input)."""
+        """Return the IRI of a slot, from its name in the model."""
         return self.BASE + name.replace(" ", "_")
 
     def ancestors(self, name: str) -> list[str]:
@@ -1082,9 +1088,9 @@ class Biolink:
 
     def categories(self, prefix: str) -> list[str]:
         """Return the categories (class IRIs, not mixins) where an identifier prefix belongs:
-        those that list it (compared as Bioregistry prefixes: UniProtKB is uniprot) while none
-        of their ancestors does. Biolink repeats a prefix on narrower classes (UniProtKB on
-        Protein and on ProteinIsoform); the prefix belongs to the broadest (Protein).
+        those that list it (compared as Bioregistry prefixes) while none of their ancestors
+        does. The model repeats a prefix on narrower classes; the prefix belongs to the
+        broadest class that lists it.
         """
         import bioregistry
 
@@ -1108,8 +1114,7 @@ def categorize(
     """Give each node of *graph* (PropertyGraph) without a Biolink category the one its
     identifiers allow: the categories Biolink lists for the prefix of each of its identifiers,
     and of the identifiers decided to name the same entity (*pairs*, Resolution.pairs), shared
-    by all of them. An Ensembl id (Gene or Protein in Biolink) drawn for a protein that the
-    decision names with a UniProt id is a Protein. The category is a kind, not a statement: it is
+    by all of them. The category is a kind, not a statement: it is
     not given back as RDF. Where the prefixes allow none or several, the node is listed.
     """
     from rdfsolve.identifiers import parse
@@ -1313,8 +1318,7 @@ def write_query(
 
 def within(client: Client, records: Any, via: str) -> str:
     """Return the scope "the focus is linked by *via* to these records, or is one of them"
-    (Profile.run and rebuilds): ``within(wp, pathway, via="Is part of")`` is what is drawn in
-    the pathway, and the pathway itself. *via* is a link name of the client.
+    (Profile.run and rebuilds). *via* is a link name of the client.
     """
     iris = [str(vars(record)["uri"]) for record in records.records]
     kinds = {client.type_name(type(record)) for record in records.records}
@@ -1328,17 +1332,36 @@ def within(client: Client, records: Any, via: str) -> str:
 _ASSOCIATION_SLOTS = ("subject", "predicate", "object")
 
 
+def _local_prefixes(iris: Iterable[str], base: str) -> dict[str, str]:
+    """Return a prefix for each namespace of *iris*: <base>_<its last segment>, lower case."""
+    out: dict[str, str] = {}
+    for iri in sorted(iris):
+        namespace = re.match(r"^(.*[/#])[^/#]+$", iri)
+        if namespace is None or namespace.group(1) in out.values():
+            continue
+        segment = re.sub(r"\W+", "_", namespace.group(1).rstrip("/#").rsplit("/", 1)[-1]).lower()
+        name, n = f"{base}_{segment}", 2
+        while name in out:
+            name, n = f"{base}_{segment}{n}", n + 1
+        out[name] = namespace.group(1)
+    return out
+
+
 def to_kgx(
-    graph: Any, biolink: Biolink, folder: str | Path, knowledge_source: str
+    graph: Any,
+    biolink: Biolink,
+    folder: str | Path,
+    knowledge_source: str,
+    local_prefix: str = "local",
 ) -> tuple[Path, Path]:
     """Write a property graph of Biolink statements as KGX TSV (nodes.tsv, edges.tsv); return
     their paths.
 
     Node ids are CURIEs: with the prefixes Biolink writes (Biolink.curie), else Bioregistry's,
-    else a prefix named for the IRI's namespace; prefixes.json beside the files expands those. A node's
-    category is its Biolink classes (biolink:NamedThing when it has none). Each edge of a
-    Biolink predicate is a row; a node that is a biolink:Association (an inhibition: subject,
-    predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
+    else ``<local_prefix>_<last segment of the IRI's namespace>``; prefixes.json beside the
+    files expands those. A node's category is its Biolink classes (the model's root class when
+    it has none). Each edge of a Biolink predicate is a row; a node that is an association
+    (subject, predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
     (*knowledge_source*, an infores CURIE; knowledge_level and agent_type).
     """
     import csv
@@ -1349,7 +1372,7 @@ def to_kgx(
 
     import json
 
-    from rdfsolve._uri import curie_from_prefixes, prefix_map
+    from rdfsolve._uri import curie_from_prefixes
     from rdfsolve.identifiers import parse
 
     # A CURIE for every node (KGX requires one): the prefix Biolink writes, else Bioregistry's,
@@ -1362,7 +1385,7 @@ def to_kgx(
             if not biolink.curie(n) and parse(n) is None and not n.startswith("_:")
         }
     )
-    minted = prefix_map(unregistered, {})
+    minted = _local_prefixes(unregistered, local_prefix)
 
     def short(iri: str) -> str:
         """Return a node id as a CURIE."""

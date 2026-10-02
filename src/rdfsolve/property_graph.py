@@ -191,7 +191,7 @@ class PGEdge:
     attached: Properties = field(default_factory=dict)
     absorbed: list[PGNode] = field(default_factory=list)
     # Further statements this edge stands for, as (source, target) IRIs written in the RDF:
-    # two drawings of cholesterol, merged, are each part of the pathway; one edge, two statements.
+    # two drawings of one entity, merged, each linked to the same node: one edge, two statements.
     also: list[tuple[str, str]] = field(default_factory=list)
 
 
@@ -499,9 +499,9 @@ class Identity:
     - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
       WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
       types. With "issuer" (the default) a node whose identifier's issuer gives a kind of
-      entity (UniProt's Protein) has that kind as its node type, however each source drew it
-      (WikiPathways' GeneProduct or Protein), and the sources' classes become its ``type``;
-      where the issuer's class names no kind (ChEBI's owl:Class) it is "role". With "role" it
+      entity has that kind as its node type, however each source drew it, and the sources'
+      classes become its ``type``; where the issuer's class names no kind (a generic class
+      such as owl:Class) it is "role". With "role" it
       keeps the classes its sources give it other than the issuer kinds of *kinds*: the
       issuer's classes decide identity, the data's own classes are its node type, so a
       metabolite is a Metabolite whether it was merged or not. "majority"
@@ -1161,11 +1161,11 @@ class PropertyGraph:
 
         With *edge_types* (edge type names: "catalyzes"), only those edges and their nodes.
         Each node also carries ``category`` (its node types joined by " + ", or "no category")
-        and ``title`` (its name: a biolink:name, else a label, else the end of its IRI), for
+        and ``title`` (its name: a name or label property, else the end of its IRI), for
         drawing.
 
         Nodes carry ``labels`` (and ``ids``); edges carry ``type`` (and ``via``, the folded node)
-        and are keyed by both: two complexes give two edges between the same proteins. A property named as one of these (the other classes of
+        and are keyed by both: two folded nodes give two edges between the same ends. A property named as one of these (the other classes of
         a folded catalysis, rdf:type) is kept as ``rdf_<name>``.
         """
         import networkx as nx
@@ -1413,7 +1413,7 @@ _TITLE_PROPERTIES = ("https://w3id.org/biolink/vocab/name", *NAME_PROPERTIES)
 
 
 def _title(node: PGNode) -> str:
-    """Return a node's name for drawing: a biolink:name, else a label, else the end of its IRI."""
+    """Return a node's name for drawing: a name or label property, else the end of its IRI."""
     for key in _TITLE_PROPERTIES:
         for value in node.properties.get(key, []):
             return str(value.lexical)
@@ -2141,7 +2141,7 @@ def _reconcile_labels(
             named = {c for c in candidates if c & issuer_classes and not c <= _GENERIC_CLASSES}
             roles = [c for c in candidates if not c & issuer_classes]
             if policy == "issuer" and len(named) == 1:
-                # The issuer's kind of entity (UniProt's Protein), however a source drew it.
+                # The issuer's kind of entity, however a source drew it.
                 chosen = frozenset(next(iter(named)) & issuer_classes)
                 by_issuer += 1
             elif len(roles) != 1:

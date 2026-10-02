@@ -417,7 +417,7 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
     <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/3156> ;
         <{BL}predicate> <{BL}regulates> ; <{BL}object> <urn:r1> ; <{BL}object_direction_qualifier> "decreased" ."""
     graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
-    nodes, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test")
+    nodes, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test", local_prefix="src")
     node_rows = {r["id"]: r for r in csv.DictReader(nodes.open(), delimiter="\t")}
     assert node_rows["NCBIGene:3156"] == {
         "id": "NCBIGene:3156",
@@ -432,7 +432,7 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
     } == {
         ("NCBIGene:3156", "biolink:catalyzes", "urn:r1", ""),
         ("NCBIGene:3156", "biolink:regulates", "urn:r1", "decreased"),
-        ("urn:r1", "biolink:has_input", "Complex:a2d92", ""),
+        ("urn:r1", "biolink:has_input", "src_complex:a2d92", ""),
     }
     assert all(r["primary_knowledge_source"] == "infores:test" for r in edge_rows)
     import json
@@ -475,3 +475,22 @@ WHERE { ?node a wp:Metabolite . FILTER NOT EXISTS { ?node a wp:Protein } FILTER 
     )
     rows = Profile.from_queries([tmp_path / "wp-biolink-genes.rq"]).rebuilds(Local())
     assert rows[0]["same"] and rows[0]["as written"] == 3
+
+
+def test_exact_kind_leaves_out_the_kinds_below():
+    """A rule for exactly one kind leaves out every class the source places below it."""
+    from types import SimpleNamespace
+
+    from rdfsolve.conversion import _below
+
+    classes = {WP + "GeneProduct", WP + "Protein", WP + "Rna", WP + "Metabolite"}
+    client = SimpleNamespace(
+        schema=SimpleNamespace(get_classes=lambda: classes),
+        superclasses=lambda cs: {
+            WP + "Protein": {WP + "GeneProduct", WP + "DataNode"},
+            WP + "Rna": {WP + "GeneProduct", WP + "DataNode"},
+            WP + "GeneProduct": {WP + "DataNode"},
+            WP + "Metabolite": {WP + "DataNode"},
+        },
+    )
+    assert _below(client, WP + "GeneProduct") == (WP + "Protein", WP + "Rna")
