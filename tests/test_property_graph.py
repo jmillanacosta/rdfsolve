@@ -182,3 +182,57 @@ def test_client_records_become_a_checked_property_graph():
     assert report["lossless"]["passed"] and report["names"]["passed"]
     assert report["nodes"] == len(found)
     assert len(client.to_oxigraph(found)) == len(pg.to_oxigraph())
+
+
+IDS = """
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix up: <http://purl.uniprot.org/core/> . @prefix wp: <http://vocabularies.wikipathways.org/wp#> .
+<https://identifiers.org/ensembl/ENSG00000141510> a wp:Protein ; rdfs:label "TP53" ;
+    wp:bdbUniprot <https://identifiers.org/uniprot/P04637>, <https://identifiers.org/uniprot/A0A087X1C5> .
+<http://purl.uniprot.org/uniprot/P04637> a up:Protein ; up:mnemonic "P53_HUMAN" ;
+    skos:exactMatch <http://purl.obolibrary.org/obo/PR_P04637> .
+<https://identifiers.org/chebi/CHEBI:15377> skos:exactMatch <http://purl.obolibrary.org/obo/CHEBI_15377> .
+<http://purl.obolibrary.org/obo/CHEBI_15377> a <http://www.w3.org/2002/07/owl#Class> ; rdfs:label "water" .
+"""
+
+
+def test_identity_merges_one_identifier_and_decides_each_mapping():
+    """The WikiPathways, UniProt and ChEBI case: IRIs of one identifier become one node with its
+    IRIs; a link between two kinds stays an edge; a same-kind one-to-one link to an identifier
+    without data becomes an attribute; a link whose kind is unknown stays an edge and is
+    reported as undecided. The RDF is given back unchanged."""
+    from rdfsolve.property_graph import Identity
+
+    data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
+    protein = "http://purl.uniprot.org/core/Protein"
+    kinds = {"uniprot": [protein], "pr": [protein], "chebi": ["http://www.w3.org/2002/07/owl#Class"]}
+    pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds))
+    report = pg.report()
+    assert report["lossless"]["passed"], report["lossless"]
+    p53 = pg.nodes["http://purl.uniprot.org/uniprot/P04637"]
+    assert p53.members == ["http://purl.uniprot.org/uniprot/P04637", "https://identifiers.org/uniprot/P04637"]
+    assert "https://identifiers.org/uniprot/P04637" not in pg.nodes
+    water = pg.nodes["http://purl.obolibrary.org/obo/CHEBI_15377"]
+    assert len(water.members) == 2 and report["identity"]["statements_within_merged_nodes"] == 1
+    assert "http://purl.obolibrary.org/obo/PR_P04637" not in pg.nodes, "Same kind, one to one"
+    attribute = pg.to_networkx().nodes["http://purl.uniprot.org/uniprot/P04637"]
+    assert attribute["exactMatch"] == "http://purl.obolibrary.org/obo/PR_P04637"
+    assert attribute["ids"] == p53.members
+    gene_links = [e for e in pg.edges if e.source.endswith("ENSG00000141510")]
+    assert {e.target for e in gene_links} == {
+        "http://purl.uniprot.org/uniprot/P04637", "https://identifiers.org/uniprot/A0A087X1C5"
+    }, "A gene and its proteins stay linked; nothing is merged across kinds"
+    rows = {r["decision"]: r for r in report["identity"]["mappings"]}
+    undecided = rows["edge: undecided, kind unknown for ensembl"]
+    assert undecided["links"] == 2 and "ensembl" in undecided["decide_with"]
+    decided = PropertyGraph.from_rdf(
+        data, identity=Identity(kinds={**kinds, "ensembl": ["http://example.org/Gene"]})
+    ).report()
+    assert {r["decision"] for r in decided["identity"]["mappings"]} >= {"edge: a relation between two kinds"}
+    assert decided["identity"]["undecided"] == 0 and decided["lossless"]["passed"]
+
+
+def test_without_identity_nothing_is_merged():
+    data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(data)
+    assert "https://identifiers.org/uniprot/P04637" in pg.nodes and pg.report()["lossless"]["passed"]

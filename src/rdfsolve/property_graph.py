@@ -20,6 +20,10 @@ Two choices have defaults that can be set:
   CURIE where local names clash; the default), ``"curie"``, ``"label"`` (the labels of the mined
   schema), ``"iri"``, a function of the IRI, or a mapping of IRIs to names over the default.
 
+An :class:`Identity` merges the IRIs of one registered identifier into one node (listing its
+IRIs) and decides each mapping between identifiers: an attribute when both are known to be of
+one kind and the link is one to one, an edge otherwise; the report lists the undecided ones.
+
 The gates of :meth:`PropertyGraph.report` check an export: :meth:`PropertyGraph.to_oxigraph` gives
 back the input (nothing is lost silently), names are unique, literals keep their types, keys that
 the schema measured as single-valued have one value, and each fold is applied only where it
@@ -132,11 +136,19 @@ Properties = dict[str, list[Value]]
 
 @dataclass
 class PGNode:
-    """A node: its id (IRI, or ``_:`` and a blank-node label), class IRIs and properties."""
+    """A node: its id (IRI, or ``_:`` and a blank-node label), class IRIs and properties.
+
+    A node that several IRIs of one identifier were merged into (see :class:`Identity`) lists
+    them in ``members``; ``origins`` gives, for each key, the IRI that stated each value, and
+    ``label_origins`` the IRI that stated each label, so that the statements can be given back.
+    """
 
     id: str
     labels: list[str] = field(default_factory=list)
     properties: Properties = field(default_factory=dict)
+    members: list[str] = field(default_factory=list)
+    origins: dict[str, list[str]] = field(default_factory=dict)
+    label_origins: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -152,6 +164,8 @@ class PGEdge:
     properties: Properties = field(default_factory=dict)
     via: str | None = None
     fold: int | None = None
+    source_iri: str | None = None  # the IRI written in the RDF, when a merge changed the end
+    target_iri: str | None = None
 
 
 @dataclass(frozen=True)
@@ -167,6 +181,31 @@ class Fold:
     target: str
     name: str | None = None
     evidence: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
+
+
+SAME_AS = "http://www.w3.org/2002/07/owl#sameAs"
+EXACT_MATCH = "http://www.w3.org/2004/02/skos/core#exactMatch"
+
+
+@dataclass(frozen=True)
+class Identity:
+    """Which nodes name one entity, and how a mapping between two identifiers is shown.
+
+    - Nodes whose IRIs are one registered identifier (rdfsolve.identifiers.parse: the same
+      prefix and local identifier, as identifiers.org/uniprot/Q13510 and
+      purl.uniprot.org/uniprot/Q13510) are merged into one node that lists its IRIs.
+    - A link to an identifier that has no data of its own becomes a reference property of the
+      node (an attribute) when both identifiers are known to be of the same kind and the link
+      is one to one; otherwise it stays an edge. A link between two kinds (a gene to its
+      proteins) is a relation, not a sameness.
+    - *kinds* maps a registered prefix to the classes that the source issuing it gives its
+      identifiers (Client.issued_kinds). A prefix without kinds is unknown: its links stay
+      edges and the report lists them as undecided, with what would decide them.
+    """
+
+    merge: bool = True
+    kinds: Mapping[str, Iterable[str]] = field(default_factory=dict, compare=False, hash=False)
+    attributes: bool = True
 
 
 def _ox_id(term: ox.NamedNode | ox.BlankNode) -> str:
@@ -242,6 +281,7 @@ class PropertyGraph:
         }
         self._name: dict[str, str] | None = None  # IRI (or fold:<n>) -> name
         self._groups: dict[str, list[str]] = {}
+        self.identity: dict[str, Any] | None = None  # the decisions of an Identity
 
     # -- building ---------------------------------------------------------------------------
 
@@ -256,8 +296,12 @@ class PropertyGraph:
         native: bool = True,
         names: Names = "local",
         prefixes: Mapping[str, str] | None = None,
+        identity: Identity | None = None,
     ) -> PropertyGraph:
         """Build a property graph from an RDF graph, with the folds applied where they hold.
+
+        *identity* merges the nodes of one identifier and decides how mappings are shown
+        (:class:`Identity`); the report records every decision and what stays undecided.
 
         *types* overrides :data:`DEFAULT_TYPES` per datatype IRI (None keeps the lexical form);
         ``native=False`` keeps every literal as written. *names*: see the module documentation.
@@ -296,6 +340,7 @@ class PropertyGraph:
                 raise ValueError(f"Quoted triples are not supported as objects: {quad}")
         expanded = [_expand(f, prefixes) for f in folds]
         counts = [_apply_fold(i, f, nodes, edges) for i, f in enumerate(expanded)]
+        decisions = _apply_identity(identity, nodes, edges) if identity is not None else None
         built = cls(
             nodes,
             edges,
@@ -310,6 +355,7 @@ class PropertyGraph:
             names=names,
         )
         built.named_graphs = sorted(named)
+        built.identity = decisions
         return built
 
     # -- values -----------------------------------------------------------------------------
@@ -402,19 +448,27 @@ class PropertyGraph:
         out = ox.Dataset()
         type_ = ox.NamedNode(_TYPE)
 
-        def add(subject: ox.NamedNode | ox.BlankNode, properties: Properties) -> None:
+        def add(
+            subject: ox.NamedNode | ox.BlankNode,
+            properties: Properties,
+            origins: Mapping[str, list[str]] | None = None,
+        ) -> None:
             for key, values in properties.items():
                 predicate = ox.NamedNode(key)
-                for value in values:
-                    out.add(ox.Quad(subject, predicate, value.ox_term()))
+                stated = (origins or {}).get(key)
+                for i, value in enumerate(values):
+                    who = _ox_node(stated[i]) if stated else subject
+                    out.add(ox.Quad(who, predicate, value.ox_term()))
 
         for node in self.nodes.values():
             subject = _ox_node(node.id)
-            for label in node.labels:
-                out.add(ox.Quad(subject, type_, ox.NamedNode(label)))
-            add(subject, node.properties)
+            for i, label in enumerate(node.labels):
+                who = _ox_node(node.label_origins[i]) if node.label_origins else subject
+                out.add(ox.Quad(who, type_, ox.NamedNode(label)))
+            add(subject, node.properties, node.origins)
         for edge in self.edges:
-            source, target = _ox_node(edge.source), _ox_node(edge.target)
+            source = _ox_node(edge.source_iri or edge.source)
+            target = _ox_node(edge.target_iri or edge.target)
             if edge.fold is None:
                 out.add(ox.Quad(source, ox.NamedNode(edge.type), target))
                 continue
@@ -456,7 +510,10 @@ class PropertyGraph:
             "identity": {
                 "passed": True,
                 "blank_nodes": sum(i.startswith("_:") for i in self.nodes),
-                "basis": "IRI, or _: and the blank-node label",
+                "basis": "IRI, or _: and the blank-node label"
+                if self.identity is None
+                else "registered identifier (rdfsolve.identifiers), else IRI",
+                **(self.identity or {}),
             },
             "names": {
                 "passed": not duplicates,
@@ -499,6 +556,8 @@ class PropertyGraph:
         out: dict[str, Any] = {}
         for key, values in properties.items():
             name = namer[key]
+            # A value that two IRIs of a merged node both state is shown once.
+            values = list(dict.fromkeys(values))
             native = [self.native(v) for v in values]
             out[name] = native if key in self.lists else native[0]
             if not all(self._typed(v) for v in values):
@@ -520,8 +579,9 @@ class PropertyGraph:
         namer = self._namer()
         graph: Any = nx.MultiDiGraph()
         for node in self.nodes.values():
-            labels = [namer[label] for label in node.labels]
-            graph.add_node(node.id, labels=labels, **self._plain(node.properties))
+            labels = list(dict.fromkeys(namer[label] for label in node.labels))
+            ids = {"ids": list(node.members)} if node.members else {}
+            graph.add_node(node.id, labels=labels, **ids, **self._plain(node.properties))
         for edge in self.edges:
             kind = self._edge_type(edge, namer)
             extra = {"via": edge.via} if edge.via else {}
@@ -574,8 +634,9 @@ class PropertyGraph:
             "nodes": [
                 {
                     "id": n.id,
-                    "labels": [namer[label] for label in n.labels],
+                    "labels": list(dict.fromkeys(namer[label] for label in n.labels)),
                     "properties": props(n.properties),
+                    **({"ids": list(n.members)} if n.members else {}),
                 }
                 for n in self.nodes.values()
             ],
@@ -608,7 +669,8 @@ class PropertyGraph:
         node_rows = [
             {
                 "id:ID": n.id,
-                ":LABEL": [namer[label] for label in n.labels],
+                ":LABEL": list(dict.fromkeys(namer[label] for label in n.labels)),
+                **({"ids": list(n.members)} if n.members else {}),
                 **self._plain(n.properties),
             }
             for n in self.nodes.values()
@@ -720,6 +782,155 @@ def _apply_fold(
         counts["applied"] += 1
     edges[:] = [e for e in edges if id(e) not in folded]
     return dict(counts)
+
+
+def _apply_identity(
+    identity: Identity, nodes: dict[str, PGNode], edges: list[PGEdge]
+) -> dict[str, Any]:
+    """Merge the nodes of one identifier and decide each mapping; return the decisions."""
+    from rdfsolve.identifiers import parse
+
+    parsed = {nid: parse(nid) for nid in nodes if not nid.startswith("_:")}
+    groups: dict[str, list[str]] = defaultdict(list)
+    if identity.merge:
+        for nid, found in parsed.items():
+            if found is not None:
+                groups[found.curie].append(nid)
+    canonical: dict[str, str] = {}
+    merged: list[dict[str, Any]] = []
+    for key, members in sorted(groups.items()):
+        if len(members) < 2:
+            continue
+        preferred = cast(Any, parsed[members[0]]).iri()
+
+        def weight(member: str, preferred: str | None = preferred) -> tuple[int, int, str]:
+            node = nodes[member]
+            data = len(node.labels) + sum(len(v) for v in node.properties.values())
+            return (data, member == preferred, member)
+
+        keep = max(members, key=weight)
+        node = nodes[keep]
+        labels: list[str] = []
+        label_origins: list[str] = []
+        properties: Properties = {}
+        origins: dict[str, list[str]] = {}
+        for member in [keep, *sorted(m for m in members if m != keep)]:
+            part = nodes[member]
+            labels += part.labels
+            label_origins += [member] * len(part.labels)
+            for k, values in part.properties.items():
+                properties.setdefault(k, []).extend(values)
+                origins.setdefault(k, []).extend([member] * len(values))
+            canonical[member] = keep
+            if member != keep:
+                del nodes[member]
+        node.labels, node.label_origins = labels, label_origins
+        node.properties, node.origins = properties, origins
+        node.members = sorted(members)
+        merged.append({"identifier": key, "node": keep, "iris": sorted(members)})
+    internal = 0
+    kept: list[PGEdge] = []
+    for edge in edges:
+        source = canonical.get(edge.source, edge.source)
+        target = canonical.get(edge.target, edge.target)
+        if source != edge.source:
+            edge.source_iri = edge.source
+        if target != edge.target:
+            edge.target_iri = edge.target
+        written_source, written_target = edge.source, edge.target
+        edge.source, edge.target = source, target
+        if edge.fold is None and source == target and written_source != written_target:
+            # A statement between two IRIs of one identifier: a property of the merged node.
+            _add_value(nodes[source], edge.type, Value(written_target, REFERENCE), written_source)
+            internal += 1
+            continue
+        kept.append(edge)
+    edges[:] = kept
+
+    issued = {prefix: set(classes) for prefix, classes in identity.kinds.items()}
+    incoming: Counter[str] = Counter(e.target for e in edges if e.fold is None)
+    has_out = {e.source for e in edges}
+    per_link: Counter[tuple[str, str]] = Counter(
+        (e.source, e.type) for e in edges if e.fold is None
+    )
+    decisions: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    removed: set[int] = set()
+    for edge in edges:
+        if edge.fold is not None:
+            continue
+        to = parsed.get(edge.target_iri or edge.target)
+        if to is None:
+            continue  # not a link to an identifier
+        start = parsed.get(edge.source_iri or edge.source)
+        kinds_from = issued.get(start.prefix) if start else None
+        kinds_to = issued.get(to.prefix)
+        target_node = nodes.get(edge.target)
+        bare = (
+            target_node is not None
+            and not target_node.labels
+            and not target_node.properties
+            and edge.target not in has_out
+            and incoming[edge.target] == 1
+        )
+        if start is None:
+            decision = "edge: undecided, the source is not a registered identifier"
+        elif kinds_from is None or kinds_to is None:
+            unknown = sorted(
+                {p for p, k in ((start.prefix, kinds_from), (to.prefix, kinds_to)) if k is None}
+            )
+            decision = f"edge: undecided, kind unknown for {', '.join(unknown)}"
+        elif not kinds_from & kinds_to:
+            decision = "edge: a relation between two kinds"
+        elif not (identity.attributes and bare and per_link[(edge.source, edge.type)] == 1):
+            decision = "edge: same kind, but the target has data or the link is not one to one"
+        else:
+            decision = "attribute: same kind, one to one"
+            _add_value(
+                nodes[edge.source],
+                edge.type,
+                Value(edge.target_iri or edge.target, REFERENCE),
+                edge.source_iri or edge.source,
+            )
+            del nodes[edge.target]
+            removed.add(id(edge))
+        group = (edge.type, start.prefix if start else "-", to.prefix, decision)
+        row = decisions.setdefault(
+            group,
+            {
+                "predicate": edge.type,
+                "from": group[1],
+                "to": group[2],
+                "decision": decision,
+                "links": 0,
+                "example": [edge.source_iri or edge.source, edge.target_iri or edge.target],
+            },
+        )
+        row["links"] += 1
+    edges[:] = [e for e in edges if id(e) not in removed]
+    rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
+    undecided = [r for r in rows if "undecided" in r["decision"]]
+    for row in undecided:
+        missing = [p for p in (row["from"], row["to"]) if p != "-" and p not in issued]
+        row["decide_with"] = (
+            f"Identity(kinds={{{', '.join(repr(p) + ': [...]' for p in missing)}}})"
+        )
+    return {
+        "merged": len(merged),
+        "merged_iris": sum(len(m["iris"]) for m in merged),
+        "merged_examples": merged[:5],
+        "statements_within_merged_nodes": internal,
+        "kinds": {prefix: sorted(classes) for prefix, classes in sorted(issued.items())},
+        "mappings": rows,
+        "undecided": len(undecided),
+    }
+
+
+def _add_value(node: PGNode, key: str, value: Value, written: str) -> None:
+    """Add a value to a node, with the IRI that stated it when the node is a merge."""
+    node.properties.setdefault(key, []).append(value)
+    if node.members:
+        stated = node.origins.setdefault(key, [node.id] * (len(node.properties[key]) - 1))
+        stated.append(written)
 
 
 def _single_valued(schema: MinedSchema) -> set[str]:

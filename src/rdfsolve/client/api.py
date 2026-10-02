@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
     from rdfsolve.client.resolution import Resolution
     from rdfsolve.ontology import Ontologies, Term
-    from rdfsolve.property_graph import Conversion, Fold, PropertyGraph
+    from rdfsolve.property_graph import Conversion, Fold, Identity, PropertyGraph
     from rdfsolve.schema_models.selection import SchemaSelection
 
 
@@ -1222,6 +1222,7 @@ class Client(DatasetClient):
         types: Mapping[str, Conversion | None] | None = None,
         native: bool = True,
         names: Any = "local",
+        identity: Identity | None = None,
     ) -> PropertyGraph:
         """Return records or result sets as a property graph, checked against their RDF.
 
@@ -1229,6 +1230,7 @@ class Client(DatasetClient):
         suggest_folds. *types* overrides the literal conversions per datatype (None keeps the
         lexical form) and native=False keeps every literal as written. *names*: "local" (the
         default), "curie", "label", "iri", a function of the IRI, or a mapping of IRIs to names.
+        *identity* merges the IRIs of one identifier and decides how mappings are shown.
         """
         from rdfsolve.property_graph import PropertyGraph
 
@@ -1239,7 +1241,25 @@ class Client(DatasetClient):
             types=types,
             native=native,
             names=names,
+            identity=identity,
         )
+
+    def issued_kinds(self) -> dict[str, list[str]]:
+        """Return the classes this source gives the identifiers it issues: {prefix: classes}.
+
+        A source issues the identifiers of its own registered prefix (Bioregistry, from the
+        dataset name of the schema); their classes are the schema classes whose example subjects
+        carry that prefix (rdfsolve.mappings.signatures). An identifier the source only cites
+        (WikiPathways and Ensembl genes) is not its own.
+        """
+        import bioregistry
+
+        from rdfsolve.mappings.signatures import signatures
+
+        name = self._schema.about.dataset_name
+        prefix = bioregistry.normalize_prefix(name) if name else None
+        classes = signatures(self._schema).subjects.get(prefix, set()) if prefix else set()
+        return {prefix: sorted(classes)} if prefix and classes else {}
 
     def suggest_folds(self) -> list[Fold]:
         """Propose classes whose instances can become edges, from the mined schema."""
