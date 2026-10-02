@@ -1297,7 +1297,11 @@ def _unfold(
                     if origin != iri:
                         kept.append(value)
                         kept_origins.append(origin)
-                    elif value.datatype == REFERENCE and value.lexical in node.members:
+                    elif (
+                        value.datatype == REFERENCE
+                        and value.lexical in node.members
+                        and value.lexical != iri  # the gene naming itself stays its value
+                    ):
                         target = None if value.lexical == node.id else value.lexical
                         edges.append(PGEdge(iri, _predicate(key), node.id, target_iri=target))
                     else:

@@ -203,10 +203,14 @@ class Claims:
         wanted = set(citing)
         claims = []
         for quad in records:
-            if not isinstance(quad.object, ox.NamedNode) or quad.subject == quad.object:
+            if not isinstance(quad.object, ox.NamedNode):
                 continue
             subject, target = parse(quad.subject.value), parse(quad.object.value)
-            if subject is None or target is None or subject.prefix == target.prefix:
+            if subject is None or target is None:
+                continue
+            # A node drawn with its ChEBI id that names it again (bdbChEBI to itself) is a claim,
+            # so that the ChEBI record is fetched; two ids of one namespace are two entities.
+            if subject.prefix == target.prefix and subject.curie != target.curie:
                 continue
             if quad.predicate.value in chosen or target.prefix in wanted:
                 claims.append(

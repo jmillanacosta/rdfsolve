@@ -188,6 +188,10 @@ def test_a_gene_id_is_kept_apart_from_its_protein_and_can_be_unfolded():
     assert [(e.source, e.target) for e in apart.edges if e.type == WP + "bdbUniprot"] == [(gene, protein)]
     assert WP + "bdbEntrezGene" in apart.nodes[gene].properties, "the gene keeps its NCBI Gene id"
     assert "ensembl" not in apart.to_networkx().nodes[protein]
+    self_named = [q for q in data] + [ox.Quad(ox.NamedNode(gene), ox.NamedNode(WP + "bdbEnsembl"), ox.NamedNode(gene))]
+    named = PropertyGraph.from_rdf(self_named, identity=Identity.of(up, decision=decision, kinds=kinds, unfold=["ensembl"]))
+    assert [e.type for e in named.edges if e.source == gene] == [WP + "bdbUniprot"], "a self statement is no edge"
+    assert named.report()["lossless"]["passed"]
 
 
 def test_claims_of_a_client_read_the_cross_references_from_the_records():
@@ -208,6 +212,10 @@ def test_claims_of_a_client_read_the_cross_references_from_the_records():
     assert all(c.source == "wikipathways" for c in found.claims)
     cites = Claims.of(wp, citing=["ncbigene"])
     assert len(cites) == len(found)
+    drawn = ox.Dataset([*data, ox.Quad(ox.NamedNode(IDO + "chebi/CHEBI:15377"), ox.NamedNode(WP + "bdbChEBI"), ox.NamedNode(IDO + "chebi/CHEBI:15377"))])
+    wp.to_oxigraph = lambda *results: drawn
+    named = Claims.of(wp).decide(namespaces=["chebi"])
+    assert IDO + "chebi/CHEBI:15377" in named.targets("chebi"), "a node drawn with its ChEBI id gets its ChEBI record"
 
 
 def test_cross_references_of_a_schema():
