@@ -106,4 +106,4 @@ def test_many_identifiers_are_resolved_with_one_check_query():
         sent = client.trace()["source_queries"] - before
     assert {n: r.iri for n, r in many.items()} == one_by_one
     assert one_by_one["CHEBI:15377"] is None and one_by_one["urn:e:org"] == "urn:e:org"
-    assert sent == 1, sent
+    assert sent == 2, sent  # subjects, then objects for the rest

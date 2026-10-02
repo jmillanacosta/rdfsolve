@@ -11,6 +11,7 @@ from rdfsolve.client.description_lookup import CLASS_TYPES
 from rdfsolve.client.hydration import _iri
 from rdfsolve.client.query_fragments import Fragment
 from rdfsolve.schema_models.enrichment import SYNONYM_PREDICATES, RdfTerm
+from rdfsolve.sparql_helper import SparqlHelperError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -204,28 +205,56 @@ def _named(
 
 
 def _witnesses(client: Client, iris: list[str], kind: str) -> dict[str, dict[str, Any]]:
-    """Return one scoped member (class) or statement (resource) for each IRI, in one query.
+    """Return one scoped member (class) or statement (resource) for each IRI.
 
-    The IRIs are one VALUES list and each keeps one witness (SAMPLE). Before, each IRI was a
-    LIMIT 1 subquery in a UNION, which QLever answered slowly for many IRIs (66 ChEBI ids in
-    batches of 200 candidates: 93 s, against 23 s one by one).
+    A resource is first looked up as a subject: one query with the IRIs as one VALUES list
+    and one sampled statement each (a subject lookup, cheap on every engine). Only the IRIs
+    without outgoing statements are then looked up as objects, the same way: grouping every
+    inbound statement of UniProt entries (which have outgoing ones) did not answer on its
+    endpoint. When the endpoint refuses, the rest are checked in LIMIT 1 subqueries, 20 at a
+    time (a UNION of 200 was slow on QLever). A class is checked
+    with a LIMIT 1 subquery for each IRI (grouping all members of a large class would scan it).
     """
     if not iris:
         return {}
-    values = " ".join(_iri(iri) for iri in iris)
-    body = (
-        client._subject_type("?w", "?candidate")
-        if kind == "class"
-        else "{ ?candidate ?_p ?w } UNION { ?w ?_p ?candidate }"
-    )
-    query = (
-        f"SELECT ?candidate (SAMPLE(?w) AS ?witness) WHERE {{ VALUES ?candidate {{ {values} }} "
-        f"{client._scope(body)} }} GROUP BY ?candidate"
-    )
+    seen: dict[str, str] = {}
+    ids: list[str] = []
+    rest = list(iris)
     with client.step(f"Check {kind} candidates in scope"):
-        rows = client._select(query)
+        if kind != "class":
+            for pattern in ("?candidate ?_p ?w", "?w ?_p ?candidate"):
+                if not rest:
+                    break
+                values = " ".join(_iri(iri) for iri in rest)
+                try:
+                    rows = client._select(
+                        f"SELECT ?candidate (SAMPLE(?w) AS ?witness) WHERE {{ VALUES ?candidate "
+                        f"{{ {values} }} {client._scope(pattern)} }} GROUP BY ?candidate"
+                    )
+                except SparqlHelperError:
+                    break  # the endpoint refused: the rest is checked one IRI at a time
+                seen.update(
+                    {r["candidate"]["value"]: r["witness"]["value"] for r in rows if "witness" in r}
+                )
+                rest = [iri for iri in rest if iri not in seen]
+            else:
+                rest = []
+        for start in range(0, len(rest), 20):
+            branches = []
+            for iri in rest[start : start + 20]:
+                term = _iri(iri)
+                body = (
+                    client._subject_type("?w", term)
+                    if kind == "class"
+                    else f"{{ {term} ?_p ?w }} UNION {{ ?w ?_p {term} }}"
+                )
+                branches.append(
+                    f"{{ {{ SELECT ?w WHERE {{ {client._scope(body)} }} LIMIT 1 }} "
+                    f"BIND({term} AS ?candidate) }}"
+                )
+            rows = client._select(f"SELECT ?candidate ?w WHERE {{ {' UNION '.join(branches)} }}")
+            seen.update({r["candidate"]["value"]: r["w"]["value"] for r in rows})
     ids = list(client._steps[-1]["query_ids"])
-    seen = {row["candidate"]["value"]: row["witness"]["value"] for row in rows if "witness" in row}
     used, missing = (
         ("used as class", "not used as class")
         if kind == "class"
