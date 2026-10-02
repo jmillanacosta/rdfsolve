@@ -92,9 +92,6 @@ class SourceModel(BaseModel):
         Extra named graphs for subject and object types.
     ontology_graph_uris:
         Named graphs for ontology interpretation and extraction.
-    materialized_graph_uris:
-        Named graphs where a reasoner stores relations between terms as edges: X R Y for
-        X SubClassOf (R some Y) (UberGraph: the nonredundant relation graph).
     graph_sources:
         Download fields keyed by the named graph that receives their triples.
     chunk_size:
@@ -175,7 +172,6 @@ class SourceModel(BaseModel):
     graph_uris: list[str] = Field(default_factory=list)
     type_context_graph_uris: list[str] = Field(default_factory=list)
     ontology_graph_uris: list[str] = Field(default_factory=list)
-    materialized_graph_uris: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     skip_remote: bool = False
     chunk_size: int | None = None
@@ -273,7 +269,6 @@ class SourceModel(BaseModel):
         "graph_uris",
         "type_context_graph_uris",
         "ontology_graph_uris",
-        "materialized_graph_uris",
         "download_ttl",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",

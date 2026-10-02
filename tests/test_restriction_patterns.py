@@ -76,37 +76,3 @@ def test_the_patterns_are_kept_in_the_schema_file():
     read = MinedSchema.from_dict(schema.to_dict())
     assert read.restriction_patterns == schema.restriction_patterns
     assert MinedSchema.from_dict(MinedSchema(about=schema.about, patterns=[]).to_dict()).restriction_patterns is None
-
-
-RELATIONS = "http://reasoner.renci.org/nonredundant"
-MATERIALIZED = f"""
-<{OBO}CL_1> <{OBO}BFO_0000050> <{OBO}UBERON_1> .
-<{OBO}CL_2> <{OBO}BFO_0000050> <{OBO}UBERON_2> .
-<{OBO}CL_2> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <{OBO}CL_1> .
-<{OBO}CL_1> <http://www.w3.org/2000/01/rdf-schema#subClassOf> <{OBO}UBERON_9> .
-<{OBO}CL_1> <{OBO}BFO_0000050> "not a term" .
-"""
-
-
-def test_materialized_relations_are_patterns_with_their_evidence():
-    """UberGraph stores X part_of Y for X SubClassOf (part_of some Y) in a relation graph; those
-    edges are patterns of the same kind, marked materialized, next to the asserted ones."""
-    from rdflib import Dataset, URIRef
-
-    data = Dataset()
-    data.default_graph.parse(data=DATA, format="turtle")
-    data.graph(URIRef(RELATIONS)).parse(data=MATERIALIZED, format="nt")
-    with SchemaMiner.from_graph(data, delay=0) as miner:
-        found = mine_restriction_patterns(miner.helper, materialized_graph_uris=[RELATIONS])
-    assert found.state == "complete"
-    made = {(_key(p), p.subject_namespace.rsplit("/", 1)[-1]): p for p in found.patterns if p.evidence == "materialized"}
-    part = made[("SubClassOf", "BFO_0000050", "some", "UBERON_"), "CL_"]
-    assert (part.count, part.classes, part.graph_uri) == (2, 2, RELATIONS)
-    assert part.label == "CL SubClassOf BFO_0000050 some UBERON", "No label of BFO_0000050 in the data"
-    within = made[("SubClassOf", "rdf-schema#subClassOf", "named", "CL_"), "CL_"]
-    assert within.label == "CL SubClassOf CL" and within.count == 1
-    assert (("SubClassOf", "rdf-schema#subClassOf", "named", "UBERON_"), "CL_") in made
-    assert len([p for p in found.patterns if p.evidence == "asserted"]) == 5, "The axioms as before"
-    assert MinedSchema.from_dict(
-        MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[], restriction_patterns=found).to_dict()
-    ).restriction_patterns == found
