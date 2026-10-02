@@ -107,3 +107,23 @@ def test_many_identifiers_are_resolved_with_one_check_query():
     assert {n: r.iri for n, r in many.items()} == one_by_one
     assert one_by_one["CHEBI:15377"] is None and one_by_one["urn:e:org"] == "urn:e:org"
     assert sent == 2, sent  # subjects, then objects for the rest
+
+
+def test_the_forms_of_a_namespace_are_learned_from_a_sample():
+    """The source writes every ChEBI id as obo:CHEBI_n: learned from two ids, applied to the
+    others, so ten ids take a few queries; an id the learned form misses is checked in full."""
+    obo = "http://purl.obolibrary.org/obo/CHEBI_"
+    data = "".join(f"<{obo}{n}> <urn:e:p> <urn:e:o> .\n" for n in range(15370, 15379))
+    data += "<urn:e:x> <urn:e:p> <https://identifiers.org/chebi/CHEBI:16000> .\n"
+    graph = Dataset().parse(data=f"<urn:e:data> {{ {data} }}", format="trig")
+    names = [f"CHEBI:{n}" for n in range(15370, 15379)] + ["CHEBI:16000", "CHEBI:99999"]
+    with Client(MinedSchema.from_shacl(SHACL), graph, graph_uris=["urn:e:data"]) as client:
+        one_by_one = {n: client.resolve(n).iri for n in names}
+        before = client.trace()["source_queries"]
+        many = client.resolve_many(names, sample=2)
+        sent = client.trace()["source_queries"] - before
+    assert {n: r.iri for n, r in many.items()} == one_by_one
+    assert one_by_one["CHEBI:16000"] == "https://identifiers.org/chebi/CHEBI:16000", "A miss, checked in full"
+    assert one_by_one["CHEBI:99999"] is None
+    assert sent <= 6, sent
+    assert many["CHEBI:15378"].coverage["forms"] == [obo + "{id}"]

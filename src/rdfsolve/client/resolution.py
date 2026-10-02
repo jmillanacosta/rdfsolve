@@ -102,13 +102,16 @@ def _registered(name: str) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
 
 
 def resolve_terms(
-    client: Client, names: Iterable[str], *, kind: str, batch: int = 200
+    client: Client, names: Iterable[str], *, kind: str, batch: int = 500, sample: int = 3
 ) -> dict[str, Resolution]:
     """Resolve many names at once: the candidates of every IRI or CURIE are checked together.
 
-    The same decisions as :func:`resolve_term`, with one check query for each *batch* of
-    candidate IRIs instead of one for each name (134 identifiers of WP4726: 134 queries
-    before). A name that is not an IRI or CURIE is resolved on its own.
+    The same decisions as :func:`resolve_term`, from few queries. A source writes all the
+    identifiers of one namespace the same way, so the forms it uses are learned from *sample*
+    identifiers of each namespace (all their registered IRI forms are checked), and only those
+    forms are checked for the others; an identifier not found that way has all its forms
+    checked. Each check is one query per *batch* of IRIs and direction (68 UniProt accessions
+    of WP4726: 137 queries one by one). A name that is not an IRI or CURIE is resolved alone.
     """
     if kind not in {"class", "resource"}:
         raise ValueError("Choose kind='class' (typed members) or kind='resource' (exact term)")
@@ -119,10 +122,66 @@ def resolve_terms(
             pending[name] = _registered(name)
         else:
             results[name] = resolve_term(client, name, kind=kind)
-    iris = sorted({iri for found, _ in pending.values() for iri in found})
+    from collections import defaultdict
+
+    from rdfsolve.identifiers import parse
+
     checks: dict[str, dict[str, Any]] = {}
-    for start in range(0, len(iris), batch):
-        checks.update(_witnesses(client, iris[start : start + batch], kind))
+
+    def check(iris: Iterable[str]) -> None:
+        todo = sorted(set(iris) - checks.keys())
+        for start in range(0, len(todo), batch):
+            checks.update(_witnesses(client, todo[start : start + batch], kind))
+
+    def present(iri: str) -> bool:
+        return checks.get(iri, {}).get("use") in {"present", "used as class"}
+
+    def form(iri: str, name: str) -> str | None:
+        read = parse(name)
+        return iri.replace(read.local, "{id}") if read and read.local in iri else None
+
+    by_prefix: dict[str, list[str]] = defaultdict(list)
+    for name in pending:
+        read = parse(name)
+        by_prefix[read.prefix if read else ""].append(name)
+    # A source writes every identifier of a namespace the same way: the forms it uses are
+    # learned from a sample of each namespace (all registered forms checked, all namespaces in
+    # one check), then only those forms are checked for the others, then the misses in full.
+    learn = {p: g[:sample] for p, g in by_prefix.items() if p and len(g) > sample}
+    check(
+        iri
+        for p, group in by_prefix.items()
+        for name in learn.get(p, group)
+        for iri in pending[name][0]
+    )
+    guessed: dict[str, list[str]] = {}
+    learned: dict[str, list[str]] = {}
+    for p, probe in learn.items():
+        forms = {
+            f
+            for name in probe
+            for iri in pending[name][0]
+            if present(iri) and (f := form(iri, name))
+        }
+        learned[p] = sorted(forms)
+        for name in by_prefix[p][sample:]:
+            guessed[name] = [i for i in pending[name][0] if form(i, name) in forms]
+    check(iri for iris in guessed.values() for iri in iris)
+    missed = [name for name, iris in guessed.items() if not any(present(i) for i in iris)]
+    check(iri for name in missed for iri in pending[name][0])
+    for name, iris in guessed.items():
+        if name in missed:
+            continue
+        found, coverage = pending[name]
+        prefix = parse(name).prefix  # type: ignore[union-attr]
+        pending[name] = (
+            {iri: item for iri, item in found.items() if iri in iris},
+            {
+                **coverage,
+                "forms": learned[prefix],
+                "forms_basis": f"learned from {sample} {prefix} ids",
+            },
+        )
     for name, (found, coverage) in pending.items():
         results[name] = _conclude(client, name, kind, found, checks, coverage, [])
     return results
