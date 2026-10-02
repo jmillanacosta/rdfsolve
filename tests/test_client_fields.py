@@ -110,3 +110,17 @@ def test_properties_with_code_names_are_named_by_their_labels():
     assert {client.field_name("Event", n) for n in ("P580", "wdt:P580", "start time")} == {
         "start_time"
     }
+
+
+def test_the_links_of_one_record_type_are_drawn_with_what_they_reach():
+    """A link diagram draws one record type, the named links and what each reaches; a link
+    named with ^ points to the record type; classes of another namespace are left out."""
+    client = Client(MinedSchema.from_vocabulary([VOCABULARY], CLASSES))
+    drawn = client.diagram("Work", links=["author", "editor"])
+    assert drawn.startswith("```mermaid") and "**Work**" in drawn and "**Person**" in drawn
+    assert re.search(r'C0 -->\|"`author \(\d[\d,]*\)`"\| C1', drawn), drawn
+    assert "Place" not in client.diagram("Person", links=["place"]), "another namespace"
+    into = client.diagram("Person", links=["^knows"])
+    assert re.search(r'C1 -->\|"`knows', into) is None and "C0 -->|" in into, (
+        "knows: Person to Person"
+    )

@@ -140,6 +140,92 @@ def path_diagram(
     return notice + "```mermaid\n" + body + "\n```"
 
 
+def link_diagram(
+    client: Client, kind: str, links: Iterable[str], *, top: int = 4, fenced: bool = True
+) -> str:
+    """Draw one record type, the links of it that are named, and what each link reaches.
+
+    A link is a field name or label ("source", "Is part of"); "^Is part of" is a link that
+    points to the record type. The reached record types are those the mined schema counts for
+    the link, in the record type's own namespace (WikiPathways' drawing classes are left out),
+    with the number of statements; the *top* most counted per link, the others as one node.
+    """
+    from collections import defaultdict
+
+    from rdfsolve.conversion import _link
+
+    focus = class_iri(client.model(kind))
+    parts = re.split(r"(?<=[#/])", focus)
+    namespace = "".join(parts[:-1]) if len(parts) > 1 else ""
+    prefixes = client.schema.get_prefixes()
+
+    def name(iri: str) -> str:
+        """Return the record type name of a class, else the class's short form."""
+        if iri in ("Literal", "Resource", "BlankNode"):
+            return {"Literal": "text or value", "Resource": "IRI", "BlankNode": "blank node"}[iri]
+        try:
+            return client.type_name(client.model(iri))
+        except ValueError:
+            return _curie(iri, prefixes)
+
+    nodes = {focus: "C0"}
+    lines = [_node("C0", name(focus), _curie(focus, prefixes))]
+    edges = []
+    for link in links:
+        inverse = link.startswith("^")
+        prop = _link(client, link.lstrip("^"), kind)
+        counts: dict[str, int] = defaultdict(int)
+        for pattern in client.schema.patterns:
+            if pattern.property_uri != prop:
+                continue
+            here, there = (
+                (pattern.object_class, pattern.subject_class)
+                if inverse
+                else (pattern.subject_class, pattern.object_class)
+            )
+            if here != focus or (there.startswith("http") and not there.startswith(namespace)):
+                continue
+            counts[there] += pattern.count or 0
+        ranked = sorted(counts.items(), key=lambda item: -item[1])
+        if len(ranked) > top:
+            rest = ranked[top:]
+            other = f"C{len(nodes)}"
+            nodes[f"{link} other"] = other
+            lines.append(
+                _node(other, f"{len(rest)} other types", ", ".join(name(t) for t, _ in rest[:4]))
+            )
+            lines.append(f"style {other} fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")
+            label = _md(f"{link.lstrip('^')} ({sum(c for _, c in rest):,})")
+            edges.append(
+                f'{other} -.->|"`{label}`"| C0' if inverse else f'C0 -.->|"`{label}`"| {other}'
+            )
+            ranked = ranked[:top]
+        for there, count in ranked:
+            if there not in nodes:
+                nodes[there] = f"C{len(nodes)}"
+                lines.append(
+                    _node(
+                        nodes[there],
+                        name(there),
+                        _curie(there, prefixes) if there.startswith("http") else "",
+                    )
+                )
+            label = _md(f"{link.lstrip('^')} ({count:,})")
+            a, b = (nodes[there], nodes[focus]) if inverse else (nodes[focus], nodes[there])
+            edges.append(f'{a} -->|"`{label}`"| {b}')
+    body = "\n".join(
+        [
+            "flowchart LR",
+            *lines,
+            *edges,
+            "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
+            "style C0 fill:#fdf1d6,stroke:#b07a12,stroke-width:2px",
+            "linkStyle default stroke:#7a8aa0,stroke-width:1.5px",
+        ]
+    )
+    return f"```mermaid\n{body}\n```" if fenced else body
+
+
 def connection_diagram(table: pd.DataFrame, *, instances: bool = False) -> str:
     """Draw only observed routes in a returned connection table or its selected rows.
 

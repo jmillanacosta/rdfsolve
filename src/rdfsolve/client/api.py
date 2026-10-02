@@ -858,15 +858,23 @@ class Client(DatasetClient):
         namespaces: Iterable[str] = (),
         iris: str = "curie",
         merge: bool = True,
+        links: Iterable[str] | None = None,
     ) -> str:
         """Draw selected models or the selected rows of a paths table, without queries.
+
+        With *links*, draw one record type, those of its links (field names or labels;
+        "^name" for a link pointing to it) and the record types each reaches, with counts.
 
         For models: namespaces keeps the classes in these namespaces (IRIs or prefixes);
         iris shows class IRIs as "curie", "full" or "none"; merge draws one edge per pair
         of classes with the names of all their links.
         """
-        from rdfsolve.client.diagram import model_diagram, path_diagram
+        from rdfsolve.client.diagram import link_diagram, model_diagram, path_diagram
 
+        if links is not None:
+            if len(kinds) != 1:
+                raise ValueError("Draw the links of one record type")
+            return link_diagram(self, kinds[0], links, fenced=fenced)
         if paths is not None:
             if kinds:
                 raise ValueError("Choose model names or a paths table, not both")
