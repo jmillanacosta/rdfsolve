@@ -889,8 +889,8 @@ def _apply_identity(
         if not (edge.type in chosen if chosen is not None else is_declared_property(edge.type)):
             continue  # not a predicate that can state that two identifiers are one entity
         to = parsed.get(edge.target_iri or edge.target)
-        if to is None:
-            continue
+        if to is None or edge.source == edge.target:
+            continue  # not a link to an identifier, or a statement of a node about itself
         start = parsed.get(edge.source_iri or edge.source)
         kinds_from = issued.get(start.prefix) if start else None
         kinds_to = issued.get(to.prefix)
@@ -911,6 +911,8 @@ def _apply_identity(
             decision = f"edge: undecided, kind unknown for {', '.join(unknown)}"
         elif not kinds_from & kinds_to:
             decision = "edge: a relation between two kinds"
+        elif start.prefix == to.prefix and start.curie != to.curie:
+            decision = "edge: two identifiers of one namespace are two entities"
         elif not one_to_one:
             decision = "edge: same kind, not one to one"
         elif bare and identity.attributes:
@@ -943,12 +945,30 @@ def _apply_identity(
         row["links"] += 1
     edges[:] = [e for e in edges if id(e) not in removed]
     exact = 0
+    refused = 0
     if same:
+        root: dict[str, str] = {}
+
+        def find(n: str) -> str:
+            while root.get(n, n) != n:
+                n = root[n]
+            return n
+
+        for left, right in same:
+            root[find(left)] = find(right)
+        clusters: dict[str, list[str]] = defaultdict(list)
+        for n in {n for pair in same for n in pair}:
+            clusters[find(n)].append(n)
         found_in: dict[str, str] = {}
-        for left, right in same:  # each pair is one to one, so the pairs are disjoint
-            keep = _keep(nodes, (left, right), None)
-            _merge_nodes(nodes, (left, right), keep)
-            found_in.update({left: keep, right: keep})
+        for members in clusters.values():
+            iris = [iri for m in members for iri in (nodes[m].members or [m])]
+            ids = {found.curie: found.prefix for iri in iris if (found := parse(iri))}
+            if len(set(ids.values())) < len(ids):
+                refused += 1  # a merge never joins two identifiers of one namespace
+                continue
+            keep = _keep(nodes, members, None)
+            _merge_nodes(nodes, members, keep)
+            found_in.update(dict.fromkeys(members, keep))
             exact += 1
         internal += _retarget(nodes, edges, found_in)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
@@ -963,6 +983,7 @@ def _apply_identity(
         "merged_iris": sum(len(m["iris"]) for m in merged),
         "merged_examples": merged[:5],
         "merged_exact": exact,
+        "exact_refused": refused,
         "statements_within_merged_nodes": internal,
         "kinds": {prefix: sorted(classes) for prefix, classes in sorted(issued.items())},
         "mappings": rows,

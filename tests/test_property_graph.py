@@ -195,6 +195,8 @@ IDS = """
 <http://purl.obolibrary.org/obo/CHEBI_15377> a <http://www.w3.org/2002/07/owl#Class> ; rdfs:label "water" .
 <https://identifiers.org/cas/7732-18-5> a wp:Metabolite ; rdfs:label "H2O" ;
     wp:bdbChEBI <http://purl.obolibrary.org/obo/CHEBI_15377> .
+<https://identifiers.org/chebi/CHEBI:30616> a wp:Metabolite ; rdfs:label "ATP" ;
+    wp:bdbChEBI <https://identifiers.org/chebi/CHEBI:30616>, <https://identifiers.org/chebi/CHEBI:15422> .
 """
 WPV = "http://vocabularies.wikipathways.org/wp#"
 MAPPINGS = [WPV + "bdbUniprot", WPV + "bdbChEBI", "http://www.w3.org/2004/02/skos/core#exactMatch"]
@@ -266,5 +268,8 @@ def test_exact_identity_merges_two_identifiers_of_one_kind():
         "https://identifiers.org/cas/7732-18-5",
     }
     assert {"http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"} <= set(water.labels)
+    rows = report["identity"]["mappings"]
+    assert not [r for r in rows if r["example"][0] == r["example"][1]], "A self statement is no mapping"
+    assert "https://identifiers.org/chebi/CHEBI:15422" in one.nodes, "Two ChEBI ids are two entities"
     default = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds)).report()["identity"]
     assert {r["predicate"] for r in default["mappings"]} == {"http://www.w3.org/2004/02/skos/core#exactMatch"}
