@@ -145,6 +145,22 @@ class UberGraph:
             out += [(r["t"]["value"], r["p"]["value"], r["x"]["value"]) for r in self.select(query)]
         return sorted(set(out))
 
+    def between(
+        self, terms: Iterable[str], predicates: Iterable[str]
+    ) -> list[tuple[str, str, str]]:
+        """Return the relations among *terms* by *predicates*, from the closure (both ways)."""
+        ordered = sorted(set(terms))
+        if len(ordered) < 2:
+            return []
+        query = (
+            f"SELECT ?t ?p ?x WHERE {{ VALUES ?t {{ {_values(ordered)} }} "
+            f"VALUES ?x {{ {_values(ordered)} }} VALUES ?p {{ {_values(predicates)} }} "
+            f"GRAPH <{REDUNDANT}> {{ ?t ?p ?x }} FILTER(?t != ?x) }}"
+        )
+        return sorted(
+            {(r["t"]["value"], r["p"]["value"], r["x"]["value"]) for r in self.select(query)}
+        )
+
     def categories(
         self, terms: Iterable[str], *, most_specific: bool = True
     ) -> dict[str, set[str]]:

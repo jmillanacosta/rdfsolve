@@ -495,6 +495,32 @@ class Ontologies:
         ) or {}
         return {t: found.get(canonical[t], []) if canonical[t] in held else None for t in terms}
 
+    def variants(self, terms: list[str]) -> list[tuple[str, str]]:
+        """Return the pairs of terms that name one compound in another form.
+
+        Tautomers and conjugate acids and bases (rdfsolve.ontology.vocabulary.
+        CHEMICAL_VARIANT_PREDICATES), from UberGraph's closure: L-serine and L-serine
+        zwitterion are tautomers. Terms it does not hold have no variants here.
+        """
+        from rdfsolve.ontology.vocabulary import CHEMICAL_VARIANT_PREDICATES
+
+        canonical, held = self._held(terms)
+        inside = sorted({canonical[t] for t in terms if canonical[t] in held})
+        found = (
+            self._closure(
+                "variants",
+                inside,
+                lambda: [
+                    [s, o]
+                    for s, _, o in self._ubergraph().between(inside, CHEMICAL_VARIANT_PREDICATES)
+                ],
+            )
+            if len(inside) > 1
+            else []
+        ) or []
+        back = {canonical[t]: t for t in terms}
+        return sorted({(back.get(s, s), back.get(o, o)) for s, o in found})
+
     def _ols_related(self, iri: str, relation: str) -> list[str] | None:
         """Return the ancestors or descendants of a term from OLS, or None when OLS lacks it."""
         if self.provider != "ols":

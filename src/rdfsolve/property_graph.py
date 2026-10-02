@@ -207,6 +207,10 @@ class Identity:
     - *exact* merges two different identifiers of one kind that are linked one to one both ways
       and both have data (a WikiPathways metabolite and its ChEBI class), into one node listing
       both; without it they stay linked by an edge.
+    - *same* are pairs of IRIs decided to name one entity (Decision.pairs: the claims that a
+      decision accepted); they are merged, unless their kinds are known and differ.
+      *variants* are pairs of identifiers of one namespace that name one entity in another
+      form (tautomers in ChEBI); only these may share a node with each other.
     - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
       WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
       types. With "role" (the default) it keeps the classes its sources give it other than the
@@ -224,6 +228,21 @@ class Identity:
     mappings: Iterable[str] | None = None
     exact: bool = False
     labels: str | Sequence[str] = "role"
+    same: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
+    variants: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
+
+    @classmethod
+    def of(cls, *clients: Any, decision: Any = None, **options: Any) -> Identity:
+        """Return an Identity with the kinds that *clients* issue and the pairs a decision
+        accepted (rdfsolve.mappings.claims.Decision), merged as one entity each.
+        """
+        kinds: dict[str, list[str]] = {}
+        for client in clients:
+            kinds.update(client.issued_kinds())
+        if decision is not None:
+            options.setdefault("same", decision.pairs())
+            options.setdefault("variants", decision.variants)
+        return cls(kinds={**kinds, **options.pop("kinds", {})}, **options)
 
 
 def _ox_id(term: ox.NamedNode | ox.BlankNode) -> str:
@@ -525,9 +544,14 @@ class PropertyGraph:
                     total += 1
                     native += v.datatype not in (None, _STRING, REFERENCE) and self._typed(v)
         namer = self._namer()
+        node_types = Counter(
+            " + ".join(sorted({namer[label] for label in n.labels})) or "(no class)"
+            for n in self.nodes.values()
+        )
         return {
             "nodes": len(self.nodes),
             "edges": len(self.edges),
+            "node_types": dict(node_types.most_common()),
             "lossless": {
                 "passed": not missing and not extra and not self.named_graphs,
                 "missing": len(missing),
@@ -966,6 +990,34 @@ def _apply_identity(
         )
         row["links"] += 1
     edges[:] = [e for e in edges if id(e) not in removed]
+    # A decided pair names identifiers as a source wrote them (identifiers.org/chebi/...); its
+    # node is the node of that identifier, whatever IRI the node has.
+    by_identifier: dict[str, str] = {}
+    for nid, node in nodes.items():
+        for iri in node.members or [nid]:
+            if (found := parse(iri)) is not None:
+                by_identifier.setdefault(found.curie, nid)
+
+    def node_of(iri: str) -> str | None:
+        if iri in nodes:
+            return iri
+        found = parse(iri)
+        return by_identifier.get(found.curie) if found else canonical.get(iri)
+
+    for left, right in identity.same:
+        a, b = node_of(left), node_of(right)
+        if a is None or b is None or a == b:
+            continue
+        from_kind = issued.get(getattr(parse(left), "prefix", ""))
+        to_kind = issued.get(getattr(parse(right), "prefix", ""))
+        if from_kind and to_kind and not from_kind & to_kind:
+            continue  # decided as one entity, but the issuers say two kinds
+        same.append((a, b))
+    allowed = {
+        frozenset((found_a.curie, found_b.curie))
+        for a, b in identity.variants
+        if (found_a := parse(a)) and (found_b := parse(b))
+    }
     exact = 0
     refused = 0
     if same:
@@ -985,8 +1037,11 @@ def _apply_identity(
         for members in clusters.values():
             iris = [iri for m in members for iri in (nodes[m].members or [m])]
             ids = {found.curie: found.prefix for iri in iris if (found := parse(iri))}
-            if len(set(ids.values())) < len(ids):
-                refused += 1  # a merge never joins two identifiers of one namespace
+            by_prefix: dict[str, list[str]] = defaultdict(list)
+            for key, prefix in ids.items():
+                by_prefix[prefix].append(key)
+            if any(not _joined(keys, allowed) for keys in by_prefix.values() if len(keys) > 1):
+                refused += 1  # never two identifiers of one namespace, but declared variants
                 continue
             keep = _keep(nodes, members, None)
             _merge_nodes(nodes, members, keep)
@@ -1079,6 +1134,22 @@ def _reconcile_labels(
         "ties_kept_all": ties,
         "basis": "the data's own classes; issuer kinds go to type" if policy == "role" else "",
     }
+
+
+def _joined(keys: list[str], pairs: set[frozenset[str]]) -> bool:
+    """Return whether *pairs* join every key into one group."""
+    root = {k: k for k in keys}
+
+    def find(k: str) -> str:
+        while root[k] != k:
+            k = root[k]
+        return k
+
+    for pair in pairs:
+        a, b = tuple(pair)
+        if a in root and b in root:
+            root[find(a)] = find(b)
+    return len({find(k) for k in keys}) == 1
 
 
 def _add_value(node: PGNode, key: str, value: Value, written: str) -> None:

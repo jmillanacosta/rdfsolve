@@ -13,9 +13,12 @@ DATA = f"""
 <{NONREDUNDANT}> {{ <{OBO}CL_2> <{SUB}> <{OBO}CL_1> . <{OBO}CL_1> <{SUB}> <{OBO}CL_0> .
   <{OBO}CL_2> <{OBO}BFO_0000050> <{OBO}UBERON_1> . }}
 <http://reasoner.renci.org/ontology> {{ <{OBO}CL_2> a <http://www.w3.org/2002/07/owl#Class> .
+  <{OBO}CHEBI_17115> a <http://www.w3.org/2002/07/owl#Class> . <{OBO}CHEBI_33384> a <http://www.w3.org/2002/07/owl#Class> .
+  <{OBO}CHEBI_16523> a <http://www.w3.org/2002/07/owl#Class> .
   <{OBO}CL_1> a <http://www.w3.org/2002/07/owl#Class> . <{OBO}CL_0> a <http://www.w3.org/2002/07/owl#Class> . }}
 <{REDUNDANT}> {{ <{OBO}CL_2> <{SUB}> <{OBO}CL_1>, <{OBO}CL_0>, <{OBO}CL_2>, <http://www.w3.org/2002/07/owl#Thing> .
-  <{OBO}CL_1> <{SUB}> <{OBO}CL_0> . }}
+  <{OBO}CL_1> <{SUB}> <{OBO}CL_0> .
+  <{OBO}CHEBI_33384> <{OBO}RO_0018036> <{OBO}CHEBI_17115> . <{OBO}CHEBI_16523> <{OBO}RO_0018039> <{OBO}CHEBI_17115> . }}
 <{BIOLINK_GRAPH}> {{ <{OBO}CL_2> <{BIOLINK}category> <{BIOLINK}Cell>, <{BIOLINK}AnatomicalEntity>,
     <{BIOLINK}NamedThing>, <{BIOLINK}PhysicalEssence> .
   <{BIOLINK}Cell> <{L}is_a> <{BIOLINK}AnatomicalEntity> .
@@ -76,3 +79,9 @@ def test_a_term_ubergraph_does_not_hold_is_asked_of_ols_not_taken_as_parentless(
     assert found[edam] == ["http://edamontology.org/data_0842", "http://edamontology.org/data_0976"]
     assert found["http://example.org/unknown"] is None
     assert ontologies.categories([edam]) == {edam: None}, "Biolink kinds come from UberGraph only"
+
+
+def test_variants_are_tautomers_and_conjugates_not_enantiomers():
+    ontologies = Ontologies(ubergraph=source())
+    terms = [OBO + "CHEBI_17115", OBO + "CHEBI_33384", OBO + "CHEBI_16523"]
+    assert ontologies.variants(terms) == [(OBO + "CHEBI_33384", OBO + "CHEBI_17115")]
