@@ -19,8 +19,8 @@ from rdfsolve.config import get_base_uri
 from rdfsolve.mappings.models.core import MappingEdge
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
     from collections.abc import Mapping as MappingType
-    from collections.abc import Sequence
 
     from curies import Converter
 
@@ -101,6 +101,19 @@ def create_sssom_mappings(
     msdf.clean_prefix_map()
 
     return msdf
+
+
+def converter_for(curies: Iterable[str]) -> Converter:
+    """Return a prefix map for these CURIEs: Bioregistry's URI prefix of each, and rdfsolve's."""
+    import bioregistry
+    from curies import Converter
+
+    prefix_map = {"rdfsolve": get_base_uri()}
+    for prefix in sorted({c.partition(":")[0] for c in curies}):
+        prefix_map[prefix] = (
+            bioregistry.get_uri_prefix(prefix) or f"https://bioregistry.io/{prefix}:"
+        )
+    return Converter.from_prefix_map(prefix_map)
 
 
 def write_sssom_tsv(msdf: MappingSetDataFrame, output_path: Path) -> None:

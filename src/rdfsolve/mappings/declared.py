@@ -108,12 +108,10 @@ def write_declared_identities(
     not match the Bioregistry pattern of its namespace). The flags of each statement are in the other column of the SSSOM table. The
     statements are the data of the source, so the table carries the licence of the source.
     """
-    import bioregistry
-    from curies import Converter
     from sssom import Mapping as SSSOMMapping
 
-    from rdfsolve.config import get_base_uri, mint
-    from rdfsolve.mappings.sssom import create_sssom_mappings, write_sssom_tsv
+    from rdfsolve.config import mint
+    from rdfsolve.mappings.sssom import converter_for, create_sssom_mappings, write_sssom_tsv
 
     rows = list(rows)
     counts: Counter[str] = Counter()
@@ -122,13 +120,7 @@ def write_declared_identities(
         kinds = {_kind(f) for f in row.flags}
         counts.update(kinds or {"clean"})
         flagged += bool(kinds)
-    prefixes = {c.partition(":")[0] for row in rows for c in (row.subject_id, row.object_id)}
-    prefix_map = {"rdfsolve": get_base_uri()}
-    for prefix in sorted(prefixes):
-        prefix_map[prefix] = (
-            bioregistry.get_uri_prefix(prefix) or f"https://bioregistry.io/{prefix}:"
-        )
-    converter = Converter.from_prefix_map(prefix_map)
+    converter = converter_for(c for row in rows for c in (row.subject_id, row.object_id))
     mappings = [
         SSSOMMapping(
             subject_id=row.subject_id,

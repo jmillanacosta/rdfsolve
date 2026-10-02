@@ -66,11 +66,11 @@ dependencies = [
     "ujson>=5.0.0",  # Fast JSON parser for large mapping files
 
     # Other
-    "pandas>=2.0.0", # DataFrame operations for analysis results
+    # pandas 3 turns a column of rdflib BNodes (a str subclass) into plain strings when the
+    # DataFrame is built, so from_table cannot tell blank nodes from IRIs; pyobo held pandas<3
+    "pandas>=2.0.0,<3", # DataFrame operations for analysis results
     "numpy",
-    "bioregistry>=0.13.25",  # bioversions.sources.ols needs bioregistry.external.ols.get_ols_processing
-    "bioversions>=0.8.295",  # must stay in sync with bioregistry (transitive via pyobo)
-    # bioregistry is now available from PyPI (see above)
+    "bioregistry>=0.13.25",
     # Schema modeling
     "linkml>=1.10.0",
     "linkml-runtime>=1.10.0",  # Must match linkml major.minor — 1.9.x removed Format.JSON used by linkml<1.10
@@ -85,8 +85,6 @@ dependencies = [
     "click",
     "more_click",
     "flask", # web framework,
-    "pyobo>=0.12.16",  # needs bioversions>=0.8.243 compatible with bioregistry>=0.13
-    "semra>=0.1.4",
 ]
 
 [project.optional-dependencies]

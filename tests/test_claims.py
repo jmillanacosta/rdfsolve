@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pyoxigraph as ox
 
-from rdfsolve.mappings.claims import Claim, Claims
+from rdfsolve.mappings.claims import Claims, property_of, source_of
 from rdfsolve.property_graph import Identity, PropertyGraph
 
 WP = "http://vocabularies.wikipathways.org/wp#"
@@ -208,8 +208,8 @@ def test_claims_of_a_client_read_the_cross_references_from_the_records():
         to_oxigraph=lambda *results: data,
     )
     found = Claims.of(wp)
-    assert {c.predicate for c in found.claims} == set(BRIDGEDB)
-    assert all(c.source == "wikipathways" for c in found.claims)
+    assert {property_of(c) for c in found.claims} == set(BRIDGEDB)
+    assert all(source_of(c) == "wikipathways" for c in found.claims)
     cites = Claims.of(wp, citing=["ncbigene"])
     assert len(cites) == len(found)
     drawn = ox.Dataset([*data, ox.Quad(ox.NamedNode(IDO + "chebi/CHEBI:15377"), ox.NamedNode(WP + "bdbChEBI"), ox.NamedNode(IDO + "chebi/CHEBI:15377"))])
@@ -244,3 +244,40 @@ def test_cross_references_of_a_schema():
     )
     wp = SimpleNamespace(_schema=schema, issued_kinds=lambda: {"wikipathways": [WP + "DataNode"]})
     assert Client.cross_references(wp) == [WP + "bdbChEBI", WP + "bdbLipidMaps"]
+
+
+def test_claims_and_the_resolution_are_sssom(tmp_path):
+    """The claims and the resolution are SSSOM mapping sets that sssom-py reads back: stated
+    BridgeDb links as cross-references with their source, accepted mappings as exact matches
+    with the rule that decided them, overruled ones as negative mappings."""
+    from sssom.parsers import parse_sssom_table
+
+    from rdfsolve.mappings.sssom import write_sssom_tsv
+
+    found = claims()
+    decision = found.decide(namespaces=["chebi"], variants=lambda iris: [
+        (a, b) for a in iris for b in iris if {a[-5:], b[-5:]} == {"17115", "33384"}
+    ])
+    stated = found.to_sssom().df
+    row = stated[(stated.subject_id == "lipidmaps:LMSP03010023") & (stated.object_id == "chebi:89488")].iloc[0]
+    assert row.predicate_id == "oboinowl:hasDbXref" and row.mapping_justification == "semapv:UnspecifiedMatching"
+    assert "wikipathways" in row.mapping_provider and WP + "bdbChEBI" in row.other
+
+    path = tmp_path / "resolution.sssom.tsv"
+    write_sssom_tsv(decision.to_sssom(), path)
+    table = parse_sssom_table(path).df.fillna("")
+    exact = table[table.predicate_modifier != "Not"]
+    negative = table[table.predicate_modifier == "Not"]
+    assert ("lipidmaps:LMSP03010023", "chebi:91146") in set(zip(exact.subject_id, exact.object_id))
+    assert list(zip(negative.subject_id, negative.object_id)) == [("lipidmaps:LMSP03010023", "chebi:89488")]
+    assert "chebi" in negative.iloc[0].curation_rule_text
+    assert set(table.mapping_justification) == {"semapv:MappingReview"}
+
+
+def test_an_identifier_that_fails_its_pattern_is_listed_not_written():
+    """lipidmaps/LMSP02 fails the LIPID MAPS pattern: no SSSOM record, but listed as invalid."""
+    turtle = f"""@prefix wp: <{WP}> .
+    <{IDO}cas/7732-18-5> wp:bdbLipidMaps <{IDO}lipidmaps/LMSP02>, <{IDO}lipidmaps/LMPR0106010002> ."""
+    found = Claims.stated(ox.Dataset(ox.parse(turtle.encode(), ox.RdfFormat.TURTLE)), [WP + "bdbLipidMaps"], "wikipathways")
+    assert [str(c.object_id) for c in found.claims] == ["lipidmaps:LMPR0106010002"]
+    assert found.invalid == [(IDO + "cas/7732-18-5", IDO + "lipidmaps/LMSP02", "wikipathways")]

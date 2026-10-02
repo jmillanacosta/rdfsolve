@@ -1,10 +1,22 @@
-"""Claims that two identifiers name one entity, who makes each claim, and a decision among them.
+"""Mappings that sources state, compared and resolved, as SSSOM records.
 
 A claim is one source stating a mapping: WikiPathways (BridgeDb) says the LIPID MAPS id of a
 metabolite is ChEBI 89488 and 91146; ChEBI, which issues ChEBI ids, says (with a
 cross-reference) that it is 91146 only. Sources disagree, and BridgeDb links depend on the
 BridgeDb release without saying which. So claims keep their source, are compared, and a
-decision says which are accepted and why:
+resolution says which are accepted and why.
+
+Records follow SSSOM, the Simple Standard for Sharing Ontological Mappings (Matentzoglu et al.
+2022; https://w3id.org/sssom), as sssom-py's Mapping: the stated cross-reference is
+``oboinowl:hasDbXref`` (a declared identity, ``skos:exactMatch``) with justification
+``semapv:UnspecifiedMatching``; the source that states it is ``mapping_provider``; the IRIs as
+the source wrote them and its property are kept in ``other``, so nothing is lost. Prefixes are
+written as Bioregistry normalizes them. An identifier that fails the pattern of its namespace
+(a UniProt proteome IRI with a fragment) is no SSSOM record; the claims list it as invalid.
+
+The resolution follows the assembly and prioritization of SeMRA, the Semantic Mapping Reasoning
+Assembler (Hoyt et al. 2025; https://github.com/biopragmatics/semra), and adds the authority of
+the source that issues a namespace:
 
 - the source that issues the target identifiers (ChEBI for ChEBI ids) is the authority for
   mappings to them; when it states targets, the other sources' different targets are
@@ -16,6 +28,11 @@ decision says which are accepted and why:
   entity that a source states (L-serine and its zwitterion are tautomers, in ChEBI);
 - otherwise several targets are ambiguous: none is accepted, and the report says so.
 
+The resolution is written as SSSOM too (:meth:`Resolution.to_sssom`): accepted mappings as
+``skos:exactMatch`` with justification ``semapv:MappingReview`` and the rule that decided them,
+overruled ones as negative mappings (``predicate_modifier: Not``). SSSOM tools such as SeMRA,
+which removes negative mappings before grouping, then group the identifiers as resolved.
+
 A claim can also be checked through a third identifier: the BridgeDb link from an Ensembl
 gene to a UniProt accession agrees with UniProt when UniProt gives the accession the same
 NCBI Gene id that BridgeDb gives the gene.
@@ -23,39 +40,82 @@ NCBI Gene id that BridgeDb gives the gene.
 
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.identifiers import Identifier, parse
+from rdfsolve.identifiers import parse
 
 if TYPE_CHECKING:
     import pyoxigraph as ox
+    from sssom import Mapping, MappingSetDataFrame
 
     from rdfsolve.client.api import Client
 
-__all__ = ["Claim", "Claims", "Decision"]
+__all__ = ["Claims", "Resolution", "claim"]
+
+STATED = "semapv:UnspecifiedMatching"
+REVIEWED = "semapv:MappingReview"
+CROSS_REFERENCE = "oboinowl:hasDbXref"  # prefixes as Bioregistry normalizes them
+EXACT = "skos:exactMatch"
 
 
-@dataclass(frozen=True)
-class Claim:
-    """A source stating that *subject* maps to *object* (both IRIs, as written)."""
+def claim(subject: str, object: str, source: str, predicate: str) -> Mapping:
+    """Return the SSSOM record of *source* stating, with *predicate*, that *subject* is *object*.
 
-    subject: str
-    object: str
-    source: str
-    predicate: str
+    *subject* and *object* are IRIs (or CURIEs) of registered identifiers, as the source wrote
+    them; the record keeps them, the source and the predicate in ``other``.
+    """
+    from sssom import Mapping
 
-    @property
-    def subject_id(self) -> Identifier | None:
-        """Return the subject read as a registered identifier."""
-        return parse(self.subject)
+    from rdfsolve.config import mint
+    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES
 
-    @property
-    def object_id(self) -> Identifier | None:
-        """Return the object read as a registered identifier."""
-        return parse(self.object)
+    s, o = parse(subject), parse(object)
+    if s is None or o is None:
+        raise ValueError(f"Not registered identifiers: {subject}, {object}")
+    return Mapping(
+        subject_id=s.curie,
+        predicate_id=EXACT if predicate in IDENTITY_PROPERTIES else CROSS_REFERENCE,
+        object_id=o.curie,
+        mapping_justification=STATED,
+        mapping_provider=mint("dataset", source),
+        other=json.dumps(
+            {"subject": subject, "object": object, "source": source, "property": predicate},
+            sort_keys=True,
+        ),
+    )
+
+
+def _valid(*identifiers: str) -> bool:
+    """Return whether each identifier is registered and matches the pattern of its namespace."""
+    return all((found := parse(i)) is not None and found.valid is not False for i in identifiers)
+
+
+def _other(record: Mapping) -> dict[str, str]:
+    return dict(json.loads(record.other or "{}"))
+
+
+def subject_of(record: Mapping) -> str:
+    """Return the subject IRI as the source wrote it."""
+    return _other(record).get("subject") or str(record.subject_id)
+
+
+def object_of(record: Mapping) -> str:
+    """Return the object IRI as the source wrote it."""
+    return _other(record).get("object") or str(record.object_id)
+
+
+def source_of(record: Mapping) -> str:
+    """Return the name of the source that states the mapping."""
+    return _other(record).get("source") or str(record.mapping_provider)
+
+
+def property_of(record: Mapping) -> str:
+    """Return the property the source states the mapping with."""
+    return _other(record).get("property") or str(record.predicate_id)
 
 
 def _key(iri: str) -> str:
@@ -77,26 +137,21 @@ def _issuer(source: str) -> str | None:
 
 
 @dataclass
-class Decision:
+class Resolution:
     """The accepted claims, the variant pairs accepted with them, and every group's outcome."""
 
-    accepted: list[Claim]
+    accepted: list[Mapping]
     variants: list[tuple[str, str]]
     groups: list[dict[str, Any]] = field(default_factory=list)
+    overruled: list[tuple[str, str, str]] = field(default_factory=list)
 
     def targets(self, namespace: str) -> list[str]:
         """Return the accepted IRIs in *namespace*: the records worth fetching."""
-        return sorted(
-            {
-                c.object
-                for c in self.accepted
-                if (found := c.object_id) and found.prefix == namespace
-            }
-        )
+        return sorted({object_of(c) for c in self.accepted if _prefix(object_of(c)) == namespace})
 
     def pairs(self) -> list[tuple[str, str]]:
-        """Return the accepted (subject, object) pairs."""
-        return sorted({(c.subject, c.object) for c in self.accepted})
+        """Return the accepted (subject, object) pairs, as the sources wrote them."""
+        return sorted({(subject_of(c), object_of(c)) for c in self.accepted})
 
     def table(self) -> Any:
         """Return the outcome of each (subject, target namespace) group as a DataFrame."""
@@ -104,17 +159,70 @@ class Decision:
 
         return pd.DataFrame(self.groups)
 
+    def to_sssom(self, name: str = "resolution") -> MappingSetDataFrame:
+        """Return the resolution as an SSSOM mapping set.
+
+        Accepted mappings are ``skos:exactMatch`` with justification ``semapv:MappingReview``
+        and the rule that decided them; overruled ones are negative mappings (``Not``), with
+        the source whose statement overruled them.
+        """
+        from sssom import Mapping
+
+        from rdfsolve.config import mint
+        from rdfsolve.mappings.sssom import converter_for, create_sssom_mappings
+
+        rule = {(g["subject"], t): g for g in self.groups for t in g["targets"].split(", ") if t}
+        records = []
+        for subject, target in sorted({(_key(s), _key(o)) for s, o in self.pairs()}):
+            group = rule.get((subject, target), {})
+            decided = (
+                f"{group.get('outcome', 'accepted')}; decided by "
+                f"{group.get('decided by', '?')} ({group.get('basis', '')})"
+            )
+            records.append(
+                Mapping(
+                    subject_id=subject,
+                    predicate_id=EXACT,
+                    object_id=target,
+                    mapping_justification=REVIEWED,
+                    curation_rule_text=[decided],
+                )
+            )
+        for subject, target, by in sorted(set(self.overruled)):
+            records.append(
+                Mapping(
+                    subject_id=subject,
+                    predicate_id=EXACT,
+                    predicate_modifier="Not",
+                    object_id=target,
+                    mapping_justification=REVIEWED,
+                    curation_rule_text=[
+                        f"overruled: {by}, which issues these identifiers, states other targets"
+                    ],
+                )
+            )
+        converter = converter_for(
+            c for r in records for c in (r.subject_id, r.predicate_id, r.object_id)
+        )
+        return create_sssom_mappings(records, mint("mappings", name), converter=converter)
+
 
 class Claims:
-    """A set of claims from several sources."""
+    """A set of claims (SSSOM records) from several sources."""
 
-    def __init__(self, claims: Iterable[Claim] = ()) -> None:
-        """Keep the claims, each once."""
-        self.claims: list[Claim] = list(dict.fromkeys(claims))
+    def __init__(
+        self, claims: Iterable[Mapping] = (), invalid: Iterable[tuple[str, str, str]] = ()
+    ) -> None:
+        """Keep the claims, each once, and the statements whose identifiers are invalid."""
+        seen: dict[tuple[str, str, str, str], Mapping] = {}
+        for c in claims:
+            seen.setdefault((subject_of(c), object_of(c), source_of(c), property_of(c)), c)
+        self.claims: list[Mapping] = list(seen.values())
+        self.invalid: list[tuple[str, str, str]] = sorted(set(invalid))
 
     def __add__(self, other: Claims) -> Claims:
         """Return the claims of both."""
-        return Claims([*self.claims, *other.claims])
+        return Claims([*self.claims, *other.claims], [*self.invalid, *other.invalid])
 
     def __len__(self) -> int:
         """Return the number of claims."""
@@ -134,10 +242,11 @@ class Claims:
         Only links between registered identifiers are claims; *objects* keeps the claims whose
         object has this prefix (UniProt's rdfs:seeAlso to NCBI Gene, not to InterPro).
         """
-        wanted = set(predicates)
-        found = []
         import pyoxigraph as ox
 
+        wanted = set(predicates)
+        found = []
+        invalid: list[tuple[str, str, str]] = []
         for quad in rdf:
             if quad.predicate.value not in wanted or not isinstance(quad.object, ox.NamedNode):
                 continue
@@ -149,8 +258,11 @@ class Claims:
                 continue
             if objects is not None and target.prefix != objects:
                 continue
-            found.append(Claim(subject, obj, source, quad.predicate.value))
-        return cls(found)
+            if not _valid(subject, obj):
+                invalid.append((subject, obj, source))
+                continue
+            found.append(claim(subject, obj, source, quad.predicate.value))
+        return cls(found, invalid)
 
     @classmethod
     def of(cls, client: Client, *results: Any, citing: Iterable[str] = ()) -> Claims:
@@ -162,9 +274,9 @@ class Claims:
         here, not described (WikiPathways' BridgeDb links; not dcterms:isPartOf, whose values
         are WikiPathways' own, nor wp:source, whose enzymes the records describe), and that the
         schema of the source lists as a cross-reference (Client.cross_references: not
-        dcterms:references, whose publications WikiPathways describes). *citing*
-        adds every link to identifiers of these namespaces, as evidence for check (UniProt's
-        NCBI Gene id of an accession).
+        dcterms:references, whose publications WikiPathways describes). *citing* adds every
+        link to identifiers of these namespaces, as evidence for check (UniProt's NCBI Gene id
+        of an accession).
         """
         import pyoxigraph as ox
 
@@ -202,6 +314,7 @@ class Claims:
         }
         wanted = set(citing)
         claims = []
+        invalid: list[tuple[str, str, str]] = []
         for quad in records:
             if not isinstance(quad.object, ox.NamedNode):
                 continue
@@ -213,16 +326,17 @@ class Claims:
             if subject.prefix == target.prefix and subject.curie != target.curie:
                 continue
             if quad.predicate.value in chosen or target.prefix in wanted:
+                if not _valid(quad.subject.value, quad.object.value):
+                    invalid.append((quad.subject.value, quad.object.value, name))
+                    continue
                 claims.append(
-                    Claim(quad.subject.value, quad.object.value, name, quad.predicate.value)
+                    claim(quad.subject.value, quad.object.value, name, quad.predicate.value)
                 )
-        return cls(claims)
+        return cls(claims, invalid)
 
     def targets(self, namespace: str) -> list[str]:
         """Return the IRIs that the claims map to in *namespace* (a Bioregistry prefix)."""
-        return sorted(
-            {c.object for c in self.claims if (found := c.object_id) and found.prefix == namespace}
-        )
+        return sorted({object_of(c) for c in self.claims if _prefix(object_of(c)) == namespace})
 
     def ask(
         self,
@@ -245,20 +359,22 @@ class Claims:
         issued = set(client.issued_kinds())
         if identifiers is None:
             identifiers = sorted(
-                {c.subject for c in self.claims if (o := c.object_id) and o.prefix in issued}
+                {subject_of(c) for c in self.claims if _prefix(object_of(c)) in issued}
             )
         # The issuer is not asked about its own identifiers: a ChEBI id is its own class, and
         # matching its bare number found other classes (any value "15377").
         written = {
             curie(i): i for i in identifiers if (read := parse(i)) and read.prefix not in issued
         }
-        found = [
-            Claim(written.get(x.identifier, x.identifier), x.resource, name, x.predicate)
+        matches = [
+            (written.get(x.identifier, x.identifier), x.resource, x.predicate)
             for x in client.identify(list(written))
             if x.kind == "uri"
             or x.value.lower().startswith(x.identifier.split(":", 1)[0].lower() + ":")
         ]
-        return self + Claims(found)
+        found = [claim(s, o, name, p) for s, o, p in matches if _valid(s, o)]
+        invalid = [(s, o, name) for s, o, _ in matches if not _valid(s, o)]
+        return self + Claims(found, invalid)
 
     def table(self) -> Any:
         """Return the claims as a DataFrame (subject and object as CURIEs)."""
@@ -267,20 +383,33 @@ class Claims:
         return pd.DataFrame(
             [
                 {
-                    "subject": _key(c.subject),
-                    "object": _key(c.object),
-                    "source": c.source,
-                    "predicate": c.predicate,
+                    "subject": str(c.subject_id),
+                    "object": str(c.object_id),
+                    "source": source_of(c),
+                    "predicate": property_of(c),
                 }
                 for c in self.claims
-            ]
+            ],
+            columns=["subject", "object", "source", "predicate"],
         )
+
+    def to_sssom(self, name: str = "claims") -> MappingSetDataFrame:
+        """Return the claims as an SSSOM mapping set (each with its source and property)."""
+        from rdfsolve.config import mint
+        from rdfsolve.mappings.sssom import converter_for, create_sssom_mappings
+
+        converter = converter_for(
+            c for r in self.claims for c in (r.subject_id, r.predicate_id, r.object_id)
+        )
+        return create_sssom_mappings(self.claims, mint("mappings", name), converter=converter)
 
     def _groups(self) -> dict[tuple[str, str], dict[str, set[str]]]:
         """Return the targets of each (subject, target namespace), by source."""
         groups: dict[tuple[str, str], dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
         for c in self.claims:
-            groups[(_key(c.subject), _prefix(c.object))][c.source].add(_key(c.object))
+            groups[(_key(subject_of(c)), _prefix(object_of(c)))][source_of(c)].add(
+                _key(object_of(c))
+            )
         return groups
 
     def compare(self) -> Any:
@@ -310,29 +439,34 @@ class Claims:
 
         third: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
         for c in self.claims:
-            if _prefix(c.object) == through:
-                third[_key(c.subject)][c.source].add(_key(c.object))
+            if _prefix(object_of(c)) == through:
+                third[_key(subject_of(c))][source_of(c)].add(_key(object_of(c)))
+
+        def described(key: str, found: set[str]) -> str:
+            """Return the third identifiers of *key*, each with the sources that give it."""
+            return ", ".join(
+                f"{t} ({', '.join(sorted(s for s, ts in third[key].items() if t in ts))})"
+                for t in sorted(found)
+            )
+
         rows = []
         for c in self.claims:
-            if _prefix(c.object) == through or (among is not None and c.source not in among):
+            if _prefix(object_of(c)) == through or (
+                among is not None and source_of(c) not in among
+            ):
                 continue
-            left = {t for ts in third[_key(c.subject)].values() for t in ts}
-            right = {t for ts in third[_key(c.object)].values() for t in ts}
+            subject, target = _key(subject_of(c)), _key(object_of(c))
+            left = {t for ts in third[subject].values() for t in ts}
+            right = {t for ts in third[target].values() for t in ts}
             status = "unknown" if not left or not right else "agree" if left & right else "disagree"
             rows.append(
                 {
-                    "subject": _key(c.subject),
-                    "object": _key(c.object),
-                    "source": c.source,
+                    "subject": subject,
+                    "object": target,
+                    "source": source_of(c),
                     "status": status,
-                    f"{through} of subject": ", ".join(
-                        f"{t} ({', '.join(sorted(s for s, ts in third[_key(c.subject)].items() if t in ts))})"
-                        for t in sorted(left)
-                    ),
-                    f"{through} of object": ", ".join(
-                        f"{t} ({', '.join(sorted(s for s, ts in third[_key(c.object)].items() if t in ts))})"
-                        for t in sorted(right)
-                    ),
+                    f"{through} of subject": described(subject, left),
+                    f"{through} of object": described(target, right),
                 }
             )
         return pd.DataFrame(rows)
@@ -344,7 +478,7 @@ class Claims:
         variants: Callable[[list[str]], Iterable[tuple[str, str]]] | Iterable[tuple[str, str]] = (),
         namespaces: Iterable[str] | None = None,
         prefer: Iterable[Any] = (),
-    ) -> Decision:
+    ) -> Resolution:
         """Decide which claims are accepted, for each subject and target namespace.
 
         The authority is the source that issues the target namespace (ChEBI for ChEBI ids),
@@ -361,18 +495,19 @@ class Claims:
         order = list(authority or [])
         preferred = {_key(iri) for iri in _iris(prefer)}
         if namespaces is None:
-            namespaces = {i for s in {c.source for c in self.claims} if (i := _issuer(s))}
+            namespaces = {i for s in {source_of(c) for c in self.claims} if (i := _issuer(s))}
         kept = set(namespaces)
-        by_group: dict[tuple[str, str], list[Claim]] = defaultdict(list)
+        by_group: dict[tuple[str, str], list[Mapping]] = defaultdict(list)
         for c in self.claims:
-            by_group[(_key(c.subject), _prefix(c.object))].append(c)
-        accepted: list[Claim] = []
+            by_group[(_key(subject_of(c)), _prefix(object_of(c)))].append(c)
+        accepted: list[Mapping] = []
         variant_pairs: list[tuple[str, str]] = []
         groups: list[dict[str, Any]] = []
+        overruled_by: list[tuple[str, str, str]] = []
         for (subject, namespace), claims in sorted(by_group.items()):
             if namespace not in kept:
                 continue
-            sources = sorted({c.source for c in claims})
+            sources = sorted({source_of(c) for c in claims})
             rank = sorted(
                 sources,
                 key=lambda s: (
@@ -382,15 +517,18 @@ class Claims:
                 ),
             )
             chosen = rank[0]
-            mine = [c for c in claims if c.source == chosen]
+            mine = [c for c in claims if source_of(c) == chosen]
             # One IRI per identifier: a source can write one target twice (bdbUniprot to
             # identifiers.org/uniprot/Q13510, owl:sameAs to purl.uniprot.org/uniprot/Q13510).
             targets = sorted(
-                {_key(c.object): c.object for c in sorted(mine, key=lambda c: c.object)}.values()
+                {_key(object_of(c)): object_of(c) for c in sorted(mine, key=object_of)}.values()
             )
             overruled = sorted(
-                {_key(c.object) for c in claims if c.source != chosen} - {_key(t) for t in targets}
+                {_key(object_of(c)) for c in claims if source_of(c) != chosen}
+                - {_key(t) for t in targets}
             )
+            if _issuer(chosen) == namespace:
+                overruled_by += [(subject, t, chosen) for t in overruled]
             outcome = "accepted"
             pairs: list[tuple[str, str]] = []
             narrowed = [t for t in targets if _key(t) in preferred]
@@ -404,10 +542,10 @@ class Claims:
                     outcome = "ambiguous: several targets, not variants of one entity"
                 else:
                     outcome = "accepted: variants of one entity"
-            set_aside: set[str] = {_key(c.object) for c in mine} - {_key(t) for t in targets}
+            set_aside: set[str] = {_key(object_of(c)) for c in mine} - {_key(t) for t in targets}
             if outcome.startswith("accepted"):
                 keys = {_key(t) for t in targets}
-                accepted += [c for c in mine if _key(c.object) in keys]
+                accepted += [c for c in mine if _key(object_of(c)) in keys]
                 variant_pairs += pairs
             groups.append(
                 {
@@ -426,7 +564,7 @@ class Claims:
                     "sources": ", ".join(sources),
                 }
             )
-        return Decision(accepted, sorted(set(variant_pairs)), groups)
+        return Resolution(accepted, sorted(set(variant_pairs)), groups, overruled_by)
 
 
 def _iris(items: Any) -> list[str]:

@@ -33,6 +33,7 @@ Table of Contents
    :caption: Mappings & Integration
 
    analysis
+   related_tools
 
 .. toctree::
    :maxdepth: 2
