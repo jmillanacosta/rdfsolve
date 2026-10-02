@@ -96,3 +96,24 @@ def test_the_pipeline_tests_paths_within_a_budget(monkeypatch):
         cli.main()
     assert seen["config"].navigation_budget == 900
     assert not hasattr(seen["config"], "navigation_probes")
+
+
+def test_each_query_has_the_rest_of_the_budget_and_no_pages():
+    """A query that does not answer within the budget fails at once: it is not retried, nor
+    recovered in pages (Bgee run 13 spent 12 h on one query that way)."""
+    graph = Graph().parse(data=DATA, format="turtle")
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine()
+        helper = miner.helper
+        seen = []
+        select = helper.select_with_fallback
+
+        def watched(query, purpose=""):
+            seen.append((helper.timeout, helper.max_retries, helper.page_recovery))
+            return select(query, purpose=purpose)
+
+        helper.select_with_fallback = watched
+        settings = (helper.timeout, helper.max_retries, helper.page_recovery)
+        find_tested_paths(schema, helper, max_hops=3, budget_s=600)
+    assert seen and all(t <= 600 and tries == 1 and not pages for t, tries, pages in seen)
+    assert (helper.timeout, helper.max_retries, helper.page_recovery) == settings

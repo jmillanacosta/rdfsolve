@@ -491,7 +491,9 @@ def find_tested_paths(
     because a longer path cannot match when its start does not; a path does not repeat an edge.
     Only matched paths are kept, with their number of matched start instances. The search stops
     when the time budget is spent; a length is complete when every path of the shorter length
-    was extended without a failed query. *members* gives the member terms of each group of
+    was extended without a failed query. Each query has the rest of the budget, one try and no
+    page recovery: a query that does not answer in that time is a failed query (Bgee run 13
+    waited for one extension query 2 h at a time, in ever smaller pages, until the job ended). *members* gives the member terms of each group of
     ontology terms (the report of the mining), which the data use as types instead of the group.
     """
     from datetime import datetime, timezone
@@ -534,7 +536,8 @@ def find_tested_paths(
             query = _extension_query(prefix, candidates, dataset, context or None, members)
             queries += 1
             try:
-                result = helper.select_with_fallback(query, purpose="navigation/tested-paths")
+                with helper.budget(max(1.0, deadline - clock())):
+                    result = helper.select_with_fallback(query, purpose="navigation/tested-paths")
             except (SparqlHelperError, TimeoutError, OSError) as error:
                 logger.warning("Path extension query failed: %s", error)
                 failed += 1
@@ -555,7 +558,10 @@ def find_tested_paths(
                 support = _support_query(steps, dataset, context or None, members)
                 queries += 1
                 try:
-                    answer = helper.select_with_fallback(support, purpose="navigation/path-support")
+                    with helper.budget(max(1.0, deadline - clock())):
+                        answer = helper.select_with_fallback(
+                            support, purpose="navigation/path-support"
+                        )
                     row = answer.get("results", {}).get("bindings", [{}])[0]
                     sources = int(row["sources"]["value"])
                     followed = int(row["matched"]["value"]) if sources else 0
