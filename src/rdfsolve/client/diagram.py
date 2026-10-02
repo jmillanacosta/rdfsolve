@@ -154,7 +154,8 @@ def link_diagram(
 
     from rdfsolve.conversion import _link
 
-    focus = class_iri(client.model(kind))
+    links = list(links)
+    focus = class_iri(client.model(kind, links=links))
     parts = re.split(r"(?<=[#/])", focus)
     namespace = "".join(parts[:-1]) if len(parts) > 1 else ""
     prefixes = client.schema.get_prefixes()
@@ -173,7 +174,7 @@ def link_diagram(
     edges = []
     for link in links:
         inverse = link.startswith("^")
-        prop = _link(client, link.lstrip("^"), kind)
+        prop = _link(client, link.lstrip("^"), focus)
         counts: dict[str, int] = defaultdict(int)
         for pattern in client.schema.patterns:
             if pattern.property_uri != prop:

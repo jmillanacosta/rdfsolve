@@ -384,3 +384,67 @@ def test_rules_take_curies_and_a_and_within_names_the_scope():
         scope
         == f"{{ ?x <{WP}partOf> ?within . VALUES ?within {{ <urn:wp1> }} }} UNION {{ VALUES ?x {{ <urn:wp1> }} }}"
     )
+
+
+BIOLINK_YAML = """version: 9.9
+classes:
+  named thing: {}
+  gene: {is_a: named thing, id_prefixes: [NCBIGene, ENSEMBL]}
+  protein: {is_a: named thing, id_prefixes: [UniProtKB]}
+  molecular activity: {is_a: named thing, id_prefixes: [RHEA]}
+  association: {is_a: named thing}
+slots:
+  catalyzes: {is_a: related to}
+  has input: {is_a: has participant, domain: molecular activity, range: named thing}
+"""
+
+
+def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
+    """KGX nodes and edges: Biolink CURIEs, categories, names, provenance; an association node is
+    one edge with its qualifier. The model draws a class with its parents and a slot as an edge."""
+    import csv
+
+    from rdfsolve.conversion import Biolink, to_kgx
+
+    (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    data = f"""<https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}name> "HMGCR" ;
+        <{BL}catalyzes> <urn:r1> .
+    <urn:r1> a <{BL}MolecularActivity> .
+    <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/3156> ;
+        <{BL}predicate> <{BL}regulates> ; <{BL}object> <urn:r1> ; <{BL}object_direction_qualifier> "decreased" ."""
+    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
+    nodes, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test")
+    node_rows = {r["id"]: r for r in csv.DictReader(nodes.open(), delimiter="\t")}
+    assert node_rows["NCBIGene:3156"] == {
+        "id": "NCBIGene:3156",
+        "category": "biolink:Gene",
+        "name": "HMGCR",
+    }
+    assert "urn:i1" not in node_rows, "an association is an edge"
+    edge_rows = list(csv.DictReader(edges.open(), delimiter="\t"))
+    assert {
+        (r["subject"], r["predicate"], r["object"], r["object_direction_qualifier"])
+        for r in edge_rows
+    } == {
+        ("NCBIGene:3156", "biolink:catalyzes", "urn:r1", ""),
+        ("NCBIGene:3156", "biolink:regulates", "urn:r1", "decreased"),
+    }
+    assert all(r["primary_knowledge_source"] == "infores:test" for r in edge_rows)
+    drawn = biolink.diagram("biolink:Gene", "biolink:has_input")
+    assert "**gene**" in drawn and '-->|"is a"|' in drawn and "ids: NCBIGene, ENSEMBL" in drawn
+    assert "has input (is a has participant)" in drawn
+
+
+def test_a_class_left_out_with_filter_not_exists(tmp_path):
+    (tmp_path / "wp-biolink-genes.rq").write_text("""# source: wp
+# target: biolink 4.4.5
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX biolink: <https://w3id.org/biolink/vocab/>
+CONSTRUCT { ?node a biolink:Gene . }
+WHERE { ?node a wp:Metabolite . FILTER NOT EXISTS { ?node a wp:Protein } }
+""")
+    rules = Query.read(tmp_path / "wp-biolink-genes.rq").rules()
+    assert [r.unless_class for r in rules] == [WP + "Protein"]
+    rows = Profile.from_queries([tmp_path / "wp-biolink-genes.rq"]).rebuilds(Local())
+    assert rows[0]["same"] and rows[0]["as written"] == 3

@@ -743,3 +743,13 @@ def test_two_drawings_of_one_metabolite_give_one_edge_and_both_statements():
     assert [e.type for e in pg.edges] == [wp + "isPartOf"] and pg.report()["lossless"]["passed"]
     # Both drawings cite one HMDB id: one edge, then a value of the node for each statement.
     assert pg.report()["identity"]["edges_made_one"] == 2
+
+
+def test_networkx_keeps_chosen_edge_types_and_gives_each_node_a_category_and_title():
+    pg = PropertyGraph.from_rdf(graph(), prefixes=PREFIXES)
+    g = pg.to_networkx(edge_types=["source"])
+    assert {d["type"] for *_, d in g.edges(data=True)} == {"source"}
+    assert set(g.nodes) == {E + "c1", E + "c2", E + "asah1"}
+    assert g.nodes[E + "asah1"]["category"] == "GeneProduct + Protein"
+    assert g.nodes[E + "asah1"]["title"] == "ASAH1"
+    assert g.nodes[E + "c1"]["category"] == "Catalysis" and g.nodes[E + "c1"]["title"] == "c1"

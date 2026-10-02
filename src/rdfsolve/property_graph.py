@@ -1156,8 +1156,13 @@ class PropertyGraph:
                 out[f"{name}__lang"] = langs if key in self.lists else langs[0]
         return out
 
-    def to_networkx(self) -> Any:
+    def to_networkx(self, edge_types: Iterable[str] | None = None) -> Any:
         """Return a ``networkx.MultiDiGraph``: node and edge attributes are native values.
+
+        With *edge_types* (edge type names: "catalyzes"), only those edges and their nodes.
+        Each node also carries ``category`` (its node types joined by " + ", or "no category")
+        and ``title`` (its name: a biolink:name, else a label, else the end of its IRI), for
+        drawing.
 
         Nodes carry ``labels`` (and ``ids``); edges carry ``type`` (and ``via``, the folded node)
         and are keyed by both: two complexes give two edges between the same proteins. A property named as one of these (the other classes of
@@ -1166,13 +1171,23 @@ class PropertyGraph:
         import networkx as nx
 
         namer = self._namer()
+        wanted = set(edge_types) if edge_types is not None else None
+        edges = [e for e in self.edges if wanted is None or self._edge_type(e, namer) in wanted]
+        kept = {end for e in edges for end in (e.source, e.target)} if wanted is not None else None
         graph: Any = nx.MultiDiGraph()
         for node in self.nodes.values():
+            if kept is not None and node.id not in kept:
+                continue
             labels = list(dict.fromkeys(namer[label] for label in node.labels))
             graph.add_node(
-                node.id, labels=labels, **_ids(node), **_aside(self._plain(node.properties))
+                node.id,
+                labels=labels,
+                category=" + ".join(labels) or "no category",
+                title=_title(node),
+                **_ids(node),
+                **_aside(self._plain(node.properties)),
             )
-        for edge in self.edges:
+        for edge in edges:
             kind = self._edge_type(edge, namer)
             extra: dict[str, Any] = {"via": edge.via} if edge.via else {}
             if edge.derived:
@@ -1377,7 +1392,7 @@ class PropertyGraph:
 # -- helpers ----------------------------------------------------------------------------------
 
 
-_RESERVED = ("type", "via", "labels", "ids", "derived")
+_RESERVED = ("type", "via", "labels", "ids", "derived", "category", "title")
 
 
 def _ids(node: PGNode) -> dict[str, Any]:
@@ -1392,6 +1407,17 @@ def _ids(node: PGNode) -> dict[str, Any]:
         key = read.prefix if read else "apart"
         out[key] = [*out[key], iri] if key in out else iri
     return out
+
+
+_TITLE_PROPERTIES = ("https://w3id.org/biolink/vocab/name", *NAME_PROPERTIES)
+
+
+def _title(node: PGNode) -> str:
+    """Return a node's name for drawing: a biolink:name, else a label, else the end of its IRI."""
+    for key in _TITLE_PROPERTIES:
+        for value in node.properties.get(key, []):
+            return str(value.lexical)
+    return re.split(r"[/#]", node.id.rstrip("/"))[-1]
 
 
 def _aside(properties: dict[str, Any]) -> dict[str, Any]:

@@ -218,6 +218,7 @@ class Client(DatasetClient):
                 )
             else:
                 raise ValueError("Use json, shacl, or void as the schema format")
+            _add_release(schema, path)
         if not schema.get_classes():
             raise ValueError("The schema has no classes to query; metadata alone is not enough")
         if data_file is not None:
@@ -859,10 +860,11 @@ class Client(DatasetClient):
         iris: str = "curie",
         merge: bool = True,
         links: Iterable[str] | None = None,
+        kind: str | None = None,
     ) -> str:
         """Draw selected models or the selected rows of a paths table, without queries.
 
-        With *links*, draw one record type, those of its links (field names or labels;
+        With *links*, draw one record type (*kind*), those of its links (field names or labels;
         "^name" for a link pointing to it) and the record types each reaches, with counts.
 
         For models: namespaces keeps the classes in these namespaces (IRIs or prefixes);
@@ -871,6 +873,8 @@ class Client(DatasetClient):
         """
         from rdfsolve.client.diagram import link_diagram, model_diagram, path_diagram
 
+        if kind is not None:
+            kinds = (*kinds, kind)
         if links is not None:
             if len(kinds) != 1:
                 raise ValueError("Draw the links of one record type")
@@ -884,6 +888,32 @@ class Client(DatasetClient):
         return model_diagram(
             self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge
         )
+
+    def _uses(self, cls: str, links: Iterable[str], to: str | None) -> bool:
+        """Return whether the mined statements of *cls* use every link (towards *to*)."""
+        from rdfsolve.conversion import _link
+
+        for link in links:
+            inverse = link.startswith("^")
+            try:
+                prop = _link(self, link.lstrip("^"), cls)
+            except ValueError:
+                return False
+            found = False
+            for pattern in self.schema.patterns:
+                if pattern.property_uri != prop:
+                    continue
+                own, other = (
+                    (pattern.object_class, pattern.subject_class)
+                    if inverse
+                    else (pattern.subject_class, pattern.object_class)
+                )
+                if own == cls and (to is None or other == to) and pattern.count != 0:
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
 
     def query_log(self) -> QueryLog:
         """Show every session query and its retained response without running it again."""
@@ -908,12 +938,29 @@ class Client(DatasetClient):
             "ontology": self.ontology.diagnostics() if self.ontology else {"enabled": False},
         }
 
-    def model(self, name_or_iri: str) -> type[BaseModel]:
-        """Accept generated names, spaced names, CURIEs of the mined prefixes, or class IRIs."""
+    def model(
+        self, name_or_iri: str, *, links: Iterable[str] = (), to: str | None = None
+    ) -> type[BaseModel]:
+        """Accept generated names, spaced names, CURIEs of the mined prefixes, or class IRIs.
+
+        A local name that several classes share (in two namespaces of one source) is decided
+        by *links*: the class whose mined statements use each link (a field name or label; as
+        subject, or as object for "^name"), towards the class *to* when given.
+        """
         name_or_iri = str(name_or_iri)
         prefix, sep, local = name_or_iri.partition(":")
         if sep and not local.startswith("//") and prefix in self.schema.get_prefixes():
             name_or_iri = self.schema.get_prefixes()[prefix] + local
+        if links and not name_or_iri.startswith(("http://", "https://")):
+            # A name several classes share, as a generated name or a local name: the links decide.
+            shared = [
+                model
+                for model in self.models.values()
+                if _key(name_or_iri) == _key(re.split(r"[/#:]", class_iri(model))[-1])
+            ]
+            used = [m for m in shared if self._uses(class_iri(m), links, to)]
+            if len(shared) > 1 and len(used) == 1:
+                return used[0]
         if name_or_iri in self.models:
             return self.models[name_or_iri]
         for model in self.models.values():
@@ -1855,3 +1902,46 @@ def explore(endpoint: str, *, graph: str | None = None, timeout: float = 30) -> 
     except BaseException:
         miner.close()
         raise
+
+
+_RELEASE_FIELDS = ("source_version", "source_version_iri", "source_issued", "source_modified")
+
+
+def _add_release(schema: MinedSchema, path: Path) -> None:
+    """Fill the source's release from the metadata saved next to its schema file.
+
+    The miner asks the endpoint for the dataset's description; a source whose description
+    comes with its download (a VoID file of each release) has it in
+    ``<name>_metadata.ttl`` beside ``<name>_schema.json`` instead. The described dataset is the
+    void:Dataset whose subjects are most of the schema's classes (the file also describes the
+    ontologies the source imports). Fields the schema already has are kept.
+    """
+    about = schema.about
+    if any(getattr(about, f, None) for f in _RELEASE_FIELDS):
+        return
+    found = path.with_name(path.name.replace("_schema.json", "_metadata.ttl"))
+    if found == path or not found.exists():
+        return
+    from rdflib import RDF, Namespace, URIRef
+
+    from rdfsolve.metadata import query_endpoint_metadata
+    from rdfsolve.mining.local_graph import LocalGraphHelper
+
+    void, dcterms = Namespace("http://rdfs.org/ns/void#"), Namespace("http://purl.org/dc/terms/")
+    data = Dataset()
+    data.parse(found)
+    classes = set(schema.get_classes())
+
+    def shared(dataset: Any) -> int:
+        """Return how many of the schema's classes the dataset names as its subjects."""
+        named = {str(o) for p in (dcterms.subject, void["class"]) for o in data.objects(dataset, p)}
+        return len(named & classes)
+
+    candidates = sorted(set(data.subjects(RDF.type, void.Dataset)), key=shared, reverse=True)
+    if not candidates or shared(candidates[0]) == 0:
+        return
+    helper = LocalGraphHelper(found.as_uri(), data)
+    described = query_endpoint_metadata(helper, subject_iri=str(candidates[0]))
+    for field_name in _RELEASE_FIELDS:
+        if described.get(field_name) and not getattr(about, field_name, None):
+            setattr(about, field_name, described[field_name])

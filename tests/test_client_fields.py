@@ -1,3 +1,4 @@
+import json
 import re
 
 """The fields of a generated model are listed with their property, value types and links."""
@@ -129,3 +130,32 @@ def test_the_links_of_one_record_type_are_drawn_with_what_they_reach():
 def test_a_record_type_can_be_named_by_its_curie():
     client = Client(MinedSchema.from_vocabulary([VOCABULARY], CLASSES))
     assert client.model("ex:Person") is client.model("Person")
+
+
+def test_a_shared_name_is_decided_by_the_links_used():
+    """Two classes named Place: the one whose statements use the link is chosen."""
+    vocabulary = (
+        VOCABULARY
+        + """
+    ex:Place a rdfs:Class . ex:near a rdf:Property ; rdfs:domain ex:Place ; rdfs:range ex:Person ."""
+    )
+    client = Client(
+        MinedSchema.from_vocabulary([vocabulary], [*CLASSES, "https://fields-test.invalid/Place"])
+    )
+    from rdfsolve.client.hydration import class_iri
+
+    assert class_iri(client.model("Place", links=["near"])) == "https://fields-test.invalid/Place"
+
+
+def test_the_release_is_read_from_the_metadata_saved_beside_the_schema(tmp_path):
+    """A source whose description comes with its download: the release is read from
+    <name>_metadata.ttl, from the dataset whose subjects are the schema's classes."""
+    schema = MinedSchema.from_vocabulary([VOCABULARY], CLASSES)
+    path = tmp_path / "people_local_schema.json"
+    path.write_text(json.dumps(schema.to_dict()))
+    (tmp_path / "people_local_metadata.ttl").write_text("""
+    @prefix void: <http://rdfs.org/ns/void#> . @prefix dcterms: <http://purl.org/dc/terms/> .
+    <urn:release-7> a void:Dataset ; dcterms:issued "2026-08-10" ; dcterms:subject <https://fields-test.invalid/Person> .
+    <urn:other-ontology> a void:Dataset ; dcterms:issued "2020-01-01" .""")
+    client = Client.open(path)
+    assert str(client.schema.about.source_issued).startswith("2026-08-10")
