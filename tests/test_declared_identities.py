@@ -29,7 +29,7 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     rows = declared_identities(
         [
             binding(gene, XREF, "http://bio2rdf.org/ensembl:ENSG00000121410"),
-            binding(gene, XREF, "http://bio2rdf.org/ensembl:NM_130786"),
+            binding(gene, XREF, "http://bio2rdf.org/uniprot:P53_HUMAN"),
             binding("http://bio2rdf.org/ensembl:ENSG00000121410", EXACT, gene),
             binding(gene, EXACT, "http://bio2rdf.org/hgnc:6"),
             binding(gene, EXACT, "not an iri"),
@@ -39,14 +39,14 @@ def test_statements_are_read_flagged_and_counted(tmp_path):
     assert len(rows) == 2, "The repeated pair, the same-namespace pair and the unread value are left out"
     clean, wrong = rows
     assert clean.flags == [] and clean.comment == "hgnc x-ensembl"
-    assert wrong.flags == ["namespace:ensembl:NM_130786 is a refseq identifier", "kind:gene-transcript"]
+    assert wrong.flags == ["namespace:uniprot:P53_HUMAN does not match the uniprot pattern"]
     summary = write_declared_identities(rows, tmp_path, "hgnc", license_uri="https://spdx.org/licenses/CC-BY-SA-4.0")
     assert summary["check"] == "flagged_statements"
     assert summary["statements"] == 2 and summary["flagged"] == 1
-    assert summary["flags"] == {"clean": 1, "namespace": 1, "kind:gene-transcript": 1}
+    assert summary["flags"] == {"clean": 1, "namespace": 1}
     assert json.loads((tmp_path / "hgnc_declared_identities.json").read_text()) == summary
     table = (tmp_path / "hgnc_declared_identities.sssom.tsv").read_text()
-    assert "skos:exactMatch" in table and "kind:gene-transcript" in table
+    assert "skos:exactMatch" in table and "does not match the uniprot pattern" in table
     assert "mapping_set_id:" in table
     assert "license: https://spdx.org/licenses/CC-BY-SA-4.0" in table, "The licence of the source"
 

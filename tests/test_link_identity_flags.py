@@ -1,6 +1,6 @@
 """A link over an identity property (owl:sameAs, skos:exactMatch) is checked as a declared
-identity is: a gene stated to be the same as its protein is a real join on the data, but the
-statement claims more than holds. The link keeps its evidence and records the flags; a route
+identity is: the join holds on the data, but some statements name an entry name where the
+namespace has accessions (uniprot/P53_HUMAN). The link keeps its evidence and records the flags; a route
 and an edge of the connectivity graph that use the link carry them, and a route search takes
 a route without flags first (the owner, 2026-09-30)."""
 
@@ -15,8 +15,8 @@ from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 UP, GENE = "http://purl.uniprot.org/uniprot/", "https://identifiers.org/ncbigene/"
 SAME, XREF = "http://www.w3.org/2002/07/owl#sameAs", "urn:xref"
 SOURCE = f"""
-<{GENE}7157> a <urn:Gene> ; <{SAME}> <{UP}P04637> ; <{XREF}> <{UP}P04637> .
-<{GENE}672> a <urn:Gene> ; <{SAME}> <{UP}P38398> ; <{XREF}> <{UP}P38398> .
+<{GENE}7157> a <urn:Gene> ; <{SAME}> <{UP}P04637>, <{UP}P53_HUMAN> ; <{XREF}> <{UP}P04637> .
+<{GENE}672> a <urn:Gene> ; <{SAME}> <{UP}P38398>, <{UP}BRCA1_HUMAN> ; <{XREF}> <{UP}P38398> .
 """
 TARGET = f"<{UP}P04637> a <urn:Protein> . <{UP}P38398> a <urn:Protein> ; <urn:in> <urn:t/1> . <urn:t/1> a <urn:Taxon> ."
 PATTERNS = [
@@ -37,17 +37,17 @@ def _verify(link):
         return verify(link, s, t, sample=None)
 
 
-def test_an_identity_link_between_two_kinds_of_entity_is_flagged_and_kept(tmp_path):
+def test_an_identity_link_with_identifiers_that_fail_the_check_is_flagged_and_kept(tmp_path):
     stated, referred = _verify(STATED), _verify(REFERRED)
-    assert stated.found == 2 and stated.flags == {"kind:gene-protein": 2}
-    assert stated.flag_checked == 2 and stated.flagged
+    assert stated.found == 2 and stated.flags == {"namespace": 2}, "The sample has the accessions"
+    assert stated.flag_checked == 4 and stated.flagged
     assert referred.found == 2 and referred.flags == {} and not referred.flagged, (
         "A cross-reference states no identity"
     )
     write_links(tmp_path / "links.tsv", [stated, referred])
     read = read_links(tmp_path / "links.tsv")
-    assert [e.flags for e in read] == [{"kind:gene-protein": 2}, {}]
-    assert read[0].flag_checked == 2
+    assert [e.flags for e in read] == [{"namespace": 2}, {}]
+    assert read[0].flag_checked == 4
 
 
 def test_routes_and_edges_carry_the_flags_and_a_route_without_flags_is_taken_first():
@@ -58,7 +58,7 @@ def test_routes_and_edges_carry_the_flags_and_a_route_without_flags_is_taken_fir
     ends = ("genes", "urn:Gene"), ("proteins", "urn:Taxon")
     only = build_connectivity(schemas, links=[stated], routes=[flagged])
     found = best_route(only, *ends)
-    assert found["flagged"] and found["edges"][0]["flags"] == {"kind:gene-protein": 2}
+    assert found["flagged"] and found["edges"][0]["flags"] == {"namespace": 2}
     assert found["evidence"] == "confirmed", "The join is on the data; the flag is about the claim"
     link_edge = best_route(only, ("genes", "urn:Gene"), ("proteins", "urn:Protein"))
     assert link_edge["flagged"] and link_edge["edges"][0]["kind"] == "verified_link"

@@ -1,69 +1,33 @@
 """Checks of a declared identity (exactMatch, sameAs, a cross-reference) between two identifiers.
 
-Linked data states identities that do not hold: a RefSeq accession filed under the Ensembl
-namespace, or a gene "exactMatch" its protein. Chaining such statements (A = B, B = C, so
-A = C) spreads the error. These checks name the problem of each statement, so that inferred
-chains can carry the flags of their steps.
+Linked data states identities that do not hold, and chaining them (A = B, B = C, so A = C)
+spreads the error, so each statement carries the flags of its checks. The check reads only
+Bioregistry: an identifier is flagged when its local part does not match the pattern that
+Bioregistry gives for the namespace it is filed under (a KEGG DRUG identifier D09637 filed as
+kegg.compound). A namespace without a pattern in Bioregistry is not checked.
 
-The kind of an identifier is read from its pattern, because one namespace can hold several
-kinds (Ensembl: genes ENSG, transcripts ENST, proteins ENSP). KINDS is curated and short; a
-prefix that is not in it, or a pattern that names more than one kind of entity (OMIM: genes
-and phenotypes), gives no kind.
+What kind of entity an identifier names (a gene, a protein, a chemical) is not read here: it is
+not in Bioregistry, and a curated table of patterns covered only a few gene and protein
+namespaces (removed on 2026-10-02 by the owner). The kind comes from data: the class of the
+identifier in the source that issues it.
 """
 
 from __future__ import annotations
 
-import re
-
-__all__ = ["ALIASES", "KINDS", "identifier_kind", "identity_flags"]
-
-# (prefix, local identifier pattern, kind). The first match wins; order specific before general.
-KINDS: tuple[tuple[str, str, str], ...] = (
-    ("ensembl", r"ENS[A-Z]*G\d{11}(\.\d+)?", "gene"),
-    ("ensembl", r"ENS[A-Z]*T\d{11}(\.\d+)?", "transcript"),
-    ("ensembl", r"ENS[A-Z]*P\d{11}(\.\d+)?", "protein"),
-    ("refseq", r"(NM|NR|XM|XR)_\d+(\.\d+)?", "transcript"),
-    ("refseq", r"(NP|XP|YP|WP)_\d+(\.\d+)?", "protein"),
-    ("refseq", r"(NG|NC|NT|NW)_\d+(\.\d+)?", "genomic region"),
-    ("hgnc", r"\d+", "gene"),
-    ("ncbigene", r"\d+", "gene"),
-    ("mgi", r"(MGI:)?\d+", "gene"),
-    ("uniprot", r"[OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}", "protein"),
-    ("ccds", r"CCDS\d+(\.\d+)?", "coding sequence"),
-)
-# Bioregistry prefixes that hold the identifiers of a KINDS namespace (Bioregistry reads
-# Bio2RDF refseq IRIs as ncbiprotein).
-ALIASES = {"ncbiprotein": "refseq"}
-# Prefixes whose patterns name a kind only by their letter code, so that a value filed under
-# another namespace can be recognised as theirs.
-RECOGNISABLE = ("ensembl", "refseq", "ccds")
-
-
-def identifier_kind(curie: str) -> tuple[str, str] | None:
-    """Return the kind of entity and the namespace that an identifier's pattern belongs to."""
-    prefix, _, local = curie.partition(":")
-    prefix = ALIASES.get(prefix, prefix)
-    for owner, pattern, kind in KINDS:
-        if owner == prefix and re.fullmatch(pattern, local):
-            return kind, owner
-    for owner, pattern, kind in KINDS:
-        if owner in RECOGNISABLE and owner != prefix and re.fullmatch(pattern, local):
-            return kind, owner
-    return None
+__all__ = ["identity_flags"]
 
 
 def identity_flags(left: str, right: str) -> list[str]:
-    """Return the problems of the statement that *left* and *right* name the same entity."""
+    """Return the problems of the statement that the CURIEs *left* and *right* name one entity."""
+    import bioregistry
+
     flags = []
-    kinds = []
     for curie in (left, right):
-        found = identifier_kind(curie)
-        declared = curie.partition(":")[0]
-        if found and found[1] != ALIASES.get(declared, declared):
-            flags.append(f"namespace:{curie} is a {found[1]} identifier")
-        kinds.append(found[0] if found else None)
-    if None in kinds:
-        flags.append("kind:unknown")
-    elif kinds[0] != kinds[1]:
-        flags.append(f"kind:{kinds[0]}-{kinds[1]}")
+        prefix, _, local = curie.partition(":")
+        namespace = bioregistry.normalize_prefix(prefix)
+        if namespace is None or not bioregistry.get_pattern(namespace):
+            continue
+        local = bioregistry.standardize_identifier(namespace, local)
+        if not bioregistry.is_valid_identifier(namespace, local):
+            flags.append(f"namespace:{curie} does not match the {namespace} pattern")
     return flags

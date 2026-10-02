@@ -134,9 +134,11 @@ that it ends at an entity; ``resolved_construct`` names the construct. A path wi
 ``rdf:type`` step is not tested.
 
 A link over an identity property (``owl:sameAs``, ``skos:exactMatch``) is checked as a
-declared identity is. A gene stated to be the same as a protein is a join that exists on the
-data, so the link keeps its level of evidence, and it records the failed checks (``flags``,
-for example ``kind:gene-protein``). Routes and edges that use the link carry the flags, and
+declared identity is: an identifier that does not match the Bioregistry pattern of its
+namespace (an entry name such as ``uniprot:P53_HUMAN`` where the namespace has accessions) is
+flagged. The join exists on the data, so the link keeps its level of evidence, and it records
+the failed checks (``flags``). The kind of entity of an identifier is not checked: no
+registry holds it. Routes and edges that use the link carry the flags, and
 ``best_route`` takes a route without flagged edges first (``flagged``). Property correspondence and transitive mapping
 inference are separate work. The optional inference script is not part of this validated
 analysis workflow.

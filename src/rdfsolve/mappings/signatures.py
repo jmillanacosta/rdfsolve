@@ -269,7 +269,7 @@ def _lookup(
     return dict(found)
 
 
-# Most statements of an identity link that are checked for their kinds of entity.
+# Most statements of an identity link that are checked.
 FLAG_SAMPLE = 1000
 
 
@@ -277,10 +277,10 @@ def _identity_flags(link: Link, source: Client, body: str) -> tuple[dict[str, in
     """Check the statements of a link over an identity property, as declared identities are.
 
     Return the failed checks with their counts, and the number of statements checked. A
-    statement is checked when its subject and its value are identifiers with a known prefix;
-    a kind that is not known is not a failed check. Other properties state no identity.
+    statement is checked when its subject and its value are identifiers with a known prefix.
+    Other properties state no identity.
     """
-    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES
+    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES, _curie
     from rdfsolve.mappings.identity import identity_flags
 
     if link.property not in IDENTITY_PROPERTIES:
@@ -291,14 +291,15 @@ def _identity_flags(link: Link, source: Client, body: str) -> tuple[dict[str, in
     counts: dict[str, int] = defaultdict(int)
     checked = 0
     for row in rows:
-        subject, value = _local(row["s"]["value"]), _local(row["v"]["value"])
+        # As written, not as sampled: an identifier that is not valid for its namespace is
+        # what the check finds (the sample leaves it out).
+        subject, value = _curie(row["s"]["value"]), _curie(row["v"]["value"])
         if not subject or not value:
             continue
         checked += 1
-        flags = identity_flags(":".join(subject), ":".join(value))
+        flags = identity_flags(subject, value)
         for flag in {"namespace" if f.startswith("namespace:") else f for f in flags}:
-            if flag != "kind:unknown":
-                counts[flag] += 1
+            counts[flag] += 1
     return dict(counts), checked
 
 

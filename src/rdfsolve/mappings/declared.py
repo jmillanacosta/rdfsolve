@@ -3,9 +3,9 @@ of rdfsolve.mappings.identity on each statement.
 
 The statements are kept as the source gives them, also when they are wrong: they are what a user
 who treats cross-references as identity reads, and chaining them spreads their errors. Each
-statement carries its flags, and a file that holds a statement that fails a check (a value filed
-under another namespace, or two kinds of entity) is marked as having flagged statements. A
-statement whose kind is unknown is not checked and is not counted as flagged.
+statement carries its flags, and a file that holds a statement that fails a check (an
+identifier that does not match the Bioregistry pattern of its namespace) is marked as having
+flagged statements.
 """
 
 from __future__ import annotations
@@ -105,7 +105,7 @@ def declared_identities(
 
 
 def _kind(flag: str) -> str:
-    """Return the kind of a flag: namespace, or the kind flag itself."""
+    """Return the kind of a flag: namespace, or the flag itself."""
     return "namespace" if flag.startswith("namespace:") else flag
 
 
@@ -114,8 +114,8 @@ def write_declared_identities(
 ) -> dict[str, Any]:
     """Write <name>_declared_identities.sssom.tsv and a summary with the result of the checks.
 
-    The file has flagged statements when a statement fails a check (a namespace flag, or two
-    kinds of entity). The flags of each statement are in the other column of the SSSOM table. The
+    The file has flagged statements when a statement fails a check (an identifier that does
+    not match the Bioregistry pattern of its namespace). The flags of each statement are in the other column of the SSSOM table. The
     statements are the data of the source, so the table carries the licence of the source.
     """
     import bioregistry
@@ -131,7 +131,7 @@ def write_declared_identities(
     for row in rows:
         kinds = {_kind(f) for f in row.flags}
         counts.update(kinds or {"clean"})
-        flagged += bool(kinds - {"kind:unknown"})
+        flagged += bool(kinds)
     prefixes = {c.partition(":")[0] for row in rows for c in (row.subject_id, row.object_id)}
     prefix_map = {"rdfsolve": get_base_uri()}
     for prefix in sorted(prefixes):

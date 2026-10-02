@@ -10,7 +10,7 @@ XREF = "http://bio2rdf.org/hgnc_vocabulary:x-ensembl"
 def test_declared_identities_carry_their_check(tmp_path):
     bindings = [
         {"s": {"value": "http://bio2rdf.org/hgnc:5"}, "p": {"value": XREF}, "o": {"value": obj}}
-        for obj in ("http://bio2rdf.org/ensembl:ENSG00000121410", "http://bio2rdf.org/ensembl:NM_130786")
+        for obj in ("http://bio2rdf.org/ensembl:ENSG00000121410", "http://bio2rdf.org/uniprot:P53_HUMAN")
     ]
     write_declared_identities(
         declared_identities(bindings, "hgnc"), tmp_path / "hgnc", "hgnc", license_uri="https://spdx.org/licenses/CC0-1.0"
