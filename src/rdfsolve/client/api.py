@@ -672,7 +672,7 @@ class Client(DatasetClient):
         return out
 
     def construct(self, query: str) -> ox.Dataset:
-        """Run a SPARQL CONSTRUCT on this client's endpoint and return the statements.
+        """Run a SPARQL CONSTRUCT on this client's endpoint or local RDF; return the statements.
 
         The query is recorded in the session like any other (the log can rebuild a product
         from its CONSTRUCTs, such as Fold.to_construct). A client scoped to several named
@@ -680,14 +680,40 @@ class Client(DatasetClient):
         """
         from rdfsolve.local_rdf import to_oxigraph
 
+        if self.is_local:
+            return self._construct_local(query)
         if not isinstance(self.source, SparqlHelper):
-            raise ValueError("CONSTRUCT needs a SPARQL endpoint")
+            raise ValueError("CONSTRUCT needs a SPARQL endpoint or local RDF")
         context = (self._schema.about.type_graph_uris or []) + (
             self._schema.about.type_context_graph_uris or []
         )
         if len(self.graph_uris) > 1 or (self.graph_uris and context):
             raise ValueError("Write the graph scope into the CONSTRUCT (FROM or GRAPH) yourself")
         return to_oxigraph(self.source.construct_graph(query))
+
+    def _construct_local(self, query: str) -> ox.Dataset:
+        """Run a CONSTRUCT on the client's local RDF, recorded in the session like a SELECT."""
+        import time
+
+        from rdfsolve.local_rdf import to_oxigraph
+        from rdfsolve.sparql_helper import QueryRecord
+
+        if self._local_rdf is None:
+            raise RuntimeError("Local RDF backend is not initialized")
+        query = self._scope_query(query)
+        self.queries.append(query)
+        record = QueryRecord(query, "CONSTRUCT", "", success=False, purpose="construct")
+        self._local_records.append(record)
+        started = time.monotonic()
+        try:
+            graph = self._local_rdf.query(query).graph
+            record.success = True
+        except Exception as error:
+            record.error = type(error).__name__
+            raise
+        finally:
+            record.elapsed_seconds = time.monotonic() - started
+        return to_oxigraph(graph if graph is not None else Graph())
 
     def extract(
         self,
@@ -1912,15 +1938,26 @@ def _add_release(schema: MinedSchema, path: Path) -> None:
 
     The miner asks the endpoint for the dataset's description; a source whose description
     comes with its download (a VoID file of each release) has it in
-    ``<name>_metadata.ttl`` beside ``<name>_schema.json`` instead. The described dataset is the
+    ``<name>_metadata.ttl`` beside ``<name>_schema.json`` (or ``<name>.metadata.ttl`` beside
+    ``<name>.schema.json``) instead. The described dataset is the
     void:Dataset whose subjects are most of the schema's classes (the file also describes the
     ontologies the source imports). Fields the schema already has are kept.
     """
     about = schema.about
     if any(getattr(about, f, None) for f in _RELEASE_FIELDS):
         return
-    found = path.with_name(path.name.replace("_schema.json", "_metadata.ttl"))
-    if found == path or not found.exists():
+    found = next(
+        (
+            path.with_name(path.name.replace(schema_end, metadata_end))
+            for schema_end, metadata_end in (
+                ("_schema.json", "_metadata.ttl"),
+                (".schema.json", ".metadata.ttl"),
+            )
+            if path.name.endswith(schema_end)
+        ),
+        None,
+    )
+    if found is None or not found.exists():
         return
     from rdflib import RDF, Namespace, URIRef
 
@@ -1940,7 +1977,7 @@ def _add_release(schema: MinedSchema, path: Path) -> None:
     candidates = sorted(set(data.subjects(RDF.type, void.Dataset)), key=shared, reverse=True)
     if not candidates or shared(candidates[0]) == 0:
         return
-    helper = LocalGraphHelper(found.as_uri(), data)
+    helper = LocalGraphHelper(found.resolve().as_uri(), data)
     described = query_endpoint_metadata(helper, subject_iri=str(candidates[0]))
     for field_name in _RELEASE_FIELDS:
         if described.get(field_name) and not getattr(about, field_name, None):

@@ -168,6 +168,9 @@ fabric.properties
 !/notebooks/pydantic_clients/**/*.ipynb
 !/notebooks/mcp/*.ipynb
 /notebooks/mcp/output/
+!/notebooks/conversion/*.ipynb
+/notebooks/conversion/output/
+/notebooks/data/*.zip
 
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/

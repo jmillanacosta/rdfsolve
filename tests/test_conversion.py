@@ -477,20 +477,21 @@ WHERE { ?node a wp:Metabolite . FILTER NOT EXISTS { ?node a wp:Protein } FILTER 
     assert rows[0]["same"] and rows[0]["as written"] == 3
 
 
-def test_exact_kind_leaves_out_the_kinds_below():
-    """A rule for exactly one kind leaves out every class the source places below it."""
+def test_exact_kind_leaves_out_the_kinds_beside_and_below():
+    """A rule for exactly one kind leaves out the kinds at its level and below, from the mined
+    schema's class extensions (the whole source), not from the data at hand."""
     from types import SimpleNamespace
 
-    from rdfsolve.conversion import _below
+    from rdfsolve.conversion import _other_kinds
 
-    classes = {WP + "GeneProduct", WP + "Protein", WP + "Rna", WP + "Metabolite"}
+    contained_in = {
+        WP + "GeneProduct": [WP + "DataNode"],
+        WP + "Protein": [WP + "DataNode"],
+        WP + "Rna": [WP + "DataNode"],
+        WP + "Mrna": [WP + "Rna", WP + "GeneProduct"],
+        WP + "Conversion": [WP + "Interaction"],
+    }
     client = SimpleNamespace(
-        schema=SimpleNamespace(get_classes=lambda: classes),
-        superclasses=lambda cs: {
-            WP + "Protein": {WP + "GeneProduct", WP + "DataNode"},
-            WP + "Rna": {WP + "GeneProduct", WP + "DataNode"},
-            WP + "GeneProduct": {WP + "DataNode"},
-            WP + "Metabolite": {WP + "DataNode"},
-        },
+        schema=SimpleNamespace(class_extensions=SimpleNamespace(contained_in=contained_in))
     )
-    assert _below(client, WP + "GeneProduct") == (WP + "Protein", WP + "Rna")
+    assert _other_kinds(client, WP + "GeneProduct") == (WP + "Mrna", WP + "Protein", WP + "Rna")

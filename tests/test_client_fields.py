@@ -147,7 +147,7 @@ def test_a_shared_name_is_decided_by_the_links_used():
     assert class_iri(client.model("Place", links=["near"])) == "https://fields-test.invalid/Place"
 
 
-def test_the_release_is_read_from_the_metadata_saved_beside_the_schema(tmp_path):
+def test_the_release_is_read_from_the_metadata_saved_beside_the_schema(tmp_path, monkeypatch):
     """A source whose description comes with its download: the release is read from
     <name>_metadata.ttl, from the dataset whose subjects are the schema's classes."""
     schema = MinedSchema.from_vocabulary([VOCABULARY], CLASSES)
@@ -159,3 +159,28 @@ def test_the_release_is_read_from_the_metadata_saved_beside_the_schema(tmp_path)
     <urn:other-ontology> a void:Dataset ; dcterms:issued "2020-01-01" .""")
     client = Client.open(path)
     assert str(client.schema.about.source_issued).startswith("2026-08-10")
+    dotted = tmp_path / "people.schema.json"
+    dotted.write_text(path.read_text())
+    (tmp_path / "people.metadata.ttl").write_text(
+        (tmp_path / "people_local_metadata.ttl").read_text()
+    )
+    assert str(Client.open(dotted).schema.about.source_issued).startswith("2026-08-10")
+    monkeypatch.chdir(tmp_path)
+    assert str(Client.open("people.schema.json").schema.about.source_issued).startswith(
+        "2026-08-10"
+    ), "relative path"
+
+
+def test_a_construct_runs_on_local_rdf(tmp_path):
+    data = tmp_path / "people.ttl"
+    data.write_text(
+        "<urn:ada> a <https://fields-test.invalid/Person> ; <https://fields-test.invalid/givenName> 'Ada' ."
+    )
+    schema = tmp_path / "people_local_schema.json"
+    schema.write_text(json.dumps(MinedSchema.from_vocabulary([VOCABULARY], CLASSES).to_dict()))
+    client = Client.open(schema, data_file=data)
+    out = client.construct(
+        "CONSTRUCT { ?p <urn:named> ?n } WHERE { ?p <https://fields-test.invalid/givenName> ?n }"
+    )
+    assert [q.object.value for q in out] == ["Ada"]
+    assert "CONSTRUCT" in client.queries[-1]

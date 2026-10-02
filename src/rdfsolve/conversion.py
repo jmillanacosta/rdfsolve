@@ -53,11 +53,22 @@ def _expand(text: str, client: Client | None = None) -> str:
     return base + local
 
 
-def _below(client: Client, cls: str) -> tuple[str, ...]:
-    """Return the classes of the source's mined schema that its vocabulary places below *cls*."""
-    classes = sorted(client.schema.get_classes())
-    above = client.superclasses(classes)
-    return tuple(c for c in classes if c != cls and cls in above.get(c, set()))
+def _other_kinds(client: Client, cls: str) -> tuple[str, ...]:
+    """Return the kinds a node of exactly *cls* is not: the classes at the same level (contained
+    in the same nearest classes) and those below it, as the whole source's mined schema relates
+    the classes' members (class_extensions).
+    """
+    extensions = client.schema.class_extensions
+    if extensions is None:
+        raise ValueError("The mined schema has no class extensions: exact_kind cannot be decided")
+    containers = extensions.contained_in
+    parents = set(containers.get(cls, []))
+    out = {
+        c
+        for c, theirs in containers.items()
+        if c != cls and (cls in theirs or (parents and parents & set(theirs)))
+    }
+    return tuple(sorted(out))
 
 
 def _link(client: Client, name: str, focus: str) -> str:
@@ -164,8 +175,9 @@ class Rule:
         by field name or label, a path of them ("a/b"), or a link that points to the focus
         ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
         IRIs, CURIEs or "a" for rdf:type. *unless_kinds* leaves out focus nodes of these
-        record types; *exact_kind* leaves out those of any record type the source places below
-        the focus (rdfs:subClassOf), so the rule is for nodes of exactly that kind.
+        record types; *exact_kind* leaves out nodes that are also of a kind at the same level as
+        the focus or below it, as the whole source's mined schema relates its classes, so the
+        rule is for nodes of exactly that kind.
         """
         from rdfsolve.client.hydration import class_iri
 
@@ -215,7 +227,7 @@ class Rule:
             pairs=pairs,
             name=name,
             unless_classes=tuple(c for k in unless_kinds if (c := kind(k, first)))
-            + (_below(client, focus_iri) if exact_kind else ()),
+            + (_other_kinds(client, focus_iri) if exact_kind else ()),
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,

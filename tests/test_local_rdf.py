@@ -14,11 +14,14 @@ E = Namespace("https://example.org/")
 def test_local_backends_preserve_graphs_terms_and_schema():
     data = Dataset()
     graph = data.graph(E.data)
-    graph.parse(data="""
+    graph.parse(
+        data="""
         @prefix e: <https://example.org/> .
         e:s a e:Record; e:link e:o; e:text "hello"@en; e:items ("one" "two") .
         e:o e:label "untyped" .
-    """, format="turtle")
+    """,
+        format="turtle",
+    )
     data.graph(E.context).add((E.o, RDF.type, E.Target))
     data.graph(E.other).add((E.s, E.text, Literal("outside")))
     data.default_graph.add((E.default, E.text, Literal("default")))
@@ -27,7 +30,12 @@ def test_local_backends_preserve_graphs_terms_and_schema():
     data.graph(blank_graph).add((E.blank, E.text, Literal("blank graph")))
     inputs = set(data.quads((None, None, None, None)))
     converted = to_oxigraph(data)
-    outside = ox.Quad(ox.NamedNode(str(E.s)), ox.NamedNode(str(E.text)), ox.Literal("outside"), ox.NamedNode(str(E.other)))
+    outside = ox.Quad(
+        ox.NamedNode(str(E.s)),
+        ox.NamedNode(str(E.text)),
+        ox.Literal("outside"),
+        ox.NamedNode(str(E.other)),
+    )
     assert len(converted) == len(inputs) and outside in converted, "Named graphs stay named"
     schemas = []
     for source, backend in ((data, "rdflib"), (data, "oxigraph"), (converted, "oxigraph")):
@@ -37,12 +45,20 @@ def test_local_backends_preserve_graphs_terms_and_schema():
         query = f"SELECT ?o FROM <{E.data}> WHERE {{ <{E.s}> <{E.text}> ?o }}"
         assert list(engine.query(query))[0].o == Literal("hello", lang="en")
         assert bool(engine.query(f"ASK {{ GRAPH <{E.other}> {{ ?s ?p ?o }} }}"))
-        found = engine.query(f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{E.data}> {{ ?s ?p ?o }} }}")
+        found = engine.query(
+            f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{E.data}> {{ ?s ?p ?o }} }}"
+        )
         assert isomorphic(found.graph, graph)
-        assert list(engine.query(f"SELECT ?o WHERE {{ GRAPH ?g {{ <{E.blank}> ?p ?o }} }}"))[0].o == Literal("blank graph")
-        with SchemaMiner.from_graph(source, local_backend=backend,
-                graph_uris=[str(E.data)], type_context_graph_uris=[str(E.context)],
-                delay=0) as miner:
+        assert list(engine.query(f"SELECT ?o WHERE {{ GRAPH ?g {{ <{E.blank}> ?p ?o }} }}"))[
+            0
+        ].o == Literal("blank graph")
+        with SchemaMiner.from_graph(
+            source,
+            local_backend=backend,
+            graph_uris=[str(E.data)],
+            type_context_graph_uris=[str(E.context)],
+            delay=0,
+        ) as miner:
             schema = miner.mine("backends")
             assert miner.last_report.config["local_backend"]["engine"] == backend
             assert miner.last_report.completion_state == "complete"
@@ -54,26 +70,36 @@ def test_local_backends_preserve_graphs_terms_and_schema():
             record = client.get(client.model(str(E.Record)), str(E.s))
             assert str(record.text[0]) == "hello"
             assert client.session_metadata()["local_backend"]["engine"] == backend
+
     def observations(schema):
         return {
             field: sorted(
-                (p.model_dump_json(exclude={"examples", "witness_query", "recount_query"})
-                 for p in getattr(schema, field) or [])
+                (
+                    p.model_dump_json(exclude={"examples", "witness_query", "recount_query"})
+                    for p in getattr(schema, field) or []
+                )
             )
             for field in ("patterns", "structural_patterns", "collections")
         }
+
     assert observations(schemas[0]) == observations(schemas[1]), "Backend changed schema evidence"
-    assert observations(schemas[2]) == observations(schemas[1]), "Oxigraph data needs no RDFLib graph"
+    assert observations(schemas[2]) == observations(schemas[1]), (
+        "Oxigraph data needs no RDFLib graph"
+    )
     void = schemas[0].to_void_graph().serialize(format="turtle")
     assert observations(MinedSchema.from_void(void, local_backend="rdflib")) == (
         observations(MinedSchema.from_void(void, local_backend="oxigraph"))
     )
-    assert set(data.quads((None, None, None, None))) == inputs, "Mining changed the caller's dataset"
+    assert set(data.quads((None, None, None, None))) == inputs, (
+        "Mining changed the caller's dataset"
+    )
 
     data.default_union = True
     engine = LocalRdf(data, backend="oxigraph")
     assert len(list(engine.query("SELECT ?s ?p ?o WHERE { ?s ?p ?o }"))) == len(data)
-    assert {str(row.o) for row in engine.query(query)} == {"hello"}, "FROM must override union scope"
+    assert {str(row.o) for row in engine.query(query)} == {"hello"}, (
+        "FROM must override union scope"
+    )
 
     data.graph(E.other).add((E.s, E.text, Literal("hello", lang="en")))
     engine = LocalRdf(data, backend="oxigraph")
@@ -90,3 +116,16 @@ def test_local_backends_preserve_graphs_terms_and_schema():
     assert len(lexical) == 2
     with pytest.raises(ValueError, match="backend"):
         LocalRdf(data, backend="unknown")
+
+
+def test_a_zip_archive_of_rdf_files_loads_every_file(tmp_path):
+    import zipfile
+
+    from rdfsolve.local_rdf import load_store
+
+    archive = tmp_path / "dump.zip"
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("a/one.ttl", "<urn:a> <urn:p> <urn:b> .")
+        z.writestr("two.nt", "<urn:c> <urn:p> <urn:d> .\n")
+        z.writestr("README.txt", "not RDF")
+    assert len(load_store(archive)) == 2

@@ -58,13 +58,16 @@ def to_oxigraph(graph: Graph) -> ox.Dataset:
 
 
 def load_store(path: str | Path) -> ox.Store:
-    """Load an RDF file (gzip allowed) into an Oxigraph store, with Oxigraph's bulk loader.
+    """Load an RDF file (gzip allowed), or every RDF file in a zip archive (a source's dump),
+    into an Oxigraph store, with Oxigraph's bulk loader.
 
     The format comes from the extension; a format Oxigraph does not read is parsed by RDFLib.
     """
     import gzip
 
     path = Path(path)
+    if path.suffix == ".zip":
+        return _load_zip(path)
     suffixes = [s.lstrip(".") for s in path.suffixes]
     zipped = suffixes[-1:] == ["gz"]
     extension = suffixes[-2] if zipped and len(suffixes) > 1 else suffixes[-1] if suffixes else ""
@@ -78,6 +81,27 @@ def load_store(path: str | Path) -> ox.Store:
             store.bulk_load(cast("IO[bytes]", handle), format=rdf_format)
     else:
         store.bulk_load(path=str(path), format=rdf_format)
+    return store
+
+
+_RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})
+
+
+def _load_zip(path: Path) -> ox.Store:
+    """Load every member of a zip archive whose extension is an RDF format Oxigraph reads."""
+    import zipfile
+
+    store = ox.Store()
+    with zipfile.ZipFile(path) as archive:
+        for member in archive.namelist():
+            extension = Path(member).suffix.lstrip(".").lower()
+            if extension not in _RDF_EXTENSIONS:
+                continue
+            rdf_format = ox.RdfFormat.from_extension(extension)
+            if rdf_format is None:
+                continue
+            with archive.open(member) as handle:
+                store.bulk_load(handle, format=rdf_format)
     return store
 
 
