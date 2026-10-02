@@ -52,3 +52,12 @@ def test_turtle_in_an_owl_file_is_indexed_as_turtle(tmp_path):
     assert done.returncode == 0, done.stderr
     assert (tmp_path / "ontology.ttl").read_text().startswith("@prefix")
     assert not (tmp_path / "ontology.nq").exists() and (tmp_path / "model.nq").exists()
+
+
+def test_an_empty_file_is_skipped(tmp_path):
+    """UniProt publishes enzyme-hierarchy.rdf.xz empty (release 2026-09-03): an empty file has no
+    statements, and the converter's "Premature end of file" stopped the Swiss-Prot build."""
+    (tmp_path / "enzyme-hierarchy.rdf").write_text("")
+    done = _run(_convert_rdfxml_steps(), tmp_path)
+    assert done.returncode == 0, done.stderr
+    assert not (tmp_path / "enzyme-hierarchy.nq").exists()
