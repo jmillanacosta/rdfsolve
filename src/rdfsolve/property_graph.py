@@ -209,23 +209,46 @@ class Fold:
     evidence: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
     members: str | None = None
     among: str | None = None
+    predicate: str | None = None
+    dataset: str | None = None
 
     @classmethod
     def pairs(
-        cls, of: str, members: str, *, among: str | None = None, name: str | None = None
+        cls,
+        of: str,
+        members: str,
+        *,
+        among: str | None = None,
+        name: str | None = None,
+        predicate: str | None = None,
     ) -> Fold:
         """Return a fold that links each pair of members of each instance of *of*.
 
         *members* is the property from the instance to its members (wp:participants of a
-        Complex); *among* keeps the members of this class (wp:Protein).
+        Complex); *among* keeps the members of this class (wp:Protein); *predicate* is the
+        target schema's IRI of the relation (biolink:in_complex_with).
         """
-        return cls(of, members, members, name or f"same_{_local(of)}", members=members, among=among)
+        return cls(
+            of,
+            members,
+            members,
+            name or f"same_{_local(of)}",
+            members=members,
+            among=among,
+            predicate=predicate,
+        )
 
     def relation(self) -> str:
-        """Return the IRI of the relation the fold's edges stand for."""
+        """Return the IRI of the relation the fold's edges stand for.
+
+        The target schema's IRI when the fold has one (*predicate*); otherwise one of rdfsolve,
+        under the dataset: https://w3id.org/rdfsolve/pg/schemas/<dataset>/<label>.
+        """
         from rdfsolve.config import mint
 
-        return mint("relation", self.name or _local(self.cls))
+        if self.predicate:
+            return self.predicate
+        return mint("pg", "schemas", self.dataset or "local", self.name or _local(self.cls))
 
     def to_construct(self, focus: Iterable[str] = ()) -> str:
         """Return the SPARQL CONSTRUCT that gives the fold's edges from one endpoint.
@@ -246,11 +269,14 @@ class Fold:
             "  FILTER(STR(?a) < STR(?b))\n}"
         )
 
-    def to_shacl(self) -> str:
+    def to_shacl(self, provenance: Mapping[str, str | None] | None = None) -> str:
         """Return the fold as a SHACL node shape with a sh:TripleRule (SHACL-AF), in Turtle.
 
         The shape targets the class; the rule's subject and object are node expressions on the
-        paths (filtered by the class of the members, for a fold of pairs).
+        paths (filtered by the class of the members, for a fold of pairs). *provenance*
+        (:func:`provenance`) says which release of the source and which version of the target
+        schema the rule is for, and what made it: as comments, and as triples on the shape
+        (prov:wasDerivedFrom, pav:createdWith, dcterms:conformsTo).
         """
         from rdfsolve.config import mint
 
@@ -263,15 +289,138 @@ class Fold:
                 )
             return f"[ sh:path <{path}> ]"
 
+        info = {k: v for k, v in (provenance or {}).items() if v}
+        comments = "".join(f"# {k}: {v}\n" for k, v in info.items())
+        about = ""
+        if info.get("source description"):
+            about += f"  prov:wasDerivedFrom <{info['source description']}> ;\n"
+        if info.get("generated with"):
+            about += f'  pav:createdWith "{info["generated with"]}" ;\n'
+        if info.get("target"):
+            version = (
+                f' ; pav:version "{info["target version"]}"' if info.get("target version") else ""
+            )
+            about += f'  dcterms:conformsTo [ dcterms:title "{info["target"]}"{version} ] ;\n'
         return (
-            "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            comments
+            + "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            + "@prefix prov: <http://www.w3.org/ns/prov#> .\n"
+            + "@prefix pav: <http://purl.org/pav/> .\n"
+            + "@prefix dcterms: <http://purl.org/dc/terms/> .\n"
             f"<{mint('fold', self.name or _local(self.cls))}> a sh:NodeShape ;\n"
-            f"  sh:targetClass <{self.cls}> ;\n"
+            + about
+            + f"  sh:targetClass <{self.cls}> ;\n"
             "  sh:rule [ a sh:TripleRule ;\n"
             f"    sh:subject {nodes(self.source)} ;\n"
             f"    sh:predicate <{self.relation()}> ;\n"
             f"    sh:object {nodes(self.target)} ] .\n"
         )
+
+
+def provenance(
+    schema: MinedSchema, *, target: str | None = None, target_version: str | None = None
+) -> dict[str, str | None]:
+    """Return what a conversion rule is for and what made it, from the mined schema's metadata.
+
+    The source release is the one the metadata miner read (VoID, version or issued date); when
+    the source states none, the snapshot the schema was mined from says when, and the release
+    is written as unknown. *target* and *target_version* name the property-graph schema the
+    rule converts to (Biolink Model, 4.4.5).
+    """
+    from importlib.metadata import PackageNotFoundError, version
+
+    about = schema.about
+    try:
+        made = f"rdfsolve {version('rdfsolve')}"
+    except PackageNotFoundError:
+        made = about.generated_by
+    release = about.source_version or about.source_issued or about.source_modified
+    snapshot = about.retrieved_at or about.generated_at
+    return {
+        "source": about.title or about.dataset_name,
+        "source release": str(release)
+        if release
+        else f"not stated by the source; schema mined from a snapshot of {snapshot}",
+        "source endpoint": about.endpoint,
+        "source description": about.void_uri,
+        "target": target,
+        "target version": target_version,
+        "generated with": made,
+    }
+
+
+class UpstreamWarning(UserWarning):
+    """Something the graph shows to be wrong in a source (see PropertyGraph.findings)."""
+
+
+@dataclass
+class Finding:
+    """A disagreement that points upstream: what the source states, what the issuer states.
+
+    *shape* (SHACL) and *query* (SPARQL SELECT on the source's endpoint) find every node of
+    the same pattern in the source, when the node sits in a fold (an enzyme as the source of
+    a catalysis); otherwise they are None and the finding stands for the node alone.
+    """
+
+    kind: str
+    node: str
+    source: str
+    stated: list[str]
+    issuer: list[str]
+    pattern: str
+    shape: str | None = None
+    query: str | None = None
+
+    def __str__(self) -> str:
+        """Say the finding in one sentence, with where to look for the others."""
+        where = " Every such node in the source: Finding.query (SPARQL) or .shape (SHACL)."
+        return (
+            f"{self.source} names {self.node} {self.stated!r}; its issuer names it "
+            f"{self.issuer!r} ({self.pattern}).{where if self.query else ''}"
+        )
+
+
+RARE = 0.05  # a place in a pattern that a source uses for fewer of its values than this is rare
+
+# Properties that give a name or a synonym of a term (the issuer's names to compare with).
+NAME_PROPERTIES = (
+    "http://www.w3.org/2000/01/rdf-schema#label",
+    "http://www.w3.org/2004/02/skos/core#prefLabel",
+    "http://www.w3.org/2004/02/skos/core#altLabel",
+    "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym",
+    "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
+    "http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym",
+    "http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym",
+    "http://purl.uniprot.org/core/mnemonic",
+)
+
+
+def _normal(name: str) -> str:
+    """Return a name for comparison: compatibility form, lower case, no leading count, no
+    punctuation ("2 H₂O" and "h2o" agree).
+    """
+    import unicodedata
+
+    text = unicodedata.normalize("NFKC", name).casefold().strip()
+    text = re.sub(r"^\d+\s+", "", text)
+    return re.sub(r"[^0-9a-z]+", "", text)
+
+
+def _agrees(name: str, names: Iterable[str]) -> bool:
+    """Return whether a name agrees with one of *names* (equal, or one holds the other)."""
+    mine = _normal(name)
+    for other in names:
+        theirs = _normal(other)
+        if (
+            mine
+            and theirs
+            and (
+                mine == theirs
+                or (min(len(mine), len(theirs)) >= 4 and (mine in theirs or theirs in mine))
+            )
+        ):
+            return True
+    return False
 
 
 SAME_AS = "http://www.w3.org/2002/07/owl#sameAs"
@@ -410,6 +559,8 @@ class PropertyGraph:
         self.named_graphs: list[str] = []
         self.cited: dict[str, Any] = {}  # resources the RDF only cites, kept as values
         self.specific: dict[str, Any] = {}  # superclasses moved from labels to the type property
+        # How often the sources use each (class, property, class): what is rare in a source.
+        self.patterns: Counter[tuple[str, str, str]] = Counter()
         sizes: Counter[str] = Counter()
         for item in _items(nodes.values(), edges):
             for key, values in item.properties.items():
@@ -525,6 +676,10 @@ class PropertyGraph:
         built.identity = decisions
         built.cited = cited
         built.specific = specific
+        for each in schemas:
+            for pattern in each.patterns:
+                key = (pattern.subject_class, pattern.property_uri, pattern.object_class)
+                built.patterns[key] += pattern.count or 0
         return built
 
     @classmethod
@@ -556,7 +711,20 @@ class PropertyGraph:
         if "suggested" in given:
             found = suggested_folds([c.schema for c in clients], records)
             given = [f for g in given for f in (found if g == "suggested" else [g])]
-        options["folds"] = given
+        # A fold without a dataset takes the one whose schema has the folded class.
+        from dataclasses import replace
+
+        def source_of(fold: Fold) -> str | None:
+            """Return the dataset name of the client whose schema has the fold's class."""
+            for client in clients:
+                if any(p.subject_class == fold.cls for p in client.schema.patterns):
+                    return str(client.schema.about.dataset_name or "") or None
+            return None
+
+        options["folds"] = [
+            f if not isinstance(f, Fold) or f.dataset else replace(f, dataset=source_of(f))
+            for f in given
+        ]
         if identity is not None and not isinstance(identity, Identity):
             identity = Identity.of(*clients, decision=identity, **chosen)
         elif chosen:
@@ -775,6 +943,97 @@ class PropertyGraph:
             among = f" ({_local(fold.among)})" if fold.among else ""
             return f"{_local(fold.cls)}: pairs of {_local(fold.members)}{among}"
         return f"{_local(fold.cls)}: {_local(fold.source)} -> {_local(fold.target)}"
+
+    def findings(self, *, warn: bool = True) -> list[Finding]:
+        """Return the disagreements between a source's names and the issuer's, node by node.
+
+        On a merged node, each name the source gives (``label`` beside the issuer's, see
+        Identity) is compared with the issuer's names and synonyms; a name that agrees with none
+        is a finding: an enzyme that WikiPathways draws as a metabolite with a ChEBI id is named
+        "Esterase" by WikiPathways and "arecoline hydrobromide" by ChEBI. A name equal to one of
+        the node's own identifiers agrees (a gene symbol, hgnc.symbol:HMGCR). When the node is
+        an end of a folded edge in a place the source rarely uses for its class (the mined
+        schema: 31 metabolites against 3,484 gene products as source of a catalysis; under
+        :data:`RARE`), the finding carries the SHACL shape and the SPARQL query that find every
+        node in that place with that class in the source. With *warn*, each finding is also issued as an UpstreamWarning.
+        """
+        import warnings
+
+        found: list[Finding] = []
+        for node in self.nodes.values():
+            for key in [k for k in node.properties if _BESIDE in k]:
+                predicate, _, source = key.partition(_BESIDE)
+                if predicate not in NAME_PROPERTIES:
+                    continue
+                from rdfsolve.identifiers import parse
+
+                names = [v.lexical for k in NAME_PROPERTIES for v in node.properties.get(k, [])]
+                # A name that is one of the node's own identifiers agrees (hgnc.symbol:HMGCR).
+                names += [
+                    read.local
+                    for values in node.properties.values()
+                    for v in values
+                    if v.datatype == REFERENCE and (read := parse(v.lexical))
+                ]
+                stated = [v.lexical for v in node.properties[key]]
+                wrong = [n for n in stated if not _agrees(n, names)]
+                if not wrong or not names:
+                    continue
+                origins = node.origins.get(key) or []
+                member = origins[0] if origins else node.id
+                classes = [
+                    label
+                    for label, origin in zip(node.labels, node.label_origins or [], strict=False)
+                    if origin == member
+                ] or list(node.labels)
+                finding = Finding(
+                    "name",
+                    node.id,
+                    source,
+                    wrong,
+                    [v.lexical for v in node.properties.get(predicate, [])] or names[:3],
+                    f"{', '.join(_local(c) for c in classes)} in {source}",
+                )
+                for edge in self.edges:
+                    if (
+                        edge.fold is None
+                        or edge.derived
+                        or node.id not in (edge.source, edge.target)
+                    ):
+                        continue
+                    fold = self.folds[edge.fold]
+                    link = fold.source if edge.source == node.id else fold.target
+                    finding.pattern = (
+                        f"{_local(classes[0])} as {_local(link)} of a {_local(fold.cls)}"
+                    )
+                    # Only a place the source rarely uses is worth a query for all such nodes.
+                    used = sum(
+                        n for (c, p, _), n in self.patterns.items() if (c, p) == (fold.cls, link)
+                    )
+                    here = self.patterns.get((fold.cls, link, classes[0]), 0)
+                    if used and here / used >= RARE:
+                        break
+                    finding.pattern += (
+                        f", rare in {source}: {here} of {used}" if used else ", how rare unknown"
+                    )
+                    finding.query = (
+                        f"SELECT DISTINCT ?instance ?node ?name WHERE {{\n"
+                        f"  ?instance a <{fold.cls}> ; <{link}> ?node .\n"
+                        f"  ?node a <{classes[0]}> .\n"
+                        f"  OPTIONAL {{ ?node <http://www.w3.org/2000/01/rdf-schema#label> ?name }}\n}}"
+                    )
+                    finding.shape = (
+                        "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+                        f"[] a sh:NodeShape ; sh:targetClass <{fold.cls}> ;\n"
+                        f"  sh:property [ sh:path <{link}> ; sh:not [ sh:class <{classes[0]}> ] ;\n"
+                        f'    sh:message "a {_local(classes[0])} as {_local(link)} of a '
+                        f'{_local(fold.cls)}" ] .\n'
+                    )
+                    break
+                found.append(finding)
+                if warn:
+                    warnings.warn(str(finding), UpstreamWarning, stacklevel=2)
+        return found
 
     def fold_edges(self, index: int) -> set[tuple[str, str]]:
         """Return the ends of the edges of fold *index*, as the RDF wrote them."""
@@ -1080,6 +1339,8 @@ def _expand(fold: Fold, prefixes: Mapping[str, str]) -> Fold:
         fold.evidence,
         iri(fold.members) if fold.members else None,
         iri(fold.among) if fold.among else None,
+        iri(fold.predicate) if fold.predicate else None,
+        fold.dataset,
     )
 
 
