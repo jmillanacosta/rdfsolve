@@ -160,7 +160,9 @@ class Claims:
         skos:exactMatch, Bio2RDF cross-references), or a predicate whose values are all
         identifiers of one namespace that this source does not issue, some of them only cited
         here, not described (WikiPathways' BridgeDb links; not dcterms:isPartOf, whose values
-        are WikiPathways' own, nor wp:source, whose enzymes the records describe). *citing*
+        are WikiPathways' own, nor wp:source, whose enzymes the records describe), and that the
+        schema of the source lists as a cross-reference (Client.cross_references: not
+        dcterms:references, whose publications WikiPathways describes). *citing*
         adds every link to identifiers of these namespaces, as evidence for check (UniProt's
         NCBI Gene id of an accession).
         """
@@ -185,11 +187,18 @@ class Claims:
             spaces[quad.predicate.value].add(found.prefix if found else "-")
             if quad.object.value not in described:
                 cited.add(quad.predicate.value)
+        # The schema says which of these the source describes itself (its publications).
+        schema = set(client.cross_references()) if hasattr(client, "cross_references") else None
         chosen = {
             predicate
             for predicate, found in spaces.items()
             if is_declared_property(predicate)
-            or (len(found) == 1 and not found & (own | {"-"}) and predicate in cited)
+            or (
+                len(found) == 1
+                and not found & (own | {"-"})
+                and predicate in cited
+                and (schema is None or predicate in schema)
+            )
         }
         wanted = set(citing)
         claims = []

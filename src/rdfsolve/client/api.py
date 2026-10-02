@@ -342,20 +342,29 @@ class Client(DatasetClient):
     def cross_references(self) -> list[str]:
         """Return the properties of this source that cite identifiers of one other source.
 
-        From the mined examples: every identifier value of the property is in one registered
-        namespace that this source does not issue (WikiPathways' bdbChEBI, bdbUniprot). A
-        property whose values span namespaces (dcterms:isPartOf, wp:source, rdfs:seeAlso) links
-        to things of several kinds and is read only when asked for.
+        From the mined schema: every identifier value of the property is in one registered
+        namespace that this source does not issue (WikiPathways' bdbChEBI, bdbUniprot), and some
+        of its values are resources the source does not describe (object class Resource). An
+        invalid identifier counts in its namespace (lipidmaps/LMSP02 is a LIPID MAPS id that
+        fails the pattern). Not cross-references: properties whose values span namespaces
+        (dcterms:isPartOf, rdfs:seeAlso), or whose values the source describes itself
+        (dcterms:references to its PublicationReference records).
         """
-        from rdfsolve.mappings.signatures import RDF_TYPE, identifier_type
+        from rdfsolve.identifiers import parse
+        from rdfsolve.mappings.signatures import RDF_TYPE, VOCABULARIES
 
         own = set(self.issued_kinds())
         spaces: dict[str, set[str]] = defaultdict(set)
         for example in self._schema.enrichment.examples if self._schema.enrichment else []:
             if example.property_uri != RDF_TYPE:
-                spaces[example.property_uri].add(identifier_type(example.value.value) or "-")
+                found = parse(example.value.value)
+                prefix = found.prefix if found else "-"
+                spaces[example.property_uri].add("-" if prefix in VOCABULARIES else prefix)
+        cited = {p.property_uri for p in self._schema.patterns if p.object_class == "Resource"}
         return sorted(
-            p for p, found in spaces.items() if len(found) == 1 and not found & (own | {"-"})
+            p
+            for p, found in spaces.items()
+            if len(found) == 1 and not found & (own | {"-"}) and p in cited
         )
 
     def identify(self, identifiers: Iterable[str]) -> list[Identification]:
