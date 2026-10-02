@@ -302,6 +302,8 @@ class LocalMiningStage(Stage):
             if self.config.resume_from
             else None
         )
+        if previous and not previous.is_file():
+            log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
         scope = graph_uris if graph_uris is not None else source.graph_uris or None
         if graph_uris is None and scope:
             applied = local_graph_scope(scope, source.download_fields, source.graph_sources)

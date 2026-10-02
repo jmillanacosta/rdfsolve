@@ -175,6 +175,8 @@ class RemoteMiningStage(Stage):
                 if self.config.resume_from
                 else None
             )
+            if previous and not previous.is_file():
+                log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
             miner = SchemaMiner(
                 endpoint_url=source.endpoint,
                 get_graphs_from_store=use_graph_store,
