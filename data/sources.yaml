@@ -6570,10 +6570,6 @@
 - name: ubergraph
   dataset_kind: ontology
   endpoint: https://ubergraph.apps.renci.org/sparql
-  graph_uris:
-  - http://reasoner.renci.org/ontology
-  materialized_graph_uris:
-  - http://reasoner.renci.org/nonredundant
   download_nq: https://ubergraph.apps.renci.org/downloads/current/ubergraph.nq.gz
   notes: 'KG Registry: Ubergraph'
   kg_registry_id: ubergraph
