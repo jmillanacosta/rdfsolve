@@ -76,6 +76,11 @@ class AboutMetadata(BaseModel):
         None,
         description="URIs of graphs identified as ontologies (.owl extension)",
     )
+    materialized_graph_uris: list[str] | None = Field(
+        None,
+        description="Graphs of relations that a reasoner stored as edges, read as restriction "
+        "patterns with the evidence materialized",
+    )
 
     # Provenance
     generated_by: str = Field(

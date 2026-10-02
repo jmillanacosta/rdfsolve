@@ -5,7 +5,9 @@ is a blank node. Here each form is read with one grouped query that joins throug
 node and does not return it: a class that is a subclass of a restriction, and a class that is
 equivalent to an intersection with a restriction. Terms are grouped by the namespace of their
 IRI (the IRI without its last identifier part). A label in Manchester syntax is made for each
-pattern, with the labels that the source gives to the properties.
+pattern, with the labels that the source gives to the properties. A source can also hold
+the relations that a reasoner materialized as edges (UberGraph: X part_of Y for X SubClassOf
+(part_of some Y)); they are read from their graphs as patterns with the evidence materialized.
 """
 
 from __future__ import annotations
@@ -63,6 +65,9 @@ def manchester(pattern_fields: dict[str, Any], property_label: str | None) -> st
 
     The property has the label of the source when there is one, else the last part of its IRI.
     """
+    if pattern_fields["form"] == "named":
+        subject, filler = pattern_fields["subject_namespace"], pattern_fields["filler_namespace"]
+        return f"{_name(subject)} SubClassOf {_name(filler)}"
     prop = pattern_fields["property_uri"]
     name = f"'{property_label}'" if property_label else _name(prop + "/")
     part = f"{name} {pattern_fields['form']} {_name(pattern_fields['filler_namespace'])}"
@@ -90,17 +95,63 @@ def _labels(helper: Any, properties: list[str], dataset: str) -> dict[str, str]:
     return labels
 
 
+def _materialized_query(graph_uri: str) -> str:
+    """Return the grouped query of the edges between terms in a graph of materialized relations."""
+    return f"""SELECT ?p ?sns ?fns (COUNT(*) AS ?n) (COUNT(DISTINCT ?c) AS ?classes)
+       (SAMPLE(?c) AS ?c1) (SAMPLE(?v) AS ?v1)
+WHERE {{
+  GRAPH <{graph_uri}> {{ ?c ?p ?v }}
+  FILTER(isIRI(?c) && isIRI(?v))
+  BIND(REPLACE(STR(?c), "{NAMESPACE}", "") AS ?sns)
+  BIND(REPLACE(STR(?v), "{NAMESPACE}", "") AS ?fns)
+}}
+GROUP BY ?p ?sns ?fns"""
+
+
 def mine_restriction_patterns(
-    helper: Any, *, graph_uris: list[str] | None = None
+    helper: Any,
+    *,
+    graph_uris: list[str] | None = None,
+    materialized_graph_uris: list[str] | None = None,
 ) -> RestrictionPatterns:
     """Mine the restriction patterns of the data that *helper* reads.
 
     A form whose query fails is recorded and the state is partial; when every query fails the
     state is failed. A dataset without restrictions gives no pattern and the state complete.
+    Each graph of *materialized_graph_uris* holds relations that a reasoner stored as edges
+    (X R Y for X SubClassOf (R some Y)); its edges between terms are patterns with the evidence
+    materialized, read with one grouped query per graph.
     """
     dataset, _, _ = _graph_scope(graph_uris)
     result = RestrictionPatterns()
     rows: list[dict[str, Any]] = []
+    for graph_uri in materialized_graph_uris or []:
+        result.query_count += 1
+        try:
+            answer = helper.select(_materialized_query(graph_uri), purpose="restrictions")
+        except Exception as error:
+            logger.warning("Restrictions: %s not read: %s", graph_uri, str(error)[:200])
+            result.failures.append(f"materialized {graph_uri}: {str(error)[:300]}")
+            continue
+        for row in answer.get("results", {}).get("bindings", []):
+            if "p" not in row:
+                continue
+            named = row["p"]["value"] == RDFS + "subClassOf"
+            rows.append(
+                {
+                    "subject_namespace": row["sns"]["value"],
+                    "axiom": "SubClassOf",
+                    "property_uri": row["p"]["value"],
+                    "form": "named" if named else "some",
+                    "filler_namespace": row["fns"]["value"],
+                    "count": int(row["n"]["value"]),
+                    "classes": int(row["classes"]["value"]),
+                    "example_subject": row.get("c1", {}).get("value"),
+                    "example_filler": row.get("v1", {}).get("value"),
+                    "evidence": "materialized",
+                    "graph_uri": graph_uri,
+                }
+            )
     for axiom in AXIOMS:
         for form in FORMS:
             result.query_count += 1
@@ -140,10 +191,10 @@ def mine_restriction_patterns(
             RestrictionPattern(**row, label=manchester(row, labels.get(row["property_uri"])))
             for row in rows
         ),
-        key=lambda p: (-p.count, p.label),
+        key=lambda p: (p.evidence, -p.count, p.label),
     )
     failed_forms = sum(not failure.startswith("labels") for failure in result.failures)
-    if failed_forms == len(AXIOMS) * len(FORMS):
+    if failed_forms == len(AXIOMS) * len(FORMS) + len(materialized_graph_uris or []):
         result.state = "failed"
     elif result.failures:
         result.state = "partial"

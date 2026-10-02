@@ -298,6 +298,7 @@ class Stage:
         suffix: str,
         helper=None,
         members: dict[str, list[str]] | None = None,
+        materialized_graph_uris: list[str] | None = None,
     ) -> None:
         """Save schema in requested output formats.
 
@@ -331,8 +332,12 @@ class Stage:
         if self.config.restriction_patterns and helper is not None:
             from rdfsolve.mining.restrictions import mine_restriction_patterns
 
+            if materialized_graph_uris:
+                schema.about.materialized_graph_uris = list(materialized_graph_uris)
             schema.restriction_patterns = mine_restriction_patterns(
-                helper, graph_uris=restriction_scope(schema.about)
+                helper,
+                graph_uris=restriction_scope(schema.about),
+                materialized_graph_uris=schema.about.materialized_graph_uris,
             )
             log.info(
                 "[%s] Restriction patterns: %d (%s)",

@@ -59,3 +59,32 @@ def test_the_option_is_read_from_the_command_line(monkeypatch):
     with pytest.raises(SystemExit):
         cli.main()
     assert seen["config"].restriction_patterns is True
+
+
+def test_materialized_graphs_of_the_registry_reach_the_schema(tmp_path):
+    from rdflib import Dataset, URIRef
+
+    from scripts.pipeline_stages.config import Source
+    from tests.test_restriction_patterns import MATERIALIZED, RELATIONS
+
+    source = Source.from_dict({"name": "ubergraph", "endpoint": "https://example.org/sparql",
+                               "materialized_graph_uris": [RELATIONS]})
+    assert source.materialized_graph_uris == [RELATIONS]
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run",
+        restriction_patterns=True, navigation_hops=0, output_formats=["json"],
+    )
+    data = Dataset()
+    data.graph(URIRef(RELATIONS)).parse(data=MATERIALIZED, format="nt")
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[])
+    with SchemaMiner.from_graph(data, delay=0) as miner:
+        Any_(config)._save_schema_outputs(
+            schema, tmp_path, "x", "_local", helper=miner.helper,
+            materialized_graph_uris=source.materialized_graph_uris,
+        )
+    written = json.loads((tmp_path / "x_local_schema.json").read_text())
+    written = written.get("schema", written)
+    assert written["about"]["materialized_graph_uris"] == [RELATIONS]
+    assert {p["evidence"] for p in written["restriction_patterns"]["patterns"]} == {"materialized"}

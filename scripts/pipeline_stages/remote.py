@@ -274,6 +274,7 @@ class RemoteMiningStage(Stage):
                     suffix,
                     helper=miner.helper,
                     members=self._group_members(miner),
+                    materialized_graph_uris=source.materialized_graph_uris or None,
                 )
                 self._save_ontology_discovery(
                     schema,

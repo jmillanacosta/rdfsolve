@@ -445,7 +445,8 @@ class LocalMiningStage(Stage):
         suffix = self.config.output_suffix
         schema = self._without_service_data(schema)
         self._save_schema_outputs(
-            schema, output_dir, source.name, suffix, helper=helper, members=members
+            schema, output_dir, source.name, suffix, helper=helper, members=members,
+            materialized_graph_uris=source.materialized_graph_uris or None,
         )
         from rdfsolve.evidence.local_ontology_files import archive_local_ontology_files
 

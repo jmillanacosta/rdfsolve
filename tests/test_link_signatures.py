@@ -90,3 +90,32 @@ def test_a_join_is_verified_on_sampled_values_and_gives_the_target_form():
         "The target writes UniProt as purl.uniprot.org"
     )
     assert evidence.examples == [("https://identifiers.org/uniprot:P04637", UP + "P04637")]
+
+
+def test_the_terms_of_an_ontology_are_subjects_of_owl_class():
+    """An ontology source (UberGraph) issues the terms of each namespace whose terms have
+    axioms in it; a data source that names GO terms then joins it."""
+    from rdfsolve.schema_models.restrictions import RestrictionPattern, RestrictionPatterns
+
+    obo = "http://purl.obolibrary.org/obo/"
+    terms = MinedSchema(
+        about=AboutMetadata.build(dataset_name="terms"),
+        patterns=[],
+        restriction_patterns=RestrictionPatterns(
+            patterns=[
+                RestrictionPattern(
+                    subject_namespace=obo + "GO_", axiom="SubClassOf", property_uri=obo + "BFO_0000050",
+                    form="some", filler_namespace=obo + "UBERON_", count=1, classes=1,
+                    example_subject=obo + "GO_0006915", example_filler=obo + "UBERON_0000955",
+                    label="GO SubClassOf part_of some UBERON", evidence="materialized",
+                )
+            ]
+        ),
+    )
+    found = signatures(terms)
+    assert found.subjects == {"go": {"http://www.w3.org/2002/07/owl#Class"}}, "Not the filler"
+    events = schema("events", [("urn:Event", "urn:process", "urn:event/1", obo + "GO_0008150")])
+    (link,) = infer_links({"events": events, "terms": terms})
+    assert (link.kind, link.identifier_type, link.target, link.target_class) == (
+        "join", "go", "terms", "http://www.w3.org/2002/07/owl#Class"
+    )

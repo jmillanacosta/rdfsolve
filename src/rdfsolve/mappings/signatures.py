@@ -92,11 +92,24 @@ def identifier_type(value: str, ignore: Iterable[str] = VOCABULARIES) -> str | N
     return None if prefix is None or prefix in set(ignore) else prefix
 
 
+OWL_CLASS = "http://www.w3.org/2002/07/owl#Class"
+
+
 def signatures(schema: MinedSchema, ignore: Iterable[str] = VOCABULARIES) -> Signatures:
-    """Type the example values and subjects of a schema; rdf:type values are classes."""
+    """Type the example values and subjects of a schema; rdf:type values are classes.
+
+    The terms of an ontology are subjects of owl:Class: the example subject of each restriction
+    pattern names a namespace whose terms have axioms in the dataset (UberGraph: about 60
+    ontologies, where the class patterns have one example of owl:Class). Fillers are left out:
+    an ontology refers to terms of others that it does not define.
+    """
     ignored = frozenset(ignore)
     values: dict[str, set[tuple[str, str]]] = defaultdict(set)
     subjects: dict[str, set[str]] = defaultdict(set)
+    restrictions = schema.restriction_patterns.patterns if schema.restriction_patterns else []
+    for pattern in restrictions:
+        if pattern.example_subject and (kind := identifier_type(pattern.example_subject, ignored)):
+            subjects[kind].add(OWL_CLASS)
     for example in schema.enrichment.examples if schema.enrichment else []:
         if example.property_uri == RDF_TYPE:
             continue
