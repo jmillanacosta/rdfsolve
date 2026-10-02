@@ -152,6 +152,59 @@ class Claims:
             found.append(Claim(subject, obj, source, quad.predicate.value))
         return cls(found)
 
+    @classmethod
+    def of(cls, client: Client, *results: Any, citing: Iterable[str] = ()) -> Claims:
+        """Return what *client* states in these records about the identity of their identifiers.
+
+        The predicates are read from the records: a declared identity (owl:sameAs,
+        skos:exactMatch, Bio2RDF cross-references), or a predicate whose values are all
+        identifiers of one namespace that this source does not issue, some of them only cited
+        here, not described (WikiPathways' BridgeDb links; not dcterms:isPartOf, whose values
+        are WikiPathways' own, nor wp:source, whose enzymes the records describe). *citing*
+        adds every link to identifiers of these namespaces, as evidence for check (UniProt's
+        NCBI Gene id of an accession).
+        """
+        import pyoxigraph as ox
+
+        from rdfsolve.mappings.declared import is_declared_property
+
+        records = client.to_oxigraph(*results)
+        name = client._schema.about.dataset_name or "source"
+        own = set(client.issued_kinds())
+        described = {
+            q.subject.value
+            for q in records
+            if q.predicate.value == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        }
+        spaces: dict[str, set[str]] = defaultdict(set)
+        cited: set[str] = set()
+        for quad in records:
+            if not isinstance(quad.object, ox.NamedNode):
+                continue
+            found = parse(quad.object.value)
+            spaces[quad.predicate.value].add(found.prefix if found else "-")
+            if quad.object.value not in described:
+                cited.add(quad.predicate.value)
+        chosen = {
+            predicate
+            for predicate, found in spaces.items()
+            if is_declared_property(predicate)
+            or (len(found) == 1 and not found & (own | {"-"}) and predicate in cited)
+        }
+        wanted = set(citing)
+        claims = []
+        for quad in records:
+            if not isinstance(quad.object, ox.NamedNode) or quad.subject == quad.object:
+                continue
+            subject, target = parse(quad.subject.value), parse(quad.object.value)
+            if subject is None or target is None or subject.prefix == target.prefix:
+                continue
+            if quad.predicate.value in chosen or target.prefix in wanted:
+                claims.append(
+                    Claim(quad.subject.value, quad.object.value, name, quad.predicate.value)
+                )
+        return cls(claims)
+
     def targets(self, namespace: str) -> list[str]:
         """Return the IRIs that the claims map to in *namespace* (a Bioregistry prefix)."""
         return sorted(
@@ -286,14 +339,17 @@ class Claims:
         some are taken; the other sources' different targets are overruled. One target is
         accepted; several are accepted only when *variants* (pairs, or a function of the
         target IRIs, such as Ontologies.variants) joins them into one group; otherwise the
-        group is ambiguous and nothing is accepted. *namespaces* keeps these target namespaces.
+        group is ambiguous and nothing is accepted. *namespaces* keeps these target namespaces;
+        by default those that a source of the claims issues (where the issuer can be heard).
         *prefer* are identifiers (IRIs, or Results of a client) that the issuer marks as its
         preferred entries (UniProt's reviewed ones): several targets narrow to those preferred,
         when some are.
         """
         order = list(authority or [])
         preferred = {_key(iri) for iri in _iris(prefer)}
-        kept = set(namespaces) if namespaces is not None else None
+        if namespaces is None:
+            namespaces = {i for s in {c.source for c in self.claims} if (i := _issuer(s))}
+        kept = set(namespaces)
         by_group: dict[tuple[str, str], list[Claim]] = defaultdict(list)
         for c in self.claims:
             by_group[(_key(c.subject), _prefix(c.object))].append(c)
@@ -301,7 +357,7 @@ class Claims:
         variant_pairs: list[tuple[str, str]] = []
         groups: list[dict[str, Any]] = []
         for (subject, namespace), claims in sorted(by_group.items()):
-            if kept is not None and namespace not in kept:
+            if namespace not in kept:
                 continue
             sources = sorted({c.source for c in claims})
             rank = sorted(
@@ -314,7 +370,11 @@ class Claims:
             )
             chosen = rank[0]
             mine = [c for c in claims if c.source == chosen]
-            targets = sorted({c.object for c in mine})
+            # One IRI per identifier: a source can write one target twice (bdbUniprot to
+            # identifiers.org/uniprot/Q13510, owl:sameAs to purl.uniprot.org/uniprot/Q13510).
+            targets = sorted(
+                {_key(c.object): c.object for c in sorted(mine, key=lambda c: c.object)}.values()
+            )
             overruled = sorted(
                 {_key(c.object) for c in claims if c.source != chosen} - {_key(t) for t in targets}
             )
@@ -333,7 +393,8 @@ class Claims:
                     outcome = "accepted: variants of one entity"
             set_aside: set[str] = {_key(c.object) for c in mine} - {_key(t) for t in targets}
             if outcome.startswith("accepted"):
-                accepted += [c for c in mine if c.object in targets]
+                keys = {_key(t) for t in targets}
+                accepted += [c for c in mine if _key(c.object) in keys]
                 variant_pairs += pairs
             groups.append(
                 {

@@ -153,7 +153,7 @@ class PGNode:
     """A node: its id (IRI, or ``_:`` and a blank-node label), class IRIs and properties.
 
     A node that several IRIs of one identifier were merged into (see :class:`Identity`) lists
-    them in ``members``; ``origins`` gives, for each key, the IRI that stated each value, and
+    them in ``members`` (and those of another kind in ``apart``); ``origins`` gives, for each key, the IRI that stated each value, and
     ``label_origins`` the IRI that stated each label, so that the statements can be given back.
     """
 
@@ -163,6 +163,9 @@ class PGNode:
     members: list[str] = field(default_factory=list)
     origins: dict[str, list[str]] = field(default_factory=dict)
     label_origins: list[str] = field(default_factory=list)
+    # Identifiers of another kind that a source drew the node with (WikiPathways draws an
+    # enzyme with its Ensembl gene id): listed in members for the round trip, shown apart.
+    apart: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -234,6 +237,14 @@ class Identity:
       classes and 67 metabolites); a sequence of class IRIs keeps the first class it holds;
       "all" keeps every class. The other classes become its ``type`` property (references),
       so the RDF is given back.
+    - A decided pair of two known kinds (an Ensembl gene id and a UniProt accession, once
+      *kinds* says Ensembl ids name genes) is one node only when the record of one kind is at
+      hand and the other is an identifier a source drew it with: the node is the issuer's
+      (the protein) and the other identifier is kept apart, as an attribute named by its
+      prefix (``ensembl``), not as one of its ids. *unfold* names prefixes whose identifiers
+      kept apart become nodes again, with what their source states about them (the gene, its
+      NCBI Gene id, and the link to the protein); their classes are their kinds.
+      A merge across a prefix of unknown kind is made and reported, with what would decide it.
     """
 
     merge: bool = True
@@ -244,6 +255,7 @@ class Identity:
     labels: str | Sequence[str] = "role"
     same: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
     variants: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
+    unfold: Iterable[str] = field(default=(), compare=False, hash=False)
 
     @classmethod
     def of(cls, *clients: Any, decision: Any = None, **options: Any) -> Identity:
@@ -437,9 +449,15 @@ class PropertyGraph:
         """Build a property graph from result sets of one or more clients.
 
         The records of each client are exported together (with the links between them) and
-        named with each client's schema. *identity* is an :class:`Identity`, or a decision
-        (rdfsolve.mappings.claims.Decision), read with the kinds these clients issue.
+        named with each client's schema. *folds* are by default those that the schemas suggest
+        and the records bear out (:func:`suggested_folds`). *identity* is an :class:`Identity`, or a decision
+        (rdfsolve.mappings.claims.Decision), read with the kinds these clients issue; the
+        options of an Identity (``kinds``, ``unfold``, ``labels``) can be given here too.
         """
+        from dataclasses import fields
+
+        settings = {f.name for f in fields(Identity)}
+        chosen = {k: options.pop(k) for k in list(options) if k in settings}
         clients: list[Any] = []
         for found in results:
             if not any(found.client is c for c in clients):
@@ -448,8 +466,12 @@ class PropertyGraph:
         for client in clients:
             for quad in client.to_oxigraph(*[r for r in results if r.client is client]):
                 records.add(quad)
+        if options.get("folds", "suggested") == "suggested":
+            options["folds"] = suggested_folds([c.schema for c in clients], records)
         if identity is not None and not isinstance(identity, Identity):
-            identity = Identity.of(*clients, decision=identity)
+            identity = Identity.of(*clients, decision=identity, **chosen)
+        elif chosen:
+            raise ValueError(f"Give {sorted(chosen)} to the Identity, or a decision as identity")
         options.setdefault("schema", [c.schema for c in clients])
         return cls.from_rdf(records, identity=identity, **options)
 
@@ -563,6 +585,8 @@ class PropertyGraph:
         for node in self.nodes.values():
             subject = _ox_node(node.id)
             for i, label in enumerate(node.labels):
+                if node.label_origins and node.label_origins[i] == _UNSTATED:
+                    continue  # a kind, not a statement
                 who = _ox_node(node.label_origins[i]) if node.label_origins else subject
                 out.add(ox.Quad(who, type_, ox.NamedNode(label)))
             add(subject, node.properties, node.origins)
@@ -687,8 +711,9 @@ class PropertyGraph:
         graph: Any = nx.MultiDiGraph()
         for node in self.nodes.values():
             labels = list(dict.fromkeys(namer[label] for label in node.labels))
-            ids = {"ids": list(node.members)} if node.members else {}
-            graph.add_node(node.id, labels=labels, **ids, **_aside(self._plain(node.properties)))
+            graph.add_node(
+                node.id, labels=labels, **_ids(node), **_aside(self._plain(node.properties))
+            )
         for edge in self.edges:
             kind = self._edge_type(edge, namer)
             extra = {"via": edge.via} if edge.via else {}
@@ -745,7 +770,7 @@ class PropertyGraph:
                     "id": n.id,
                     "labels": list(dict.fromkeys(namer[label] for label in n.labels)),
                     "properties": props(n.properties),
-                    **({"ids": list(n.members)} if n.members else {}),
+                    **_ids(n),
                 }
                 for n in self.nodes.values()
             ],
@@ -779,7 +804,7 @@ class PropertyGraph:
             {
                 "id:ID": n.id,
                 ":LABEL": list(dict.fromkeys(namer[label] for label in n.labels)),
-                **({"ids": list(n.members)} if n.members else {}),
+                **_ids(n),
                 **self._plain(n.properties),
             }
             for n in self.nodes.values()
@@ -820,6 +845,20 @@ class PropertyGraph:
 
 
 _RESERVED = ("type", "via", "labels", "ids")
+
+
+def _ids(node: PGNode) -> dict[str, Any]:
+    """Return the ids of a merged node, and the identifiers of another kind by prefix."""
+    from rdfsolve.identifiers import parse
+
+    if not node.members:
+        return {}
+    out: dict[str, Any] = {"ids": [m for m in node.members if m not in node.apart]}
+    for iri in node.apart:
+        read = parse(iri)
+        key = read.prefix if read else "apart"
+        out[key] = [*out[key], iri] if key in out else iri
+    return out
 
 
 def _aside(properties: dict[str, Any]) -> dict[str, Any]:
@@ -865,9 +904,9 @@ def _apply_fold(
     outgoing: dict[str, list[PGEdge]] = defaultdict(list)
     incoming: Counter[str] = Counter()
     for edge in edges:
+        incoming[edge.target] += 1  # also an edge an earlier fold made (a catalysis of it)
         if edge.fold is None:
             outgoing[edge.source].append(edge)
-            incoming[edge.target] += 1
     counts: Counter[str] = Counter()
     folded: set[int] = set()
     for node in [n for n in nodes.values() if fold.cls in n.labels]:
@@ -1118,11 +1157,7 @@ def _apply_identity(
         a, b = node_of(left), node_of(right)
         if a is None or b is None or a == b:
             continue
-        from_kind = issued.get(getattr(parse(left), "prefix", ""))
-        to_kind = issued.get(getattr(parse(right), "prefix", ""))
-        if from_kind and to_kind and not from_kind & to_kind:
-            continue  # decided as one entity, but the issuers say two kinds
-        same.append((a, b))
+        same.append((a, b))  # two kinds: decided per cluster, by the records at hand
     allowed = {
         frozenset((found_a.curie, found_b.curie))
         for a, b in identity.variants
@@ -1130,6 +1165,7 @@ def _apply_identity(
     }
     exact = 0
     refused = 0
+    apart = 0
     if same:
         root: dict[str, str] = {}
 
@@ -1161,13 +1197,35 @@ def _apply_identity(
                 for m in members
                 if (read := parse(m)) and set(nodes[m].labels) & issued.get(read.prefix, set())
             ]
+            kinds_known = {frozenset(issued[p]) for p in by_prefix if p in issued}
+            issuer_kinds = {frozenset(issued[cast(Any, parse(m)).prefix]) for m in issuers}
+            if _disjoint(kinds_known) and len(issuer_kinds) != 1:
+                refused += 1  # two kinds, and not one record with an identifier of the other
+                continue
             keep = min(issuers) if issuers else _keep(nodes, members, None)
             _merge_nodes(nodes, members, keep)
             found_in.update(dict.fromkeys(members, keep))
+            if _disjoint(kinds_known):
+                kind = next(iter(issuer_kinds))
+                nodes[keep].apart = sorted(
+                    iri
+                    for iri in nodes[keep].members
+                    if (read := parse(iri))
+                    and read.prefix in issued
+                    and not issued[read.prefix] & kind
+                )
+                apart += len(nodes[keep].apart)
             exact += 1
         internal += _retarget(nodes, edges, found_in)
     beside = _issuer_speaks(nodes, issued)
     relabelled = _reconcile_labels(nodes, identity.labels, issued)
+    unfolded = _unfold(nodes, edges, set(identity.unfold), issued)
+    # A node that joins several namespaces, one of which no source here gives a kind.
+    unknown_kinds: Counter[str] = Counter()
+    for node in nodes.values():
+        spaces = {read.prefix for iri in node.members if (read := parse(iri))}
+        if len(spaces) > 1:
+            unknown_kinds.update(p for p in spaces if p not in issued)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
     for row in undecided:
@@ -1187,7 +1245,76 @@ def _apply_identity(
         "undecided": len(undecided),
         "labels": relabelled,
         "issuer_values": beside,
+        "kept_apart": apart,
+        "unfolded": unfolded,
+        "merged_with_unknown_kind": {
+            "identifiers": dict(unknown_kinds.most_common()),
+            "decide_with": "Identity(kinds={"
+            + ", ".join(repr(p) + ": [...]" for p in sorted(unknown_kinds))
+            + "})"
+            if unknown_kinds
+            else "",
+            "basis": "merged as decided; no source here says what these identifiers name",
+        },
     }
+
+
+_UNSTATED = ""  # the origin of a class that no statement gives (the kind of an unfolded node)
+
+
+def _disjoint(kinds: set[frozenset[str]]) -> bool:
+    """Return whether two of the kinds share no class."""
+    return any(not a & b for a, b in combinations(kinds, 2))
+
+
+def _unfold(
+    nodes: dict[str, PGNode],
+    edges: list[PGEdge],
+    prefixes: set[str],
+    issued: Mapping[str, set[str]],
+) -> dict[str, Any]:
+    """Make the identifiers kept apart of *prefixes* nodes again, with what is stated of them.
+
+    The values their IRI states move to the new node; a link from it to the node it was kept
+    apart from (BridgeDb's gene to protein link) becomes an edge; the classes the IRI states
+    stay with the node it was drawn as (their role), and the new node has its kind.
+    """
+    from rdfsolve.identifiers import parse
+
+    made = 0
+    for node in list(nodes.values()):
+        for iri in list(node.apart):
+            read = parse(iri)
+            if read is None or read.prefix not in prefixes:
+                continue
+            kinds = sorted(issued.get(read.prefix, ()))
+            other = PGNode(iri, labels=kinds, label_origins=[_UNSTATED] * len(kinds))
+            for key in list(node.properties):
+                stated = node.origins.get(key) or [node.id] * len(node.properties[key])
+                kept: list[Value] = []
+                kept_origins: list[str] = []
+                for value, origin in zip(node.properties[key], stated, strict=True):
+                    if origin != iri:
+                        kept.append(value)
+                        kept_origins.append(origin)
+                    elif value.datatype == REFERENCE and value.lexical in node.members:
+                        target = None if value.lexical == node.id else value.lexical
+                        edges.append(PGEdge(iri, _predicate(key), node.id, target_iri=target))
+                    else:
+                        other.properties.setdefault(_predicate(key), []).append(value)
+                if kept:
+                    node.properties[key], node.origins[key] = kept, kept_origins
+                else:
+                    node.properties.pop(key)
+                    node.origins.pop(key, None)
+            for edge in edges:
+                if edge.fold is None and edge.source == node.id and edge.source_iri == iri:
+                    edge.source, edge.source_iri = iri, None
+            node.apart.remove(iri)
+            node.members.remove(iri)
+            nodes[iri] = other
+            made += 1
+    return {"nodes": made, "prefixes": sorted(prefixes)}
 
 
 def _issuer_speaks(nodes: dict[str, PGNode], issued: Mapping[str, set[str]]) -> dict[str, Any]:
@@ -1397,6 +1524,51 @@ def suggest_folds(schema: MinedSchema) -> list[Fold]:
             }
             folds.append(Fold(cls, source, target, evidence=evidence))
     return folds
+
+
+def suggested_folds(schemas: Iterable[MinedSchema], records: Source) -> list[Fold]:
+    """Return the folds that hold in *records*: classes whose instances link two things once.
+
+    A link qualifies for a class when every instance in the records has one value of it, an
+    IRI, and it does not point to a container (most instances sharing one value, such as the
+    pathway). A class with exactly two qualifying links is folded; the direction is the one a
+    schema suggests (:func:`suggest_folds`), else the order of the link IRIs (give a Fold to
+    set it). A class with other counts is not folded, nor one whose instances a more
+    specific class already folds (Catalysis, not its superclass Interaction).
+    """
+    quads = _quads(records)
+    instances: dict[str, set[str]] = defaultdict(set)
+    values: dict[tuple[str, str], list[str]] = defaultdict(list)
+    links: dict[str, set[str]] = defaultdict(set)
+    for quad in quads:
+        if quad.predicate.value == _TYPE:
+            instances[quad.object.value].add(quad.subject.value)
+        elif not isinstance(quad.object, ox.Literal):
+            values[(quad.subject.value, quad.predicate.value)].append(quad.object.value)
+            links[quad.subject.value].add(quad.predicate.value)
+    directed = {(f.cls, f.source, f.target) for schema in schemas for f in suggest_folds(schema)}
+
+    def holds(members: set[str], link: str) -> bool:
+        """Return whether every member has one value of the link, not shared by most."""
+        found = [values.get((m, link), []) for m in members]
+        if any(len(v) != 1 for v in found):
+            return False
+        return len(members) < 3 or len({v[0] for v in found}) * 2 >= len(members)
+
+    chosen: list[Fold] = []
+    covered: set[str] = set()
+    for cls, members in sorted(instances.items(), key=lambda item: (len(item[1]), item[0])):
+        if members & covered:
+            continue
+        candidates = set().union(*(links[m] for m in members))
+        good = sorted(link for link in candidates if holds(members, link))
+        if len(good) != 2:
+            continue
+        covered |= members
+        a, b = good
+        source, target = (b, a) if (cls, b, a) in directed else (a, b)
+        chosen.append(Fold(cls, source, target, evidence={"instances": len(members)}))
+    return chosen
 
 
 def _flatten(graph: Any) -> Any:

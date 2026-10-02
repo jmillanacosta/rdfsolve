@@ -306,16 +306,57 @@ class Client(DatasetClient):
         self.resolutions.extend(r.model_dump(mode="json") for r in results.values())
         return results
 
-    def fetch(self, identifiers: Iterable[str], kind: str, *fields: str) -> Results:
-        """Return the records of *kind* that the identifiers (IRIs or CURIEs) name here.
+    def fetch(self, identifiers: Iterable[str], *fields: str, kind: str | None = None) -> Results:
+        """Return the records that the identifiers (IRIs or CURIEs) name here, with their values.
 
-        Each is resolved to the IRI this source writes (resolve_many); those found become
-        records with *fields* loaded, so that to_oxigraph gives their values.
+        Each is resolved to the IRI this source writes (resolve_many). *kind* is by default the
+        class this source gives the identifiers it issues (issued_kinds: owl:Class for ChEBI,
+        up:Protein for UniProt). *fields* are by default the record's literal values and its
+        cross-references (see cross_references), so that to_oxigraph gives them.
         """
+        if kind is None:
+            issued = sorted({c for classes in self.issued_kinds().values() for c in classes})
+            if len(issued) != 1:
+                raise ValueError(f"Give kind=: this source issues {issued or 'no kind'}")
+            kind = issued[0]
         found = self.resolve_many(identifiers)
         iris = sorted({r.iri for r in found.values() if r.iri})
         records = self.from_table(kind, pd.DataFrame({"iri": iris}), id_column="iri")
-        return records.load(*fields) if fields else records
+        return records.load(*(fields or self.record_fields(kind)))
+
+    def record_fields(self, kind: str) -> list[str]:
+        """Return the fields of a class that hold its values: literals and cross-references."""
+        crossing = set(self.cross_references())
+        names = []
+        for name, info in self.model(kind).model_fields.items():
+            extra = info.json_schema_extra
+            if not isinstance(extra, dict):
+                continue
+            patterns: list[dict[str, Any]] = list(extra.get("rdf_patterns") or [])  # type: ignore[arg-type]
+            if extra.get("rdf_property_iri") in crossing or any(
+                p.get("pattern_type") == "datatype_property" for p in patterns
+            ):
+                names.append(name)
+        return names
+
+    def cross_references(self) -> list[str]:
+        """Return the properties of this source that cite identifiers of one other source.
+
+        From the mined examples: every identifier value of the property is in one registered
+        namespace that this source does not issue (WikiPathways' bdbChEBI, bdbUniprot). A
+        property whose values span namespaces (dcterms:isPartOf, wp:source, rdfs:seeAlso) links
+        to things of several kinds and is read only when asked for.
+        """
+        from rdfsolve.mappings.signatures import RDF_TYPE, identifier_type
+
+        own = set(self.issued_kinds())
+        spaces: dict[str, set[str]] = defaultdict(set)
+        for example in self._schema.enrichment.examples if self._schema.enrichment else []:
+            if example.property_uri != RDF_TYPE:
+                spaces[example.property_uri].add(identifier_type(example.value.value) or "-")
+        return sorted(
+            p for p, found in spaces.items() if len(found) == 1 and not found & (own | {"-"})
+        )
 
     def identify(self, identifiers: Iterable[str]) -> list[Identification]:
         """Find the resources that carry each identifier (CURIE or IRI) in the selected graphs.
@@ -1399,10 +1440,18 @@ class Results:
     def load(self, *fields: str) -> Results:
         """Read these fields of every record (in a few queries) and return the same set.
 
-        Only read fields are exported (to_oxigraph, property graphs), so a step that needs a
-        field names it here.
+        Only read fields are exported (to_oxigraph, property graphs). Without fields, each
+        record's values and cross-references are read (Client.record_fields).
         """
-        self._load(*fields)
+        if fields:
+            self._load(*fields)
+            return self
+        loaded: dict[Any, BaseModel] = {}
+        for model in {type(r) for r in self.records}:
+            part = Results(self.client, [r for r in self.records if type(r) is model])
+            part._load(*self.client.record_fields(str(getattr(model, "rdf_class_iri", ""))))
+            loaded.update((vars(r)["uri"], r) for r in part.records)  # _load gives new records
+        self.records = [loaded.get(vars(r)["uri"], r) for r in self.records]
         return self
 
     def where(self, field: str, value: Any) -> Results:

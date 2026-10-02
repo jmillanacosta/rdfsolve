@@ -344,3 +344,28 @@ def test_a_statement_about_itself_is_a_value_not_a_loop():
             <urn:bdbChEBI> <https://identifiers.org/chebi/CHEBI:15377> .""", ox.RdfFormat.TURTLE))
     pg = PropertyGraph.from_rdf(data)
     assert not pg.edges and pg.report()["lossless"]["passed"]
+
+
+def test_folds_are_found_in_the_records():
+    """Each catalysis links one enzyme and one reaction (and a shared pathway): it folds, as
+    the most specific class; a reaction that a catalysis points to stays a node."""
+    from rdfsolve.property_graph import suggested_folds
+
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    part = "http://purl.org/dc/terms/isPartOf"
+    turtle = f"@prefix wp: <{wp}> .\n" + "".join(
+        f"<urn:c{i}> a wp:Catalysis, wp:Interaction ; wp:source <urn:e{i}> ; wp:target <urn:r{i}> ; <{part}> <urn:p> .\n"
+        f"<urn:r{i}> a wp:Conversion, wp:Interaction ; wp:source <urn:m{i}> ; wp:target <urn:n{i}> ; <{part}> <urn:p> .\n"
+        f"<urn:e{i}> a wp:Protein . <urn:m{i}> a wp:Metabolite . <urn:n{i}> a wp:Metabolite .\n"
+        for i in range(4)
+    )
+    data = ox.Dataset(ox.parse(turtle.encode(), ox.RdfFormat.TURTLE))
+    folds = suggested_folds([], data)
+    assert {(f.cls, f.source, f.target) for f in folds} == {
+        (wp + "Catalysis", wp + "source", wp + "target"),
+        (wp + "Conversion", wp + "source", wp + "target"),
+    }
+    pg = PropertyGraph.from_rdf(data, folds=folds)
+    assert pg.report()["lossless"]["passed"]
+    assert all(n.startswith("urn:r") or not n.startswith("urn:c") for n in pg.nodes)
+    assert sum(1 for n in pg.nodes if n.startswith("urn:r")) == 4, "a reaction a catalysis targets stays"

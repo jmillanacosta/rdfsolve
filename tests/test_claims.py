@@ -154,3 +154,57 @@ def test_prefer_takes_client_results():
     decision = claims().decide(namespaces=["uniprot"], prefer=reviewed)
     assert decision.targets("uniprot") == [IDO + "uniprot/Q13510"]
     assert claims().decide(namespaces=["uniprot"], prefer=[reviewed]).targets("uniprot") == [IDO + "uniprot/Q13510"]
+
+
+GENE = "http://purl.obolibrary.org/obo/SO_0000704"
+
+
+def test_a_gene_id_is_kept_apart_from_its_protein_and_can_be_unfolded():
+    """WikiPathways draws an enzyme as a Protein with an Ensembl gene id. Once Ensembl ids are
+    known to name genes, the node is the UniProt protein and the gene id is kept apart (an
+    attribute, not an id); unfold makes the gene a node again, linked to the protein. Without
+    the kind, the merge is reported with what would decide it. The RDF is given back."""
+    decision = claims().decide(namespaces=["uniprot"], prefer=["http://purl.uniprot.org/uniprot/Q13510"])
+    up = SimpleNamespace(issued_kinds=lambda: {"uniprot": ["http://purl.uniprot.org/core/Protein"]})
+    data = [q for q in rdf() if "A0A1B0GTA6" not in q.subject.value]
+    protein = "http://purl.uniprot.org/uniprot/Q13510"
+    gene = IDO + "ensembl/ENSG00000104763"
+
+    unknown = PropertyGraph.from_rdf(data, identity=Identity.of(up, decision=decision)).report()["identity"]
+    assert unknown["merged_with_unknown_kind"]["identifiers"] == {"ensembl": 1}
+    assert "'ensembl'" in unknown["merged_with_unknown_kind"]["decide_with"]
+
+    kinds = {"ensembl": [GENE]}
+    pg = PropertyGraph.from_rdf(data, identity=Identity.of(up, decision=decision, kinds=kinds))
+    assert pg.report()["lossless"]["passed"]
+    node = pg.to_networkx().nodes[protein]
+    assert gene not in node["ids"] and node["ensembl"] == gene
+    assert node["labels"] == ["Protein"] and gene not in pg.nodes
+
+    apart = PropertyGraph.from_rdf(data, identity=Identity.of(up, decision=decision, kinds=kinds, unfold=["ensembl"]))
+    report = apart.report()
+    assert report["lossless"]["passed"], report["lossless"]
+    assert apart.nodes[gene].labels == [GENE] and report["identity"]["unfolded"]["nodes"] == 1
+    assert [(e.source, e.target) for e in apart.edges if e.type == WP + "bdbUniprot"] == [(gene, protein)]
+    assert WP + "bdbEntrezGene" in apart.nodes[gene].properties, "the gene keeps its NCBI Gene id"
+    assert "ensembl" not in apart.to_networkx().nodes[protein]
+
+
+def test_claims_of_a_client_read_the_cross_references_from_the_records():
+    """BridgeDb links are claims (one namespace each, cited); a link to the source's own
+    identifiers (part of a pathway) and a link to a described resource are not."""
+    extra = f"""@prefix wp: <{WP}> .
+    <{IDO}lipidmaps/LMSP03010023> <http://purl.org/dc/terms/isPartOf> <{IDO}wikipathways/WP4726> .
+    <urn:catalysis> wp:source <{IDO}ensembl/ENSG00000104763> ."""
+    pathway = [q for q in rdf() if "purl.uniprot.org" not in q.subject.value]  # WikiPathways only
+    data = ox.Dataset([*pathway, *ox.parse(extra.encode(), ox.RdfFormat.TURTLE)])
+    wp = SimpleNamespace(
+        _schema=SimpleNamespace(about=SimpleNamespace(dataset_name="wikipathways")),
+        issued_kinds=lambda: {"wikipathways": [WP + "DataNode"]},
+        to_oxigraph=lambda *results: data,
+    )
+    found = Claims.of(wp)
+    assert {c.predicate for c in found.claims} == set(BRIDGEDB)
+    assert all(c.source == "wikipathways" for c in found.claims)
+    cites = Claims.of(wp, citing=["ncbigene"])
+    assert len(cites) == len(found)
