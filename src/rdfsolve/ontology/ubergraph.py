@@ -22,6 +22,7 @@ from rdfsolve.ontology.vocabulary import OWL, SUBCLASS_OF
 
 UBERGRAPH = "https://ubergraph.apps.renci.org/sparql"
 REDUNDANT = "http://reasoner.renci.org/redundant"
+ONTOLOGY_GRAPH = "http://reasoner.renci.org/ontology"
 NONREDUNDANT = "http://reasoner.renci.org/nonredundant"
 BIOLINK_GRAPH = "https://biolink.github.io/biolink-model/"
 BIOLINK = "https://w3id.org/biolink/vocab/"
@@ -86,6 +87,23 @@ class UberGraph:
             for row in self.select(query):
                 found[row["t"]["value"]].add(row["x"]["value"])
         return {term: found.get(term, set()) for term in ordered}
+
+    def known(self, terms: Iterable[str]) -> set[str]:
+        """Return the terms that UberGraph holds as classes; it holds OBO PURL IRIs only.
+
+        An answer about a term it does not hold is empty, which must not be read as a term
+        without ancestors (EFO, EDAM, SIO terms are asked of OLS instead).
+        """
+        held: set[str] = set()
+        ordered = sorted(set(terms))
+        for start in range(0, len(ordered), self.batch_size):
+            batch = ordered[start : start + self.batch_size]
+            query = (
+                f"SELECT DISTINCT ?t WHERE {{ VALUES ?t {{ {_values(batch)} }} "
+                f"GRAPH <{ONTOLOGY_GRAPH}> {{ ?t a <{OWL}Class> }} }}"
+            )
+            held |= {row["t"]["value"] for row in self.select(query)}
+        return held
 
     def parents(self, terms: Iterable[str]) -> dict[str, set[str]]:
         """Return the direct named superclasses of each term."""

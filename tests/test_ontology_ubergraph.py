@@ -12,6 +12,8 @@ L = "https://w3id.org/linkml/"
 DATA = f"""
 <{NONREDUNDANT}> {{ <{OBO}CL_2> <{SUB}> <{OBO}CL_1> . <{OBO}CL_1> <{SUB}> <{OBO}CL_0> .
   <{OBO}CL_2> <{OBO}BFO_0000050> <{OBO}UBERON_1> . }}
+<http://reasoner.renci.org/ontology> {{ <{OBO}CL_2> a <http://www.w3.org/2002/07/owl#Class> .
+  <{OBO}CL_1> a <http://www.w3.org/2002/07/owl#Class> . <{OBO}CL_0> a <http://www.w3.org/2002/07/owl#Class> . }}
 <{REDUNDANT}> {{ <{OBO}CL_2> <{SUB}> <{OBO}CL_1>, <{OBO}CL_0>, <{OBO}CL_2>, <http://www.w3.org/2002/07/owl#Thing> .
   <{OBO}CL_1> <{SUB}> <{OBO}CL_0> . }}
 <{BIOLINK_GRAPH}> {{ <{OBO}CL_2> <{BIOLINK}category> <{BIOLINK}Cell>, <{BIOLINK}AnatomicalEntity>,
@@ -52,4 +54,25 @@ def test_ontologies_cache_the_answers_with_their_source(tmp_path):
     offline = Ontologies(cache=tmp_path / "cache.json", offline=True)
     assert offline.categories([OBO + "CL_2"]) == {OBO + "CL_2": [BIOLINK + "Cell"]}
     assert offline.events[-1]["provider"] == "ubergraph" and offline.events[-1]["cached"]
-    assert offline.ancestors([OBO + "CL_2"]) == {}, "Not asked before: offline gives nothing"
+    assert offline.ancestors([OBO + "CL_2"]) == {OBO + "CL_2": None}, "Not asked before: unknown"
+
+
+def test_a_term_ubergraph_does_not_hold_is_asked_of_ols_not_taken_as_parentless(monkeypatch):
+    """UberGraph holds OBO PURL IRIs only: an EDAM term gets its ancestors from OLS, and a term
+    that no source knows is None (unknown), never an empty list (no ancestors)."""
+    edam = "http://edamontology.org/data_1025"
+    ontologies = Ontologies(ubergraph=source())
+    terms = {edam: {"iri": edam, "ontology": "edam", "label": "Gene identifier"}}
+    monkeypatch.setattr(ontologies, "lookup", lambda iri, hierarchy=True: terms.get(iri))
+    pages = {0: ["http://edamontology.org/data_0976"], 1: ["http://edamontology.org/data_0842"]}
+
+    def answer(path, **params):
+        assert path.endswith("/ancestors") and "/ontologies/edam/" in path
+        return {"_embedded": {"terms": [{"iri": i} for i in pages[params["page"]]]}, "page": {"totalPages": 2}}
+
+    monkeypatch.setattr(ontologies, "_json", answer)
+    found = ontologies.ancestors([OBO + "CL_2", edam, "http://example.org/unknown"])
+    assert found[OBO + "CL_2"] == [OBO + "CL_0", OBO + "CL_1"]
+    assert found[edam] == ["http://edamontology.org/data_0842", "http://edamontology.org/data_0976"]
+    assert found["http://example.org/unknown"] is None
+    assert ontologies.categories([edam]) == {edam: None}, "Biolink kinds come from UberGraph only"

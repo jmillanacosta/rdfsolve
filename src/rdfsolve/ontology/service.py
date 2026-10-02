@@ -407,37 +407,119 @@ class Ontologies:
     def _closure(self, operation: str, terms: list[str], read: Callable[[], Any]) -> Any:
         return self._request(operation, sorted(set(terms)), read, provider="ubergraph")
 
-    def ancestors(self, terms: list[str]) -> dict[str, list[str]]:
-        """Return all named superclasses of each term, from the reasoner's closure."""
-        found = self._closure(
-            "ancestors",
-            terms,
-            lambda: {t: sorted(a) for t, a in self._ubergraph().ancestors(terms).items()},
-        )
-        return found or {}
+    def _held(self, terms: list[str]) -> tuple[dict[str, str], set[str]]:
+        """Return the canonical IRI of each term and the canonical IRIs that UberGraph holds.
 
-    def descendants(self, term: str) -> list[str]:
-        """Return all named subclasses of a term, from the reasoner's closure."""
-        found = self._closure(
-            "descendants", [term], lambda: sorted(self._ubergraph().descendants(term))
+        Another IRI form of an OBO term (identifiers.org) is asked by its PURL.
+        """
+        canonical = {term: canonical_iri(term) for term in terms}
+        held = self._closure(
+            "known",
+            list(canonical.values()),
+            lambda: sorted(self._ubergraph().known(canonical.values())),
         )
-        return found or []
+        return canonical, set(held or [])
 
-    def relations(self, terms: list[str]) -> list[list[str]]:
-        """Return (term, property, filler) for X SubClassOf (property some filler)."""
-        found = self._closure(
-            "relations", terms, lambda: [list(r) for r in self._ubergraph().relations(terms)]
-        )
-        return found or []
+    def ancestors(self, terms: list[str]) -> dict[str, list[str] | None]:
+        """Return all named superclasses of each term, or None for a term that no source knows.
 
-    def categories(self, terms: list[str]) -> dict[str, list[str]]:
-        """Return the most specific Biolink categories of each term (the kind of a term)."""
-        found = self._closure(
-            "categories",
-            terms,
-            lambda: {t: sorted(c) for t, c in self._ubergraph().categories(terms).items()},
+        UberGraph's closure for the terms it holds; OLS for the others (EFO, EDAM, ...). An
+        empty list is a term without superclasses; None is not that.
+        """
+        canonical, held = self._held(terms)
+        inside = sorted({canonical[t] for t in terms if canonical[t] in held})
+        closure = (
+            self._closure(
+                "ancestors",
+                inside,
+                lambda: {t: sorted(a) for t, a in self._ubergraph().ancestors(inside).items()},
+            )
+            if inside
+            else {}
+        ) or {}
+        out: dict[str, list[str] | None] = {}
+        for term in terms:
+            if canonical[term] in held:
+                out[term] = closure.get(canonical[term])
+            else:
+                out[term] = self._ols_related(term, "ancestors")
+        return out
+
+    def descendants(self, term: str) -> list[str] | None:
+        """Return all named subclasses of a term, or None when no source knows the term."""
+        canonical, held = self._held([term])
+        if canonical[term] not in held:
+            return self._ols_related(term, "descendants")
+        found: list[str] | None = self._closure(
+            "descendants",
+            [canonical[term]],
+            lambda: sorted(self._ubergraph().descendants(canonical[term])),
         )
-        return found or {}
+        return found
+
+    def relations(self, terms: list[str]) -> dict[str, list[list[str]] | None]:
+        """Return (property, filler) of each term for X SubClassOf (property some filler).
+
+        Only UberGraph gives relations; a term it does not hold gets None.
+        """
+        canonical, held = self._held(terms)
+        inside = sorted({canonical[t] for t in terms if canonical[t] in held})
+        found = (
+            self._closure(
+                "relations", inside, lambda: [list(r) for r in self._ubergraph().relations(inside)]
+            )
+            if inside
+            else []
+        ) or []
+        by_term: dict[str, list[list[str]]] = {}
+        for subject, prop, filler in found:
+            by_term.setdefault(subject, []).append([prop, filler])
+        return {t: by_term.get(canonical[t], []) if canonical[t] in held else None for t in terms}
+
+    def categories(self, terms: list[str]) -> dict[str, list[str] | None]:
+        """Return the most specific Biolink categories of each term (the kind of a term).
+
+        UberGraph categorizes the terms it holds; a term it does not hold gets None.
+        """
+        canonical, held = self._held(terms)
+        inside = sorted({canonical[t] for t in terms if canonical[t] in held})
+        found = (
+            self._closure(
+                "categories",
+                inside,
+                lambda: {t: sorted(c) for t, c in self._ubergraph().categories(inside).items()},
+            )
+            if inside
+            else {}
+        ) or {}
+        return {t: found.get(canonical[t], []) if canonical[t] in held else None for t in terms}
+
+    def _ols_related(self, iri: str, relation: str) -> list[str] | None:
+        """Return the ancestors or descendants of a term from OLS, or None when OLS lacks it."""
+        if self.provider != "ols":
+            return None
+        term = self.lookup(iri, hierarchy=False)
+        if term is None or not term.get("ontology"):
+            return None
+        name = quote(term["ontology"], safe="")
+        encoded = quote(quote(term["iri"], safe=""), safe="")
+
+        def fetch() -> list[str]:
+            """Read every page of the related terms."""
+            found: list[str] = []
+            page = 0
+            while True:
+                answer = self._json(
+                    f"/ontologies/{name}/terms/{encoded}/{relation}", size=500, page=page
+                )
+                found += [t["iri"] for t in answer.get("_embedded", {}).get("terms", [])]
+                pages = answer.get("page", {}).get("totalPages", 1)
+                page += 1
+                if page >= pages:
+                    return sorted(set(found))
+
+        found: list[str] | None = self._request(relation, [term["iri"], term["ontology"]], fetch)
+        return found
 
     def _sparql(self, query: str) -> list[dict[str, Any]]:
         if self.helper is None:
