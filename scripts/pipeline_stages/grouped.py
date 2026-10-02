@@ -377,7 +377,7 @@ class GroupedMiningStage(LocalMiningStage):
                     from rdfsolve.mining.report_tracking import ReportCollector
 
                     miner.last_report.abort_reason = f"{len(missing)} patterns lack edge-graph attribution"
-                    ReportCollector(miner.last_report, group_report).flush()
+                    ReportCollector(miner.last_report, group_report, fresh=False).flush()
                     log.warning(
                         "  %d patterns have no per-graph count and appear only in the group schema",
                         len(missing),

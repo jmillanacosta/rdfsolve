@@ -31,12 +31,19 @@ class ReportCollector:
         self,
         report: MiningReport,
         report_path: Path | None = None,
+        *,
+        fresh: bool = True,
     ) -> None:
-        """Set up the collector with *report* and optional *report_path*."""
+        """Set up the collector with *report* and optional *report_path*.
+
+        A fresh collector starts a new checkpoint; ``fresh=False`` continues the report of a
+        run and keeps its checkpoint (the output phase of the pipeline removed the checkpoint
+        of every run that reached it, so that a later --resume-from found nothing to reuse).
+        """
         self._report = report
         self._path = report_path
         self._checkpoint = report_path.with_suffix(".checkpoint.jsonl") if report_path else None
-        if self._checkpoint:
+        if self._checkpoint and fresh:
             self._checkpoint.unlink(missing_ok=True)
 
         # Resource-usage snapshots (populated in _snapshot_start)

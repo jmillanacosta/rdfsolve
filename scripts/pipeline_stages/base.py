@@ -107,7 +107,7 @@ class Stage:
         from rdfsolve.mining.report_tracking import ReportCollector
 
         report = miner.last_report
-        collector = ReportCollector(report, report_path)
+        collector = ReportCollector(report, report_path, fresh=False)
         report.finished_at = None
         phase = collector.start_phase("pipeline-outputs")
         collector.flush()
