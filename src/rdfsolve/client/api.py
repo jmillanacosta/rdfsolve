@@ -646,6 +646,24 @@ class Client(DatasetClient):
             duration_ms=round((perf_counter() - started) * 1000),
         )
 
+    def construct(self, query: str) -> ox.Dataset:
+        """Run a SPARQL CONSTRUCT on this client's endpoint and return the statements.
+
+        The query is recorded in the session like any other (the log can rebuild a product
+        from its CONSTRUCTs, such as Fold.to_construct). A client scoped to several named
+        graphs is refused: the scope would have to be written into the query's WHERE.
+        """
+        from rdfsolve.local_rdf import to_oxigraph
+
+        if not isinstance(self.source, SparqlHelper):
+            raise ValueError("CONSTRUCT needs a SPARQL endpoint")
+        context = (self._schema.about.type_graph_uris or []) + (
+            self._schema.about.type_context_graph_uris or []
+        )
+        if len(self.graph_uris) > 1 or (self.graph_uris and context):
+            raise ValueError("Write the graph scope into the CONSTRUCT (FROM or GRAPH) yourself")
+        return to_oxigraph(self.source.construct_graph(query))
+
     def extract(
         self,
         selection: SchemaSelection,
@@ -1648,15 +1666,50 @@ class Results:
                 loaded = [
                     record
                     for start in range(0, len(iris), size)
-                    for record in self.client.get_many(
-                        model, iris[start : start + size], fields=sorted(selected)
-                    )
+                    for record in self._get_many(model, iris[start : start + size], selected)
                 ]
                 replacements = {vars(r)["uri"]: r for r in loaded}
                 self.records = [
                     replacements.get(vars(r)["uri"], r) if type(r) is model else r
                     for r in self.records
                 ]
+
+    def _get_many(
+        self, model: type[BaseModel], iris: list[str], fields: set[str]
+    ) -> list[BaseModel]:
+        """Read the records of *iris*; a batch over the value budget is split in two and retried.
+
+        A UniProt entry can carry thousands of citations, so a batch may exceed the budget that
+        one entry does not. When one entry alone exceeds it, the fields whose values alone
+        exceed it are left out for that entry, and the coverage of the set says so (partial).
+        """
+        from rdfsolve.client.hydration import HydrationLimitError
+
+        try:
+            return list(self.client.get_many(model, iris, fields=sorted(fields)))
+        except HydrationLimitError:
+            if len(iris) > 1:
+                half = len(iris) // 2
+                return self._get_many(model, iris[:half], fields) + self._get_many(
+                    model, iris[half:], fields
+                )
+            too_many = []
+            for name in sorted(fields):
+                try:
+                    self.client.get_many(model, iris, fields=[name])
+                except HydrationLimitError:
+                    too_many.append(name)
+            if not too_many or set(too_many) == set(fields):
+                raise
+            left_out = dict(self.coverage.get("left_out", {}))
+            left_out[iris[0]] = too_many
+            self.coverage = {
+                **self.coverage,
+                "status": "partial",
+                "basis": "fields with more values than the budget were left out",
+                "left_out": left_out,
+            }
+            return self._get_many(model, iris, fields - set(too_many))
 
     def show(self, *fields: str) -> pd.DataFrame:
         """Show names and requested fields, retrieving those fields if needed."""

@@ -369,3 +369,62 @@ def test_folds_are_found_in_the_records():
     assert pg.report()["lossless"]["passed"]
     assert all(n.startswith("urn:r") or not n.startswith("urn:c") for n in pg.nodes)
     assert sum(1 for n in pg.nodes if n.startswith("urn:r")) == 4, "a reaction a catalysis targets stays"
+
+
+def _pathway():
+    """A WikiPathways-shaped graph: two complexes (proteins and a metabolite) and two catalyses."""
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    turtle = f"""@prefix wp: <{wp}> .
+    <urn:c1> a wp:Complex ; wp:participants <urn:p1>, <urn:p2>, <urn:p3>, <urn:m1> .
+    <urn:c2> a wp:Complex ; wp:participants <urn:p2>, <urn:p4> .
+    <urn:k1> a wp:Catalysis ; wp:source <urn:p1> ; wp:target <urn:r1> .
+    <urn:k2> a wp:Catalysis ; wp:source <urn:p4> ; wp:target <urn:r1> .
+    <urn:r1> a wp:Conversion ; wp:source <urn:m1> ; wp:target <urn:m2> .
+    <urn:p1> a wp:Protein . <urn:p2> a wp:Protein . <urn:p3> a wp:Protein . <urn:p4> a wp:Protein .
+    <urn:m1> a wp:Metabolite . <urn:m2> a wp:Metabolite ."""
+    return wp, ox.Dataset(ox.parse(turtle.encode(), ox.RdfFormat.TURTLE))
+
+
+def test_a_fold_of_pairs_links_the_proteins_of_each_complex_and_keeps_the_complex():
+    """Each pair of proteins of a complex gets a derived edge (the metabolite is not paired); the
+    complex stays a node; derived edges are not given back as RDF, so the round trip holds."""
+    wp, data = _pathway()
+    ppi = Fold.pairs(wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH")
+    pg = PropertyGraph.from_rdf(data, folds=[ppi])
+    assert pg.fold_edges(0) == {("urn:p1", "urn:p2"), ("urn:p1", "urn:p3"), ("urn:p2", "urn:p3"), ("urn:p2", "urn:p4")}
+    assert "urn:c1" in pg.nodes and pg.report()["lossless"]["passed"]
+    assert pg.report()["folds"][0]["pairs"] == 4
+    edge = next(d for _, _, d in pg.to_networkx().edges(data=True) if d["type"] == "IN_COMPLEX_WITH")
+    assert edge["derived"] is True and edge["via"] in {"urn:c1", "urn:c2"}
+
+
+def test_each_fold_is_a_construct_and_a_shacl_rule_that_give_the_same_edges():
+    """The CONSTRUCT compiled from each fold, run on the RDF, gives the edges the graph has (the
+    log can rebuild the product); the SHACL rule parses as a node shape with a TripleRule."""
+    import rdflib
+
+    wp, data = _pathway()
+    catalysis = Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")
+    ppi = Fold.pairs(wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH")
+    pg = PropertyGraph.from_rdf(data, folds=[catalysis, ppi])
+    store = ox.Store()
+    for quad in data:
+        store.add(quad)
+    for index, fold in enumerate([catalysis, ppi]):
+        rebuilt = {(t.subject.value, t.object.value) for t in store.query(fold.to_construct())}
+        assert rebuilt == pg.fold_edges(index), fold.name
+        shapes = rdflib.Graph().parse(data=fold.to_shacl(), format="turtle")
+        sh = rdflib.Namespace("http://www.w3.org/ns/shacl#")
+        assert (None, sh.targetClass, rdflib.URIRef(fold.cls)) in shapes
+        assert len(list(shapes.subjects(rdflib.RDF.type, sh.TripleRule))) == 1
+    scoped = {(t.subject.value, t.object.value) for t in store.query(ppi.to_construct(focus=["urn:c2"]))}
+    assert scoped == {("urn:p2", "urn:p4")}
+
+
+def test_the_graph_types_are_written_in_pg_schema():
+    wp, data = _pathway()
+    catalysis = Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")
+    text = PropertyGraph.from_rdf(data, folds=[catalysis]).to_pg_schema("wp")
+    assert text.startswith("CREATE GRAPH TYPE wpType LOOSE {")
+    assert "(proteinType: Protein)" in text
+    assert "(:proteinType)-[catalysesType: CATALYSES" in text

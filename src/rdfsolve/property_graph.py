@@ -173,6 +173,8 @@ class PGEdge:
     """An edge: its type (a predicate IRI, or the fold that made it) and properties.
 
     ``via`` is the id of the folded node, which :meth:`PropertyGraph.to_oxigraph` recreates.
+    A *derived* edge (two proteins of one complex) states nothing of its own: it is kept out
+    of the RDF that the graph gives back.
     """
 
     source: str
@@ -183,6 +185,7 @@ class PGEdge:
     fold: int | None = None
     source_iri: str | None = None  # the IRI written in the RDF, when a merge changed the end
     target_iri: str | None = None
+    derived: bool = False  # made by a fold of pairs; not a statement, so not given back
 
 
 @dataclass(frozen=True)
@@ -191,6 +194,12 @@ class Fold:
 
     IRIs or CURIEs of the schema. *name* names the edges (default: named as the class).
     *evidence* is what the mined schema measured, when the fold was suggested.
+
+    A fold of pairs (:meth:`pairs`) instead links each pair of the instance's *members* (the
+    proteins of a complex) with a derived edge, and keeps the instance: it is an entity with
+    data of its own. Each fold is written as a SPARQL CONSTRUCT over one endpoint
+    (:meth:`to_construct`) and as a SHACL rule (:meth:`to_shacl`), so the operation can be
+    logged and run again.
     """
 
     cls: str
@@ -198,6 +207,71 @@ class Fold:
     target: str
     name: str | None = None
     evidence: Mapping[str, Any] = field(default_factory=dict, compare=False, hash=False)
+    members: str | None = None
+    among: str | None = None
+
+    @classmethod
+    def pairs(
+        cls, of: str, members: str, *, among: str | None = None, name: str | None = None
+    ) -> Fold:
+        """Return a fold that links each pair of members of each instance of *of*.
+
+        *members* is the property from the instance to its members (wp:participants of a
+        Complex); *among* keeps the members of this class (wp:Protein).
+        """
+        return cls(of, members, members, name or f"same_{_local(of)}", members=members, among=among)
+
+    def relation(self) -> str:
+        """Return the IRI of the relation the fold's edges stand for."""
+        from rdfsolve.config import mint
+
+        return mint("relation", self.name or _local(self.cls))
+
+    def to_construct(self, focus: Iterable[str] = ()) -> str:
+        """Return the SPARQL CONSTRUCT that gives the fold's edges from one endpoint.
+
+        *focus* limits it to these instances (VALUES); a fold of pairs gives each pair once.
+        """
+        values = " ".join(f"<{iri}>" for iri in focus)
+        scope = f"VALUES ?x {{ {values} }}\n  " if values else ""
+        if self.members is None:
+            return (
+                f"CONSTRUCT {{ ?s <{self.relation()}> ?t }}\nWHERE {{\n  {scope}"
+                f"?x a <{self.cls}> ; <{self.source}> ?s ; <{self.target}> ?t .\n}}"
+            )
+        kind = f"\n  ?a a <{self.among}> . ?b a <{self.among}> ." if self.among else ""
+        return (
+            f"CONSTRUCT {{ ?a <{self.relation()}> ?b }}\nWHERE {{\n  {scope}"
+            f"?x a <{self.cls}> ; <{self.members}> ?a, ?b .{kind}\n"
+            "  FILTER(STR(?a) < STR(?b))\n}"
+        )
+
+    def to_shacl(self) -> str:
+        """Return the fold as a SHACL node shape with a sh:TripleRule (SHACL-AF), in Turtle.
+
+        The shape targets the class; the rule's subject and object are node expressions on the
+        paths (filtered by the class of the members, for a fold of pairs).
+        """
+        from rdfsolve.config import mint
+
+        def nodes(path: str) -> str:
+            """Return the node expression of the values of *path*, filtered by *among*."""
+            if self.members is not None and self.among:
+                return (
+                    f"[ sh:filterShape [ sh:class <{self.among}> ] ; "
+                    f"sh:nodes [ sh:path <{path}> ] ]"
+                )
+            return f"[ sh:path <{path}> ]"
+
+        return (
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            f"<{mint('fold', self.name or _local(self.cls))}> a sh:NodeShape ;\n"
+            f"  sh:targetClass <{self.cls}> ;\n"
+            "  sh:rule [ a sh:TripleRule ;\n"
+            f"    sh:subject {nodes(self.source)} ;\n"
+            f"    sh:predicate <{self.relation()}> ;\n"
+            f"    sh:object {nodes(self.target)} ] .\n"
+        )
 
 
 SAME_AS = "http://www.w3.org/2002/07/owl#sameAs"
@@ -450,7 +524,8 @@ class PropertyGraph:
 
         The records of each client are exported together (with the links between them) and
         named with each client's schema. *folds* are by default those that the schemas suggest
-        and the records bear out (:func:`suggested_folds`). *identity* is an :class:`Identity`, or a decision
+        and the records bear out (:func:`suggested_folds`); "suggested" in a list of folds
+        stands for them (``folds=["suggested", Fold.pairs(...)]``). *identity* is an :class:`Identity`, or a decision
         (rdfsolve.mappings.claims.Decision), read with the kinds these clients issue; the
         options of an Identity (``kinds``, ``unfold``, ``labels``) can be given here too.
         """
@@ -466,8 +541,12 @@ class PropertyGraph:
         for client in clients:
             for quad in client.to_oxigraph(*[r for r in results if r.client is client]):
                 records.add(quad)
-        if options.get("folds", "suggested") == "suggested":
-            options["folds"] = suggested_folds([c.schema for c in clients], records)
+        folds = options.get("folds", "suggested")
+        given = [folds] if isinstance(folds, str) else list(folds)
+        if "suggested" in given:
+            found = suggested_folds([c.schema for c in clients], records)
+            given = [f for g in given for f in (found if g == "suggested" else [g])]
+        options["folds"] = given
         if identity is not None and not isinstance(identity, Identity):
             identity = Identity.of(*clients, decision=identity, **chosen)
         elif chosen:
@@ -591,6 +670,8 @@ class PropertyGraph:
                 out.add(ox.Quad(who, type_, ox.NamedNode(label)))
             add(subject, node.properties, node.origins)
         for edge in self.edges:
+            if edge.derived:
+                continue  # made by a fold of pairs: no statement of its own
             source = _ox_node(edge.source_iri or edge.source)
             target = _ox_node(edge.target_iri or edge.target)
             if edge.fold is None:
@@ -672,7 +753,18 @@ class PropertyGraph:
 
     def _fold_label(self, index: int) -> str:
         fold = self.folds[index]
+        if fold.members is not None:
+            among = f" ({_local(fold.among)})" if fold.among else ""
+            return f"{_local(fold.cls)}: pairs of {_local(fold.members)}{among}"
         return f"{_local(fold.cls)}: {_local(fold.source)} -> {_local(fold.target)}"
+
+    def fold_edges(self, index: int) -> set[tuple[str, str]]:
+        """Return the ends of the edges of fold *index*, as the RDF wrote them."""
+        return {
+            (edge.source_iri or edge.source, edge.target_iri or edge.target)
+            for edge in self.edges
+            if edge.fold == index
+        }
 
     # -- networkx and GraphML ---------------------------------------------------------------
 
@@ -716,10 +808,76 @@ class PropertyGraph:
             )
         for edge in self.edges:
             kind = self._edge_type(edge, namer)
-            extra = {"via": edge.via} if edge.via else {}
+            extra: dict[str, Any] = {"via": edge.via} if edge.via else {}
+            if edge.derived:
+                extra["derived"] = True
             attrs = {"type": kind, **extra, **_aside(self._plain(edge.properties))}
             graph.add_edge(edge.source, edge.target, key=kind, **attrs)
         return graph
+
+    def to_pg_schema(self, name: str = "graph") -> str:
+        """Return the graph's types in PG-Schema (Angles et al., SIGMOD 2023), as S3PG writes it.
+
+        A node type for each combination of labels, with its properties (OPTIONAL when some
+        nodes of the type lack it; ARRAY when a key holds several values); an edge type for
+        each edge type, once, with the node types it joins (a union when several). The graph
+        type is LOOSE: it describes the
+        graph that was built, it does not close it.
+        """
+        namer = self._namer()
+
+        def type_name(labels: Iterable[str]) -> str:
+            """Return the PG-Schema type name of a combination of labels."""
+            words = sorted({re.sub(r"\W+", "", namer[label]) for label in labels}) or ["Node"]
+            return words[0][0].lower() + "".join(words)[1:] + "Type"
+
+        def content(values: list[Any], key: str) -> str:
+            """Return the PG-Schema content type of the values of one key."""
+            kind = {"long": "INT64", "double": "FLOAT64", "boolean": "BOOL", "date": "DATE"}
+            found = kind.get(_neo4j_type(values), "STRING")
+            return f"{found} ARRAY" if key in self.lists else found
+
+        def properties(items: list[PGNode] | list[PGEdge]) -> str:
+            """Return the properties of a type, with OPTIONAL for keys some items lack."""
+            values: dict[str, list[Any]] = defaultdict(list)
+            present: Counter[str] = Counter()
+            for item in items:
+                for key, found in item.properties.items():
+                    values[key] += [self.native(v) for v in found]
+                    present[key] += 1
+            parts = []
+            for key in sorted(values, key=lambda k: namer[k]):
+                optional = "" if present[key] == len(items) else "OPTIONAL "
+                word = re.sub(r"\W+", "_", namer[key])
+                parts.append(f"{optional}{word} {content(values[key], key)}")
+            return " { " + ", ".join(parts) + " }" if parts else ""
+
+        by_type: dict[str, list[PGNode]] = defaultdict(list)
+        node_type: dict[str, str] = {}
+        labels_of: dict[str, list[str]] = {}
+        for node in self.nodes.values():
+            found = type_name(node.labels)
+            by_type[found].append(node)
+            node_type[node.id] = found
+            labels_of[found] = sorted({namer[label] for label in node.labels})
+        lines = [
+            f"  ({t}: {' & '.join(labels_of[t]) or 'Node'}{properties(items)})"
+            for t, items in sorted(by_type.items())
+        ]
+        by_edge: dict[str, list[PGEdge]] = defaultdict(list)
+        for edge in self.edges:
+            by_edge[self._edge_type(edge, namer)].append(edge)
+        for kind, items in sorted(by_edge.items()):
+            sources = " | ".join(
+                f":{t}" for t in sorted({node_type.get(e.source, "nodeType") for e in items})
+            )
+            targets = " | ".join(
+                f":{t}" for t in sorted({node_type.get(e.target, "nodeType") for e in items})
+            )
+            word = re.sub(r"\W+", "", kind)
+            word = word.lower() if word.isupper() else word[0].lower() + word[1:]
+            lines.append(f"  ({sources})-[{word}Type: {kind}{properties(items)}]->({targets})")
+        return f"CREATE GRAPH TYPE {name}Type LOOSE {{\n" + ",\n".join(lines) + "\n}\n"
 
     def to_graphml(self, path: str | Path) -> Path:
         """Write GraphML (lists as JSON text, dates as ISO text), read it back and compare."""
@@ -781,6 +939,7 @@ class PropertyGraph:
                     "target": e.target,
                     "properties": props(e.properties),
                     **({"via": e.via} if e.via else {}),
+                    **({"derived": True} if e.derived else {}),
                 }
                 for e in self.edges
             ],
@@ -815,6 +974,7 @@ class PropertyGraph:
                 ":END_ID": e.target,
                 ":TYPE": self._edge_type(e, namer),
                 **({"via": e.via} if e.via else {}),
+                **({"derived": True} if e.derived else {}),
                 **self._plain(e.properties),
             }
             for e in self.edges
@@ -844,7 +1004,7 @@ class PropertyGraph:
 # -- helpers ----------------------------------------------------------------------------------
 
 
-_RESERVED = ("type", "via", "labels", "ids")
+_RESERVED = ("type", "via", "labels", "ids", "derived")
 
 
 def _ids(node: PGNode) -> dict[str, Any]:
@@ -894,16 +1054,51 @@ def _expand(fold: Fold, prefixes: Mapping[str, str]) -> Fold:
             return text
         return prefixes[prefix] + local
 
-    return Fold(iri(fold.cls), iri(fold.source), iri(fold.target), fold.name, fold.evidence)
+    return Fold(
+        iri(fold.cls),
+        iri(fold.source),
+        iri(fold.target),
+        fold.name,
+        fold.evidence,
+        iri(fold.members) if fold.members else None,
+        iri(fold.among) if fold.among else None,
+    )
+
+
+def _apply_pairs(
+    index: int, fold: Fold, nodes: dict[str, PGNode], edges: list[PGEdge]
+) -> dict[str, int]:
+    """Link each pair of members of each instance with a derived edge; keep the instance."""
+    members: dict[str, set[str]] = defaultdict(set)
+    for edge in edges:
+        if edge.fold is None and edge.type == fold.members:
+            member = nodes.get(edge.target)
+            if member is not None and (fold.among is None or fold.among in member.labels):
+                members[edge.source].add(edge.target)
+    counts: Counter[str] = Counter()
+    for node in [n for n in nodes.values() if fold.cls in n.labels]:
+        found = sorted(members.get(node.id, ()))
+        if len(found) < 2:
+            counts["kept: fewer than two members"] += 1
+            continue
+        for a, b in combinations(found, 2):
+            edges.append(PGEdge(a, f"fold:{index}", b, via=node.id, fold=index, derived=True))
+            counts["pairs"] += 1
+        counts["applied"] += 1
+    return dict(counts)
 
 
 def _apply_fold(
     index: int, fold: Fold, nodes: dict[str, PGNode], edges: list[PGEdge]
 ) -> dict[str, int]:
     """Fold the instances where it holds; count applied instances and kept ones by reason."""
+    if fold.members is not None:
+        return _apply_pairs(index, fold, nodes, edges)
     outgoing: dict[str, list[PGEdge]] = defaultdict(list)
     incoming: Counter[str] = Counter()
     for edge in edges:
+        if edge.derived:
+            continue
         incoming[edge.target] += 1  # also an edge an earlier fold made (a catalysis of it)
         if edge.fold is None:
             outgoing[edge.source].append(edge)
@@ -1030,6 +1225,8 @@ def _retarget(nodes: dict[str, PGNode], edges: list[PGEdge], canonical: Mapping[
         if target != edge.target and edge.target_iri is None:
             edge.target_iri = edge.target
         edge.source, edge.target = source, target
+        if edge.derived and source == target:
+            continue  # two members merged into one entity: no pair
         written_source = edge.source_iri or source
         written_target = edge.target_iri or target
         if edge.fold is None and source == target:

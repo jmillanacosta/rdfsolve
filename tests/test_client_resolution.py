@@ -127,3 +127,42 @@ def test_the_forms_of_a_namespace_are_learned_from_a_sample():
     assert one_by_one["CHEBI:99999"] is None
     assert sent <= 6, sent
     assert many["CHEBI:15378"].coverage["forms"] == [obo + "{id}"]
+
+
+def test_a_batch_over_the_value_budget_is_split_and_retried():
+    """Entries with hundreds of values (UniProt citations) load in smaller batches."""
+    from types import SimpleNamespace
+
+    from rdfsolve.client.api import Results
+    from rdfsolve.client.hydration import HydrationLimitError
+
+    calls = []
+
+    def get_many(model, iris, fields):
+        calls.append(len(iris))
+        if len(iris) > 2:
+            raise HydrationLimitError("Value budget exceeded")
+        return [f"record {i}" for i in iris]
+
+    fake = SimpleNamespace(client=SimpleNamespace(get_many=get_many))
+    fake._get_many = lambda model, iris, fields: Results._get_many(fake, model, iris, fields)
+    assert Results._get_many(fake, None, [str(i) for i in range(7)], set()) == [f"record {i}" for i in range(7)]
+    assert max(c for c in calls if c <= 2) == 2 and calls[0] == 7
+
+
+def test_a_field_too_large_for_one_record_is_left_out_and_reported():
+    """One entry whose citations alone exceed the budget loads without them; the set is partial."""
+    from types import SimpleNamespace
+
+    from rdfsolve.client.api import Results
+    from rdfsolve.client.hydration import HydrationLimitError
+
+    def get_many(model, iris, fields):
+        if "citation" in fields:
+            raise HydrationLimitError("Value budget exceeded")
+        return [f"{iris[0]} with {', '.join(fields)}"]
+
+    fake = SimpleNamespace(client=SimpleNamespace(get_many=get_many), coverage={"status": "complete"})
+    fake._get_many = lambda model, iris, fields: Results._get_many(fake, model, iris, fields)
+    assert Results._get_many(fake, None, ["P1"], {"citation", "label"}) == ["P1 with label"]
+    assert fake.coverage["status"] == "partial" and fake.coverage["left_out"] == {"P1": ["citation"]}
