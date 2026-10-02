@@ -22,9 +22,9 @@ def test_node_kinds_are_read_with_isblank_first():
         assert "isIRI" not in expression, "Virtuoso: isIRI is true for blank nodes in a BIND"
 
 
-def test_discovery_of_one_property_groups_only_its_own_nodes():
-    """The property sets are grouped for the subjects and objects of the property only, with
-    the same answer as grouping every node (UberGraph: 47 properties refused at 10 min each)."""
+def test_discovery_groups_only_the_nodes_of_uncovered_edges():
+    """The property sets are grouped for the subjects and objects of the uncovered edges only,
+    with the same answer as grouping every node (UberGraph: 47 properties refused at 10 min each)."""
     import json
 
     from rdflib import Graph
@@ -35,9 +35,13 @@ def test_discovery_of_one_property_groups_only_its_own_nodes():
         <urn:c> <urn:q> "y" . _:n <urn:p> "z" ; <urn:r> <urn:a> .""",
     )
     residual = "VALUES ?p { <urn:p> }"
-    whole = _discovery_query(None, [], residual)
-    own = _discovery_query(None, [], residual, predicate="urn:p")
-    assert "?s <urn:p> ?_po" in own and "?_ps <urn:p> ?o" in own
+    own = _discovery_query(None, [], residual)
+    assert "WHERE { { SELECT DISTINCT ?s WHERE { ?s ?p ?o . VALUES ?p { <urn:p> } } }" in own
+    # The earlier form, which grouped every node of the graph.
+    whole = own.replace("{ SELECT DISTINCT ?s WHERE { ?s ?p ?o . VALUES ?p { <urn:p> } } } ", "").replace(
+        "{ SELECT DISTINCT ?o WHERE { ?s ?p ?o . VALUES ?p { <urn:p> } } } ", ""
+    )
+    assert "SELECT DISTINCT ?s WHERE" not in whole
 
     def rows(query):
         """Return the answer rows, with the property sets in order (GROUP_CONCAT has none)."""

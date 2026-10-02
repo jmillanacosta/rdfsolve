@@ -67,7 +67,7 @@ def test_a_refused_property_count_keeps_the_other_counts(monkeypatch):
 
     def refuse(run):
         def call(query, *args, **kwargs):
-            if "<urn:q>" in query and "DISTINCT ?o" in query:
+            if "<urn:q>" in query and "COUNT(DISTINCT ?o)" in query:
                 raise EndpointError("HTTP 500: Tried to allocate 54 GB")
             return run(query, *args, **kwargs)
 

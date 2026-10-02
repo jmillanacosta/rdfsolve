@@ -53,29 +53,27 @@ def _discovery_query(
     residual: str,
     *,
     include_edges: bool = False,
-    predicate: str | None = None,
 ) -> str:
     """Return the query of the property sets of the subjects and objects of uncovered edges.
 
-    With *predicate*, the property sets are grouped only for the subjects and objects of that
-    property: an engine that does not push the join into the subqueries (QLever) grouped
-    every subject and object of the graph for each property (UberGraph: 47 properties refused
-    after 10 min each, one of them with a single edge).
+    The property sets are grouped only for the subjects and objects of the uncovered edges
+    (the edge pattern with *residual*): an engine that does not push the join into the
+    subqueries (QLever) grouped every subject and object of the graph, or of the property,
+    for each property (UberGraph: 47 properties refused after 10 min each; IAO_0000115 with
+    720,078 edges and 5 uncovered took 263 s grouped by property, structural-discovery-20261002).
     """
     edges = "?s ?o " if include_edges else ""
     edge_pattern = f"?s ?p ?o . {residual}"
     if include_edges:
         edge_pattern = f"{{ SELECT ?s ?p ?o WHERE {{ {edge_pattern} }} }}"
-    own_s = f"?s <{predicate}> ?_po . " if predicate else ""
-    own_o = f"?_ps <{predicate}> ?o . " if predicate else ""
     return f"""SELECT DISTINCT {edges}?ss ?os ?p ?sk ?ok ?dt ?lang
 {_dataset(graph, named_graphs)} WHERE {{
   {edge_pattern}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
-     WHERE {{ {own_s}?s ?sp ?sv }} GROUP BY ?s }}
+     WHERE {{ {{ SELECT DISTINCT ?s WHERE {{ ?s ?p ?o . {residual} }} }} ?s ?sp ?sv }} GROUP BY ?s }}
   OPTIONAL {{
     {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=" ") AS ?os)
-       WHERE {{ {own_o}?o ?op ?ov }} GROUP BY ?o }}
+       WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ ?s ?p ?o . {residual} }} }} ?o ?op ?ov }} GROUP BY ?o }}
   }}
   BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
   BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
@@ -310,7 +308,7 @@ def _property_discovery(
         else:
             test = uncovered_filter(own, context.graph_uris, context.type_context_graph_uris)
         residual = f"VALUES ?p {{ <{predicate}> }} " + test
-        query = _discovery_query(graph, named, residual, predicate=predicate)
+        query = _discovery_query(graph, named, residual)
         try:
             rows += _select(context, query, "structural/discovery")
         except (SparqlHelperError, ValueError) as error:
