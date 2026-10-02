@@ -144,21 +144,32 @@ def query_enrichment(
     phase = report.start_phase("enrichment") if report else None
     successful = 0
 
-    def select(query: str, purpose: str) -> list[dict[str, Any]]:
-        """Run a query and record its outcome."""
+    def run(query: str, purpose: str, *, tried: bool = False) -> list[dict[str, Any]] | None:
+        """Run a query and record its outcome.
+
+        A *tried* query (a batch, which is asked again one query at a time) that does not
+        complete is not a failure: it returns None.
+        """
         nonlocal successful
         if result.query_count and delay:
             time.sleep(delay)
         started = time.monotonic()
         outcome = select_outcome(query, purpose, helper, graph_uris=graph_uris)
         result.query_count += 1
-        result.failures.extend(outcome.failures)
         complete = outcome.state == "complete"
-        successful += int(complete)
         if report:
             report.record_query(purpose, time.monotonic() - started, complete)
+        if tried and not complete:
+            return None
+        result.failures.extend(outcome.failures)
+        successful += int(complete)
+        if report:
             report.record_outcome(outcome)
         return outcome.rows
+
+    def select(query: str, purpose: str) -> list[dict[str, Any]]:
+        """Run a query and record its outcome; return its rows."""
+        return run(query, purpose) or []
 
     def invalid(error: Exception, purpose: str) -> None:
         """Record malformed response data as a failure."""
@@ -172,15 +183,24 @@ def query_enrichment(
     dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
 
     def batched(queries: list[str], purpose: str) -> Iterator[tuple[int, dict[str, Any]]]:
-        """Group example queries and retain each result slot."""
+        """Group example queries and retain each result slot.
+
+        A batch that does not complete is asked again one query at a time, so that only the
+        query that is too costly fails (ChEMBL: one string-valued pattern of chembl#Activity
+        failed 13 batches of 10, 2026-09-30).
+        """
         for offset in range(0, len(queries), 10):
-            branches = [
-                f"{{ {{ {query} }} BIND({index} AS ?slot) }}"
-                for index, query in enumerate(queries[offset : offset + 10], offset)
-            ]
-            for row in select(
-                "SELECT * " + dataset + " WHERE { " + " UNION ".join(branches) + " }", purpose
-            ):
+            group = list(enumerate(queries[offset : offset + 10], offset))
+            branches = [f"{{ {{ {query} }} BIND({index} AS ?slot) }}" for index, query in group]
+            union = "SELECT * " + dataset + " WHERE { " + " UNION ".join(branches) + " }"
+            rows = run(union, purpose, tried=len(group) > 1)
+            if rows is None:
+                rows = [
+                    {**row, "slot": {"type": "literal", "value": str(index)}}
+                    for index, query in group
+                    for row in select(f"SELECT * {dataset} WHERE {{ {query} }}", purpose)
+                ]
+            for row in rows:
                 try:
                     index = int(row["slot"]["value"])
                     if not offset <= index < min(offset + 10, len(queries)):

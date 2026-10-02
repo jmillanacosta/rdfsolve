@@ -80,3 +80,27 @@ def test_enrichment_keeps_language_and_scope(source):
     )
     with pytest.raises(ValueError, match="trim_descriptions"):
         schema.to_shacl(trim_descriptions=-1)
+
+
+def test_a_failed_example_batch_is_asked_again_one_query_at_a_time(source):
+    """One costly example query failed its whole batch of 10 (ChEMBL, 2026-09-30); now only the
+    costly query fails, and a batch that fails only as a batch is not a failure."""
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
+    schema, helper = source
+    answer = helper.select.side_effect
+
+    def costly(query, **kwargs):
+        if "UNION" in query or ("?value" in query and "urn:test:B" in query):
+            raise EndpointTimeoutError("Query cost/time limit: fixture")
+        return answer(query, **kwargs)
+
+    helper.select.side_effect = costly
+    result = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert len(result.examples) == 1 and result.examples[0].value.kind == "literal"
+    assert result.state == "partial" and len(result.failures) == 1, "Only the costly query"
+    helper.select.side_effect = lambda query, **kwargs: (
+        (_ for _ in ()).throw(EndpointTimeoutError("fixture")) if "UNION" in query else answer(query, **kwargs)
+    )
+    again = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert again.state == "complete" and len(again.examples) == 2 and not again.failures
