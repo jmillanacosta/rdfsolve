@@ -124,3 +124,8 @@ def test_the_links_of_one_record_type_are_drawn_with_what_they_reach():
     assert re.search(r'C1 -->\|"`knows', into) is None and "C0 -->|" in into, (
         "knows: Person to Person"
     )
+
+
+def test_a_record_type_can_be_named_by_its_curie():
+    client = Client(MinedSchema.from_vocabulary([VOCABULARY], CLASSES))
+    assert client.model("ex:Person") is client.model("Person")

@@ -909,8 +909,11 @@ class Client(DatasetClient):
         }
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
-        """Accept generated names, spaced names, or full class IRIs."""
+        """Accept generated names, spaced names, CURIEs of the mined prefixes, or class IRIs."""
         name_or_iri = str(name_or_iri)
+        prefix, sep, local = name_or_iri.partition(":")
+        if sep and not local.startswith("//") and prefix in self.schema.get_prefixes():
+            name_or_iri = self.schema.get_prefixes()[prefix] + local
         if name_or_iri in self.models:
             return self.models[name_or_iri]
         for model in self.models.values():

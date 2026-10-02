@@ -31,7 +31,28 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
     from rdfsolve.schema_models.paths import PropertyPath
 
-__all__ = ["Biolink", "Profile", "Query", "Rule", "write_query"]
+__all__ = ["Biolink", "Profile", "Query", "Rule", "within", "write_query"]
+
+
+def _expand(text: str, client: Client | None = None) -> str:
+    """Return the IRI of "a" (rdf:type), of a CURIE or of an IRI: the prefixes of the client's
+    mined schema first, then the Biolink Model's own prefix, then Bioregistry.
+    """
+    import bioregistry
+
+    if text == "a":
+        return _TYPE
+    if text.startswith(("http://", "https://", "urn:")):
+        return text
+    prefix, sep, local = text.partition(":")
+    if not sep:
+        raise ValueError(f"{text!r}: write an IRI, a CURIE or 'a'")
+    known = client.schema.get_prefixes() if client is not None else {}
+    base = known.get(prefix) or (Biolink.BASE if prefix == "biolink" else None)
+    base = base or bioregistry.get_uri_prefix(prefix)
+    if not base:
+        raise ValueError(f"{text!r}: unknown prefix {prefix!r}")
+    return base + local
 
 
 def _link(client: Client, name: str, focus: str) -> str:
@@ -137,13 +158,18 @@ class Rule:
         *focus* and the kinds are record types ("Catalysis"); *subject* and *object* are links
         of the focus by field name or label ("source", "Is part of"), a path of them
         ("target/source"), or a link that points to the focus ("^Is part of"); None is the
-        focus itself. *predicate* and *value* are the target's IRIs.
+        focus itself. *predicate* and *value* are the target's terms: IRIs, CURIEs
+        ("biolink:catalyzes") or "a" for rdf:type.
         """
         from rdfsolve.client.hydration import class_iri
 
-        def kind(name_or_iri: str | None) -> str | None:
-            """Return the class IRI of a record type."""
-            return class_iri(client.model(name_or_iri)) if name_or_iri else None
+        def kind(name: str | None) -> str | None:
+            """Return the class IRI of a record type, named or written as a CURIE ("wp:DataNode")."""
+            if not name:
+                return None
+            if ":" in name and not name.startswith(("http://", "https://")):
+                name = _expand(name, client)
+            return class_iri(client.model(name))
 
         def path(text: str | None) -> str | None:
             """Return a path of links as SPARQL path text, each step resolved by the client."""
@@ -159,10 +185,10 @@ class Rule:
 
         return cls(
             kind(focus) or focus,
-            predicate,
+            _expand(predicate, client),
             subject=path(subject),
             object=path(object),
-            value=value,
+            value=value if literal or value is None else _expand(value, client),
             subject_class=kind(subject_kind),
             object_class=kind(object_kind),
             pairs=pairs,
@@ -289,10 +315,12 @@ class Profile:
         name: str | None = None,
         dataset: str | None = None,
         provenance: Mapping[str, str | None] | None = None,
+        client: Client | None = None,
     ) -> Profile:
         """Return the profile of query files (Query): the rules of each, the target and its
-        version from their headers (``# target: biolink 4.4.5``). A query outside the plain
-        subset is kept and run whole.
+        version from their headers (``# target: biolink 4.4.5``); the source's release and
+        endpoint from *client* (its mined schema). A query outside the plain subset is kept and
+        run whole.
         """
         queries = [Query.read(p) for p in sorted(map(str, paths))]
         targets = {q.header.get("target", "") for q in queries}
@@ -302,6 +330,10 @@ class Profile:
         sources = {q.header.get("source") for q in queries} - {None}
         dataset = dataset or (next(iter(sources)) if len(sources) == 1 else None)
         rules = [rule for q in queries for rule in q.rules()]
+        if provenance is None and client is not None:
+            from rdfsolve.property_graph import provenance as described
+
+            provenance = described(client.schema)
         return cls(
             name or f"{dataset or 'local'}-{target or 'target'}",
             rules,
@@ -1022,8 +1054,8 @@ def write_query(
     *,
     title: str,
     description: str = "",
-    source: str = "",
-    target: str = "",
+    source: Any = "",
+    target: Any = "",
     endpoint: str = "",
     prefixes: Mapping[str, str] | None = None,
     focus_as: str | None = None,
@@ -1031,13 +1063,20 @@ def write_query(
     """Return the rules of one focus as a query file: a ``# key: value`` header and one plain
     CONSTRUCT, which Query reads back into the same rules.
 
-    The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
+    *source* is a client (its name and its mined prefixes) or a name; *target* a Biolink model
+    or a name with its version. The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
     after the last link of its path. *prefixes* abbreviate IRIs (those of the source's schema
     and of the target).
     """
     if len({r.focus for r in rules}) != 1:
         raise ValueError("A query has one focus: write one query per focus class")
     known = dict(prefixes or {})
+    if hasattr(source, "schema"):  # a client: its name and the prefixes of its mined schema
+        known = {**source.schema.get_prefixes(), **known}
+        source = source.schema.about.dataset_name or ""
+    if isinstance(target, Biolink):
+        known.setdefault("biolink", Biolink.BASE)
+        target = f"biolink {target.version}"
 
     def term(iri: str) -> str:
         """Return an IRI as a prefixed name where a prefix fits it, else <iri>."""
@@ -1136,3 +1175,17 @@ def write_query(
         "",
     ]
     return "\n".join(lines)
+
+
+def within(client: Client, records: Any, via: str) -> str:
+    """Return the scope "the focus is linked by *via* to these records, or is one of them"
+    (Profile.run and rebuilds): ``within(wp, pathway, via="Is part of")`` is what is drawn in
+    the pathway, and the pathway itself. *via* is a link name of the client.
+    """
+    iris = [str(vars(record)["uri"]) for record in records.records]
+    kinds = {client.type_name(type(record)) for record in records.records}
+    if not iris or len(kinds) != 1:
+        raise ValueError("Give records of one record type")
+    prop = _link(client, via, next(iter(kinds)))
+    values = " ".join(f"<{iri}>" for iri in iris)
+    return f"{{ ?x <{prop}> ?within . VALUES ?within {{ {values} }} }} UNION {{ VALUES ?x {{ {values} }} }}"

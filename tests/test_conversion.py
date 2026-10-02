@@ -358,3 +358,29 @@ WHERE { ?pathway a wp:Pathway . ?entity a wp:Protein ; wp:partOf ?pathway . }
         {"query": "wp-biolink-pathways", "as written": 2, "compiled": 2, "same": True}
     ]
     assert "sh:condition" in profile.to_shacl()
+
+
+def test_rules_take_curies_and_a_and_within_names_the_scope():
+    """Terms are written as CURIEs (the Biolink Model's own prefix) or "a"; within() builds the
+    scope from records and a link name."""
+    from types import SimpleNamespace
+
+    from rdfsolve.conversion import _expand, within
+
+    assert _expand("a") == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    assert _expand("biolink:catalyzes") == BL + "catalyzes"
+    record = type("Pathway", (), {})()
+    vars(record)["uri"] = "urn:wp1"
+    client = SimpleNamespace(type_name=lambda model: "Pathway")
+    import rdfsolve.conversion as conversion
+
+    original = conversion._link
+    conversion._link = lambda client, name, focus: WP + "partOf"
+    try:
+        scope = within(client, SimpleNamespace(records=[record]), via="Is part of")
+    finally:
+        conversion._link = original
+    assert (
+        scope
+        == f"{{ ?x <{WP}partOf> ?within . VALUES ?within {{ <urn:wp1> }} }} UNION {{ VALUES ?x {{ <urn:wp1> }} }}"
+    )
