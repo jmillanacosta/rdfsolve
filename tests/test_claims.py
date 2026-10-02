@@ -266,12 +266,15 @@ def test_claims_and_the_resolution_are_sssom(tmp_path):
     path = tmp_path / "resolution.sssom.tsv"
     write_sssom_tsv(decision.to_sssom(), path)
     table = parse_sssom_table(path).df.fillna("")
-    exact = table[table.predicate_modifier != "Not"]
+    exact = table[(table.predicate_modifier != "Not") & (table.confidence != 0.5)]
     negative = table[table.predicate_modifier == "Not"]
     assert ("lipidmaps:LMSP03010023", "chebi:91146") in set(zip(exact.subject_id, exact.object_id))
     assert list(zip(negative.subject_id, negative.object_id)) == [("lipidmaps:LMSP03010023", "chebi:89488")]
     assert "chebi" in negative.iloc[0].curation_rule_text
     assert set(table.mapping_justification) == {"semapv:MappingReview"}
+    ambiguous = table[table.subject_id == "lipidmaps:LMSP03010025"]
+    assert set(ambiguous.object_id) == {"chebi:1", "chebi:2"} and set(ambiguous.confidence) == {0.5}
+    assert set(ambiguous.mapping_cardinality) == {"1:n"} and "ambiguous" in ambiguous.iloc[0].curation_rule_text
 
 
 def test_an_identifier_that_fails_its_pattern_is_listed_not_written():

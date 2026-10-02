@@ -30,8 +30,9 @@ the source that issues a namespace:
 
 The resolution is written as SSSOM too (:meth:`Resolution.to_sssom`): accepted mappings as
 ``skos:exactMatch`` with justification ``semapv:MappingReview`` and the rule that decided them,
-overruled ones as negative mappings (``predicate_modifier: Not``). SSSOM tools such as SeMRA,
-which removes negative mappings before grouping, then group the identifiers as resolved.
+overruled ones as negative mappings (``predicate_modifier: Not``), and the targets of an
+ambiguous group with confidence 0.5 and cardinality 1:n. SSSOM tools such as SeMRA, which
+removes negative mappings before grouping, then group the identifiers as resolved.
 
 A claim can also be checked through a third identifier: the BridgeDb link from an Ensembl
 gene to a UniProt accession agrees with UniProt when UniProt gives the accession the same
@@ -60,6 +61,7 @@ STATED = "semapv:UnspecifiedMatching"
 REVIEWED = "semapv:MappingReview"
 CROSS_REFERENCE = "oboinowl:hasDbXref"  # prefixes as Bioregistry normalizes them
 EXACT = "skos:exactMatch"
+AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group (owner decision 2026-10-02)
 
 
 def claim(subject: str, object: str, source: str, predicate: str) -> Mapping:
@@ -164,7 +166,9 @@ class Resolution:
 
         Accepted mappings are ``skos:exactMatch`` with justification ``semapv:MappingReview``
         and the rule that decided them; overruled ones are negative mappings (``Not``), with
-        the source whose statement overruled them.
+        the source whose statement overruled them. The targets of an ambiguous group are exact
+        matches with confidence 0.5 and cardinality 1:n, so that a reader with a confidence
+        threshold (SeMRA's filter_minimum_confidence) leaves them ungrouped.
         """
         from sssom import Mapping
 
@@ -188,6 +192,26 @@ class Resolution:
                     curation_rule_text=[decided],
                 )
             )
+        for group in self.groups:
+            if not group["outcome"].startswith("ambiguous"):
+                continue
+            for target in group["targets"].split(", "):
+                records.append(
+                    Mapping(
+                        subject_id=group["subject"],
+                        predicate_id=EXACT,
+                        object_id=target,
+                        mapping_justification=REVIEWED,
+                        confidence=AMBIGUOUS,
+                        mapping_cardinality="1:n",
+                        curation_rule_text=[
+                            (
+                                f"ambiguous: {group['decided by']} gives several targets "
+                                f"({group['targets']}) that are not forms of one entity"
+                            )
+                        ],
+                    )
+                )
         for subject, target, by in sorted(set(self.overruled)):
             records.append(
                 Mapping(
