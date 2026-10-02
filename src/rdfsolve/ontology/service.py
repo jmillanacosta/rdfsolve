@@ -20,7 +20,8 @@ from urllib.parse import quote
 import requests
 from rdflib import Literal
 
-from rdfsolve.ontology.terms import Term, canonical_iri
+from rdfsolve.identifiers import canonical_iri
+from rdfsolve.ontology.terms import Term
 from rdfsolve.ontology.ubergraph import UberGraph
 from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, SUBCLASS_OF
 from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES

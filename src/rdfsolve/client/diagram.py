@@ -233,9 +233,9 @@ def _curie(iri: str, prefixes: dict[str, str]) -> str:
     found = curie_from_prefixes(iri, prefixes)
     if found:
         return found[0]
-    import bioregistry
+    from rdfsolve.identifiers import curie
 
-    return bioregistry.curie_from_iri(iri) or iri
+    return curie(iri)
 
 
 def _text(value: str) -> str:

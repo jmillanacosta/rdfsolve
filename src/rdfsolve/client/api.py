@@ -1117,9 +1117,10 @@ class Client(DatasetClient):
             return result
         import bioregistry
 
-        from rdfsolve.ontology.terms import term_key
+        from rdfsolve.identifiers import curie, parse
 
-        prefix = bioregistry.parse_iri(class_iri(self.model(kind)))[0] if kind else None
+        registered = parse(class_iri(self.model(kind))) if kind else None
+        prefix = registered.prefix if registered else None
         ontology = bioregistry.get_ols_prefix(prefix) if prefix else None
         looked_up = [
             self.vocabulary(c["iri"]) for c in self.ontology.search(text, ontology=ontology)
@@ -1137,8 +1138,8 @@ class Client(DatasetClient):
         found = search_records(
             self, aliases[:12], kind, [], names_only=True, allow_partial=allow_partial
         )
-        keys = {term_key(c["iri"]) for c in candidates}
-        records = [r for r in found if term_key(str(vars(r)["uri"])) in keys]
+        keys = {curie(c["iri"]) for c in candidates}
+        records = [r for r in found if curie(str(vars(r)["uri"])) in keys]
         identities = {str(vars(r)["uri"]) for r in records}
         evidence = [e for e in found.evidence if e["id"] in identities]
         return Results(

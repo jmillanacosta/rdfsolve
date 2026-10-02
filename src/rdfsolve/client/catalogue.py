@@ -255,7 +255,7 @@ class Catalogue:
         if not refs:
             return []
         if concept and ontology and self.client.ontology:
-            from rdfsolve.ontology.terms import term_key
+            from rdfsolve.identifiers import curie
 
             iris: set[str] = set()
             for ref in refs:
@@ -267,9 +267,9 @@ class Catalogue:
                     self.client.vocabulary(iri)
             self.schema_documents.update({r: self._schema_document(r) for r in refs})
             if not any(self.relevance(r, concept) >= 1 for r in refs):
-                matches = {term_key(t["iri"]) for t in self.client.ontology.search(concept)}
+                matches = {curie(t["iri"]) for t in self.client.ontology.search(concept)}
                 for iri in sorted(iris):
-                    if term_key(iri) in matches:
+                    if curie(iri) in matches:
                         self.client.vocabulary(iri)
                 self.schema_documents.update({r: self._schema_document(r) for r in refs})
         refs = [r for r in refs if self.relevance(r, concept)]

@@ -52,14 +52,14 @@ def describe(
         raise ValueError(
             "Ontology fallback requires source class discovery without owner or target filters"
         )
-    from rdfsolve.mappings.identifiers import identifier_candidates
+    from rdfsolve import identifiers
 
     candidates: list[str] = []
     identity: dict[str, Any] = {}
     if identifier is not None:
         if not source or targets or not concept:
             raise ValueError("An identifier requires a source name lookup without target filters")
-        candidates, identity = identifier_candidates(identifier)
+        candidates, identity = identifiers.candidates(identifier)
     index = client.catalogue
     rows: list[dict[str, Any]] = [
         {

@@ -20,8 +20,31 @@ not mined (the owner, 2026-10-02). This package holds:
 Mining strategies (rdfsolve.mining) use these for the ontology terms of data graphs.
 """
 
-from rdfsolve.ontology.service import Ontologies
-from rdfsolve.ontology.terms import Term, namespace, term_key
-from rdfsolve.ontology.ubergraph import UberGraph
+from __future__ import annotations
 
-__all__ = ["Ontologies", "Term", "UberGraph", "namespace", "term_key"]
+from importlib import import_module
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from rdfsolve.ontology.service import Ontologies
+    from rdfsolve.ontology.terms import Term, namespace
+    from rdfsolve.ontology.ubergraph import UberGraph
+
+# Loaded on first use: schema_models imports rdfsolve.ontology.structure, and the service
+# imports schema models.
+_EXPORTS = {
+    "Ontologies": "rdfsolve.ontology.service",
+    "Term": "rdfsolve.ontology.terms",
+    "UberGraph": "rdfsolve.ontology.ubergraph",
+    "namespace": "rdfsolve.ontology.terms",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Return a public name of the package, importing its module on first use."""
+    if name not in _EXPORTS:
+        raise AttributeError(f"module 'rdfsolve.ontology' has no attribute {name!r}")
+    return getattr(import_module(_EXPORTS[name]), name)
+
+
+__all__ = ["Ontologies", "Term", "UberGraph", "namespace"]

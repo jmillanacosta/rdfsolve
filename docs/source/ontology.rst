@@ -99,3 +99,15 @@ structure
    :members:
    :undoc-members:
    :show-inheritance:
+
+Identifiers
+===========
+
+``rdfsolve.identifiers`` reads identifiers once for all of rdfsolve: ``parse`` gives the
+registered prefix, the standard local identifier and its validity; link inference, declared
+identities, identity checks, term keys and the client build on it.
+
+.. automodule:: rdfsolve.identifiers
+   :members:
+   :undoc-members:
+   :show-inheritance:

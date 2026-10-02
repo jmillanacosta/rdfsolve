@@ -39,16 +39,13 @@ class Identification(BaseModel):
 
 def spellings(identifier: str) -> list[Any]:
     """Every way a source may write an identifier: registered IRIs, as IRIs or strings, and ids."""
-    import bioregistry
+    from rdfsolve import identifiers
 
-    from rdfsolve.mappings.identifiers import identifier_candidates
-
-    iris, _ = identifier_candidates(identifier)
+    iris, _ = identifiers.candidates(identifier)
     terms: list[Any] = [URIRef(iri) for iri in iris] + [Literal(iri) for iri in iris]
     if not identifier.startswith(("http://", "https://", "urn:")):
-        prefix, local = identifier.split(":", 1)
-        resource = bioregistry.get_resource(prefix)
-        local = resource.standardize_identifier(local) if resource else local
+        found = identifiers.parse(identifier)
+        local = found.local if found else identifier.split(":", 1)[1]
         terms += [Literal(v) for v in (local, local.upper(), local.lower(), identifier)]
     return list(dict.fromkeys(terms))
 
@@ -57,6 +54,8 @@ def carriers(client: Client, prefix: str) -> list[str]:
     """Properties whose example values in the schema are identifiers of this registered type."""
     import bioregistry
 
+    from rdfsolve.identifiers import parse
+
     resource = bioregistry.get_resource(prefix)
     if resource is None:
         return []
@@ -64,13 +63,10 @@ def carriers(client: Client, prefix: str) -> list[str]:
     for example in client._schema.enrichment.examples:
         value = example.value.value
         if value.startswith(("http://", "https://")):
-            # parse_iri gives (None, None) for an IRI of no registered namespace.
-            registered = bioregistry.parse_iri(value)[0]
-            carries = registered is not None and (
-                bioregistry.normalize_prefix(registered) == resource.prefix
-            )
+            identifier = parse(value)
+            carries = identifier is not None and identifier.prefix == resource.prefix
         else:
-            carries = resource.is_valid_identifier(value)
+            carries = bool(resource.is_valid_identifier(value))
         if carries:
             found.append(example.property_uri)
     return sorted(set(found))

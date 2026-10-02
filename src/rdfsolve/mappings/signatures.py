@@ -77,19 +77,17 @@ class Link:
 
 
 def identifier_type(value: str, ignore: Iterable[str] = VOCABULARIES) -> str | None:
-    """Return the Bioregistry prefix of an identifier IRI or CURIE, or None."""
-    import bioregistry
+    """Return the Bioregistry prefix of a valid identifier IRI or CURIE, or None.
 
-    if value.startswith(("http://", "https://")):
-        prefix, _ = bioregistry.parse_iri(value) or (None, None)
-    elif ":" in value and not any(c.isspace() for c in value):
-        prefix, local = bioregistry.parse_curie(value) or (None, None)
-        if prefix and not bioregistry.is_valid_identifier(prefix, local):
-            prefix = None
-    else:
-        prefix = None
-    prefix = bioregistry.normalize_prefix(prefix) if prefix else None
-    return None if prefix is None or prefix in set(ignore) else prefix
+    Read by rdfsolve.identifiers.parse; an identifier that fails the pattern of its prefix
+    (purl.uniprot.org/uniprot/P53_HUMAN, an entry name) has no type.
+    """
+    from rdfsolve.identifiers import parse
+
+    found = parse(value)
+    if found is None or found.valid is False or found.prefix in set(ignore):
+        return None
+    return found.prefix
 
 
 def signatures(schema: MinedSchema, ignore: Iterable[str] = VOCABULARIES) -> Signatures:
@@ -199,24 +197,17 @@ class LinkEvidence:
 
 
 def _local(value: str) -> tuple[str, str] | None:
-    """Return the Bioregistry prefix and the local identifier of an IRI or CURIE.
+    """Return the Bioregistry prefix and the standard local identifier of an IRI or CURIE.
 
     A local identifier that is not valid for the prefix gives None: a namespace can also name
     other things (purl.uniprot.org/uniprot/P53_HUMAN is an entry name, not an accession).
     """
-    import bioregistry
+    from rdfsolve.identifiers import parse
 
-    parsed = bioregistry.parse_iri(value) if value.startswith(("http://", "https://")) else None
-    parsed = parsed or bioregistry.parse_curie(value)
-    if not parsed or not parsed[0]:
+    found = parse(value)
+    if found is None or found.valid is False:
         return None
-    prefix = bioregistry.normalize_prefix(parsed[0]) or parsed[0]
-    resource = bioregistry.get_resource(prefix)
-    if resource is not None and not resource.is_valid_identifier(
-        resource.standardize_identifier(parsed[1])
-    ):
-        return None
-    return prefix, parsed[1]
+    return found.prefix, found.local
 
 
 class LookupStoppedError(Exception):
@@ -280,7 +271,8 @@ def _identity_flags(link: Link, source: Client, body: str) -> tuple[dict[str, in
     statement is checked when its subject and its value are identifiers with a known prefix.
     Other properties state no identity.
     """
-    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES, _curie
+    from rdfsolve.identifiers import parse
+    from rdfsolve.mappings.declared import IDENTITY_PROPERTIES
     from rdfsolve.mappings.identity import identity_flags
 
     if link.property not in IDENTITY_PROPERTIES:
@@ -293,11 +285,11 @@ def _identity_flags(link: Link, source: Client, body: str) -> tuple[dict[str, in
     for row in rows:
         # As written, not as sampled: an identifier that is not valid for its namespace is
         # what the check finds (the sample leaves it out).
-        subject, value = _curie(row["s"]["value"]), _curie(row["v"]["value"])
-        if not subject or not value:
+        subject, value = parse(row["s"]["value"]), parse(row["v"]["value"])
+        if subject is None or value is None:
             continue
         checked += 1
-        flags = identity_flags(subject, value)
+        flags = identity_flags(subject.curie, value.curie)
         for flag in {"namespace" if f.startswith("namespace:") else f for f in flags}:
             counts[flag] += 1
     return dict(counts), checked

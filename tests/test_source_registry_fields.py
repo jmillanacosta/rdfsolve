@@ -15,7 +15,7 @@ def test_sidecar_supplies_namespaces_without_changing_access(tmp_path):
 
     import pytest
 
-    from rdfsolve.mappings.identifiers import resolve_identifiers
+    from rdfsolve.identifiers import resolve_identifiers
     from rdfsolve.schema_models.enrichment import RdfTerm
     from rdfsolve.sources import load_sources
 

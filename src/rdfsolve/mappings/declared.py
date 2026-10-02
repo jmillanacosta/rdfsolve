@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.identifiers import parse
 from rdfsolve.mappings.identity import identity_flags
 
 __all__ = [
@@ -66,21 +67,10 @@ def declared_query() -> str:
     )
 
 
-def _curie(iri: str) -> str | None:
-    """Return the CURIE of an IRI with the namespace the source gave it (no validity check).
-
-    An identifiers.org IRI that Bioregistry does not read (http://identifiers.org/mgi/101757)
-    is read as namespace/identifier.
-    """
-    import bioregistry
-
-    parsed = bioregistry.parse_iri(iri)
-    if not parsed or not parsed[0]:
-        return None
-    prefix, local = parsed
-    if prefix == "idot" and "/" in local:
-        prefix, _, local = local.partition("/")
-    return f"{bioregistry.normalize_prefix(prefix) or prefix}:{local}"
+def curie_of(iri: str) -> str | None:
+    """Return the CURIE of an identifier IRI as the source wrote it (no validity check)."""
+    found = parse(iri)
+    return found.curie if found else None
 
 
 def declared_identities(
@@ -93,7 +83,7 @@ def declared_identities(
     """
     rows: dict[tuple[str, str], DeclaredIdentity] = {}
     for binding in bindings:
-        subject, obj = _curie(binding["s"]["value"]), _curie(binding["o"]["value"])
+        subject, obj = curie_of(binding["s"]["value"]), curie_of(binding["o"]["value"])
         if not subject or not obj or subject.partition(":")[0] == obj.partition(":")[0]:
             continue
         key = (min(subject, obj), max(subject, obj))

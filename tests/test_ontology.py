@@ -4,8 +4,8 @@ import requests
 from rdflib import RDF, RDFS, Graph, Literal, URIRef
 
 from rdfsolve.api import Client
+from rdfsolve.identifiers import canonical_iri
 from rdfsolve.ontology import Ontologies
-from rdfsolve.ontology.terms import canonical_iri
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 

@@ -10,7 +10,6 @@ import re
 from typing import Any, TypedDict
 
 from rdfsolve.ontology.vocabulary import OBO
-from rdfsolve.schema_models.paths import absolute_iri
 
 # An OBO term (obo/MONDO_0000001) belongs to its prefix (obo/MONDO_), as written: FBbt, not FBBT.
 _OBO_TERM = r"/obo/[A-Za-z][A-Za-z0-9]*_"
@@ -44,36 +43,6 @@ def obo_prefix(iri: str) -> str | None:
     return None
 
 
-def _parse_registered_iri(iri: str) -> tuple[str | None, str | None]:
-    """Use Bioregistry when installed; ontology lookup remains usable without it."""
-    try:
-        import bioregistry
-    except ImportError:
-        return None, None
-    return bioregistry.parse_iri(iri)
-
-
-def _registered_iri(prefix: str, identifier: str) -> str | None:
-    try:
-        import bioregistry
-    except ImportError:
-        return None
-    return bioregistry.get_iri(prefix, identifier)
-
-
-def term_key(iri: str) -> str:
-    """Use an exact IRI or a registered namespace/identifier correspondence."""
-    prefix, identifier = _parse_registered_iri(iri)
-    return f"{prefix}:{identifier}" if prefix and identifier else iri
-
-
-def canonical_iri(iri: str) -> str:
-    """Resolve registered IRI formats without guessing local namespaces."""
-    absolute_iri(iri)
-    prefix, identifier = _parse_registered_iri(iri)
-    return _registered_iri(prefix, identifier) or iri if prefix and identifier else iri
-
-
 class Term(TypedDict, total=False):
     """One ontology term as a backend gives it, with where it came from.
 
@@ -100,4 +69,4 @@ class Term(TypedDict, total=False):
     name_match: dict[str, str]
 
 
-__all__ = ["Term", "canonical_iri", "namespace", "namespace_expression", "obo_prefix", "term_key"]
+__all__ = ["Term", "namespace", "namespace_expression", "obo_prefix"]

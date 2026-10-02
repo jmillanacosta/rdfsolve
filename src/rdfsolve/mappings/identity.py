@@ -19,15 +19,11 @@ __all__ = ["identity_flags"]
 
 def identity_flags(left: str, right: str) -> list[str]:
     """Return the problems of the statement that the CURIEs *left* and *right* name one entity."""
-    import bioregistry
+    from rdfsolve.identifiers import parse
 
     flags = []
-    for curie in (left, right):
-        prefix, _, local = curie.partition(":")
-        namespace = bioregistry.normalize_prefix(prefix)
-        if namespace is None or not bioregistry.get_pattern(namespace):
-            continue
-        local = bioregistry.standardize_identifier(namespace, local)
-        if not bioregistry.is_valid_identifier(namespace, local):
-            flags.append(f"namespace:{curie} does not match the {namespace} pattern")
+    for written in (left, right):
+        found = parse(written)
+        if found is not None and found.valid is False:
+            flags.append(f"namespace:{written} does not match the {found.prefix} pattern")
     return flags

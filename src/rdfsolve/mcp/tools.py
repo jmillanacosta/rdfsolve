@@ -158,11 +158,11 @@ class Toolbox:
 
     def _resource(self, text: str) -> list[str]:
         """Describe an IRI, or a CURIE of a schema or registered prefix, that is a subject."""
-        from rdfsolve.mappings.identifiers import identifier_candidates
+        from rdfsolve import identifiers
 
         iri = self.view.expand(text)
         try:
-            iris = [iri] if iri is not None else identifier_candidates(text.strip())[0]
+            iris = [iri] if iri is not None else identifiers.candidates(text.strip())[0]
         except ValueError:
             return []
         iris = [iri for iri in iris if re.fullmatch(r"[^<>\"{}|^`\\\s]+", iri)]
