@@ -149,6 +149,8 @@ def link_diagram(
     reached record types are those the mined schema counts for the link, in the record type's
     own namespace (classes of other namespaces of the source are left out),
     with the number of statements; the *top* most counted per link, the others as one node.
+    The classes that hold all members of the record type are drawn ("within"); with no links
+    named, the other kinds at its level too.
     """
     from collections import defaultdict
 
@@ -214,6 +216,25 @@ def link_diagram(
             label = _md(f"{link.lstrip('^')} ({count:,})")
             a, b = (nodes[there], nodes[focus]) if inverse else (nodes[focus], nodes[there])
             edges.append(f'{a} -->|"`{label}`"| {b}')
+    # Where the record type sits among the source's kinds (the mined class extensions): the
+    # classes that hold all its members, and, with no links named, the kinds at its level.
+    extensions = client.schema.class_extensions
+    containers = extensions.contained_in if extensions is not None else {}
+    parents = list(containers.get(focus, []))
+    for parent in parents:
+        if parent not in nodes:
+            nodes[parent] = f"C{len(nodes)}"
+            lines.append(_node(nodes[parent], name(parent), _curie(parent, prefixes)))
+        edges.append(f'C0 -.->|"within"| {nodes[parent]}')
+    if not links:
+        level = sorted(
+            c for c, theirs in containers.items() if c != focus and set(theirs) & set(parents)
+        )
+        for other in level:
+            nodes[other] = f"C{len(nodes)}"
+            lines.append(_node(nodes[other], name(other), _curie(other, prefixes)))
+            lines.append(f"style {nodes[other]} fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")
+            edges.append(f'{nodes[other]} -.->|"within"| {nodes[parents[0]]}')
     body = "\n".join(
         [
             "flowchart LR",
