@@ -309,7 +309,8 @@ def test_a_merged_node_takes_the_data_class_not_the_majority():
     )
     data = ox.Dataset(ox.parse((IDS + extra).encode(), ox.RdfFormat.TURTLE))
     chemical = ["http://www.w3.org/2002/07/owl#Class"]
-    kinds = {"chebi": chemical, "cas": chemical}
+    # WikiPathways issues its own DataNode kind; that must not count against a metabolite's role.
+    kinds = {"chebi": chemical, "cas": chemical, "wikipathways": ["http://vocabularies.wikipathways.org/wp#DataNode", "http://vocabularies.wikipathways.org/wp#Metabolite"]}
     metabolite = "http://vocabularies.wikipathways.org/wp#Metabolite"
     for policy, expected in (("role", metabolite), ("majority", chemical[0])):
         pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=policy))

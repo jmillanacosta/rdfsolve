@@ -993,8 +993,7 @@ def _apply_identity(
             found_in.update(dict.fromkeys(members, keep))
             exact += 1
         internal += _retarget(nodes, edges, found_in)
-    issuer_classes = {c for classes in issued.values() for c in classes}
-    relabelled = _reconcile_labels(nodes, identity.labels, issuer_classes)
+    relabelled = _reconcile_labels(nodes, identity.labels, issued)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
     for row in undecided:
@@ -1017,7 +1016,9 @@ def _apply_identity(
 
 
 def _reconcile_labels(
-    nodes: dict[str, PGNode], policy: str | Sequence[str], issuer_classes: Iterable[str] = ()
+    nodes: dict[str, PGNode],
+    policy: str | Sequence[str],
+    issued: Mapping[str, set[str]] | None = None,
 ) -> dict[str, Any]:
     """Give each merged node the classes of one of its sources; the others become ``type``."""
     if policy == "all":
@@ -1036,7 +1037,13 @@ def _reconcile_labels(
         if len(candidates) < 2:
             continue
         if policy == "role":
-            roles = [c for c in candidates if not c & set(issuer_classes)]
+            # The issuer kinds of this node's own identifiers (CAS and ChEBI for a metabolite),
+            # not those of every source (WikiPathways issues its DataNode).
+            from rdfsolve.identifiers import parse
+
+            own = {found.prefix for iri in node.members if (found := parse(iri))}
+            issuer_classes = {c for prefix in own for c in (issued or {}).get(prefix, ())}
+            roles = [c for c in candidates if not c & issuer_classes]
             if len(roles) != 1:
                 ties += 1
                 continue
