@@ -100,7 +100,50 @@ def test_a_failed_example_batch_is_asked_again_one_query_at_a_time(source):
     assert len(result.examples) == 1 and result.examples[0].value.kind == "literal"
     assert result.state == "partial" and len(result.failures) == 1, "Only the costly query"
     helper.select.side_effect = lambda query, **kwargs: (
-        (_ for _ in ()).throw(EndpointTimeoutError("fixture")) if "UNION" in query else answer(query, **kwargs)
+        (_ for _ in ()).throw(EndpointTimeoutError("fixture"))
+        if "UNION" in query
+        else answer(query, **kwargs)
     )
     again = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
     assert again.state == "complete" and len(again.examples) == 2 and not again.failures
+
+
+def test_examples_filter_a_sample_and_ask_again_when_it_has_none(monkeypatch):
+    """A value filter runs on a sample of the pattern (ChEMBL: 300 s on 24 M values, 0.1 s on a
+    sample); a sample without a value of the filter is asked again in full."""
+    import rdfsolve.mining.enrichment as enrichment
+
+    monkeypatch.setattr(enrichment, "EXAMPLE_SAMPLE", 1)
+    dataset = Dataset()
+    graph = dataset.graph(URIRef("urn:chosen"))
+    for i in range(5):
+        graph.add((EX[f"s{i}"], RDF.type, EX.A))
+        graph.add((EX[f"s{i}"], EX.p, Literal(f"text {i}")))
+    graph.add((EX.s4, EX.p, Literal(7)))
+    integer = "http://www.w3.org/2001/XMLSchema#integer"
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="test"),
+        patterns=[
+            SchemaPattern(
+                subject_class=str(EX.A),
+                property_uri=str(EX.p),
+                object_class="Literal",
+                datatype=integer,
+            )
+        ],
+    )
+    asked = []
+
+    def select(query, **kwargs):
+        asked.append(query)
+        return json.loads(dataset.query(query).serialize(format="json"))
+
+    helper = Mock(endpoint_url="https://example.org/sparql", select=Mock(side_effect=select))
+    result = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert [e.value.value for e in result.examples] == ["7"] and result.state == "complete"
+    examples = [q for q in asked if str(EX.p) in q and "datatype" in q]
+    inner = "{ SELECT ?subject ?value WHERE"
+    assert inner in examples[0], "the first query filters a sample"
+    assert len(examples) == 2 and inner not in examples[1], (
+        "the full query when the sample has none"
+    )

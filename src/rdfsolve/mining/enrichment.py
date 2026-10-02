@@ -47,6 +47,19 @@ def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
     }}"""
 
 
+# Subject-value pairs of a pattern sampled before a value filter (see example_query).
+EXAMPLE_SAMPLE = 1000
+
+
+def _filtered(pattern: SchemaPattern) -> bool:
+    """Return whether the value condition of *pattern*'s example query is a filter."""
+    return pattern.object_binding != "term" and pattern.object_class in (
+        "Literal",
+        "Resource",
+        "BlankNode",
+    )
+
+
 def example_query(
     pattern: SchemaPattern,
     graph_uris: list[str] | None,
@@ -54,8 +67,17 @@ def example_query(
     type_context_graph_uris: list[str] | None = None,
     *,
     with_dataset: bool = True,
+    sample: int | None = None,
 ) -> str:
-    """Select values of this pattern, not an unrelated value of the property."""
+    """Select values of this pattern, not an unrelated value of the property.
+
+    With *sample*, a value condition that is a filter (a literal's datatype, an untyped
+    resource, a blank node) is applied to the first *sample* subject-value pairs of the
+    property, not to all of them: QLever evaluates the filter over the whole join before the
+    limit (ChEMBL chembl#Activity chemblId, 24 M values: over 300 s, against 0.1 s on a sample
+    of 1,000; article/experiments/example-queries-20261002). A sample with no such value gives
+    no row; the caller asks again without one.
+    """
     if not 1 <= limit <= 20:
         raise ValueError("Example limit must be between 1 and 20")
     for iri in graph_uris or []:
@@ -80,6 +102,14 @@ def example_query(
         condition = "FILTER(isBlank(?value))"
     else:
         condition = _type_pattern("?value", _iri(pattern.object_class), type_context_graph_uris)
+    if sample and _filtered(pattern):
+        return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
+      {{ SELECT ?subject ?value WHERE {{
+        {subject}
+        {opening} ?subject {_iri(pattern.property_uri)} ?value . {closing}
+      }} LIMIT {sample} }}
+      {condition}
+    }} LIMIT {limit}"""
     return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
       {subject}
       {opening} ?subject {_iri(pattern.property_uri)} ?value . {closing}
@@ -251,18 +281,9 @@ def query_enrichment(
             )
             unique[key] = pattern
         patterns = list(unique.values())
-        queries = [
-            example_query(
-                pattern,
-                graph_uris,
-                examples_per_pattern,
-                type_context_graph_uris,
-                with_dataset=False,
-            )
-            for pattern in patterns
-        ]
-        for index, row in batched(queries, "pattern_examples"):
-            pattern = patterns[index]
+
+        def add_example(pattern: SchemaPattern, row: dict[str, Any]) -> bool:
+            """Add an example of *pattern* from a response row; return whether it was valid."""
             try:
                 result.examples.append(
                     PatternExample(
@@ -274,6 +295,33 @@ def query_enrichment(
                 )
             except (KeyError, TypeError, ValueError) as error:
                 invalid(error, "pattern_examples")
+                return False
+            return True
+
+        def examples_of(selected: list[SchemaPattern], sample: int | None) -> set[int]:
+            """Ask for examples of *selected*; return the indexes of those that got one."""
+            queries = [
+                example_query(
+                    pattern,
+                    graph_uris,
+                    examples_per_pattern,
+                    type_context_graph_uris,
+                    with_dataset=False,
+                    sample=sample,
+                )
+                for pattern in selected
+            ]
+            return {
+                i
+                for i, row in batched(queries, "pattern_examples")
+                if add_example(selected[i], row)
+            }
+
+        found = examples_of(patterns, EXAMPLE_SAMPLE)
+        # A sample with no value of the pattern (a rare datatype of the property): the full query.
+        sampled = [p for i, p in enumerate(patterns) if i not in found and _filtered(p)]
+        if sampled:
+            examples_of(sampled, None)
     result.state = ("partial" if successful else "failed") if result.failures else "complete"
     if report and phase:
         report.finish_phase(phase, error="Incomplete enrichment" if result.failures else None)
