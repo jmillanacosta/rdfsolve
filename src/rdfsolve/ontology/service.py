@@ -20,7 +20,7 @@ from urllib.parse import quote
 import requests
 from rdflib import Literal
 
-from rdfsolve.identifiers import canonical_iri
+from rdfsolve.identifiers import canonical_iri, parse
 from rdfsolve.ontology.terms import Term
 from rdfsolve.ontology.ubergraph import UberGraph
 from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, SUBCLASS_OF
@@ -203,6 +203,22 @@ class Ontologies:
                     .get("terms", [])
                 )
                 terms = [t for t in terms if t.get("iri") == canonical and not t.get("is_obsolete")]
+                if not terms and (found := parse(canonical)) is not None:
+                    # OLS files some ontologies under IRIs other than the PURL that Bioregistry
+                    # gives (SBO under biomodels.net/SBO/): ask by the OBO identifier instead.
+                    import bioregistry
+
+                    obo_id = (
+                        f"{bioregistry.get_preferred_prefix(found.prefix) or found.prefix.upper()}"
+                        f":{found.local}"
+                    )
+                    terms = [
+                        t
+                        for t in self._json("/terms", obo_id=obo_id, size=100)
+                        .get("_embedded", {})
+                        .get("terms", [])
+                        if t.get("obo_id") == obo_id and not t.get("is_obsolete")
+                    ]
                 terms.sort(
                     key=lambda t: (not t.get("is_defining_ontology"), t.get("ontology_name", ""))
                 )

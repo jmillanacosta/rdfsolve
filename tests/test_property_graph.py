@@ -511,3 +511,33 @@ def test_a_rule_says_which_source_release_and_target_version_it_is_for():
     assert "https://w3id.org/biolink/vocab/catalyzes" in text
     unknown = provenance(SimpleNamespace(about=SimpleNamespace(**{**vars(about), "source_version": None, "retrieved_at": "2026-09-30"})))
     assert unknown["source release"].startswith("not stated by the source")
+
+
+def test_a_conversion_becomes_metabolite_edges_with_its_enzyme_attached():
+    """A conversion of one substrate into two products becomes two edges (each keeps the
+    conversion); its catalysis puts the enzyme on them as catalyzed_by and disappears; the RDF is
+    given back; each fold's CONSTRUCT gives what the graph holds. A catalysis of an interaction
+    that is not folded stays a node."""
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    data = ox.Dataset(ox.parse(f"""@prefix wp: <{wp}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    <urn:r1> a wp:Conversion ; wp:source <urn:m1> ; wp:target <urn:m2>, <urn:m3> .
+    <urn:k1> a wp:Catalysis ; wp:source <urn:p1> ; wp:target <urn:r1> ; rdfs:label "k1" .
+    <urn:k2> a wp:Catalysis ; wp:source <urn:p1> ; wp:target <urn:i1> .
+    <urn:i1> a wp:Binding ; wp:source <urn:p1> .
+    <urn:p1> a wp:Protein . <urn:m1> a wp:Metabolite . <urn:m2> a wp:Metabolite . <urn:m3> a wp:Metabolite .""".encode(), ox.RdfFormat.TURTLE))
+    conversion = Fold(wp + "Conversion", wp + "source", wp + "target", "CONVERTED_TO", each=True)
+    catalysis = Fold.attach(wp + "Catalysis", wp + "source", wp + "target", name="catalyzed_by", target_class=wp + "Conversion")
+    pg = PropertyGraph.from_rdf(data, folds=[conversion, catalysis])
+    report = pg.report()
+    assert report["lossless"]["passed"], report["lossless"]
+    assert "urn:r1" not in pg.nodes and "urn:k1" not in pg.nodes and "urn:k2" in pg.nodes
+    g = pg.to_networkx()
+    edges = {(u, v): d for u, v, d in g.edges(data=True) if d["type"] == "CONVERTED_TO"}
+    assert set(edges) == {("urn:m1", "urn:m2"), ("urn:m1", "urn:m3")}
+    assert all(d["catalyzed_by"] == ["urn:p1"] and d["via"] == "urn:r1" for d in edges.values())
+    store = ox.Store()
+    for quad in data:
+        store.add(quad)
+    for index, fold in enumerate(pg.folds):
+        rebuilt = {(t.subject.value, t.object.value) for t in store.query(fold.to_construct())}
+        assert rebuilt == pg.fold_edges(index), fold.name

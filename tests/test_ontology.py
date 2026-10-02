@@ -98,3 +98,21 @@ def test_cache_and_unavailable_are_distinct(monkeypatch, tmp_path):
     asked = len(online.asked)
     assert online.search("human", exact=False), "Candidates for a phrase"
     assert len(online.asked) == asked + 1 and online.asked[-1]["exact"] == "false", "Not exact names"
+
+
+def test_a_term_ols_files_under_another_iri_is_found_by_its_obo_id(monkeypatch):
+    """Bioregistry gives SBO terms as OBO PURLs; OLS files them under biomodels.net/SBO/."""
+    from rdfsolve.ontology import Ontologies
+
+    term = {"iri": "http://biomodels.net/SBO/SBO_0000027", "obo_id": "SBO:0000027", "label": "Michaelis constant",
+            "ontology_name": "sbo", "is_defining_ontology": True, "description": [], "synonyms": []}
+
+    def answer(path, **params):
+        if params.get("obo_id") == "SBO:0000027":
+            return {"_embedded": {"terms": [term]}}
+        return {"_embedded": {"terms": []}}
+
+    lookup = Ontologies()
+    monkeypatch.setattr(lookup, "_json", answer)
+    found = lookup.lookup("http://purl.obolibrary.org/obo/SBO_0000027", hierarchy=False)
+    assert found is not None and found["label"] == "Michaelis constant"

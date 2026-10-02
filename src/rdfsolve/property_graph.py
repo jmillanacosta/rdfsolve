@@ -186,6 +186,10 @@ class PGEdge:
     source_iri: str | None = None  # the IRI written in the RDF, when a merge changed the end
     target_iri: str | None = None
     derived: bool = False  # made by a fold of pairs; not a statement, so not given back
+    # Values a fold attached (the enzyme of a catalysis), not given back as RDF; and the
+    # nodes it absorbed to attach them (the catalysis), which are given back.
+    attached: Properties = field(default_factory=dict)
+    absorbed: list[PGNode] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -193,7 +197,9 @@ class Fold:
     """Turn each instance of *cls* into an edge from its *source* value to its *target* value.
 
     IRIs or CURIEs of the schema. *name* names the edges (default: named as the class).
-    *evidence* is what the mined schema measured, when the fold was suggested.
+    *evidence* is what the mined schema measured, when the fold was suggested. With *each*, an
+    instance with several sources or targets (a conversion of two substrates into two products)
+    gives an edge for each source and target, all keeping the instance (via).
 
     A fold of pairs (:meth:`pairs`) instead links each pair of the instance's *members* (the
     proteins of a complex) with a derived edge, and keeps the instance: it is an entity with
@@ -211,6 +217,35 @@ class Fold:
     among: str | None = None
     predicate: str | None = None
     dataset: str | None = None
+    each: bool = False
+    attach_to: str | None = None
+
+    @classmethod
+    def attach(
+        cls,
+        of: str,
+        value: str,
+        to: str,
+        *,
+        name: str | None = None,
+        target_class: str | None = None,
+    ) -> Fold:
+        """Return a fold that puts the *value* of each instance of *of* on the edges of a folded
+        node: a wp:Catalysis's enzyme (wp:source) on the edges its reaction (wp:target) was
+        folded into, as ``catalyzed_by``.
+
+        The instance is absorbed into those edges (given back as RDF); an instance whose
+        target was not folded stays a node. *target_class* (wp:Conversion) is the class of the
+        folded targets, which the fold's CONSTRUCT keeps.
+        """
+        return cls(
+            of,
+            value,
+            to,
+            name or f"{_local(value)}_of_{_local(of)}",
+            attach_to=to,
+            among=target_class,
+        )
 
     @classmethod
     def pairs(
@@ -257,6 +292,13 @@ class Fold:
         """
         values = " ".join(f"<{iri}>" for iri in focus)
         scope = f"VALUES ?x {{ {values} }}\n  " if values else ""
+        if self.attach_to is not None:
+            return (
+                f"CONSTRUCT {{ ?t <{self.relation()}> ?s }}\nWHERE {{\n  {scope}"
+                f"?x a <{self.cls}> ; <{self.source}> ?s ; <{self.attach_to}> ?t ."
+                + (f"\n  ?t a <{self.among}> ." if self.among else "")
+                + "\n}"
+            )
         if self.members is None:
             return (
                 f"CONSTRUCT {{ ?s <{self.relation()}> ?t }}\nWHERE {{\n  {scope}"
@@ -559,12 +601,16 @@ class PropertyGraph:
         self.named_graphs: list[str] = []
         self.cited: dict[str, Any] = {}  # resources the RDF only cites, kept as values
         self.specific: dict[str, Any] = {}  # superclasses moved from labels to the type property
+        self.attached_pairs: dict[int, set[tuple[str, str]]] = {}  # attach folds: (target, value)
         # How often the sources use each (class, property, class): what is rare in a source.
         self.patterns: Counter[tuple[str, str, str]] = Counter()
         sizes: Counter[str] = Counter()
         for item in _items(nodes.values(), edges):
             for key, values in item.properties.items():
                 sizes[key] = max(sizes[key], len(values))
+        for edge in edges:
+            for key, values in edge.attached.items():
+                sizes[key] = max(sizes[key], len(values), 2)  # several enzymes are common
         # A key is a list when the schema measured several values or the data has several.
         self.lists = {
             k for k, n in sizes.items() if n > 1 or (self.single and k not in self.single)
@@ -655,7 +701,15 @@ class PropertyGraph:
             else:
                 raise ValueError(f"Quoted triples are not supported as objects: {quad}")
         expanded = [_expand(f, prefixes) for f in folds]
-        counts = [_apply_fold(i, f, nodes, edges) for i, f in enumerate(expanded)]
+        absorbable = _absorbable(expanded, nodes, edges)
+        counts: list[dict[str, int]] = [{} for _ in expanded]
+        attached_pairs: dict[int, set[tuple[str, str]]] = {}
+        for i, fold in enumerate(expanded):
+            if fold.attach_to is None:
+                counts[i] = _apply_fold(i, fold, nodes, edges, ignore=absorbable)
+        for i, fold in enumerate(expanded):
+            if fold.attach_to is not None:
+                counts[i], attached_pairs[i] = _apply_attach(i, fold, nodes, edges)
         decisions = _apply_identity(identity, nodes, edges) if identity is not None else None
         cited = _cited_as_values(nodes, edges)
         specific = _most_specific(nodes, hierarchy) if hierarchy else {}
@@ -676,6 +730,8 @@ class PropertyGraph:
         built.identity = decisions
         built.cited = cited
         built.specific = specific
+        built.attached_pairs = attached_pairs
+        _attached_to_nodes(nodes, edges)
         for each in schemas:
             for pattern in each.patterns:
                 key = (pattern.subject_class, pattern.property_uri, pattern.object_class)
@@ -788,6 +844,7 @@ class PropertyGraph:
         labels = {label for n in self.nodes.values() for label in n.labels}
         types = {e.type for e in self.edges if e.fold is None}
         keys = {k for item in _items(self.nodes.values(), self.edges) for k in item.properties}
+        keys |= {k for edge in self.edges for k in edge.attached}
         iris = labels | types | keys | {f.cls for f in self.folds}
         known = prefix_map(iris, self.prefixes)
         curie = {}
@@ -862,6 +919,10 @@ class PropertyGraph:
             if edge.fold is None:
                 out.add(ox.Quad(source, ox.NamedNode(edge.type), target))
                 continue
+            for node in edge.absorbed:
+                for label in node.labels:
+                    out.add(ox.Quad(_ox_node(node.id), type_, ox.NamedNode(label)))
+                add(_ox_node(node.id), node.properties)
             fold, via = self.folds[edge.fold], _ox_node(edge.via or "")
             out.add(ox.Quad(via, type_, ox.NamedNode(fold.cls)))
             out.add(ox.Quad(via, ox.NamedNode(fold.source), source))
@@ -994,15 +1055,27 @@ class PropertyGraph:
                     [v.lexical for v in node.properties.get(predicate, [])] or names[:3],
                     f"{', '.join(_local(c) for c in classes)} in {source}",
                 )
-                for edge in self.edges:
-                    if (
-                        edge.fold is None
-                        or edge.derived
-                        or node.id not in (edge.source, edge.target)
-                    ):
-                        continue
-                    fold = self.folds[edge.fold]
-                    link = fold.source if edge.source == node.id else fold.target
+                places = [
+                    (
+                        self.folds[edge.fold],
+                        self.folds[edge.fold].source
+                        if edge.source == node.id
+                        else self.folds[edge.fold].target,
+                    )
+                    for edge in self.edges
+                    if edge.fold is not None
+                    and not edge.derived
+                    and node.id in (edge.source, edge.target)
+                ]
+                # A node a fold attached to edges (the enzyme of a catalysis) is in that place.
+                relations = {f.relation(): f for f in self.folds if f.attach_to is not None}
+                places += [
+                    (relations[key], relations[key].source)
+                    for edge in self.edges
+                    for key, values in edge.attached.items()
+                    if key in relations and any(v.lexical == node.id for v in values)
+                ]
+                for fold, link in places:
                     finding.pattern = (
                         f"{_local(classes[0])} as {_local(link)} of a {_local(fold.cls)}"
                     )
@@ -1037,6 +1110,8 @@ class PropertyGraph:
 
     def fold_edges(self, index: int) -> set[tuple[str, str]]:
         """Return the ends of the edges of fold *index*, as the RDF wrote them."""
+        if self.folds[index].attach_to is not None:
+            return set(self.attached_pairs.get(index, set()))
         return {
             (edge.source_iri or edge.source, edge.target_iri or edge.target)
             for edge in self.edges
@@ -1088,7 +1163,12 @@ class PropertyGraph:
             extra: dict[str, Any] = {"via": edge.via} if edge.via else {}
             if edge.derived:
                 extra["derived"] = True
-            attrs = {"type": kind, **extra, **_aside(self._plain(edge.properties))}
+            attrs = {
+                "type": kind,
+                **extra,
+                **_aside(self._plain(edge.properties)),
+                **_aside(self._plain(edge.attached)),
+            }
             graph.add_edge(edge.source, edge.target, key=kind, **attrs)
         return graph
 
@@ -1253,6 +1333,7 @@ class PropertyGraph:
                 **({"via": e.via} if e.via else {}),
                 **({"derived": True} if e.derived else {}),
                 **self._plain(e.properties),
+                **self._plain(e.attached),
             }
             for e in self.edges
         ]
@@ -1341,7 +1422,74 @@ def _expand(fold: Fold, prefixes: Mapping[str, str]) -> Fold:
         iri(fold.among) if fold.among else None,
         iri(fold.predicate) if fold.predicate else None,
         fold.dataset,
+        fold.each,
+        iri(fold.attach_to) if fold.attach_to else None,
     )
+
+
+def _absorbable(folds: list[Fold], nodes: dict[str, PGNode], edges: list[PGEdge]) -> set[str]:
+    """Return the instances that an attach fold will absorb: one target, a value, no links in."""
+    linked = {e.target for e in edges}
+    out: set[str] = set()
+    for fold in folds:
+        if fold.attach_to is None:
+            continue
+        for node in nodes.values():
+            if fold.cls not in node.labels or node.id in linked:
+                continue
+            mine = [e for e in edges if e.source == node.id]
+            if sum(e.type == fold.attach_to for e in mine) == 1 and any(
+                e.type == fold.source for e in mine
+            ):
+                out.add(node.id)
+    return out
+
+
+def _apply_attach(
+    index: int, fold: Fold, nodes: dict[str, PGNode], edges: list[PGEdge]
+) -> tuple[dict[str, int], set[tuple[str, str]]]:
+    """Put each instance's values on the edges its target was folded into; absorb it there."""
+    by_via: dict[str, list[PGEdge]] = defaultdict(list)
+    for edge in edges:
+        if edge.fold is not None and edge.via:
+            by_via[edge.via].append(edge)
+    counts: Counter[str] = Counter()
+    pairs: set[tuple[str, str]] = set()
+    gone: set[int] = set()
+    for node in [n for n in nodes.values() if fold.cls in n.labels]:
+        out = [e for e in edges if e.source == node.id and e.fold is None]
+        targets = [e for e in out if e.type == fold.attach_to]
+        values = [e for e in out if e.type == fold.source]
+        folded = by_via.get(targets[0].target, []) if len(targets) == 1 else []
+        if not values or not folded:
+            counts["kept: its target was not folded"] += 1
+            continue
+        absorbed = PGNode(
+            node.id, list(node.labels), {k: list(v) for k, v in node.properties.items()}
+        )
+        for edge in out:
+            absorbed.properties.setdefault(edge.type, []).append(Value(edge.target, REFERENCE))
+        for edge in folded:
+            edge.attached.setdefault(fold.relation(), []).extend(
+                Value(v.target, REFERENCE) for v in values
+            )
+            edge.absorbed.append(absorbed)
+        pairs |= {(targets[0].target, v.target) for v in values}
+        gone.update(id(e) for e in out)
+        del nodes[node.id]
+        counts["applied"] += 1
+    edges[:] = [e for e in edges if id(e) not in gone]
+    return dict(counts), pairs
+
+
+def _attached_to_nodes(nodes: dict[str, PGNode], edges: list[PGEdge]) -> None:
+    """Point attached values at the nodes they became (a merged enzyme's UniProt IRI)."""
+    node_of = {member: n.id for n in nodes.values() for member in (n.members or [n.id])}
+    for edge in edges:
+        for key, values in edge.attached.items():
+            edge.attached[key] = list(
+                dict.fromkeys(Value(node_of.get(v.lexical, v.lexical), REFERENCE) for v in values)
+            )
 
 
 def _apply_pairs(
@@ -1368,15 +1516,23 @@ def _apply_pairs(
 
 
 def _apply_fold(
-    index: int, fold: Fold, nodes: dict[str, PGNode], edges: list[PGEdge]
+    index: int,
+    fold: Fold,
+    nodes: dict[str, PGNode],
+    edges: list[PGEdge],
+    ignore: set[str] = frozenset(),  # type: ignore[assignment]
 ) -> dict[str, int]:
-    """Fold the instances where it holds; count applied instances and kept ones by reason."""
+    """Fold the instances where it holds; count applied instances and kept ones by reason.
+
+    Links from *ignore* (instances an attach fold will absorb, such as the catalysis of a
+    reaction) do not keep an instance from folding.
+    """
     if fold.members is not None:
         return _apply_pairs(index, fold, nodes, edges)
     outgoing: dict[str, list[PGEdge]] = defaultdict(list)
     incoming: Counter[str] = Counter()
     for edge in edges:
-        if edge.derived:
+        if edge.derived or edge.source in ignore:
             continue
         incoming[edge.target] += 1  # also an edge an earlier fold made (a catalysis of it)
         if edge.fold is None:
@@ -1390,26 +1546,28 @@ def _apply_fold(
         if incoming[node.id]:
             counts["kept: linked to"] += 1
             continue
-        if len(sources) != 1 or len(targets) != 1:
+        if not sources or not targets or (not fold.each and (len(sources) > 1 or len(targets) > 1)):
             counts["kept: not one source and one target"] += 1
             continue
         properties: Properties = {k: list(v) for k, v in node.properties.items()}
         for edge in out:
-            if edge is not sources[0] and edge is not targets[0]:
+            if edge not in sources and edge not in targets:
                 properties.setdefault(edge.type, []).append(Value(edge.target, REFERENCE))
         for label in node.labels:
             if label != fold.cls:
                 properties.setdefault(_TYPE, []).append(Value(label, REFERENCE))
-        edges.append(
-            PGEdge(
-                sources[0].target,
-                f"fold:{index}",
-                targets[0].target,
-                properties,
-                via=node.id,
-                fold=index,
-            )
-        )
+        for start in sources:
+            for end in targets:
+                edges.append(
+                    PGEdge(
+                        start.target,
+                        f"fold:{index}",
+                        end.target,
+                        {k: list(v) for k, v in properties.items()},
+                        via=node.id,
+                        fold=index,
+                    )
+                )
         folded.update(id(e) for e in out)
         del nodes[node.id]
         counts["applied"] += 1
