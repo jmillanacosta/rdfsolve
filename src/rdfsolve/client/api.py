@@ -1552,9 +1552,15 @@ class Results:
                 selected.update(
                     field for r in group for field in vars(r).get("rdf_loaded_fields", [])
                 )
-                loaded = self.client.get_many(
-                    model, [str(vars(r)["uri"]) for r in group], fields=sorted(selected)
-                )
+                iris = [str(vars(r)["uri"]) for r in group]
+                size = self.client.max_subjects  # one call reads at most this many subjects
+                loaded = [
+                    record
+                    for start in range(0, len(iris), size)
+                    for record in self.client.get_many(
+                        model, iris[start : start + size], fields=sorted(selected)
+                    )
+                ]
                 replacements = {vars(r)["uri"]: r for r in loaded}
                 self.records = [
                     replacements.get(vars(r)["uri"], r) if type(r) is model else r

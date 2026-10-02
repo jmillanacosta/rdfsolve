@@ -43,15 +43,23 @@ class ChEBI:
 
     _schema = SimpleNamespace(about=SimpleNamespace(dataset_name="chebi"))
 
+    def issued_kinds(self):
+        return {"chebi": ["http://www.w3.org/2002/07/owl#Class"]}
+
     def identify(self, identifiers):
-        known = {"lipidmaps:LMSP03010023": O + "CHEBI_91146"}
-        return [SimpleNamespace(identifier=i, resource=known[i], predicate=XREF) for i in identifiers if i in known]
+        assert not [i for i in identifiers if i.startswith("chebi:")], "Not asked about its own ids"
+        found = [SimpleNamespace(identifier=i, resource=O + "CHEBI_91146", predicate=XREF, value=i, kind="literal")
+                 for i in identifiers if i == "lipidmaps:LMSP03010023"]
+        # A bare number is no cross-reference.
+        found += [SimpleNamespace(identifier=i, resource=O + "CHEBI_1", predicate=XREF, value="03010025", kind="literal")
+                  for i in identifiers if i == "lipidmaps:LMSP03010025"]
+        return found
 
 
 def claims():
     found = Claims.stated(rdf(), BRIDGEDB, "wikipathways")
     found += Claims.stated(rdf(), [SEE_ALSO], "uniprot", objects="ncbigene")
-    return found.ask(ChEBI(), [IDO + "lipidmaps/LMSP03010023", IDO + "lipidmaps/LMSP03010025"])
+    return found.ask(ChEBI(), [IDO + "lipidmaps/LMSP03010023", IDO + "lipidmaps/LMSP03010025", IDO + "chebi/CHEBI:15377"])
 
 
 def test_sources_are_compared():

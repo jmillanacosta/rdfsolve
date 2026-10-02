@@ -145,15 +145,24 @@ class Claims:
         """Return these claims and those of *client*: the resources that carry each identifier.
 
         The source states the mapping with a cross-reference (ChEBI's hasDbXref
-        'lipidmaps:LMSP0501AA04'); Client.identify finds them, in batches.
+        'lipidmaps:LMSP0501AA04'); Client.identify finds them, in batches. Only a match written
+        with the prefix of the identifier, or as an IRI, is a cross-reference (a bare number is
+        not), and identifiers of the client's own prefix are not asked.
         """
         from rdfsolve.identifiers import curie
 
         name = source or (client._schema.about.dataset_name or "source")
-        written = {curie(i): i for i in identifiers if parse(i)}
+        issued = set(client.issued_kinds())
+        # The issuer is not asked about its own identifiers: a ChEBI id is its own class, and
+        # matching its bare number found other classes (any value "15377").
+        written = {
+            curie(i): i for i in identifiers if (found := parse(i)) and found.prefix not in issued
+        }
         found = [
             Claim(written.get(x.identifier, x.identifier), x.resource, name, x.predicate)
             for x in client.identify(list(written))
+            if x.kind == "uri"
+            or x.value.lower().startswith(x.identifier.split(":", 1)[0].lower() + ":")
         ]
         return self + Claims(found)
 
