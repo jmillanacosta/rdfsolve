@@ -646,6 +646,30 @@ class Client(DatasetClient):
             duration_ms=round((perf_counter() - started) * 1000),
         )
 
+    def superclasses(self, classes: Iterable[str]) -> dict[str, set[str]]:
+        """Return all named superclasses of each class, as this source's endpoint states them.
+
+        Read from the source's own vocabulary (rdfs:subClassOf, by levels): WikiPathways states
+        wp:Protein under wp:GeneProduct under wp:DataNode. A class the endpoint says nothing
+        about has none.
+        """
+        from rdfsolve.ontology.hierarchy import fetch_superclasses
+
+        if not isinstance(self.source, SparqlHelper):
+            return {c: set() for c in classes}
+        parents = fetch_superclasses(self.source, classes, graph_uris=list(self.graph_uris) or None)
+        out: dict[str, set[str]] = {}
+        for start in classes:
+            seen: set[str] = set()
+            frontier = list(parents.get(start, ()))
+            while frontier:
+                current = frontier.pop()
+                if current not in seen:
+                    seen.add(current)
+                    frontier.extend(parents.get(current, ()))
+            out[start] = seen
+        return out
+
     def construct(self, query: str) -> ox.Dataset:
         """Run a SPARQL CONSTRUCT on this client's endpoint and return the statements.
 

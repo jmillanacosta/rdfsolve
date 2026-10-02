@@ -409,6 +409,7 @@ class PropertyGraph:
         self.checks: dict[str, Any] = {}
         self.named_graphs: list[str] = []
         self.cited: dict[str, Any] = {}  # resources the RDF only cites, kept as values
+        self.specific: dict[str, Any] = {}  # superclasses moved from labels to the type property
         sizes: Counter[str] = Counter()
         for item in _items(nodes.values(), edges):
             for key, values in item.properties.items():
@@ -436,6 +437,7 @@ class PropertyGraph:
         prefixes: Mapping[str, str] | None = None,
         identity: Identity | None = None,
         as_attributes: Iterable[str] | None = None,
+        hierarchy: Mapping[str, Iterable[str]] | None = None,
     ) -> PropertyGraph:
         """Build a property graph from an RDF graph, with the folds applied where they hold.
 
@@ -446,6 +448,11 @@ class PropertyGraph:
         a ChEBI class lists its superclasses; a blank-node value (an OWL restriction) stays an
         edge. Whatever the predicate, a resource the RDF only cites is a reference value.
         *schema* is the mined schema, or the schemas of each source of the RDF.
+
+        *hierarchy* gives the superclasses of classes (Client.superclasses): a node's labels are
+        then its most specific stated classes (wp:Protein, not also wp:GeneProduct and
+        wp:DataNode), whatever superclasses a record happens to state; the others go to its
+        ``type`` property, so the RDF is given back.
 
         *types* overrides :data:`DEFAULT_TYPES` per datatype IRI (None keeps the lexical form);
         ``native=False`` keeps every literal as written. *names*: see the module documentation.
@@ -500,6 +507,7 @@ class PropertyGraph:
         counts = [_apply_fold(i, f, nodes, edges) for i, f in enumerate(expanded)]
         decisions = _apply_identity(identity, nodes, edges) if identity is not None else None
         cited = _cited_as_values(nodes, edges)
+        specific = _most_specific(nodes, hierarchy) if hierarchy else {}
         built = cls(
             nodes,
             edges,
@@ -516,6 +524,7 @@ class PropertyGraph:
         built.named_graphs = sorted(named)
         built.identity = decisions
         built.cited = cited
+        built.specific = specific
         return built
 
     @classmethod
@@ -525,7 +534,8 @@ class PropertyGraph:
         The records of each client are exported together (with the links between them) and
         named with each client's schema. *folds* are by default those that the schemas suggest
         and the records bear out (:func:`suggested_folds`); "suggested" in a list of folds
-        stands for them (``folds=["suggested", Fold.pairs(...)]``). *identity* is an :class:`Identity`, or a decision
+        stands for them (``folds=["suggested", Fold.pairs(...)]``). *hierarchy* is by default
+        read from each client's endpoint (Client.superclasses); None leaves labels as stated. *identity* is an :class:`Identity`, or a decision
         (rdfsolve.mappings.claims.Decision), read with the kinds these clients issue; the
         options of an Identity (``kinds``, ``unfold``, ``labels``) can be given here too.
         """
@@ -552,6 +562,13 @@ class PropertyGraph:
         elif chosen:
             raise ValueError(f"Give {sorted(chosen)} to the Identity, or a decision as identity")
         options.setdefault("schema", [c.schema for c in clients])
+        if options.get("hierarchy", "sources") == "sources":
+            stated = {q.object.value for q in records if q.predicate.value == _TYPE}
+            hierarchy: dict[str, set[str]] = defaultdict(set)
+            for client in clients:
+                for found, above in client.superclasses(sorted(stated)).items():
+                    hierarchy[found] |= above
+            options["hierarchy"] = dict(hierarchy)
         return cls.from_rdf(records, identity=identity, **options)
 
     # -- values -----------------------------------------------------------------------------
@@ -748,6 +765,7 @@ class PropertyGraph:
                 {"fold": self._fold_label(i), **counts} for i, counts in enumerate(self.fold_counts)
             ],
             "cited": self.cited,
+            "most_specific_labels": self.specific,
             "checks": self.checks,
         }
 
@@ -1136,6 +1154,34 @@ def _apply_fold(
         counts["applied"] += 1
     edges[:] = [e for e in edges if id(e) not in folded]
     return dict(counts)
+
+
+def _most_specific(
+    nodes: dict[str, PGNode], hierarchy: Mapping[str, Iterable[str]]
+) -> dict[str, Any]:
+    """Keep each node's most specific stated classes as labels; move the others to ``type``."""
+    above = {cls: set(found) for cls, found in hierarchy.items()}
+    moved: Counter[str] = Counter()
+    for node in nodes.values():
+        stated = set(node.labels)
+        general = {c for c in stated if any(c in above.get(other, ()) for other in stated)}
+        if not general:
+            continue
+        origins = node.label_origins or [node.id] * len(node.labels)
+        labels, kept_origins = [], []
+        for label, origin in zip(node.labels, origins, strict=True):
+            if label in general:
+                _add_value(node, _TYPE, Value(label, REFERENCE), origin)
+                moved[label] += 1
+            else:
+                labels.append(label)
+                kept_origins.append(origin)
+        node.labels = labels
+        node.label_origins = kept_origins if node.label_origins else []
+    return {
+        "moved_to_type": dict(moved.most_common()),
+        "basis": "the source's own class hierarchy (rdfs:subClassOf)",
+    }
 
 
 def _cited_as_values(nodes: dict[str, PGNode], edges: list[PGEdge]) -> dict[str, Any]:

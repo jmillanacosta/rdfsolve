@@ -428,3 +428,21 @@ def test_the_graph_types_are_written_in_pg_schema():
     assert text.startswith("CREATE GRAPH TYPE wpType LOOSE {")
     assert "(proteinType: Protein)" in text
     assert "(:proteinType)-[catalysesType: CATALYSES" in text
+
+
+def test_node_types_are_the_most_specific_stated_classes():
+    """A protein stated with or without its superclasses is one node type (wp:Protein); the
+    superclasses go to the type property, so the round trip holds."""
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    data = ox.Dataset(ox.parse(f"""@prefix wp: <{wp}> .
+    <urn:apob> a wp:DataNode, wp:Protein .
+    <urn:ldlr> a wp:DataNode, wp:GeneProduct, wp:Protein .
+    <urn:hmgcr> a wp:DataNode, wp:GeneProduct .
+    <urn:c> a wp:Complex, wp:DataNode .""".encode(), ox.RdfFormat.TURTLE))
+    hierarchy = {wp + "Protein": {wp + "GeneProduct", wp + "DataNode"}, wp + "GeneProduct": {wp + "DataNode"},
+                 wp + "Complex": {wp + "DataNode"}}
+    pg = PropertyGraph.from_rdf(data, hierarchy=hierarchy)
+    report = pg.report()
+    assert report["node_types"] == {"Protein": 2, "GeneProduct": 1, "Complex": 1}
+    assert report["lossless"]["passed"]
+    assert report["most_specific_labels"]["moved_to_type"] == {wp + "DataNode": 4, wp + "GeneProduct": 1}
