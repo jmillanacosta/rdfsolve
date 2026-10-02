@@ -111,9 +111,8 @@ class Rule:
     *subject* and *object* are paths from the focus node (SPARQL path syntax, or an IRI); None
     is the focus node itself. *value* is a constant object instead of a path (a category).
     *subject_class* and *object_class* keep the ends of these classes. *pairs* links each pair
-    of the nodes that *subject* reaches (once per pair), with *object* unused. *unless_class*
-    skips focus nodes of this class (a wp:GeneProduct rule skips the ones that are also
-    wp:Protein, which a more specific rule takes).
+    of the nodes that *subject* reaches (once per pair), with *object* unused. *unless_classes*
+    skips focus nodes of any of these classes (those a more specific rule takes).
     """
 
     focus: str
@@ -125,7 +124,7 @@ class Rule:
     object_class: str | None = None
     pairs: bool = False
     name: str | None = None
-    unless_class: str | None = None
+    unless_classes: tuple[str, ...] = ()
     literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
     # The names of the ends in a query written from the rule (write_query): ?enzyme, ?reaction.
     subject_as: str | None = field(default=None, compare=False)
@@ -149,7 +148,7 @@ class Rule:
         pairs: bool = False,
         subject_as: str | None = None,
         object_as: str | None = None,
-        unless_kind: str | None = None,
+        unless_kinds: Sequence[str] = (),
         literal: bool = False,
         name: str | None = None,
     ) -> Rule:
@@ -208,7 +207,7 @@ class Rule:
             ),
             pairs=pairs,
             name=name,
-            unless_class=kind(unless_kind, first),
+            unless_classes=tuple(c for k in unless_kinds if (c := kind(k, first))),
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,
@@ -219,8 +218,8 @@ class Rule:
         from rdfsolve.schema_models.exporters.paths import path_to_sparql
 
         lines = [f"?x a <{self.focus}> ."]
-        if self.unless_class:
-            lines.append(f"FILTER NOT EXISTS {{ ?x a <{self.unless_class}> }}")
+        for unless in self.unless_classes:
+            lines.append(f"FILTER NOT EXISTS {{ ?x a <{unless}> }}")
         if scope:
             lines.append(scope.strip())
         if self.subject is None:
@@ -292,9 +291,9 @@ class Rule:
                 graph.add((prop, SH.qualifiedMinCount, Literal(1)))
             else:
                 graph.add((prop, SH.minCount, Literal(1)))
-        if self.unless_class:
+        for unless in self.unless_classes:
             condition, negated = BNode(), BNode()
-            graph.add((negated, SH["class"], URIRef(self.unless_class)))
+            graph.add((negated, SH["class"], URIRef(unless)))
             graph.add((condition, SH["not"], negated))
             graph.add((rule, SH.condition, condition))
         graph.add((rule, SH.subject, nodes(self.subject, self.subject_class)))
@@ -711,15 +710,16 @@ class Query:
             else:
                 self.problem = f"{s.n3()} {p.n3()} {o.n3()}: a constant end is outside the subset"
                 return []
-        pairs, unless = set(), {}
-        for expr in filters:
+        pairs: set[frozenset[Any]] = set()
+        unless: dict[Any, list[str]] = {}
+        for expr in _conjuncts(filters):
             kind = getattr(expr, "name", "")
             if kind == "RelationalExpression" and expr.op == "!=":
                 pairs.add(frozenset((expr.expr, expr.other)))
             elif kind == "Builtin_NOTEXISTS":
                 inner = _triples_of(expr["graph"])
                 if len(inner) == 1 and str(inner[0][1]) == _TYPE:
-                    unless[inner[0][0]] = str(inner[0][2])
+                    unless.setdefault(inner[0][0], []).append(str(inner[0][2]))
                     continue
                 self.problem = "FILTER NOT EXISTS other than one rdf:type is outside the subset"
                 return []
@@ -761,7 +761,7 @@ class Query:
                 "subject": subject,
                 "subject_class": class_of(s),
                 "name": self.name,
-                "unless_class": unless.get(focus),
+                "unless_classes": tuple(unless.get(focus, [])),
                 "requires": requires,
             }
             if frozenset((s, o)) in pairs:
@@ -873,6 +873,20 @@ class Query:
                 }
             )
         return rows
+
+
+def _conjuncts(filters: Iterable[Any]) -> list[Any]:
+    """Return the filters with AND-joined ones taken apart (two FILTER NOT EXISTS are one
+    ConditionalAndExpression once parsed).
+    """
+    out = []
+    for expr in filters:
+        if getattr(expr, "name", "") == "ConditionalAndExpression":
+            others = expr["other"] if "other" in expr else []  # noqa: SIM401  (rdflib overrides get)
+            out += _conjuncts([expr["expr"], *others])
+        else:
+            out.append(expr)
+    return out
 
 
 def _triples_of(pattern: Any) -> list[Any]:
@@ -1264,8 +1278,8 @@ def write_query(
                 classes[needed] = cls
         predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)
         template.append(f"  {subject} {predicate} {obj} .")
-        if rule.unless_class:
-            filters.append(f"FILTER NOT EXISTS {{ {root} a {term(rule.unless_class)} }}")
+        for unless in rule.unless_classes:
+            filters.append(f"FILTER NOT EXISTS {{ {root} a {term(unless)} }}")
     for path, name in names.items():
         if not path.endswith(" other"):
             where.append(f"{root} {path_text(path)} {name} .")
@@ -1320,7 +1334,8 @@ def to_kgx(
     """Write a property graph of Biolink statements as KGX TSV (nodes.tsv, edges.tsv); return
     their paths.
 
-    Node ids are CURIEs with the prefixes Biolink writes (Biolink.curie), else the IRI. A node's
+    Node ids are CURIEs: with the prefixes Biolink writes (Biolink.curie), else Bioregistry's,
+    else a prefix named for the IRI's namespace; prefixes.json beside the files expands those. A node's
     category is its Biolink classes (biolink:NamedThing when it has none). Each edge of a
     Biolink predicate is a row; a node that is a biolink:Association (an inhibition: subject,
     predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
@@ -1332,9 +1347,35 @@ def to_kgx(
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
 
+    import json
+
+    from rdfsolve._uri import curie_from_prefixes, prefix_map
+    from rdfsolve.identifiers import parse
+
+    # A CURIE for every node (KGX requires one): the prefix Biolink writes, else Bioregistry's,
+    # else a prefix named for the IRI's namespace; the prefixes used are written beside the files.
+    used: dict[str, str] = {}
+    unregistered = sorted(
+        {
+            n
+            for n in graph.nodes
+            if not biolink.curie(n) and parse(n) is None and not n.startswith("_:")
+        }
+    )
+    minted = prefix_map(unregistered, {})
+
     def short(iri: str) -> str:
-        """Return a node id: a Biolink CURIE, else the IRI."""
-        return biolink.curie(iri) or iri
+        """Return a node id as a CURIE."""
+        if found := biolink.curie(iri):
+            return found
+        if (registered := parse(iri)) is not None:
+            used[registered.prefix] = iri[: len(iri) - len(registered.local)]
+            return registered.curie
+        hit = curie_from_prefixes(iri, minted)
+        if hit:
+            used[hit[1]] = hit[2]
+            return hit[0]
+        return iri
 
     def term(iri: str) -> str:
         """Return a Biolink term as biolink:<local>."""
@@ -1408,4 +1449,5 @@ def to_kgx(
                     knowledge_source,
                 ]
             )
+    (folder / "prefixes.json").write_text(json.dumps(dict(sorted(used.items())), indent=1))
     return nodes_path, edges_path

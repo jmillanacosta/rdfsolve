@@ -123,7 +123,9 @@ def test_a_rule_can_skip_focus_nodes_of_a_more_specific_class():
     data = f"""@prefix wp: <{WP}> . <urn:g> a wp:GeneProduct . <urn:p> a wp:GeneProduct, wp:Protein ."""
     found = ox.Store()
     found.load(data.encode(), ox.RdfFormat.TURTLE)
-    rule = Rule(WP + "GeneProduct", BL + "category", value=BL + "Gene", unless_class=WP + "Protein")
+    rule = Rule(
+        WP + "GeneProduct", BL + "category", value=BL + "Gene", unless_classes=(WP + "Protein",)
+    )
     assert {t.subject.value for t in found.query(rule.to_construct())} == {"urn:g"}
     graph = rdflib.Graph()
     rule.add_shacl(graph, rdflib.URIRef("urn:shape"))
@@ -410,7 +412,8 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
     biolink = Biolink.read(tmp_path / "b.yaml")
     data = f"""<https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}name> "HMGCR" ;
         <{BL}catalyzes> <urn:r1> .
-    <urn:r1> a <{BL}MolecularActivity> .
+    <urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <https://source-test.invalid/data/Complex/a2d92> .
+    <https://source-test.invalid/data/Complex/a2d92> a <{BL}MacromolecularComplex> .
     <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/3156> ;
         <{BL}predicate> <{BL}regulates> ; <{BL}object> <urn:r1> ; <{BL}object_direction_qualifier> "decreased" ."""
     graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
@@ -429,8 +432,18 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
     } == {
         ("NCBIGene:3156", "biolink:catalyzes", "urn:r1", ""),
         ("NCBIGene:3156", "biolink:regulates", "urn:r1", "decreased"),
+        ("urn:r1", "biolink:has_input", "Complex:a2d92", ""),
     }
     assert all(r["primary_knowledge_source"] == "infores:test" for r in edge_rows)
+    import json
+
+    local = next(r["object"] for r in edge_rows if r["predicate"] == "biolink:has_input")
+    prefix, _, name = local.partition(":")
+    assert "/" not in name and json.loads((tmp_path / "kgx" / "prefixes.json").read_text())[
+        prefix
+    ] + name == ("https://source-test.invalid/data/Complex/a2d92"), (
+        "an IRI no registry knows: a CURIE of a named namespace, expanded by prefixes.json"
+    )
     drawn = biolink.diagram("biolink:Gene", "biolink:has_input")
     assert "**gene**" in drawn and '-->|"is a"|' in drawn and "ids: NCBIGene, ENSEMBL" in drawn
     assert "has input (is a has participant)" in drawn
@@ -442,9 +455,23 @@ def test_a_class_left_out_with_filter_not_exists(tmp_path):
 PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
 PREFIX biolink: <https://w3id.org/biolink/vocab/>
 CONSTRUCT { ?node a biolink:Gene . }
-WHERE { ?node a wp:Metabolite . FILTER NOT EXISTS { ?node a wp:Protein } }
+WHERE { ?node a wp:Metabolite . FILTER NOT EXISTS { ?node a wp:Protein } FILTER NOT EXISTS { ?node a wp:Rna } }
 """)
     rules = Query.read(tmp_path / "wp-biolink-genes.rq").rules()
-    assert [r.unless_class for r in rules] == [WP + "Protein"]
+    assert [r.unless_classes for r in rules] == [(WP + "Protein", WP + "Rna")]
+    from rdfsolve.conversion import write_query
+
+    written = write_query(rules, title="genes", prefixes={"wp": WP, "biolink": BL})
+    assert "FILTER NOT EXISTS { ?metabolite a wp:Protein }" in written and "wp:Rna" in written
+    assert (
+        len(
+            list(
+                rdflib.Graph()
+                .parse(data=Profile(name="p", rules=rules).to_shacl(), format="turtle")
+                .objects(None, rdflib.SH["not"])
+            )
+        )
+        == 2
+    )
     rows = Profile.from_queries([tmp_path / "wp-biolink-genes.rq"]).rebuilds(Local())
     assert rows[0]["same"] and rows[0]["as written"] == 3
