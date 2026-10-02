@@ -149,7 +149,7 @@ class TwoPhaseStrategy(MiningStrategy):
             parentless_candidates,
         )
         from rdfsolve.mining.query_builders import Representative
-        from rdfsolve.ontology.hierarchy import fetch_superclasses, read_hierarchy
+        from rdfsolve.ontology.hierarchy import fetch_superclasses, fill_parents, read_hierarchy
         from rdfsolve.ontology.terms import namespace
 
         phase = context.report.start_phase("ontology-terms/group-before-mining")
@@ -157,20 +157,7 @@ class TwoPhaseStrategy(MiningStrategy):
             context.helper, classes, graph_uris=context.ontology_graph_uris
         )
         files = {path: read_hierarchy([path]) for path in context.ontology_hierarchy_files}
-        loaded: dict[str, set[str]] = {}
-        for table in files.values():
-            for term, ps in table.items():
-                loaded[term] = loaded.get(term, set()) | ps
-        # A term without a parent in the data takes the parents of the files, and so do its
-        # ancestors; a parent in the data is kept.
-        with_loaded = [c for c in classes if not parents.get(c) and c in loaded]
-        frontier = list(with_loaded)
-        while frontier:
-            term = frontier.pop()
-            if parents.get(term) or term not in loaded:
-                continue
-            parents[term] = set(loaded[term])
-            frontier.extend(loaded[term])
+        with_loaded = fill_parents(parents, list(files.values()), classes)
         chosen = choose_representatives(classes, parents, budget)
         # Terms that no ancestor can take are grouped by the shape of their instances (the owner
         # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later.

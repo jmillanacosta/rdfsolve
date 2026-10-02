@@ -153,4 +153,27 @@ def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
     return dict(parents)
 
 
-__all__ = ["NamedOntologyIndex", "fetch_superclasses", "read_hierarchy"]
+def fill_parents(
+    parents: dict[str, set[str]], tables: Iterable[dict[str, set[str]]], terms: Iterable[str]
+) -> list[str]:
+    """Give parents from *tables* to the terms that have none in *parents*; return those terms.
+
+    A term without a parent in the data takes the parents of the tables (hierarchy files), and
+    so do its ancestors; a parent in the data is kept. *parents* is changed in place.
+    """
+    loaded: dict[str, set[str]] = {}
+    for table in tables:
+        for term, ps in table.items():
+            loaded[term] = loaded.get(term, set()) | ps
+    with_loaded = [c for c in terms if not parents.get(c) and c in loaded]
+    frontier = list(with_loaded)
+    while frontier:
+        term = frontier.pop()
+        if parents.get(term) or term not in loaded:
+            continue
+        parents[term] = set(loaded[term])
+        frontier.extend(loaded[term])
+    return with_loaded
+
+
+__all__ = ["NamedOntologyIndex", "fetch_superclasses", "fill_parents", "read_hierarchy"]

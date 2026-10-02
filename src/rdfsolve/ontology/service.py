@@ -21,6 +21,7 @@ import requests
 from rdflib import Literal
 
 from rdfsolve.ontology.terms import Term, canonical_iri
+from rdfsolve.ontology.ubergraph import UberGraph
 from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, SUBCLASS_OF
 from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
@@ -60,7 +61,12 @@ SEARCH_ROWS = 8
 
 
 class Ontologies:
-    """Bounded OLS or Ontobee access with a reusable response cache."""
+    """Answers about ontology terms, with one bounded and cached request log.
+
+    Terms, names and direct parents come from the provider (OLS or Ontobee); ancestors,
+    descendants, relations and Biolink categories come from *ubergraph* (rdfsolve.ontology.
+    ubergraph.UberGraph; the public endpoint by default).
+    """
 
     def __init__(
         self,
@@ -70,6 +76,7 @@ class Ontologies:
         offline: bool = False,
         timeout: float = 8,
         max_requests: int = 40,
+        ubergraph: UberGraph | None = None,
     ) -> None:
         """Configure a provider; defer requests until evidence is needed."""
         if provider not in {"ols", "ontobee"}:
@@ -85,9 +92,12 @@ class Ontologies:
         self.http = requests.Session()
         self.http.headers["User-Agent"] = "rdfsolve ontologies"
         self.helper: SparqlHelper | None = None
+        self.ubergraph = ubergraph
 
     def close(self) -> None:
         """Release provider connections."""
+        if self.ubergraph is not None:
+            self.ubergraph.close()
         self.http.close()
         if self.helper:
             self.helper.close()
@@ -102,12 +112,15 @@ class Ontologies:
             and (self.offline or time.time() - stored["fetched_at"] < 86400)
         )
 
-    def _request(self, operation: str, value: Any, fetch: Callable[[], Any]) -> Any:
-        key = json.dumps([self.provider, operation, value], sort_keys=True)
+    def _request(
+        self, operation: str, value: Any, fetch: Callable[[], Any], *, provider: str | None = None
+    ) -> Any:
+        provider = provider or self.provider
+        key = json.dumps([provider, operation, value], sort_keys=True)
         started = time.monotonic()
         stored = self.cache.get(key)
         event: dict[str, Any] = {
-            "provider": self.provider,
+            "provider": provider,
             "operation": operation,
             "value": value,
             "cached": False,
@@ -385,6 +398,46 @@ class Ontologies:
         for parent in parents:
             named.setdefault(parent["iri"], parent)
         return list(named.values())
+
+    def _ubergraph(self) -> UberGraph:
+        if self.ubergraph is None:
+            self.ubergraph = UberGraph(timeout=max(self.timeout, 30))
+        return self.ubergraph
+
+    def _closure(self, operation: str, terms: list[str], read: Callable[[], Any]) -> Any:
+        return self._request(operation, sorted(set(terms)), read, provider="ubergraph")
+
+    def ancestors(self, terms: list[str]) -> dict[str, list[str]]:
+        """Return all named superclasses of each term, from the reasoner's closure."""
+        found = self._closure(
+            "ancestors",
+            terms,
+            lambda: {t: sorted(a) for t, a in self._ubergraph().ancestors(terms).items()},
+        )
+        return found or {}
+
+    def descendants(self, term: str) -> list[str]:
+        """Return all named subclasses of a term, from the reasoner's closure."""
+        found = self._closure(
+            "descendants", [term], lambda: sorted(self._ubergraph().descendants(term))
+        )
+        return found or []
+
+    def relations(self, terms: list[str]) -> list[list[str]]:
+        """Return (term, property, filler) for X SubClassOf (property some filler)."""
+        found = self._closure(
+            "relations", terms, lambda: [list(r) for r in self._ubergraph().relations(terms)]
+        )
+        return found or []
+
+    def categories(self, terms: list[str]) -> dict[str, list[str]]:
+        """Return the most specific Biolink categories of each term (the kind of a term)."""
+        found = self._closure(
+            "categories",
+            terms,
+            lambda: {t: sorted(c) for t, c in self._ubergraph().categories(terms).items()},
+        )
+        return found or {}
 
     def _sparql(self, query: str) -> list[dict[str, Any]]:
         if self.helper is None:

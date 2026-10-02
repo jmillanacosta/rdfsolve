@@ -6,8 +6,11 @@ not mined (the owner, 2026-10-02). This package holds:
 - vocabulary: the IRIs that ontologies are written in (class and property types, structure,
   annotation and infrastructure namespaces, versions);
 - terms: the namespace of a term (one rule, in Python and SPARQL) and the record of a term;
-- service: Ontologies, answers about terms from OLS or Ontobee, cached with provenance;
-- hierarchy: named parents and ancestors, from an ontology graph, an endpoint or files;
+- service: Ontologies, answers about terms (OLS or Ontobee; UberGraph for ancestors,
+  descendants, relations and Biolink categories), cached with provenance;
+- ubergraph: UberGraph, the reasoned OBO ontologies as a source;
+- hierarchy: named parents and ancestors, from an ontology graph, an endpoint or files, and
+  the rule that fills parents from hierarchy files;
 - discovery: which graphs of a dataset hold ontology material, and their versions;
 - usage: how a data graph uses the terms of an ontology artifact;
 - sources: which ontology a namespace of the data comes from, and the plan to acquire it;
@@ -19,5 +22,6 @@ Mining strategies (rdfsolve.mining) use these for the ontology terms of data gra
 
 from rdfsolve.ontology.service import Ontologies
 from rdfsolve.ontology.terms import Term, namespace, term_key
+from rdfsolve.ontology.ubergraph import UberGraph
 
-__all__ = ["Ontologies", "Term", "namespace", "term_key"]
+__all__ = ["Ontologies", "Term", "UberGraph", "namespace", "term_key"]
