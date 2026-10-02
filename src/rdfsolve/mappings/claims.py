@@ -156,7 +156,7 @@ class Claims:
         # The issuer is not asked about its own identifiers: a ChEBI id is its own class, and
         # matching its bare number found other classes (any value "15377").
         written = {
-            curie(i): i for i in identifiers if (found := parse(i)) and found.prefix not in issued
+            curie(i): i for i in identifiers if (read := parse(i)) and read.prefix not in issued
         }
         found = [
             Claim(written.get(x.identifier, x.identifier), x.resource, name, x.predicate)
