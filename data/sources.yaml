@@ -2571,7 +2571,7 @@
   supports_graph: true
   skip_remote: true
 - name: iocb.ontology
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://bioinfo.iocb.cz/dataset/ontology
@@ -2703,7 +2703,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: chebi.idsm
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://rdf.ebi.ac.uk/dataset/chebi
@@ -3408,7 +3408,7 @@
   supports_graph: true
   skip_remote: true
 - name: uniprot.chebi
-  dataset_kind: instance
+  dataset_kind: ontology
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
   graph_uris:
@@ -3494,7 +3494,7 @@
   sparql_strategy: get+json
   supports_graph: true
 - name: uniprot.go
-  dataset_kind: instance
+  dataset_kind: ontology
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/go
   graph_uris:
