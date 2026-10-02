@@ -201,11 +201,19 @@ class Identity:
     - *kinds* maps a registered prefix to the classes that the source issuing it gives its
       identifiers (Client.issued_kinds). A prefix without kinds is unknown: its links stay
       edges and the report lists them as undecided, with what would decide them.
+    - *mappings* are the predicates that can state that two identifiers are one entity (by
+      default the declared identities: owl:sameAs, skos:exactMatch and Bio2RDF cross-references);
+      other links (part of a pathway) are never judged.
+    - *exact* merges two different identifiers of one kind that are linked one to one both ways
+      and both have data (a WikiPathways metabolite and its ChEBI class), into one node listing
+      both; without it they stay linked by an edge.
     """
 
     merge: bool = True
     kinds: Mapping[str, Iterable[str]] = field(default_factory=dict, compare=False, hash=False)
     attributes: bool = True
+    mappings: Iterable[str] | None = None
+    exact: bool = False
 
 
 def _ox_id(term: ox.NamedNode | ox.BlankNode) -> str:
@@ -784,11 +792,69 @@ def _apply_fold(
     return dict(counts)
 
 
+def _merge_nodes(nodes: dict[str, PGNode], members: Iterable[str], keep: str) -> None:
+    """Merge *members* into the node *keep*, keeping the IRI that stated each label and value."""
+    node = nodes[keep]
+    labels: list[str] = []
+    label_origins: list[str] = []
+    properties: Properties = {}
+    origins: dict[str, list[str]] = {}
+    iris: list[str] = []
+    for member in [keep, *sorted(set(members) - {keep})]:
+        part = nodes[member]
+        labels += part.labels
+        label_origins += part.label_origins or [member] * len(part.labels)
+        for k, values in part.properties.items():
+            properties.setdefault(k, []).extend(values)
+            origins.setdefault(k, []).extend(part.origins.get(k) or [member] * len(values))
+        iris += part.members or [member]
+        if member != keep:
+            del nodes[member]
+    node.labels, node.label_origins = labels, label_origins
+    node.properties, node.origins = properties, origins
+    node.members = sorted(set(iris))
+
+
+def _keep(nodes: dict[str, PGNode], members: Iterable[str], preferred: str | None) -> str:
+    """Return the member that a merge keeps: most data, then the preferred IRI, then by IRI."""
+
+    def weight(member: str) -> tuple[int, bool, str]:
+        node = nodes[member]
+        data = len(node.labels) + sum(len(v) for v in node.properties.values())
+        return (data, member == preferred, member)
+
+    return max(members, key=weight)
+
+
+def _retarget(nodes: dict[str, PGNode], edges: list[PGEdge], canonical: Mapping[str, str]) -> int:
+    """Point edges at merged nodes; a statement within one merged node becomes its property."""
+    internal = 0
+    kept: list[PGEdge] = []
+    for edge in edges:
+        source = canonical.get(edge.source, edge.source)
+        target = canonical.get(edge.target, edge.target)
+        if source != edge.source and edge.source_iri is None:
+            edge.source_iri = edge.source
+        if target != edge.target and edge.target_iri is None:
+            edge.target_iri = edge.target
+        edge.source, edge.target = source, target
+        written_source = edge.source_iri or source
+        written_target = edge.target_iri or target
+        if edge.fold is None and source == target and written_source != written_target:
+            _add_value(nodes[source], edge.type, Value(written_target, REFERENCE), written_source)
+            internal += 1
+            continue
+        kept.append(edge)
+    edges[:] = kept
+    return internal
+
+
 def _apply_identity(
     identity: Identity, nodes: dict[str, PGNode], edges: list[PGEdge]
 ) -> dict[str, Any]:
     """Merge the nodes of one identifier and decide each mapping; return the decisions."""
     from rdfsolve.identifiers import parse
+    from rdfsolve.mappings.declared import is_declared_property
 
     parsed = {nid: parse(nid) for nid in nodes if not nid.startswith("_:")}
     groups: dict[str, list[str]] = defaultdict(list)
@@ -801,52 +867,13 @@ def _apply_identity(
     for key, members in sorted(groups.items()):
         if len(members) < 2:
             continue
-        preferred = cast(Any, parsed[members[0]]).iri()
-
-        def weight(member: str, preferred: str | None = preferred) -> tuple[int, int, str]:
-            node = nodes[member]
-            data = len(node.labels) + sum(len(v) for v in node.properties.values())
-            return (data, member == preferred, member)
-
-        keep = max(members, key=weight)
-        node = nodes[keep]
-        labels: list[str] = []
-        label_origins: list[str] = []
-        properties: Properties = {}
-        origins: dict[str, list[str]] = {}
-        for member in [keep, *sorted(m for m in members if m != keep)]:
-            part = nodes[member]
-            labels += part.labels
-            label_origins += [member] * len(part.labels)
-            for k, values in part.properties.items():
-                properties.setdefault(k, []).extend(values)
-                origins.setdefault(k, []).extend([member] * len(values))
-            canonical[member] = keep
-            if member != keep:
-                del nodes[member]
-        node.labels, node.label_origins = labels, label_origins
-        node.properties, node.origins = properties, origins
-        node.members = sorted(members)
+        keep = _keep(nodes, members, cast(Any, parsed[members[0]]).iri())
+        _merge_nodes(nodes, members, keep)
+        canonical.update(dict.fromkeys(members, keep))
         merged.append({"identifier": key, "node": keep, "iris": sorted(members)})
-    internal = 0
-    kept: list[PGEdge] = []
-    for edge in edges:
-        source = canonical.get(edge.source, edge.source)
-        target = canonical.get(edge.target, edge.target)
-        if source != edge.source:
-            edge.source_iri = edge.source
-        if target != edge.target:
-            edge.target_iri = edge.target
-        written_source, written_target = edge.source, edge.target
-        edge.source, edge.target = source, target
-        if edge.fold is None and source == target and written_source != written_target:
-            # A statement between two IRIs of one identifier: a property of the merged node.
-            _add_value(nodes[source], edge.type, Value(written_target, REFERENCE), written_source)
-            internal += 1
-            continue
-        kept.append(edge)
-    edges[:] = kept
+    internal = _retarget(nodes, edges, canonical)
 
+    chosen = set(identity.mappings) if identity.mappings is not None else None
     issued = {prefix: set(classes) for prefix, classes in identity.kinds.items()}
     incoming: Counter[str] = Counter(e.target for e in edges if e.fold is None)
     has_out = {e.source for e in edges}
@@ -855,12 +882,15 @@ def _apply_identity(
     )
     decisions: dict[tuple[str, str, str, str], dict[str, Any]] = {}
     removed: set[int] = set()
+    same: list[tuple[str, str]] = []
     for edge in edges:
         if edge.fold is not None:
             continue
+        if not (edge.type in chosen if chosen is not None else is_declared_property(edge.type)):
+            continue  # not a predicate that can state that two identifiers are one entity
         to = parsed.get(edge.target_iri or edge.target)
         if to is None:
-            continue  # not a link to an identifier
+            continue
         start = parsed.get(edge.source_iri or edge.source)
         kinds_from = issued.get(start.prefix) if start else None
         kinds_to = issued.get(to.prefix)
@@ -870,8 +900,8 @@ def _apply_identity(
             and not target_node.labels
             and not target_node.properties
             and edge.target not in has_out
-            and incoming[edge.target] == 1
         )
+        one_to_one = per_link[(edge.source, edge.type)] == 1 and incoming[edge.target] == 1
         if start is None:
             decision = "edge: undecided, the source is not a registered identifier"
         elif kinds_from is None or kinds_to is None:
@@ -881,9 +911,9 @@ def _apply_identity(
             decision = f"edge: undecided, kind unknown for {', '.join(unknown)}"
         elif not kinds_from & kinds_to:
             decision = "edge: a relation between two kinds"
-        elif not (identity.attributes and bare and per_link[(edge.source, edge.type)] == 1):
-            decision = "edge: same kind, but the target has data or the link is not one to one"
-        else:
+        elif not one_to_one:
+            decision = "edge: same kind, not one to one"
+        elif bare and identity.attributes:
             decision = "attribute: same kind, one to one"
             _add_value(
                 nodes[edge.source],
@@ -893,6 +923,11 @@ def _apply_identity(
             )
             del nodes[edge.target]
             removed.add(id(edge))
+        elif identity.exact:
+            decision = "merged: same kind, one to one (exact)"
+            same.append((edge.source, edge.target))
+        else:
+            decision = "edge: same kind, one to one; merged with Identity(exact=True)"
         group = (edge.type, start.prefix if start else "-", to.prefix, decision)
         row = decisions.setdefault(
             group,
@@ -907,17 +942,27 @@ def _apply_identity(
         )
         row["links"] += 1
     edges[:] = [e for e in edges if id(e) not in removed]
+    exact = 0
+    if same:
+        found_in: dict[str, str] = {}
+        for left, right in same:  # each pair is one to one, so the pairs are disjoint
+            keep = _keep(nodes, (left, right), None)
+            _merge_nodes(nodes, (left, right), keep)
+            found_in.update({left: keep, right: keep})
+            exact += 1
+        internal += _retarget(nodes, edges, found_in)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
     for row in undecided:
         missing = [p for p in (row["from"], row["to"]) if p != "-" and p not in issued]
         row["decide_with"] = (
-            f"Identity(kinds={{{', '.join(repr(p) + ': [...]' for p in missing)}}})"
+            "Identity(kinds={" + ", ".join(repr(p) + ": [...]" for p in missing) + "})"
         )
     return {
         "merged": len(merged),
         "merged_iris": sum(len(m["iris"]) for m in merged),
         "merged_examples": merged[:5],
+        "merged_exact": exact,
         "statements_within_merged_nodes": internal,
         "kinds": {prefix: sorted(classes) for prefix, classes in sorted(issued.items())},
         "mappings": rows,

@@ -193,7 +193,11 @@ IDS = """
     skos:exactMatch <http://purl.obolibrary.org/obo/PR_P04637> .
 <https://identifiers.org/chebi/CHEBI:15377> skos:exactMatch <http://purl.obolibrary.org/obo/CHEBI_15377> .
 <http://purl.obolibrary.org/obo/CHEBI_15377> a <http://www.w3.org/2002/07/owl#Class> ; rdfs:label "water" .
+<https://identifiers.org/cas/7732-18-5> a wp:Metabolite ; rdfs:label "H2O" ;
+    wp:bdbChEBI <http://purl.obolibrary.org/obo/CHEBI_15377> .
 """
+WPV = "http://vocabularies.wikipathways.org/wp#"
+MAPPINGS = [WPV + "bdbUniprot", WPV + "bdbChEBI", "http://www.w3.org/2004/02/skos/core#exactMatch"]
 
 
 def test_identity_merges_one_identifier_and_decides_each_mapping():
@@ -206,7 +210,7 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
     data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
     protein = "http://purl.uniprot.org/core/Protein"
     kinds = {"uniprot": [protein], "pr": [protein], "chebi": ["http://www.w3.org/2002/07/owl#Class"]}
-    pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds))
+    pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS))
     report = pg.report()
     assert report["lossless"]["passed"], report["lossless"]
     p53 = pg.nodes["http://purl.uniprot.org/uniprot/P04637"]
@@ -226,13 +230,41 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
     undecided = rows["edge: undecided, kind unknown for ensembl"]
     assert undecided["links"] == 2 and "ensembl" in undecided["decide_with"]
     decided = PropertyGraph.from_rdf(
-        data, identity=Identity(kinds={**kinds, "ensembl": ["http://example.org/Gene"]})
+        data,
+        identity=Identity(kinds={**kinds, "ensembl": ["http://example.org/Gene"]}, mappings=MAPPINGS),
     ).report()
     assert {r["decision"] for r in decided["identity"]["mappings"]} >= {"edge: a relation between two kinds"}
-    assert decided["identity"]["undecided"] == 0 and decided["lossless"]["passed"]
+    assert not [r for r in decided["identity"]["mappings"] if "ensembl" in r["decision"]]
+    assert decided["lossless"]["passed"]
 
 
 def test_without_identity_nothing_is_merged():
     data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
     pg = PropertyGraph.from_rdf(data)
     assert "https://identifiers.org/uniprot/P04637" in pg.nodes and pg.report()["lossless"]["passed"]
+
+
+def test_exact_identity_merges_two_identifiers_of_one_kind():
+    """A WikiPathways metabolite (a CAS number) and its ChEBI class, linked one to one, are one
+    node once CAS numbers are known to name the same kind as ChEBI ids; without exact they stay
+    linked by an edge. Nothing is merged across predicates that cannot state identity."""
+    from rdfsolve.property_graph import Identity
+
+    data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
+    chemical = ["http://www.w3.org/2002/07/owl#Class"]
+    kinds = {"chebi": chemical, "cas": chemical}
+    linked = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS))
+    rows = {r["decision"] for r in linked.report()["identity"]["mappings"]}
+    assert "edge: same kind, one to one; merged with Identity(exact=True)" in rows
+    one = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True))
+    report = one.report()
+    assert report["lossless"]["passed"] and report["identity"]["merged_exact"] == 1
+    water = next(n for n in one.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+    assert set(water.members) == {
+        "http://purl.obolibrary.org/obo/CHEBI_15377",
+        "https://identifiers.org/chebi/CHEBI:15377",
+        "https://identifiers.org/cas/7732-18-5",
+    }
+    assert {"http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"} <= set(water.labels)
+    default = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds)).report()["identity"]
+    assert {r["predicate"] for r in default["mappings"]} == {"http://www.w3.org/2004/02/skos/core#exactMatch"}
