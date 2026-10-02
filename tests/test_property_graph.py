@@ -226,8 +226,13 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
     assert attribute["ids"] == p53.members
     gene_links = [e for e in pg.edges if e.source.endswith("ENSG00000141510")]
     assert {e.target for e in gene_links} == {
-        "http://purl.uniprot.org/uniprot/P04637", "https://identifiers.org/uniprot/A0A087X1C5"
-    }, "A gene and its proteins stay linked; nothing is merged across kinds"
+        "http://purl.uniprot.org/uniprot/P04637"
+    }, "A gene and its protein stay linked; nothing is merged across kinds"
+    gene = next(n for n in pg.nodes.values() if n.id.endswith("ENSG00000141510"))
+    assert "https://identifiers.org/uniprot/A0A087X1C5" in [
+        v.lexical for v in gene.properties[WPV + "bdbUniprot"]
+    ], "A protein the RDF only cites is a value of the gene, not a node"
+    assert report["cited"]["resources"] >= 1
     rows = {r["decision"]: r for r in report["identity"]["mappings"]}
     undecided = rows["edge: undecided, kind unknown for ensembl"]
     assert undecided["links"] == 2 and "ensembl" in undecided["decide_with"]
@@ -243,7 +248,8 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
 def test_without_identity_nothing_is_merged():
     data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
     pg = PropertyGraph.from_rdf(data)
-    assert "https://identifiers.org/uniprot/P04637" in pg.nodes and pg.report()["lossless"]["passed"]
+    assert not any(n.members for n in pg.nodes.values()) and pg.report()["lossless"]["passed"]
+    assert "https://identifiers.org/uniprot/P04637" not in pg.nodes, "only cited: a value"
 
 
 def test_exact_identity_merges_two_identifiers_of_one_kind():
@@ -279,7 +285,7 @@ def test_exact_identity_merges_two_identifiers_of_one_kind():
     assert set(chosen.labels) == {owl_class} and stated.report()["lossless"]["passed"]
     rows = report["identity"]["mappings"]
     assert not [r for r in rows if r["example"][0] == r["example"][1]], "A self statement is no mapping"
-    assert "https://identifiers.org/chebi/CHEBI:15422" in one.nodes, "Two ChEBI ids are two entities"
+    assert "https://identifiers.org/chebi/CHEBI:15422" not in water.members, "Two ChEBI ids are two entities"
     default = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds)).report()["identity"]
     assert {r["predicate"] for r in default["mappings"]} == {"http://www.w3.org/2004/02/skos/core#exactMatch"}
 
@@ -317,3 +323,24 @@ def test_a_merged_node_takes_the_data_class_not_the_majority():
         water = next(n for n in pg.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
         assert water.labels == [expected], policy
         assert pg.report()["lossless"]["passed"]
+
+
+def test_networkx_keeps_the_edge_type_when_a_fold_has_other_classes():
+    """A folded catalysis that is also a DirectedInteraction keeps its edge type; its classes
+    are kept as rdf_type."""
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    data = ox.Dataset(ox.parse(f"""
+        @prefix wp: <{wp}> .
+        <urn:c> a wp:Catalysis, wp:DirectedInteraction ; wp:source <urn:e> ; wp:target <urn:r> .
+        <urn:e> a wp:Protein . <urn:r> a wp:Conversion .""".encode(), ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(data, folds=[Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")])
+    (_, _, attrs), = pg.to_networkx().edges(data=True)
+    assert attrs["type"] == "CATALYSES" and attrs["rdf_type"] == wp + "DirectedInteraction"
+
+
+def test_a_statement_about_itself_is_a_value_not_a_loop():
+    data = ox.Dataset(ox.parse(b"""
+        <https://identifiers.org/chebi/CHEBI:15377> a <urn:Metabolite> ;
+            <urn:bdbChEBI> <https://identifiers.org/chebi/CHEBI:15377> .""", ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(data)
+    assert not pg.edges and pg.report()["lossless"]["passed"]

@@ -17,7 +17,7 @@ _LAST_PART = r"[^/#:]*$"
 
 
 def namespace(iri: str) -> str:
-    """Return the namespace of a term: its OBO prefix (obo/MONDO_), else the IRI without its
+    """Return the namespace of a term: its OBO prefix (``obo/MONDO_``), else the IRI without its
     last part after /, # or :.
     """
     match = re.match(rf"(.*{_OBO_TERM})", iri)

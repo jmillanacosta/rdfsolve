@@ -9,6 +9,9 @@ decision says which are accepted and why:
 - the source that issues the target identifiers (ChEBI for ChEBI ids) is the authority for
   mappings to them; when it states targets, the other sources' different targets are
   overruled;
+- several targets of one subject narrow to those the issuer prefers, when it marks some
+  (UniProt's reviewed entries: BridgeDb links an Ensembl gene to its Swiss-Prot entry and to
+  TrEMBL fragments);
 - several targets of one subject are accepted together only when they are variants of one
   entity that a source states (L-serine and its zwitterion are tautomers, in ChEBI);
 - otherwise several targets are ambiguous: none is accepted, and the report says so.
@@ -81,6 +84,16 @@ class Decision:
     variants: list[tuple[str, str]]
     groups: list[dict[str, Any]] = field(default_factory=list)
 
+    def targets(self, namespace: str) -> list[str]:
+        """Return the accepted IRIs in *namespace*: the records worth fetching."""
+        return sorted(
+            {
+                c.object
+                for c in self.accepted
+                if (found := c.object_id) and found.prefix == namespace
+            }
+        )
+
     def pairs(self) -> list[tuple[str, str]]:
         """Return the accepted (subject, object) pairs."""
         return sorted({(c.subject, c.object) for c in self.accepted})
@@ -139,20 +152,35 @@ class Claims:
             found.append(Claim(subject, obj, source, quad.predicate.value))
         return cls(found)
 
+    def targets(self, namespace: str) -> list[str]:
+        """Return the IRIs that the claims map to in *namespace* (a Bioregistry prefix)."""
+        return sorted(
+            {c.object for c in self.claims if (found := c.object_id) and found.prefix == namespace}
+        )
+
     def ask(
-        self, client: Client, identifiers: Iterable[str], *, source: str | None = None
+        self,
+        client: Client,
+        identifiers: Iterable[str] | None = None,
+        *,
+        source: str | None = None,
     ) -> Claims:
         """Return these claims and those of *client*: the resources that carry each identifier.
 
         The source states the mapping with a cross-reference (ChEBI's hasDbXref
         'lipidmaps:LMSP0501AA04'); Client.identify finds them, in batches. Only a match written
         with the prefix of the identifier, or as an IRI, is a cross-reference (a bare number is
-        not), and identifiers of the client's own prefix are not asked.
+        not), and identifiers of the client's own prefix are not asked. By default the
+        identifiers asked are the subjects of the claims into the namespace *client* issues.
         """
         from rdfsolve.identifiers import curie
 
         name = source or (client._schema.about.dataset_name or "source")
         issued = set(client.issued_kinds())
+        if identifiers is None:
+            identifiers = sorted(
+                {c.subject for c in self.claims if (o := c.object_id) and o.prefix in issued}
+            )
         # The issuer is not asked about its own identifiers: a ChEBI id is its own class, and
         # matching its bare number found other classes (any value "15377").
         written = {
@@ -249,6 +277,7 @@ class Claims:
         authority: Sequence[str] | None = None,
         variants: Callable[[list[str]], Iterable[tuple[str, str]]] | Iterable[tuple[str, str]] = (),
         namespaces: Iterable[str] | None = None,
+        prefer: Iterable[Any] = (),
     ) -> Decision:
         """Decide which claims are accepted, for each subject and target namespace.
 
@@ -258,8 +287,12 @@ class Claims:
         accepted; several are accepted only when *variants* (pairs, or a function of the
         target IRIs, such as Ontologies.variants) joins them into one group; otherwise the
         group is ambiguous and nothing is accepted. *namespaces* keeps these target namespaces.
+        *prefer* are identifiers (IRIs, or Results of a client) that the issuer marks as its
+        preferred entries (UniProt's reviewed ones): several targets narrow to those preferred,
+        when some are.
         """
         order = list(authority or [])
+        preferred = {_key(iri) for iri in _iris(prefer)}
         kept = set(namespaces) if namespaces is not None else None
         by_group: dict[tuple[str, str], list[Claim]] = defaultdict(list)
         for c in self.claims:
@@ -287,6 +320,10 @@ class Claims:
             )
             outcome = "accepted"
             pairs: list[tuple[str, str]] = []
+            narrowed = [t for t in targets if _key(t) in preferred]
+            if len(targets) > 1 and narrowed:
+                outcome = f"accepted: preferred by the issuer, {len(targets) - len(narrowed)} not"
+                targets = narrowed
             if len(targets) > 1:
                 found = variants(targets) if callable(variants) else variants
                 pairs = [(a, b) for a, b in found if a in targets and b in targets]
@@ -294,6 +331,7 @@ class Claims:
                     outcome = "ambiguous: several targets, not variants of one entity"
                 else:
                     outcome = "accepted: variants of one entity"
+            set_aside: set[str] = {_key(c.object) for c in mine} - {_key(t) for t in targets}
             if outcome.startswith("accepted"):
                 accepted += [c for c in mine if c.object in targets]
                 variant_pairs += pairs
@@ -310,10 +348,20 @@ class Claims:
                     "targets": ", ".join(_key(t) for t in targets),
                     "outcome": outcome,
                     "overruled": ", ".join(overruled),
+                    "not preferred": ", ".join(sorted(set_aside)),
                     "sources": ", ".join(sources),
                 }
             )
         return Decision(accepted, sorted(set(variant_pairs)), groups)
+
+
+def _iris(items: Any) -> list[str]:
+    """Return the IRIs of identifiers given as IRIs, as client Results, or as a list of both."""
+    if isinstance(items, str):
+        return [items]
+    if hasattr(items, "records"):
+        return [str(vars(r)["uri"]) for r in items.records if vars(r).get("uri")]
+    return [iri for item in items for iri in _iris(item)]
 
 
 def _connected(items: list[str], pairs: Iterable[tuple[str, str]]) -> bool:
@@ -321,6 +369,7 @@ def _connected(items: list[str], pairs: Iterable[tuple[str, str]]) -> bool:
     root = {i: i for i in items}
 
     def find(i: str) -> str:
+        """Return the root of an item."""
         while root[i] != i:
             i = root[i]
         return i

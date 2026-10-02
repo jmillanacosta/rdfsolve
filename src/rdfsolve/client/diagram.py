@@ -211,6 +211,7 @@ def _specific(client: Client, names: str) -> str:
     counts = client.schema.about.class_entity_counts or {}
 
     def size(name: str) -> float:
+        """Return the number of instances of a class (unknown: infinite)."""
         try:
             return counts.get(class_iri(client.model(name)), float("inf"))
         except ValueError:

@@ -306,6 +306,17 @@ class Client(DatasetClient):
         self.resolutions.extend(r.model_dump(mode="json") for r in results.values())
         return results
 
+    def fetch(self, identifiers: Iterable[str], kind: str, *fields: str) -> Results:
+        """Return the records of *kind* that the identifiers (IRIs or CURIEs) name here.
+
+        Each is resolved to the IRI this source writes (resolve_many); those found become
+        records with *fields* loaded, so that to_oxigraph gives their values.
+        """
+        found = self.resolve_many(identifiers)
+        iris = sorted({r.iri for r in found.values() if r.iri})
+        records = self.from_table(kind, pd.DataFrame({"iri": iris}), id_column="iri")
+        return records.load(*fields) if fields else records
+
     def identify(self, identifiers: Iterable[str]) -> list[Identification]:
         """Find the resources that carry each identifier (CURIE or IRI) in the selected graphs.
 
@@ -1384,6 +1395,27 @@ class Results:
             evidence=self.evidence,
             coverage=self.coverage,
         )
+
+    def load(self, *fields: str) -> Results:
+        """Read these fields of every record (in a few queries) and return the same set.
+
+        Only read fields are exported (to_oxigraph, property graphs), so a step that needs a
+        field names it here.
+        """
+        self._load(*fields)
+        return self
+
+    def where(self, field: str, value: Any) -> Results:
+        """Keep the records whose *field* has *value* (UniProt entries with reviewed true)."""
+        self._load(field)
+        kept = []
+        for record in self.records:
+            name = self.client.field_name(type(record), field)
+            found = vars(record).get(name)
+            values = found if isinstance(found, list) else [found]
+            if any(v == value or str(v).lower() == str(value).lower() for v in values):
+                kept.append(record)
+        return Results(self.client, kept, evidence=self.evidence, coverage=self.coverage)
 
     def without(self, other: Results) -> Results:
         """Remove records with IRIs already present in another result set."""

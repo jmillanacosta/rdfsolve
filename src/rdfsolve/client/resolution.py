@@ -129,14 +129,17 @@ def resolve_terms(
     checks: dict[str, dict[str, Any]] = {}
 
     def check(iris: Iterable[str]) -> None:
+        """Check IRIs not yet checked, in batches, and keep those present."""
         todo = sorted(set(iris) - checks.keys())
         for start in range(0, len(todo), batch):
             checks.update(_witnesses(client, todo[start : start + batch], kind))
 
     def present(iri: str) -> bool:
+        """Return whether the source has the IRI (as a resource or a class)."""
         return checks.get(iri, {}).get("use") in {"present", "used as class"}
 
     def form(iri: str, name: str) -> str | None:
+        """Return the IRI form of a name: its IRI with the local id as {id}."""
         read = parse(name)
         return iri.replace(read.local, "{id}") if read and read.local in iri else None
 

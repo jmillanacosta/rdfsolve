@@ -5,7 +5,9 @@ An RDF graph becomes a property graph by rules that can be undone:
 - a subject (IRI or blank node) is a node, identified by its IRI or by ``_:`` and its blank-node
   label; its ``rdf:type`` values are its labels;
 - a literal value is a node property; its lexical form, datatype and language are kept;
-- a link to another resource is an edge, whose type is the predicate;
+- a link to another resource is an edge, whose type is the predicate, when the RDF describes that
+  resource (it has a class or a value); a resource the RDF only cites (a UniProt cross-reference
+  to InterPro, a superclass) is a reference value of the node that cites it, not a node;
 - a :class:`Fold` turns the instances of a class (a catalysis, an axiom) into edges between the
   two resources each instance links, with the instance's other values as edge properties. An
   instance without exactly one source and one target, or that something else links to, stays a
@@ -23,6 +25,9 @@ Two choices have defaults that can be set:
 An :class:`Identity` merges the IRIs of one registered identifier into one node (listing its
 IRIs) and decides each mapping between identifiers: an attribute when both are known to be of
 one kind and the link is one to one, an edge otherwise; the report lists the undecided ones.
+On a merged node the record of the source that issues the identifier speaks for it: where it
+states a key (the name of ChEBI 15377 is "water"), the values of the other sources are kept
+beside it under the key and the source (``label_wikipathways``: "2 H2O", "oxidized thioredoxin").
 
 The gates of :meth:`PropertyGraph.report` check an export: :meth:`PropertyGraph.to_oxigraph` gives
 back the input (nothing is lost silently), names are unique, literals keep their types, keys that
@@ -53,6 +58,15 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
 
 REFERENCE = "@id"  # the datatype of a property value that refers to a resource
+# A key that holds the values a source states beside those of the issuer: "<predicate> @<source>".
+_BESIDE = " @"
+
+
+def _predicate(key: str) -> str:
+    """Return the predicate IRI of a property key."""
+    return key.partition(_BESIDE)[0]
+
+
 _XSD = "http://www.w3.org/2001/XMLSchema#"
 _STRING = _XSD + "string"
 _LANG_STRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
@@ -308,6 +322,7 @@ class PropertyGraph:
         self.naming = names
         self.checks: dict[str, Any] = {}
         self.named_graphs: list[str] = []
+        self.cited: dict[str, Any] = {}  # resources the RDF only cites, kept as values
         sizes: Counter[str] = Counter()
         for item in _items(nodes.values(), edges):
             for key, values in item.properties.items():
@@ -327,7 +342,7 @@ class PropertyGraph:
         cls,
         graph: Source,
         *,
-        schema: MinedSchema | None = None,
+        schema: MinedSchema | Sequence[MinedSchema] | None = None,
         folds: Iterable[Fold] = (),
         types: Mapping[str, Conversion | None] | None = None,
         native: bool = True,
@@ -343,14 +358,21 @@ class PropertyGraph:
         *as_attributes* are predicates whose IRI values are node attributes (references), not
         edges: by default the class and property hierarchy (rdfs:subClassOf, subPropertyOf), so
         a ChEBI class lists its superclasses; a blank-node value (an OWL restriction) stays an
-        edge.
+        edge. Whatever the predicate, a resource the RDF only cites is a reference value.
+        *schema* is the mined schema, or the schemas of each source of the RDF.
 
         *types* overrides :data:`DEFAULT_TYPES` per datatype IRI (None keeps the lexical form);
         ``native=False`` keeps every literal as written. *names*: see the module documentation.
         *prefixes* name namespaces for CURIEs (and folds), over those of the schema.
         """
         given = dict(prefixes or {})
-        prefixes = {**(dict(schema.get_prefixes()) if schema is not None else {}), **given}
+        schemas: list[MinedSchema] = (
+            [] if schema is None else list(schema) if isinstance(schema, Sequence) else [schema]
+        )
+        prefixes = {}
+        for each in reversed(schemas):
+            prefixes.update(dict(each.get_prefixes()))
+        prefixes.update(given)
         if hasattr(graph, "namespaces"):
             prefixes.update({p: str(ns) for p, ns in graph.namespaces() if p and p not in prefixes})
         quads = _quads(graph)
@@ -362,6 +384,7 @@ class PropertyGraph:
         named: set[str] = set()
 
         def node(term: ox.NamedNode | ox.BlankNode) -> PGNode:
+            """Return the node of a term, made on first use."""
             key = _ox_id(term)
             if key not in nodes:
                 nodes[key] = PGNode(key)
@@ -376,8 +399,10 @@ class PropertyGraph:
             subject = node(s)
             if p == _TYPE and isinstance(o, ox.NamedNode):
                 subject.labels.append(o.value)
-            elif isinstance(o, ox.Literal) or (
-                p in attribute_predicates and isinstance(o, ox.NamedNode)
+            elif (
+                isinstance(o, ox.Literal)
+                or (p in attribute_predicates and isinstance(o, ox.NamedNode))
+                or o == s  # a statement about itself (a ChEBI id mapped to itself) is a value
             ):
                 subject.properties.setdefault(p, []).append(Value.of(o))
             elif isinstance(o, (ox.NamedNode, ox.BlankNode)):
@@ -388,6 +413,7 @@ class PropertyGraph:
         expanded = [_expand(f, prefixes) for f in folds]
         counts = [_apply_fold(i, f, nodes, edges) for i, f in enumerate(expanded)]
         decisions = _apply_identity(identity, nodes, edges) if identity is not None else None
+        cited = _cited_as_values(nodes, edges)
         built = cls(
             nodes,
             edges,
@@ -395,15 +421,37 @@ class PropertyGraph:
             prefixes=prefixes,
             folds=expanded,
             fold_counts=counts,
-            single=_single_valued(schema) if schema is not None else (),
-            labels=_schema_labels(schema) if schema is not None else {},
+            single=set().union(*(_single_valued(each) for each in schemas)),
+            labels={k: v for each in reversed(schemas) for k, v in _schema_labels(each).items()},
             types=types,
             native=native,
             names=names,
         )
         built.named_graphs = sorted(named)
         built.identity = decisions
+        built.cited = cited
         return built
+
+    @classmethod
+    def from_results(cls, *results: Any, identity: Any = None, **options: Any) -> PropertyGraph:
+        """Build a property graph from result sets of one or more clients.
+
+        The records of each client are exported together (with the links between them) and
+        named with each client's schema. *identity* is an :class:`Identity`, or a decision
+        (rdfsolve.mappings.claims.Decision), read with the kinds these clients issue.
+        """
+        clients: list[Any] = []
+        for found in results:
+            if not any(found.client is c for c in clients):
+                clients.append(found.client)
+        records = ox.Dataset()
+        for client in clients:
+            for quad in client.to_oxigraph(*[r for r in results if r.client is client]):
+                records.add(quad)
+        if identity is not None and not isinstance(identity, Identity):
+            identity = Identity.of(*clients, decision=identity)
+        options.setdefault("schema", [c.schema for c in clients])
+        return cls.from_rdf(records, identity=identity, **options)
 
     # -- values -----------------------------------------------------------------------------
 
@@ -477,6 +525,10 @@ class PropertyGraph:
             used = Counter(first.values())
             first = {iri: n if used[n] == 1 else curie[iri] for iri, n in first.items()}
         name = {**first, **{iri: n for iri, n in overrides.items() if iri in iris}}
+        for key in keys:
+            base, _, source = key.partition(_BESIDE)
+            if source:
+                name[key] = f"{name.get(base) or _local(base)}_{source}"
         folds = {f"fold:{i}": f.name or name[f.cls] for i, f in enumerate(self.folds)}
         self._groups = {
             "labels": sorted(labels),
@@ -500,8 +552,9 @@ class PropertyGraph:
             properties: Properties,
             origins: Mapping[str, list[str]] | None = None,
         ) -> None:
+            """Add the statements of properties, each from the IRI that stated it."""
             for key, values in properties.items():
-                predicate = ox.NamedNode(key)
+                predicate = ox.NamedNode(_predicate(key))
                 stated = (origins or {}).get(key)
                 for i, value in enumerate(values):
                     who = _ox_node(stated[i]) if stated else subject
@@ -589,6 +642,7 @@ class PropertyGraph:
             "folds": [
                 {"fold": self._fold_label(i), **counts} for i, counts in enumerate(self.fold_counts)
             ],
+            "cited": self.cited,
             "checks": self.checks,
         }
 
@@ -623,8 +677,9 @@ class PropertyGraph:
     def to_networkx(self) -> Any:
         """Return a ``networkx.MultiDiGraph``: node and edge attributes are native values.
 
-        Nodes carry ``labels``; edges are keyed by their type and carry ``type`` (and ``via``,
-        the folded node).
+        Nodes carry ``labels`` (and ``ids``); edges are keyed by their type and carry ``type``
+        (and ``via``, the folded node). A property named as one of these (the other classes of
+        a folded catalysis, rdf:type) is kept as ``rdf_<name>``.
         """
         import networkx as nx
 
@@ -633,11 +688,11 @@ class PropertyGraph:
         for node in self.nodes.values():
             labels = list(dict.fromkeys(namer[label] for label in node.labels))
             ids = {"ids": list(node.members)} if node.members else {}
-            graph.add_node(node.id, labels=labels, **ids, **self._plain(node.properties))
+            graph.add_node(node.id, labels=labels, **ids, **_aside(self._plain(node.properties)))
         for edge in self.edges:
             kind = self._edge_type(edge, namer)
             extra = {"via": edge.via} if edge.via else {}
-            attrs = {"type": kind, **extra, **self._plain(edge.properties)}
+            attrs = {"type": kind, **extra, **_aside(self._plain(edge.properties))}
             graph.add_edge(edge.source, edge.target, key=kind, **attrs)
         return graph
 
@@ -670,6 +725,7 @@ class PropertyGraph:
         namer = self._namer()
 
         def value(v: Value) -> dict[str, Any]:
+            """Return a value as JSON: native where JSON has the type."""
             native = self.native(v)
             plain = native if isinstance(native, (str, int, float, bool)) else v.lexical
             out: dict[str, Any] = {"value": plain}
@@ -680,6 +736,7 @@ class PropertyGraph:
             return out
 
         def props(properties: Properties) -> dict[str, list[dict[str, Any]]]:
+            """Return properties as JSON, by name."""
             return {namer[k]: [value(v) for v in values] for k, values in properties.items()}
 
         return {
@@ -762,6 +819,16 @@ class PropertyGraph:
 # -- helpers ----------------------------------------------------------------------------------
 
 
+_RESERVED = ("type", "via", "labels", "ids")
+
+
+def _aside(properties: dict[str, Any]) -> dict[str, Any]:
+    """Return properties with those named as a reserved attribute renamed ``rdf_<name>``."""
+    return {
+        f"rdf_{k}" if k.partition("__")[0] in _RESERVED else k: v for k, v in properties.items()
+    }
+
+
 def _items(nodes: Iterable[PGNode], edges: Iterable[PGEdge]) -> list[PGNode | PGEdge]:
     return [*nodes, *edges]
 
@@ -782,6 +849,7 @@ def _difference(source: ox.Dataset, built: ox.Dataset) -> tuple[set[str], set[st
 
 def _expand(fold: Fold, prefixes: Mapping[str, str]) -> Fold:
     def iri(text: str) -> str:
+        """Return the IRI of a CURIE, or the text."""
         prefix, _, local = text.partition(":")
         if text.startswith(("http://", "https://", "urn:")) or prefix not in prefixes:
             return text
@@ -836,6 +904,46 @@ def _apply_fold(
     return dict(counts)
 
 
+def _cited_as_values(nodes: dict[str, PGNode], edges: list[PGEdge]) -> dict[str, Any]:
+    """Make each resource that the RDF only cites a reference value of the node citing it.
+
+    A resource is described when it has a class, a value, or a link of its own; one that is
+    only the object of links (an InterPro entry that a UniProt record cites) is not a node.
+    The value keeps the IRI as written, so the statement is given back.
+    """
+    starts = {e.source for e in edges}
+    folded = {end for e in edges if e.fold is not None for end in (e.source, e.target)}
+    bare = {
+        nid
+        for nid, node in nodes.items()
+        if not node.labels and not node.properties and nid not in starts and nid not in folded
+    }
+    by_predicate: Counter[str] = Counter()
+    kept: list[PGEdge] = []
+    for edge in edges:
+        if edge.fold is None and edge.target in bare:
+            written = edge.source_iri or edge.source
+            _add_value(
+                nodes[edge.source],
+                edge.type,
+                Value(edge.target_iri or edge.target, REFERENCE),
+                written,
+            )
+            by_predicate[edge.type] += 1
+            continue
+        kept.append(edge)
+    edges[:] = kept
+    removed = sorted(bare)
+    for nid in removed:
+        del nodes[nid]
+    return {
+        "resources": len(removed),
+        "links": sum(by_predicate.values()),
+        "by_predicate": dict(by_predicate.most_common()),
+        "basis": "cited, not described: no class, value or link of its own",
+    }
+
+
 def _merge_nodes(nodes: dict[str, PGNode], members: Iterable[str], keep: str) -> None:
     """Merge *members* into the node *keep*, keeping the IRI that stated each label and value."""
     node = nodes[keep]
@@ -863,6 +971,7 @@ def _keep(nodes: dict[str, PGNode], members: Iterable[str], preferred: str | Non
     """Return the member that a merge keeps: most data, then the preferred IRI, then by IRI."""
 
     def weight(member: str) -> tuple[int, bool, str]:
+        """Return the rank of a member: data, then preferred, then IRI."""
         node = nodes[member]
         data = len(node.labels) + sum(len(v) for v in node.properties.values())
         return (data, member == preferred, member)
@@ -884,7 +993,7 @@ def _retarget(nodes: dict[str, PGNode], edges: list[PGEdge], canonical: Mapping[
         edge.source, edge.target = source, target
         written_source = edge.source_iri or source
         written_target = edge.target_iri or target
-        if edge.fold is None and source == target and written_source != written_target:
+        if edge.fold is None and source == target:
             _add_value(nodes[source], edge.type, Value(written_target, REFERENCE), written_source)
             internal += 1
             continue
@@ -999,6 +1108,7 @@ def _apply_identity(
                 by_identifier.setdefault(found.curie, nid)
 
     def node_of(iri: str) -> str | None:
+        """Return the node of an IRI, or of its identifier."""
         if iri in nodes:
             return iri
         found = parse(iri)
@@ -1024,6 +1134,7 @@ def _apply_identity(
         root: dict[str, str] = {}
 
         def find(n: str) -> str:
+            """Return the root of a node."""
             while root.get(n, n) != n:
                 n = root[n]
             return n
@@ -1043,11 +1154,19 @@ def _apply_identity(
             if any(not _joined(keys, allowed) for keys in by_prefix.values() if len(keys) > 1):
                 refused += 1  # never two identifiers of one namespace, but declared variants
                 continue
-            keep = _keep(nodes, members, None)
+            # The issuer's record names the node (UniProt's IRI for a protein that WikiPathways
+            # draws with an Ensembl gene id), else the member with most data.
+            issuers = [
+                m
+                for m in members
+                if (read := parse(m)) and set(nodes[m].labels) & issued.get(read.prefix, set())
+            ]
+            keep = min(issuers) if issuers else _keep(nodes, members, None)
             _merge_nodes(nodes, members, keep)
             found_in.update(dict.fromkeys(members, keep))
             exact += 1
         internal += _retarget(nodes, edges, found_in)
+    beside = _issuer_speaks(nodes, issued)
     relabelled = _reconcile_labels(nodes, identity.labels, issued)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
@@ -1067,6 +1186,58 @@ def _apply_identity(
         "mappings": rows,
         "undecided": len(undecided),
         "labels": relabelled,
+        "issuer_values": beside,
+    }
+
+
+def _issuer_speaks(nodes: dict[str, PGNode], issued: Mapping[str, set[str]]) -> dict[str, Any]:
+    """On a merged node, let the issuer's record speak for each key it states.
+
+    The issuer's record is the member whose classes are those its source gives the identifiers
+    it issues (the ChEBI class of chebi:15377). Where it states a key, the values of the other
+    members move beside it, to the key and their source (WikiPathways' labels of water: "2
+    H2O", "oxidized thioredoxin"), so the node has the issuer's name and nothing is lost.
+    """
+    from rdfsolve.identifiers import parse
+
+    source_of = {c: prefix for prefix, classes in issued.items() for c in classes}
+    moved: Counter[str] = Counter()
+    for node in nodes.values():
+        if not node.members or not node.label_origins:
+            continue
+        classes: dict[str, set[str]] = defaultdict(set)
+        for label, origin in zip(node.labels, node.label_origins, strict=True):
+            classes[origin].add(label)
+        issuers = {
+            member
+            for member, found in classes.items()
+            if (read := parse(member)) and found & issued.get(read.prefix, set())
+        }
+        if not issuers:
+            continue
+        for key in list(node.properties):
+            stated = node.origins.get(key) or [node.id] * len(node.properties[key])
+            if not any(origin in issuers for origin in stated):
+                continue
+            keep: list[Value] = []
+            keep_origins: list[str] = []
+            for value, origin in zip(node.properties[key], stated, strict=True):
+                if origin in issuers:
+                    keep.append(value)
+                    keep_origins.append(origin)
+                    continue
+                source = next(
+                    (source_of[c] for c in sorted(classes.get(origin, ())) if c in source_of),
+                    "other",
+                )
+                aside = f"{key}{_BESIDE}{source}"
+                node.properties.setdefault(aside, []).append(value)
+                node.origins.setdefault(aside, []).append(origin)
+                moved[aside] += 1
+            node.properties[key], node.origins[key] = keep, keep_origins
+    return {
+        "values_beside_the_issuer": dict(moved.most_common()),
+        "basis": "the record of the source that issues the identifier names the node",
     }
 
 
@@ -1141,6 +1312,7 @@ def _joined(keys: list[str], pairs: set[frozenset[str]]) -> bool:
     root = {k: k for k in keys}
 
     def find(k: str) -> str:
+        """Return the root of a key."""
         while root[k] != k:
             k = root[k]
         return k
@@ -1232,6 +1404,7 @@ def _flatten(graph: Any) -> Any:
     flat = graph.copy()
 
     def scalar(value: Any) -> Any:
+        """Return a value that GraphML can hold."""
         if isinstance(value, list):
             return json.dumps(
                 [v if isinstance(v, (str, int, float, bool)) else str(v) for v in value]
@@ -1281,6 +1454,7 @@ def _write_neo4j_csv(
     strings = {k for k in keys if header[k].split(":")[-1].startswith("string")}
 
     def cell(key: str, value: Any) -> str:
+        """Return the CSV cell of a value."""
         items = value if isinstance(value, list) else [value]
         if key in strings:
             return delimiter.join(str(v) for v in items)

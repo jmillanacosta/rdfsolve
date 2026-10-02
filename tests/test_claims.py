@@ -109,3 +109,48 @@ def test_a_property_graph_follows_the_decision():
     assert O + "CHEBI_91146" in sphingomyelin.members and O + "CHEBI_89488" not in sphingomyelin.members
     metabolites = [n for n in pg.nodes.values() if WP + "Metabolite" in n.labels]
     assert len(metabolites) == 3 and all(n.labels == [WP + "Metabolite"] for n in metabolites)
+
+
+def test_the_issuer_preferred_entry_is_taken_and_ask_finds_its_own_questions():
+    """BridgeDb links ASAH1 to its Swiss-Prot entry and to a TrEMBL one; the entry UniProt
+    reviewed is taken. Asked without identifiers, ChEBI is asked about the subjects of the
+    claims into ChEBI."""
+    stated = Claims.stated(rdf(), BRIDGEDB, "wikipathways")
+    asked = stated.ask(ChEBI())
+    assert ("lipidmaps:LMSP03010023", "chebi") in {(r.subject, r.object.split(":")[0]) for r in asked.table().itertuples() if r.source == "chebi"}
+    decision = asked.decide(namespaces=["uniprot", "chebi"], prefer=["http://purl.uniprot.org/uniprot/Q13510"])
+    rows = decision.table().set_index("subject")
+    assert rows.loc["ensembl:ENSG00000104763", "outcome"] == "accepted: preferred by the issuer, 1 not"
+    assert rows.loc["ensembl:ENSG00000104763", "not preferred"] == "uniprot:A0A1B0GTA6"
+    assert decision.targets("uniprot") == [IDO + "uniprot/Q13510"]
+    assert O + "CHEBI_91146" in decision.targets("chebi")
+
+
+def test_one_node_per_entity_named_by_its_issuer():
+    """The protein WikiPathways draws with an Ensembl gene id and its UniProt entry are one node
+    keyed by UniProt's IRI; the metabolite takes ChEBI's name and keeps WikiPathways' beside it;
+    the TrEMBL entry the RDF only cites is a value, not a node."""
+    decision = claims().decide(namespaces=["uniprot", "chebi"], prefer=["http://purl.uniprot.org/uniprot/Q13510"])
+    issuers = [
+        SimpleNamespace(issued_kinds=lambda: {"chebi": ["http://www.w3.org/2002/07/owl#Class"]}),
+        SimpleNamespace(issued_kinds=lambda: {"uniprot": ["http://purl.uniprot.org/core/Protein"]}),
+        SimpleNamespace(issued_kinds=lambda: {"wikipathways": [WP + "Metabolite", WP + "Protein"]}),
+    ]
+    data = [q for q in rdf() if "A0A1B0GTA6" not in q.subject.value]  # its record was not fetched
+    pg = PropertyGraph.from_rdf(data, identity=Identity.of(*issuers, decision=decision))
+    report = pg.report()
+    assert report["lossless"]["passed"]
+    protein = pg.nodes["http://purl.uniprot.org/uniprot/Q13510"]
+    assert IDO + "ensembl/ENSG00000104763" in protein.members and protein.labels == [WP + "Protein"]
+    assert "http://purl.uniprot.org/uniprot/A0A1B0GTA6" not in pg.nodes
+    assert not [n for n in pg.nodes.values() if not n.labels], "every node has a class"
+    node = pg.to_networkx().nodes[O + "CHEBI_91146"]
+    assert node["label"] == "C24:1 sphingomyelin" and node["label_wikipathways"] == "C24:1DH SM"
+
+
+def test_prefer_takes_client_results():
+    """A Results of the issuer's preferred entries (UniProt's reviewed ones) names them."""
+    reviewed = SimpleNamespace(records=[SimpleNamespace(uri="http://purl.uniprot.org/uniprot/Q13510")])
+    decision = claims().decide(namespaces=["uniprot"], prefer=reviewed)
+    assert decision.targets("uniprot") == [IDO + "uniprot/Q13510"]
+    assert claims().decide(namespaces=["uniprot"], prefer=[reviewed]).targets("uniprot") == [IDO + "uniprot/Q13510"]
