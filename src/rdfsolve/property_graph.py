@@ -37,7 +37,7 @@ import csv
 import json
 import re
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from itertools import combinations
@@ -207,6 +207,11 @@ class Identity:
     - *exact* merges two different identifiers of one kind that are linked one to one both ways
       and both have data (a WikiPathways metabolite and its ChEBI class), into one node listing
       both; without it they stay linked by an edge.
+    - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
+      WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
+      types. With "majority" it keeps the classes of the source that most nodes of the graph
+      share; a sequence of class IRIs keeps the first class it holds; "all" keeps every class.
+      The other classes become its ``type`` property (references), so the RDF is given back.
     """
 
     merge: bool = True
@@ -214,6 +219,7 @@ class Identity:
     attributes: bool = True
     mappings: Iterable[str] | None = None
     exact: bool = False
+    labels: str | Sequence[str] = "majority"
 
 
 def _ox_id(term: ox.NamedNode | ox.BlankNode) -> str:
@@ -305,11 +311,16 @@ class PropertyGraph:
         names: Names = "local",
         prefixes: Mapping[str, str] | None = None,
         identity: Identity | None = None,
+        as_attributes: Iterable[str] | None = None,
     ) -> PropertyGraph:
         """Build a property graph from an RDF graph, with the folds applied where they hold.
 
         *identity* merges the nodes of one identifier and decides how mappings are shown
         (:class:`Identity`); the report records every decision and what stays undecided.
+        *as_attributes* are predicates whose IRI values are node attributes (references), not
+        edges: by default the class and property hierarchy (rdfs:subClassOf, subPropertyOf), so
+        a ChEBI class lists its superclasses; a blank-node value (an OWL restriction) stays an
+        edge.
 
         *types* overrides :data:`DEFAULT_TYPES` per datatype IRI (None keeps the lexical form);
         ``native=False`` keeps every literal as written. *names*: see the module documentation.
@@ -320,6 +331,9 @@ class PropertyGraph:
         if hasattr(graph, "namespaces"):
             prefixes.update({p: str(ns) for p, ns in graph.namespaces() if p and p not in prefixes})
         quads = _quads(graph)
+        from rdfsolve.ontology.vocabulary import HIERARCHY_PREDICATES
+
+        attribute_predicates = set(HIERARCHY_PREDICATES if as_attributes is None else as_attributes)
         nodes: dict[str, PGNode] = {}
         edges: list[PGEdge] = []
         named: set[str] = set()
@@ -339,7 +353,9 @@ class PropertyGraph:
             subject = node(s)
             if p == _TYPE and isinstance(o, ox.NamedNode):
                 subject.labels.append(o.value)
-            elif isinstance(o, ox.Literal):
+            elif isinstance(o, ox.Literal) or (
+                p in attribute_predicates and isinstance(o, ox.NamedNode)
+            ):
                 subject.properties.setdefault(p, []).append(Value.of(o))
             elif isinstance(o, (ox.NamedNode, ox.BlankNode)):
                 node(o)
@@ -875,7 +891,9 @@ def _apply_identity(
 
     chosen = set(identity.mappings) if identity.mappings is not None else None
     issued = {prefix: set(classes) for prefix, classes in identity.kinds.items()}
-    incoming: Counter[str] = Counter(e.target for e in edges if e.fold is None)
+    incoming: Counter[str] = Counter(
+        target for _, target in {(e.source, e.target) for e in edges if e.fold is None}
+    )
     has_out = {e.source for e in edges}
     per_link: Counter[tuple[str, str]] = Counter(
         (e.source, e.type) for e in edges if e.fold is None
@@ -971,6 +989,7 @@ def _apply_identity(
             found_in.update(dict.fromkeys(members, keep))
             exact += 1
         internal += _retarget(nodes, edges, found_in)
+    relabelled = _reconcile_labels(nodes, identity.labels)
     rows = sorted(decisions.values(), key=lambda r: (-r["links"], r["predicate"]))
     undecided = [r for r in rows if "undecided" in r["decision"]]
     for row in undecided:
@@ -988,6 +1007,56 @@ def _apply_identity(
         "kinds": {prefix: sorted(classes) for prefix, classes in sorted(issued.items())},
         "mappings": rows,
         "undecided": len(undecided),
+        "labels": relabelled,
+    }
+
+
+def _reconcile_labels(nodes: dict[str, PGNode], policy: str | Sequence[str]) -> dict[str, Any]:
+    """Give each merged node the classes of one of its sources; the others become ``type``."""
+    if policy == "all":
+        return {"policy": "all", "nodes": 0}
+    graph_labels = [set(n.labels) for n in nodes.values()]
+    moved = 0
+    kept: Counter[str] = Counter()
+    ties = 0
+    for node in nodes.values():
+        if not node.members or not node.label_origins:
+            continue
+        by_source: dict[str, set[str]] = defaultdict(set)
+        for label, origin in zip(node.labels, node.label_origins, strict=True):
+            by_source[origin].add(label)
+        candidates = {frozenset(found) for found in by_source.values() if found}
+        if len(candidates) < 2:
+            continue
+        if isinstance(policy, str):
+            support = {c: sum(c <= labels for labels in graph_labels) for c in candidates}
+            best = max(support.values())
+            top = [c for c in candidates if support[c] == best]
+            if len(top) > 1:
+                ties += 1
+                continue
+            chosen = top[0]
+        else:
+            preferred = next((c for cls in policy for c in candidates if cls in c), None)
+            if preferred is None:
+                continue
+            chosen = preferred
+        labels, origins = [], []
+        for label, origin in zip(node.labels, node.label_origins, strict=True):
+            if label in chosen:
+                labels.append(label)
+                origins.append(origin)
+            else:
+                _add_value(node, _TYPE, Value(label, REFERENCE), origin)
+                moved += 1
+        node.labels, node.label_origins = labels, origins
+        kept[" ".join(sorted(chosen))] += 1
+    return {
+        "policy": policy if isinstance(policy, str) else list(policy),
+        "nodes": sum(kept.values()),
+        "kept_classes": dict(kept),
+        "classes_moved_to_type": moved,
+        "ties_kept_all": ties,
     }
 
 

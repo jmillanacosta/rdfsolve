@@ -48,6 +48,9 @@ OWL_CONSTRUCT_TYPES = frozenset(
     }
 )
 
+# Predicates of a class or property hierarchy: in a property graph, a node attribute.
+HIERARCHY_PREDICATES = (SUBCLASS_OF, RDFS + "subPropertyOf")
+
 # Predicates that state the structure of an ontology between named terms.
 STRUCTURE_PREDICATES = (
     SUBCLASS_OF,

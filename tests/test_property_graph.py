@@ -267,9 +267,33 @@ def test_exact_identity_merges_two_identifiers_of_one_kind():
         "https://identifiers.org/chebi/CHEBI:15377",
         "https://identifiers.org/cas/7732-18-5",
     }
-    assert {"http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"} <= set(water.labels)
+    # One kind of entity, one node type: the classes most nodes share; the others are its type.
+    metabolite, owl_class = "http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"
+    assert set(water.labels) == {metabolite}
+    assert [v.lexical for v in water.properties["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]] == [owl_class]
+    assert report["identity"]["labels"]["classes_moved_to_type"] == 1
+    every = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels="all"))
+    assert {metabolite, owl_class} <= set(next(n for n in every.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members).labels)
+    stated = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=[owl_class]))
+    chosen = next(n for n in stated.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+    assert set(chosen.labels) == {owl_class} and stated.report()["lossless"]["passed"]
     rows = report["identity"]["mappings"]
     assert not [r for r in rows if r["example"][0] == r["example"][1]], "A self statement is no mapping"
     assert "https://identifiers.org/chebi/CHEBI:15422" in one.nodes, "Two ChEBI ids are two entities"
     default = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds)).report()["identity"]
     assert {r["predicate"] for r in default["mappings"]} == {"http://www.w3.org/2004/02/skos/core#exactMatch"}
+
+
+def test_the_hierarchy_is_a_node_attribute():
+    """A superclass is a property of the node (a reference), not an edge; a blank-node superclass
+    (an OWL restriction) stays an edge. The RDF is given back."""
+    data = ox.Dataset(ox.parse(b"""
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
+        <urn:serine> a owl:Class ; rdfs:label "serine" ; rdfs:subClassOf <urn:amino-acid>, [ a owl:Restriction ] .
+        <urn:amino-acid> a owl:Class ; rdfs:label "amino acid" .""", ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(data)
+    assert pg.report()["lossless"]["passed"]
+    assert pg.to_networkx().nodes["urn:serine"]["subClassOf"] == "urn:amino-acid"
+    assert [e.target for e in pg.edges if e.source == "urn:serine"] == [next(i for i in pg.nodes if i.startswith("_:"))]
+    edges = PropertyGraph.from_rdf(data, as_attributes=())
+    assert {e.target for e in edges.edges if e.source == "urn:serine"} >= {"urn:amino-acid"}
