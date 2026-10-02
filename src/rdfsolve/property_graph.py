@@ -190,6 +190,9 @@ class PGEdge:
     # nodes it absorbed to attach them (the catalysis), which are given back.
     attached: Properties = field(default_factory=dict)
     absorbed: list[PGNode] = field(default_factory=list)
+    # Further statements this edge stands for, as (source, target) IRIs written in the RDF:
+    # two drawings of cholesterol, merged, are each part of the pathway; one edge, two statements.
+    also: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -495,9 +498,13 @@ class Identity:
       form (tautomers in ChEBI); only these may share a node with each other.
     - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
       WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
-      types. With "role" (the default) it keeps the classes its sources give it other than the
-      issuer kinds of *kinds*: the issuer's classes decide identity, the data's own classes are
-      its node type, so a metabolite is a Metabolite whether it was merged or not. "majority"
+      types. With "issuer" (the default) a node whose identifier's issuer gives a kind of
+      entity (UniProt's Protein) has that kind as its node type, however each source drew it
+      (WikiPathways' GeneProduct or Protein), and the sources' classes become its ``type``;
+      where the issuer's class names no kind (ChEBI's owl:Class) it is "role". With "role" it
+      keeps the classes its sources give it other than the issuer kinds of *kinds*: the
+      issuer's classes decide identity, the data's own classes are its node type, so a
+      metabolite is a Metabolite whether it was merged or not. "majority"
       keeps the classes of the source that most nodes share (fragile: WP4726 has 70 ChEBI
       classes and 67 metabolites); a sequence of class IRIs keeps the first class it holds;
       "all" keeps every class. The other classes become its ``type`` property (references),
@@ -517,7 +524,7 @@ class Identity:
     attributes: bool = True
     mappings: Iterable[str] | None = None
     exact: bool = False
-    labels: str | Sequence[str] = "role"
+    labels: str | Sequence[str] = "issuer"
     same: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
     variants: Iterable[tuple[str, str]] = field(default=(), compare=False, hash=False)
     unfold: Iterable[str] = field(default=(), compare=False, hash=False)
@@ -864,9 +871,14 @@ class PropertyGraph:
         else:
             first = {iri: _local(iri) for iri in iris}
         if not callable(strategy) and strategy not in ("curie", "iri"):
-            # Names that clash fall back to the CURIE (never for a function or the IRI).
-            used = Counter(first.values())
-            first = {iri: n if used[n] == 1 else curie[iri] for iri, n in first.items()}
+            # Names that clash fall back to the CURIE (never for a function or the IRI). Labels,
+            # edge types and keys are separate in a property graph: a clash is within one of them
+            # (an edge type wp:source and a key dc:source are both "source").
+            clashing = set()
+            for group in (labels, types | {f.cls for f in self.folds}, keys):
+                used = Counter(first[i] for i in group)
+                clashing |= {i for i in group if used[first[i]] > 1}
+            first = {iri: curie[iri] if iri in clashing else n for iri, n in first.items()}
         name = {**first, **{iri: n for iri, n in overrides.items() if iri in iris}}
         for key in keys:
             base, _, source = key.partition(_BESIDE)
@@ -918,6 +930,8 @@ class PropertyGraph:
             target = _ox_node(edge.target_iri or edge.target)
             if edge.fold is None:
                 out.add(ox.Quad(source, ox.NamedNode(edge.type), target))
+                for start, end in edge.also:
+                    out.add(ox.Quad(_ox_node(start), ox.NamedNode(edge.type), _ox_node(end)))
                 continue
             for node in edge.absorbed:
                 for label in node.labels:
@@ -1145,8 +1159,8 @@ class PropertyGraph:
     def to_networkx(self) -> Any:
         """Return a ``networkx.MultiDiGraph``: node and edge attributes are native values.
 
-        Nodes carry ``labels`` (and ``ids``); edges are keyed by their type and carry ``type``
-        (and ``via``, the folded node). A property named as one of these (the other classes of
+        Nodes carry ``labels`` (and ``ids``); edges carry ``type`` (and ``via``, the folded node)
+        and are keyed by both: two complexes give two edges between the same proteins. A property named as one of these (the other classes of
         a folded catalysis, rdf:type) is kept as ``rdf_<name>``.
         """
         import networkx as nx
@@ -1169,7 +1183,8 @@ class PropertyGraph:
                 **_aside(self._plain(edge.properties)),
                 **_aside(self._plain(edge.attached)),
             }
-            graph.add_edge(edge.source, edge.target, key=kind, **attrs)
+            key = f"{kind} {edge.via}" if edge.via else kind
+            graph.add_edge(edge.source, edge.target, key=key, **attrs)
         return graph
 
     def to_pg_schema(self, name: str = "graph") -> str:
@@ -1621,14 +1636,10 @@ def _cited_as_values(nodes: dict[str, PGNode], edges: list[PGEdge]) -> dict[str,
     kept: list[PGEdge] = []
     for edge in edges:
         if edge.fold is None and edge.target in bare:
-            written = edge.source_iri or edge.source
-            _add_value(
-                nodes[edge.source],
-                edge.type,
-                Value(edge.target_iri or edge.target, REFERENCE),
-                written,
-            )
-            by_predicate[edge.type] += 1
+            statements = [(edge.source_iri or edge.source, edge.target_iri or edge.target)]
+            for written, cited in [*statements, *edge.also]:
+                _add_value(nodes[edge.source], edge.type, Value(cited, REFERENCE), written)
+                by_predicate[edge.type] += 1
             continue
         kept.append(edge)
     edges[:] = kept
@@ -1676,6 +1687,30 @@ def _keep(nodes: dict[str, PGNode], members: Iterable[str], preferred: str | Non
         return (data, member == preferred, member)
 
     return max(members, key=weight)
+
+
+def _collapse(edges: list[PGEdge]) -> int:
+    """Make edges that merges made the same (ends, type, properties) one edge; return how many
+    were folded in. The edge keeps each statement's IRIs as written (``also``).
+    """
+    first: dict[tuple[str, str, str, str], PGEdge] = {}
+    kept: list[PGEdge] = []
+    for edge in edges:
+        if edge.fold is not None or edge.derived or edge.via:
+            kept.append(edge)
+            continue
+        key = (edge.source, edge.type, edge.target, repr(sorted(edge.properties.items())))
+        if key not in first:
+            first[key] = edge
+            kept.append(edge)
+            continue
+        same = first[key]
+        written = (edge.source_iri or edge.source, edge.target_iri or edge.target)
+        if written != (same.source_iri or same.source, same.target_iri or same.target):
+            same.also.append(written)
+    folded_in = len(edges) - len(kept)
+    edges[:] = kept
+    return folded_in
 
 
 def _retarget(nodes: dict[str, PGNode], edges: list[PGEdge], canonical: Mapping[str, str]) -> int:
@@ -1882,6 +1917,7 @@ def _apply_identity(
     beside = _issuer_speaks(nodes, issued)
     relabelled = _reconcile_labels(nodes, identity.labels, issued)
     unfolded = _unfold(nodes, edges, set(identity.unfold), issued)
+    collapsed = _collapse(edges)
     # A node that joins several namespaces, one of which no source here gives a kind.
     unknown_kinds: Counter[str] = Counter()
     for node in nodes.values():
@@ -1908,6 +1944,7 @@ def _apply_identity(
         "labels": relabelled,
         "issuer_values": beside,
         "kept_apart": apart,
+        "edges_made_one": collapsed,
         "unfolded": unfolded,
         "merged_with_unknown_kind": {
             "identifiers": dict(unknown_kinds.most_common()),
@@ -2034,6 +2071,19 @@ def _issuer_speaks(nodes: dict[str, PGNode], issued: Mapping[str, set[str]]) -> 
     }
 
 
+# Classes that say an identifier names a class or a concept, not what kind of entity it is.
+_GENERIC_CLASSES = frozenset(
+    {
+        "http://www.w3.org/2002/07/owl#Class",
+        "http://www.w3.org/2002/07/owl#NamedIndividual",
+        "http://www.w3.org/2002/07/owl#Thing",
+        "http://www.w3.org/2000/01/rdf-schema#Class",
+        "http://www.w3.org/2000/01/rdf-schema#Resource",
+        "http://www.w3.org/2004/02/skos/core#Concept",
+    }
+)
+
+
 def _reconcile_labels(
     nodes: dict[str, PGNode],
     policy: str | Sequence[str],
@@ -2045,7 +2095,7 @@ def _reconcile_labels(
     graph_labels = [set(n.labels) for n in nodes.values()]
     moved = 0
     kept: Counter[str] = Counter()
-    ties = 0
+    ties = by_issuer = 0
     for node in nodes.values():
         if not node.members or not node.label_origins:
             continue
@@ -2055,18 +2105,24 @@ def _reconcile_labels(
         candidates = {frozenset(found) for found in by_source.values() if found}
         if len(candidates) < 2:
             continue
-        if policy == "role":
+        if policy in ("issuer", "role"):
             # The issuer kinds of this node's own identifiers (CAS and ChEBI for a metabolite),
             # not those of every source (WikiPathways issues its DataNode).
             from rdfsolve.identifiers import parse
 
             own = {found.prefix for iri in node.members if (found := parse(iri))}
             issuer_classes = {c for prefix in own for c in (issued or {}).get(prefix, ())}
+            named = {c for c in candidates if c & issuer_classes and not c <= _GENERIC_CLASSES}
             roles = [c for c in candidates if not c & issuer_classes]
-            if len(roles) != 1:
+            if policy == "issuer" and len(named) == 1:
+                # The issuer's kind of entity (UniProt's Protein), however a source drew it.
+                chosen = frozenset(next(iter(named)) & issuer_classes)
+                by_issuer += 1
+            elif len(roles) != 1:
                 ties += 1
                 continue
-            chosen = roles[0]
+            else:
+                chosen = roles[0]
         elif isinstance(policy, str):
             support = {c: sum(c <= labels for labels in graph_labels) for c in candidates}
             best = max(support.values())
@@ -2096,7 +2152,12 @@ def _reconcile_labels(
         "kept_classes": dict(kept),
         "classes_moved_to_type": moved,
         "ties_kept_all": ties,
-        "basis": "the data's own classes; issuer kinds go to type" if policy == "role" else "",
+        "by_issuer": by_issuer,
+        "basis": {
+            "issuer": "the issuer's kind of entity where it names one (not owl:Class), else the"
+            " data's own classes; the other classes go to type",
+            "role": "the data's own classes; issuer kinds go to type",
+        }.get(policy if isinstance(policy, str) else "", ""),
     }
 
 

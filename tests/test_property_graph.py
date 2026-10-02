@@ -8,7 +8,7 @@ import networkx as nx
 import pyoxigraph as ox
 import pytest
 
-from rdfsolve.property_graph import Conversion, Fold, PropertyGraph, suggest_folds
+from rdfsolve.property_graph import Conversion, Fold, Identity, PropertyGraph, suggest_folds
 from rdfsolve.schema_models import MinedSchema, SchemaPattern
 
 DATA = """
@@ -28,6 +28,7 @@ PREFIXES = {"e": E, "o": "https://other-test.invalid/"}
 
 
 XSD = "http://www.w3.org/2001/XMLSchema#"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 
 def graph():
@@ -48,6 +49,13 @@ def test_plain_export_is_lossless_typed_and_named():
     assert node["score"] == "12a" and node["score__datatype"] == XSD + "integer", "No native form"
     assert node["label"] == ["ASAH1", "acid ceramidase"] and node["label__lang"] == ["", "en"]
     assert report["identity"]["blank_nodes"] == 1
+
+
+def test_an_edge_type_and_a_key_may_share_a_name():
+    data = f"<{E}c1> <{E}source> <{E}asah1> . <{E}asah1> <https://other-test.invalid/source> 'x' ."
+    pg = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
+    assert pg.names()["types"] == {"source": E + "source"}
+    assert "source" in pg.names()["keys"] and pg.report()["names"]["passed"]
 
 
 def test_types_and_names_can_be_set():
@@ -211,12 +219,19 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
 
     data = ox.Dataset(ox.parse(IDS.encode(), ox.RdfFormat.TURTLE))
     protein = "http://purl.uniprot.org/core/Protein"
-    kinds = {"uniprot": [protein], "pr": [protein], "chebi": ["http://www.w3.org/2002/07/owl#Class"]}
+    kinds = {
+        "uniprot": [protein],
+        "pr": [protein],
+        "chebi": ["http://www.w3.org/2002/07/owl#Class"],
+    }
     pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS))
     report = pg.report()
     assert report["lossless"]["passed"], report["lossless"]
     p53 = pg.nodes["http://purl.uniprot.org/uniprot/P04637"]
-    assert p53.members == ["http://purl.uniprot.org/uniprot/P04637", "https://identifiers.org/uniprot/P04637"]
+    assert p53.members == [
+        "http://purl.uniprot.org/uniprot/P04637",
+        "https://identifiers.org/uniprot/P04637",
+    ]
     assert "https://identifiers.org/uniprot/P04637" not in pg.nodes
     water = pg.nodes["http://purl.obolibrary.org/obo/CHEBI_15377"]
     assert len(water.members) == 2 and report["identity"]["statements_within_merged_nodes"] == 1
@@ -225,9 +240,9 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
     assert attribute["exactMatch"] == "http://purl.obolibrary.org/obo/PR_P04637"
     assert attribute["ids"] == p53.members
     gene_links = [e for e in pg.edges if e.source.endswith("ENSG00000141510")]
-    assert {e.target for e in gene_links} == {
-        "http://purl.uniprot.org/uniprot/P04637"
-    }, "A gene and its protein stay linked; nothing is merged across kinds"
+    assert {e.target for e in gene_links} == {"http://purl.uniprot.org/uniprot/P04637"}, (
+        "A gene and its protein stay linked; nothing is merged across kinds"
+    )
     gene = next(n for n in pg.nodes.values() if n.id.endswith("ENSG00000141510"))
     assert "https://identifiers.org/uniprot/A0A087X1C5" in [
         v.lexical for v in gene.properties[WPV + "bdbUniprot"]
@@ -238,9 +253,13 @@ def test_identity_merges_one_identifier_and_decides_each_mapping():
     assert undecided["links"] == 2 and "ensembl" in undecided["decide_with"]
     decided = PropertyGraph.from_rdf(
         data,
-        identity=Identity(kinds={**kinds, "ensembl": ["http://example.org/Gene"]}, mappings=MAPPINGS),
+        identity=Identity(
+            kinds={**kinds, "ensembl": ["http://example.org/Gene"]}, mappings=MAPPINGS
+        ),
     ).report()
-    assert {r["decision"] for r in decided["identity"]["mappings"]} >= {"edge: a relation between two kinds"}
+    assert {r["decision"] for r in decided["identity"]["mappings"]} >= {
+        "edge: a relation between two kinds"
+    }
     assert not [r for r in decided["identity"]["mappings"] if "ensembl" in r["decision"]]
     assert decided["lossless"]["passed"]
 
@@ -264,43 +283,75 @@ def test_exact_identity_merges_two_identifiers_of_one_kind():
     linked = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS))
     rows = {r["decision"] for r in linked.report()["identity"]["mappings"]}
     assert "edge: same kind, one to one; merged with Identity(exact=True)" in rows
-    one = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True))
+    one = PropertyGraph.from_rdf(
+        data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True)
+    )
     report = one.report()
     assert report["lossless"]["passed"] and report["identity"]["merged_exact"] == 1
-    water = next(n for n in one.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+    water = next(
+        n for n in one.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members
+    )
     assert set(water.members) == {
         "http://purl.obolibrary.org/obo/CHEBI_15377",
         "https://identifiers.org/chebi/CHEBI:15377",
         "https://identifiers.org/cas/7732-18-5",
     }
     # One kind of entity, one node type: the data's own class; the issuer's class is its type.
-    metabolite, owl_class = "http://vocabularies.wikipathways.org/wp#Metabolite", "http://www.w3.org/2002/07/owl#Class"
+    metabolite, owl_class = (
+        "http://vocabularies.wikipathways.org/wp#Metabolite",
+        "http://www.w3.org/2002/07/owl#Class",
+    )
     assert set(water.labels) == {metabolite}
-    assert [v.lexical for v in water.properties["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]] == [owl_class]
+    assert [
+        v.lexical for v in water.properties["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]
+    ] == [owl_class]
     assert report["identity"]["labels"]["classes_moved_to_type"] == 1
-    every = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels="all"))
-    assert {metabolite, owl_class} <= set(next(n for n in every.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members).labels)
-    stated = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=[owl_class]))
-    chosen = next(n for n in stated.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+    every = PropertyGraph.from_rdf(
+        data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels="all")
+    )
+    assert {metabolite, owl_class} <= set(
+        next(
+            n for n in every.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members
+        ).labels
+    )
+    stated = PropertyGraph.from_rdf(
+        data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=[owl_class])
+    )
+    chosen = next(
+        n for n in stated.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members
+    )
     assert set(chosen.labels) == {owl_class} and stated.report()["lossless"]["passed"]
     rows = report["identity"]["mappings"]
-    assert not [r for r in rows if r["example"][0] == r["example"][1]], "A self statement is no mapping"
-    assert "https://identifiers.org/chebi/CHEBI:15422" not in water.members, "Two ChEBI ids are two entities"
+    assert not [r for r in rows if r["example"][0] == r["example"][1]], (
+        "A self statement is no mapping"
+    )
+    assert "https://identifiers.org/chebi/CHEBI:15422" not in water.members, (
+        "Two ChEBI ids are two entities"
+    )
     default = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds)).report()["identity"]
-    assert {r["predicate"] for r in default["mappings"]} == {"http://www.w3.org/2004/02/skos/core#exactMatch"}
+    assert {r["predicate"] for r in default["mappings"]} == {
+        "http://www.w3.org/2004/02/skos/core#exactMatch"
+    }
 
 
 def test_the_hierarchy_is_a_node_attribute():
     """A superclass is a property of the node (a reference), not an edge; a blank-node superclass
     (an OWL restriction) stays an edge. The RDF is given back."""
-    data = ox.Dataset(ox.parse(b"""
+    data = ox.Dataset(
+        ox.parse(
+            b"""
         @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix owl: <http://www.w3.org/2002/07/owl#> .
         <urn:serine> a owl:Class ; rdfs:label "serine" ; rdfs:subClassOf <urn:amino-acid>, [ a owl:Restriction ] .
-        <urn:amino-acid> a owl:Class ; rdfs:label "amino acid" .""", ox.RdfFormat.TURTLE))
+        <urn:amino-acid> a owl:Class ; rdfs:label "amino acid" .""",
+            ox.RdfFormat.TURTLE,
+        )
+    )
     pg = PropertyGraph.from_rdf(data)
     assert pg.report()["lossless"]["passed"]
     assert pg.to_networkx().nodes["urn:serine"]["subClassOf"] == "urn:amino-acid"
-    assert [e.target for e in pg.edges if e.source == "urn:serine"] == [next(i for i in pg.nodes if i.startswith("_:"))]
+    assert [e.target for e in pg.edges if e.source == "urn:serine"] == [
+        next(i for i in pg.nodes if i.startswith("_:"))
+    ]
     edges = PropertyGraph.from_rdf(data, as_attributes=())
     assert {e.target for e in edges.edges if e.source == "urn:serine"} >= {"urn:amino-acid"}
 
@@ -311,16 +362,28 @@ def test_a_merged_node_takes_the_data_class_not_the_majority():
     from rdfsolve.property_graph import Identity
 
     extra = "".join(
-        f"<http://purl.obolibrary.org/obo/CHEBI_{n}> a <http://www.w3.org/2002/07/owl#Class> .\n" for n in range(1, 6)
+        f"<http://purl.obolibrary.org/obo/CHEBI_{n}> a <http://www.w3.org/2002/07/owl#Class> .\n"
+        for n in range(1, 6)
     )
     data = ox.Dataset(ox.parse((IDS + extra).encode(), ox.RdfFormat.TURTLE))
     chemical = ["http://www.w3.org/2002/07/owl#Class"]
     # WikiPathways issues its own DataNode kind; that must not count against a metabolite's role.
-    kinds = {"chebi": chemical, "cas": chemical, "wikipathways": ["http://vocabularies.wikipathways.org/wp#DataNode", "http://vocabularies.wikipathways.org/wp#Metabolite"]}
+    kinds = {
+        "chebi": chemical,
+        "cas": chemical,
+        "wikipathways": [
+            "http://vocabularies.wikipathways.org/wp#DataNode",
+            "http://vocabularies.wikipathways.org/wp#Metabolite",
+        ],
+    }
     metabolite = "http://vocabularies.wikipathways.org/wp#Metabolite"
     for policy, expected in (("role", metabolite), ("majority", chemical[0])):
-        pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=policy))
-        water = next(n for n in pg.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members)
+        pg = PropertyGraph.from_rdf(
+            data, identity=Identity(kinds=kinds, mappings=MAPPINGS, exact=True, labels=policy)
+        )
+        water = next(
+            n for n in pg.nodes.values() if "https://identifiers.org/cas/7732-18-5" in n.members
+        )
         assert water.labels == [expected], policy
         assert pg.report()["lossless"]["passed"]
 
@@ -329,19 +392,31 @@ def test_networkx_keeps_the_edge_type_when_a_fold_has_other_classes():
     """A folded catalysis that is also a DirectedInteraction keeps its edge type; its classes
     are kept as rdf_type."""
     wp = "http://vocabularies.wikipathways.org/wp#"
-    data = ox.Dataset(ox.parse(f"""
+    data = ox.Dataset(
+        ox.parse(
+            f"""
         @prefix wp: <{wp}> .
         <urn:c> a wp:Catalysis, wp:DirectedInteraction ; wp:source <urn:e> ; wp:target <urn:r> .
-        <urn:e> a wp:Protein . <urn:r> a wp:Conversion .""".encode(), ox.RdfFormat.TURTLE))
-    pg = PropertyGraph.from_rdf(data, folds=[Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")])
-    (_, _, attrs), = pg.to_networkx().edges(data=True)
+        <urn:e> a wp:Protein . <urn:r> a wp:Conversion .""".encode(),
+            ox.RdfFormat.TURTLE,
+        )
+    )
+    pg = PropertyGraph.from_rdf(
+        data, folds=[Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")]
+    )
+    ((_, _, attrs),) = pg.to_networkx().edges(data=True)
     assert attrs["type"] == "CATALYSES" and attrs["rdf_type"] == wp + "DirectedInteraction"
 
 
 def test_a_statement_about_itself_is_a_value_not_a_loop():
-    data = ox.Dataset(ox.parse(b"""
+    data = ox.Dataset(
+        ox.parse(
+            b"""
         <https://identifiers.org/chebi/CHEBI:15377> a <urn:Metabolite> ;
-            <urn:bdbChEBI> <https://identifiers.org/chebi/CHEBI:15377> .""", ox.RdfFormat.TURTLE))
+            <urn:bdbChEBI> <https://identifiers.org/chebi/CHEBI:15377> .""",
+            ox.RdfFormat.TURTLE,
+        )
+    )
     pg = PropertyGraph.from_rdf(data)
     assert not pg.edges and pg.report()["lossless"]["passed"]
 
@@ -368,7 +443,9 @@ def test_folds_are_found_in_the_records():
     pg = PropertyGraph.from_rdf(data, folds=folds)
     assert pg.report()["lossless"]["passed"]
     assert all(n.startswith("urn:r") or not n.startswith("urn:c") for n in pg.nodes)
-    assert sum(1 for n in pg.nodes if n.startswith("urn:r")) == 4, "a reaction a catalysis targets stays"
+    assert sum(1 for n in pg.nodes if n.startswith("urn:r")) == 4, (
+        "a reaction a catalysis targets stays"
+    )
 
 
 def _pathway():
@@ -389,13 +466,40 @@ def test_a_fold_of_pairs_links_the_proteins_of_each_complex_and_keeps_the_comple
     """Each pair of proteins of a complex gets a derived edge (the metabolite is not paired); the
     complex stays a node; derived edges are not given back as RDF, so the round trip holds."""
     wp, data = _pathway()
-    ppi = Fold.pairs(wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH")
+    ppi = Fold.pairs(
+        wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH"
+    )
     pg = PropertyGraph.from_rdf(data, folds=[ppi])
-    assert pg.fold_edges(0) == {("urn:p1", "urn:p2"), ("urn:p1", "urn:p3"), ("urn:p2", "urn:p3"), ("urn:p2", "urn:p4")}
+    assert pg.fold_edges(0) == {
+        ("urn:p1", "urn:p2"),
+        ("urn:p1", "urn:p3"),
+        ("urn:p2", "urn:p3"),
+        ("urn:p2", "urn:p4"),
+    }
     assert "urn:c1" in pg.nodes and pg.report()["lossless"]["passed"]
     assert pg.report()["folds"][0]["pairs"] == 4
-    edge = next(d for _, _, d in pg.to_networkx().edges(data=True) if d["type"] == "IN_COMPLEX_WITH")
+    edge = next(
+        d for _, _, d in pg.to_networkx().edges(data=True) if d["type"] == "IN_COMPLEX_WITH"
+    )
     assert edge["derived"] is True and edge["via"] in {"urn:c1", "urn:c2"}
+
+
+def test_two_complexes_of_one_pair_give_two_edges_in_networkx():
+    wp, data = _pathway()
+    data.add(
+        ox.Quad(ox.NamedNode("urn:c3"), ox.NamedNode(wp + "participants"), ox.NamedNode("urn:p1"))
+    )
+    data.add(
+        ox.Quad(ox.NamedNode("urn:c3"), ox.NamedNode(wp + "participants"), ox.NamedNode("urn:p2"))
+    )
+    data.add(ox.Quad(ox.NamedNode("urn:c3"), ox.NamedNode(RDF_TYPE), ox.NamedNode(wp + "Complex")))
+    ppi = Fold.pairs(
+        wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH"
+    )
+    pg = PropertyGraph.from_rdf(data, folds=[ppi])
+    g = pg.to_networkx()
+    assert g.number_of_edges() == len(pg.edges)
+    assert {d["via"] for d in g.get_edge_data("urn:p1", "urn:p2").values()} == {"urn:c1", "urn:c3"}
 
 
 def test_each_fold_is_a_construct_and_a_shacl_rule_that_give_the_same_edges():
@@ -405,7 +509,9 @@ def test_each_fold_is_a_construct_and_a_shacl_rule_that_give_the_same_edges():
 
     wp, data = _pathway()
     catalysis = Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES")
-    ppi = Fold.pairs(wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH")
+    ppi = Fold.pairs(
+        wp + "Complex", wp + "participants", among=wp + "Protein", name="IN_COMPLEX_WITH"
+    )
     pg = PropertyGraph.from_rdf(data, folds=[catalysis, ppi])
     store = ox.Store()
     for quad in data:
@@ -417,7 +523,9 @@ def test_each_fold_is_a_construct_and_a_shacl_rule_that_give_the_same_edges():
         sh = rdflib.Namespace("http://www.w3.org/ns/shacl#")
         assert (None, sh.targetClass, rdflib.URIRef(fold.cls)) in shapes
         assert len(list(shapes.subjects(rdflib.RDF.type, sh.TripleRule))) == 1
-    scoped = {(t.subject.value, t.object.value) for t in store.query(ppi.to_construct(focus=["urn:c2"]))}
+    scoped = {
+        (t.subject.value, t.object.value) for t in store.query(ppi.to_construct(focus=["urn:c2"]))
+    }
     assert scoped == {("urn:p2", "urn:p4")}
 
 
@@ -434,18 +542,29 @@ def test_node_types_are_the_most_specific_stated_classes():
     """A protein stated with or without its superclasses is one node type (wp:Protein); the
     superclasses go to the type property, so the round trip holds."""
     wp = "http://vocabularies.wikipathways.org/wp#"
-    data = ox.Dataset(ox.parse(f"""@prefix wp: <{wp}> .
+    data = ox.Dataset(
+        ox.parse(
+            f"""@prefix wp: <{wp}> .
     <urn:apob> a wp:DataNode, wp:Protein .
     <urn:ldlr> a wp:DataNode, wp:GeneProduct, wp:Protein .
     <urn:hmgcr> a wp:DataNode, wp:GeneProduct .
-    <urn:c> a wp:Complex, wp:DataNode .""".encode(), ox.RdfFormat.TURTLE))
-    hierarchy = {wp + "Protein": {wp + "GeneProduct", wp + "DataNode"}, wp + "GeneProduct": {wp + "DataNode"},
-                 wp + "Complex": {wp + "DataNode"}}
+    <urn:c> a wp:Complex, wp:DataNode .""".encode(),
+            ox.RdfFormat.TURTLE,
+        )
+    )
+    hierarchy = {
+        wp + "Protein": {wp + "GeneProduct", wp + "DataNode"},
+        wp + "GeneProduct": {wp + "DataNode"},
+        wp + "Complex": {wp + "DataNode"},
+    }
     pg = PropertyGraph.from_rdf(data, hierarchy=hierarchy)
     report = pg.report()
     assert report["node_types"] == {"Protein": 2, "GeneProduct": 1, "Complex": 1}
     assert report["lossless"]["passed"]
-    assert report["most_specific_labels"]["moved_to_type"] == {wp + "DataNode": 4, wp + "GeneProduct": 1}
+    assert report["most_specific_labels"]["moved_to_type"] == {
+        wp + "DataNode": 4,
+        wp + "GeneProduct": 1,
+    }
 
 
 def test_a_name_the_issuer_does_not_give_is_a_finding_with_the_query_for_all_such():
@@ -460,19 +579,30 @@ def test_a_name_the_issuer_does_not_give_is_a_finding_with_the_query_for_all_suc
     wp = "http://vocabularies.wikipathways.org/wp#"
     chebi, ido = "http://purl.obolibrary.org/obo/CHEBI_", "https://identifiers.org/chebi/CHEBI:"
     syn = "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym"
-    data = ox.Dataset(ox.parse(f"""@prefix wp: <{wp}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    data = ox.Dataset(
+        ox.parse(
+            f"""@prefix wp: <{wp}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
     <{ido}233150> a wp:Metabolite ; rdfs:label "Esterase" .
     <{chebi}233150> a <http://www.w3.org/2002/07/owl#Class> ; rdfs:label "arecoline hydrobromide" .
     <{ido}15377> a wp:Metabolite ; rdfs:label "2 H₂O" .
     <{chebi}15377> a <http://www.w3.org/2002/07/owl#Class> ; rdfs:label "water" ; <{syn}> "H2O" .
     <urn:k1> a wp:Catalysis ; wp:source <{ido}233150> ; wp:target <urn:r1> .
-    <urn:r1> a wp:Conversion ; wp:source <{ido}15377> .""".encode(), ox.RdfFormat.TURTLE))
+    <urn:r1> a wp:Conversion ; wp:source <{ido}15377> .""".encode(),
+            ox.RdfFormat.TURTLE,
+        )
+    )
     kinds = {"chebi": ["http://www.w3.org/2002/07/owl#Class"], "wikipathways": [wp + "Metabolite"]}
-    pg = PropertyGraph.from_rdf(data, identity=Identity(kinds=kinds), folds=[Fold(wp + "Catalysis", wp + "source", wp + "target")])
+    pg = PropertyGraph.from_rdf(
+        data,
+        identity=Identity(kinds=kinds),
+        folds=[Fold(wp + "Catalysis", wp + "source", wp + "target")],
+    )
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         found = pg.findings()
-    assert [f.stated for f in found] == [["Esterase"]] and found[0].issuer == ["arecoline hydrobromide"]
+    assert [f.stated for f in found] == [["Esterase"]] and found[0].issuer == [
+        "arecoline hydrobromide"
+    ]
     assert any(issubclass(w.category, UpstreamWarning) for w in caught)
     assert f"<{wp}Catalysis>" in found[0].query and f"<{wp}Metabolite>" in found[0].query
     assert "sh:not [ sh:class" in found[0].shape
@@ -496,20 +626,43 @@ def test_a_rule_says_which_source_release_and_target_version_it_is_for():
 
     from rdfsolve.property_graph import provenance
 
-    about = SimpleNamespace(title="WikiPathways", dataset_name="wikipathways", source_version="20260610",
-                            source_issued=None, source_modified=None, retrieved_at=None, generated_at=None,
-                            endpoint="http://localhost:7101", void_uri="https://w3id.org/rdfsolve/void/wikipathways",
-                            generated_by="rdfsolve 0.1.0")
+    about = SimpleNamespace(
+        title="WikiPathways",
+        dataset_name="wikipathways",
+        source_version="20260610",
+        source_issued=None,
+        source_modified=None,
+        retrieved_at=None,
+        generated_at=None,
+        endpoint="http://localhost:7101",
+        void_uri="https://w3id.org/rdfsolve/void/wikipathways",
+        generated_by="rdfsolve 0.1.0",
+    )
     info = provenance(SimpleNamespace(about=about), target="Biolink Model", target_version="4.4.5")
     wp = "http://vocabularies.wikipathways.org/wp#"
-    text = Fold(wp + "Catalysis", wp + "source", wp + "target", "CATALYSES",
-                predicate="https://w3id.org/biolink/vocab/catalyzes").to_shacl(info)
+    text = Fold(
+        wp + "Catalysis",
+        wp + "source",
+        wp + "target",
+        "CATALYSES",
+        predicate="https://w3id.org/biolink/vocab/catalyzes",
+    ).to_shacl(info)
     assert "# source release: 20260610" in text and "# generated with: rdfsolve" in text
     graph = rdflib.Graph().parse(data=text, format="turtle")
-    assert (None, rdflib.URIRef("http://www.w3.org/ns/prov#wasDerivedFrom"), rdflib.URIRef(about.void_uri)) in graph
+    assert (
+        None,
+        rdflib.URIRef("http://www.w3.org/ns/prov#wasDerivedFrom"),
+        rdflib.URIRef(about.void_uri),
+    ) in graph
     assert (None, rdflib.URIRef("http://purl.org/pav/version"), rdflib.Literal("4.4.5")) in graph
     assert "https://w3id.org/biolink/vocab/catalyzes" in text
-    unknown = provenance(SimpleNamespace(about=SimpleNamespace(**{**vars(about), "source_version": None, "retrieved_at": "2026-09-30"})))
+    unknown = provenance(
+        SimpleNamespace(
+            about=SimpleNamespace(
+                **{**vars(about), "source_version": None, "retrieved_at": "2026-09-30"}
+            )
+        )
+    )
     assert unknown["source release"].startswith("not stated by the source")
 
 
@@ -519,14 +672,25 @@ def test_a_conversion_becomes_metabolite_edges_with_its_enzyme_attached():
     given back; each fold's CONSTRUCT gives what the graph holds. A catalysis of an interaction
     that is not folded stays a node."""
     wp = "http://vocabularies.wikipathways.org/wp#"
-    data = ox.Dataset(ox.parse(f"""@prefix wp: <{wp}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+    data = ox.Dataset(
+        ox.parse(
+            f"""@prefix wp: <{wp}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
     <urn:r1> a wp:Conversion ; wp:source <urn:m1> ; wp:target <urn:m2>, <urn:m3> .
     <urn:k1> a wp:Catalysis ; wp:source <urn:p1> ; wp:target <urn:r1> ; rdfs:label "k1" .
     <urn:k2> a wp:Catalysis ; wp:source <urn:p1> ; wp:target <urn:i1> .
     <urn:i1> a wp:Binding ; wp:source <urn:p1> .
-    <urn:p1> a wp:Protein . <urn:m1> a wp:Metabolite . <urn:m2> a wp:Metabolite . <urn:m3> a wp:Metabolite .""".encode(), ox.RdfFormat.TURTLE))
+    <urn:p1> a wp:Protein . <urn:m1> a wp:Metabolite . <urn:m2> a wp:Metabolite . <urn:m3> a wp:Metabolite .""".encode(),
+            ox.RdfFormat.TURTLE,
+        )
+    )
     conversion = Fold(wp + "Conversion", wp + "source", wp + "target", "CONVERTED_TO", each=True)
-    catalysis = Fold.attach(wp + "Catalysis", wp + "source", wp + "target", name="catalyzed_by", target_class=wp + "Conversion")
+    catalysis = Fold.attach(
+        wp + "Catalysis",
+        wp + "source",
+        wp + "target",
+        name="catalyzed_by",
+        target_class=wp + "Conversion",
+    )
     pg = PropertyGraph.from_rdf(data, folds=[conversion, catalysis])
     report = pg.report()
     assert report["lossless"]["passed"], report["lossless"]
@@ -541,3 +705,41 @@ def test_a_conversion_becomes_metabolite_edges_with_its_enzyme_attached():
     for index, fold in enumerate(pg.folds):
         rebuilt = {(t.subject.value, t.object.value) for t in store.query(fold.to_construct())}
         assert rebuilt == pg.fold_edges(index), fold.name
+
+
+def test_a_protein_is_a_protein_however_a_source_drew_it():
+    """WikiPathways draws UniProt proteins as GeneProduct or Protein; the issuer's kind is the
+    node type and the drawing is kept as type, so the RDF is given back."""
+    wp, up = "http://vocabularies.wikipathways.org/wp#", "http://purl.uniprot.org/core/"
+    data = f"""<https://identifiers.org/uniprot/P04035> a <{wp}GeneProduct> .
+    <http://purl.uniprot.org/uniprot/P04035> a <{up}Protein> .
+    <https://identifiers.org/uniprot/Q14534> a <{wp}GeneProduct>, <{wp}Protein> .
+    <http://purl.uniprot.org/uniprot/Q14534> a <{up}Protein> ."""
+    rdf = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(rdf, identity=Identity(kinds={"uniprot": [up + "Protein"]}))
+    assert pg.report()["node_types"] == {"Protein": 2} and pg.report()["lossless"]["passed"]
+    q14534 = next(
+        n for n in pg.nodes.values() if "http://purl.uniprot.org/uniprot/Q14534" in n.members
+    )
+    drawn = {
+        v.lexical for v in q14534.properties["http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]
+    }
+    assert {wp + "GeneProduct", wp + "Protein"} <= drawn
+    role = PropertyGraph.from_rdf(
+        rdf, identity=Identity(kinds={"uniprot": [up + "Protein"]}, labels="role")
+    )
+    assert role.report()["node_types"] == {"GeneProduct": 1, "GeneProduct + Protein": 1}
+
+
+def test_two_drawings_of_one_metabolite_give_one_edge_and_both_statements():
+    wp = "http://vocabularies.wikipathways.org/wp#"
+    data = f"""<https://identifiers.org/chebi/CHEBI:16113> a <{wp}Metabolite> ; <{wp}isPartOf> <urn:wp1> ;
+        <{wp}bdbHmdb> <https://identifiers.org/hmdb/HMDB0000067> .
+    <http://purl.obolibrary.org/obo/CHEBI_16113> a <{wp}Metabolite> ; <{wp}isPartOf> <urn:wp1> ;
+        <{wp}bdbHmdb> <https://identifiers.org/hmdb/HMDB0000067> .
+    <urn:wp1> a <{wp}Pathway> ."""
+    rdf = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
+    pg = PropertyGraph.from_rdf(rdf, identity=Identity())
+    assert [e.type for e in pg.edges] == [wp + "isPartOf"] and pg.report()["lossless"]["passed"]
+    # Both drawings cite one HMDB id: one edge, then a value of the node for each statement.
+    assert pg.report()["identity"]["edges_made_one"] == 2

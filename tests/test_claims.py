@@ -11,6 +11,7 @@ from rdfsolve.property_graph import Identity, PropertyGraph
 WP = "http://vocabularies.wikipathways.org/wp#"
 O = "http://purl.obolibrary.org/obo/"
 IDO = "https://identifiers.org/"
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 DATA = f"""
 @prefix wp: <{WP}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 <{IDO}lipidmaps/LMSP03010023> a wp:Metabolite ; rdfs:label "C24:1DH SM" ;
@@ -141,7 +142,10 @@ def test_one_node_per_entity_named_by_its_issuer():
     report = pg.report()
     assert report["lossless"]["passed"]
     protein = pg.nodes["http://purl.uniprot.org/uniprot/Q13510"]
-    assert IDO + "ensembl/ENSG00000104763" in protein.members and protein.labels == [WP + "Protein"]
+    # The issuer's kind is the node type; WikiPathways' class of its drawing is kept as type.
+    assert IDO + "ensembl/ENSG00000104763" in protein.members
+    assert protein.labels == ["http://purl.uniprot.org/core/Protein"]
+    assert WP + "Protein" in {v.lexical for v in protein.properties[RDF_TYPE]}
     assert "http://purl.uniprot.org/uniprot/A0A1B0GTA6" not in pg.nodes
     assert not [n for n in pg.nodes.values() if not n.labels], "every node has a class"
     node = pg.to_networkx().nodes[O + "CHEBI_91146"]
