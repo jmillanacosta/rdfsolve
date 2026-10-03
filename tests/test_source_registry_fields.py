@@ -65,3 +65,20 @@ def test_the_shipped_registry_loads_with_its_metadata_sidecar():
     sources = load_sources(Path(__file__).parents[1] / "data" / "sources.yaml")
     assert len(sources) > 200
     assert {s.name for s in sources if s.classes_as_data} >= {"rhea", "swisslipids"}
+
+
+def test_the_registry_adds_iri_formats_that_bioregistry_lacks(tmp_path, monkeypatch):
+    """A source's uri_formats join Bioregistry's formats of its prefix in identifier candidates
+    (Rhea's RDF writes http://rdf.rhea-db.org/<id>, which Bioregistry does not list)."""
+    from rdfsolve import identifiers, sources
+
+    registry = tmp_path / "sources.yaml"
+    registry.write_text(
+        "- name: rhea\n  bioregistry_prefix: rhea\n  uri_formats:\n  - http://rdf.rhea-db.org/$1\n"
+    )
+    monkeypatch.setattr(sources, "DEFAULT_SOURCES_YAML", registry)
+    identifiers.registry_uri_formats.cache_clear()
+    try:
+        assert "http://rdf.rhea-db.org/21812" in identifiers.candidates("rhea:21812")[0]
+    finally:
+        identifiers.registry_uri_formats.cache_clear()

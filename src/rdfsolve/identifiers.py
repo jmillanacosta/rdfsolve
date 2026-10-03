@@ -10,6 +10,7 @@ namespaces that a source records.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 from collections.abc import Iterable, Sequence
@@ -45,14 +46,36 @@ class Identifier:
         return bioregistry.get_iri(self.prefix, self.local)
 
     def iris(self) -> list[str]:
-        """Return the identifier in every registered URI format that gives a valid IRI."""
+        """Return the identifier in every registered URI format that gives a valid IRI: those of
+        Bioregistry and those the source registry adds (uri_formats).
+        """
         import bioregistry
 
         resource = bioregistry.get_resource(self.prefix)
-        forms = resource.get_uri_formats() if resource else set()
+        forms = set(resource.get_uri_formats() if resource else ()) | set(
+            registry_uri_formats().get(self.prefix, ())
+        )
         return sorted(
             {iri for form in forms if (iri := _valid_iri(form.replace("$1", self.local)))}
         )
+
+
+@functools.cache
+def registry_uri_formats() -> dict[str, tuple[str, ...]]:
+    """Return the URI formats the source registry adds to each Bioregistry prefix (uri_formats
+    of its entries, keyed by their bioregistry_prefix); empty without the registry file.
+    """
+    import yaml
+
+    from rdfsolve.sources import DEFAULT_SOURCES_YAML
+
+    if not DEFAULT_SOURCES_YAML.is_file():
+        return {}
+    found: dict[str, set[str]] = {}
+    for entry in yaml.safe_load(DEFAULT_SOURCES_YAML.read_text(encoding="utf-8")) or []:
+        if entry.get("uri_formats") and entry.get("bioregistry_prefix"):
+            found.setdefault(entry["bioregistry_prefix"], set()).update(entry["uri_formats"])
+    return {prefix: tuple(sorted(forms)) for prefix, forms in found.items()}
 
 
 def _valid_iri(text: str) -> str | None:

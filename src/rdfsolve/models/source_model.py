@@ -108,6 +108,10 @@ class SourceModel(BaseModel):
         Whether to mine instance counts.
     unsafe_paging:
         Use offset paging even on endpoints that don't support it well.
+    uri_formats:
+        IRI formats of the source's identifiers, with $1 for the local identifier, that
+        Bioregistry does not list (Rhea's RDF writes http://rdf.rhea-db.org/$1); identifier
+        resolution adds them to Bioregistry's formats of the source's prefix.
     classes_as_data:
         The source keeps its records as classes (each entity an rdfs:Class under its kind,
         as Rhea's reactions under rh:Reaction): with ontology-as-data, their rows are grouped
@@ -186,6 +190,7 @@ class SourceModel(BaseModel):
     counts: bool = False
     unsafe_paging: bool = False
     classes_as_data: bool = False
+    uri_formats: list[str] = Field(default_factory=list)
     notes: str = ""
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)

@@ -2459,6 +2459,8 @@
   - biology
 - name: wikipathways
   dataset_kind: instance
+  uri_formats:  # IRI formats the RDF writes that Bioregistry does not list
+  - http://rdf.wikipathways.org/Pathway/$1
   sparql_examples:
     link_to_repository: https://github.com/wikipathways/sparql-examples
   endpoint: https://sparql.wikipathways.org/sparql/
@@ -3551,6 +3553,8 @@
   supports_graph: true
 - name: rhea
   dataset_kind: instance
+  uri_formats:  # IRI formats the RDF writes that Bioregistry does not list
+  - http://rdf.rhea-db.org/$1
   classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
   endpoint: https://sparql.rhea-db.org/sparql/
   void_iri: https://sparql.rhea-db.org/
