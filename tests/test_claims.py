@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pyoxigraph as ox
 
-from rdfsolve.mappings.claims import Claims, property_of, source_of
+from rdfsolve.mappings.claims import Claims, claim, property_of, source_of
 from rdfsolve.property_graph import Identity, PropertyGraph
 
 WP = "http://vocabularies.wikipathways.org/wp#"
@@ -165,6 +165,14 @@ def test_the_issuer_preferred_entry_is_taken_and_ask_finds_its_own_questions():
     assert rows.loc["ensembl:ENSG00000104763", "not preferred"] == "uniprot:A0A1B0GTA6"
     assert decision.targets("uniprot") == [IDO + "uniprot/Q13510"]
     assert O + "CHEBI_91146" in decision.targets("chebi")
+    # through: a node with no ChEBI id gets ChEBI's class for another of its identifiers
+    other = Claims(
+        [claim(IDO + "cas/50-00-0", IDO + "lipidmaps/LMSP03010023", "wikipathways", XREF)]
+    )
+    rows = other.ask(ChEBI(), through=True).table()
+    assert ("cas:50-00-0", "chebi:91146", "chebi") in set(
+        zip(rows.subject, rows.object, rows.source, strict=True)
+    )
 
 
 def test_one_node_per_entity_named_by_its_issuer():

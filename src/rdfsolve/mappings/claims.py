@@ -64,11 +64,14 @@ EXACT = "skos:exactMatch"
 AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group (owner decision 2026-10-02)
 
 
-def claim(subject: str, object: str, source: str, predicate: str) -> Mapping:
+def claim(
+    subject: str, object: str, source: str, predicate: str, through: str | None = None
+) -> Mapping:
     """Return the SSSOM record of *source* stating, with *predicate*, that *subject* is *object*.
 
     *subject* and *object* are IRIs (or CURIEs) of registered identifiers, as the source wrote
-    them; the record keeps them, the source and the predicate in ``other``.
+    them; the record keeps them, the source and the predicate in ``other``, and *through*, the
+    identifier of the subject that the source was asked about when it is another.
     """
     from sssom import Mapping
 
@@ -85,7 +88,13 @@ def claim(subject: str, object: str, source: str, predicate: str) -> Mapping:
         mapping_justification=STATED,
         mapping_provider=mint("dataset", source),
         other=json.dumps(
-            {"subject": subject, "object": object, "source": source, "property": predicate},
+            {
+                "subject": subject,
+                "object": object,
+                "source": source,
+                "property": predicate,
+                **({"through": through} if through else {}),
+            },
             sort_keys=True,
         ),
     )
@@ -372,6 +381,7 @@ class Claims:
         identifiers: Iterable[str] | None = None,
         *,
         source: str | None = None,
+        through: bool = False,
     ) -> Claims:
         """Return these claims and those of *client*: the resources that carry each identifier.
 
@@ -380,12 +390,19 @@ class Claims:
         with the prefix of the identifier, or as an IRI, is a cross-reference (a bare number is
         not), and identifiers of the client's own prefix are not asked. By default the
         identifiers asked are the subjects of the claims into the namespace *client* issues.
+
+        With *through*, every identifier of the claims is asked (subjects and the identifiers
+        they are claimed to be), and what the source states for an identifier is also stated for
+        each subject claimed to be it, through it: a subject with no target in the namespace
+        gets one from its other identifiers.
         """
         from rdfsolve.identifiers import curie
 
         name = source or (client._schema.about.dataset_name or "source")
         issued = set(client.issued_kinds())
-        if identifiers is None:
+        if identifiers is None and through:
+            identifiers = sorted({i for c in self.claims for i in (subject_of(c), object_of(c))})
+        elif identifiers is None:
             identifiers = sorted(
                 {subject_of(c) for c in self.claims if _prefix(object_of(c)) in issued}
             )
@@ -402,6 +419,14 @@ class Claims:
         ]
         found = [claim(s, o, name, p) for s, o, p in matches if _valid(s, o)]
         invalid = [(s, o, name) for s, o, _ in matches if not _valid(s, o)]
+        if through:
+            asked: dict[str, list[tuple[str, str]]] = defaultdict(list)
+            for s, o, p in matches:
+                if _valid(s, o):
+                    asked[_key(s)].append((o, p))
+            for c in self.claims:
+                for o, p in asked.get(_key(object_of(c)), []):
+                    found.append(claim(subject_of(c), o, name, p, through=object_of(c)))
         return self + Claims(found, invalid)
 
     def table(self) -> Any:
