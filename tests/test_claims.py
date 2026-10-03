@@ -7,6 +7,7 @@ import pyoxigraph as ox
 
 from rdfsolve.mappings.claims import Claims, claim, property_of, source_of
 from rdfsolve.property_graph import Identity, PropertyGraph
+from rdfsolve.version import VERSION
 
 WP = "http://vocabularies.wikipathways.org/wp#"
 O = "http://purl.obolibrary.org/obo/"
@@ -100,6 +101,7 @@ def test_a_gene_to_protein_link_is_checked_through_ncbi_gene():
 def test_the_issuer_decides_and_variants_join():
     decision = claims().decide(
         namespaces=["chebi"],
+        exact=["chebi"],
         variants=lambda iris: (
             [(IDO + "chebi/CHEBI:17115", IDO + "chebi/CHEBI:33384")]
             if IDO + "chebi/CHEBI:17115" in iris
@@ -113,6 +115,16 @@ def test_the_issuer_decides_and_variants_join():
     assert rows.loc["lipidmaps:LMSP03010025", "outcome"].startswith("ambiguous")
     assert (IDO + "lipidmaps/LMSP03010023", O + "CHEBI_91146") in decision.pairs()
     assert not [p for p in decision.pairs() if "LMSP03010025" in p[0]]
+    assert (
+        rows.loc["lipidmaps:LMSP03010023", "assumption"]
+        == "cross-references to chebi taken as exact"
+    )
+    # without the assumption, a cross-reference joins nothing and stays a cross-reference
+    stated = claims().decide(namespaces=["chebi"])
+    assert stated.pairs() == []
+    sssom = stated.to_sssom().df
+    assert set(sssom.predicate_id) == {"oboinowl:hasDbXref"}, "no identity, no negation"
+    assert stated.to_sssom().metadata["mapping_tool_version"] == VERSION
 
 
 def test_a_property_graph_follows_the_decision():
@@ -120,6 +132,7 @@ def test_a_property_graph_follows_the_decision():
     zwitterion share the serine node (declared variants); the RDF is given back."""
     decision = claims().decide(
         namespaces=["chebi"],
+        exact=["chebi"],
         variants=lambda iris: [
             (a, b) for a in iris for b in iris if {a[-5:], b[-5:]} == {"17115", "33384"}
         ],
@@ -173,6 +186,8 @@ def test_the_issuer_preferred_entry_is_taken_and_ask_finds_its_own_questions():
     assert ("cas:50-00-0", "chebi:91146", "chebi") in set(
         zip(rows.subject, rows.object, rows.source, strict=True)
     )
+    chained = [c for c in other.ask(ChEBI(), through=True).claims if c.subject_id == "cas:50-00-0"]
+    assert chained[-1].mapping_justification == "semapv:MappingChaining"
 
 
 def test_one_node_per_entity_named_by_its_issuer():
@@ -180,7 +195,9 @@ def test_one_node_per_entity_named_by_its_issuer():
     keyed by UniProt's IRI; the metabolite takes ChEBI's name and keeps WikiPathways' beside it;
     the TrEMBL entry the RDF only cites is a value, not a node."""
     decision = claims().decide(
-        namespaces=["uniprot", "chebi"], prefer=["http://purl.uniprot.org/uniprot/Q13510"]
+        namespaces=["uniprot", "chebi"],
+        prefer=["http://purl.uniprot.org/uniprot/Q13510"],
+        exact=["uniprot", "chebi"],
     )
     issuers = [
         SimpleNamespace(issued_kinds=lambda: {"chebi": ["http://www.w3.org/2002/07/owl#Class"]}),
@@ -223,7 +240,7 @@ def test_a_gene_id_is_kept_apart_from_its_protein_and_can_be_unfolded():
     attribute, not an id); unfold makes the gene a node again, linked to the protein. Without
     the kind, the merge is reported with what would decide it. The RDF is given back."""
     decision = claims().decide(
-        namespaces=["uniprot"], prefer=["http://purl.uniprot.org/uniprot/Q13510"]
+        namespaces=["uniprot"], prefer=["http://purl.uniprot.org/uniprot/Q13510"], exact=["uniprot"]
     )
     up = SimpleNamespace(issued_kinds=lambda: {"uniprot": ["http://purl.uniprot.org/core/Protein"]})
     data = [q for q in rdf() if "A0A1B0GTA6" not in q.subject.value]
@@ -347,6 +364,7 @@ def test_claims_and_the_resolution_are_sssom(tmp_path):
     found = claims()
     decision = found.decide(
         namespaces=["chebi"],
+        exact=["chebi"],
         variants=lambda iris: [
             (a, b) for a in iris for b in iris if {a[-5:], b[-5:]} == {"17115", "33384"}
         ],

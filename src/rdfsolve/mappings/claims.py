@@ -58,7 +58,8 @@ if TYPE_CHECKING:
 __all__ = ["Claims", "Resolution", "claim"]
 
 STATED = "semapv:UnspecifiedMatching"
-REVIEWED = "semapv:MappingReview"
+REVIEWED = "semapv:MappingReview"  # an automatic review: mapping_tool, never reviewer_id
+CHAINED = "semapv:MappingChaining"
 CROSS_REFERENCE = "oboinowl:hasDbXref"  # prefixes as Bioregistry normalizes them
 EXACT = "skos:exactMatch"
 AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group (owner decision 2026-10-02)
@@ -85,7 +86,7 @@ def claim(
         subject_id=s.curie,
         predicate_id=EXACT if predicate in IDENTITY_PROPERTIES else CROSS_REFERENCE,
         object_id=o.curie,
-        mapping_justification=STATED,
+        mapping_justification=CHAINED if through else STATED,
         mapping_provider=mint("dataset", source),
         other=json.dumps(
             {
@@ -155,14 +156,21 @@ class Resolution:
     variants: list[tuple[str, str]]
     groups: list[dict[str, Any]] = field(default_factory=list)
     overruled: list[tuple[str, str, str]] = field(default_factory=list)
+    exact: frozenset[str] = frozenset()  # namespaces whose cross-references are taken as exact
 
     def targets(self, namespace: str) -> list[str]:
         """Return the accepted IRIs in *namespace*: the records worth fetching."""
         return sorted({object_of(c) for c in self.accepted if _prefix(object_of(c)) == namespace})
 
     def pairs(self) -> list[tuple[str, str]]:
-        """Return the accepted (subject, object) pairs, as the sources wrote them."""
-        return sorted({(subject_of(c), object_of(c)) for c in self.accepted})
+        """Return the accepted exact (subject, object) pairs, as the sources wrote them.
+
+        A pair is exact when its claims state identity, or when the cross-references of its
+        namespaces are taken as exact (decide's *exact*); only exact pairs join records.
+        """
+        return sorted(
+            {(subject_of(c), object_of(c)) for c in self.accepted if _is_exact(c, self.exact)}
+        )
 
     def table(self) -> Any:
         """Return the outcome of each (subject, target namespace) group as a DataFrame."""
@@ -173,8 +181,10 @@ class Resolution:
     def to_sssom(self, name: str = "resolution") -> MappingSetDataFrame:
         """Return the resolution as an SSSOM mapping set.
 
-        Accepted mappings are ``skos:exactMatch`` with justification ``semapv:MappingReview``
-        and the rule that decided them; overruled ones are negative mappings (``Not``), with
+        Accepted mappings are reviewed automatically (``semapv:MappingReview``, with rdfsolve as
+        the mapping tool) and keep what their claims state: ``skos:exactMatch`` for identity, or
+        when the namespace's cross-references are taken as exact, else the cross-reference
+        (``oboInOwl:hasDbXref``); with the rule that decided them; overruled ones are negative mappings (``Not``), with
         the source whose statement overruled them. The targets of an ambiguous group are exact
         matches with confidence 0.5 and cardinality 1:n, so that a reader with a confidence
         threshold (SeMRA's filter_minimum_confidence) leaves them ungrouped.
@@ -186,7 +196,14 @@ class Resolution:
 
         rule = {(g["subject"], t): g for g in self.groups for t in g["targets"].split(", ") if t}
         records = []
-        for subject, target in sorted({(_key(s), _key(o)) for s, o in self.pairs()}):
+        exact_keys = {
+            (_key(subject_of(c)), _key(object_of(c)))
+            for c in self.accepted
+            if _is_exact(c, self.exact)
+        }
+        for subject, target in sorted(
+            {(_key(subject_of(c)), _key(object_of(c))) for c in self.accepted}
+        ):
             group = rule.get((subject, target), {})
             decided = (
                 f"{group.get('outcome', 'accepted')}; decided by "
@@ -195,7 +212,7 @@ class Resolution:
             records.append(
                 Mapping(
                     subject_id=subject,
-                    predicate_id=EXACT,
+                    predicate_id=EXACT if (subject, target) in exact_keys else CROSS_REFERENCE,
                     object_id=target,
                     mapping_justification=REVIEWED,
                     curation_rule_text=[decided],
@@ -208,7 +225,7 @@ class Resolution:
                 records.append(
                     Mapping(
                         subject_id=group["subject"],
-                        predicate_id=EXACT,
+                        predicate_id=EXACT if group["namespace"] in self.exact else CROSS_REFERENCE,
                         object_id=target,
                         mapping_justification=REVIEWED,
                         confidence=AMBIGUOUS,
@@ -221,7 +238,11 @@ class Resolution:
                         ],
                     )
                 )
+        # A negative mapping only where the namespace's links are taken as exact (unique): a
+        # cross-reference is not excluded by another one.
         for subject, target, by in sorted(set(self.overruled)):
+            if _prefix(target) not in self.exact:
+                continue
             records.append(
                 Mapping(
                     subject_id=subject,
@@ -237,7 +258,9 @@ class Resolution:
         converter = converter_for(
             c for r in records for c in (r.subject_id, r.predicate_id, r.object_id)
         )
-        return create_sssom_mappings(records, mint("mappings", name), converter=converter)
+        return create_sssom_mappings(
+            records, mint("mappings", name), converter=converter, mapping_tool_version=_version()
+        )
 
 
 class Claims:
@@ -454,7 +477,12 @@ class Claims:
         converter = converter_for(
             c for r in self.claims for c in (r.subject_id, r.predicate_id, r.object_id)
         )
-        return create_sssom_mappings(self.claims, mint("mappings", name), converter=converter)
+        return create_sssom_mappings(
+            self.claims,
+            mint("mappings", name),
+            converter=converter,
+            mapping_tool_version=_version(),
+        )
 
     def _groups(self) -> dict[tuple[str, str], dict[str, set[str]]]:
         """Return the targets of each (subject, target namespace), by source."""
@@ -531,6 +559,7 @@ class Claims:
         variants: Callable[[list[str]], Iterable[tuple[str, str]]] | Iterable[tuple[str, str]] = (),
         namespaces: Iterable[str] | None = None,
         prefer: Iterable[Any] = (),
+        exact: Iterable[str] = (),
     ) -> Resolution:
         """Decide which claims are accepted, for each subject and target namespace.
 
@@ -544,6 +573,11 @@ class Claims:
         *prefer* are identifiers (IRIs, or Results of a client) that the issuer marks as its
         preferred entries (UniProt's reviewed ones): several targets narrow to those preferred,
         when some are.
+
+        A cross-reference is not an identity. *exact* names the namespaces whose
+        cross-references are taken as exact matches: an assumption, recorded in each group it
+        applies to; only exact mappings are pairs (Resolution.pairs). A mapping found through
+        another identifier is exact only when both of its links are.
         """
         order = list(authority or [])
         preferred = {_key(iri) for iri in _iris(prefer)}
@@ -617,7 +651,11 @@ class Claims:
                     "sources": ", ".join(sources),
                 }
             )
-        return Resolution(accepted, sorted(set(variant_pairs)), groups, overruled_by)
+        assumed = frozenset(exact)
+        for group in groups:
+            if group["namespace"] in assumed:
+                group["assumption"] = f"cross-references to {group['namespace']} taken as exact"
+        return Resolution(accepted, sorted(set(variant_pairs)), groups, overruled_by, assumed)
 
 
 def _iris(items: Any) -> list[str]:
@@ -642,3 +680,23 @@ def _connected(items: list[str], pairs: Iterable[tuple[str, str]]) -> bool:
     for a, b in pairs:
         root[find(a)] = find(b)
     return len({find(i) for i in items}) == 1
+
+
+def _is_exact(record: Mapping, exact: frozenset[str]) -> bool:
+    """Return whether a claim states identity, given the namespaces taken as exact.
+
+    A claim stated as identity is exact; a cross-reference is exact when its target's namespace
+    is taken as exact. A chained claim (found through another identifier) is exact only when
+    the link it came through is exact too.
+    """
+    if record.predicate_id != EXACT and _prefix(object_of(record)) not in exact:
+        return False
+    through = _other(record).get("through")
+    return through is None or _prefix(through) in exact or record.predicate_id == EXACT
+
+
+def _version() -> str:
+    """Return the version of rdfsolve, the tool that reviews mappings."""
+    from rdfsolve.version import VERSION
+
+    return VERSION
