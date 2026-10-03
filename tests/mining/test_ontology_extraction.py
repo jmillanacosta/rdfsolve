@@ -6,6 +6,7 @@ def test_scoped_ontology_keeps_named_equivalence_property_hierarchy_disjointness
     from unittest.mock import Mock
 
     from rdflib import OWL, Dataset
+
     from rdfsolve.mining.ontology_extraction import OntologyMiner
 
     dataset = Dataset()

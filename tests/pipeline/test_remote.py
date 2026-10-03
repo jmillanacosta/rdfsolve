@@ -1,6 +1,5 @@
-"""With --local-records, the remote stage checks each endpoint against the local record of its
-source first. An endpoint that serves the same data is not mined again; the check is written
-beside the other outputs. An endpoint that differs is mined as before."""
+"""scripts.pipeline_stages.remote: an endpoint is checked against the local record of its source
+first, and a remote run resumes."""
 
 import json
 from datetime import datetime, timezone
@@ -9,10 +8,11 @@ import pytest
 import yaml
 from rdflib import Graph
 
+import rdfsolve
 from rdfsolve import SchemaMiner
 from rdfsolve.schema_models import AboutMetadata, MinedSchema
 from scripts.pipeline_stages.cli import Pipeline
-from scripts.pipeline_stages.config import PipelineConfig
+from scripts.pipeline_stages.config import PipelineConfig, Source
 from scripts.pipeline_stages.remote import RemoteMiningStage
 
 DATA = """@prefix e: <urn:ex:> .
@@ -32,14 +32,31 @@ def _run(tmp_path, monkeypatch, p_count):
     )
     record.write_text(json.dumps(MinedSchema(about=about, patterns=[]).to_dict()))
     registry = tmp_path / "sources.yaml"
-    registry.write_text(yaml.safe_dump([{
-        "name": "fixture", "endpoint": "https://fixture.invalid/sparql", "delay": 0,
-        "last_checked": datetime.now(timezone.utc).isoformat(),
-    }]))
+    registry.write_text(
+        yaml.safe_dump(
+            [
+                {
+                    "name": "fixture",
+                    "endpoint": "https://fixture.invalid/sparql",
+                    "delay": 0,
+                    "last_checked": datetime.now(timezone.utc).isoformat(),
+                }
+            ]
+        )
+    )
     config = PipelineConfig(
-        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run",
-        output_suffix="_remote", output_formats=["void"], enrich=False, delay=0,
-        navigation_hops=0, no_index=True, no_download=True, local_records=tmp_path / "local",
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        output_suffix="_remote",
+        output_formats=["void"],
+        enrich=False,
+        delay=0,
+        navigation_hops=0,
+        no_index=True,
+        no_download=True,
+        local_records=tmp_path / "local",
     )
     config.load_sources()
     results = Pipeline(config).add_stage(RemoteMiningStage).run()
@@ -59,7 +76,7 @@ def test_an_endpoint_with_the_local_data_is_not_mined_again(tmp_path, monkeypatc
 
 
 def test_an_endpoint_with_other_data_is_mined(tmp_path, monkeypatch):
-    results, match, mined = _run(tmp_path, monkeypatch, p_count=5)
+    _, match, mined = _run(tmp_path, monkeypatch, p_count=5)
     assert match["state"] == "differs" and mined
 
 
@@ -75,7 +92,36 @@ def test_the_cli_takes_the_local_records(monkeypatch, tmp_path):
         raise SystemExit(0)
 
     monkeypatch.setattr(cli, "preflight", stop)
-    monkeypatch.setattr(sys, "argv", ["pipeline.py", "--preflight", "--local-records", str(tmp_path)])
+    monkeypatch.setattr(
+        sys, "argv", ["pipeline.py", "--preflight", "--local-records", str(tmp_path)]
+    )
     with pytest.raises(SystemExit):
         cli.main()
     assert seen["config"].local_records == tmp_path
+
+
+def test_a_remote_run_resumes_from_the_checkpoint_of_an_earlier_run(tmp_path, monkeypatch):
+    checkpoint = tmp_path / "run-2" / "fixture" / "fixture_report.checkpoint.jsonl"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text("")
+    received = []
+
+    def miner(*args, **kwargs):
+        received.append(kwargs.get("resume_checkpoint"))
+        raise RuntimeError("stop after the miner is made")
+
+    monkeypatch.setattr(rdfsolve, "SchemaMiner", miner)
+    now = datetime.now(timezone.utc).isoformat()
+    source = Source.from_dict(
+        {"name": "fixture", "endpoint": "https://example.invalid/sparql", "last_checked": now}
+    )
+    for resume, expected in (
+        (tmp_path / "run-2", checkpoint),
+        (None, None),
+        (tmp_path / "none", None),
+    ):
+        config = PipelineConfig(
+            base_dir=tmp_path, output_dir=tmp_path / "run-3", enrich=False, resume_from=resume
+        )
+        assert RemoteMiningStage(config)._mine_single_source(source)["status"] == "failed"
+        assert received.pop() == expected

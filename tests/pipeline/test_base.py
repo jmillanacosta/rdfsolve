@@ -1,0 +1,178 @@
+"""scripts.pipeline_stages.base: stages keep restriction patterns, clean service data, and acquire
+ontologies."""
+
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+from pydantic import BaseModel
+from rdflib import Graph
+
+from rdfsolve import SchemaMiner
+from rdfsolve.ontology.discovery import OntologyDiscoverySummary, OntologyGraphCandidate
+from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+from scripts.pipeline_stages import cli
+from scripts.pipeline_stages.base import Stage, restriction_scope
+from scripts.pipeline_stages.config import PipelineConfig
+from tests.test_restriction_patterns import DATA
+
+
+class AnyStage(Stage):
+    name = "any"
+
+    def _execute(self):
+        return {}
+
+
+def test_the_stage_writes_the_restriction_patterns(tmp_path):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        restriction_patterns=True,
+        navigation_hops=0,
+        output_formats=["json"],
+    )
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[])
+    with SchemaMiner.from_graph(Graph().parse(data=DATA, format="turtle"), delay=0) as miner:
+        AnyStage(config)._save_schema_outputs(schema, tmp_path, "x", "_local", helper=miner.helper)
+    written = json.loads((tmp_path / "x_local_schema.json").read_text())
+    written = written.get("schema", written)
+    assert written["restriction_patterns"]["state"] == "complete"
+    assert len(written["restriction_patterns"]["patterns"]) == 5
+
+
+def test_the_scope_has_the_data_graphs_and_the_ontology_graphs():
+    about = AboutMetadata.build(dataset_name="x").model_copy(
+        update={"graph_uris": ["urn:g:data"], "ontology_graph_uris": ["urn:g:ontology"]}
+    )
+    assert restriction_scope(about) == ["urn:g:data", "urn:g:ontology"]
+    assert restriction_scope(AboutMetadata.build(dataset_name="x")) is None, "The whole dataset"
+
+
+def test_the_restriction_patterns_option_is_read_from_the_command_line(monkeypatch):
+    seen = {}
+
+    def stop(config, **_):
+        seen["config"] = config
+        raise SystemExit(0)
+
+    monkeypatch.setattr(cli, "preflight", stop)
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "--preflight", "--restriction-patterns"])
+    with pytest.raises(SystemExit):
+        cli.main()
+    assert seen["config"].restriction_patterns is True
+
+
+V = "http://www.openlinksw.com/schemas/virtrdf#"
+SCHEMA = MinedSchema(
+    about=AboutMetadata.build(dataset_name="x"),
+    patterns=[
+        SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="Literal"),
+        SchemaPattern(subject_class=V + "QuadMap", property_uri=V + "item", object_class="Literal"),
+    ],
+)
+
+
+def _stage(tmp_path, clean):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        clean_service_data=clean,
+    )
+    return AnyStage(config)
+
+
+def test_the_stage_removes_service_data_when_asked(tmp_path):
+    cleaned = _stage(tmp_path, True)._without_service_data(SCHEMA)
+    assert [p.property_uri for p in cleaned.patterns] == ["urn:p"]
+    assert cleaned.about.cleaned["patterns_removed"] == 1
+    kept = _stage(tmp_path, False)._without_service_data(SCHEMA)
+    assert kept is SCHEMA and kept.about.cleaned is None
+
+
+def test_the_clean_service_data_option_is_read_from_the_command_line(monkeypatch):
+    seen = {}
+
+    def stop(config, **_):
+        seen["config"] = config
+        raise SystemExit(0)
+
+    monkeypatch.setattr(cli, "preflight", stop)
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "--preflight", "--clean-service-data"])
+    with pytest.raises(SystemExit):
+        cli.main()
+    assert seen["config"].clean_service_data is True
+
+
+class Pattern(BaseModel):
+    subject_class: str
+    property_uri: str
+    object_class: str | None = None
+
+
+class About:
+    ontology_graph_uris: list[str] | None = None
+
+
+class Schema:
+    def __init__(self):
+        self.patterns = [
+            Pattern(
+                subject_class="http://purl.obolibrary.org/obo/CHEBI_15377",
+                property_uri="http://example.org/p",
+            )
+        ]
+        self.about = About()
+
+    def get_classes(self):
+        return ["http://purl.obolibrary.org/obo/CHEBI_15377"]
+
+    def get_properties(self):
+        return ["http://example.org/p"]
+
+
+def test_pipeline_writes_discovery_and_usage_scoped_acquisition(monkeypatch, tmp_path: Path):
+    config = PipelineConfig()
+    config.discover_ontology_graphs = True
+    stage = Stage(config)
+    candidate = OntologyGraphCandidate(
+        graph_uri="http://example.org/ontology",
+        explicit_ontology_iris=["http://purl.obolibrary.org/obo/chebi.owl"],
+        candidate_reasons=["ontology_structure_probe"],
+        observed_class_overlap=["http://purl.obolibrary.org/obo/CHEBI_15377"],
+    )
+    summary = OntologyDiscoverySummary(
+        endpoint="https://example.org/sparql",
+        observed_at="2026-09-18T00:00:00Z",
+        discovered_named_graphs=1,
+        scanned_named_graphs=1,
+        candidates=[candidate],
+    )
+    monkeypatch.setattr(
+        "rdfsolve.ontology.discovery.discover_remote_ontology_graphs",
+        lambda *args, **kwargs: summary,
+    )
+    helper = SimpleNamespace(endpoint_url="https://example.org/sparql")
+    schema = Schema()
+    stage._save_ontology_discovery(
+        schema, tmp_path, "demo", "_remote", helper=helper, mining_context="remote_endpoint"
+    )
+    assert (tmp_path / "demo_remote_ontology_discovery.json").exists()
+    acquisition = json.loads((tmp_path / "demo_remote_ontology_acquisition.json").read_text())
+    assert acquisition["dataset_id"] == "demo"
+    chebi = next(x for x in acquisition["candidates"] if x["namespace"].endswith("CHEBI_"))
+    assert chebi["ontology_id"] == "chebi"
+    assert chebi["graph_evidence"][0]["graph_uri"] == "http://example.org/ontology"
+    assert chebi["graph_evidence"][0]["access_context"] == "remote_endpoint"
+    assert chebi["reference_sources"][0]["source_url"].endswith("/chebi.owl")
+    assert schema.about.ontology_graph_uris == ["http://example.org/ontology"]

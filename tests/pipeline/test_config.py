@@ -1,11 +1,16 @@
+"""scripts.pipeline_stages.config: a run records its provenance."""
+
 from pathlib import Path
 
 import pytest
 import yaml
+
 from scripts.pipeline_stages.config import PipelineConfig
 
 
-def test_archive_run_inputs_freezes_registry_config_and_identity_overrides(tmp_path: Path, monkeypatch):
+def test_archive_run_inputs_freezes_registry_config_and_identity_overrides(
+    tmp_path: Path, monkeypatch
+):
     repo = tmp_path / "repo"
     data = repo / "data"
     output = tmp_path / "run"
@@ -89,9 +94,12 @@ def test_archive_run_inputs_freezes_registry_config_and_identity_overrides(tmp_p
         Source(name="service", source_role="service"),
         Source(name="unresolved", skip_mining=True),
     ]
+
     def cached_index(workdir, name):
         assert workdir == config.data_dir / "qlever_workdirs" / name
         return name != "remote"
 
     monkeypatch.setattr(index_check, "has_cached_index", cached_index)
-    assert [s.name for s in config.get_local_sources()] == ["cached"], "Use cached local inputs and retain scope exclusions"
+    assert [s.name for s in config.get_local_sources()] == ["cached"], (
+        "Use cached local inputs and retain scope exclusions"
+    )

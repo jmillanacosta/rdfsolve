@@ -1,3 +1,6 @@
+"""scripts.pipeline_stages.cli: a pipeline run on a release fixture, and a partial run reported as
+such."""
+
 import json
 from datetime import datetime, timezone
 
@@ -5,6 +8,7 @@ import pytest
 import yaml
 from click.testing import CliRunner
 from rdflib import RDF, Dataset, Literal, Namespace, URIRef
+
 from rdfsolve.cli import main
 from rdfsolve.config import mint
 from rdfsolve.mining.miner import SchemaMiner
@@ -16,7 +20,8 @@ from rdfsolve.release.scientific_validation import (
 )
 from rdfsolve.schema_models import MinedSchema
 from rdfsolve.sparql_helper import EndpointError
-from scripts.pipeline_stages.cli import Pipeline
+from scripts.pipeline_stages.base import Stage
+from scripts.pipeline_stages.cli import Pipeline, exit_code
 from scripts.pipeline_stages.config import PipelineConfig
 from scripts.pipeline_stages.grouped import GroupedMiningStage
 from scripts.pipeline_stages.local import LocalMiningStage
@@ -111,11 +116,21 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         stage = RemoteMiningStage
     else:
 
-        def local_miner(self, port, graph_uris, report_path, *, type_context_graph_uris=None,
-                        resume_checkpoint=None):
+        def local_miner(
+            self,
+            port,
+            graph_uris,
+            report_path,
+            *,
+            type_context_graph_uris=None,
+            resume_checkpoint=None,
+        ):
             return factory(
-                graph_uris=graph_uris or [left_graph, right_graph], report_path=report_path, delay=0,
-                type_context_graph_uris=type_context_graph_uris, resume_checkpoint=resume_checkpoint
+                graph_uris=graph_uris or [left_graph, right_graph],
+                report_path=report_path,
+                delay=0,
+                type_context_graph_uris=type_context_graph_uris,
+                resume_checkpoint=resume_checkpoint,
             )
 
         monkeypatch.setattr(LocalMiningStage, "_local_miner", local_miner)
@@ -139,16 +154,18 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
     schema_paths = [output / row["name"] / f"{row['name']}_{mode}_schema.json" for row in rows]
     schemas = [MinedSchema.from_json(path) for path in schema_paths]
     link = next(
-        (
-            p
-            for p in schemas[0].patterns
-            if p.subject_class == str(E.A) and p.property_uri == str(E.link)
-        )
+        p
+        for p in schemas[0].patterns
+        if p.subject_class == str(E.A) and p.property_uri == str(E.link)
     )
-    assert {p.object_class for p in schemas[0].patterns if p.property_uri == str(E.link) and p.subject_class == str(E.A)} == {str(E.B), str(E.Linked)}
+    assert {
+        p.object_class
+        for p in schemas[0].patterns
+        if p.property_uri == str(E.link) and p.subject_class == str(E.A)
+    } == {str(E.B), str(E.Linked)}
     assert all(p.property_uri != str(E.leak) for schema in schemas for p in schema.patterns)
     assert link.count == 1 and link.graphs == {left_graph: 1}
-    assert all((p.pattern_type != "unknown" for schema in schemas for p in schema.patterns))
+    assert all(p.pattern_type != "unknown" for schema in schemas for p in schema.patterns)
     assert schemas[0].about.class_entity_counts[str(E.A)] == 1
     for path in schema_paths:
         report = json.loads(
@@ -170,14 +187,12 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
             assert actual == expected
         assert len({schema.about.snapshot_id for schema in schemas}) == 2
         if state == "complete":
-            assert all((p.graphs for p in group.patterns))
+            assert all(p.graphs for p in group.patterns)
     elif state == "complete":
         text = next(
-            (
-                p
-                for p in schemas[0].patterns
-                if p.subject_class == str(E.A) and p.property_uri == str(E.text)
-            )
+            p
+            for p in schemas[0].patterns
+            if p.subject_class == str(E.A) and p.property_uri == str(E.text)
         )
         assert text.count == 2
         assert schemas[0].navigation.paths
@@ -187,12 +202,12 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         assert checked.exit_code == 0, checked.output
     manifest = ReleaseManifest.model_validate_json((output / "release.json").read_text())
     assert len(manifest.datasets) == len(rows)
-    assert all((d.completion_state == state for d in manifest.datasets))
+    assert all(d.completion_state == state for d in manifest.datasets)
     plan = build_scientific_validation_plan(manifest, output, patterns_per_schema=100)
     write_scientific_validation_plan(plan, output / "validation/scientific_checks.json")
     assert plan.pattern_checks
     target = "remote_endpoint" if mode == "remote" else "frozen_local_index"
-    assert all((check.target_kind == target for check in plan.pattern_checks + plan.route_checks))
+    assert all(check.target_kind == target for check in plan.pattern_checks + plan.route_checks)
     validator = SchemaMiner.from_graph(data)
     try:
         for row in rows:
@@ -207,13 +222,11 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
                 index_reference="in-memory-fixture" if mode != "remote" else None,
             )
             assert all(
-                (
-                    result.state == "matched"
-                    for result in observed.results
-                    if result.check_id in {c.check_id for c in checks}
-                )
+                result.state == "matched"
+                for result in observed.results
+                if result.check_id in {c.check_id for c in checks}
             )
-            assert all((result.comparison == "agrees" for result in observed.results))
+            assert all(result.comparison == "agrees" for result in observed.results)
             (output / "validation" / f"{row['name']}_scientific_check_results.json").write_text(
                 observed.model_dump_json(indent=2)
             )
@@ -224,23 +237,64 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         assert checked.exit_code == 0, checked.output
     summary = json.loads((output / "summary.json").read_text())
     assert summary["attempted_completion"] == {state: len(rows)}
-    assert summary["observed_evidence"]["patterns"] == sum((len(s.patterns) for s in schemas))
+    assert summary["observed_evidence"]["patterns"] == sum(len(s.patterns) for s in schemas)
     assert summary["property_usage_evidence"]["class_populations_available"] > 0
     assert "unknown" not in summary["observed_evidence"]["pattern_types"]
     for schema in schemas:
         assert all(
-            (
-                not any(
-                    (
-                        str(term).startswith("http://www.w3.org/ns/shacl#")
-                        or "sparql-examples" in str(term)
-                        for term in (p.subject_class, p.property_uri, p.object_class)
-                    )
-                )
-                for p in schema.patterns
+            not any(
+                str(term).startswith("http://www.w3.org/ns/shacl#")
+                or "sparql-examples" in str(term)
+                for term in (p.subject_class, p.property_uri, p.object_class)
             )
+            for p in schema.patterns
         )
     for path in output.glob("*/*_ontology_acquisition.json"):
         assert not json.loads(path.read_text())["local_ontology_file_candidates"]
     assert registry.read_text() == original == (output / "sources.yaml").read_text()
     assert list(working.iterdir()) == []
+
+
+class Partial(Stage):
+    name = "partial"
+
+    def _execute(self):
+        return {"mined": ["a"], "failed": [{"name": "b", "error": "endpoint down"}]}
+
+
+class Failed(Stage):
+    name = "failed"
+
+    def _execute(self):
+        return {"mined": [], "failed": [{"name": "b", "error": "endpoint down"}]}
+
+
+class After(Stage):
+    name = "after"
+
+    def _execute(self):
+        return {"mined": ["c"]}
+
+
+def _config(tmp_path):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run"
+    )
+    config.output_dir.mkdir()
+    return config
+
+
+def test_a_partial_stage_does_not_stop_the_run(tmp_path):
+    results = Pipeline(_config(tmp_path)).add_stage(Partial).add_stage(After).run()
+    assert results["partial"]["state"] == "partial" and results["partial"]["success"] is False
+    assert results["after"]["state"] == "complete", "The next stage runs after a partial one"
+    assert exit_code(results) == 0, "A partial run is reported as partial, not as a failure"
+
+
+def test_a_failed_stage_stops_the_run(tmp_path):
+    results = Pipeline(_config(tmp_path)).add_stage(Failed).add_stage(After).run()
+    assert results["failed"]["state"] == "failed"
+    assert "after" not in results
+    assert exit_code(results) == 1

@@ -28,7 +28,10 @@ def test_classes_with_the_same_members_and_their_nearest_containers(monkeypatch)
     assert found.members == {"urn:A": 2, "urn:B": 2, "urn:C": 3, "urn:D": 1, "urn:E": 1, "urn:F": 4}
     assert found.same_members == [["urn:A", "urn:B"]]
     assert found.contained_in == {
-        "urn:A": ["urn:C"], "urn:B": ["urn:C"], "urn:C": ["urn:F"], "urn:D": ["urn:C"]
+        "urn:A": ["urn:C"],
+        "urn:B": ["urn:C"],
+        "urn:C": ["urn:F"],
+        "urn:D": ["urn:C"],
     }, "Only the nearest containing classes"
     assert found.not_checked == {}
     assert mine(monkeypatch, "virtuoso").class_extensions is None, "Measured on QLever only"

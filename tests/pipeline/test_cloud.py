@@ -1,3 +1,6 @@
+"""scripts.pipeline_stages.cloud: a failure after mining leaves the source partial and its outputs
+kept."""
+
 import json
 
 from rdflib import Graph
@@ -11,7 +14,9 @@ from scripts.pipeline_stages.local import LocalMiningStage
 
 def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
     data = Graph().parse(data='<urn:s> a <urn:C>; <urn:p> "value" .', format="turtle")
-    config = PipelineConfig(base_dir=tmp_path, output_dir=tmp_path / "output", enrich=False, navigation_hops=0)
+    config = PipelineConfig(
+        base_dir=tmp_path, output_dir=tmp_path / "output", enrich=False, navigation_hops=0
+    )
     source = Source.from_dict({"name": "fixture", "local_provider": "fixture"})
     stage = LocalMiningStage(config)
     report_path = config.output_dir / "fixture" / "fixture_report.json"
@@ -38,7 +43,9 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
         monkeypatch.setattr(stage, "_save_property_usage_evidence", fail_optional)
         try:
             with stage._output_phase(miner, report_path):
-                stage._save_dataset_outputs(source, schema, output, miner.helper, "local_distribution")
+                stage._save_dataset_outputs(
+                    source, schema, output, miner.helper, "local_distribution"
+                )
         except PartialMiningError:
             pass
         path = output / "fixture_schema.json"
@@ -49,22 +56,31 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
         assert any(p["error"] == "fixture property usage timeout" for p in report["phases"])
 
     import pytest
-    from rdfsolve.schema_models import MinedSchema
+
     from rdfsolve.ontology.structure import OntologyStructure
+    from rdfsolve.schema_models import MinedSchema
 
     export_dir = tmp_path / "export_failure"
     export_dir.mkdir()
     export_report = export_dir / "fixture_report.json"
-    export_config = PipelineConfig(base_dir=tmp_path, output_dir=export_dir,
-                                   extract_ontology=True, enrich=False, navigation_hops=0)
+    export_config = PipelineConfig(
+        base_dir=tmp_path,
+        output_dir=export_dir,
+        extract_ontology=True,
+        enrich=False,
+        navigation_hops=0,
+    )
     with monkeypatch.context() as patch:
+
         def broken_export(*args, **kwargs):
             raise ValueError("fixture RDF serialization failure")
 
         patch.setattr(OntologyStructure, "to_rdf_graph", broken_export)
-        with SchemaMiner.from_graph(data, report_path=export_report, delay=0) as miner:
-            with pytest.raises(PartialMiningError, match="serialization failure"):
-                LocalMiningStage(export_config)._mine_schema(miner, "fixture", export_dir)
+        with (
+            SchemaMiner.from_graph(data, report_path=export_report, delay=0) as miner,
+            pytest.raises(PartialMiningError, match="serialization failure"),
+        ):
+            LocalMiningStage(export_config)._mine_schema(miner, "fixture", export_dir)
         saved = MinedSchema.from_json(export_dir / "fixture_schema.json")
         assert any(p.property_uri == "urn:p" and p.count == 1 for p in saved.patterns)
         report = json.loads(export_report.read_text())
@@ -82,7 +98,14 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
         result = mine_with_ontology(miner, extract_ontology=True, dataset_name="ontology_failure")
         assert result.data_schema.patterns and result.ontology is None
         assert miner.last_report.completion_state == "partial"
-    skipped = Source.from_dict({"name": "unavailable", "endpoint": "https://example.invalid/sparql", "endpoint_down": True, "failure_count": 3})
+    skipped = Source.from_dict(
+        {
+            "name": "unavailable",
+            "endpoint": "https://example.invalid/sparql",
+            "endpoint_down": True,
+            "failure_count": 3,
+        }
+    )
     outcome = RemoteMiningStage(config)._mine_single_source(skipped)
     assert outcome["status"] == "skipped"
     record = json.loads((config.output_dir / "unavailable/unavailable_report.json").read_text())
@@ -91,7 +114,13 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
     health = tmp_path / "health.json"
     health.write_text(json.dumps({"endpoints": {"offline": {"status": "down"}}}))
     config.endpoint_status_file = health
-    both = Source.from_dict({"name": "offline", "endpoint": "https://example.invalid/sparql", "download_ttl": ["https://example.invalid/data.ttl"]})
+    both = Source.from_dict(
+        {
+            "name": "offline",
+            "endpoint": "https://example.invalid/sparql",
+            "download_ttl": ["https://example.invalid/data.ttl"],
+        }
+    )
     config.sources = config._filter_by_health_checks([both])
     assert config.get_local_sources() == [both], "Endpoint health removed the local access channel"
     assert config.get_remote_sources() == [both], "Skipped remote attempt has no report path"
@@ -100,11 +129,14 @@ def test_late_failure_keeps_schema_and_marks_partial(tmp_path, monkeypatch):
     import rdfsolve
     from scripts.pipeline_stages.cloud import LsLodCloudStage
 
-    monkeypatch.setattr(rdfsolve, "SchemaMiner",
-                        lambda **options: SchemaMiner.from_graph(data, **options))
+    monkeypatch.setattr(
+        rdfsolve, "SchemaMiner", lambda **options: SchemaMiner.from_graph(data, **options)
+    )
     missing = Source.from_dict({"name": "missing_scope", "graph_uris": ["urn:missing"]})
-    for stage_class, name in [(LocalMiningStage, "missing_scope"),
-                              (LsLodCloudStage, "lslod_cloud")]:
+    for stage_class, name in [
+        (LocalMiningStage, "missing_scope"),
+        (LsLodCloudStage, "lslod_cloud"),
+    ]:
         scoped_stage = stage_class(config)
         with pytest.raises(ValueError, match="graphs"):
             if stage_class is LocalMiningStage:

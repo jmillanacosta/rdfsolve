@@ -1,0 +1,234 @@
+"""scripts.pipeline_stages.local: the local stage mines a source's index with its graph scope and
+settings, sets aside a source whose downloads were updated, and starts local servers without delay."""
+
+import sys
+from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
+
+import rdfsolve
+from rdfsolve.qlever import downloads
+from scripts.pipeline_stages.config import PipelineConfig, Source
+from scripts.pipeline_stages.local import LocalMiningStage, local_graph_scope
+
+URL = "https://example.org/data.ttl.gz"
+
+
+def _stage(tmp_path, update):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        update_downloads=update,
+    )
+    workdir = tmp_path / "fixture"
+    (workdir / "rdf").mkdir(parents=True)
+    (workdir / "rdf" / "data.ttl").write_text("<urn:a> <urn:p> <urn:b> .")
+    (workdir / "fixture.meta-data.json").write_text("{}")
+    return (
+        LocalMiningStage(config),
+        workdir,
+        Source.from_dict({"name": "fixture", "download_ttl": [URL]}),
+    )
+
+
+def _folders(tmp_path):
+    return sorted(
+        p.name.split("-update-")[0] for p in tmp_path.iterdir() if p.is_dir() and p.name != "run"
+    )
+
+
+def test_a_source_with_an_update_is_set_aside_and_made_empty(tmp_path, monkeypatch):
+    monkeypatch.setattr(downloads, "updated_urls", lambda urls, record, built_at: [URL])
+    stage, workdir, source = _stage(tmp_path, update=True)
+    stage._set_aside_when_updated(workdir, source)
+    assert _folders(tmp_path) == ["fixture", "fixture.before"]
+    assert not any(workdir.iterdir()), "The source is downloaded and indexed again"
+    kept = next(p for p in tmp_path.iterdir() if ".before-update-" in p.name)
+    assert (kept / "rdf" / "data.ttl").exists(), "The old folder is kept"
+
+
+def test_a_source_without_an_update_keeps_its_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(downloads, "updated_urls", lambda urls, record, built_at: [])
+    stage, workdir, source = _stage(tmp_path, update=True)
+    stage._set_aside_when_updated(workdir, source)
+    assert _folders(tmp_path) == ["fixture"] and (workdir / "rdf" / "data.ttl").exists()
+
+
+def test_a_changed_registry_entry_is_an_update(tmp_path, monkeypatch):
+    def not_asked(urls, record, built_at):
+        raise AssertionError("The server is not asked when the entry changed")
+
+    monkeypatch.setattr(downloads, "updated_urls", not_asked)
+    stage, workdir, source = _stage(tmp_path, update=True)
+    downloads.write_record(workdir, [URL, "https://example.org/dropped.ttl"], lambda url: None)
+    stage._set_aside_when_updated(workdir, source)
+    assert _folders(tmp_path) == ["fixture", "fixture.before"]
+
+
+def test_without_the_option_the_server_is_not_asked(tmp_path, monkeypatch):
+    def not_asked(urls, record, built_at):
+        raise AssertionError("A run without the option asks nothing of the server")
+
+    monkeypatch.setattr(downloads, "updated_urls", not_asked)
+    stage, workdir, source = _stage(tmp_path, update=False)
+    stage._set_aside_when_updated(workdir, source)
+    assert _folders(tmp_path) == ["fixture"]
+
+
+def test_the_miner_of_a_local_server_does_not_wait(tmp_path, monkeypatch):
+    seen = {}
+
+    def miner(**options):
+        seen.update(options)
+        return object()
+
+    monkeypatch.setattr(rdfsolve, "SchemaMiner", miner)
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run"
+    )
+    assert config.delay > 0, "Public endpoints keep their wait"
+    LocalMiningStage(config)._local_miner(7000, None, tmp_path / "report.json")
+    assert seen["endpoint_url"] == "http://localhost:7000" and seen["delay"] == 0
+
+
+SCOPE = ["http://rdfportal.org/dataset/medgen"]
+
+
+def test_the_scope_of_the_endpoint_is_not_applied_to_files_without_graphs():
+    assert local_graph_scope(SCOPE, {"download_nt": ["https://example.org/a.nt.gz"]}, {}) is None
+    fields = {
+        "download_ttl": ["https://example.org/a.ttl"],
+        "download_owl": "https://example.org/o.owl",
+    }
+    assert local_graph_scope(SCOPE, fields, {}) is None
+
+
+def test_the_scope_is_kept_where_the_files_can_hold_graphs():
+    assert local_graph_scope(SCOPE, {"download_nq": ["https://example.org/a.nq.gz"]}, {}) == SCOPE
+    assert local_graph_scope(SCOPE, {"download_tgz": "https://example.org/a.tgz"}, {}) == SCOPE
+    mapped = {"urn:g": {"download_ttl": ["https://example.org/a.ttl"]}}
+    assert local_graph_scope(["urn:g"], {}, mapped) == ["urn:g"]
+    assert local_graph_scope(SCOPE, {}, {}) == SCOPE, (
+        "No files are known: the miner checks the scope"
+    )
+    assert local_graph_scope(None, {"download_nt": ["https://example.org/a.nt"]}, {}) is None
+
+
+@pytest.fixture
+def pipeline():
+    import subprocess
+    from importlib import import_module
+    from types import SimpleNamespace
+
+    scripts = str(Path(__file__).resolve().parents[2] / "scripts")
+    sys.path.insert(0, scripts)
+    modules = [
+        import_module("pipeline_stages." + name)
+        for name in ("config", "base", "remote", "local", "grouped", "cloud", "cli")
+    ]
+    return SimpleNamespace(
+        subprocess=subprocess,
+        **{
+            name: getattr(module, name)
+            for module in modules
+            for name in (
+                "Source",
+                "SourceMode",
+                "PipelineConfig",
+                "Stage",
+                "RemoteMiningStage",
+                "LocalMiningStage",
+                "GroupedMiningStage",
+                "LsLodCloudStage",
+                "Pipeline",
+                "preflight",
+            )
+            if hasattr(module, name)
+        },
+    )
+
+
+def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
+    pipeline, tmp_path, monkeypatch
+):
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    one, two = ("urn:provider:one", "urn:provider:two")
+    config = pipeline.PipelineConfig(base_dir=tmp_path)
+    stage = pipeline.GroupedMiningStage(config)
+    sources = [
+        pipeline.Source.from_dict(
+            {
+                "name": "one",
+                "graph_uris": one,
+                "type_context_graph_uris": "urn:types",
+                "ontology_graph_uris": "urn:ontology",
+            }
+        ),
+        pipeline.Source(name="two", graph_uris=[two]),
+    ]
+    miners = []
+    miner = Mock(declared_classes=frozenset(), subsumed_classes=frozenset())
+    miner.count_class_entities.return_value = ({"urn:A": 2}, {"urn:A": "complete"})
+    miner.last_report.completion_state = "complete"
+
+    def local_miner(
+        port, graph_uris, report_path, *, type_context_graph_uris, resume_checkpoint=None
+    ):
+        assert type_context_graph_uris == ["urn:types"]
+        miners.append(graph_uris)
+        return miner
+
+    group = MinedSchema(
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri="urn:p",
+                object_class="urn:B",
+                count=3,
+                graphs={one: 3},
+            ),
+            SchemaPattern(
+                subject_class="urn:B",
+                property_uri="urn:q",
+                object_class="Literal",
+                count=1,
+                graphs={two: 1},
+            ),
+        ],
+        about=AboutMetadata(dataset_name="provider", graph_uris=[one, two]),
+    )
+    saved = {}
+    monkeypatch.setattr(stage, "_local_miner", local_miner)
+
+    def mine_schema(miner, name, output_dir, *, ontology_graph_uris):
+        assert ontology_graph_uris == ["urn:ontology"]
+        return group
+
+    monkeypatch.setattr(stage, "_mine_schema", mine_schema)
+    monkeypatch.setattr(stage, "_save_schema_outputs", Mock())
+    monkeypatch.setattr(
+        stage,
+        "_save_dataset_outputs",
+        lambda source, part, output_dir, helper, context: saved.setdefault(
+            source.name, (part, context)
+        ),
+    )
+    assert stage._mine_grouped("provider", sources, 7019) == ["one", "two"]
+    assert miners == [[one, two]]
+    part, context = saved["one"]
+    assert context == "grouped_local_distribution"
+    assert [(p.subject_class, p.object_class, p.count) for p in part.patterns] == [
+        ("urn:A", "urn:B", 3)
+    ]
+    assert part.about.dataset_name == "one" and part.about.graph_uris == [one]
+    assert part.about.class_entity_counts == {"urn:A": 2}
+    miner.count_class_entities.assert_any_call(["urn:A", "urn:B"], [one])
+    assert [p.property_uri for p in saved["two"][0].patterns] == ["urn:q"]

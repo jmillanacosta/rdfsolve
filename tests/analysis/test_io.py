@@ -1,3 +1,5 @@
+"""rdfsolve.analysis.io: the release extraction reads local and remote schemas together."""
+
 import json
 
 import pytest
@@ -17,7 +19,9 @@ def test_release_selects_verified_extraction(tmp_path):
     snapshots = {}
     for mode, value in [("local", "local"), ("remote", "remote")]:
         data = Graph().parse(data=f'<urn:s> a <urn:C>; <urn:{value}> "x" .', format="turtle")
-        with SchemaMiner.from_graph(data, delay=0, report_path=directory / f"fixture_{mode}_report.json") as miner:
+        with SchemaMiner.from_graph(
+            data, delay=0, report_path=directory / f"fixture_{mode}_report.json"
+        ) as miner:
             schema = miner.mine("fixture")
         (directory / f"fixture_{mode}_schema.json").write_text(json.dumps(schema.to_dict()))
         snapshots[mode] = schema.about.snapshot_id
@@ -27,19 +31,29 @@ def test_release_selects_verified_extraction(tmp_path):
     assert all(r.schema_path for r in record.extractions)
     assert record.snapshot_id is None, "Dataset record selected an arbitrary extraction"
     from rdfsolve.release.model import ExtractionReleaseRecord
-    record.extractions.append(ExtractionReleaseRecord(
-        mode="remote", completion_state="failed", snapshot_id="failed-attempt"))
+
+    record.extractions.append(
+        ExtractionReleaseRecord(
+            mode="remote", completion_state="failed", snapshot_id="failed-attempt"
+        )
+    )
     write_release_manifest(manifest, tmp_path)
     from rdfsolve.analysis.io import iter_extractions
+
     attempts = list(iter_extractions(tmp_path))
-    assert [(name, attempt.mode, attempt.completion_state, schema is not None)
-            for name, attempt, schema in attempts] == [
+    assert [
+        (name, attempt.mode, attempt.completion_state, schema is not None)
+        for name, attempt, schema in attempts
+    ] == [
         ("fixture", "local", "complete", True),
         ("fixture", "remote", "complete", True),
         ("fixture", "remote", "failed", False),
     ], "Keep each channel and failed attempt without choosing a schema"
-    assert {attempt.mode: schema.about.snapshot_id for _, attempt, schema in attempts
-            if schema is not None} == snapshots
+    assert {
+        attempt.mode: schema.about.snapshot_id
+        for _, attempt, schema in attempts
+        if schema is not None
+    } == snapshots
     with pytest.raises(ValueError, match="extraction"):
         load_schemas(tmp_path)
     chosen = load_schemas(tmp_path, extraction_mode="local")
@@ -47,12 +61,15 @@ def test_release_selects_verified_extraction(tmp_path):
     assert any(p.property_uri == "urn:local" for p in chosen["fixture"].patterns)
     stray = directory / "ignored_schema.json"
     stray.write_text("invalid json")
-    assert load_schemas(tmp_path, extraction_mode="local")["fixture"].patterns == chosen["fixture"].patterns
+    assert (
+        load_schemas(tmp_path, extraction_mode="local")["fixture"].patterns
+        == chosen["fixture"].patterns
+    )
     path = directory / "fixture_local_schema.json"
     raw = json.loads(path.read_text())
     path.write_text(json.dumps(raw, indent=4))
-    with pytest.raises(ValueError, match="hash|digest"):
+    with pytest.raises(ValueError, match=r"hash|digest"):
         load_schemas(tmp_path, extraction_mode="local")
 
-    with pytest.raises(ValueError, match="hash|digest"):
+    with pytest.raises(ValueError, match=r"hash|digest"):
         list(iter_extractions(tmp_path))

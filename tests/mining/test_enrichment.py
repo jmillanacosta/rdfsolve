@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 from rdflib import RDF, Dataset, Literal, Namespace, URIRef
+
 from rdfsolve.mining.enrichment import query_enrichment
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
@@ -54,9 +55,7 @@ def test_enrichment_keeps_language_and_scope(source):
     assert result.description(str(EX.p)) == "A measured value."
     assert len(result.examples) == 2
     assert result.query_count == 3
-    literal = next(
-        (example.value for example in result.examples if example.value.kind == "literal")
-    )
+    literal = next(example.value for example in result.examples if example.value.kind == "literal")
     assert literal.language == "en"
     assert literal.value == "hello"
     assert result.class_examples[str(EX.B)][0].value == str(EX.two)
@@ -71,12 +70,10 @@ def test_enrichment_keeps_language_and_scope(source):
     assert (EX.one, EX.p, Literal("hello", lang="en")) in graph
     assert (EX.A, SKOS.definition, Literal('A "u', lang="en")) in graph
     assert all(
-        (
-            not item.text.value
-            for item in MinedSchema.from_dict(
-                schema.to_dict(trim_descriptions=0)
-            ).enrichment.definitions
-        )
+        not item.text.value
+        for item in MinedSchema.from_dict(
+            schema.to_dict(trim_descriptions=0)
+        ).enrichment.definitions
     )
     with pytest.raises(ValueError, match="trim_descriptions"):
         schema.to_shacl(trim_descriptions=-1)
@@ -111,7 +108,7 @@ def test_a_failed_example_batch_is_asked_again_one_query_at_a_time(source):
 def test_examples_filter_a_sample_and_ask_again_when_it_has_none(monkeypatch):
     """A value filter runs on a sample of the pattern (ChEMBL: 300 s on 24 M values, 0.1 s on a
     sample); a sample without a value of the filter is asked again in full."""
-    import rdfsolve.mining.enrichment as enrichment
+    from rdfsolve.mining import enrichment
 
     monkeypatch.setattr(enrichment, "EXAMPLE_SAMPLE", 1)
     dataset = Dataset()
