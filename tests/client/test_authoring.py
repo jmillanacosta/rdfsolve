@@ -70,9 +70,14 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         year = ox.Literal("2026", datatype=ox.NamedNode(str(XSD.gYear)))
         assert ox.Quad(ox.NamedNode(str(E.one)), ox.NamedNode(str(E.date)), year) in quads
         assert len(quads) == len(expected), "The same statements, also for Oxigraph"
-        assert sum(isinstance(q.object, ox.BlankNode) for q in quads) == 1, "Nested nodes stay blank"
+        assert sum(isinstance(q.object, ox.BlankNode) for q in quads) == 1, (
+            "Nested nodes stay blank"
+        )
         by_iri = client.create(
-            str(E.Item), uri=str(E.one), part=part, label=Literal("One", lang="en"),
+            str(E.Item),
+            uri=str(E.one),
+            part=part,
+            label=Literal("One", lang="en"),
             **{E.date: Literal("2026", datatype=XSD.gYear, normalize=False)},
         )
         assert isomorphic(by_iri.to_graph(), expected)
@@ -105,15 +110,27 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         assert next(linked.objects(None, E.part)) in set(linked.subjects(RDF.type, E.Part))
 
         inferred = client.create(
-            str(E.Item), uri=str(E.one), language="en", extra_types=[str(E.Other)],
-            label="One", date="2026-09", part=part,
+            str(E.Item),
+            uri=str(E.one),
+            language="en",
+            extra_types=[str(E.Other)],
+            label="One",
+            date="2026-09",
+            part=part,
         ).to_graph()
-        assert (E.one, E.date, Literal("2026-09", datatype=XSD.gYearMonth, normalize=False)) in inferred
+        assert (
+            E.one,
+            E.date,
+            Literal("2026-09", datatype=XSD.gYearMonth, normalize=False),
+        ) in inferred
         assert (E.one, E.label, Literal("One", lang="en")) in inferred
         assert set(inferred.objects(E.one, RDF.type)) == {E.Item, E.Other}
         inferred_rows = client.from_table(
-            str(E.Item), pd.DataFrame([{"label": "One", "date": "2026-09"}]),
-            language="en", label="label", date="date",
+            str(E.Item),
+            pd.DataFrame([{"label": "One", "date": "2026-09"}]),
+            language="en",
+            label="label",
+            date="date",
         )
         assert set(inferred_rows[0].to_graph().objects(None, E.date)) == {
             Literal("2026-09", datatype=XSD.gYearMonth, normalize=False)
@@ -176,10 +193,13 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         client.save(tmp_path / "named.ttl", chebi)
         assert "chebi:17761" in (tmp_path / "named.ttl").read_text(), "Name record namespaces"
 
-    people = MinedSchema(about={"dataset_name": "api-check"}, patterns=[
-        SchemaPattern(subject_class=iri, property_uri=str(E.knows), object_class=iri)
-        for iri in ("https://schema.org/Person", "http://xmlns.com/foaf/0.1/Person")
-    ])
+    people = MinedSchema(
+        about={"dataset_name": "api-check"},
+        patterns=[
+            SchemaPattern(subject_class=iri, property_uri=str(E.knows), object_class=iri)
+            for iri in ("https://schema.org/Person", "http://xmlns.com/foaf/0.1/Person")
+        ],
+    )
     with Client(people, Graph()) as client:
         client.models["Person"] = client.model("https://schema.org/Person")
         assert client.model("Person").rdf_class_iri == "https://schema.org/Person"
@@ -197,10 +217,17 @@ def test_records_and_tables_preserve_rdf_values(tmp_path):
         raw = client.diagram(fenced=False)
         assert client.diagram() == "```mermaid\n" + raw + "\n```"
         assert raw.startswith("flowchart LR") and "-->" in raw
-        paths = pd.DataFrame([{
-            "Path": 1, "Step": 1, "From class": "Person",
-            "To class": "Person", "Link": "knows",
-        }])
+        paths = pd.DataFrame(
+            [
+                {
+                    "Path": 1,
+                    "Step": 1,
+                    "From class": "Person",
+                    "To class": "Person",
+                    "Link": "knows",
+                }
+            ]
+        )
         paths.attrs.update(routes=[[(iri, str(E.knows), iri, False)]], truncated=True)
         raw_path = client.diagram(paths=paths, fenced=False)
         assert "```" not in raw_path and "-->" in raw_path

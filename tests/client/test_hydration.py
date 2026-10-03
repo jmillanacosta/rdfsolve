@@ -1,13 +1,16 @@
+"""rdfsolve.client.hydration: records are hydrated with their fields, also from SHACL schemas."""
+
 from pathlib import Path
 
 from rdflib import RDF, Graph, URIRef
 
-from rdfsolve import MinedSchema
+from rdfsolve.client.api import Client
+from rdfsolve.schema_models import MinedSchema
 
 ROOT = "https://aopwiki.rdf.bigcat-bioinformatics.org/AOPWikiRDF"
 DATASET = "http://rdfs.org/ns/void#Dataset"
 DESCRIPTION = "http://purl.org/dc/elements/1.1/description"
-DATA = Path(__file__).parent / "test_data/aopwikirdf_metadata_excerpt.ttl"
+DATA = Path(__file__).parents[1] / "test_data/aopwikirdf_metadata_excerpt.ttl"
 
 
 def schema():
@@ -66,6 +69,64 @@ def test_languages_are_filtered_and_missing_subjects_can_be_skipped():
     assert sorted(record.label) == ["A None", "A en"], "Untagged literals are kept"
     with pytest.raises(LookupError):
         client.get_many(model, ["urn:a", "urn:gone"])
-    assert [str(r.uri) for r in client.get_many(model, ["urn:gone", "urn:a"], missing="skip")] == ["urn:a"]
+    assert [str(r.uri) for r in client.get_many(model, ["urn:gone", "urn:a"], missing="skip")] == [
+        "urn:a"
+    ]
     with pytest.raises(ValueError, match="missing"):
         client.get_many(model, ["urn:a"], missing="ignore")
+
+
+def test_declared_fields_retrieve_and_validate_original_constraints(caplog):
+    source = """
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix e: <https://example.org/books/> .
+        e:BookShape a sh:NodeShape; sh:targetClass e:Book;
+            sh:closed true;
+            sh:ignoredProperties (<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>);
+            sh:property [sh:path e:title; sh:minCount 1; sh:pattern "^Book "] .
+    """
+    imported = MinedSchema.from_shacl(source)
+    schema = MinedSchema.from_dict(imported.to_dict())
+    data = Graph().parse(
+        data="""
+        @prefix e: <https://example.org/books/> .
+        e:one a e:Book; e:title "Book one" .
+        e:two a e:Book; e:title "Wrong prefix" .
+        e:three a e:Book .
+    """,
+        format="turtle",
+    )
+    with Client(schema, data) as client:
+        assert client.session_metadata()["local_backend"]["engine"] == "oxigraph"
+        book = client.model("https://example.org/books/Book")
+        title = client.field_name(book, "https://example.org/books/title")
+        records = client.sample(book, fields=[title])
+        assert len(records) == 3, "A missing required field must not hide the record"
+        selected = schema.select(
+            fields=[("https://example.org/books/Book", "https://example.org/books/title")]
+        )
+        assert selected.patterns == [], "A required field does not imply a class or datatype"
+        result = client.extract(selected, root_class=book)
+        assert len(result.roots) == 3 and len(result.quads) == 5
+        report = result.assess(schema.get_metadata().to_rdf_graph())
+        assert report.state == "violations" and len(report.violations) == 2
+        assert {v.focus.value for v in report.violations} == {
+            "https://example.org/books/two",
+            "https://example.org/books/three",
+        }
+        assert not any("outside selected" in warning for warning in report.scope_warnings)
+        assert report.source_conforms is None
+
+    incomplete = MinedSchema.from_shacl(
+        source
+        + """
+        <https://example.org/books/BookShape>
+          <http://www.w3.org/ns/shacl#property> <https://example.org/books/ReferencedShape> .
+    """
+    )
+    with Client(incomplete, data) as client:
+        model = client.model("https://example.org/books/Book")
+        title = client.field_name(model, "https://example.org/books/title")
+        assert len(client.sample(model, fields=[title])) == 3
+        assert client.links(model).empty, "An unresolved property supplies no invented target"
+        assert "ReferencedShape" in caplog.text and "no client field" in caplog.text

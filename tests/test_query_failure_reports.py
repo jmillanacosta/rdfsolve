@@ -9,7 +9,7 @@ def test_paging_recovers_timeout_and_short_server_pages(monkeypatch):
     from rdflib import Graph
     from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
 
-    from tests.test_client_api import DATA
+    from tests.client.test_api import DATA
 
     graph = Graph().parse(DATA, format="turtle")
     query = "SELECT ?s ?title WHERE { ?s <http://purl.org/dc/elements/1.1/title> ?title } ORDER BY ?s ?title"

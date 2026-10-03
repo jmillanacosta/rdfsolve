@@ -6,7 +6,7 @@ from rdflib import RDF, Graph, Literal, URIRef
 from rdfsolve import MinedSchema, SchemaPattern
 from rdfsolve.client.api import Client
 
-DATA = Path(__file__).parent / "test_data/aopwikirdf_phenobarbital_excerpt.ttl"
+DATA = Path(__file__).parents[1] / "test_data/aopwikirdf_phenobarbital_excerpt.ttl"
 AOP = "http://aopkb.org/aop_ontology#AdverseOutcomePathway"
 STRESSOR = "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571"
 CHEMICAL = "http://semanticscience.org/resource/CHEMINF_000000"

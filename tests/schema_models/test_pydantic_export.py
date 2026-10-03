@@ -1,9 +1,50 @@
+"""rdfsolve.schema_models.exporters.pydantic: Pydantic models are generated from a schema, under a
+contract, and registered."""
+
+import json
+import sys
+from types import ModuleType
+
 import pytest
 from rdflib import RDF, XSD, Graph, Literal, Namespace
 
-from rdfsolve import MinedSchema, SchemaPattern
 from rdfsolve.api import Client
+from rdfsolve.client.registry import Registry
+from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
+from tests.client.test_api import client
+
+
+def generate(patterns, **metadata):
+    schema = MinedSchema(patterns=patterns, about=AboutMetadata(**metadata))
+    module = ModuleType("rdfsolve_generated_test")
+    sys.modules[module.__name__] = module
+    exec(compile(schema.to_pydantic(), "generated.py", "exec"), module.__dict__)
+    return (module, schema)
+
+
+def test_preserves_mixed_ranges_without_inventing_cardinality():
+    module, _ = generate(
+        [
+            SchemaPattern(
+                subject_class="urn:A",
+                subject_label="Thing",
+                property_uri="urn:value",
+                object_class=kind,
+                datatype=datatype,
+            )
+            for kind, datatype in [
+                ("urn:B", None),
+                ("Literal", "http://www.w3.org/2001/XMLSchema#integer"),
+                ("Resource", None),
+                ("BlankNode", None),
+            ]
+        ]
+    )
+    instance = module.Thing(uri="urn:test", value=[1, "urn:ref"])
+    assert instance.value == [1, "urn:ref"]
+    assert module.Thing(uri="urn:test").value is None
+
 
 E = Namespace("https://example.org/")
 
@@ -70,3 +111,23 @@ def test_contract_records_enforce_reviewed_fields_and_constraints(tmp_path):
     schema.shapes = None
     model = next(iter(schema.to_pydantic_classes(contract=True).values()))
     assert len(model().to_graph()) == 1, "Mining invented a required field"
+
+
+def test_registry_roundtrip_and_rejected_documents(tmp_path):
+    with client() as data:
+        registry = data.registry(source_id="aopwikirdf")
+        assert not data.queries
+        path = tmp_path / "registry.json"
+        registry.write(path)
+        assert Registry.read(path) == registry
+        raw = json.loads(path.read_text())
+        for bad in (
+            {**raw, "format_version": 2},
+            {**raw, "source_id": "changed"},
+            {**raw, "load_code": "untrusted.py"},
+        ):
+            path.write_text(json.dumps(bad))
+            with pytest.raises(ValueError):
+                Registry.read(path)
+        data.graph_uris = ["http://aopwiki.org/"]
+        assert data.registry(source_id="aopwikirdf").revision != registry.revision

@@ -13,14 +13,23 @@ def cell(value, datatype=None):
 def test_profile_reports_row_multiplicity_gaps_and_datatypes():
     rows = []
     for index in range(10):
-        row = {"measurement": cell(f"urn:m{index}"), "protein": cell("urn:p1"),
-               "value": cell(str(index), XSD + ("int" if index < 2 else "decimal"))}
+        row = {
+            "measurement": cell(f"urn:m{index}"),
+            "protein": cell("urn:p1"),
+            "value": cell(str(index), XSD + ("int" if index < 2 else "decimal")),
+        }
         if index < 7:
             row["qualifier"] = cell("=", XSD + "string")
         rows.append(row)
     rows.append({**rows[0], "protein": cell("urn:p2")})  # one measurement, two proteins
-    result = QueryResult(query="SELECT", endpoint="", row_count=len(rows), duration_ms=0,
-                         variables=["measurement", "protein", "value", "qualifier"], rows=rows)
+    result = QueryResult(
+        query="SELECT",
+        endpoint="",
+        row_count=len(rows),
+        duration_ms=0,
+        variables=["measurement", "protein", "value", "qualifier"],
+        rows=rows,
+    )
     profile = result.profile()
 
     measurement = profile.variable("measurement")
