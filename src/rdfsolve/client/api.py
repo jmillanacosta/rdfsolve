@@ -330,9 +330,10 @@ class Client(DatasetClient):
         return records.load(*(fields or self.record_fields(kind)))
 
     def naming(self, identifiers: Iterable[str], *, kind: str, via: str) -> Results:
-        """Return the records of *kind* whose link *via* names one of the identifiers.
+        """Return the records of *kind* that are one of the identifiers, or whose link *via*
+        names one.
 
-        Any registered IRI form is matched: a source cites an identifier in its own form, not
+        Any registered IRI form is matched: a source writes an identifier in its own form, not
         in the one asked for. links() gives each identifier, as given, its records.
         """
         from rdfsolve.client.exploration import _path
@@ -347,7 +348,8 @@ class Client(DatasetClient):
             for start in range(0, len(names), self.batch_size):
                 values = " ".join(_iri(name) for name in names[start : start + self.batch_size])
                 body = self._scope(
-                    f"VALUES ?named {{ {values} }} ?record {path} ?named . "
+                    f"{{ VALUES ?named {{ {values} }} ?record {path} ?named . }} UNION "
+                    f"{{ VALUES ?named {{ {values} }} BIND(?named AS ?record) }} "
                     + self._type_pattern("?record", _iri(class_iri(model)))
                 )
                 rows = self._select(f"SELECT DISTINCT ?record ?named WHERE {{ {body} }}")
@@ -464,7 +466,10 @@ class Client(DatasetClient):
                 self.catalogue,
                 output_variables=output_variables,
             )
-        if self._schema.about.type_context_graph_uris or self._schema.about.type_graph_uris:
+        about = self._schema.about
+        # Class inserts follow the schema's typing: its type graphs, and its membership property
+        # (records that are classes, under their kind by rdfs:subClassOf).
+        if about.type_context_graph_uris or about.type_graph_uris or about.membership_property:
             scoped = compile_query(
                 sparql,
                 self.catalogue.fragments,
@@ -539,7 +544,7 @@ class Client(DatasetClient):
         patterns: Sequence[QueryPattern | dict[str, Any]],
         *,
         outputs: Sequence[str],
-        values: Mapping[str, str] | None = None,
+        values: Mapping[str, str | Sequence[str] | Results] | None = None,
         text: Mapping[str, str] | None = None,
         distinct: bool = True,
         resolve: bool = False,
@@ -558,6 +563,8 @@ class Client(DatasetClient):
         The supplied bindings define the network; resolution does not add edges.
         Warnings state constraints the resolution added, such as a field owner type.
         diagnostics["network"] lists each role's classes and each field or path link.
+        *values* restricts a role to retained terms: one reference, several, or the records
+        of a Results set (the question is then asked for all of them at once).
         """
         from rdfsolve.client.network_resolution import describe_network, resolve_patterns
         from rdfsolve.client.query_fragments import network_query
@@ -568,8 +575,12 @@ class Client(DatasetClient):
             raise ValueError("external_names requires resolve=True")
         if resolve:
             patterns, evidence, warnings = resolve_patterns(self, patterns, external_names)
+        restricted: dict[str, str | Sequence[str]] = {
+            role: given.references if isinstance(given, Results) else given
+            for role, given in (values or {}).items()
+        }
         query = network_query(
-            self.catalogue, patterns, outputs, values=values, text=text, distinct=distinct
+            self.catalogue, patterns, outputs, values=restricted, text=text, distinct=distinct
         )
         prepared = self.prepare(
             query, requirements=requirements, grounding=grounding, output_variables=outputs
@@ -1724,15 +1735,8 @@ class Results:
             columns=["From", "Link", "To"],
         ).drop_duplicates()
 
-    def links(self, via: str | None = None) -> dict[str, set[Any]]:
-        """Return what each record leads to: the records a related() step reached from it, or
-        the values of a field.
-
-        A related() step is read back by the record it started from; the evidence holds it
-        (after a path, each start record and the records at its end). With *via* (as given to
-        related()), that link only; a field of these records gives each record its values
-        (records without a value are left out). Only targets in this set are given.
-        """
+    def _links(self, via: str | None = None) -> dict[str, set[Any]]:
+        """Return what each record leads to (record -> targets): see links()."""
         kept = {vars(record)["uri"] for record in self.records}
         if via is None and self.through is not None:
             return {s: t & kept for s, t in self.through.items() if t & kept}
@@ -1752,6 +1756,20 @@ class Results:
                 if value is not None:
                     found[vars(record)["uri"]].add(value)
         return dict(found)
+
+    def links(self, via: str | None = None) -> pd.DataFrame:
+        """Return what each record leads to, one row each: the records a related() step
+        reached from it (from, to), or the values of a field (from, to).
+
+        A related() step is read back by the record it started from; the evidence holds it
+        (after a path, each start record and the records at its end). With *via* (as given to
+        related()), that link only; a field of these records gives each record its values
+        (records without a value are left out). Only targets in this set are given.
+        """
+        return pd.DataFrame(
+            sorted((a, b) for a, found in self._links(via).items() for b in found),
+            columns=["from", "to"],
+        )
 
     def _shown(self, model: type[BaseModel]) -> str:
         """Return a type's name, or its CURIE when the name is shared by other types."""
@@ -1809,7 +1827,7 @@ class Results:
                 for hop_kind, (hop, backwards) in zip(kinds, hops, strict=True):
                     level = level.related(hop_kind, via=hop, value=value, incoming=backwards)
                     evidence += level.evidence
-                    step = level.links()
+                    step = level._links()
                     ends = {s: {t for m in e for t in step.get(m, ())} for s, e in ends.items()}
                 for start, end in ends.items():
                     through[start] |= end

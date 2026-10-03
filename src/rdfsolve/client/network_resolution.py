@@ -6,6 +6,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 from rdfsolve.client.catalogue import same_name
+from rdfsolve.client.hydration import class_iri
 from rdfsolve.client.query_fragments import QueryPattern
 from rdfsolve.client.resolution import ResolutionError
 
@@ -31,6 +32,16 @@ def resolve_patterns(
         if len(pattern.bindings) != 1:
             continue
         fragment = client.catalogue.fragments.get(pattern.reference)
+        if fragment is None:
+            # A name the client knows as one class (a generated name, a CURIE of the mined
+            # prefixes, an IRI) is that class.
+            try:
+                known = client.catalogue.type_refs.get(class_iri(client.model(pattern.reference)))
+            except ValueError:
+                known = None
+            if known is not None:
+                selected[index] = pattern.model_copy(update={"reference": known})
+                fragment = client.catalogue.fragments[known]
         if fragment is None:
             result = client.resolve(pattern.reference, kind="class", external_names=external_names)
             if result.status != "resolved" or result.reference is None:
@@ -58,6 +69,11 @@ def resolve_patterns(
         ]
         bound = [ref for ref in matches if client.catalogue.fragments[ref].owner in owners[role]]
         candidates = bound or matches
+        # A field named exactly so is that field, as for Client.field_name (gpml:type, not the
+        # rdf:type labelled "Type").
+        exact = [ref for ref in candidates if client.catalogue.fragments[ref].field_name == name]
+        if len(candidates) > 1 and len(exact) == 1:
+            candidates = exact
         if len(candidates) != 1:
             owned = {r: client.catalogue.fragments[r].owner for r in candidates}
             raise ValueError(f"Field {name!r} for ?{role} is unknown or ambiguous: {owned}")

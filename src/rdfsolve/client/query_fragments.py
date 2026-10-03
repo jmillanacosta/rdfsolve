@@ -229,7 +229,7 @@ def network_query(
     patterns: Sequence[QueryPattern | dict[str, Any]],
     outputs: Sequence[str],
     *,
-    values: Mapping[str, str] | None = None,
+    values: Mapping[str, str | Sequence[str]] | None = None,
     text: Mapping[str, str] | None = None,
     distinct: bool = True,
 ) -> str:
@@ -284,13 +284,18 @@ def network_query(
             f"Unbound output roles: {sorted(set(outputs) - scopes.keys())}. "
             f"Available roles: {sorted(scopes)}. Add field patterns binding the requested outputs."
         )
-    for variable, ref in (values or {}).items():
+    for variable, given in (values or {}).items():
         if variable not in scopes or scopes[variable]:
             raise ValueError("An exact restriction needs a required role")
-        fragment = catalogue.fragments.get(ref)
-        if fragment is None or fragment.kind != "term":
-            raise ValueError("Select an exact retained RDF term for a value restriction")
-        blocks[0].append("VALUES ?" + variable + " { {{" + ref + "}} }")
+        refs = [given] if isinstance(given, str) else list(given)
+        for ref in refs:
+            fragment = catalogue.fragments.get(ref)
+            if fragment is None or fragment.kind != "term":
+                raise ValueError("Select an exact retained RDF term for a value restriction")
+        # First, so that the engine starts from the given records (not from every match).
+        blocks[0].insert(
+            0, "VALUES ?" + variable + " { " + " ".join("{{" + ref + "}}" for ref in refs) + " }"
+        )
     from rdflib import Literal
 
     for variable, value in (text or {}).items():

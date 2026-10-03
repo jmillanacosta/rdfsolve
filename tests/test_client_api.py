@@ -106,6 +106,12 @@ def test_paths_show_a_shared_type_name_as_a_curie(tmp_path):
         shown = set(pathway.paths(incoming=True)["To"])
         assert {"bio:Node", "draw:Node"} <= shown
         assert [r.uri for r in pathway.related("draw:Node", incoming=True)] == ["urn:box"]
+        query = found.prepare_network(
+            [{"reference": "draw:Node", "bindings": ["box"]}],
+            outputs=["box"],
+            resolve=True,
+        )
+        assert found.select(query).table()["box"].tolist() == ["urn:box"], "a CURIE names a class"
 
 
 def test_a_schema_with_a_membership_property_finds_records_by_it(tmp_path):
@@ -141,6 +147,16 @@ def test_a_schema_with_a_membership_property_finds_records_by_it(tmp_path):
         )
         assert [vars(r)["equation"] for r in reaction.load("equation")] == [["A = B"]]
         assert [r.uri for r in reaction.related(rh + "ReactionSide", via="side")] == [rh + "r1_L"]
+        query = found.prepare_network(
+            [
+                {"reference": rh + "Reaction", "bindings": ["r"]},
+                {"reference": "side", "bindings": ["r", "s"]},
+            ],
+            outputs=["r", "s"],
+            values={"r": reaction},
+            resolve=True,
+        )
+        assert found.select(query).table().values.tolist() == [[rh + "r1", rh + "r1_L"]]
 
 
 def test_related_follows_a_link_that_shares_its_name_with_a_class():
@@ -197,15 +213,15 @@ def test_related_follows_a_path_to_a_depth_and_gives_its_links(tmp_path):
     with client(tmp_path / "parts.ttl") as found:
         start = found.from_table(X + "Pathway", [X + "P1"])
         one = start.related([X + "Pathway", X + "Pathway"], via=["^isPartOf", "hasVersion"])
-        assert one.links() == {X + "P1": {X + "P2"}}, "each start record and what its path reaches"
+        assert one.links().values.tolist() == [[X + "P1", X + "P2"]], "a start and its path's end"
         two = start.related(X + "Pathway", via=["^isPartOf", "hasVersion"], depth=2)
         assert sorted(r.uri for r in two) == [X + "P2", X + "P3"]
         three = start.related(X + "Pathway", via=["^isPartOf", "hasVersion"], depth=3)
-        assert three.links(via="hasVersion") == {
-            X + "n1": {X + "P2"},
-            X + "n2": {X + "P3"},
-            X + "n3": {X + "P1"},
-        }
+        assert three.links(via="hasVersion").values.tolist() == [
+            [X + "n1", X + "P2"],
+            [X + "n2", X + "P3"],
+            [X + "n3", X + "P1"],
+        ]
 
 
 def test_related_without_a_kind_gives_every_type_a_link_reaches(tmp_path):
@@ -221,6 +237,18 @@ def test_related_without_a_kind_gives_every_type_a_link_reaches(tmp_path):
             "Metabolite": 1,
             "Pathway": 1,
         }
+        # the same question for a whole set of records at once, as one query and a table
+        query = found.prepare_network(
+            [
+                {"reference": X + "Pathway", "bindings": ["p"]},
+                {"reference": X + "Metabolite", "bindings": ["part"]},
+                {"reference": "isPartOf", "bindings": ["part", "p"]},
+            ],
+            outputs=["part", "p"],
+            values={"p": start},
+            resolve=True,
+        )
+        assert found.select(query).table()["part"].tolist() == [X + "m1"]
 
 
 def test_naming_finds_the_records_that_cite_an_identifier_in_any_form(tmp_path):
@@ -234,14 +262,15 @@ def test_naming_finds_the_records_that_cite_an_identifier_in_any_form(tmp_path):
     )
     with client(tmp_path / "xrefs.ttl") as found:
         named = found.naming(
-            ["ncbigene:3156", "https://identifiers.org/ncbigene/9999"],
+            ["ncbigene:3156", "https://identifiers.org/ncbigene/9999", X + "p3"],
             kind=X + "Protein",
             via="see also",
         )
-        assert named.links() == {
-            "ncbigene:3156": {X + "p1"},
-            "https://identifiers.org/ncbigene/9999": {X + "p2"},
-        }
+        assert named.links().values.tolist() == [
+            ["https://identifiers.org/ncbigene/9999", X + "p2"],
+            ["ncbigene:3156", X + "p1"],
+            [X + "p3", X + "p3"],
+        ], "a record is named by its own identifier too"
 
 
 def test_a_registry_entry_opens_with_its_downloads(tmp_path, monkeypatch):
@@ -267,5 +296,7 @@ def test_a_registry_entry_opens_with_its_downloads(tmp_path, monkeypatch):
     with Client.open(schema=schema, data_file="demo") as found:
         import pandas as pd
 
-        assert found.from_table(X + "Pathway", [X + "P1"]).links(via="title") == {X + "P1": {"One"}}
+        assert found.from_table(X + "Pathway", [X + "P1"]).links(via="title").values.tolist() == [
+            [X + "P1", "One"]
+        ]
     assert sorted(p.name for p in (tmp_path / "cache" / "demo").iterdir()) == ["dump.ttl"]
