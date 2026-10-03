@@ -1,6 +1,7 @@
 """Queries from a model get missing prefixes, checks, and notes on empty results."""
 
 import pytest
+
 from rdfsolve.client.query_fragments import QuerySyntaxError
 from rdfsolve.mcp.sparql import (
     add_prefixes,
@@ -9,8 +10,8 @@ from rdfsolve.mcp.sparql import (
     loose_optionals,
     parse,
     required_triples,
-    undeclared_prefixes,
     terms,
+    undeclared_prefixes,
     with_graphs,
 )
 
@@ -22,7 +23,10 @@ def test_only_used_and_undeclared_known_prefixes_are_added():
     completed, added = add_prefixes(text, PREFIXES)
     assert added == ["rdfs"], "Declared, quoted, bracketed and unknown prefixes are left alone"
     assert completed.startswith("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n")
-    assert add_prefixes("SELECT ?s WHERE { ?s ?p ?o }", PREFIXES) == ("SELECT ?s WHERE { ?s ?p ?o }", [])
+    assert add_prefixes("SELECT ?s WHERE { ?s ?p ?o }", PREFIXES) == (
+        "SELECT ?s WHERE { ?s ?p ?o }",
+        [],
+    )
     assert undeclared_prefixes(text) == ["rdfs", "un"]
 
 
@@ -50,7 +54,9 @@ def test_limits_terms_and_required_patterns_are_read_from_the_algebra():
     )
     assert terms(query) == ({"urn:C"}, {"urn:p", "urn:q", "urn:r", "urn:u1", "urn:u2", "urn:e"})
     required = [str(p) for _, p, _ in required_triples(query.algebra)]
-    assert len(required) == 2 and "urn:r" not in " ".join(required), "OPTIONAL and UNION are left out"
+    assert len(required) == 2 and "urn:r" not in " ".join(required), (
+        "OPTIONAL and UNION are left out"
+    )
 
 
 def test_diagnosis_names_the_first_pattern_that_fails():
@@ -71,7 +77,10 @@ def test_diagnosis_names_the_first_pattern_that_fails():
 
 def test_graphs_become_from_clauses_before_where():
     text = "PREFIX ex: <urn:{x}>\nSELECT ?s WHERE { ?s ?p ?o }"
-    assert with_graphs(text, ["urn:g"]) == "PREFIX ex: <urn:{x}>\nSELECT ?s FROM <urn:g> WHERE { ?s ?p ?o }"
+    assert (
+        with_graphs(text, ["urn:g"])
+        == "PREFIX ex: <urn:{x}>\nSELECT ?s FROM <urn:g> WHERE { ?s ?p ?o }"
+    )
     assert with_graphs("SELECT * { ?s ?p ?o }", ["urn:g"]) == "SELECT * FROM <urn:g> { ?s ?p ?o }"
     assert with_graphs(text, []) == text
 
@@ -81,7 +90,11 @@ def test_an_optional_bound_only_by_another_optional_is_named():
         "SELECT * WHERE { ?e <urn:a> ?b OPTIONAL { ?b <urn:p> ?p } OPTIONAL { ?p <urn:label> ?name } }"
     )
     assert loose_optionals(loose) == ["p"]
-    nested = parse("SELECT * WHERE { ?e <urn:a> ?b OPTIONAL { ?b <urn:p> ?p OPTIONAL { ?p <urn:label> ?n } } }")
+    nested = parse(
+        "SELECT * WHERE { ?e <urn:a> ?b OPTIONAL { ?b <urn:p> ?p OPTIONAL { ?p <urn:label> ?n } } }"
+    )
     assert loose_optionals(nested) == []
-    shared = parse("SELECT * WHERE { ?e <urn:a> ?b OPTIONAL { ?b <urn:p> ?p } OPTIONAL { ?b <urn:q> ?p } }")
+    shared = parse(
+        "SELECT * WHERE { ?e <urn:a> ?b OPTIONAL { ?b <urn:p> ?p } OPTIONAL { ?b <urn:q> ?p } }"
+    )
     assert loose_optionals(shared) == [], "Joined on a required variable"

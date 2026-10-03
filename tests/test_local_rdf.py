@@ -1,12 +1,15 @@
+"""rdfsolve.local_rdf: local RDF is loaded and queried, with restriction patterns."""
+
 import pyoxigraph as ox
 import pytest
-from rdflib import BNode, Dataset, Graph, Literal, Namespace, RDF, XSD
+from rdflib import RDF, XSD, BNode, Dataset, Graph, Literal, Namespace
 from rdflib.compare import isomorphic
 
 from rdfsolve import MinedSchema, SchemaMiner
-from rdfsolve.api import Client
-from rdfsolve.api import to_oxigraph
+from rdfsolve.api import Client, to_oxigraph
 from rdfsolve.local_rdf import LocalRdf
+from rdfsolve.mining.restrictions import mine_restriction_patterns
+from rdfsolve.schema_models import AboutMetadata
 
 E = Namespace("https://example.org/")
 
@@ -74,10 +77,8 @@ def test_local_backends_preserve_graphs_terms_and_schema():
     def observations(schema):
         return {
             field: sorted(
-                (
-                    p.model_dump_json(exclude={"examples", "witness_query", "recount_query"})
-                    for p in getattr(schema, field) or []
-                )
+                p.model_dump_json(exclude={"examples", "witness_query", "recount_query"})
+                for p in getattr(schema, field) or []
             )
             for field in ("patterns", "structural_patterns", "collections")
         }
@@ -144,3 +145,75 @@ def test_the_dumps_of_one_release_load_into_one_store(tmp_path):
     store = load_store([archive, tmp_path / "layer-two.ttl"])
     assert len(store) == 2
     assert len(load_store(archive)) == 1
+
+
+OBO = "http://purl.obolibrary.org/obo/"
+DATA = f"""
+@prefix owl: <http://www.w3.org/2002/07/owl#> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix obo: <{OBO}> .
+obo:RO_0001025 a owl:ObjectProperty ; rdfs:label "located in" .
+obo:RO_0002452 a owl:ObjectProperty ; rdfs:label "has symptom" .
+obo:DOID_1 a owl:Class ; rdfs:label "liver disease" ;
+  rdfs:subClassOf [ a owl:Restriction ; owl:onProperty obo:RO_0001025 ; owl:someValuesFrom obo:UBERON_0002107 ] ,
+                  [ a owl:Restriction ; owl:onProperty obo:RO_0002452 ; owl:someValuesFrom obo:SYMP_1 ] .
+obo:DOID_2 a owl:Class ; rdfs:label "heart disease" ;
+  rdfs:subClassOf [ a owl:Restriction ; owl:onProperty obo:RO_0001025 ; owl:someValuesFrom obo:UBERON_0000948 ] ,
+                  [ a owl:Restriction ; owl:onProperty obo:RO_0002452 ; owl:allValuesFrom obo:SYMP_2 ] .
+obo:DOID_3 a owl:Class ; owl:equivalentClass [ owl:intersectionOf ( obo:DOID_2
+    [ a owl:Restriction ; owl:onProperty obo:RO_0001025 ; owl:someValuesFrom obo:UBERON_0000948 ] ) ] .
+obo:DOID_4 a owl:Class ; rdfs:subClassOf [ a owl:Restriction ; owl:onProperty obo:RO_0001025 ;
+    owl:someValuesFrom [ owl:unionOf ( obo:UBERON_1 obo:UBERON_2 ) ] ] .
+obo:UBERON_0002107 rdfs:label "liver" .
+"""
+
+
+def _mine():
+    with SchemaMiner.from_graph(Graph().parse(data=DATA, format="turtle"), delay=0) as miner:
+        return mine_restriction_patterns(miner.helper)
+
+
+def _key(p):
+    return p.axiom, p.property_uri.rsplit("/", 1)[-1], p.form, p.filler_namespace.rsplit("/", 1)[-1]
+
+
+def test_each_relation_of_the_ontology_is_a_pattern_with_its_counts():
+    found = _mine()
+    assert found.state == "complete" and found.query_count > 0
+    by = {_key(p): p for p in found.patterns}
+    assert set(by) == {
+        ("SubClassOf", "RO_0001025", "some", "UBERON_"),
+        ("SubClassOf", "RO_0001025", "some", "(class expression)"),
+        ("SubClassOf", "RO_0002452", "some", "SYMP_"),
+        ("SubClassOf", "RO_0002452", "only", "SYMP_"),
+        ("EquivalentTo", "RO_0001025", "some", "UBERON_"),
+    }
+    located = by["SubClassOf", "RO_0001025", "some", "UBERON_"]
+    assert (located.count, located.classes) == (2, 2) and located.subject_namespace == OBO + "DOID_"
+    assert located.example_subject.startswith(OBO + "DOID_")
+    assert located.example_filler.startswith(OBO + "UBERON_")
+
+
+def test_the_label_is_in_manchester_syntax_with_the_labels_of_the_source():
+    by = {_key(p): p for p in _mine().patterns}
+    assert by["SubClassOf", "RO_0001025", "some", "UBERON_"].label == (
+        "DOID SubClassOf 'located in' some UBERON"
+    )
+    assert by["SubClassOf", "RO_0002452", "only", "SYMP_"].label == (
+        "DOID SubClassOf 'has symptom' only SYMP"
+    )
+    assert by["EquivalentTo", "RO_0001025", "some", "UBERON_"].label == (
+        "DOID EquivalentTo (… and 'located in' some UBERON)"
+    )
+
+
+def test_the_patterns_are_kept_in_the_schema_file():
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[])
+    schema.restriction_patterns = _mine()
+    read = MinedSchema.from_dict(schema.to_dict())
+    assert read.restriction_patterns == schema.restriction_patterns
+    assert (
+        MinedSchema.from_dict(
+            MinedSchema(about=schema.about, patterns=[]).to_dict()
+        ).restriction_patterns
+        is None
+    )

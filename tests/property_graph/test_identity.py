@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pyoxigraph as ox
 
 from rdfsolve.property_graph import Identity, PropertyGraph
-from tests.mappings.test_claims import BRIDGEDB, IDO, O, RDF_TYPE, WP, claims, rdf
+from tests.mappings.test_claims import BRIDGEDB, IDO, RDF_TYPE, WP, O, claims, rdf
 
 
 def test_a_property_graph_follows_the_decision():

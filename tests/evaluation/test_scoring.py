@@ -1,6 +1,7 @@
 """Answers are scored by RDF term and by the resource that each cell shows."""
 
 from conftest import E, text, uri
+
 from rdfsolve.evaluation.scoring import maximum_matching, score, score_levels
 
 INTEGER = "http://www.w3.org/2001/XMLSchema#integer"
@@ -8,8 +9,11 @@ REFERENCE = [{"ke": uri(E[f"ke{n}"]), "name": text(f"Event title {n}")} for n in
 
 
 def test_other_views_of_the_same_resources_match_at_resource_level(select):
-    answer = [{"ke": uri(E.page1), "name": text("KE 1")}, {"ke": uri(E.ke2), "name": text("KE 2")},
-              {"ke": uri(E.ke2), "name": text("Event title 2")}]
+    answer = [
+        {"ke": uri(E.page1), "name": text("KE 1")},
+        {"ke": uri(E.ke2), "name": text("KE 2")},
+        {"ke": uri(E.ke2), "name": text("Event title 2")},
+    ]
     scores = score_levels(REFERENCE, answer, ["ke", "name"], select)
     assert (scores["term"].matched, scores["term"].f1) == (1, 0.4), "Only the third row is the same"
     resource = scores["resource"]
@@ -18,13 +22,18 @@ def test_other_views_of_the_same_resources_match_at_resource_level(select):
 
 
 def test_wrong_resources_other_fields_and_counts_do_not_match(select):
-    swapped = [{"ke": uri(E.ke1), "name": text("KE 2")}, {"ke": uri(E.ke2), "name": text("Shared text")}]
+    swapped = [
+        {"ke": uri(E.ke1), "name": text("KE 2")},
+        {"ke": uri(E.ke2), "name": text("Shared text")},
+    ]
     assert score_levels(REFERENCE, swapped, ["ke", "name"], select)["resource"].matched == 0
     count = [{"n": text("2", datatype=INTEGER)}]
     decimal = [{"n": text("2.0", datatype="http://www.w3.org/2001/XMLSchema#decimal")}]
     levels = score_levels(count, decimal, ["n"], select)
     assert (levels["term"].matched, levels["resource"].matched) == (0, 1), "Numbers match by value"
-    assert score_levels(count, [{"n": text("3", datatype=INTEGER)}], ["n"], select)["resource"].f1 == 0
+    assert (
+        score_levels(count, [{"n": text("3", datatype=INTEGER)}], ["n"], select)["resource"].f1 == 0
+    )
 
 
 def test_unbound_cells_duplicate_rows_and_empty_answers():
@@ -47,5 +56,7 @@ def test_linked_records_match_only_at_the_linked_level(select):
     answer = [{"gene": uri(E.ncbi), "id": uri(E.gene)}]
     levels = score_levels(reference, answer, ["gene", "id"], select)
     assert [levels[level].matched for level in ("term", "resource", "linked")] == [0, 0, 1]
-    same = score_levels(reference, [{"gene": uri(E.gene), "id": uri(E.gene)}], ["gene", "id"], select)
+    same = score_levels(
+        reference, [{"gene": uri(E.gene), "id": uri(E.gene)}], ["gene", "id"], select
+    )
     assert same["resource"].exact and same["resource"].substitutions == {"id: hgnc -> self": 1}

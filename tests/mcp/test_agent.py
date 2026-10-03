@@ -6,6 +6,7 @@ import json
 from conftest import E
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
+
 from rdfsolve.api import ask_rdf
 
 AOPS = "SELECT ?aop ?label WHERE { ?aop a ex:Pathway ; rdfs:label ?label }"
@@ -40,19 +41,27 @@ def ask(files, tmp_path, steps, seen):
 
 def test_the_answer_rows_reach_the_caller_not_the_model(files, tmp_path):
     seen = []
-    steps = [("schema", {"classes": ["Adverse Outcome Pathway"]}), ("run", {"sparql": AOPS, "limit": 1}),
-             ("answer", {"sparql": AOPS})]
+    steps = [
+        ("schema", {"classes": ["Adverse Outcome Pathway"]}),
+        ("run", {"sparql": AOPS, "limit": 1}),
+        ("answer", {"sparql": AOPS}),
+    ]
     answer = ask(files, tmp_path, steps, seen)
     assert answer.state == "complete", answer.error
     assert {r["aop"]["value"] for r in answer.bindings} == {str(E.aop1), str(E.aop2)}
-    assert answer.query.startswith("PREFIX ex:") and answer.text == "Retrieved 2 rows. Notes: Added PREFIX for ex, rdfs."
+    assert (
+        answer.query.startswith("PREFIX ex:")
+        and answer.text == "Retrieved 2 rows. Notes: Added PREFIX for ex, rdfs."
+    )
     assert len(seen) == 3 and answer.usage.requests == 3
     instructions = seen[0][0].instructions
     assert "Source summary:" in instructions and "ex:Pathway" in instructions
     assert "Do not put LIMIT in the final query" in instructions
     assert "one row with the count" in instructions and "(< 1602 instances)" in instructions
     visible = json.dumps([str(m) for m in seen])
-    assert sum(name in visible for name in ["Liver pathway", "Thyroid pathway"]) == 1, "One row only"
+    assert sum(name in visible for name in ["Liver pathway", "Thyroid pathway"]) == 1, (
+        "One row only"
+    )
     assert answer.package["source_queries"] >= 2 and answer.diagnostics()["tool_calls"] == 3
     saved = sorted(p.name.split(".")[1] for p in (tmp_path / "out").iterdir())
     assert saved == ["answer", "calls", "package"]

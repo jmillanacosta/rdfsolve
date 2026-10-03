@@ -16,7 +16,7 @@ from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 from scripts.pipeline_stages import cli
 from scripts.pipeline_stages.base import Stage, restriction_scope
 from scripts.pipeline_stages.config import PipelineConfig
-from tests.test_restriction_patterns import DATA
+from tests.test_local_rdf import DATA
 
 
 class AnyStage(Stage):

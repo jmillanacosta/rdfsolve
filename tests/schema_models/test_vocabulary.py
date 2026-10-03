@@ -45,10 +45,16 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
     schema = MinedSchema.from_vocabulary(VOCABULARY, classes=classes)
     from_parts = MinedSchema.from_vocabulary(parts, classes=classes)
     assert from_parts.patterns == schema.patterns, "Files and text"
-    assert from_parts.prefixes["dcterms"] == str(DCTERMS) and "dct" not in from_parts.prefixes, "Owner"
-    assert schema.prefixes["foaf"] == str(FOAF) and "owl" not in schema.prefixes, "Declared prefixes in use"
+    assert from_parts.prefixes["dcterms"] == str(DCTERMS) and "dct" not in from_parts.prefixes, (
+        "Owner"
+    )
+    assert schema.prefixes["foaf"] == str(FOAF) and "owl" not in schema.prefixes, (
+        "Declared prefixes in use"
+    )
     parents = {S.ResearchOrganization: S.Organization, S.Organization: S.Thing, S.Person: S.Thing}
-    assert schema.class_hierarchy == {str(c): [str(p)] for c, p in parents.items()}, "Range-only Thing joins"
+    assert schema.class_hierarchy == {str(c): [str(p)] for c, p in parents.items()}, (
+        "Range-only Thing joins"
+    )
     assert {p.evidence_source for p in schema.patterns} == {"vocabulary"}, "Declared, not observed"
     person_rows = {p.property_uri for p in schema.patterns if p.subject_class == str(S.Person)}
     assert str(S.name) in person_rows, "Properties of ancestor classes are inherited"
@@ -59,26 +65,51 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
         client.select("SELECT * WHERE { ?s ?p ?o }")
     org = client.create("ResearchOrganization", uri="urn:org", name="Institute")
     ada = client.create(
-        "Person", uri="urn:ada", name="Ada", birthDate="1815-12", rank=1, affiliation=org, knowsAbout=org,
-        sameAs=URIRef("https://www.wikidata.org/wiki/Q7259"), value="0000-0002",
+        "Person",
+        uri="urn:ada",
+        name="Ada",
+        birthDate="1815-12",
+        rank=1,
+        affiliation=org,
+        knowsAbout=org,
+        sameAs=URIRef("https://www.wikidata.org/wiki/Q7259"),
+        value="0000-0002",
     )
     graph, ada_iri = ada.to_graph() + org.to_graph(), URIRef("urn:ada")
     assert graph.value(ada_iri, S.birthDate) == Literal("1815-12", datatype=XSD.gYearMonth)
-    assert graph.value(ada_iri, S.affiliation) == URIRef("urn:org"), "A subclass fills its parent's range"
-    assert graph.value(ada_iri, S.knowsAbout) == URIRef("urn:org"), "Also when the range is not requested"
+    assert graph.value(ada_iri, S.affiliation) == URIRef("urn:org"), (
+        "A subclass fills its parent's range"
+    )
+    assert graph.value(ada_iri, S.knowsAbout) == URIRef("urn:org"), (
+        "Also when the range is not requested"
+    )
     assert not [r for r in caplog.records if r.levelname in {"ERROR", "WARNING"}], "Clean coercion"
     assert not [w for w in recwarn if "rdflib" in w.filename], "Values are not parsed to be tried"
     assert graph.value(URIRef("urn:org"), S.name) == Literal("Institute", datatype=XSD.string)
     assert graph.value(ada_iri, URIRef("urn:ex:rank")) == Literal(1, datatype=XSD.integer)
     person = client.model("Person")
-    assert "A person." in (person.__doc__ or "") and "name" in person.model_fields, "Documented; plain names"
+    assert "A person." in (person.__doc__ or "") and "name" in person.model_fields, (
+        "Documented; plain names"
+    )
     research = client.model("ResearchOrganization")
     assert "name" in research.model_fields and "name" not in research.__annotations__, "Inherited"
     assert "mentioned" not in client.model("Person").model_fields, "Mentioned, not described"
     assert "number_of_children" in person.model_fields, "Python names: snake_case of the local name"
-    assert {client.field_name(person, n) for n in ("numberOfChildren", "numberofchildren")} == {"number_of_children"}
+    assert {client.field_name(person, n) for n in ("numberOfChildren", "numberofchildren")} == {
+        "number_of_children"
+    }
     year = Literal("1815-12-10", datatype=XSD.date)
-    tagged = client.create("Person", uri="urn:en", name="Ada", foaf_name="Ada", foaf_givenName="A", familyName="L", numberOfChildren=3, dcterms_date=year, language="en")
+    tagged = client.create(
+        "Person",
+        uri="urn:en",
+        name="Ada",
+        foaf_name="Ada",
+        foaf_givenName="A",
+        familyName="L",
+        numberOfChildren=3,
+        dcterms_date=year,
+        language="en",
+    )
     assert {(p, o) for _, p, o in tagged.to_graph()} >= {
         (S.name, Literal("Ada", lang="en")),
         (FOAF.name, Literal("Ada", lang="en")),  # owl:Thing domain; a prefixed field
@@ -87,17 +118,28 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
         (S.numberOfChildren, Literal(3)),  # Integer, not its parent Number
         (DCTERMS.date, year),  # No domain: any class. rdfs:Literal: any literal
     }
-    cited = client.create("Person", uri="urn:c", dcterms_source=URIRef("urn:s"), dcterms_creator="urn:ada")
-    assert set(cited.to_graph().objects()) >= {URIRef("urn:s"), URIRef("urn:ada")}, "No range; dcam ranges"
+    cited = client.create(
+        "Person", uri="urn:c", dcterms_source=URIRef("urn:s"), dcterms_creator="urn:ada"
+    )
+    assert set(cited.to_graph().objects()) >= {URIRef("urn:s"), URIRef("urn:ada")}, (
+        "No range; dcam ranges"
+    )
     with pytest.raises(ValueError, match="Ambiguous"):
         client.create("Person", uri="urn:c", dcterms_source="https://example.org/"), "IRI or text?"
     shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
     assert not set(shapes.triples((None, SH.datatype, RDFS.Literal))), "Any literal: a node kind"
     team = client.create("Person", uri="urn:t", colleague=RDFList(items=[ada, "urn:b"])).to_graph()
-    assert list(Collection(team, team.value(URIRef("urn:t"), S.colleague))) == [ada_iri, URIRef("urn:b")]
+    assert list(Collection(team, team.value(URIRef("urn:t"), S.colleague))) == [
+        ada_iri,
+        URIRef("urn:b"),
+    ]
     linked = client.create("Person", uri="urn:l", sameAs=org).to_graph()
-    assert (URIRef("urn:org"), S.name, None) in linked, "A record fills an IRI field with its statements"
-    with pytest.raises(ValueError, match=r"^affiliation: a Person record cannot be the value\. Use"):
+    assert (URIRef("urn:org"), S.name, None) in linked, (
+        "A record fills an IRI field with its statements"
+    )
+    with pytest.raises(
+        ValueError, match=r"^affiliation: a Person record cannot be the value\. Use"
+    ):
         client.create("Person", uri="urn:w", affiliation=client.create("Person", uri="urn:p"))
     with pytest.raises(ValueError, match=r"name\[1\]: missing value"):
         client.create("Person", uri="urn:m", name=["Ada", None])
@@ -118,15 +160,31 @@ foaf:familyName a owl:DatatypeProperty; rdfs:domain foaf:Person; rdfs:range rdfs
 
 
 def test_an_equivalent_class_brings_its_properties_without_a_new_axiom():
-    schema = MinedSchema.from_vocabulary(VOCABULARY_PROFILE_VOCABULARY, [VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "Person"])
+    schema = MinedSchema.from_vocabulary(
+        VOCABULARY_PROFILE_VOCABULARY,
+        [VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "Person"],
+    )
     rows = {(p.subject_class, p.property_uri) for p in schema.patterns}
-    assert (VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "familyName") in rows, "schema.org states the equivalence"
-    assert (VOCABULARY_PROFILE_FOAF + "Person", VOCABULARY_PROFILE_S + "name") in rows, "Equivalence goes both ways"
-    assert VOCABULARY_PROFILE_S + "Person" not in schema.class_hierarchy.get(VOCABULARY_PROFILE_FOAF + "Person", []), "Not a subclass"
+    assert (VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "familyName") in rows, (
+        "schema.org states the equivalence"
+    )
+    assert (VOCABULARY_PROFILE_FOAF + "Person", VOCABULARY_PROFILE_S + "name") in rows, (
+        "Equivalence goes both ways"
+    )
+    assert VOCABULARY_PROFILE_S + "Person" not in schema.class_hierarchy.get(
+        VOCABULARY_PROFILE_FOAF + "Person", []
+    ), "Not a subclass"
     client = Client(schema)
-    family = client.field_name(VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "familyName")
-    record = client.create(VOCABULARY_PROFILE_S + "Person", uri="urn:me", name="Me", **{family: "Me"})
-    assert {str(p) for p in record.to_graph().predicates()} >= {VOCABULARY_PROFILE_S + "name", VOCABULARY_PROFILE_FOAF + "familyName"}
+    family = client.field_name(
+        VOCABULARY_PROFILE_S + "Person", VOCABULARY_PROFILE_FOAF + "familyName"
+    )
+    record = client.create(
+        VOCABULARY_PROFILE_S + "Person", uri="urn:me", name="Me", **{family: "Me"}
+    )
+    assert {str(p) for p in record.to_graph().predicates()} >= {
+        VOCABULARY_PROFILE_S + "name",
+        VOCABULARY_PROFILE_FOAF + "familyName",
+    }
 
 
 CODE = (
@@ -150,14 +208,18 @@ def test_a_profile_adds_rows_that_the_vocabulary_does_not_declare():
 
     classes = [VOCABULARY_PROFILE_S + "SoftwareSourceCode"]
     schema = MinedSchema.from_vocabulary(CODE, classes, profile=PROFILE)
-    row = next(p for p in schema.patterns if p.property_uri == VOCABULARY_PROFILE_S + "softwareVersion")
+    row = next(
+        p for p in schema.patterns if p.property_uri == VOCABULARY_PROFILE_S + "softwareVersion"
+    )
     assert (row.subject_class, row.datatype, row.evidence_source) == (
         VOCABULARY_PROFILE_S + "SoftwareSourceCode",
         "http://www.w3.org/2001/XMLSchema#string",
         "shacl",
     ), "The row says that it comes from the profile, not from schema.org"
     client = Client(schema)
-    record = client.create(VOCABULARY_PROFILE_S + "SoftwareSourceCode", uri="urn:code", softwareVersion="1.0")
+    record = client.create(
+        VOCABULARY_PROFILE_S + "SoftwareSourceCode", uri="urn:code", softwareVersion="1.0"
+    )
     assert (None, None, None) in record.to_graph()
     with pytest.raises(ValueError, match="not requested"):
         MinedSchema.from_vocabulary(CODE, [VOCABULARY_PROFILE_S + "Person"], profile=PROFILE)
@@ -176,12 +238,19 @@ def test_a_profile_can_declare_ordered_lists():
     from rdfsolve.api import RDFList
 
     schema = MinedSchema.from_vocabulary(
-        CODE, [VOCABULARY_PROFILE_S + "SoftwareSourceCode", VOCABULARY_PROFILE_S + "Person"], profile=LISTS
+        CODE,
+        [VOCABULARY_PROFILE_S + "SoftwareSourceCode", VOCABULARY_PROFILE_S + "Person"],
+        profile=LISTS,
     )
     client = Client(schema)
-    people = [client.create(VOCABULARY_PROFILE_S + "Person", uri=f"urn:p{i}", name=f"P{i}") for i in (1, 2)]
+    people = [
+        client.create(VOCABULARY_PROFILE_S + "Person", uri=f"urn:p{i}", name=f"P{i}")
+        for i in (1, 2)
+    ]
     code = client.create(
-        VOCABULARY_PROFILE_S + "SoftwareSourceCode", uri="urn:code", contributor=RDFList(items=people)
+        VOCABULARY_PROFILE_S + "SoftwareSourceCode",
+        uri="urn:code",
+        contributor=RDFList(items=people),
     )
     graph = code.to_graph()
     head = next(o for _, p, o in graph if str(p) == VOCABULARY_PROFILE_S + "contributor")

@@ -4,6 +4,7 @@ import json
 
 import pytest
 from conftest import E
+
 from rdfsolve.client.retrieval import QueryValidationError
 
 AOPS = "SELECT ?aop ?label WHERE { ?aop a ex:Pathway ; rdfs:label ?label }"
