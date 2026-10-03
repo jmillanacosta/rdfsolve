@@ -167,3 +167,16 @@ def test_a_source_that_keeps_its_records_as_classes(classes_as_data):
     assert (expected <= kinds) is classes_as_data
     terms = {(p.subject_class, p.property_uri, p.object_class) for p in schema.term_patterns}
     assert ("urn:rh:r1", "urn:rh:side", "urn:rh:r1_L") in terms, "Exact rows are kept either way"
+
+
+@pytest.mark.parametrize("terms_first", [False, True])
+def test_the_term_probes_are_valid_sparql_with_named_graphs(terms_first):
+    """With data and ontology graphs selected (a local index with the endpoint's graphs), both
+    forms of the term probe are valid SPARQL: QLever refused the terms-first form whose union
+    stood outside its subquery."""
+    from rdflib.plugins.sparql import prepareQuery
+    from rdfsolve.mining.ontology_as_data import build_term_object_query, build_term_subject_query
+
+    graphs = ["urn:graph:data", "urn:graph:ontology"]
+    prepareQuery(build_term_subject_query(graphs, graphs, terms_first=terms_first))
+    prepareQuery(build_term_object_query(graphs, graphs))

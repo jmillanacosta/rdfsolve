@@ -133,7 +133,7 @@ def build_term_subject_query(
     graph_var = " ?_g" if g_open else ""
     terms = f"{{ {{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }} }}"
     edge = (
-        f"{{ SELECT DISTINCT ?t WHERE {_context_pattern(terms, ontology_graph_uris)} }}\n"
+        f"{{ SELECT DISTINCT ?t WHERE {{ {_context_pattern(terms, ontology_graph_uris)} }} }}\n"
         f"  {g_open} ?t ?p ?o . {g_close}"
         if terms_first
         else f"{g_open} ?t ?p ?o . {g_close}\n  {_term_filter('?t', ontology_graph_uris)}"
