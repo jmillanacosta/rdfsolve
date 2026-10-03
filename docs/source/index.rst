@@ -13,6 +13,7 @@ Table of Contents
    installation
    usage
    workflow_steps
+   reconciliation
 
 .. toctree::
    :maxdepth: 2

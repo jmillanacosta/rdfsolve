@@ -1,10 +1,9 @@
 Workflow steps
 ==============
 
-Each step below was first written by hand in a notebook (the WikiPathways to Biolink
-notebook, ``notebooks/conversion/01_wikipathways_to_biolink.ipynb``, 2026-10-03), and is now
-part of rdfsolve. An existing method is extended where one fits. The reason each
-step exists is kept here, so that a later rewrite keeps what the step is for.
+The steps below are common to workflows that convert and reconcile RDF sources. Each is
+part of rdfsolve, as an extension of an existing method where one fits. The reason for
+each step is given with it, so that a later change keeps what the step is for.
 
 Steps
 -----
@@ -14,56 +13,63 @@ Steps
    :widths: 22 39 39
 
    * - Step
-     - Why it was needed
+     - Why it is needed
      - Where in rdfsolve
    * - Open a source from the registry
-     - The notebook downloaded each RDF dump of a release by URL and passed the files to
-       ``Client.open``; the registry already lists the downloads.
+     - The RDF downloads of a release are listed in the registry entry, so they are not
+       given again by URL.
      - ``Client.open(..., data_file=<entry name>)``: the entry's RDF downloads are fetched
        once into ``$RDFSOLVE_DOWNLOADS/<name>`` and loaded together.
    * - Follow links to a depth
-     - A pathway draws other pathways as nodes; they are taken whole, level by level
-       (``Has version`` gives the pathway a node stands for). The loop also kept each
-       node and the record it stands for, which become identity pairs.
-     - ``Results.related(kind, via=[...], depth=n)``: *via* a path of links (``^name``
-       backwards); ``Results.links(via=)`` gives the pairs of one link.
+     - Records that stand for other records (a node that stands for a whole pathway, a
+       version of a record) are followed level by level; the pairs of a link become
+       identity pairs.
+     - ``Results.related(kind, via=[...], depth=n)``: *via* is a path of links (``^name``
+       is followed backwards), *kind* one class or one per link. ``Results.links(via=)``
+       gives the pairs of one link as a table.
    * - Links of a step
-     - Each ``related`` step had to be grouped back by source record (a protein's
-       activities, a reaction's sides); the evidence held it, unread.
-     - ``Results.links()``: source to targets, from the evidence.
+     - The records a step reached are read back by the record it started from.
+     - ``Results.links()``: a table of each start record and the records it reached; with
+       *via* naming a field, each record and its values.
    * - What a scope holds
-     - Every record type of the scope with its count, to see what the rules must cover.
-     - Existing: ``Results.related(via=, incoming=).types()``; ``related`` now takes a link
-       without a kind.
+     - Every record type of a scope, with its count, shows what the rules must cover.
+     - ``Results.related(via=, incoming=).types()``: ``related`` takes a link without a kind.
    * - Records that name an identifier
-     - The proteins of a gene: records whose cross-reference names the gene in any
-       registered IRI form (``rdfs:seeAlso`` in UniProt), also through the gene a
-       source links to the node (BridgeDb).
-     - ``Client.naming(identifiers, kind=, via=)``, returning each identifier's records.
+     - Records are found by any registered IRI form of an identifier: the record that is
+       the identifier, and the records whose cross-reference names it.
+     - ``Client.naming(identifiers, kind=, via=)``; ``links()`` gives each identifier its
+       records.
+   * - One question for a set of records
+     - Several links and fields of many records are read in one query, as one table,
+       instead of one query per step.
+     - ``Client.prepare_network(patterns, outputs=, values={role: results}, resolve=True)``
+       and ``Client.select(query).table()``. Plain class and field names are accepted.
    * - Kind conflicts
-     - One node with two Biolink kinds of which neither is an ancestor of the other
-       (protein and RNA), after the identity groups; decided by evidence, before the
-       graph is built.
+     - A node with two target-model kinds, neither under the other, after identity groups
+       are formed, is decided before the graph is built.
      - ``conversion.kind_conflicts(client, statements, biolink, same=)`` and
        ``conversion.keep_kinds(client, statements, biolink, kept=)``. Both are CONSTRUCTs run
-       with ``Client.construct(query, data=statements)``, recorded as named steps in the
-       client's session; each conflict is logged as a warning.
+       with ``Client.construct(query, data=statements)`` and recorded as named steps in the
+       client's session. Each conflict is logged as a warning.
+   * - Conversions
+     - A process node implies direct edges (each input to each output), with its catalysts
+       as qualifiers.
+     - ``conversion.derive_conversions(client, statements, biolink)``: a recorded CONSTRUCT
+       that states the target model's associations; ``derive_associations`` makes each
+       association an edge.
    * - Compounds that meet
-     - A compound named by one source meets another source's when it is the same term,
-       another form (acid or base, tautomer) or a more general term.
-     - ``Ontologies.meets(named, others)``: exact, form, narrower, or None; answers kept
+     - A term of one source meets a term of another when it is the same term, another form
+       of it, or a more general term.
+     - ``Ontologies.meets(named, others)``: exact, form, narrower, or None; answers are kept
        across calls.
    * - Views of a network
-     - The direct edges without complex, reaction and association nodes; qualifiers
-       shown with the predicate; nodes without edges left out unless an edge
-       attribute names them.
+     - Direct edges are shown without process and association nodes, with qualifiers next
+       to the predicate; nodes without edges are left out unless an edge attribute names
+       them.
      - ``PropertyGraph.to_networkx(without=, qualifiers=, keep=)``.
    * - Draw a network
-     - Breadth-first layers from chosen nodes, one colour per category and edge type
-       for the whole run, dotted edges of unknown type, edge attributes drawn to the
-       edge's middle, an image a browser can show.
-     - Stays in the notebook: plotting is simple enough not to wrap.
+     - Plotting depends on the analysis and its figure.
+     - Left to the workflow; not part of rdfsolve.
    * - Edge evidence
-     - What another source says about an edge (a reaction or transport that confirms
-       it) is kept on the edge, not as a new edge type.
-     - Edge attributes of the network, written by the step that checks them (no new API).
+     - What another source says about an edge is kept on the edge, not as a new edge type.
+     - Edge attributes of the network, written by the step that checks them.
