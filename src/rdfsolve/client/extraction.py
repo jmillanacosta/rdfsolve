@@ -86,6 +86,7 @@ def extraction_query(
             + (selection.source.about.type_context_graph_uris or [])
         )
     )
+    membership = selection.source.about.membership_property
     for graph in data + context:
         _iri(graph)
     dataset, _, _ = _graph_scope(data, context)
@@ -103,7 +104,7 @@ def extraction_query(
             prefix += f" {node} {_iri(step.property_uri)} {target} ."
             if step.object_class in {"Literal", "Resource", "BlankNode"}:
                 break
-            prefix += " " + _type_pattern(target, _iri(step.object_class), context)
+            prefix += " " + _type_pattern(target, _iri(step.object_class), context, membership)
             reaches[(step.object_class, target, prefix)] = None
             node = target
     for reach_index, (owner, node, prefix) in enumerate(list(reaches)):
@@ -117,7 +118,7 @@ def extraction_query(
                 route = (
                     prefix
                     + f" {node} {_iri(profile.property_uri)}/<{RDF}rest>*/<{RDF}first> {member} . "
-                    + _type_pattern(member, _iri(member_class), context)
+                    + _type_pattern(member, _iri(member_class), context, membership)
                 )
                 reaches[(member_class, member, route)] = None
     unreachable = {owner for owner, _ in fields} - {owner for owner, _, _ in reaches}
@@ -180,7 +181,7 @@ def extraction_query(
                     + edge(f"?s <{RDF}type> ?o .", list(dict.fromkeys(data + context)), types=True)
                     + f" BIND(<{RDF}type> AS ?p) }}"
                 )
-    anchor = _subject_type_pattern("?root", _iri(root_class), context)
+    anchor = _subject_type_pattern("?root", _iri(root_class), context, membership)
     if roots is not None:
         anchor = (
             f"VALUES ?root {{ {' '.join(_iri(value) for value in roots)} }} " + anchor

@@ -90,18 +90,26 @@ def _context_pattern(pattern: str, graph_uris: list[str] | None) -> str:
     )
 
 
-def _type_pattern(node: str, cls: str, context_graph_uris: list[str] | None = None) -> str:
-    """Match each node/type pair once across data and companion graphs."""
-    triple = f"{node} a {cls} ."
+def _type_pattern(
+    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+) -> str:
+    """Match each node/type pair once across data and companion graphs.
+
+    *membership* is the property that places a record in its class when the source does not use
+    rdf:type (rdfs:subClassOf for Rhea, whose records are classes; wdt:P31 for Wikidata).
+    """
+    triple = f"{node} {f'<{membership}>' if membership else 'a'} {cls} ."
     if not context_graph_uris:
         return triple
     variables = " ".join(term for term in (node, cls) if term.startswith("?"))
     return f"{{ SELECT DISTINCT {variables} WHERE {{ {_context_pattern(triple, context_graph_uris)} }} }}"
 
 
-def _subject_type_pattern(node: str, cls: str, context_graph_uris: list[str] | None = None) -> str:
+def _subject_type_pattern(
+    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+) -> str:
     """Match typed subjects with an outgoing edge in the selected data."""
-    pattern = _type_pattern(node, cls, context_graph_uris)
+    pattern = _type_pattern(node, cls, context_graph_uris, membership)
     if context_graph_uris:
         pattern += f" FILTER EXISTS {{ {node} ?_dataPredicate ?_dataObject }}"
     return pattern

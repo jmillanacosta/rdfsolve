@@ -346,7 +346,7 @@ class Hydrator:
                 + (self._schema.about.type_context_graph_uris or [])
             )
         )
-        return _type_pattern(node, cls, context)
+        return _type_pattern(node, cls, context, self._schema.about.membership_property)
 
     def _subject_type(self, node: str, cls: str) -> str:
         """Require a typed subject to have an outgoing data edge."""

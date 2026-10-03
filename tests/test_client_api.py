@@ -106,3 +106,30 @@ def test_paths_show_a_shared_type_name_as_a_curie(tmp_path):
         shown = set(pathway.paths(incoming=True)["To"])
         assert {"bio:Node", "draw:Node"} <= shown
         assert [r.uri for r in pathway.related("draw:Node", incoming=True)] == ["urn:box"]
+
+
+def test_a_schema_with_a_membership_property_finds_records_by_it(tmp_path):
+    """A source whose records are classes (Rhea: a reaction rdfs:subClassOf rh:Reaction): with the
+    schema's membership property, the client finds the records and follows their links."""
+    from rdflib import RDFS
+
+    rh = "urn:rh:"
+    graph = Graph().parse(
+        data=f"""@prefix rh: <{rh}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        rh:r1 rdfs:subClassOf rh:Reaction ; rh:side rh:r1_L ; rh:equation "A = B" .
+        rh:r1_L rdfs:subClassOf rh:ReactionSide .""",
+        format="turtle",
+    )
+    schema = MinedSchema(
+        about={"dataset_name": "rhea-like", "membership_property": str(RDFS.subClassOf)},
+        patterns=[
+            SchemaPattern(subject_class=rh + "Reaction", property_uri=rh + "side", object_class=rh + "ReactionSide"),
+            SchemaPattern(subject_class=rh + "Reaction", property_uri=rh + "equation", object_class="Literal"),
+        ],
+    )
+    with Client(schema, graph, graph_uris=[]) as found:
+        import pandas as pd
+
+        reaction = found.from_table(rh + "Reaction", pd.DataFrame({"iri": [rh + "r1"]}), id_column="iri")
+        assert [vars(r)["equation"] for r in reaction.load("equation")] == [["A = B"]]
+        assert [r.uri for r in reaction.related(rh + "ReactionSide", via="side")] == [rh + "r1_L"]
