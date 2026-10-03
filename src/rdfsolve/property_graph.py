@@ -1162,10 +1162,13 @@ class PropertyGraph:
                 out[f"{name}__lang"] = langs if key in self.lists else langs[0]
         return out
 
-    def to_networkx(self, edge_types: Iterable[str] | None = None) -> Any:
+    def to_networkx(
+        self, edge_types: Iterable[str] | None = None, without: Iterable[str] = ()
+    ) -> Any:
         """Return a ``networkx.MultiDiGraph``: node and edge attributes are native values.
 
-        With *edge_types* (edge type names: "catalyzes"), only those edges and their nodes.
+        With *edge_types* (edge type names), only those edges and their nodes. *without* names
+        node types to leave out, with their edges (the other views of the same statements stay).
         Each node also carries ``category`` (its node types joined by " + ", or "no category")
         and ``title`` (its name: a name or label property, else the end of its IRI), for
         drawing.
@@ -1177,12 +1180,22 @@ class PropertyGraph:
         import networkx as nx
 
         namer = self._namer()
+        left_out = set(without)
+        dropped = {
+            n.id for n in self.nodes.values() if left_out & {namer[label] for label in n.labels}
+        }
         wanted = set(edge_types) if edge_types is not None else None
-        edges = [e for e in self.edges if wanted is None or self._edge_type(e, namer) in wanted]
+        edges = [
+            e
+            for e in self.edges
+            if (wanted is None or self._edge_type(e, namer) in wanted)
+            and e.source not in dropped
+            and e.target not in dropped
+        ]
         kept = {end for e in edges for end in (e.source, e.target)} if wanted is not None else None
         graph: Any = nx.MultiDiGraph()
         for node in self.nodes.values():
-            if kept is not None and node.id not in kept:
+            if (kept is not None and node.id not in kept) or node.id in dropped:
                 continue
             labels = list(dict.fromkeys(namer[label] for label in node.labels))
             graph.add_node(

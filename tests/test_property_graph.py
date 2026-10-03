@@ -753,3 +753,10 @@ def test_networkx_keeps_chosen_edge_types_and_gives_each_node_a_category_and_tit
     assert g.nodes[E + "asah1"]["category"] == "GeneProduct + Protein"
     assert g.nodes[E + "asah1"]["title"] == "ASAH1"
     assert g.nodes[E + "c1"]["category"] == "Catalysis" and g.nodes[E + "c1"]["title"] == "c1"
+
+
+def test_networkx_can_leave_out_node_types_with_their_edges():
+    pg = PropertyGraph.from_rdf(graph(), prefixes=PREFIXES)
+    g = pg.to_networkx(without=["Catalysis"])
+    assert E + "c1" not in g and E + "asah1" in g
+    assert not [d for *_, d in g.edges(data=True) if d["type"] in ("source", "target")]

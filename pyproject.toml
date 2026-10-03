@@ -137,7 +137,9 @@ notebooks = [
     "jupyterlab>=4.0.0", # Full Jupyter Lab environment
     "ipywidgets>=8.0.0", # Interactive widgets for notebooks
     "narwhals==2.11.0",
-    "plotly==6.4.0"
+    "plotly==6.4.0",
+    "scipy>=1.15.3", # networkx layouts (kamada_kawai_layout) in the network plots
+    "kgx>=2.7.0", # Biolink validation of KGX exports (pins click<8.2)
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
