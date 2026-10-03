@@ -133,3 +133,31 @@ def test_a_schema_with_a_membership_property_finds_records_by_it(tmp_path):
         reaction = found.from_table(rh + "Reaction", pd.DataFrame({"iri": [rh + "r1"]}), id_column="iri")
         assert [vars(r)["equation"] for r in reaction.load("equation")] == [["A = B"]]
         assert [r.uri for r in reaction.related(rh + "ReactionSide", via="side")] == [rh + "r1_L"]
+
+
+def test_related_follows_a_link_that_shares_its_name_with_a_class():
+    """UniProt's annotation link and its up:Annotation class have one name: via= follows the
+    link of these records (one hop), not a path through the class."""
+    from rdflib import RDF
+
+    up = "urn:up:"
+    graph = Graph().parse(
+        data=f"""@prefix up: <{up}> .
+        up:p1 a up:Protein ; up:annotation up:a1 .
+        up:a1 a up:Catalytic_Activity_Annotation .
+        up:x a up:Annotation .""",
+        format="turtle",
+    )
+    schema = MinedSchema(
+        about={"dataset_name": "uniprot-like"},
+        patterns=[
+            SchemaPattern(subject_class=up + "Protein", property_uri=up + "annotation", object_class=up + "Catalytic_Activity_Annotation"),
+            SchemaPattern(subject_class=up + "Annotation", property_uri=str(RDF.type), object_class="Resource"),
+        ],
+    )
+    with Client(schema, graph, graph_uris=[]) as found:
+        import pandas as pd
+
+        protein = found.from_table(up + "Protein", pd.DataFrame({"iri": [up + "p1"]}), id_column="iri")
+        annotations = protein.related(up + "Catalytic_Activity_Annotation", via="annotation")
+        assert [r.uri for r in annotations] == [up + "a1"]

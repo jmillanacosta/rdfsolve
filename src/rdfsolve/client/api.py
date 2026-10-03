@@ -1695,8 +1695,15 @@ class Results:
         if value is not None and not value.strip():
             raise ValueError("Enter a word or name to find")
         if via is not None:
+            # A link of these records with that name is followed directly, also when a class
+            # has the same name (UniProt's annotation link and up:Annotation).
+            direct = any(
+                _key(via)
+                in {_key(field), _key(self.client.link_name(dest if incoming else source, field))}
+                for source, field, dest in self._routes(incoming)
+            )
             try:
-                intermediate = self.client.model(via)
+                intermediate = None if direct else self.client.model(via)
             except ValueError:
                 intermediate = None
             if intermediate is not None:
