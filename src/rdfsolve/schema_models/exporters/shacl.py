@@ -2,17 +2,39 @@
 
 from __future__ import annotations
 
-from rdflib import Graph
+from collections import defaultdict
 
-from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
+ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
+
+
+def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
+    """Return the IRI of the node shape of *cls* in *dataset*, or of its property shape of *prop*.
+
+    The IRIs are hashes of the class and property IRIs, so a shape keeps its IRI across releases
+    while its class and property persist (mappings to it, such as SSSOM rows, keep holding).
+    """
+    from hashlib import md5
+
+    from rdfsolve.config import mint
+
+    def short(iri: str) -> str:
+        """Return the short hash of an IRI."""
+        return md5(iri.encode(), usedforsecurity=False).hexdigest()[:8]
+
+    base = mint("dataset", dataset or "unnamed") + "/shapes/"
+    return f"{base}ns-{short(cls)}" if prop is None else f"{base}ps-{short(cls)}-{short(prop)}"
+
 
 def minedschema_to_shacl(
     schema: MinedSchema,
-    base_uri: str = "http://example.org/shapes/",
+    base_uri: str | None = None,
     *,
     activate_observed: bool = False,
 ) -> ShaclShapesGraph:
@@ -22,13 +44,16 @@ def minedschema_to_shacl(
 
     Args:
         schema: MinedSchema to convert
-        base_uri: Base URI for shape URIs
+        base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
 
     Returns:
         ShaclShapesGraph with NodeShape per class
     """
     import logging
 
+    from rdfsolve.config import mint
+
+    base_uri = base_uri or mint("dataset", schema.about.dataset_name or "unnamed") + "/shapes/"
     lost_counts = sum(
         pattern.count is not None
         and (
@@ -44,9 +69,8 @@ def minedschema_to_shacl(
             lost_counts,
         )
     if schema.shapes is not None:
-        return _add_navigation(schema, schema.shapes.model_copy(deep=True), base_uri)
+        return _complete_shapes(schema, schema.shapes.model_copy(deep=True), base_uri)
 
-    from collections import defaultdict
     from hashlib import md5
 
     # Group patterns by subject class
@@ -54,6 +78,9 @@ def minedschema_to_shacl(
     for pat in schema.patterns:
         by_subject[pat.subject_class].append(pat)
 
+    lists: dict[tuple[str, str], list[CollectionProfile]] = defaultdict(list)
+    for profile in schema.collections or []:
+        lists[(profile.subject_class, profile.property_uri)].append(profile)
     node_shapes = []
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
@@ -63,13 +90,17 @@ def minedschema_to_shacl(
             by_property[pattern.property_uri].append(pattern)
         property_shapes = []
         for prop, patterns in sorted(by_property.items()):
+            # No constraint on rdf:type: the schema keeps the rows of type values that are
+            # declared classes and leaves out the others, so its rows do not give every type.
+            if prop == RDF_TYPE:
+                continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
             options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
             for pattern in patterns:
                 option = ShaclPropertyShape(path="")
                 if pattern.object_class == "Literal":
                     option.node_kind = "Literal"
-                    option.datatype = pattern.datatype
+                    option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
                 elif pattern.object_class == "Resource":
                     option.node_kind = "IRI"
                 elif pattern.object_class == "BlankNode":
@@ -78,6 +109,8 @@ def minedschema_to_shacl(
                     option.node_kind = "BlankNodeOrIRI"
                     option.class_constraint = pattern.object_class
                 options[(pattern.object_class, pattern.datatype)] = option
+            for profile in lists.get((subject_class, prop), []):
+                options[("List", None)] = _list_option(profile)
             alternatives = list(options.values())
             shape = (
                 alternatives[0]
@@ -111,23 +144,62 @@ def minedschema_to_shacl(
             )
         )
 
-    return _add_navigation(
+    return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
     )
 
 
-def _add_navigation(
+LIST_MEMBERS = "rdf:rest*/rdf:first"
+
+
+def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
+    """Return the SHACL option for RDF list values: a list node whose members have the types.
+
+    The members are reached with the path ([sh:zeroOrMorePath rdf:rest] rdf:first).
+    """
+    from rdflib import RDF
+
+    from rdfsolve.schema_models.paths import PropertyPath
+
+    members: list[ShaclPropertyShape] = [
+        ShaclPropertyShape(path="", class_constraint=member) for member in profile.member_types
+    ]
+    members += [
+        ShaclPropertyShape(path="", node_kind="Literal", datatype=datatype)
+        for datatype in profile.member_datatypes
+    ]
+    if "Literal" in profile.member_kinds and not profile.member_datatypes:
+        members.append(ShaclPropertyShape(path="", node_kind="Literal"))
+    path = PropertyPath.from_sparql(LIST_MEMBERS, {"rdf": str(RDF)})
+    member = members[0] if len(members) == 1 else ShaclPropertyShape(path="", alternatives=members)
+    member.path = path
+    return ShaclPropertyShape(
+        path="", node_kind="BlankNode", properties=[member] if members else []
+    )
+
+
+def _complete_shapes(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
-    """Describe candidate paths without adding validation constraints."""
+    """Add namespace declarations and candidate navigation paths."""
     import logging
     from collections import defaultdict
     from hashlib import sha256
 
     from rdfsolve.schema_models.navigation import NavigationPath
 
+    inactive = sum(shape.deactivated for shape in shapes.node_shapes)
+    if inactive:
+        logging.getLogger(__name__).warning(
+            "SHACL export contains %d deactivated node shapes. These shapes do not "
+            "validate data. Use activate_observed=True to enforce generated one-hop templates; "
+            "retained source constraints keep their activation state.",
+            inactive,
+        )
+    shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
+    tested = schema.navigation.strategy == "tested"
     grouped: dict[tuple[str, tuple[str, ...]], list[NavigationPath]] = defaultdict(list)
     for route in schema.navigation.paths:
         grouped[
@@ -146,18 +218,23 @@ def _add_navigation(
                 value = step.datatype or step.object_class
                 count = str(step.count) if step.count is not None else "unknown"
                 steps.append(
-                    f"{step.subject_class} --{step.property_uri}--> {value} (edge triples: {count})"
+                    f"{step.subject_label or step.subject_class} --{step.property_label or step.property_uri}--> {step.object_label or value} (edge triples: {count})"
                 )
-            descriptions.append("; ".join(steps))
+            text = "; ".join(steps)
+            if tested:
+                text += f" ({route.matched_sources} of {route.source_count} start instances)"
+            descriptions.append(text)
         identifier = sha256(repr((start, predicates)).encode()).hexdigest()[:20]
         by_class[start].append(
             ShaclPropertyShape(
                 uri=f"{base_uri}route-{identifier}",
                 path=routes[0].property_path(),
-                name=" / ".join(
-                    step.property_label or step.property_uri for step in routes[0].steps
-                ),
-                description="Candidate class-qualified routes: "
+                name="; ".join(sorted({route.label() for route in routes})),
+                description=(
+                    "Class-qualified paths followed by instances of the data: "
+                    if tested
+                    else "Candidate class-qualified routes: "
+                )
                 + " | ".join(sorted(set(descriptions))),
             )
         )
@@ -174,9 +251,18 @@ def _add_navigation(
             ShaclNodeShape(
                 uri=uri,
                 target_class=class_iri,
-                name=f"Candidate navigation: {class_iri}",
+                name="Paths from "
+                + next(
+                    (r.steps[0].subject_label or class_iri)
+                    for r in schema.navigation.paths
+                    if r.steps[0].subject_class == class_iri
+                ),
                 description=(
-                    "Schema-composed paths. Instance support and coverage are unknown. "
+                    "Paths tested on the data; each was followed by at least one instance. "
+                    "Edge triple counts are not joined counts or per-entity cardinalities. "
+                    "The path omits intermediate class filters listed in each description."
+                    if tested
+                    else "Schema-composed paths. Instance support and coverage are unknown. "
                     "Edge triple counts are not joined counts or per-entity cardinalities. "
                     "The path omits intermediate class filters listed in each description. "
                     "Value types are candidate endpoints, not enforced constraints. " + omitted
@@ -184,8 +270,48 @@ def _add_navigation(
                 property_shapes=properties,
             )
         )
+    for route in schema.navigation.paths:
+        # A tested path is given above with its counts; a nested profile for each of thousands
+        # of paths made the file too large (AOP-Wiki: 53 MB).
+        if tested or route.instance_support != "matched":
+            continue
+        child = None
+        for step in reversed(route.steps):
+            constraint = ShaclPropertyShape(path="")
+            if step.object_class == "Literal":
+                constraint.node_kind, constraint.datatype = "Literal", step.datatype
+            elif step.object_class in {"Resource", "BlankNode"}:
+                constraint.node_kind = "IRI" if step.object_class == "Resource" else "BlankNode"
+            else:
+                constraint.class_constraint = step.object_class
+            if child is not None:
+                constraint.properties = [child]
+            child = ShaclPropertyShape(
+                path=step.property_uri,
+                qualified_shape=constraint,
+                qualified_min_count=1,
+                name=step.property_label or step.property_uri,
+            )
+        identifier = sha256(repr(route.signature()).encode()).hexdigest()[:20]
+        shapes.node_shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}observed-route-{identifier}",
+                target_class=route.steps[0].subject_class,
+                deactivated=True,
+                property_shapes=[child],
+                name=route.label(),
+                description=(
+                    f"Tested path; {route.matched_sources} of {route.source_count} start "
+                    f"instances follow it; {route.observed_at}. "
+                    if tested
+                    else f"Candidate query profile; {route.matched_sources}/{route.source_count} focus entries matched. "
+                    f"Observed endpoint degree {route.min_count}..{route.max_count}; {route.observed_at}. "
+                )
+                + "Qualified existence describes this route. It is not a dataset-wide requirement.",
+            )
+        )
     logging.getLogger(__name__).warning(
-        "SHACL navigation describes class routes and edge counts as text. "
+        "SHACL exports candidate paths and observed nested profiles. "
         "Keep canonical JSON for machine-readable filters, statistics, and route provenance."
     )
     return shapes

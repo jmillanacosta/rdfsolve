@@ -26,7 +26,7 @@ copyright = f"{datetime.now(timezone.utc).year}, Javier Millán Acosta"
 author = "Javier Millán Acosta"
 
 # The full version, including alpha/beta/rc tags.
-release = "0.0.2"
+release = "0.1.0"
 
 # The short X.Y version.
 parsed_version = re.match(
@@ -88,9 +88,7 @@ extensions.append("sphinx_click.ext")
 # generate autosummary pages
 autosummary_generate = True
 
-autodoc_mock_imports = [
-    "semra",
-]
+autodoc_mock_imports: list[str] = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

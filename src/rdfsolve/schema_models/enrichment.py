@@ -2,20 +2,40 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
+import re
 from typing import Any
 from typing import Literal as Kind
 
+import pyoxigraph as ox
 from pydantic import BaseModel, Field, model_validator
-from rdflib import RDF, RDFS, BNode, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier, Node
 
 from rdfsolve._outcomes import QueryFailure
+
+_SAFE_BNODE = re.compile(r"^[A-Za-z_][A-Za-z0-9._-]*$")
+
+
+def _safe_bnode_id(value: str) -> str:
+    """Return a serialization-safe deterministic blank-node identifier.
+
+    Provider blank-node labels are not semantic identifiers and can contain
+    characters that RDFLib later emits as invalid Turtle labels (for example
+    ``nodeID://``).  Valid labels are preserved; unsafe labels are replaced by a
+    deterministic hash only in derived RDF serialization.
+    """
+    if _SAFE_BNODE.fullmatch(value) and not value.endswith("."):
+        return value
+    return "b" + hashlib.sha256(value.encode("utf-8")).hexdigest()[:24]
+
 
 DEFINITION_PREDICATES = (
     "http://www.w3.org/2004/02/skos/core#definition",
     "http://purl.obolibrary.org/obo/IAO_0000115",
     "http://purl.org/dc/terms/description",
+    "http://purl.org/dc/terms/abstract",
     "http://www.w3.org/2000/01/rdf-schema#comment",
     "http://schema.org/description",
     "https://schema.org/description",
@@ -29,6 +49,16 @@ LABEL_PREDICATES = (
     "http://purl.org/dc/terms/title",
     "http://purl.org/dc/elements/1.1/title",
 )
+
+SYNONYM_PREDICATES = {
+    "http://purl.obolibrary.org/obo/IAO_0000118": "alternative",
+    "http://www.w3.org/2004/02/skos/core#altLabel": "alternative",
+    "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym": "exact",
+    "http://www.geneontology.org/formats/oboInOwl#hasBroadSynonym": "broad",
+    "http://www.geneontology.org/formats/oboInOwl#hasNarrowSynonym": "narrow",
+    "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym": "related",
+}
+NAME_PREDICATES = LABEL_PREDICATES + tuple(SYNONYM_PREDICATES)
 
 
 class RdfTerm(BaseModel):
@@ -53,7 +83,7 @@ class RdfTerm(BaseModel):
         if self.kind == "uri":
             return URIRef(self.value)
         if self.kind == "bnode":
-            return BNode(self.value)
+            return BNode(_safe_bnode_id(self.value))
         return Literal(
             self.value,
             lang=self.language,
@@ -72,6 +102,22 @@ class RdfTerm(BaseModel):
                 datatype=str(term.datatype) if term.datatype else None,
             )
         return cls(kind="bnode" if isinstance(term, BNode) else "uri", value=str(term))
+
+    @classmethod
+    def from_oxigraph(cls, term: ox.NamedNode | ox.BlankNode | ox.Literal) -> RdfTerm:
+        """Keep the node kind and literal metadata of an Oxigraph term.
+
+        A plain literal has no datatype, as in RDFLib. RDF 1.1 gives it xsd:string.
+        """
+        if isinstance(term, ox.Literal):
+            datatype = term.datatype.value
+            return cls(
+                kind="literal",
+                value=term.value,
+                language=term.language,
+                datatype=None if term.language or datatype == str(XSD.string) else datatype,
+            )
+        return cls(kind="bnode" if isinstance(term, ox.BlankNode) else "uri", value=term.value)
 
     def json_value(self) -> Any:
         """Use JSON primitives where they preserve the observed value."""
@@ -176,37 +222,56 @@ class SchemaEnrichment(BaseModel):
     def from_rdf_graph(
         cls, graph: Graph, classes: list[str], properties: list[str]
     ) -> SchemaEnrichment:
-        """Read annotations and linked examples, not query completion claims."""
+        """Read annotations and linked examples from an RDFLib graph."""
+        from rdfsolve.local_rdf import to_oxigraph
+
+        return cls.from_oxigraph(to_oxigraph(graph), classes, properties)
+
+    @classmethod
+    def from_oxigraph(
+        cls, dataset: ox.Dataset, classes: list[str], properties: list[str]
+    ) -> SchemaEnrichment:
+        """Read annotations and linked examples, not query completion claims.
+
+        Labels and definitions of the classes and properties are read. An rdfs:seeAlso
+        resource of a class, typed with that class, is an example of the class.
+        """
         result = cls()
-        for iri in set(classes) | set(properties):
-            for predicate in DEFINITION_PREDICATES + LABEL_PREDICATES:
-                for text in graph.objects(URIRef(iri), URIRef(predicate)):
-                    if isinstance(text, Literal):
-                        destination = (
-                            result.labels if predicate in LABEL_PREDICATES else result.definitions
-                        )
-                        destination.append(
-                            TermAnnotation(
-                                term_iri=iri, predicate=predicate, text=RdfTerm.from_rdf(text)
-                            )
-                        )
+        for iri in dict.fromkeys([*classes, *properties]):
+            statements = list(dataset.quads_for_subject(ox.NamedNode(iri)))
+            for predicate in DEFINITION_PREDICATES + NAME_PREDICATES:
+                destination = result.labels if predicate in NAME_PREDICATES else result.definitions
+                destination.extend(
+                    TermAnnotation(
+                        term_iri=iri, predicate=predicate, text=RdfTerm.from_oxigraph(q.object)
+                    )
+                    for q in statements
+                    if q.predicate.value == predicate and isinstance(q.object, ox.Literal)
+                )
         for iri in classes:
-            for subject in graph.objects(URIRef(iri), RDFS.seeAlso):
-                if (
-                    not isinstance(subject, (URIRef, BNode))
-                    or (subject, RDF.type, URIRef(iri)) not in graph
+            for q in dataset.quads_for_subject(ox.NamedNode(iri)):
+                example = q.object
+                if q.predicate.value != str(RDFS.seeAlso) or not isinstance(
+                    example, (ox.NamedNode, ox.BlankNode)
                 ):
                     continue
-                term = RdfTerm.from_rdf(subject)
+                statements = list(dataset.quads_for_subject(example))
+                if not any(
+                    s.predicate.value == str(RDF.type) and s.object == ox.NamedNode(iri)
+                    for s in statements
+                ):
+                    continue
+                term = RdfTerm.from_oxigraph(example)
                 result.class_examples.setdefault(iri, []).append(term)
-                for prop in properties:
-                    for value in graph.objects(subject, URIRef(prop)):
-                        result.examples.append(
-                            PatternExample(
-                                subject_class=iri,
-                                property_uri=prop,
-                                subject=term,
-                                value=RdfTerm.from_rdf(value),
-                            )
-                        )
+                result.examples.extend(
+                    PatternExample(
+                        subject_class=iri,
+                        property_uri=prop,
+                        subject=term,
+                        value=RdfTerm.from_oxigraph(s.object),
+                    )
+                    for prop in properties
+                    for s in statements
+                    if s.predicate.value == prop and not isinstance(s.object, ox.Triple)
+                )
         return result

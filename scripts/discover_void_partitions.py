@@ -11,12 +11,35 @@ import logging
 from pathlib import Path
 
 from rdfsolve import discover_void_source, load_sources
+from rdfsolve.sparql_helper import SparqlHelper
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 log = logging.getLogger(__name__)
+
+
+def publishes_void(endpoint, graph_uris, timeout):
+    """Ask whether a void:Dataset is declared before running the full retrieval.
+
+    The retrieval query matches unbound predicates, which is a whole-graph scan
+    on a large endpoint. This probe is answered from the type index instead.
+    """
+    query = (
+        "PREFIX void: <http://rdfs.org/ns/void#> ASK { %s ?s a void:Dataset %s }"
+    )
+    scopes = [f"GRAPH <{g}> {{" for g in graph_uris] if graph_uris else [""]
+    with SparqlHelper(endpoint, timeout=timeout, max_retries=1) as helper:
+        for opening in scopes:
+            closing = "}" if opening else ""
+            try:
+                if helper.select(query % (opening, closing), purpose="void/probe").get("boolean"):
+                    return True
+            except Exception as error:
+                log.warning("  ! VoID probe failed: %s", str(error)[:120])
+                return False
+    return False
 
 
 def main():
@@ -41,6 +64,24 @@ def main():
         help="Specific source names to process (default: all with endpoints)",
     )
     parser.add_argument(
+        "--graph-batch",
+        type=int,
+        default=1000,
+        help="Graph names requested per page when a source configures none",
+    )
+    parser.add_argument(
+        "--max-graphs",
+        type=int,
+        default=10000,
+        help="Give up on graph discovery beyond this many names",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=120.0,
+        help="Seconds allowed per endpoint request",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -56,13 +97,13 @@ def main():
     log.info("Loading sources from %s", args.sources)
     sources_list = load_sources(args.sources)
     # Convert list to dict keyed by name
-    sources = {src["name"]: src for src in sources_list if src.get("name")}
+    sources = {src.name: src for src in sources_list if src.name}
 
     # Filter sources with endpoints
     endpoint_sources = {
         name: src
         for name, src in sources.items()
-        if src.get("endpoint")
+        if src.endpoint
     }
 
     if args.source_names:
@@ -82,14 +123,25 @@ def main():
     fail_count = 0
 
     for name, source in endpoint_sources.items():
-        endpoint = source["endpoint"]
+        endpoint = source.endpoint
         log.info("Discovering VoID for %s: %s", name, endpoint)
 
+        graph_uris = source.graph_uris or None
+        if graph_uris:
+            log.info("  scope: %d named graphs", len(graph_uris))
+        if not publishes_void(endpoint, graph_uris, args.timeout):
+            log.warning("  ! No void:Dataset declared by %s", name)
+            fail_count += 1
+            continue
         try:
             result = discover_void_source(
                 endpoint=endpoint,
                 name=name,
-                output_dir=args.output_dir,
+                output_dir=args.output_dir / name,
+                graph_uris=graph_uris,
+                timeout=args.timeout,
+                batch_size=args.graph_batch,
+                max_pages=max(1, args.max_graphs // args.graph_batch),
             )
 
             if len(result.graph):

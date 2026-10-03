@@ -3,26 +3,33 @@
 from __future__ import annotations
 
 import json as _json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
+from rdfsolve.schema_models.class_extensions import ClassExtensions
+from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 from rdfsolve.schema_models.metadata import RetainedMetadata
-from rdfsolve.schema_models.navigation import NavigationSummary
-from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
+from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.restrictions import RestrictionPatterns
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
+from rdfsolve.schema_models.structural import StructuralPattern
 
 if TYPE_CHECKING:
     from rdflib import Graph
 
-    from rdfsolve.exploration import DatasetClient
-    from rdfsolve.hydration import Hydrator
+    from rdfsolve.client.api import Client
+    from rdfsolve.client.hydration import Hydrator
+    from rdfsolve.local_rdf import LocalBackend
     from rdfsolve.schema_models.metadata import MetadataDocument
+    from rdfsolve.schema_models.selection import SchemaSelection
     from rdfsolve.sparql_helper import SparqlHelper
 
 
@@ -38,14 +45,46 @@ class MinedSchema(BaseModel):
 
     patterns: list[SchemaPattern] = Field(
         default_factory=list,
-        description="Schema patterns",
+        description="Typed schema patterns, including hierarchy-derived summaries",
+    )
+    raw_patterns: list[SchemaPattern] | None = Field(
+        None,
+        description=(
+            "Typed observations before ontology-term probes, hierarchy grouping and output "
+            "filters. Retained when ontology-as-data is enabled; None means not retained. "
+            "Graph-specific schemas contain only evidence attributed to their selected graphs."
+        ),
+    )
+    term_patterns: list[SchemaPattern] | None = Field(
+        None,
+        description=(
+            "Exact observed ontology-term bindings, separate from the class schema. "
+            "None means not probed. Counts refer to original terms before hierarchy grouping. "
+            "Class-schema exports, populations and navigation use patterns."
+        ),
+    )
+    structural_patterns: list[StructuralPattern] | None = Field(
+        None, description="Graph-local record shapes and edges; None means not mined"
+    )
+    collections: list[CollectionProfile] | None = Field(
+        None, description="Graph-scoped RDF list observations; None means not inspected"
     )
     enrichment: SchemaEnrichment = Field(default_factory=SchemaEnrichment)
+    class_hierarchy: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Nearest declared superclasses among the schema's classes; "
+        "generated models inherit from them, so a subclass record fills a parent's range",
+    )
+    class_extensions: ClassExtensions | None = Field(
+        None,
+        description="Classes with the same members and the nearest classes that hold all members "
+        "of another, measured in the data; None means not measured",
+    )
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"
     )
     about: AboutMetadata = Field(
-        ...,
+        default_factory=AboutMetadata.build,
         description="Provenance metadata",
     )
 
@@ -53,17 +92,135 @@ class MinedSchema(BaseModel):
         None, description="Original RDF evidence, separate from projected schema fields"
     )
     navigation: NavigationSummary | None = None
+    restriction_patterns: RestrictionPatterns | None = Field(
+        None,
+        description="Relations that the data states between terms with OWL restrictions; "
+        "None means not mined",
+    )
+    prefixes: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("patterns", "raw_patterns")
+    @classmethod
+    def check_class_patterns(
+        cls, patterns: list[SchemaPattern] | None
+    ) -> list[SchemaPattern] | None:
+        """Keep exact term bindings in their evidence collection."""
+        if any(p.subject_binding == "term" or p.object_binding == "term" for p in patterns or []):
+            raise ValueError("Exact term bindings belong in term_patterns")
+        return patterns
+
+    @field_validator("term_patterns")
+    @classmethod
+    def check_term_patterns(
+        cls, patterns: list[SchemaPattern] | None
+    ) -> list[SchemaPattern] | None:
+        """Require an exact term binding for term evidence."""
+        if any(p.subject_binding == p.object_binding == "type" for p in patterns or []):
+            raise ValueError("term_patterns requires an exact term binding")
+        return patterns
+
+    @field_validator("prefixes")
+    @classmethod
+    def check_prefixes(cls, prefixes: dict[str, str]) -> dict[str, str]:
+        """Accept namespace declarations that can be used in SHACL and SPARQL."""
+        from rdfsolve.schema_models.shacl_model import ShaclPrefixDeclaration
+
+        for prefix, namespace in prefixes.items():
+            ShaclPrefixDeclaration(uri="_:prefix", prefix=prefix, namespace=namespace)
+        return prefixes
+
+    def get_prefixes(self) -> dict[str, str]:
+        """Return retained prefixes plus names for uncovered schema namespaces."""
+        from rdflib import URIRef
+
+        from rdfsolve._uri import prefix_map
+
+        iris = {
+            iri
+            for pattern in self.patterns
+            for iri in (
+                pattern.subject_class,
+                pattern.property_uri,
+                pattern.object_class,
+                pattern.datatype,
+            )
+            if iri and iri not in _SENTINEL_OBJECTS
+        }
+        if self.shapes is not None:
+            iris.update(
+                str(term)
+                for triple in self.shapes.to_rdf()
+                for term in triple
+                if isinstance(term, URIRef)
+            )
+        return prefix_map(iris, self.prefixes)
+
+    def bind_prefixes(self, graph: Graph) -> None:
+        """Bind schema namespaces for RDF serialization."""
+        for prefix, namespace in self.get_prefixes().items():
+            graph.bind(prefix, namespace, replace=True)
+
+    def discover_collections(
+        self,
+        graph: Graph,
+        *,
+        graph_uris: list[str] | None = None,
+        type_context_graph_uris: list[str] | None = None,
+    ) -> list[CollectionProfile]:
+        """Inspect lists in a local snapshot within the schema scope or an explicit scope."""
+        from rdfsolve.mining.collections import discover_collections
+
+        self.collections = discover_collections(
+            graph,
+            graph_uris=self.about.graph_uris if graph_uris is None else graph_uris,
+            type_context_graph_uris=(
+                self.about.type_context_graph_uris
+                if type_context_graph_uris is None
+                else type_context_graph_uris
+            ),
+        )
+        return self.collections
 
     def discover_paths(
-        self, *, max_hops: int = 3, max_paths_per_length: int = 100
+        self,
+        *,
+        max_hops: int = 3,
+        max_paths_per_length: int = 100,
+        helper: SparqlHelper | None = None,
+        probe_limit: int = 0,
     ) -> NavigationSummary:
-        """Compose candidate routes locally; do not verify instance joins."""
-        from rdfsolve.navigation import discover_paths
+        """Compose bounded routes and optionally measure their joined source support."""
+        from rdfsolve.mining.navigation import discover_paths
 
         self.navigation = discover_paths(
-            self, max_hops=max_hops, max_paths_per_length=max_paths_per_length
+            self,
+            max_hops=max_hops,
+            max_paths_per_length=max_paths_per_length,
+            helper=helper,
+            probe_limit=probe_limit,
         )
         return self.navigation
+
+    def probe_paths(
+        self, paths: Sequence[NavigationPath], *, helper: SparqlHelper
+    ) -> list[NavigationPath]:
+        """Measure selected retained paths within this schema's data and typing scopes."""
+        from rdfsolve.mining.navigation import probe_paths
+
+        return probe_paths(self, paths, helper=helper)
+
+    def select(
+        self,
+        *,
+        paths: Sequence[NavigationPath] = (),
+        fields: Sequence[tuple[str, str]] = (),
+    ) -> SchemaSelection:
+        """Select class-property fields and retained paths with a copy of source evidence."""
+        from rdfsolve.schema_models.selection import SchemaSelection
+
+        return SchemaSelection(
+            source=self.model_copy(deep=True), fields=list(fields), paths=list(paths)
+        )
 
     # Service-namespace filtering
 
@@ -94,7 +251,195 @@ class MinedSchema(BaseModel):
                 or (p.object_class not in _SENTINEL_OBJECTS and _svc(p.object_class))
             )
         ]
-        return self.model_copy(update={"patterns": kept})
+        collections = (
+            [
+                p
+                for p in self.collections or []
+                if not any(_svc(iri) for iri in [p.subject_class, p.property_uri, *p.member_types])
+            ]
+            if self.collections is not None
+            else None
+        )
+        return self.model_copy(update={"patterns": kept, "collections": collections})
+
+    def clean_schema(
+        self,
+        *,
+        namespaces: Sequence[str] = (),
+        graph_uris: Sequence[str] = (),
+        drop_unattributed: bool = False,
+    ) -> MinedSchema:
+        """Return a copy without patterns from the given namespaces or graphs.
+
+        ``about.cleaned`` records the rules, the removed patterns (with their counts and
+        graphs), and the patterns and triples removed for each namespace and graph, so a
+        cleaned schema still says which service or engine data the source served.
+
+        A pattern is removed when any of its ``subject_class``,
+        ``property_uri`` or ``object_class`` starts with one of *namespaces*,
+        or when every graph in :attr:`SchemaPattern.graphs` starts with one of
+        *graph_uris*. Patterns mined without graph evidence are retained
+        unless *drop_unattributed*. Nothing is removed by default:
+        :data:`SUGGESTED_SERVICE_NAMESPACES` and
+        :data:`SUGGESTED_SERVICE_GRAPHS` are starting points to pass in.
+        """
+        ns = tuple(namespaces)
+        graphs = tuple(graph_uris)
+
+        def _in_namespace(uri: str) -> bool:
+            return bool(ns) and uri.startswith(ns)
+
+        def _only_service_graphs(pattern: SchemaPattern) -> bool:
+            if not graphs:
+                return False
+            if not pattern.graphs:
+                return drop_unattributed
+            return all(graph.startswith(graphs) for graph in pattern.graphs)
+
+        def _namespace(p: SchemaPattern) -> str | None:
+            terms = [p.subject_class, p.property_uri]
+            if p.object_class not in _SENTINEL_OBJECTS:
+                terms.append(p.object_class)
+            return next((n for n in ns for term in terms if term.startswith(n)), None)
+
+        def _graph(p: SchemaPattern) -> str | None:
+            if not graphs or not _only_service_graphs(p):
+                return None
+            first = next(iter(p.graphs or {}), "")
+            return next((g for g in graphs if first.startswith(g)), "(no graph evidence)")
+
+        kept, removed = [], []
+        by_namespace: dict[str, dict[str, int]] = {}
+        by_graph: dict[str, dict[str, int]] = {}
+        for p in self.patterns:
+            namespace, graph = _namespace(p), None
+            if namespace is None:
+                graph = _graph(p)
+            if namespace is None and graph is None:
+                kept.append(p)
+                continue
+            group = (by_namespace if namespace else by_graph).setdefault(
+                namespace or graph or "", {"patterns": 0, "triples": 0}
+            )
+            group["patterns"] += 1
+            group["triples"] += p.count or 0
+            removed.append(
+                {
+                    "subject_class": p.subject_class,
+                    "property_uri": p.property_uri,
+                    "object_class": p.object_class,
+                    "count": p.count,
+                    "graphs": p.graphs,
+                    "matched": namespace or graph,
+                }
+            )
+
+        # The other parts of the schema that name classes and properties are cleaned by
+        # namespace, and by graph where the part records its graph.
+        def _pattern_out(p: SchemaPattern) -> bool:
+            return _namespace(p) is not None or _only_service_graphs(p)
+
+        def _keep(items: list[Any] | None, out: Any, part: str) -> list[Any] | None:
+            if items is None:
+                return None
+            rest = [item for item in items if not out(item)]
+            if len(rest) != len(items):
+                other[part] = len(items) - len(rest)
+            return rest
+
+        def _keep_keys(values: dict[str, Any] | None, part: str) -> dict[str, Any] | None:
+            if values is None:
+                return None
+            rest = {key: value for key, value in values.items() if not _in_namespace(key)}
+            if len(rest) != len(values) and part:
+                other[part] = len(values) - len(rest)
+            return rest
+
+        def _structural_out(p: StructuralPattern) -> bool:
+            terms = [p.property_uri, *p.subject_properties, *p.object_properties]
+            in_graph = bool(graphs) and (
+                p.graph_uri.startswith(graphs) if p.graph_uri is not None else drop_unattributed
+            )
+            return in_graph or any(_in_namespace(term) for term in terms)
+
+        other: dict[str, int] = {}
+        raw_patterns = _keep(self.raw_patterns, _pattern_out, "raw_patterns")
+        term_patterns = _keep(self.term_patterns, _pattern_out, "term_patterns")
+        structural = _keep(self.structural_patterns, _structural_out, "structural_patterns")
+        enrichment = self.enrichment.model_copy(
+            update={
+                "examples": _keep(
+                    self.enrichment.examples,
+                    lambda e: _in_namespace(e.subject_class) or _in_namespace(e.property_uri),
+                    "examples",
+                ),
+                "class_examples": _keep_keys(self.enrichment.class_examples, "class_examples"),
+                "labels": _keep(
+                    self.enrichment.labels, lambda a: _in_namespace(a.term_iri), "labels"
+                ),
+                "definitions": _keep(
+                    self.enrichment.definitions, lambda a: _in_namespace(a.term_iri), "definitions"
+                ),
+            }
+        )
+        navigation = self.navigation
+        if navigation is not None:
+            paths = _keep(
+                navigation.paths, lambda path: any(_pattern_out(s) for s in path.steps), "paths"
+            )
+            navigation = navigation.model_copy(update={"paths": paths})
+        # The record says what the source served, so that cleaning never hides it: engine
+        # and service data are part of what an endpoint gives, not part of its data.
+        about = self.about.model_copy(
+            update={
+                "pattern_count": len(kept),
+                "class_entity_counts": _keep_keys(
+                    self.about.class_entity_counts, "class_entity_counts"
+                ),
+                "class_entity_count_states": _keep_keys(self.about.class_entity_count_states, ""),
+                "cleaned": {
+                    "namespaces": list(ns),
+                    "graph_uris": list(graphs),
+                    "drop_unattributed": drop_unattributed,
+                    "patterns_removed": len(removed),
+                    "removed_by_namespace": by_namespace,
+                    "removed_by_graph": by_graph,
+                    "removed_patterns": removed,
+                    "removed_from_other_parts": other,
+                },
+            }
+        )
+        collections = (
+            [
+                p
+                for p in self.collections or []
+                if not any(
+                    _in_namespace(iri) for iri in [p.subject_class, p.property_uri, *p.member_types]
+                )
+                and not (
+                    graphs
+                    and (
+                        p.graph_uri.startswith(graphs)
+                        if p.graph_uri is not None
+                        else drop_unattributed
+                    )
+                )
+            ]
+            if self.collections is not None
+            else None
+        )
+        return self.model_copy(
+            update={
+                "patterns": kept,
+                "raw_patterns": raw_patterns,
+                "term_patterns": term_patterns,
+                "structural_patterns": structural,
+                "enrichment": enrichment,
+                "navigation": navigation,
+                "about": about,
+                "collections": collections,
+            }
+        )
 
     # Queries -
 
@@ -109,11 +454,17 @@ class MinedSchema(BaseModel):
             classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
+        for profile in self.collections or []:
+            classes.add(profile.subject_class)
+            classes.update(profile.member_types)
         return sorted(classes)
 
     def get_properties(self) -> list[str]:
         """Return sorted unique property URIs."""
-        return sorted({p.property_uri for p in self.patterns})
+        return sorted(
+            {p.property_uri for p in self.patterns}
+            | {p.property_uri for p in self.collections or []}
+        )
 
     # JSON-LD import
 
@@ -169,12 +520,12 @@ class MinedSchema(BaseModel):
         This does not fill missing statistics by querying instance data.
         Pass discovery options such as graph_uris and get_graphs_from_store.
         """
-        from rdfsolve.api import discover_void_source
+        from rdfsolve.void_source import discover_void_source
 
         return discover_void_source(endpoint, name, **kwargs).to_mined_schema()
 
     @classmethod
-    def from_void(cls, void_ttl: str) -> MinedSchema:
+    def from_void(cls, void_ttl: str, *, local_backend: LocalBackend = "oxigraph") -> MinedSchema:
         """Parse VoID Turtle into MinedSchema.
 
         Args:
@@ -191,7 +542,7 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.readers.void import void_to_minedschema
 
-        return void_to_minedschema(void_ttl)
+        return void_to_minedschema(void_ttl, local_backend=local_backend)
 
     @classmethod
     def from_shacl(cls, shacl_ttl: str) -> MinedSchema:
@@ -212,6 +563,26 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 
         return shacl_to_minedschema(shacl_ttl)
+
+    @classmethod
+    def from_vocabulary(
+        cls, vocabulary: str | Any, classes: Any, *, profile: str | Path | None = None
+    ) -> MinedSchema:
+        """Read declared rows for classes of published vocabularies.
+
+        A vocabulary is a file path, an RDFLib graph, an Oxigraph store or Turtle text.
+        A list of them is read as one vocabulary. Each class gets every property whose
+        domain is the class or an ancestor, with each declared range. Use the result as
+        a contract to author records.
+
+        profile is a SHACL application profile (Turtle text or a file) that the user owns.
+        Its shapes add rows for properties that the vocabularies do not declare for a class,
+        without axioms about the vocabularies' terms. The added rows have evidence_source
+        "shacl".
+        """
+        from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+
+        return vocabulary_to_minedschema(vocabulary, classes, profile=profile)
 
     # NetworkX export
 
@@ -246,20 +617,18 @@ class MinedSchema(BaseModel):
 
     # VoID graph export
 
-    def to_void_graph(
-        self, base_url: str | None = None, *, trim_descriptions: int | None = None
-    ) -> Graph:
+    def to_void_graph(self, *, trim_descriptions: int | None = None) -> Graph:
         """Export the supported VoID fields."""
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        if self.shapes is not None or self.navigation is not None:
+        if self.shapes is not None or self.navigation is not None or self.collections:
             import logging
 
             logging.getLogger(__name__).warning(
-                "VoID does not encode SHACL profiles or composed navigation. Keep canonical JSON."
+                "VoID does not encode SHACL profiles, collections or composed navigation. Keep canonical JSON."
             )
         return to_void_graph(
-            trim_export_text(self, trim_descriptions), base_url, trim_descriptions=trim_descriptions
+            trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions
         )
 
     def to_linkml(
@@ -320,28 +689,30 @@ class MinedSchema(BaseModel):
             graph_uri=graph_uri,
         )
 
-    def to_pydantic_classes(self) -> dict[str, type[BaseModel]]:
+    def to_pydantic_classes(self, *, contract: bool = False) -> dict[str, type[BaseModel]]:
         """Generate runtime classes using the same definitions as the Python export."""
         from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
 
-        return build_pydantic_classes(self)
+        return build_pydantic_classes(self, contract=contract)
 
-    def client(
-        self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any
-    ) -> DatasetClient:
-        """Explore generated models by name and follow their recorded links."""
-        from rdfsolve.exploration import DatasetClient
+    def client(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Client:
+        """Open the exploratory client without mining or querying the source."""
+        from rdfsolve.client.api import Client
 
-        return DatasetClient(self, source, **kwargs)
+        return Client(self, source, **kwargs)
 
     def hydrator(self, source: str | SparqlHelper | Graph | None = None, **kwargs: Any) -> Hydrator:
         """Read generated model fields from a source. See Hydrator for request budgets."""
-        from rdfsolve.hydration import Hydrator
+        from rdfsolve.client.hydration import Hydrator
 
         return Hydrator(self, source, **kwargs)
 
     def to_pydantic(
-        self, schema_name: str | None = None, *, trim_descriptions: int | None = None
+        self,
+        schema_name: str | None = None,
+        *,
+        trim_descriptions: int | None = None,
+        contract: bool = False,
     ) -> str:
         """Generate label-named Pydantic views of observed RDF patterns."""
         from rdfsolve.schema_models.exporters.pydantic import to_pydantic
@@ -349,6 +720,7 @@ class MinedSchema(BaseModel):
         return to_pydantic(
             trim_export_text(self, trim_descriptions),
             schema_name,
+            contract=contract,
             trim_descriptions=trim_descriptions,
         )
 
@@ -364,18 +736,25 @@ class MinedSchema(BaseModel):
 
     def to_shacl(
         self,
-        base_uri: str = "http://example.org/shapes/",
+        base_uri: str | None = None,
         *,
         activate_observed: bool = False,
         trim_descriptions: int | None = None,
+        void: bool = True,
+        paths: Literal["with", "without", "only"] = "with",
     ) -> str:
         """Convert to SHACL shapes.
+
+        *paths* selects the shapes of the paths over several steps: with the class shapes (the
+        default), without them, or only them (the pipeline writes them to a file of their own).
 
         Returns SHACL Turtle string.
 
         Args:
-            base_uri: Base URI for shape URIs
+            base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
             activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
+            void: Add the VoID description, so that from_shacl reads the patterns back. Leave it
+                out when the VoID is published on its own.
 
         Example:
             >>> schema = MinedSchema.from_jsonld("schema.jsonld")
@@ -386,6 +765,11 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 
         schema = trim_export_text(self, trim_descriptions)
+        if paths == "without":
+            schema = schema.model_copy(update={"navigation": None})
+        elif paths == "only":
+            schema = schema.model_copy(update={"patterns": [], "shapes": None})
+            void = False
         shapes = minedschema_to_shacl(
             schema, base_uri=base_uri, activate_observed=activate_observed
         )
@@ -393,7 +777,8 @@ class MinedSchema(BaseModel):
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
-        graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
+        if void:
+            graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
         schema.annotate_rdf(graph)
         result: str = graph.serialize(format="turtle")
         return result

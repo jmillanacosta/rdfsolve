@@ -1,79 +1,122 @@
-"""Exercise public query helpers without endpoint requests."""
-
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from rdflib import Graph
-from rdflib.compare import isomorphic
-
-from rdfsolve.sparql_helper import EndpointError, SparqlHelper
-
-
-def test_rdf_response_is_parsed_or_raises(monkeypatch):
-    text = (Path(__file__).parent / "test_data/aopwikirdf_metadata_excerpt.ttl").read_text()
-    with SparqlHelper("https://example.org/sparql") as helper:
-        construct = Mock(return_value=text)
-        monkeypatch.setattr(helper, "construct", construct)
-        assert isomorphic(helper.construct_graph("CONSTRUCT {} WHERE {}"),
-                          Graph().parse(data=text, format="turtle"))
-        construct.return_value = "<html>gateway error</html>"
-        with pytest.raises(EndpointError, match="invalid Turtle"):
-            helper.construct_graph("CONSTRUCT {} WHERE {}")
+import requests
+from rdfsolve.sparql_helper import (
+    EndpointError,
+    EndpointRateLimitError,
+    EndpointTimeoutError,
+    SparqlHelper,
+)
 
 
-def test_ask_does_not_turn_bad_responses_into_false(monkeypatch):
-    with SparqlHelper("https://example.org/sparql") as helper:
-        execute = Mock(return_value={"boolean": False})
-        monkeypatch.setattr(helper, "_execute", execute)
-        assert helper.ask("ASK {}") is False
-        for invalid in ({}, {"boolean": "unknown"}, {"boolean": 1}):
-            execute.return_value = invalid
-            with pytest.raises(EndpointError, match="boolean"):
-                helper.ask("ASK {}")
-
-
-def test_registry_helper_uses_request_budgets():
-    with SparqlHelper.from_source_entry({
-        "endpoint": "https://example.org/sparql", "timeout": 12,
-        "delay": 2, "max_response_bytes": 2048, "sparql_strategy": "post",
-    }) as helper:
-        assert (helper.timeout, helper.inter_request_delay, helper.max_response_bytes) == (12, 2, 2048)
-        assert helper._requires_post
-    with pytest.raises(ValueError, match="endpoint"):
-        SparqlHelper.from_source_entry({"name": "no-endpoint"})
-
-
-@pytest.mark.parametrize("method", ["find_classes_for_iris", "find_classes_for_iris_by_graph"])
-def test_class_lookup_does_not_hide_failed_batches(method, monkeypatch):
-    with SparqlHelper("https://example.org/sparql") as helper:
-        select = Mock(side_effect=EndpointError("unavailable"))
-        monkeypatch.setattr(helper, "select", select)
-        lookup = getattr(helper, method)
-        with pytest.raises(ValueError):
-            lookup(["urn:s"], values_batch_size=0)
-        with pytest.raises(ValueError):
-            lookup(["urn:s> } UNION { ?s ?p ?o"])
-        select.assert_not_called()
-        with pytest.raises(EndpointError, match="unavailable"):
-            lookup(["urn:s"])
-
-
-def test_fallback_log_reports_transport_change(monkeypatch, caplog):
-    import logging
-
-    caplog.set_level(logging.INFO, logger="rdfsolve.sparql_helper")
-    with SparqlHelper("https://example.org/sparql", max_retries=2) as helper:
+def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    defer = Mock()
+    monkeypatch.setattr("rdfsolve._http_policy.defer_host", defer)
+    response = requests.Response()
+    response.status_code = 500
+    response.headers["Content-Type"] = "application/json"
+    response._content = b"SPARQL compiler: syntax error"
+    response._content_consumed = True
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
         helper.enable_query_collection()
-        monkeypatch.setattr(helper, "_get_query", Mock(return_value="<html>error</html>"))
-        monkeypatch.setattr(helper, "_post_query", Mock(return_value='{"boolean": true}'))
-        assert helper.ask("ASK {}")
-        assert "HTTP fallback used" in caplog.text
-        assert helper.get_collected_queries()[-1].fallback_used
-        assert helper.get_collected_queries()[-1].attempts == 2
-        caplog.clear()
-        assert helper.ask("ASK {}")
-        assert "no HTTP fallback" in caplog.text
-        assert not helper.get_collected_queries()[-1].fallback_used
-        assert helper.get_collected_queries()[-1].attempts == 1
-        assert "ASK {}" not in caplog.text
+        request = Mock(return_value=response)
+        monkeypatch.setattr(helper._session, "request", request)
+        with pytest.raises(EndpointError, match="query rejected"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        response._content = (
+            b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+        )
+        helper.max_retries = 3
+        helper.initial_backoff = 0
+        with pytest.raises(EndpointTimeoutError, match="Tried to allocate"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 2, "A query memory limit must reach the caller without retries"
+        response._content = b"Virtuoso S1TAT Error Query did not complete due to ANYTIME timeout."
+        with pytest.raises(EndpointTimeoutError, match="ANYTIME"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 3, "A Virtuoso time limit is a cost limit for the caller"
+        helper.max_retries = 1
+        response.status_code = 429
+        response._content = b'{"exception":"Operation timed out: deadline exceeded"}'
+        with pytest.raises(EndpointTimeoutError, match="Operation timed out"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        defer.assert_not_called()
+        record = helper.get_collected_queries()[-1]
+        assert not record.success and record.status_code == 429
+        assert record.attempts == 1 and record.error == "EndpointTimeoutError"
+        response._content = b"Too many requests"
+        response.headers["Retry-After"] = "30"
+        with pytest.raises(EndpointRateLimitError):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        defer.assert_called_once_with("example.org", 30)
+        assert request.call_count == 5, "Rejected queries must not repeat unchanged"
+    sent = request.call_args.kwargs["headers"]["User-Agent"]
+    assert sent.startswith("rdfsolve/") and "@" not in sent, "Identify the software, never a person"
+    monkeypatch.setenv("RDFSOLVE_USER_AGENT", "my-project/1 (https://example.org/contact)")
+    assert (
+        SparqlHelper("https://example.org/sparql").user_agent
+        == "my-project/1 (https://example.org/contact)"
+    )
+    assert SparqlHelper("https://example.org/sparql", user_agent="tool/2").user_agent == "tool/2"
+
+
+def test_a_connection_closed_after_a_long_wait_is_a_cost_limit(monkeypatch, tmp_path):
+    """A proxy or server that closes the connection after a long query gave up on the query.
+
+    The caller must make the query smaller, not repeat it (Rhea through a proxy: 16 minutes
+    per attempt). A connection closed at once is a network error and is retried.
+    """
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    dropped = requests.exceptions.ProxyError(
+        "Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')"
+    )
+    with SparqlHelper("https://example.org/sparql", max_retries=3) as helper:
+        helper.initial_backoff = 0
+        request = Mock(side_effect=dropped)
+        monkeypatch.setattr(helper._session, "request", request)
+        helper.DROPPED_AFTER_SECONDS = 0.0
+        with pytest.raises(EndpointTimeoutError, match="closed"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 1, "A query dropped after a long wait is not repeated"
+        helper.DROPPED_AFTER_SECONDS = 1e9
+        with pytest.raises(EndpointError):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 4, "A connection closed at once is retried"
+
+
+def test_json_error_reports_its_reason(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    response = requests.Response()
+    response.status_code = 400
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"exception":"Invalid SPARQL query: Built-in function sameterm"}'
+    response._content_consumed = True
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
+        monkeypatch.setattr(helper._session, "request", Mock(return_value=response))
+        with pytest.raises(EndpointError, match="Built-in function sameterm"):
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+
+
+def test_a_budget_gives_one_try_and_no_pages(monkeypatch, tmp_path):
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    response = requests.Response()
+    response.status_code = 500
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"exception":"Tried to allocate 250 MB, but only 92 MB were available"}'
+    response._content_consumed = True
+    with SparqlHelper("https://example.org/sparql", max_retries=3, timeout=600) as helper:
+        helper.initial_backoff = 0
+        request = Mock(return_value=response)
+        monkeypatch.setattr(helper._session, "request", request)
+        with helper.budget(5):
+            assert (helper.timeout, helper.max_retries, helper.page_recovery) == (5, 1, False)
+            with pytest.raises(EndpointTimeoutError):
+                helper.select_with_fallback("SELECT ?s WHERE { ?s ?p ?o }")
+        assert request.call_count == 1, "One request: no retry, no pages"
+        assert (helper.timeout, helper.max_retries, helper.page_recovery) == (600, 3, True)

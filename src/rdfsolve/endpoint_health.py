@@ -2,29 +2,21 @@
 
 from __future__ import annotations
 
-import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 
-import yaml
-
-from rdfsolve.models.source_model import SourceModel, SourcesRegistry
+from rdfsolve.models.source_model import SourceModel
 from rdfsolve.sparql_helper import (
     EndpointError,
     EndpointTimeoutError,
     SparqlHelper,
 )
 
-logger = logging.getLogger(__name__)
-
 __all__ = [
     "EndpointHealthCheck",
     "check_endpoint_health",
     "get_polite_delay",
-    "health_check_all_endpoints",
     "update_endpoint_status",
 ]
 
@@ -207,104 +199,3 @@ def get_polite_delay(source: SourceModel) -> float:
 
     # Default to public endpoint delay
     return DEFAULT_DELAYS["public"]
-
-
-def health_check_all_endpoints(
-    sources_yaml: str | Path,
-    save: bool = True,
-    max_workers: int = 20,
-) -> dict[str, EndpointHealthCheck]:
-    """Check health of all endpoints concurrently and save status to sources.yaml.
-
-    Args:
-        sources_yaml: Path to sources.yaml file.
-        save: Save updated status to file if True.
-        max_workers: Maximum number of concurrent health checks.
-
-    Returns:
-        Dict mapping source name to health check result.
-    """
-    registry = SourcesRegistry.from_yaml(sources_yaml)
-    results = {}
-
-    # Only check sources with endpoints (skip local-only sources)
-    sources_with_endpoints = [s for s in registry.sources if s.endpoint]
-
-    logger.info(f"Checking health of {len(sources_with_endpoints)} endpoints concurrently...")
-
-    def check_source(source: SourceModel) -> tuple[SourceModel, EndpointHealthCheck]:
-        """Return health for a source."""
-        health = check_endpoint_health(source.endpoint)
-        update_endpoint_status(source, health)
-        return source, health
-
-    # Run health checks concurrently
-    completed = 0
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_source = {
-            executor.submit(check_source, source): source for source in sources_with_endpoints
-        }
-
-        for future in as_completed(future_to_source):
-            source = future_to_source[future]
-            try:
-                _, health = future.result()
-                results[source.name] = health
-                completed += 1
-
-                status_msg = f"{health.status}"
-                if health.response_time:
-                    status_msg += f" ({health.response_time:.2f}s)"
-
-                logger.info(
-                    f"[{completed}/{len(sources_with_endpoints)}] {source.name}: {status_msg}"
-                )
-
-            except Exception as e:
-                logger.error(f"Health check failed for {source.name}: {e}")
-                completed += 1
-
-    if save:
-        # Write back to YAML
-        sources_yaml = Path(sources_yaml)
-        with open(sources_yaml, encoding="utf-8") as fh:
-            sources_data = yaml.safe_load(fh)
-
-        # Update each source with health info
-        by_name = {s["name"]: s for s in sources_data}
-        for source in registry.sources:
-            if source.name in by_name:
-                by_name[source.name].update(
-                    {
-                        "endpoint_status": source.endpoint_status,
-                        "last_checked": source.last_checked,
-                        "last_success": source.last_success,
-                        "last_error": source.last_error,
-                        "failure_count": source.failure_count,
-                        "endpoint_down": source.endpoint_down,
-                        "avg_response_time": source.avg_response_time,
-                    }
-                )
-
-        with open(sources_yaml, "w", encoding="utf-8") as fh:
-            yaml.dump(
-                sources_data,
-                fh,
-                default_flow_style=False,
-                sort_keys=False,
-                width=200,
-                allow_unicode=True,
-            )
-
-        logger.info(f"Updated endpoint health status in {sources_yaml}")
-
-    # Summary
-    status_counts: dict[str, int] = {}
-    for health in results.values():
-        status_counts[health.status] = status_counts.get(health.status, 0) + 1
-
-    logger.info("Health check summary:")
-    for status, count in sorted(status_counts.items()):
-        logger.info(f"  {status}: {count}")
-
-    return results

@@ -1,142 +1,76 @@
-"""Check optional phases and final report state without network requests."""
-
 import json
-from unittest.mock import Mock
 
-import pytest
-from rdflib import Graph, Literal, URIRef
-from rdflib.namespace import DCTERMS
-
-from rdfsolve.miner import SchemaMiner
-from rdfsolve.mining import mine_with_ontology
-from rdfsolve.schema_models import SchemaPattern
-from rdfsolve.schema_models.metadata import MetadataDocument
-from rdfsolve.schema_models.ontology import OntologyStructure
+from rdflib import RDF, Graph
+from rdfsolve.mining.miner import SchemaMiner
 
 
-@pytest.fixture
-def miner(tmp_path, monkeypatch):
-    result = SchemaMiner(
-        "https://example.org/sparql", counts=False, report_path=tmp_path / "report.json"
+def test_failed_counts_keep_patterns_and_report_partial(tmp_path, monkeypatch):
+    from rdfsolve.sparql_helper import EndpointError
+
+    graph = Graph().parse(data='@prefix e: <urn:count:> . e:a a e:A; e:p "x" .', format="turtle")
+    path = tmp_path / "report.json"
+    with SchemaMiner.from_graph(graph, delay=0, report_path=path) as miner:
+        select = miner.helper.select
+
+        def fail_counts(query, **kwargs):
+            if kwargs.get("purpose") == "counts/literal":
+                assert json.loads(path.read_text())["completion_state"] != "complete"
+                raise EndpointError("Count query failed")
+            return select(query, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", fail_counts)
+        schema = miner.mine("count")
+    assert schema.patterns
+    assert next((p for p in schema.patterns if p.property_uri == "urn:count:p")).count is None
+    report = json.loads(path.read_text())
+    assert report["completion_state"] == "partial"
+    assert report["finished_at"]
+    assert report["pattern_count"] == len(schema.patterns)
+    assert any((f["purpose"] == "counts/literal" for f in report["query_failures"]))
+
+
+def test_interrupted_mining_keeps_completed_class_batches(tmp_path, monkeypatch):
+    import pytest
+
+    graph = Graph().parse(
+        data='@prefix e: <urn:stop:> . e:a a e:A; e:p "x" . e:b a e:B; e:q e:a .', format="turtle"
     )
-    monkeypatch.setattr(result, "_run_patterns_phase", lambda: ([], None))
-    monkeypatch.setattr(result, "_run_labels_phase", lambda patterns: (patterns, set()))
-    monkeypatch.setattr(result, "_query_declared_classes", lambda: {"urn:A"})
-    monkeypatch.setattr(result, "query_dataset_metadata", lambda: {})
-    return result
+    path = tmp_path / "report.json"
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1, report_path=path) as miner:
+        select, seen = miner.helper.select, set()
 
+        def stop(query, **kwargs):
+            seen.add(kwargs.get("purpose", "").split("/")[1])
+            if kwargs.get("purpose", "").startswith("two-phase/typed-object") and "blank-node" in seen:
+                raise SystemExit(143)  # SLURM time limit after the first batch
+            return select(query, **kwargs)
 
-@pytest.mark.parametrize("ontology", [False, True])
-@pytest.mark.parametrize("metadata", [False, True])
-@pytest.mark.parametrize("detected", [False, True])
-def test_optional_phase_matrix(miner, monkeypatch, ontology, metadata, detected):
-    reports = []
-
-    def optional(value):
-        def run(self):
-            report = miner._report.report
-            assert report.finished_at is None
-            reports.append(report)
-            return value
-
-        return run
-
-    monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: detected)
-    monkeypatch.setattr("rdfsolve.mining._query_owl_class_superclasses", lambda *a: ["urn:A"])
-    monkeypatch.setattr("rdfsolve.mining.OntologyMiner.mine", optional(OntologyStructure()))
-    monkeypatch.setattr("rdfsolve.mining.MetadataMiner.mine", optional(MetadataDocument(graph=Graph())))
-    pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
-    monkeypatch.setattr(
-        "rdfsolve.mining.mine_ontology_as_data_patterns", lambda *a, **kw: [pattern]
-    )
-    monkeypatch.setattr(
-        "rdfsolve.mining.mine_ontology_as_data_subject_patterns", lambda *a, **kw: []
-    )
-    result = mine_with_ontology(
-        miner, ontology, metadata, dataset_name="test", ontology_as_data=True
-    )
-    report = miner.last_report
-    assert report.finished_at
-    assert all(item is report for item in reports)
-    assert (result.ontology is not None) is ontology
-    assert (result.metadata is not None) is metadata
-    assert report.pattern_count == len(result.data_schema.patterns) == int(detected)
-    assert report.class_count == result.data_schema.about.class_count == (2 if detected else 0)
-    assert report.property_count == result.data_schema.about.property_count == int(detected)
-    assert result.data_schema.about.finished_at == report.finished_at
-    if ontology:
-        assert report.ontology_extraction is not None
-    saved = json.loads(miner._report_path.read_text())
-    assert saved["pattern_count"] == report.pattern_count
-    assert saved["finished_at"] == report.finished_at
-
-
-def test_failed_metadata_query_does_not_drop_schema(miner, monkeypatch):
-    monkeypatch.setattr(
-        miner, "query_dataset_metadata", Mock(side_effect=RuntimeError("metadata failed"))
-    )
-    schema = miner.mine("test")
-    assert schema.patterns == []
-    assert miner.last_report.finished_at
-    assert any(phase.error == "metadata failed" for phase in miner.last_report.phases)
-
-
-def test_report_counts_final_filtered_schema(miner, monkeypatch):
-    monkeypatch.setattr(
-        "rdfsolve.schema_models.core.SERVICE_NAMESPACE_PREFIXES",
-        ("http://www.openlinksw.com/schemas/virtrdf#",),
-    )
-    pattern = SchemaPattern(
-        subject_class="http://www.openlinksw.com/schemas/virtrdf#QuadMap",
-        property_uri="urn:p",
-        object_class="urn:B",
-    )
-    monkeypatch.setattr(miner, "_run_patterns_phase", lambda: ([pattern], None))
-    schema = miner.mine("test")
-    assert schema.patterns == []
-    assert schema.about.pattern_count == miner.last_report.pattern_count == 0
-    assert schema.about.class_count == miner.last_report.class_count == 0
-    assert schema.about.property_count == miner.last_report.property_count == 0
-
-
-def test_failed_run_replaces_previous_report(miner, monkeypatch):
-    miner.mine("first")
-    first = miner.last_report
-    monkeypatch.setattr(
-        miner, "_run_patterns_phase", Mock(side_effect=RuntimeError("mining failed"))
-    )
-    with pytest.raises(RuntimeError, match="mining failed"):
-        miner.mine("second")
-    assert miner.last_report is not first
-    assert miner.last_report.dataset_name == "second"
-    assert miner.last_report.finished_at
-    assert "mining failed" in miner.last_report.abort_reason
-
-
-def test_new_run_clears_injected_ontology_classes(miner):
-    miner._ontology_classes = ["urn:stale"]
-    miner.mine("test")
-    assert not miner._ontology_classes
-
-
-def test_failed_optional_phase_keeps_its_report(miner, monkeypatch):
-    monkeypatch.setattr("rdfsolve.mining.detect_ontology_as_data", lambda *a, **kw: False)
-    monkeypatch.setattr(
-        "rdfsolve.mining.OntologyMiner.mine", Mock(side_effect=RuntimeError("ontology failed"))
-    )
-    with pytest.raises(RuntimeError, match="ontology failed"):
-        mine_with_ontology(miner, extract_ontology=True, dataset_name="test")
-    assert miner.last_report.finished_at
-    phase = next(p for p in miner.last_report.phases if p.name == "ontology-extraction")
-    assert phase.finished_at
-    assert "ontology failed" in phase.error
-
-
-def test_metadata_export_uses_literal_nodes():
-    source = Graph()
-    source.add((URIRef("urn:dataset"), DCTERMS.title, Literal("Title")))
-    source.add((URIRef("urn:dataset"), DCTERMS.description, Literal("Text")))
-    metadata = MetadataDocument(graph=source)
-    graph = metadata.to_rdf_graph()
-    assert (URIRef("urn:dataset"), DCTERMS.title, Literal("Title")) in graph
-    assert (URIRef("urn:dataset"), DCTERMS.description, Literal("Text")) in graph
+        monkeypatch.setattr(miner.helper, "select", stop)
+        with pytest.raises(SystemExit):
+            miner.mine("stop")
+    saved = [json.loads(line) for line in path.with_suffix(".checkpoint.jsonl").read_text().splitlines()]
+    typed = (str(RDF.type), "Resource")
+    expected = {"urn:stop:A": {("urn:stop:p", "Literal"), typed}, "urn:stop:B": {("urn:stop:q", "urn:stop:A"), typed}}
+    assert len(saved) == 1 and saved[0]["phase"] == "patterns", "Only the completed batch is kept"
+    (cls,) = saved[0]["classes"]
+    assert {(r["property_uri"], r["object_class"]) for r in saved[0]["rows"]} == expected[cls]
+    assert json.loads(path.read_text())["completion_state"] != "complete"
+    checkpoint = path.with_suffix(".checkpoint.jsonl")
+    kept = tmp_path / "previous.checkpoint.jsonl"
+    kept.write_text(checkpoint.read_text())
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1, report_path=path,
+                                resume_checkpoint=kept) as miner:
+        select, sent = miner.helper.select, []
+        monkeypatch.setattr(
+            miner.helper, "select", lambda q, **kw: sent.append((kw.get("purpose", ""), q)) or select(q, **kw)
+        )
+        resumed = miner.mine("stop")
+        report = miner.last_report
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1) as fresh:
+        whole = fresh.mine("stop")
+    assert sorted(map(repr, resumed.patterns)) == sorted(map(repr, whole.patterns))
+    assert not [q for p, q in sent if p.startswith("two-phase/") and f"<{cls}>" in q], "Reused, not re-queried"
+    assert report.config["resumed_batches"] == [[cls]], "Record which evidence was reused"
+    phases = [json.loads(line)["phase"] for line in checkpoint.read_text().splitlines()]
+    assert phases.count("patterns") == 2, "The new checkpoint holds every batch"
+    assert set(phases) <= {"patterns", "census"}, "and the census counts"

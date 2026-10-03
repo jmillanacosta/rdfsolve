@@ -1,0 +1,191 @@
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns1: <http://purl.org/pav/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://data.wikipathways.org/20260810/rdf/> a void:Dataset ;
+    dcterms:accuralPeriodicity <http://purl.org/cld/freq/monthly> ;
+    dcterms:description "WikiPathways RDF data dump of the pathways created on 20260810." ;
+    dcterms:issued "2026-08-10T00:49:27.872000+00:00"^^xsd:dateTime ;
+    dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> ;
+    dcterms:publisher <http://www.wikidata.org/entity/Q131790020> ;
+    dcterms:subject <http://vocabularies.wikipathways.org/wp#Binding>,
+        <http://vocabularies.wikipathways.org/wp#Catalysis>,
+        <http://vocabularies.wikipathways.org/wp#Complex>,
+        <http://vocabularies.wikipathways.org/wp#ComplexBinding>,
+        <http://vocabularies.wikipathways.org/wp#DirectedInteraction>,
+        <http://vocabularies.wikipathways.org/wp#GeneProduct>,
+        <http://vocabularies.wikipathways.org/wp#Inhibition>,
+        <http://vocabularies.wikipathways.org/wp#Interaction>,
+        <http://vocabularies.wikipathways.org/wp#Metabolite>,
+        <http://vocabularies.wikipathways.org/wp#Pathway>,
+        <http://vocabularies.wikipathways.org/wp#Protein>,
+        <http://vocabularies.wikipathways.org/wp#PublicationReference>,
+        <http://vocabularies.wikipathways.org/wp#Rna>,
+        <http://vocabularies.wikipathways.org/wp#Stimulation>,
+        <http://vocabularies.wikipathways.org/wp#TranscriptionTranslation>,
+        <http://www.biopax.org/release/biopax-level3.owl#Pathway>,
+        <https://identifiers.org/taxonomy/10090>,
+        <https://identifiers.org/taxonomy/10116>,
+        <https://identifiers.org/taxonomy/1423>,
+        <https://identifiers.org/taxonomy/1773>,
+        <https://identifiers.org/taxonomy/3694>,
+        <https://identifiers.org/taxonomy/3702>,
+        <https://identifiers.org/taxonomy/4081>,
+        <https://identifiers.org/taxonomy/4530>,
+        <https://identifiers.org/taxonomy/4577>,
+        <https://identifiers.org/taxonomy/4932>,
+        <https://identifiers.org/taxonomy/5518>,
+        <https://identifiers.org/taxonomy/562>,
+        <https://identifiers.org/taxonomy/5833>,
+        <https://identifiers.org/taxonomy/6239>,
+        <https://identifiers.org/taxonomy/7165>,
+        <https://identifiers.org/taxonomy/7227>,
+        <https://identifiers.org/taxonomy/7955>,
+        <https://identifiers.org/taxonomy/9031>,
+        <https://identifiers.org/taxonomy/9598>,
+        <https://identifiers.org/taxonomy/9606>,
+        <https://identifiers.org/taxonomy/9615>,
+        <https://identifiers.org/taxonomy/9796>,
+        <https://identifiers.org/taxonomy/9913> ;
+    dcterms:title "WikiPathways RDF 20260810" ;
+    ns1:createdAt <http://www.wikidata.org/entity/Q1137652> ;
+    ns1:createdBy <https://github.com/wikipathways/GPML2RDF> ;
+    ns1:createdOn "2026-08-10T00:49:27.872000+00:00"^^xsd:dateTime ;
+    ns1:importedFrom <https://github.com/wikipathways/wikipathways-database> ;
+    ns1:importedOn "2026-08-10T00:49:27.872000+00:00"^^xsd:dateTime ;
+    void:exampleResource <https://identifiers.org/hmdb/HMDB02005>,
+        <https://identifiers.org/ncbigene/2678>,
+        <https://identifiers.org/obo.chebi/17242>,
+        <https://identifiers.org/pubmed/15215856>,
+        <https://rdf.wikipathways.org/WP15> ;
+    void:subset <https://data.wikipathways.org/20260810/citedin>,
+        <https://data.wikipathways.org/20260810/linkset/chebi>,
+        <https://data.wikipathways.org/20260810/linkset/complexportal>,
+        <https://data.wikipathways.org/20260810/linkset/ensembl>,
+        <https://data.wikipathways.org/20260810/linkset/inchikey>,
+        <https://data.wikipathways.org/20260810/linkset/lipidmaps>,
+        <https://data.wikipathways.org/20260810/linkset/pubchem>,
+        <https://data.wikipathways.org/20260810/linkset/rhea>,
+        <https://data.wikipathways.org/20260810/linkset/uniprot>,
+        <https://data.wikipathways.org/20260810/linkset/wikidata>,
+        <https://data.wikipathways.org/20260810/smiles> ;
+    void:uriSpace "http://rdf.wikipathways.org/wp/",
+        "https://identifiers.org" ;
+    void:vocabulary ns1:,
+        <http://vocabularies.wikipathways.org/gpml#>,
+        <http://vocabularies.wikipathways.org/wp#>,
+        <http://www.biopax.org/release/biopax-level3.owl#>,
+        foaf: ;
+    dcat:distribution <https://data.wikipathways.org/20260810/rdf/authors>,
+        <https://data.wikipathways.org/20260810/rdf/gpml>,
+        <https://data.wikipathways.org/20260810/rdf/wp> ;
+    dcat:landingPage <https://www.wikipathways.org/> ;
+    dcat:theme <http://semanticscience.org/resource/SIO_001107> ;
+    foaf:homepage <https://www.wikipathways.org/> .
+
+<https://data.wikipathways.org/20260810/citedin> a void:Dataset ;
+    dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> ;
+    dcterms:title "Citations to WikiPathways pathways" ;
+    void:linkPredicate <http://purl.org/spar/cito/cites> .
+
+<https://data.wikipathways.org/20260810/smiles> a void:Dataset ;
+    dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> ;
+    dcterms:title "Compound SMILES from Wikidata" ;
+    ns1:importedFrom <https://wikidata.org/> ;
+    dcat:landingPage <https://www.wikidata.org/wiki/Wikidata:WikiProject_Chemistry> .
+
+<https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/CellOntology.ttl> a void:Dataset ;
+    dcterms:accrualPeriodicity <http://purl.org/cld/freq/monthly> ;
+    dcterms:description "An ontology of cell types. The release merges its imports, so the class count covers the GO, UBERON, PATO and PR terms CL reuses as well as CL's own." ;
+    dcterms:issued "2026-06-08"^^xsd:date ;
+    dcterms:license <http://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:title "Cell Ontology" ;
+    ns1:createdBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:createdWith <https://github.com/ontodev/robot/releases/tag/v1.9.0> ;
+    ns1:importedBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:importedFrom <http://purl.obolibrary.org/obo/cl.owl> ;
+    ns1:version "2026-06-08" ;
+    void:classes 33263 ;
+    void:dataDump <https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/CellOntology.ttl> ;
+    void:exampleResource <http://purl.obolibrary.org/obo/CL_0000000> ;
+    void:feature <http://www.w3.org/ns/formats/Turtle> ;
+    void:triples 783998 ;
+    void:uriSpace "http://purl.obolibrary.org/obo/CL_" ;
+    void:vocabulary owl: ;
+    owl:versionIRI <http://purl.obolibrary.org/obo/cl/releases/2026-06-08/cl.owl> ;
+    dcat:landingPage <https://obofoundry.org/ontology/cl.html> ;
+    foaf:homepage <https://obofoundry.org/ontology/cl.html> .
+
+<https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/DiseaseOntology.ttl> a void:Dataset ;
+    dcterms:accrualPeriodicity <http://purl.org/cld/freq/monthly> ;
+    dcterms:description "The Disease Ontology has been developed as a standardized ontology for human disease with the purpose of providing the biomedical community with consistent, reusable and sustainable descriptions of human disease terms, phenotype characteristics and related medical vocabulary disease concepts." ;
+    dcterms:issued "2026-07-31"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/publicdomain/zero/1.0/> ;
+    dcterms:title "Human Disease Ontology" ;
+    ns1:createdBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:createdWith <https://github.com/ontodev/robot/releases/tag/v1.9.0> ;
+    ns1:importedBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:importedFrom <http://purl.obolibrary.org/obo/doid.owl> ;
+    ns1:version "2026-07-31" ;
+    void:classes 15898 ;
+    void:dataDump <https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/DiseaseOntology.ttl> ;
+    void:exampleResource <http://purl.obolibrary.org/obo/DOID_4> ;
+    void:feature <http://www.w3.org/ns/formats/Turtle> ;
+    void:triples 307411 ;
+    void:uriSpace "http://purl.obolibrary.org/obo/DOID_" ;
+    void:vocabulary owl: ;
+    owl:versionIRI <http://purl.obolibrary.org/obo/doid/releases/2026-07-31/doid.owl> ;
+    dcat:landingPage <https://obofoundry.org/ontology/doid.html> ;
+    foaf:homepage <https://obofoundry.org/ontology/doid.html> .
+
+<https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/PathwayOntology.ttl> a void:Dataset ;
+    dcterms:accrualPeriodicity <http://purl.org/cld/freq/monthly> ;
+    dcterms:creator "G. Thomas Hayman",
+        "Victoria Petri" ;
+    dcterms:description "The Pathway Ontology, a controlled vocabulary of pathway types, converted to RDF from the OWL release published at the OBO PURL." ;
+    dcterms:issued "2026-05-16"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:title "Pathway Ontology" ;
+    ns1:createdBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:createdWith <https://github.com/ontodev/robot/releases/tag/v1.9.0> ;
+    ns1:importedBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:importedFrom <http://purl.obolibrary.org/obo/pw.owl> ;
+    ns1:version "2026-05-16" ;
+    void:classes 2760 ;
+    void:dataDump <https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/PathwayOntology.ttl> ;
+    void:exampleResource <http://purl.obolibrary.org/obo/PW_0000000> ;
+    void:feature <http://www.w3.org/ns/formats/Turtle> ;
+    void:triples 38600 ;
+    void:uriSpace "http://purl.obolibrary.org/obo/PW_" ;
+    void:vocabulary owl: ;
+    owl:versionIRI <http://purl.obolibrary.org/obo/pw/releases/2026-05-16/pw.owl> ;
+    dcat:landingPage <https://obofoundry.org/ontology/pw.html> ;
+    foaf:homepage <https://obofoundry.org/ontology/pw.html> .
+
+<https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/chebi-slim.ttl> a void:Dataset ;
+    dcterms:accrualPeriodicity <http://purl.org/cld/freq/monthly> ;
+    dcterms:description "Chemical Entities of Biological Interest, also known as ChEBI, is a chemical database and ontology of molecular entities focused on 'small' chemical compounds, that is part of the Open Biomedical Ontologies (OBO) effort at the European Bioinformatics Institute (EBI). Slimmed with the eNanoMapper Slimmer to the ChEBI terms that WikiPathways actually annotates with, queried live from the endpoint (wp:bdbChEBI), rather than the full ChEBI release." ;
+    dcterms:issued "2026-07-07"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:title "ChEBI Ontology (WikiPathways slim)" ;
+    ns1:createdBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:createdWith <https://github.com/enanomapper/slimmer/releases/tag/v1.0.1>,
+        <https://github.com/ontodev/robot/releases/tag/v1.9.0> ;
+    ns1:derivedFrom <http://purl.enanomapper.net/onto/external/chebi-slim.owl> ;
+    ns1:importedBy <https://github.com/wikipathways/WikiPathwaysLoader/blob/master/.github/workflows/build-imports.yml> ;
+    ns1:importedFrom <http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.obo> ;
+    ns1:version "253" ;
+    void:classes 7291 ;
+    void:dataDump <https://raw.githubusercontent.com/wikipathways/WikiPathwaysLoader/master/data/chebi-slim.ttl> ;
+    void:exampleResource <http://purl.obolibrary.org/obo/CHEBI_90> ;
+    void:feature <http://www.w3.org/ns/formats/Turtle> ;
+    void:triples 60768 ;
+    void:uriSpace "http://purl.obolibrary.org/obo/CHEBI_" ;
+    void:vocabulary owl: ;
+    dcat:landingPage <https://www.ebi.ac.uk/chebi/> ;
+    foaf:homepage <https://www.ebi.ac.uk/chebi/> .
+

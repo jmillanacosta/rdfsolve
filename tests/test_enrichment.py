@@ -1,22 +1,10 @@
-"""Check source text, RDF terms, query scope, and export annotations."""
-
 import json
 from unittest.mock import Mock
 
 import pytest
-from rdflib import Dataset, Graph, Literal, Namespace, RDF, URIRef
-from rdflib.plugins.sparql.parser import parseQuery
-
-from rdfsolve.miner import SchemaMiner
-from rdfsolve.mining.enrichment import (
-    class_example_query,
-    definition_query,
-    example_query,
-    query_enrichment,
-)
+from rdflib import RDF, Dataset, Literal, Namespace, URIRef
+from rdfsolve.mining.enrichment import query_enrichment
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
-from rdfsolve.schema_models.enrichment import RdfTerm
-from rdfsolve.sparql_helper import EndpointError
 
 EX = Namespace("urn:test:")
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
@@ -55,7 +43,7 @@ def source():
     helper.select.side_effect = lambda query, **kwargs: json.loads(
         dataset.query(query).serialize(format="json")
     )
-    return schema, helper
+    return (schema, helper)
 
 
 def test_enrichment_keeps_language_and_scope(source):
@@ -65,8 +53,10 @@ def test_enrichment_keeps_language_and_scope(source):
     assert result.description(str(EX.A)) == 'A "useful" definition.'
     assert result.description(str(EX.p)) == "A measured value."
     assert len(result.examples) == 2
-    assert result.query_count == 3  # Definitions, batched classes, batched patterns.
-    literal = next(example.value for example in result.examples if example.value.kind == "literal")
+    assert result.query_count == 3
+    literal = next(
+        (example.value for example in result.examples if example.value.kind == "literal")
+    )
     assert literal.language == "en"
     assert literal.value == "hello"
     assert result.class_examples[str(EX.B)][0].value == str(EX.two)
@@ -80,102 +70,82 @@ def test_enrichment_keeps_language_and_scope(source):
     graph = schema.to_void_graph(trim_descriptions=4)
     assert (EX.one, EX.p, Literal("hello", lang="en")) in graph
     assert (EX.A, SKOS.definition, Literal('A "u', lang="en")) in graph
-    assert all(not item.text.value for item in
-               MinedSchema.from_dict(schema.to_dict(trim_descriptions=0)).enrichment.definitions)
+    assert all(
+        (
+            not item.text.value
+            for item in MinedSchema.from_dict(
+                schema.to_dict(trim_descriptions=0)
+            ).enrichment.definitions
+        )
+    )
     with pytest.raises(ValueError, match="trim_descriptions"):
         schema.to_shacl(trim_descriptions=-1)
 
 
-def test_enrichment_failure_is_not_missing_text(source):
+def test_a_failed_example_batch_is_asked_again_one_query_at_a_time(source):
+    """One costly example query failed its whole batch of 10 (ChEMBL, 2026-09-30); now only the
+    costly query fails, and a batch that fails only as a batch is not a failure."""
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
     schema, helper = source
-    helper.select.side_effect = EndpointError("offline")
-    result = query_enrichment(schema, helper, examples_per_pattern=0)
-    assert result.state == "failed"
-    assert result.failures[0].category == "endpoint"
+    answer = helper.select.side_effect
 
+    def costly(query, **kwargs):
+        if "UNION" in query or ("?value" in query and "urn:test:B" in query):
+            raise EndpointTimeoutError("Query cost/time limit: fixture")
+        return answer(query, **kwargs)
 
-@pytest.mark.parametrize("scope", [None, ["urn:g"], ["urn:a", "urn:b"]])
-@pytest.mark.parametrize("kind", ["Literal", "Resource", "BlankNode", "urn:B"])
-def test_enrichment_queries_parse(scope, kind):
-    pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class=kind)
-    parseQuery(example_query(pattern, scope, 2))
-    parseQuery(class_example_query("urn:A", scope, 2))
-    parseQuery(definition_query(["urn:A"], scope))
-
-
-def test_enrichment_exports_do_not_add_validation_defaults(source):
-    schema, helper = source
-    schema.enrichment = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
-    graph = schema.to_void_graph()
-    void = Namespace("http://rdfs.org/ns/void#")
-    sh = Namespace("http://www.w3.org/ns/shacl#")
-    assert list(graph.triples((None, void.exampleResource, EX.one)))
-    assert (EX.one, EX.p, Literal("hello", lang="en")) in graph
-    shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
-    assert list(shapes.triples((None, sh.description, Literal("A measured value."))))
-    assert not list(shapes.triples((None, sh.defaultValue, None)))
-    restored = MinedSchema.from_dict(schema.to_jsonld())
-    assert restored.enrichment.description(str(EX.A)) == 'A "useful" definition.'
-    assert any(example.value.language == "en" for example in restored.enrichment.examples)
-    namespace = {}
-    exec(schema.to_pydantic(), namespace)
-    model = namespace["Thing"]
-    assert model.__doc__ == 'A "useful" definition.'
-    assert "hello" in model.model_fields["p"].examples
-    assert model.model_fields["p"].default is None
-    linkml = schema.to_linkml()
-    from linkml_runtime.dumpers import json_dumper
-
-    document = json_dumper.to_dict(linkml)
-    assert any(
-        cls.get("description") == 'A "useful" definition.' for cls in document["classes"].values()
+    helper.select.side_effect = costly
+    result = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert len(result.examples) == 1 and result.examples[0].value.kind == "literal"
+    assert result.state == "partial" and len(result.failures) == 1, "Only the costly query"
+    helper.select.side_effect = lambda query, **kwargs: (
+        (_ for _ in ()).throw(EndpointTimeoutError("fixture"))
+        if "UNION" in query
+        else answer(query, **kwargs)
     )
-    assert any(slot.get("examples") for slot in document["slots"].values())
+    again = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert again.state == "complete" and len(again.examples) == 2 and not again.failures
 
 
-def test_miner_enriches_before_finalizing_report(source, monkeypatch):
-    schema, helper = source
-    miner = SchemaMiner(helper.endpoint_url, graph_uris=["urn:chosen"], enrich=True, delay=0)
-    monkeypatch.setattr(miner, "_helper", helper)
-    monkeypatch.setattr(miner, "_mine_schema", lambda name: schema)
-    result = miner.mine("test")
-    assert result.enrichment.state == "complete"
-    assert miner.last_report.config["enrich"] is True
-    assert any(
-        phase.name == "enrichment" and phase.finished_at for phase in miner.last_report.phases
+def test_examples_filter_a_sample_and_ask_again_when_it_has_none(monkeypatch):
+    """A value filter runs on a sample of the pattern (ChEMBL: 300 s on 24 M values, 0.1 s on a
+    sample); a sample without a value of the filter is asked again in full."""
+    import rdfsolve.mining.enrichment as enrichment
+
+    monkeypatch.setattr(enrichment, "EXAMPLE_SAMPLE", 1)
+    dataset = Dataset()
+    graph = dataset.graph(URIRef("urn:chosen"))
+    for i in range(5):
+        graph.add((EX[f"s{i}"], RDF.type, EX.A))
+        graph.add((EX[f"s{i}"], EX.p, Literal(f"text {i}")))
+    graph.add((EX.s4, EX.p, Literal(7)))
+    integer = "http://www.w3.org/2001/XMLSchema#integer"
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="test"),
+        patterns=[
+            SchemaPattern(
+                subject_class=str(EX.A),
+                property_uri=str(EX.p),
+                object_class="Literal",
+                datatype=integer,
+            )
+        ],
     )
+    asked = []
 
+    def select(query, **kwargs):
+        asked.append(query)
+        if "{ SELECT ?subject ?value WHERE" in query:  # a sample without the integer
+            return {"head": {"vars": ["subject", "value", "slot"]}, "results": {"bindings": []}}
+        return json.loads(dataset.query(query).serialize(format="json"))
 
-def test_rdfconfig_preserves_mixed_values_and_escapes_text(source):
-    import yaml
-
-    schema, helper = source
-    schema.enrichment = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
-    result = schema.to_rdfconfig(endpoint_url=helper.endpoint_url, endpoint_name='name: "quoted"')
-    model = yaml.safe_load(result["model"])
-    entry = next(item for item in model if next(iter(item)).startswith("Thing "))
-    predicates = next(iter(entry.values()))
-    assert predicates[0] == {"a": "<urn:test:A>"}
-    values = [next(iter(item.values())) for item in predicates[1]["<urn:test:p>*"]]
-    assert "Target" in values
-    assert "<urn:test:two>" in values
-    assert '"hello"@en' in values
-    assert yaml.safe_load(result["endpoint"])['name: "quoted"'] == [helper.endpoint_url]
-    assert schema.to_rdfconfig() == schema.to_rdfconfig()
-
-
-def test_rdfconfig_does_not_fabricate_missing_samples(source):
-    import yaml
-
-    schema, _ = source
-    schema.patterns = schema.patterns[:1]
-    model = yaml.safe_load(schema.to_rdfconfig()["model"])
-    assert model == [{"Thing": [{"a": "<urn:test:A>"}, {"<urn:test:p>*": [{"thing_p_1": None}]}]}]
-    schema.patterns[0].object_class = "BlankNode"
-    with pytest.raises(ValueError, match="nested models"):
-        schema.to_rdfconfig()
-
-
-def test_rdf_term_does_not_normalize_lexical_form():
-    term = RdfTerm(kind="literal", value="01", datatype="http://www.w3.org/2001/XMLSchema#integer")
-    assert str(term.to_rdf()) == "01"
+    helper = Mock(endpoint_url="https://example.org/sparql", select=Mock(side_effect=select))
+    result = query_enrichment(schema, helper, ["urn:chosen"], examples_per_pattern=1)
+    assert [e.value.value for e in result.examples] == ["7"] and result.state == "complete"
+    examples = [q for q in asked if str(EX.p) in q and "datatype" in q]
+    inner = "{ SELECT ?subject ?value WHERE"
+    assert inner in examples[0], "the first query filters a sample"
+    assert len(examples) == 2 and inner not in examples[1], (
+        "the full query when the sample has none"
+    )

@@ -19,8 +19,13 @@ class HostBusyError(TimeoutError):
 
 
 @contextmanager
-def host_request(host: str, *, timeout: float, interval: float = 1.0) -> Iterator[None]:
+def host_request(
+    host: str, *, timeout: float, interval: float = 1.0, cooldown_wait: float | None = None
+) -> Iterator[None]:
     """Hold a host slot until the response is consumed or closed.
+
+    timeout bounds the wait for the slot. A cooldown that the server asked for (Retry-After) is
+    waited out for up to cooldown_wait seconds, when that is longer than timeout.
 
     POSIX processes coordinate through a shared lock directory. Set
     RDFSOLVE_HTTP_LOCK_DIR to the same shared path on all cluster nodes.
@@ -32,12 +37,15 @@ def host_request(host: str, *, timeout: float, interval: float = 1.0) -> Iterato
     with _guard:
         lock = _locks.setdefault(host.lower(), Lock())
     deadline = time.monotonic() + timeout
+    cooldown_deadline = deadline + max(0.0, (cooldown_wait or 0.0) - timeout)
     if not lock.acquire(timeout=max(0, timeout)):
         raise HostBusyError(f"Host request slot is busy: {host}")
     try:
         from rdfsolve._http_policy import wait_for_host
 
-        if not wait_for_host(host, max(1.0, interval), max(0.0, deadline - time.monotonic())):
+        if not wait_for_host(
+            host, max(1.0, interval), max(0.0, cooldown_deadline - time.monotonic())
+        ):
             raise HostBusyError(f"Host cooldown exceeds wait budget: {host}")
         directory = os.environ.get("RDFSOLVE_HTTP_LOCK_DIR")
         if not directory:
@@ -64,7 +72,7 @@ def host_request(host: str, *, timeout: float, interval: float = 1.0) -> Iterato
                 text = stream.read().strip()
                 ready = float(text) if text else 0.0
                 wait = max(0.0, ready - time.time())
-                if wait > max(0.0, deadline - time.monotonic()):
+                if wait > max(0.0, cooldown_deadline - time.monotonic()):
                     raise HostBusyError(f"Host cooldown exceeds wait budget: {host}")
                 if wait:
                     time.sleep(wait)

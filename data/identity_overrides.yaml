@@ -1,0 +1,305 @@
+# Curated relations between registry entries.
+#
+# Each item decides one pair. It overrides the structural rules and any
+# candidate listed in identity_review.tsv. Relations:
+#   same_dataset     one published RDF dataset under two registry names
+#   distribution_of  another endpoint or dump of the same published RDF dataset
+#   same_upstream    a different RDF dataset built from the same upstream resource
+#   version_of       another release of the same resource
+#   graph_scope_of   left is a graph subset of right on the same endpoint
+#   distinct         different datasets
+# same_dataset and distribution_of join entries into one canonical dataset.
+#
+# Example:
+# - left: oma
+#   right: omabrowser
+#   relation: same_dataset
+#   note: Same OMA SPARQL service under two endpoint paths.
+- left: oma
+  right: omabrowser
+  relation: same_dataset
+  note: >-
+    /lode/sparql and /sparql/ on sparql.omabrowser.org are one Virtuoso service;
+    both returned the same named graphs on 2026-09-18.
+- left: string
+  right: stringdb
+  relation: same_dataset
+  note: >-
+    / and /sparql on sparql.string-db.org are one Virtuoso service; both
+    returned the same named graphs on 2026-09-18.
+
+- left: rdfportal.icgc
+  right: rdfportal.linked_icgc
+  relation: same_dataset
+  note: >-
+    Owner decision, 2026-09-22: one dataset at the declared release_20 graph.
+    Retain both names and their catalogue and rdf-config provenance.
+- left: rdfportal.ensembl
+  right: rdfportal.ensembl_grch37
+  relation: version_of
+  note: >-
+    Owner decision, 2026-09-22: retain the release 115 and GRCh37 release 75
+    distinction. Verify extraction scopes before extraction; their identical
+    declared endpoint and graph remain unresolved.
+- left: rdfportal.jpost
+  right: rdfportal.mbgd
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: rdfportal.jpost
+  right: rdfportal.polyinfo
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: rdfportal.mbgd
+  right: rdfportal.polyinfo
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: distinct datasets with the shared
+    http://rdfportal.org/ontology/taxonomy graph retained as companion scope.
+- left: emikg
+  right: globi
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: emikg
+  right: pf1600
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: emikg
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: globi
+  right: pf1600
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: globi
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: pf1600
+  right: try
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain separate dataset identities.
+    Verify dataset-specific extraction scopes on the shared Metrin-KG
+    endpoint before extraction; the current unscoped declarations are unresolved.
+- left: rdfportal.microbedbjp
+  right: rdfportal.nbrc
+  relation: distinct
+  note: >-
+    Owner decision, 2026-09-22: retain distinct datasets.
+    Verify whether NBRC requires the MicrobeDB.jp graph as companion data;
+    this part of the NBRC extraction scope remains unresolved.
+
+# Decided 2026-09-28 by evidence (article/corpus/decide_identity.py): Bio2RDF and other
+# conversions of one source are same_upstream; mirrors of a provider's RDF are distribution_of.
+- left: bio2rdf.wikipathways
+  right: wikipathways
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: drugbank
+  right: drugbank.drugs
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: chebi
+  right: chebi.idsm
+  relation: distribution_of
+  note: >-
+    Both on the IDSM endpoint; chebi.idsm is the graph of the ChEBI RDF there.
+- left: bio2rdf.chembl
+  right: chembl
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: chembl
+  right: chembl.bigcat
+  relation: distribution_of
+  note: >-
+    The BiGCaT endpoint is a mirror of the EBI ChEMBL RDF.
+- left: chembl
+  right: rdfportal.chembl
+  relation: distribution_of
+  note: >-
+    Both serve the EBI ChEMBL RDF graph http://rdf.ebi.ac.uk/dataset/chembl.
+- left: mesh
+  right: mesh.heading
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: rdfportal.uniprot
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.chebi
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.citationmapping
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.citations
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.diseases
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.enzymes
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.go
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.uniprot
+  right: uniprot.uniparc
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bgee
+  right: rdfportal.bgee
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Bgee RDF (graph http://bgee.org).
+- left: rdfportal.rhea
+  right: rhea
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Rhea RDF of SIB.
+- left: homologene
+  right: rdfportal.homologene
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: ncbigene
+  right: rdfportal.ncbigene
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: hgnc
+  right: rdfportal.hgnc
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: mesh
+  right: mesh.nlm
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: mesh
+  right: rdfportal.mesh
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.biomodels
+  right: rdfportal.biomodels
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.chembl
+  right: chembl.bigcat
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.chembl
+  right: rdfportal.chembl
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.pubmed
+  right: rdfportal.pubmed
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.reactome
+  right: reactome
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: bio2rdf.reactome
+  right: rdfportal.reactome
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: cellosaurus
+  right: rdfportal.cellosaurus
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the Cellosaurus RDF of SIB.
+- left: chebi
+  right: rdfportal.chebi
+  relation: distribution_of
+  note: >-
+    RDF Portal serves the EBI ChEBI RDF graph (rdf.ebi.ac.uk/dataset/chebi).
+- left: brenda
+  right: rdfportal.brenda
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the BRENDA RDF of DSMZ.
+- left: mediadive
+  right: rdfportal.mediadive
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the MediaDive RDF of DSMZ.
+- left: glytoucan
+  right: rdfportal.glytoucan
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the GlyTouCan RDF (graph rdf.glycoinfo.org/glytoucan).
+- left: mbgd
+  right: rdfportal.mbgd
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the MBGD RDF (graph mbgd.genome.ad.jp).
+- left: oma
+  right: rdfportal.oma
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors the OMA RDF of SIB.
+- left: rdfportal.reactome
+  right: reactome
+  relation: distribution_of
+  note: >-
+    Both are the EBI Reactome RDF (graph rdf.ebi.ac.uk/dataset/reactome).
+
+# Decided 2026-09-28 after the bioregistry_prefix review (article/corpus/prefix_review.tsv).
+- left: ncbigene
+  right: pubchem.gene
+  relation: same_upstream
+  note: >-
+    Bio2RDF NCBI Gene and the PubChem gene graph are different RDF datasets built from NCBI Gene.
+- left: chebi
+  right: uniprot.chebi
+  relation: distribution_of
+  note: >-
+    The UniProt endpoint serves a copy of the ChEBI ontology in its graph sparql.uniprot.org/chebi.

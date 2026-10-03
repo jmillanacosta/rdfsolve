@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
+from typing_extensions import Self
 
-__all__ = ["PublicationRef", "SourceModel", "SourcesRegistry"]
+__all__ = ["DatasetKind", "PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
+
+DatasetKind = Literal["instance", "ontology", "unknown"]
 
 
 class PublicationRef(BaseModel):
@@ -32,6 +35,36 @@ class PublicationRef(BaseModel):
     title: str | None = None
 
 
+class SparqlExamples(BaseModel):
+    """Locations of published query examples, separate from the data graph."""
+
+    model_config = {"extra": "forbid"}
+    shacl_graph_in_endpoint: list[str] = Field(default_factory=list)
+    shacl_dumps: list[str] = Field(default_factory=list)
+    link_to_repository: str = ""
+
+    @field_validator("shacl_graph_in_endpoint", "shacl_dumps", mode="before")
+    @classmethod
+    def locations(cls, value: Any) -> Any:
+        """Accept one location or a list without changing their order."""
+        return [value] if isinstance(value, str) else value or []
+
+    @model_validator(mode="after")
+    def validate_locations(self) -> Self:
+        """Validate graph identities and explicit HTTP repository links."""
+        from rdfsolve.schema_models.paths import absolute_iri
+
+        for iri in self.shacl_graph_in_endpoint:
+            absolute_iri(iri)
+        if any(not item.strip() for item in self.shacl_dumps):
+            raise ValueError("Example dump locations must be nonempty")
+        if self.link_to_repository:
+            absolute_iri(self.link_to_repository)
+            if not self.link_to_repository.startswith(("https://", "http://")):
+                raise ValueError("Use an HTTP repository URL")
+        return self
+
+
 class SourceModel(BaseModel):
     """Validated model for a single data-source entry from ``sources.yaml``.
 
@@ -42,15 +75,25 @@ class SourceModel(BaseModel):
     Attributes
     ----------
     name:
-        Unique source identifier (primary key in the ``sources`` DB table).
+        Unique source identifier.
+    source_role:
+        Dataset or access service.
+    dataset_kind:
+        Curated instance or ontology resource classification; unknown until reviewed.
+    skip_mining:
+        Exclude this entry from pipeline mining.
     endpoint:
         SPARQL endpoint URL.
     void_iri:
         Optional VoID dataset IRI.
     graph_uris:
-        Named graph URIs to restrict queries.
-    use_graph:
-        Whether to use a GRAPH clause in SPARQL queries.
+        Named graphs that hold data edges.
+    type_context_graph_uris:
+        Extra named graphs for subject and object types.
+    ontology_graph_uris:
+        Named graphs for ontology interpretation and extraction.
+    graph_sources:
+        Download fields keyed by the named graph that receives their triples.
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -65,6 +108,14 @@ class SourceModel(BaseModel):
         Whether to mine instance counts.
     unsafe_paging:
         Use offset paging even on endpoints that don't support it well.
+    uri_formats:
+        IRI formats of the source's identifiers, with $1 for the local identifier, that
+        Bioregistry does not list; identifier
+        resolution adds them to Bioregistry's formats of the source's prefix.
+    classes_as_data:
+        The source keeps its records as classes (each entity an rdfs:Class under its
+        kind): with ontology-as-data, their rows are grouped
+        under their kinds in the typed schema.
     notes:
         Free-text notes about the source.
     local_provider:
@@ -99,10 +150,23 @@ class SourceModel(BaseModel):
         URL of the dataset logo image.
     bioregistry_extra_providers:
         Additional provider entries from Bioregistry.
+    kg_registry_id:
+        Resource identifier in the KG-Registry.
+    in_kamdar:
+        Whether the resource is in the Kamdar et al. LSLOD analysis.
+    terminology_nomenclature:
+        Topic tags for terminology and nomenclature resources.
     """
 
     name: str
+    aliases: list[str] = Field(default_factory=list)
+    catalogs: list[str] = Field(default_factory=list)
+    catalog_local_name: str = ""
+    source_role: Literal["dataset", "service"] = "dataset"
+    dataset_kind: DatasetKind = "unknown"
+    skip_mining: bool = False
     endpoint: str = ""
+    sparql_examples: SparqlExamples | None = None
     dataset_metadata: dict[str, Any] | None = None
     metadata_graph_uris: list[str] | None = None
     enrichment: dict[str, Any] | None = None
@@ -114,7 +178,10 @@ class SourceModel(BaseModel):
     has_void_patterns: bool | None = None
     void_iri: str = ""
     graph_uris: list[str] = Field(default_factory=list)
-    use_graph: bool = False
+    type_context_graph_uris: list[str] = Field(default_factory=list)
+    ontology_graph_uris: list[str] = Field(default_factory=list)
+    graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
     class_chunk_size: int | None = None
@@ -122,6 +189,8 @@ class SourceModel(BaseModel):
     delay: float | None = None
     counts: bool = False
     unsafe_paging: bool = False
+    classes_as_data: bool = False
+    uri_formats: list[str] = Field(default_factory=list)
     notes: str = ""
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
@@ -152,15 +221,69 @@ class SourceModel(BaseModel):
     bioregistry_mappings: dict[str, str] = Field(default_factory=dict)
     bioregistry_logo: str = ""
     bioregistry_extra_providers: list[dict[str, str | None]] = Field(default_factory=list)
+    bioregistry_repository: str = ""
+    bioregistry_owl_download: str = ""
+    bioregistry_rdf_download: str = ""
+    bioregistry_obo_download: str = ""
+    bioregistry_enriched_at: str = ""
+    bioregistry_package_version: str = ""
 
-    model_config = {"populate_by_name": True, "extra": "ignore"}
+    kg_registry_id: str = ""
+    in_kamdar: bool = False
+    terminology_nomenclature: list[str] = Field(default_factory=list)
+
+    # Keep registry fields without a typed attribute, such as download_* URL lists.
+    model_config = {"populate_by_name": True, "extra": "allow"}
+
+    @model_validator(mode="after")
+    def validate_graph_sources(self) -> Self:
+        """Require an input mapping for every selected local graph."""
+        if not self.graph_sources:
+            return self
+        from rdfsolve.schema_models.paths import absolute_iri
+
+        scopes = set(self.graph_uris + self.type_context_graph_uris + self.ontology_graph_uris)
+        if not self.graph_uris or scopes != set(self.graph_sources):
+            raise ValueError("graph_sources must match the data, type and ontology graph scopes")
+        if self.download_ttl or any(
+            value
+            for key, value in (self.model_extra or {}).items()
+            if key.startswith("download_") or key == "local_tar_url"
+        ):
+            raise ValueError("Place all downloads inside graph_sources")
+        for graph, fields in self.graph_sources.items():
+            absolute_iri(graph)
+            if not fields:
+                raise ValueError(f"No inputs for {graph}")
+            for key, urls in fields.items():
+                if key not in {
+                    "download_ttl",
+                    "download_nt",
+                    "download_rdf",
+                    "download_rdfxml",
+                    "download_owl",
+                }:
+                    raise ValueError(f"Unsupported graph input format: {key}")
+                if not urls or any(not url.strip() for url in urls):
+                    raise ValueError(f"Empty input locations for {graph}")
+        return self
+
+    @property
+    def mining_enabled(self) -> bool:
+        """Return whether this entry permits pipeline mining."""
+        return self.source_role == "dataset" and not self.skip_mining
 
     @field_validator(
+        "aliases",
+        "catalogs",
         "graph_uris",
+        "type_context_graph_uris",
+        "ontology_graph_uris",
         "download_ttl",
         "bioregistry_uri_prefixes",
         "bioregistry_synonyms",
         "keywords",
+        "terminology_nomenclature",
         mode="before",
     )
     @classmethod
@@ -227,25 +350,18 @@ class SourceModel(BaseModel):
             "bioregistry_domain",
             "bioregistry_uri_prefix",
             "bioregistry_logo",
+            "bioregistry_repository",
+            "bioregistry_owl_download",
+            "bioregistry_rdf_download",
+            "bioregistry_obo_download",
+            "bioregistry_enriched_at",
+            "bioregistry_package_version",
+            "kg_registry_id",
         }
         for field_name in str_fields:
             if data.get(field_name) is None:
                 data[field_name] = ""
         return data
-
-    def to_db_dict(self) -> dict[str, Any]:
-        """Return a plain dict suitable for :meth:`~rdfsolve.backend.database.Database.save_source`.
-
-        Publications are serialised as list-of-dicts (not Pydantic objects).
-
-        Returns
-        -------
-        dict[str, Any]
-            Dict with all fields, ready for database persistence.
-        """
-        d = self.model_dump()
-        d["bioregistry_publications"] = [p.model_dump() for p in self.bioregistry_publications]
-        return d
 
 
 class SourcesRegistry(BaseModel):
@@ -287,7 +403,9 @@ class SourcesRegistry(BaseModel):
             raw = yaml.safe_load(fh)
         if not isinstance(raw, list):
             raise ValueError(f"Expected a YAML list in {p}, got {type(raw).__name__}")
-        entries = [SourceModel.model_validate(item) for item in raw]
+        from rdfsolve.source_metadata import with_source_metadata
+
+        entries = [SourceModel.model_validate(item) for item in with_source_metadata(raw, p)]
         return cls(sources=entries)
 
     def by_name(self, name: str) -> SourceModel | None:
@@ -306,17 +424,3 @@ class SourcesRegistry(BaseModel):
             if s.name == name:
                 return s
         return None
-
-    def filter_by_domain(self, domain: str) -> list[SourceModel]:
-        """Return all sources whose ``bioregistry_domain`` equals *domain*.
-
-        Parameters
-        ----------
-        domain:
-            Domain string (e.g. ``"chemical"``).
-
-        Returns
-        -------
-        list[SourceModel]
-        """
-        return [s for s in self.sources if s.bioregistry_domain == domain]

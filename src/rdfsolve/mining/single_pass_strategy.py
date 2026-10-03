@@ -1,4 +1,4 @@
-"""Single-pass mining strategy - original three-query approach."""
+"""Mine typed objects, literals, untyped IRIs and blank-node patterns separately."""
 
 from __future__ import annotations
 
@@ -6,7 +6,9 @@ import logging
 
 from pydantic import ValidationError
 
+from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
+    _build_blank_node_query,
     _build_literal_query,
     _build_typed_object_query,
     _build_untyped_uri_query,
@@ -20,11 +22,7 @@ __all__ = ["SinglePassStrategy"]
 
 
 class SinglePassStrategy(MiningStrategy):
-    """Single-pass mining strategy using three separate queries.
-
-    Original approach: runs three independent SELECT queries for
-    typed-object, literal, and untyped-URI patterns.
-    """
+    """Run one paginated query for each object kind."""
 
     @property
     def name(self) -> str:
@@ -66,11 +64,20 @@ class SinglePassStrategy(MiningStrategy):
         logger.info(f"  -> {len(untyped)} untyped-URI patterns")
         context.report.finish_phase(phase, items=len(untyped))
 
+        phase = context.report.start_phase("blank-node")
+        bindings = context.collect_bindings(
+            _build_blank_node_query(context.graph_uris, context.type_context_graph_uris),
+            "mining/blank-node",
+            None,
+        )
+        blank_nodes = blank_node_patterns(bindings, context)
+        patterns.extend(blank_nodes)
+        context.report.finish_phase(phase, items=len(blank_nodes))
         return patterns
 
     def _run_typed_object(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the typed-object SELECT query."""
-        q = _build_typed_object_query(context.graph_uris)
+        q = _build_typed_object_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/typed-object", None)
         results: list[SchemaPattern] = []
         for b in bindings:
@@ -92,7 +99,7 @@ class SinglePassStrategy(MiningStrategy):
 
     def _run_literal(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the literal-property SELECT query."""
-        q = _build_literal_query(context.graph_uris)
+        q = _build_literal_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/literal", None)
         results: list[SchemaPattern] = []
         for b in bindings:
@@ -115,7 +122,7 @@ class SinglePassStrategy(MiningStrategy):
 
     def _run_untyped_uri(self, context: MiningContext) -> list[SchemaPattern]:
         """Run the untyped-URI SELECT query."""
-        q = _build_untyped_uri_query(context.graph_uris)
+        q = _build_untyped_uri_query(context.graph_uris, context.type_context_graph_uris)
         bindings = context.collect_bindings(q, "mining/untyped-uri", None)
         oc = "http://www.w3.org/2002/07/owl#Class" if context.untyped_as_classes else "Resource"
         results: list[SchemaPattern] = []

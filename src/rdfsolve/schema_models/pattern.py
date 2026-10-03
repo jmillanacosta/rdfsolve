@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
 
@@ -48,7 +49,7 @@ class SchemaPattern(BaseModel):
       ``?s a ?sc . ?s ?p ?o . FILTER(isBlank(?o))``
 
     This model is shared between SchemaMiner (direct SPARQL)
-    and VoidParser (RDF triples VoID catalog-based extraction).
+    and the VoID reader (published VoID partitions).
     """
 
     subject_class: str = Field(
@@ -68,10 +69,35 @@ class SchemaPattern(BaseModel):
             "'BlankNode' for blank node objects."
         ),
     )
+    subject_binding: Literal["type", "term"] = Field(
+        "type", description="Match instances of subject_class, or the subject IRI itself"
+    )
+    object_binding: Literal["type", "term"] = Field(
+        "type", description="For IRI objects, match a type or the object IRI itself"
+    )
+
+    @model_validator(mode="after")
+    def check_term_binding(self) -> SchemaPattern:
+        """Require an IRI for an exact object binding."""
+        if self.object_binding == "term" and self.object_class in _SENTINEL_OBJECTS:
+            raise ValueError("An exact term binding requires an object IRI")
+        return self
+
     count: int | None = Field(
         None,
         ge=0,
-        description="Number of triples matching this pattern",
+        description="Pattern count in the declared count semantics",
+    )
+    count_semantics: Literal[
+        "triples_in_graph", "quad_occurrences", "endpoint_default", "upper_bound", "unknown"
+    ] = "unknown"
+    graphs: dict[str, int] | None = Field(
+        None,
+        description=(
+            "Named graph URI to the count observed in that graph. "
+            "None when mining was not graph-aware; the graph of the "
+            "subject-predicate-object edge is the one recorded."
+        ),
     )
     datatype: str | None = Field(
         None,
@@ -109,9 +135,15 @@ class SchemaPattern(BaseModel):
         le=1.0,
         description="Confidence score (0.0-1.0) for this pattern",
     )
-    evidence_source: str = Field(
-        default="mined",
-        description="How this pattern was discovered: 'mined', 'inferred', 'imported'",
+    evidence_source: Literal["mined", "void", "shacl", "vocabulary", "imported", "inferred"] = (
+        Field(
+            default="mined",
+            description=(
+                "Where the pattern comes from: mined from instance data, read from published "
+                "VoID, SHACL or vocabulary declarations, imported, or inferred. Only 'mined' is "
+                "observed evidence."
+            ),
+        )
     )
 
     # Labels

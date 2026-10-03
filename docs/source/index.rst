@@ -12,6 +12,8 @@ Table of Contents
 
    installation
    usage
+   workflow_steps
+   reconciliation
 
 .. toctree::
    :maxdepth: 2
@@ -19,9 +21,10 @@ Table of Contents
 
    api
    miner
+   ontology
    schema_models
    mapping_models
-   void_discover
+   evaluation
 
 .. toctree::
    :maxdepth: 2
@@ -31,7 +34,8 @@ Table of Contents
    :maxdepth: 2
    :caption: Mappings & Integration
 
-   instance_matcher
+   analysis
+   related_tools
 
 .. toctree::
    :maxdepth: 2

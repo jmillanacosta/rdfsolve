@@ -93,6 +93,23 @@ def query_metadata_document(
     )
 
 
+def query_metadata(
+    endpoint_url: str,
+    timeout: float = 30.0,
+    *,
+    graph_uris: list[str] | None = None,
+    subject_iris: list[str] | None = None,
+) -> MetadataDocument:
+    """Retrieve scoped RDF metadata from an endpoint. Use .project(subject_iri) for fields.
+
+    Explicit subjects can use any vocabulary. Automatic discovery looks for
+    declared VoID/DCAT datasets and SPARQL services, not arbitrary entities.
+    None graph scope means the default graph, not every named graph.
+    """
+    with SparqlHelper(endpoint_url, timeout=timeout, max_retries=1) as helper:
+        return query_metadata_document(helper, graph_uris=graph_uris, subject_iris=subject_iris)
+
+
 def query_endpoint_metadata(
     sparql_helper: SparqlHelper,
     *,

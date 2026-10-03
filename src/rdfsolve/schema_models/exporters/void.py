@@ -2,49 +2,51 @@
 
 from __future__ import annotations
 
-import logging
 from hashlib import md5
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from rdfsolve._uri import uri_to_curie
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 if TYPE_CHECKING:
     from rdflib import Graph
 
     from rdfsolve.schema_models.core import MinedSchema
-    from rdfsolve.schema_models.pattern import SchemaPattern
     from rdfsolve.schema_models.void_model import VoidDataset
 
-_log = logging.getLogger(__name__)
+
+def public_endpoint(endpoint: str | None) -> bool:
+    """Check whether an endpoint is an HTTP(S) service outside this machine."""
+    from urllib.parse import urlsplit
+
+    if not endpoint:
+        return False
+    parts = urlsplit(endpoint)
+    return parts.scheme in {"http", "https"} and parts.hostname not in {
+        None,
+        "localhost",
+        "127.0.0.1",
+        "::1",
+    }
 
 
-def to_void_graph(
-    schema: MinedSchema, base_url: str | None = None, *, trim_descriptions: int | None = None
-) -> Graph:
+def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) -> Graph:
     """Build an rdflib VoID Graph from the mined patterns.
 
-    Args:
-        base_url: Base URL for void:dataDump (e.g., "https://rdfsolve.bigcat-bioinformatics.nl").
-                 If provided, generates dataDump URL as {base_url}/{dataset_name}/void.ttl
-
-    Allows feeding the result into VoidParser for downstream
-    conversion to LinkML, SHACL, RDF-config, etc.
+    The dataset has the minted rdfsolve dataset IRI. void:sparqlEndpoint is
+    written only for public HTTP(S) endpoints. The generated description is not
+    a data dump.
     """
-    import json
-
     from rdflib import Graph, Namespace, URIRef
     from rdflib import Literal as RdfLiteral
     from rdflib.namespace import DCTERMS, FOAF, OWL, RDF, RDFS, XSD
 
-    from rdfsolve.config import get_base_uri
+    from rdfsolve.config import mint
 
     # Configure namespaces
-    base_uri = get_base_uri()
+    dataset_iri = mint("dataset", schema.about.dataset_name or "unnamed")
     void = Namespace("http://rdfs.org/ns/void#")
     sd = Namespace("http://www.w3.org/ns/sparql-service-description#")
-    vocab_ns = Namespace(f"{base_uri}/vocab#")
-    partition_ns = Namespace(f"{base_uri}/schema#")
+    partition_ns = Namespace(f"{dataset_iri}/partition/")
 
     g = Graph()
 
@@ -65,24 +67,12 @@ def to_void_graph(
     ):
         g.bind(pfx, ns)
 
-    # Bind rdfsolve-specific namespaces
-    g.bind("vocab", vocab_ns)
     g.bind("partition", partition_ns)
 
-    # Dataset URI: represents THE SOURCE RDF dataset
     endpoint = schema.about.endpoint
-
-    if endpoint and not endpoint.startswith(("http://localhost", "http://127.0.0.1")):
-        # Remote endpoint: use endpoint URL as dataset identifier
-        dataset_uri = URIRef(endpoint)
-        # Use schema namespace for partitions
-        base = str(partition_ns)
-    else:
-        # Local or no endpoint: use configured base URI
-        dataset_name = schema.about.dataset_name or "unknown"
-        dataset_uri = URIRef(f"{base_uri}/dataset/{dataset_name}")
-        # Use schema namespace for partitions
-        base = str(partition_ns)
+    remote = public_endpoint(endpoint)
+    dataset_uri = URIRef(dataset_iri)
+    base = str(partition_ns)
 
     # void:DatasetDescription wrapper (W3C VoID spec section 3.1)
     # The VoID document itself is described as a resource
@@ -98,30 +88,18 @@ def to_void_graph(
     if schema.about.generated_at:
         g.add((void_doc_uri, DCTERMS.created, RdfLiteral(schema.about.generated_at)))
     g.add((void_doc_uri, FOAF.primaryTopic, dataset_uri))
-    if schema.about.schema_version:
-        g.add((void_doc_uri, OWL.versionInfo, RdfLiteral(schema.about.schema_version)))
+    # The generated VoID document is an rdfsolve artifact, not an ontology/source
+    # release. Its run/snapshot identity is recorded by release provenance instead
+    # of owl:versionInfo.
 
     # void:Dataset represents the source RDF dataset
     g.add((dataset_uri, RDF.type, void.Dataset))
 
-    # SPARQL endpoint (only for remote endpoints)
-    if endpoint and not endpoint.startswith(("http://localhost", "http://127.0.0.1")):
+    if remote and endpoint:
         g.add((dataset_uri, void.sparqlEndpoint, URIRef(endpoint)))
 
-    # void:dataDump URL (only for local/downloaded datasets with base_url)
-    if (
-        base_url
-        and schema.about.dataset_name
-        and (not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1")))
-    ):
-        # Generate dataDump URL pointing to the dump file location
-        datadump_url = f"{base_url.rstrip('/')}/{schema.about.dataset_name}/void.ttl"
-        g.add((dataset_uri, void.dataDump, URIRef(datadump_url)))
-
     # void:documents (only for local/downloaded datasets)
-    if (
-        not endpoint or endpoint.startswith(("http://localhost", "http://127.0.0.1"))
-    ) and schema.about.document_count:
+    if not remote and schema.about.document_count:
         g.add(
             (
                 dataset_uri,
@@ -135,25 +113,16 @@ def to_void_graph(
     if title_value:
         g.add((dataset_uri, DCTERMS.title, RdfLiteral(title_value)))
 
-    # Description: combine discovered description with provenance info
-    provenance_desc = (
-        f"Mined with rdfsolve {VERSION} on {schema.about.generated_at or 'unknown date'}"
-    )
     if schema.about.description:
-        # Strip trailing period from discovered description if present
-        desc_clean = schema.about.description.rstrip(".")
-        full_desc = f"{desc_clean}. {provenance_desc}"
-    else:
-        full_desc = provenance_desc
-    from rdfsolve.schema_models.exporters.text import clip_description
+        from rdfsolve.schema_models.exporters.text import clip_description
 
-    g.add(
-        (
-            dataset_uri,
-            DCTERMS.description,
-            RdfLiteral(clip_description(full_desc, trim_descriptions)),
+        g.add(
+            (
+                dataset_uri,
+                DCTERMS.description,
+                RdfLiteral(clip_description(schema.about.description, trim_descriptions)),
+            )
         )
-    )
 
     # License
     if schema.about.source_license:
@@ -207,12 +176,14 @@ def to_void_graph(
                 RdfLiteral(schema.about.class_count, datatype=XSD.integer),
             )
         )
-    if schema.about.property_count:
+    # The distinct properties of the data, when counted, else those of the patterns.
+    properties = schema.about.distinct_predicate_count or schema.about.property_count
+    if properties:
         g.add(
             (
                 dataset_uri,
                 void.properties,
-                RdfLiteral(schema.about.property_count, datatype=XSD.integer),
+                RdfLiteral(properties, datatype=XSD.integer),
             )
         )
     if schema.about.triple_count_estimate:
@@ -229,6 +200,14 @@ def to_void_graph(
                 dataset_uri,
                 void.distinctSubjects,
                 RdfLiteral(schema.about.distinct_subject_count, datatype=XSD.integer),
+            )
+        )
+    if schema.about.distinct_object_count:
+        g.add(
+            (
+                dataset_uri,
+                void.distinctObjects,
+                RdfLiteral(schema.about.distinct_object_count, datatype=XSD.integer),
             )
         )
 
@@ -253,11 +232,10 @@ def to_void_graph(
         g.add((dataset_uri, void.vocabulary, URIRef(vocab_uri)))
 
     # Add discovered graphs as sd:namedGraph if available
-    if schema.about.discovered_graphs and endpoint:
+    if schema.about.discovered_graphs and remote and endpoint:
         from rdflib import BNode
 
-        # Create sd:Service wrapper for endpoints with discovered graphs
-        service_uri = URIRef(f"{endpoint}#service")
+        service_uri = BNode()
         g.add((service_uri, RDF.type, sd.Service))
         g.add((service_uri, sd.endpoint, URIRef(endpoint)))
 
@@ -326,6 +304,19 @@ def to_void_graph(
                 g.add((dataset_uri, void.vocabulary, URIRef(graph_uri_str)))
                 # Also mark the graph itself
                 g.add((graph_node, DCTERMS.type, URIRef("http://www.w3.org/2002/07/owl#Ontology")))
+
+    # Dataset property partitions: the exact counts of each property of the data.
+    names = {"triples": void.triples, "distinct_subjects": void.distinctSubjects}
+    names["distinct_objects"] = void.distinctObjects
+    for prop_uri, counts in sorted((schema.about.property_partitions or {}).items()):
+        prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+        dataset_partition = URIRef(f"{base}prop-{prop_hash}")
+        g.add((dataset_uri, void.propertyPartition, dataset_partition))
+        g.add((dataset_partition, void.property, URIRef(prop_uri)))
+        for name, term in names.items():
+            if counts.get(name) is not None:
+                number = RdfLiteral(counts[name], datatype=XSD.integer)
+                g.add((dataset_partition, term, number))
 
     # Group patterns by subject class for nested VoID structure
     # Structure: class partition -> property partition -> object/datatype partition
@@ -434,7 +425,6 @@ def to_void_graph(
 
     # A typed relationship alone does not establish a cross-dataset linkset.
 
-    _bind_discovered_prefixes(g, schema.patterns)
     schema.annotate_rdf(g)
     for partition, class_iri in g.subject_objects(void["class"]):
         for example in schema.enrichment.class_examples.get(str(class_iri), []):
@@ -443,42 +433,13 @@ def to_void_graph(
     return g
 
 
-# LinkML export
-
-
-def _bind_discovered_prefixes(
-    g: Any,
-    patterns: list[SchemaPattern],
-) -> None:
-    """Bind bioregistry-derived prefixes to the graph."""
-    for pat in patterns:
-        for uri in (
-            pat.subject_class,
-            pat.property_uri,
-            pat.object_class,
-        ):
-            if uri in _SENTINEL_OBJECTS:
-                continue
-            _, pfx, ns = uri_to_curie(uri)
-            if pfx and ns:
-                try:
-                    g.bind(pfx, ns, override=False)
-                except Exception:
-                    _log.debug(
-                        "Could not bind %s=%s",
-                        pfx,
-                        ns,
-                        exc_info=True,
-                    )
-
-
-def minedschema_to_void(schema: MinedSchema, base_url: str = "https://example.org") -> VoidDataset:
+def minedschema_to_void(schema: MinedSchema) -> VoidDataset:
     """Read structural VoID fields from the canonical RDF exporter."""
     from rdflib.namespace import FOAF
 
     from rdfsolve.schema_models.void_model import VoidDataset
 
-    graph = schema.to_void_graph(base_url=base_url)
+    graph = schema.to_void_graph()
     dataset = next(graph.objects(None, FOAF.primaryTopic), None)
     if dataset is None:
         raise ValueError("Export has no primary dataset")

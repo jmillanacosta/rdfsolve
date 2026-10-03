@@ -162,10 +162,15 @@ fabric.properties
 .idea/codestream.xml
 
 ### JupyterNotebooks ###
-# Keep only the query and typed-client notebooks in Git.
+# Keep the query, typed-client, and MCP notebooks in Git.
 *.ipynb
 !/notebooks/sparql_helper/**/*.ipynb
 !/notebooks/pydantic_clients/**/*.ipynb
+!/notebooks/mcp/*.ipynb
+/notebooks/mcp/output/
+!/notebooks/conversion/*.ipynb
+/notebooks/conversion/output/
+/notebooks/data/*.zip
 
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
@@ -409,6 +414,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-*/
 env/
 venv/
 ENV/
@@ -536,6 +542,7 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+!src/rdfsolve/release/
 [Rr]eleases/
 x64/
 x86/
@@ -922,6 +929,7 @@ notes/*
 
 .vscode/settings.json
 data/*
+!data/identity_overrides.yaml
 /src/logs/
 rdfsolve_pipeline.svg
 docs/known-limitations.md
@@ -934,3 +942,8 @@ scripts/MINING.md
 notebooks/*_summary.json
 notebooks/*models.py
 notebooks/*.ttl
+*.out
+*.err
+notebooks/mcp/output*
+docs/ARCHITECTURE_DECISION_QLEVER_INSTANCES.md docs/DATASET_DISCOVERY_REPORT.md docs/HEALTH_CHECK_RESULTS.md docs/MULTI_FILE_WORKFLOW_ANALYSIS.md docs/ONTOLOGY_EXPERIMENT.md docs/OPTIMIZATION_PLAN.md docs/package_first_mcp.md docs/SCHEMA_CONTEXT_ANALYSIS.md
+docs/*.md

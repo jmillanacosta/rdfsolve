@@ -1,0 +1,650 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix schema: <https://schema.org/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:rdfsolve:query:010cb62bb90c6820c3f8d41fbbfba42a5d0c2366f62129fac3d430b38879eb47> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count AOPs" ;
+    rdfs:comment "Returns the total number of Adverse Outcome Pathways in the dataset." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count AOPs
+# description: Returns the total number of Adverse Outcome Pathways in the dataset.
+# category: Metadata
+
+SELECT (COUNT(DISTINCT ?aop) AS ?total_AOPs)
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-aops.rq> .
+
+<urn:rdfsolve:query:0565eaeb0ef99899c9cc095f3571587b6fc1ad7e9f00cdf8c0e1d9364a91265e> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Genes found only by BERN2 NER (not by regex)" ;
+    rdfs:comment "Lists gene-Key Event associations detected by the BERN2 NER+EL mapper that the legacy regex mapper did not find. These are the net-new genes contributed by named-entity recognition over Key Event descriptions." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Genes found only by BERN2 NER (not by regex)
+# description: Lists gene-Key Event associations detected by the BERN2 NER+EL mapper that the legacy regex mapper did not find. These are the net-new genes contributed by named-entity recognition over Key Event descriptions.
+# category: Key Events
+
+PREFIX p: <https://aopwiki.rdf.bigcat-bioinformatics.org/>
+
+SELECT ?ke ?ketitle ?gene ?symbol
+WHERE {
+  ?ke p:geneDetectedByNER ?gene .
+  FILTER NOT EXISTS { ?ke p:geneDetectedByRegex ?gene }
+  OPTIONAL { ?ke dc:title ?ketitle }
+  OPTIONAL { ?gene rdfs:label ?symbol }
+}
+ORDER BY ?ke
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/genes-found-only-by-ner.rq> .
+
+<urn:rdfsolve:query:08dce83c1d567f0e38e7f2b863a2d455d58e60143fe45423f77151b16db7634d> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count Key Event Relationships" ;
+    rdfs:comment "Returns the total number of Key Event Relationships in the dataset." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count Key Event Relationships
+# description: Returns the total number of Key Event Relationships in the dataset.
+# category: Metadata
+
+SELECT (COUNT(DISTINCT ?ker) AS ?total_KERs)
+WHERE {
+  ?ker a aopo:KeyEventRelationship .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-kers.rq> .
+
+<urn:rdfsolve:query:2ccd827a0946b6e7769507fa88e5a922d3305078d49dd39f7b8a913e2772efec> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Export all Key Event components" ;
+    rdfs:comment "Returns all Key Events with their biological event components including processes, objects, and actions." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Export all Key Event components
+# description: Returns all Key Events with their biological event components including processes, objects, and actions.
+# category: Data Export
+
+SELECT DISTINCT ?ke ?keTitle ?bioEvent
+  ?process ?processName ?object ?objectName ?action
+WHERE {
+  ?ke a aopo:KeyEvent ;
+    dc:title ?keTitle .
+  OPTIONAL {
+    ?ke aopo:hasBiologicalEvent ?bioEvent .
+    ?bioEvent aopo:hasProcess ?process .
+    ?process dc:title ?processName .
+  }
+  OPTIONAL {
+    ?ke aopo:hasBiologicalEvent ?bioEvent .
+    ?bioEvent aopo:hasObject ?object .
+    ?object dc:title ?objectName .
+  }
+  OPTIONAL {
+    ?ke aopo:hasBiologicalEvent ?bioEvent .
+    ?bioEvent aopo:hasAction ?action .
+  }
+}
+ORDER BY ?ke
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/G.%20Data%20Export/all-ke-components.rq> .
+
+<urn:rdfsolve:query:31d7c2fd15b54d4e04a93725483f4754f8117bbb82c5de614252c011852ebb58> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count objects using AOP ontology" ;
+    rdfs:comment "Returns the number of RDF objects that reference the AOP ontology namespace." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count objects using AOP ontology
+# description: Returns the number of RDF objects that reference the AOP ontology namespace.
+# category: Metadata
+
+SELECT (COUNT(?o) AS ?Objects)
+WHERE {
+  ?s ?p ?o .
+  FILTER regex(?o, "http://aopkb.org/aop_ontology#")
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-objects-aop-ontology.rq> .
+
+<urn:rdfsolve:query:323cf5612aa9d3759ffec8d51070d01d87845d659b54bc5c6cfedc2dad1b2e46> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with annotated NCBI gene IDs" ;
+    rdfs:comment "Returns Key Events with their annotated protein objects and linked NCBI gene identifiers, through AOP membership." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with annotated NCBI gene IDs
+# description: Returns Key Events with their annotated protein objects and linked NCBI gene identifiers, through AOP membership.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?objectname ?prot
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway ;
+    rdfs:label ?aop_id ;
+    aopo:has_key_event ?ke .
+  ?ke pato:0001241 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object dc:title ?objectname ;
+    skos:exactMatch ?prot .
+  ?prot a edam:data_1027 .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-ncbi-annotated.rq> .
+
+<urn:rdfsolve:query:4176fda6df8c1d65e011694bda735ce7ad71ae26de8282a7aa80817b52a03c13> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Find AOPs applicable to mammals" ;
+    rdfs:comment "Returns every AOP that has taxonomic applicability to a mammalian taxon (Mammalia, NCBI taxon 40674) — species, sub-species and higher mammalian groups." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Find AOPs applicable to mammals
+# description: Returns every AOP that has taxonomic applicability to a mammalian taxon (Mammalia, NCBI taxon 40674) — species, sub-species and higher mammalian groups.
+# category: AOPs
+
+SELECT ?aop ?aopTitle
+  (GROUP_CONCAT(DISTINCT ?species; separator=" | ") AS ?mammalianSpecies)
+WHERE {
+  VALUES ?taxon {
+    ncbitaxon:9258   ncbitaxon:9261   ncbitaxon:9395   ncbitaxon:9483   ncbitaxon:9534   ncbitaxon:9541
+    ncbitaxon:9544   ncbitaxon:9555   ncbitaxon:9595   ncbitaxon:9606   ncbitaxon:9615   ncbitaxon:9627
+    ncbitaxon:9651   ncbitaxon:9666   ncbitaxon:9669   ncbitaxon:9678   ncbitaxon:9685   ncbitaxon:9689
+    ncbitaxon:9696   ncbitaxon:9823   ncbitaxon:9833   ncbitaxon:9872   ncbitaxon:9874   ncbitaxon:9913
+    ncbitaxon:9986   ncbitaxon:10036  ncbitaxon:10090  ncbitaxon:10095  ncbitaxon:10116  ncbitaxon:10117
+    ncbitaxon:10118  ncbitaxon:10141  ncbitaxon:10185  ncbitaxon:29064  ncbitaxon:34880  ncbitaxon:37347
+    ncbitaxon:39108  ncbitaxon:39442  ncbitaxon:58060  ncbitaxon:61383  ncbitaxon:61388  ncbitaxon:69158
+    ncbitaxon:70699  ncbitaxon:94180  ncbitaxon:230844 ncbitaxon:310402 ncbitaxon:419130 ncbitaxon:435435
+    ncbitaxon:447135 ncbitaxon:452597
+  }
+  ?aop a aopo:AdverseOutcomePathway ;
+       dc:title ?aopTitle ;
+       ncbitaxon:131567 ?taxon .
+  ?taxon a ncbitaxon:131567 ;
+         dc:title ?species .
+}
+GROUP BY ?aop ?aopTitle
+ORDER BY ?aopTitle
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/B.%20AOPs/aops-in-mammals.rq> .
+
+<urn:rdfsolve:query:5f4b4565930851aab792837b4b8413614ab4e190d596a3b199680c595ccb01a3> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count total triples" ;
+    rdfs:comment "Returns the total number of RDF triples in the AOP-Wiki dataset." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count total triples
+# description: Returns the total number of RDF triples in the AOP-Wiki dataset.
+# category: Metadata
+
+SELECT (COUNT(DISTINCT *) AS ?Triples)
+WHERE { ?s ?p ?o }
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-triples.rq> .
+
+<urn:rdfsolve:query:610317151935f6ebee10ff387eeb295bff73c1cb88df453d38eef628c4d1f42c> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with HGNC symbols" ;
+    rdfs:comment "Returns Key Events and their linked HGNC gene symbols through gene/protein annotations." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with HGNC symbols
+# description: Returns Key Events and their linked HGNC gene symbols through gene/protein annotations.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?hgnc
+WHERE {
+  ?ke a aopo:KeyEvent ;
+    edam:data_1025 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object edam:data_2298 ?hgnc .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-hgnc.rq> .
+
+<urn:rdfsolve:query:6c6f15c4ebc46893754cd704e49ce38ea3b20c90ddf415f554f781e305a0aa8b> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with Ensembl IDs" ;
+    rdfs:comment "Returns Key Events and their linked Ensembl gene identifiers through gene/protein annotations." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with Ensembl IDs
+# description: Returns Key Events and their linked Ensembl gene identifiers through gene/protein annotations.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?id ?ensembl
+WHERE {
+  ?ke a aopo:KeyEvent ;
+    edam:data_1025 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object skos:exactMatch ?id .
+  ?id a edam:data_1033 ;
+    edam:data_1033 ?ensembl .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-ensembl.rq> .
+
+<urn:rdfsolve:query:8749391935767b11c9ebac93273141f4f7401ba181e2bbf1fe6a2dc586a51ee7> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with UniProt IDs" ;
+    rdfs:comment "Returns Key Events and their linked UniProt protein identifiers through gene/protein annotations." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with UniProt IDs
+# description: Returns Key Events and their linked UniProt protein identifiers through gene/protein annotations.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?id ?uniprot
+WHERE {
+  ?ke a aopo:KeyEvent ;
+    edam:data_1025 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object skos:exactMatch ?id .
+  ?id a edam:data_2291 ;
+    edam:data_2291 ?uniprot .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-uniprot.rq> .
+
+<urn:rdfsolve:query:9a130f7df9519b71736cd976ff0fccf414e9b1c0257c0e65d11cfd7d3b503b8f> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with NCBI gene IDs" ;
+    rdfs:comment "Returns Key Events and their linked NCBI gene identifiers through gene/protein annotations." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with NCBI gene IDs
+# description: Returns Key Events and their linked NCBI gene identifiers through gene/protein annotations.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?id ?ncbi
+WHERE {
+  ?ke a aopo:KeyEvent ;
+    edam:data_1025 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object skos:exactMatch ?id .
+  ?id a edam:data_1027 ;
+    edam:data_1027 ?ncbi .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-ncbi.rq> .
+
+<urn:rdfsolve:query:9ac898c4fd1b5990ead57f9b033c46189a2b170f2c5e3ccfa16bc98b114a8256> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Export all chemicals" ;
+    rdfs:comment "Returns all chemicals in the AOP-Wiki with their CAS registry numbers." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Export all chemicals
+# description: Returns all chemicals in the AOP-Wiki with their CAS registry numbers.
+# category: Data Export
+
+SELECT ?CAS ?ChemicalName
+WHERE {
+  ?cas a cheminf:000000 ;
+    dc:title ?ChemicalName ;
+    cheminf:000446 ?CAS .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/G.%20Data%20Export/all-chemicals.rq> .
+
+<urn:rdfsolve:query:9b9454d92856e5e14da47486ae3e905bf315c5df4bcfd4b72a9a661b77d787f7> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Map Key Events to AOPs" ;
+    rdfs:comment "Returns all Key Events and the Adverse Outcome Pathways they belong to, ordered by Key Event name." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Map Key Events to AOPs
+# description: Returns all Key Events and the Adverse Outcome Pathways they belong to, ordered by Key Event name.
+# category: Key Events
+
+SELECT DISTINCT ?ke ?keLabel ?aop ?aopLabel
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway ;
+    aopo:has_key_event ?ke ;
+    dc:title ?aopLabel .
+  ?ke dc:title ?keLabel .
+}
+ORDER BY ?keLabel
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/ke-to-aop.rq> .
+
+<urn:rdfsolve:query:a250a8cc8f3ead3b97cfc4fad988db47dfbfb075b3b0cb12dd9d341bcec90efd> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Export all AOPs" ;
+    rdfs:comment "Returns all Adverse Outcome Pathways with their names." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Export all AOPs
+# description: Returns all Adverse Outcome Pathways with their names.
+# category: Data Export
+
+SELECT ?AOP ?AOPName
+WHERE {
+  ?AOP a aopo:AdverseOutcomePathway ;
+    dc:title ?AOPName .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/G.%20Data%20Export/all-aops.rq> .
+
+<urn:rdfsolve:query:b0d184ed8838827c594b5dbbbecc8dbb250650751c1cb93409a292375cc85014> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Export AOP to AO mappings" ;
+    rdfs:comment "Returns all Adverse Outcome Pathways and their linked Adverse Outcomes, ordered by AOP." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Export AOP to AO mappings
+# description: Returns all Adverse Outcome Pathways and their linked Adverse Outcomes, ordered by AOP.
+# category: Data Export
+
+SELECT DISTINCT ?aop ?aopLabel ?ao ?aoLabel
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway ;
+    aopo:has_adverse_outcome ?ao ;
+    dc:title ?aopLabel .
+  ?ao dc:title ?aoLabel .
+}
+ORDER BY ?aop
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/G.%20Data%20Export/aop-to-ao.rq> .
+
+<urn:rdfsolve:query:b69800e679dd9ce56e84ee84a8c854f74647eb6a58391f5c6efd15b62fa2c035> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "List Key Events with annotated UniProt IDs" ;
+    rdfs:comment "Returns Key Events with their annotated protein objects and linked UniProt identifiers, through AOP membership." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: List Key Events with annotated UniProt IDs
+# description: Returns Key Events with their annotated protein objects and linked UniProt identifiers, through AOP membership.
+# category: Key Events
+
+SELECT DISTINCT ?keid ?ketitle ?objectname ?uniprotID ?uniprot
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway ;
+    rdfs:label ?aop_id ;
+    aopo:has_key_event ?ke .
+  ?ke pato:0001241 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object dc:title ?objectname ;
+    skos:exactMatch ?uniprot .
+  ?uniprot a edam:data_2291 ;
+    edam:data_2291 ?uniprotID .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/kes-and-uniprot-annotated.rq> .
+
+<urn:rdfsolve:query:c7d664757974c494e0fd600ea4a5464f6622c805862e62e43e6b585e7e1eaec0> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Find AOs for all MIEs" ;
+    rdfs:comment "Returns all Molecular Initiating Event to Adverse Outcome links across every AOP. For a single MIE with an autocomplete picker, use \"Get AO for a specific MIE\"." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Find AOs for all MIEs
+# description: Returns all Molecular Initiating Event to Adverse Outcome links across every AOP. For a single MIE with an autocomplete picker, use "Get AO for a specific MIE".
+# category: AOPs
+
+SELECT DISTINCT ?MIE ?MolecularInitiatingEventName ?AOwebpage ?AdverseOutcomeName
+WHERE {
+  ?MIE dc:identifier ?MIELookup ;
+    dc:title ?MolecularInitiatingEventName .
+  ?AOPwebpage a aopo:AdverseOutcomePathway ;
+    aopo:has_molecular_initiating_event ?MIELookup ;
+    aopo:has_adverse_outcome ?AOwebpage .
+  ?AOwebpage dc:title ?AdverseOutcomeName .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/B.%20AOPs/ao-for-mie.rq> .
+
+<urn:rdfsolve:query:ca2a8856a1d8794aea3d6df6c8c798c823cbc3c6bd3e7554bc197056ab117c02> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Find ToxCast assays for Key Events" ;
+    rdfs:comment "Returns Key Events with their annotated proteins and linked ToxCast assay information from the AOP-DB endpoint." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Find ToxCast assays for Key Events
+# description: Returns Key Events with their annotated proteins and linked ToxCast assay information from the AOP-DB endpoint.
+# category: Federated
+
+SELECT DISTINCT ?keid ?ketitle ?objectname ?prot ?assaytitle ?assay
+WHERE {
+  ?aop a aopo:AdverseOutcomePathway ;
+    rdfs:label ?aop_id ;
+    aopo:has_key_event ?ke .
+  ?ke pato:0001241 ?object ;
+    dc:title ?ketitle ;
+    rdfs:label ?keid .
+  ?object dc:title ?objectname ;
+    skos:exactMatch ?prot .
+  ?prot a edam:data_1027 .
+  SERVICE <https://aopdb.rdf.bigcat-bioinformatics.org/sparql> {
+    ?prot mmo:0000441 ?assay .
+    ?assay dc:title ?assaytitle .
+  }
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/H.%20Federated/toxcast-assays-for-kes.rq> .
+
+<urn:rdfsolve:query:e52ed5ee047c1f71d269c3e15629393e783a4d6fc3aa86ede4d6796741695d6e> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count Key Events" ;
+    rdfs:comment "Returns the total number of Key Events in the dataset." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count Key Events
+# description: Returns the total number of Key Events in the dataset.
+# category: Metadata
+
+SELECT (COUNT(DISTINCT ?ke) AS ?total_KEs)
+WHERE {
+  ?ke a aopo:KeyEvent .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-kes.rq> .
+
+<urn:rdfsolve:query:e64034dc2b95022269f41af288ea3e0618257269371e798c4fe51479a954e935> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Count predicates using AOP ontology" ;
+    rdfs:comment "Returns the number of RDF predicates that reference the AOP ontology namespace." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Count predicates using AOP ontology
+# description: Returns the number of RDF predicates that reference the AOP ontology namespace.
+# category: Metadata
+
+SELECT (COUNT(?p) AS ?Predicates)
+WHERE {
+  ?s ?p ?o .
+  FILTER regex(?p, "http://aopkb.org/aop_ontology#")
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/count-predicates-aop-ontology.rq> .
+
+<urn:rdfsolve:query:eb3adc0a07f92d3fa47f3669dfb985cbdd0fb9d7cb846e48a482ef25c484df7a> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Get dataset metadata" ;
+    rdfs:comment "Returns the VoID dataset description and creation date for the AOP-Wiki RDF dataset." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Get dataset metadata
+# description: Returns the VoID dataset description and creation date for the AOP-Wiki RDF dataset.
+# category: Metadata
+
+SELECT DISTINCT ?dataset ?date
+WHERE {
+  ?dataset a void:Dataset ;
+    pav:createdOn ?date .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/A.%20Metadata/dataset-metadata.rq> .
+
+<urn:rdfsolve:query:f1d9bb04242355099e3b1aacec4aa604d8adad05141118ecfa0bfde0f6f79fcb> a sh:SPARQLExecutable,
+        sh:SPARQLSelectExecutable ;
+    rdfs:label "Gene detection method summary (regex vs BERN2 NER)" ;
+    rdfs:comment "Counts gene-Key Event associations by detection method. edam:data_1025 holds the union of all detected genes; :geneDetectedByRegex and :geneDetectedByNER record provenance. Shows total NER associations, how many were also found by the regex mapper, and how many were found only by NER." ;
+    sh:prefixes <urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> ;
+    sh:select """# title: Gene detection method summary (regex vs BERN2 NER)
+# description: Counts gene-Key Event associations by detection method. edam:data_1025 holds the union of all detected genes; :geneDetectedByRegex and :geneDetectedByNER record provenance. Shows total NER associations, how many were also found by the regex mapper, and how many were found only by NER.
+# category: Key Events
+
+PREFIX p: <https://aopwiki.rdf.bigcat-bioinformatics.org/>
+
+SELECT
+  (COUNT(*) AS ?ner_total)
+  (SUM(IF(EXISTS { ?ke p:geneDetectedByRegex ?gene }, 1, 0)) AS ?ner_and_regex)
+  (SUM(IF(EXISTS { ?ke p:geneDetectedByRegex ?gene }, 0, 1)) AS ?ner_only)
+WHERE {
+  ?ke p:geneDetectedByNER ?gene .
+}
+""" ;
+    schema:isBasedOn <urn:sha256:548844577d7ade2a5779040667ce3b4251447fb8b1eb9c5f9cbc0552f89b3b50> ;
+    schema:target <https://aopwiki.rdf.bigcat-bioinformatics.org/sparql> ;
+    schema:url <https://github.com/marvinm2/AOP-Wiki-Queries/blob/392f365865c387b62f3fea635f04be0de04ed519/C.%20Key%20Events/gene-detection-method-summary.rq> .
+
+<urn:rdfsolve:prefixes:c7e7571b7e5b3d8e2d87366a4a961493ed220d4398b2fd5e51409db74786086d> sh:declare [ sh:namespace "https://identifiers.org/aop.events/"^^xsd:anyURI ;
+            sh:prefix "aop.events" ],
+        [ sh:namespace "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"^^xsd:anyURI ;
+            sh:prefix "ncit" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/HP_"^^xsd:anyURI ;
+            sh:prefix "hp" ],
+        [ sh:namespace "http://purl.bioontology.org/ontology/NCBITAXON/"^^xsd:anyURI ;
+            sh:prefix "ncbitaxon" ],
+        [ sh:namespace "https://identifiers.org/ensembl/"^^xsd:anyURI ;
+            sh:prefix "ensembl" ],
+        [ sh:namespace "http://www.wikidata.org/prop/qualifier/"^^xsd:anyURI ;
+            sh:prefix "pq" ],
+        [ sh:namespace "http://edamontology.org/"^^xsd:anyURI ;
+            sh:prefix "edam" ],
+        [ sh:namespace "http://purl.org/pav/"^^xsd:anyURI ;
+            sh:prefix "pav" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/PATO_"^^xsd:anyURI ;
+            sh:prefix "pato" ],
+        [ sh:namespace "http://www.wikidata.org/prop/direct/"^^xsd:anyURI ;
+            sh:prefix "wdt" ],
+        [ sh:namespace "https://identifiers.org/drugbank/"^^xsd:anyURI ;
+            sh:prefix "drugbank" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/MP_"^^xsd:anyURI ;
+            sh:prefix "mp" ],
+        [ sh:namespace "http://www.w3.org/ns/dcat#"^^xsd:anyURI ;
+            sh:prefix "dcat" ],
+        [ sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ;
+            sh:prefix "xsd" ],
+        [ sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ;
+            sh:prefix "rdf" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/PCO_"^^xsd:anyURI ;
+            sh:prefix "pco" ],
+        [ sh:namespace "https://identifiers.org/aop.relationships/"^^xsd:anyURI ;
+            sh:prefix "aop.relationships" ],
+        [ sh:namespace "http://www.wikidata.org/prop/"^^xsd:anyURI ;
+            sh:prefix "p" ],
+        [ sh:namespace "https://identifiers.org/hgnc/"^^xsd:anyURI ;
+            sh:prefix "hgnc" ],
+        [ sh:namespace "https://identifiers.org/hmdb/"^^xsd:anyURI ;
+            sh:prefix "hmdb" ],
+        [ sh:namespace "https://identifiers.org/uniprot/"^^xsd:anyURI ;
+            sh:prefix "uniprot" ],
+        [ sh:namespace "http://aopkb.org/aop_ontology#"^^xsd:anyURI ;
+            sh:prefix "aopo" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/GO_"^^xsd:anyURI ;
+            sh:prefix "go" ],
+        [ sh:namespace "http://www.wikidata.org/entity/statement/"^^xsd:anyURI ;
+            sh:prefix "wds" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/UBERON_"^^xsd:anyURI ;
+            sh:prefix "uberon" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/VT_"^^xsd:anyURI ;
+            sh:prefix "vt" ],
+        [ sh:namespace "https://identifiers.org/aop/"^^xsd:anyURI ;
+            sh:prefix "aop" ],
+        [ sh:namespace "http://www.bigdata.com/rdf#"^^xsd:anyURI ;
+            sh:prefix "bd" ],
+        [ sh:namespace "http://semanticscience.org/resource/CHEMINF_"^^xsd:anyURI ;
+            sh:prefix "cheminf" ],
+        [ sh:namespace "http://www.w3.org/2002/07/owl#"^^xsd:anyURI ;
+            sh:prefix "owl" ],
+        [ sh:namespace "http://www.wikidata.org/value/"^^xsd:anyURI ;
+            sh:prefix "wdv" ],
+        [ sh:namespace "http://purl.org/sig/ont/fma/fma"^^xsd:anyURI ;
+            sh:prefix "fma" ],
+        [ sh:namespace "https://identifiers.org/chembl.compound/"^^xsd:anyURI ;
+            sh:prefix "chembl.compound" ],
+        [ sh:namespace "https://identifiers.org/chemspider/"^^xsd:anyURI ;
+            sh:prefix "chemspider" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/NBO_"^^xsd:anyURI ;
+            sh:prefix "nbo" ],
+        [ sh:namespace "http://www.wikidata.org/entity/"^^xsd:anyURI ;
+            sh:prefix "wd" ],
+        [ sh:namespace "https://identifiers.org/aop.stressor/"^^xsd:anyURI ;
+            sh:prefix "aop.stressor" ],
+        [ sh:namespace "http://purl.org/dc/elements/1.1/"^^xsd:anyURI ;
+            sh:prefix "dc" ],
+        [ sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ;
+            sh:prefix "rdfs" ],
+        [ sh:namespace "https://identifiers.org/ncbigene/"^^xsd:anyURI ;
+            sh:prefix "ncbigene" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/CHEBI_"^^xsd:anyURI ;
+            sh:prefix "chebio" ],
+        [ sh:namespace "http://rdfs.org/ns/void#"^^xsd:anyURI ;
+            sh:prefix "void" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/CL_"^^xsd:anyURI ;
+            sh:prefix "cl" ],
+        [ sh:namespace "https://identifiers.org/kegg.compound/"^^xsd:anyURI ;
+            sh:prefix "kegg.compound" ],
+        [ sh:namespace "http://purl.org/dc/terms/"^^xsd:anyURI ;
+            sh:prefix "dcterms" ],
+        [ sh:namespace "https://identifiers.org/lipidmaps/"^^xsd:anyURI ;
+            sh:prefix "lipidmaps" ],
+        [ sh:namespace "https://identifiers.org/cas/"^^xsd:anyURI ;
+            sh:prefix "cas" ],
+        [ sh:namespace "https://identifiers.org/pubchem.compound/"^^xsd:anyURI ;
+            sh:prefix "pubchem.compound" ],
+        [ sh:namespace "https://identifiers.org/wikidata/"^^xsd:anyURI ;
+            sh:prefix "wikidata" ],
+        [ sh:namespace "https://identifiers.org/chebi/"^^xsd:anyURI ;
+            sh:prefix "chebi" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/PR_"^^xsd:anyURI ;
+            sh:prefix "pr" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/MMO_"^^xsd:anyURI ;
+            sh:prefix "mmo" ],
+        [ sh:namespace "http://wikiba.se/ontology#"^^xsd:anyURI ;
+            sh:prefix "wikibase" ],
+        [ sh:namespace "http://xmlns.com/foaf/0.1/"^^xsd:anyURI ;
+            sh:prefix "foaf" ],
+        [ sh:namespace "https://comptox.epa.gov/dashboard/"^^xsd:anyURI ;
+            sh:prefix "comptox" ],
+        [ sh:namespace "http://www.wikidata.org/prop/statement/"^^xsd:anyURI ;
+            sh:prefix "ps" ],
+        [ sh:namespace "https://identifiers.org/inchikey/"^^xsd:anyURI ;
+            sh:prefix "inchikey" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/MI_"^^xsd:anyURI ;
+            sh:prefix "mi" ] .
+

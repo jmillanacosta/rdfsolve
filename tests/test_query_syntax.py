@@ -1,65 +1,74 @@
-"""Parse every mining query builder with each supported graph scope."""
-
-import inspect
-import json
-from unittest.mock import Mock
-
-import pytest
 from rdflib import Dataset
-from rdflib.plugins.sparql.parser import parseQuery
-
-from rdfsolve.mining import _query_owl_class_superclasses
-from rdfsolve.mining import query_builders as builders
-from rdfsolve.mining.metadata_mining import MetadataMiner
-from rdfsolve.mining.ontology_as_data import (
-    detect_ontology_as_data,
-    mine_ontology_as_data_patterns,
-    mine_ontology_as_data_subject_patterns,
+from rdfsolve.mining.query_builders import (
+    _build_batched_literal_count_query,
+    _build_batched_literal_objects_query,
+    _build_batched_typed_count_query,
 )
-from rdfsolve.mining.ontology_extraction import OntologyMiner
 
 
-SCOPES = [None, ["urn:g"], ["urn:g", "urn:h"]]
-BUILDERS = [getattr(builders, name) for name in dir(builders) if name.startswith("_build_")]
-
-
-@pytest.mark.parametrize("scope", SCOPES)
-@pytest.mark.parametrize("builder", BUILDERS, ids=lambda f: f.__name__)
-@pytest.mark.parametrize("paged", [False, True])
-def test_pattern_query_syntax(builder, scope, paged):
-    values = {
-        "graph_uris": scope,
-        "uris": ["urn:A"],
-        "class_uris": ["urn:A"],
-        "subject_class": "urn:A",
-        "class_uri": "urn:A",
-        "property_uri": "urn:p",
-        "prop_uri": "urn:p",
-        "paginated": paged,
-        "drop_distinct": paged,
-    }
-    kwargs = {
-        name: values[name] for name in inspect.signature(builder).parameters if name in values
-    }
-    query = builder(**kwargs)
-    if "{limit}" in query or "{offset}" in query:
-        query = query.format(limit=10, offset=0)
-    parseQuery(query)
-
-
-@pytest.mark.parametrize("scope", SCOPES)
-def test_optional_query_syntax(scope):
-    helper = Mock()
-    helper.select.side_effect = lambda query, **kwargs: json.loads(
-        Dataset().query(query).serialize(format="json")
+def test_queries_count_edges_in_the_selected_graph():
+    data = Dataset()
+    data.parse(
+        data='@prefix e: <urn:> .\n        e:edges { e:a e:p e:b; e:text "x", "y". e:c e:text "x". }\n        e:types { e:a a e:A. e:c a e:A. e:b a e:B. }\n        e:other { e:a e:text "excluded". }',
+        format="trig",
     )
-    helper.endpoint_url = "https://example.org/sparql"
-    helper.construct.side_effect = lambda query: Dataset().query(query).serialize(format="turtle").decode()
-    _query_owl_class_superclasses(helper, scope)
-    detect_ontology_as_data(helper, scope)
-    mine_ontology_as_data_patterns(helper, scope, superclasses=["urn:A"])
-    mine_ontology_as_data_subject_patterns(helper, scope, superclasses=["urn:A"])
-    OntologyMiner(helper, scope).mine()
-    MetadataMiner(helper, scope).mine()
-    for call in helper.select.call_args_list:
-        parseQuery(call.args[0])
+    scope = ["urn:edges", "urn:types"]
+    queries = {
+        "typed edges": (_build_batched_typed_count_query, {"cnt": 1, "subjects": 1, "objects": 1}),
+        "literal edges": (_build_batched_literal_count_query, {"cnt": 3, "subjects": 2}),
+        "literal values": (_build_batched_literal_objects_query, {"objects": 2}),
+    }
+    for name, (build, counts) in queries.items():
+        query = build(["urn:A"], scope, paginated=True).format(limit=10, offset=0)
+        rows = [
+            {str(key): str(value) for key, value in row.asdict().items()}
+            for row in data.query(query)
+        ]
+        assert len(rows) == 1, f"{name}: {rows}"
+        assert {key: rows[0].get(key) for key in ("_g", *counts)} == {
+            "_g": "urn:edges",
+            **{key: str(value) for key, value in counts.items()},
+        }, name
+
+
+    from rdfsolve.mining.query_builders import (
+        _build_batched_typed_object_query,
+        _build_typed_object_for_class_property_query,
+        _build_typed_object_query_plain,
+    )
+
+    data.parse(data="""@prefix e: <urn:> .
+        e:edges { e:c e:p e:b. e:a e:p _:x. }
+        e:types { _:x a e:B. }
+        e:context { e:b a e:B, e:C. }
+        e:other { e:a e:p e:outside. e:outside a e:Wrong. e:b a e:Wrong. }
+        """, format="trig")
+    queries = {
+        "all classes": _build_typed_object_query_plain(scope, ["urn:context"]),
+        "class batch": _build_batched_typed_object_query(
+            ["urn:A"], scope, type_context_graph_uris=["urn:context"]),
+        "class property": _build_typed_object_for_class_property_query(
+            "urn:A", "urn:p", scope, type_context_graph_uris=["urn:context"]),
+    }
+    for name, query in queries.items():
+        rows = [row.asdict() for row in data.query(query)]
+        assert len(rows) == 2, f"{name}: repeated objects or types changed the row count: {rows}"
+        assert {str(row["oc"]) for row in rows} == {"urn:B", "urn:C"}, name
+
+    from rdfsolve.mining.property_queries import PROPERTY_BUILDERS
+
+    def answer(query):
+        rows = [sorted((str(k), str(v)) for k, v in r.asdict().items()) for r in data.query(query)]
+        return sorted(r for r in rows if dict(r).get("class"))  # empty groups are not rows
+
+    found = 0
+    for build in PROPERTY_BUILDERS:
+        for prop in ("urn:p", "urn:text"):
+            context = {"type_context_graph_uris": ["urn:context"]}
+            bound = build(["urn:A"], scope, property_uri=prop, **context)
+            assert "VALUES ?class" not in bound and "VALUES ?p" not in bound, "Engines must see constants"
+            batch = answer(build(["urn:A", "urn:Z"], scope, **context))
+            expected = [r for r in batch if ("class", "urn:A") in r and ("p", prop) in r]
+            assert answer(bound) == expected, (build.__name__, prop)
+            found += len(expected)
+    assert found, "The comparison must cover returned rows"

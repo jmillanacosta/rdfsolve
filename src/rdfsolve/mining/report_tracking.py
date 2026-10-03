@@ -31,10 +31,20 @@ class ReportCollector:
         self,
         report: MiningReport,
         report_path: Path | None = None,
+        *,
+        fresh: bool = True,
     ) -> None:
-        """Set up the collector with *report* and optional *report_path*."""
+        """Set up the collector with *report* and optional *report_path*.
+
+        A fresh collector starts a new checkpoint; ``fresh=False`` continues the report of a
+        run and keeps its checkpoint (the output phase of the pipeline removed the checkpoint
+        of every run that reached it, so that a later --resume-from found nothing to reuse).
+        """
         self._report = report
         self._path = report_path
+        self._checkpoint = report_path.with_suffix(".checkpoint.jsonl") if report_path else None
+        if self._checkpoint and fresh:
+            self._checkpoint.unlink(missing_ok=True)
 
         # Resource-usage snapshots (populated in _snapshot_start)
         self._t0: float = 0.0
@@ -229,6 +239,31 @@ class ReportCollector:
         return r
 
     # I/O
+
+    def checkpoint(
+        self,
+        phase: str,
+        classes: list[str],
+        rows: list[dict[str, Any]],
+        state: str = "complete",
+    ) -> None:
+        """Append one finished batch so an interrupted run keeps its evidence.
+
+        *state* is partial when a query of the batch has an unresolved failure; a resumed run
+        mines such a batch again.
+        """
+        self.flush()
+        if self._checkpoint is None:
+            return
+        line = {
+            "phase": phase,
+            "classes": classes,
+            "rows": rows,
+            "state": state,
+            "at": datetime.now(timezone.utc).isoformat(),
+        }
+        with self._checkpoint.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(line, default=str) + "\n")
 
     def flush(self) -> None:
         """Write current state to disk (if a path was given)."""

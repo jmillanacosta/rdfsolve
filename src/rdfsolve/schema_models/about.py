@@ -7,8 +7,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
-from rdfsolve.schema_models._constants import _BASE_URI
-
 
 class AboutMetadata(BaseModel):
     """Provenance metadata attached to every schema export.
@@ -25,7 +23,22 @@ class AboutMetadata(BaseModel):
     )
     schema_version: str = Field(
         default="",
-        description="Source release identifier or dated mining snapshot; not the JSON format version",
+        description=(
+            "Provider-declared release: version IRI, version, modified or issued date. "
+            "Empty when the provider declares none. Not the JSON format version."
+        ),
+    )
+    snapshot_id: str | None = Field(
+        None, description="rdfsolve identity of this observation of the source"
+    )
+    retrieved_at: str | None = Field(
+        None, description="ISO-8601 time the source was read for this snapshot"
+    )
+    content_sha256: str | None = Field(
+        None, description="SHA-256 of the retrieved content, when a dump was read"
+    )
+    snapshot_identity_basis: Literal["content_hash", "retrieval_record"] | None = Field(
+        None, description="Whether snapshot_id derives from content_sha256 or retrieved_at"
     )
 
     # Source
@@ -44,9 +57,20 @@ class AboutMetadata(BaseModel):
         None,
         description="Named graph URIs queried",
     )
+    type_graph_uris: list[str] | None = Field(
+        None, description="Graphs used for type lookups when edges have a narrower graph scope"
+    )
+    type_context_graph_uris: list[str] | None = Field(
+        None, description="Additional graphs used only for subject and object type lookups"
+    )
+    membership_property: str | None = Field(
+        None,
+        description="Property that assigns subjects to classes instead of rdf:type "
+        "(for example Wikibase 'instance of'); classes in the patterns come from it",
+    )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,
-        description="All named graphs discovered via discover_all_graphs() with counts",
+        description="Named graphs discovered via discover_all_graphs(), with optional counts",
     )
     ontology_graph_uris: list[str] | None = Field(
         None,
@@ -139,6 +163,10 @@ class AboutMetadata(BaseModel):
 
     # Statistics
     class_entity_counts: dict[str, NonNegativeInt] = Field(default_factory=dict)
+    class_entity_count_states: dict[str, Literal["complete", "partial", "failed"]] = Field(
+        default_factory=dict,
+        description="Completion state of the class-population query contributing each denominator",
+    )
     pattern_count: int = Field(
         0,
         ge=0,
@@ -173,17 +201,32 @@ class AboutMetadata(BaseModel):
     triple_count_estimate: int | None = Field(
         None,
         ge=0,
-        description="Estimated total triples in source data",
+        description=(
+            "Total triples in source data: exact when counted from a QLever index "
+            "(mining report config dataset_statistics), else an estimate"
+        ),
     )
     distinct_subject_count: int | None = Field(
         None,
         ge=0,
-        description="COUNT(DISTINCT ?s) across all patterns",
+        description="COUNT(DISTINCT ?s) over all triples of the source data",
+    )
+    distinct_object_count: int | None = Field(
+        None,
+        ge=0,
+        description="COUNT(DISTINCT ?o) over all triples of the source data",
     )
     distinct_predicate_count: int | None = Field(
         None,
         ge=0,
-        description="COUNT(DISTINCT ?p) across all patterns",
+        description="COUNT(DISTINCT ?p) over all triples of the source data",
+    )
+    property_partitions: dict[str, dict[str, int]] | None = Field(
+        None,
+        description=(
+            "Triples, distinct subjects and distinct objects of each property of the source "
+            "data (void:propertyPartition of the dataset), when counted exactly"
+        ),
     )
     document_count: int | None = Field(
         None,
@@ -213,6 +256,10 @@ class AboutMetadata(BaseModel):
     validation_errors: list[str] = Field(
         default_factory=list,
         description="List of validation error messages",
+    )
+    cleaned: dict[str, Any] | None = Field(
+        default=None,
+        description="Namespaces, graphs and pattern count removed by clean_schema",
     )
 
     # Authors
@@ -259,6 +306,8 @@ class AboutMetadata(BaseModel):
         qlever_version: dict[str, str] | None = None,
         # Version fields
         schema_version: str | None = None,
+        retrieved_at: str | None = None,
+        content_sha256: str | None = None,
         source_version: str | None = None,
         source_version_iri: str | None = None,
         source_issued: str | None = None,
@@ -271,22 +320,22 @@ class AboutMetadata(BaseModel):
         description: str | None = None,
         triple_count_estimate: int | None = None,
         distinct_subject_count: int | None = None,
+        distinct_object_count: int | None = None,
         distinct_predicate_count: int | None = None,
+        property_partitions: dict[str, dict[str, int]] | None = None,
         document_count: int | None = None,
         coverage_score: float | None = None,
         confidence_score: float | None = None,
     ) -> AboutMetadata:
         """Create metadata with auto-populated version + timestamp."""
-        from urllib.parse import quote
         from uuid import uuid4
 
         from rdfsolve.version import VERSION
 
-        def _uri(suffix: str) -> str | None:
-            if not dataset_name:
-                return None
-            encoded_name = quote(dataset_name, safe="")
-            return f"{_BASE_URI}/api/{suffix}/{encoded_name}"
+        def _uri(kind: str) -> str | None:
+            return mint(kind, dataset_name) if dataset_name else None
+
+        from rdfsolve.config import mint
 
         generated_at = finished_at or datetime.now(timezone.utc).isoformat()
         version = (
@@ -295,12 +344,27 @@ class AboutMetadata(BaseModel):
             or source_modified
             or source_issued
             or schema_version
-            or f"snapshot:{generated_at}"
+            or ""
         )
+        retrieved = retrieved_at or started_at or generated_at
+        basis: Literal["content_hash", "retrieval_record"] = (
+            "content_hash" if content_sha256 else "retrieval_record"
+        )
+        snapshot_id = None
+        if dataset_name:
+            snapshot_id = (
+                mint("snapshot", dataset_name, "sha256", content_sha256)
+                if content_sha256
+                else mint("snapshot", dataset_name, retrieved)
+            )
         return AboutMetadata(
             # Identity
             schema_id=str(uuid4()),
             schema_version=version,
+            snapshot_id=snapshot_id,
+            retrieved_at=retrieved,
+            content_sha256=content_sha256,
+            snapshot_identity_basis=basis if snapshot_id else None,
             # Source
             dataset_name=dataset_name,
             endpoint=endpoint,
@@ -335,7 +399,9 @@ class AboutMetadata(BaseModel):
             property_count=property_count,
             triple_count_estimate=triple_count_estimate,
             distinct_subject_count=distinct_subject_count,
+            distinct_object_count=distinct_object_count,
             distinct_predicate_count=distinct_predicate_count,
+            property_partitions=property_partitions,
             document_count=document_count,
             # Quality
             coverage_score=coverage_score,
@@ -343,8 +409,8 @@ class AboutMetadata(BaseModel):
             # Authors
             authors=authors,
             # Canonical URIs
-            schema_uri=_uri("schemas"),
+            schema_uri=_uri("schema"),
             void_uri=_uri("void"),
-            report_uri=_uri("reports"),
+            report_uri=_uri("report"),
             linkml_uri=_uri("linkml"),
         )

@@ -1,8 +1,7 @@
 # RDFSolve pipeline configuration
 
-# Base URI for VoID documents and schema artifacts
-# Used as namespace for generated VoID URIs
-base_uri: https://rdfsolve.bigcat-bioinformatics.nl
+# Base IRI for resources that rdfsolve identifies
+base_uri: https://w3id.org/rdfsolve/
 
 # Timeout settings (seconds)
 timeout: 300

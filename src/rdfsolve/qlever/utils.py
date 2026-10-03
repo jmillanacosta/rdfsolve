@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
-from dataclasses import dataclass
+import shlex
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +38,7 @@ class QleverConfig:
 
     memory_for_queries: str = "500G"
     timeout: str = "9999999999s"
-    parser_buffer_size: str = "8GB"
+    parser_buffer_size: str = "10M"
     stxxl_memory: str = "16GB"
     parallel_parsing: bool = False
     num_triples_per_batch: int = 1_000_000
@@ -254,6 +257,9 @@ class SourceAnalysis:
     needs_archive: bool = False
     """At least one archive (.zip / .tar.gz / .tgz) is present."""
 
+    urls_by_suffix: dict[str, list[str]] = field(default_factory=dict)
+    """Download URLs grouped by their ``download_*`` suffix."""
+
     @property
     def needs_rdfxml_conversion(self) -> bool:
         """Check if source requires RDF/XML to NQuads conversion."""
@@ -295,6 +301,7 @@ class SourceAnalysis:
 def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
     """Scan all download_* fields on entry in a single pass."""
     urls: list[str] = []
+    urls_by_suffix: dict[str, list[str]] = {}
     suffixes: set[str] = set()
     needs_gz = False
     needs_xz = False
@@ -310,6 +317,7 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
         suffixes.add(suffix)
         for u in urls_from_field(entry, key):
             urls.append(u)
+            urls_by_suffix.setdefault(suffix, []).append(u)
             low = u.lower()
             if low.endswith(".gz") and not low.endswith(".tar.gz"):
                 needs_gz = True
@@ -322,6 +330,7 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
 
     return SourceAnalysis(
         urls=urls,
+        urls_by_suffix=urls_by_suffix,
         suffixes=suffixes,
         needs_gz=needs_gz,
         needs_xz=needs_xz,
@@ -364,11 +373,24 @@ def graph_uri_to_tar_folder(uri: str) -> str:
 # Shell-step builders returning list[str] of shell fragments
 
 
+# A download is tried again after a fault that passes; a missing file (404) is not.
+_RETRY = "--tries=5 --waitretry=20 --retry-connrefused --retry-on-http-error=429,500,502,503,504"
+
+
+# wget does not try again after a failed connection (exit 4: network; exit 5: SSL). This shell
+# function tries such a file up to 5 times; another failure, as a missing file, ends at once.
+_WGET_AGAIN = (
+    'wget() { local c i; for i in 1 2 3 4 5; do command wget "$@"; c=$?; '
+    'case $c in 0) return 0;; 4|5) sleep "${RDFSOLVE_DOWNLOAD_WAIT:-20}";; *) return $c;; esac; '
+    "done; return $c; }"
+)
+
+
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
     if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
-        return f'wget -c -q "{url}"'
+        return f'wget -c -q {_RETRY} "{url}"'
     # Derive a filename from the URL path.
     parts = url.rstrip("/").split("/")
     derived = next(
@@ -376,8 +398,8 @@ def _wget_cmd(url: str) -> str:
         None,
     )
     if derived:
-        return f'wget -c -q -O "{derived}" "{url}"'
-    return f'wget -c -q --content-disposition "{url}"'
+        return f'wget -c -q {_RETRY} -O "{derived}" "{url}"'
+    return f'wget -c -q {_RETRY} --content-disposition "{url}"'
 
 
 def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
@@ -407,24 +429,49 @@ def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
     )
 
 
+def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
+    """Give a Turtle download a .ttl name when its URL says otherwise.
+
+    Some sources serve Turtle from a .owl or .rdf URL. The index globs by
+    extension, so the file has to carry the extension of what is inside it.
+    """
+    renames = []
+    for url in analysis.urls_by_suffix.get("ttl", []):
+        name = url.rstrip("/").rsplit("/", 1)[-1]
+        # An archive keeps its name: it is extracted, and its members carry their own names.
+        if name.endswith((".zip", ".tar.gz", ".tgz", ".gz", ".bz2", ".xz")):
+            continue
+        if name and not name.endswith((".ttl", ".ttl.gz", ".n3")):
+            stem = name.rsplit(".", 1)[0] if "." in name else name
+            renames.append((name, f"{stem}.ttl"))
+    if not renames:
+        return []
+    moves = " ".join(f'[ -f "{src}" ] && mv -f "{src}" "{dst}";' for src, dst in renames)
+    # Grouped, so that its ';' does not split the '&&' chain of the download step.
+    return ["echo 'Naming Turtle downloads by content ...'", f"{{ {moves} true; }}"]
+
+
 def _extract_archives_steps() -> list[str]:
     """Shell steps: extract archives, collect, repeat for nested archives."""
     _tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
-        'echo "  extracting $f"; tar xzf "$f"; done'
+        'echo "  extracting $f"; tar xzf "$f"; echo "$f" >> .extracted-archives; done'
     )
     _zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
         'echo "  extracting $f"; '
         "python3 -c \"import zipfile; z=zipfile.ZipFile('$f'); z.extractall('.'); "
-        "print(f'Extracted {len(z.namelist())} files'); z.close()\"; done"
+        "print(f'Extracted {len(z.namelist())} files'); z.close()\"; "
+        'echo "$f" >> .extracted-archives; done'
     )
     _nested_tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
+        'grep -qxF -- "$f" .extracted-archives 2>/dev/null && continue; '
         'echo "  extracting nested $f"; tar xzf "$f" 2>/dev/null || true; done'
     )
     _nested_zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
+        'grep -qxF -- "$f" .extracted-archives 2>/dev/null && continue; '
         'echo "  extracting nested $f"; '
         "python3 -c \"import zipfile; z=zipfile.ZipFile('$f'); z.extractall('.'); "
         "print(f'Extracted {len(z.namelist())} files'); z.close()\" 2>/dev/null || true; done"
@@ -441,6 +488,7 @@ def _extract_archives_steps() -> list[str]:
         _nested_zip,
         "echo 'Collecting files from nested extraction ...'",
         _collect_from_subdirs_step(include_archives=False),
+        "rm -f .extracted-archives",
     ]
 
 
@@ -481,10 +529,15 @@ def _convert_rdfxml_steps() -> list[str]:
     return [
         "echo 'Converting RDF/XML -> N-Quads ...'",
         (
-            'for f in *.rdf *.owl *.xml; do [ -f "$f" ] || continue; '
+            # An empty file (UniProt publishes enzyme-hierarchy.rdf empty) has no statements.
+            'for f in *.rdf *.owl *.xml; do [ -s "$f" ] || continue; '
             'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
             '[ -f "$nq" ] && continue; '
-            'rapper -q -i rdfxml -o nquads "$f" > "$nq" 2>/dev/null || rm -f "$nq"; done'
+            # A file that starts as Turtle is Turtle under an RDF/XML name: it is named .ttl.
+            'if head -c 4096 "$f" | grep -q -E "^[[:space:]]*(@prefix|@base|PREFIX|BASE)[[:space:]]"; '
+            'then mv "$f" "$(echo "$f" | sed "s/\\.[^.]*$/.ttl/")"; continue; fi; '
+            'rapper -q -i rdfxml -o nquads "$f" > "$nq" || '
+            '{ rm -f "$nq"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
     ]
 
@@ -501,7 +554,7 @@ def _convert_obo_steps() -> list[str]:
             'ttl=$(echo "$f" | sed "s/\\.[^.]*$/.ttl/"); '
             '[ -f "$ttl" ] && continue; '
             'java -jar robot.jar convert --input "$f" --output "$ttl" '
-            '--format ttl 2>/dev/null || rm -f "$ttl"; done'
+            '--format ttl || { rm -f "$ttl"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
         "rm -f robot.jar robot.log",
     ]
@@ -538,6 +591,7 @@ def tar_source_qleverfile_parts(
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
+        _WGET_AGAIN,
         # Discover tar root prefix from the first header block.
         (
             f'TAR_ROOT=$(curl -s --range 0-511 "{tar_url}" | '
@@ -575,8 +629,14 @@ def _build_get_data_steps(
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
-        " && ".join(_wget_cmd(u) for u in analysis.urls),
+        _WGET_AGAIN,
+        # A later step can end with '|| true'; the downloads end the script when one fails.
+        "{ "
+        + " && ".join(_wget_cmd(u) for u in analysis.urls)
+        + "; } || { echo 'A download failed' >&2; exit 1; }",
     ]
+
+    steps.extend(_rename_mislabelled_steps(analysis))
 
     if analysis.needs_archive:
         steps.extend(_extract_archives_steps())
@@ -621,7 +681,20 @@ def _render_qleverfile(
     except Exception:
         pass
 
-    return QLEVERFILE_TEMPLATE.format(
+    streams = []
+    if cat_input_files == "cat ${INPUT_FILES}":
+        streams = [
+            {
+                "cmd": 'cat "{}"',
+                "format": rdf_format,
+                "for-each": pattern,
+                "parallel": "true" if cfg.parallel_parsing else "false",
+            }
+            for pattern in shlex.split(input_files)
+        ]
+        cat_input_files = ""
+
+    content = QLEVERFILE_TEMPLATE.format(
         name=name,
         workdir=workdir,
         port=port,
@@ -639,6 +712,12 @@ def _render_qleverfile(
         timeout=cfg.timeout,
         image=cfg.image,
     )
+
+    if streams:
+        return content.replace(
+            "[index]\n", "[index]\nMULTI_INPUT_JSON = " + json.dumps(streams) + "\n"
+        )
+    return content
 
 
 # Public builders
@@ -663,6 +742,62 @@ def build_qleverfile(
     workdir = (workdir or data_dir / "qlever_workdirs" / name).resolve()
     rdf_subdir = "rdf"
     src_data_dir = f"{workdir}/{rdf_subdir}"
+
+    graph_sources = entry.get("graph_sources")
+    if graph_sources:
+        from rdfsolve.qlever.inputs import graph_input_directory
+
+        commands: list[str] = []
+        streams: list[dict[str, str]] = []
+        files: list[str] = []
+        for graph, fields in graph_sources.items():
+            directory = graph_input_directory(workdir, graph) / "rdf"
+            commands.extend(
+                [f"mkdir -p {shlex.quote(str(directory))}", f"cd {shlex.quote(str(directory))}"]
+            )
+            for key, urls in fields.items():
+                suffix = key.removeprefix("download_")
+                suffix = "rdf" if suffix == "rdfxml" else suffix
+                for url in urls:
+                    compression = (
+                        ".gz" if url.endswith(".gz") else ".xz" if url.endswith(".xz") else ""
+                    )
+                    filename = hashlib.sha256(url.encode()).hexdigest() + "." + suffix + compression
+                    commands.append(f"wget -c -q -O {filename} {shlex.quote(url)}")
+                    if compression:
+                        executable = "gunzip" if compression == ".gz" else "xz -d"
+                        commands.append(f"{executable} -fk {filename}")
+                        filename = filename.removesuffix(compression)
+                    if suffix in {"rdf", "owl"}:
+                        target = filename.rsplit(".", 1)[0] + ".nt"
+                        commands.append(
+                            f"rapper -q -i rdfxml -o ntriples {filename} > {target}.part"
+                        )
+                        commands.append(f"mv {target}.part {target}")
+                        filename = target
+                    path = directory / filename
+                    files.append(shlex.quote(str(path)))
+                    streams.append(
+                        {
+                            "cmd": f"cat {shlex.quote(str(path))}",
+                            "format": path.suffix[1:],
+                            "graph": graph,
+                        }
+                    )
+        content = _render_qleverfile(
+            name=name,
+            workdir=workdir,
+            port=port,
+            runtime=runtime,
+            rdf_format="ttl",
+            input_files=" ".join(files),
+            cat_input_files="",
+            get_data_cmd=" && ".join(commands),
+            cfg=cfg,
+        )
+        return content.replace(
+            "[index]\n", "[index]\nMULTI_INPUT_JSON = " + json.dumps(streams) + "\n"
+        )
 
     # Bulk-tar path
     local_tar_url = entry.get("local_tar_url", "")

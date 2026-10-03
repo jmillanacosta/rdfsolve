@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
+
+from typing_extensions import Self
 
 from rdfsolve.sparql_helper import SparqlHelper
 
 __all__ = [
-    "_DECOMP_CHUNK",
+    "Window",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
+    "_build_batched_literal_objects_query",
     "_build_batched_literal_query",
     "_build_batched_typed_count_query",
     "_build_batched_typed_object_query",
@@ -23,21 +27,21 @@ __all__ = [
     "_build_declared_classes_query",
     "_build_example_query",
     "_build_label_query",
-    "_build_literal_for_class_property_query",
     "_build_literal_query",
     "_build_literal_query_plain",
+    "_build_object_kinds_query",
     "_build_properties_for_class_query",
+    "_build_same_members_query",
     "_build_typed_object_for_class_property_query",
     "_build_typed_object_query",
     "_build_typed_object_query_plain",
     "_build_untyped_uri_query",
     "_build_untyped_uri_query_plain",
     "_graph_clause",
+    "_graph_scope",
     "_values_block",
     "pick_description",
 ]
-
-_DECOMP_CHUNK = 1_000
 
 
 def _graph_clause(
@@ -59,151 +63,260 @@ def _graph_clause(
     return open_, "}"
 
 
-def _values_block(class_uris: list[str]) -> str:
+def _graph_scope(
+    graph_uris: list[str] | None,
+    context_graph_uris: list[str] | None = None,
+) -> tuple[str, str, str]:
+    """Merge data graphs and attribute edges; expose context only as named graphs."""
+    if not graph_uris:
+        return "", "", ""
+    graphs = list(dict.fromkeys(graph_uris))
+    merged = " ".join(f"FROM <{u}>" for u in graphs)
+    named = " ".join(
+        f"FROM NAMED <{u}>" for u in dict.fromkeys(graphs + (context_graph_uris or []))
+    )
+    values = " ".join(f"<{u}>" for u in graphs)
+    return f"{merged} {named}", f"VALUES ?_g {{ {values} }} GRAPH ?_g {{", "}"
+
+
+def _context_pattern(pattern: str, graph_uris: list[str] | None) -> str:
+    """Match a pattern in the default dataset or selected companion graphs."""
+    if not graph_uris:
+        return pattern
+    graphs = " ".join(f"<{iri}>" for iri in dict.fromkeys(graph_uris))
+    return (
+        f"{{ {pattern} }} UNION {{ VALUES ?_contextGraph {{ {graphs} }} "
+        f"GRAPH ?_contextGraph {{ {pattern} }} }}"
+    )
+
+
+def _type_pattern(
+    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+) -> str:
+    """Match each node/type pair once across data and companion graphs.
+
+    *membership* is the property that places a record in its class when the source does not use
+    rdf:type (rdfs:subClassOf for a source whose records are classes).
+    """
+    triple = f"{node} {f'<{membership}>' if membership else 'a'} {cls} ."
+    if not context_graph_uris:
+        return triple
+    variables = " ".join(term for term in (node, cls) if term.startswith("?"))
+    return f"{{ SELECT DISTINCT {variables} WHERE {{ {_context_pattern(triple, context_graph_uris)} }} }}"
+
+
+def _subject_type_pattern(
+    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+) -> str:
+    """Match typed subjects with an outgoing edge in the selected data."""
+    pattern = _type_pattern(node, cls, context_graph_uris, membership)
+    if context_graph_uris:
+        pattern += f" FILTER EXISTS {{ {node} ?_dataPredicate ?_dataObject }}"
+    return pattern
+
+
+def _values_block(class_uris: list[str], property_uri: str | None = None) -> str:
     """Build a ``VALUES ?class { <u1> <u2> … }`` clause."""
     entries = " ".join(f"<{u}>" for u in class_uris)
-    return f"VALUES ?class {{ {entries} }}"
+    properties = f" VALUES ?p {{ <{property_uri}> }}" if property_uri else ""
+    return f"VALUES ?class {{ {entries} }}" + properties
+
+
+@dataclass(frozen=True)
+class Window:
+    """A bounded slice of one class's members, for when a whole-class query exceeds its budget.
+
+    run_first asks Blazegraph (Wikidata's engine) to evaluate the slice before joining it.
+    """
+
+    limit: int
+    offset: int = 0
+    run_first: bool = False
+
+
+def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
+    """Bind ?s to the class members, or to one window of them."""
+    pattern = _type_pattern("?s", cls, context)
+    if window is None:
+        return pattern
+    hint = (
+        " <http://www.bigdata.com/queryHints#Prior> <http://www.bigdata.com/queryHints#runFirst> true ."
+        if window.run_first
+        else ""
+    )
+    return (
+        f"{{ SELECT ?s WHERE {{ {pattern} }} LIMIT {window.limit} OFFSET {window.offset} }}{hint}"
+    )
+
+
+class Representative(str):
+    """An ontology term that stands for its member terms in the pattern queries.
+
+    Subjects typed by any member are counted under the representative; each member belongs
+    to one representative, so counts stay additive. The IRI is the representative's.
+    """
+
+    members: tuple[str, ...]
+
+    def __new__(cls, iri: str, members: list[str] | tuple[str, ...]) -> Self:
+        """Keep the representative IRI and its sorted member terms."""
+        value = super().__new__(cls, iri)
+        value.members = tuple(sorted(set(members)))
+        return value
+
+
+def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str, str, str, str]:
+    """Write one class or property as constants; BIND keeps their result columns.
+
+    A Representative among the classes binds ?class to the representative for subjects typed
+    by any of its members (VALUES (?_member ?class)).
+    """
+    binds = ""
+    if any(isinstance(c, Representative) for c in class_uris):
+        rows = " ".join(
+            f"(<{member}> <{c}>)"
+            for c in class_uris
+            for member in (c.members if isinstance(c, Representative) else (c,))
+        )
+        cls, values = "?_member", f"VALUES (?_member ?class) {{ {rows} }}"
+    elif len(class_uris) == 1:
+        cls, values = f"<{class_uris[0]}>", ""
+        binds += f" BIND({cls} AS ?class)"
+    else:
+        cls, values = "?class", _values_block(class_uris)
+    prop = f"<{property_uri}>" if property_uri else "?p"
+    if property_uri:
+        binds += f" BIND({prop} AS ?p)"
+    return values, cls, prop, binds
+
+
+def _build_object_kinds_query(
+    property_uri: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Probe which RDF term kinds occur as objects of one property in the selected data."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    branches = " UNION ".join(
+        f"{{ {{ SELECT ?o WHERE {{ {g_open} ?s <{property_uri}> ?o . {g_close} "
+        f'FILTER({test}(?o)) }} LIMIT 1 }} BIND("{kind}" AS ?kind) }}'
+        for kind, test in (("literal", "isLiteral"), ("iri", "isIRI"), ("blank", "isBlank"))
+    )
+    return f"SELECT ?kind {dataset} WHERE {{ {branches} }}"
 
 
 def _build_typed_object_query(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Query 1: typed-object patterns (``?o a ?oc``)."""
-    g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT DISTINCT ?sc ?p ?oc
-WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
-    ?o a ?oc .
-  {g_close}
-}}"""
-    return SparqlHelper.prepare_paginated_query(q)
+    """Return the paged typed object query."""
+    return SparqlHelper.prepare_paginated_query(
+        _build_typed_object_query_plain(graph_uris, type_context_graph_uris)
+    )
 
 
 def _build_typed_object_query_plain(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Query 1 - typed-object patterns, no LIMIT/OFFSET placeholders.
 
     Intended for one-shot execution against engines (e.g. QLever)
     that can return an unbounded result set in a single response.
     """
-    g_open, g_close = _graph_clause(graph_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     return f"""\
 SELECT DISTINCT ?sc ?p ?oc
+{dataset}
 WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
-    ?o a ?oc .
-  {g_close}
+  {{
+    SELECT DISTINCT ?sc ?p ?o WHERE {{
+      {_type_pattern("?s", "?sc", type_context_graph_uris)}
+      {g_open} ?s ?p ?o . {g_close}
+    }}
+  }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
 
 
 def _build_literal_query(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Query 2: literal patterns with datatype."""
-    g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT DISTINCT ?sc ?p ?dt
-WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
-    FILTER(isLiteral(?o))
-    BIND(DATATYPE(?o) AS ?dt)
-  {g_close}
-}}"""
-    return SparqlHelper.prepare_paginated_query(q)
+    """Return the paged literal query."""
+    return SparqlHelper.prepare_paginated_query(
+        _build_literal_query_plain(graph_uris, type_context_graph_uris)
+    )
 
 
 def _build_literal_query_plain(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Query 2 - literal patterns, no LIMIT/OFFSET placeholders."""
-    g_open, g_close = _graph_clause(graph_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     return f"""\
 SELECT DISTINCT ?sc ?p ?dt
+{dataset}
 WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
+  {_type_pattern("?s", "?sc", type_context_graph_uris)}
+  {g_open} ?s ?p ?o . {g_close}
     FILTER(isLiteral(?o))
     BIND(DATATYPE(?o) AS ?dt)
-  {g_close}
 }}"""
 
 
 def _build_untyped_uri_query(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Query 3: URI objects that lack an explicit ``rdf:type``."""
-    g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT DISTINCT ?sc ?p
-WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
-    FILTER(isURI(?o))
-    FILTER NOT EXISTS {{ ?o a ?any }}
-  {g_close}
-}}"""
-    return SparqlHelper.prepare_paginated_query(q)
+    """Return the paged untyped uri query."""
+    return SparqlHelper.prepare_paginated_query(
+        _build_untyped_uri_query_plain(graph_uris, type_context_graph_uris)
+    )
 
 
 def _build_untyped_uri_query_plain(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Query 3 - untyped-URI patterns, no LIMIT/OFFSET placeholders."""
-    g_open, g_close = _graph_clause(graph_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     return f"""\
 SELECT DISTINCT ?sc ?p
+{dataset}
 WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
+  {_type_pattern("?s", "?sc", type_context_graph_uris)}
+  {g_open} ?s ?p ?o . {g_close}
     FILTER(isURI(?o))
-    FILTER NOT EXISTS {{ ?o a ?any }}
-  {g_close}
+    FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
 }}"""
 
 
 def _build_blank_node_query(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Query 4: blank-node objects with optional properties."""
-    g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT DISTINCT ?sc ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
-WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
-    FILTER(isBlank(?o))
-    OPTIONAL {{ ?o ?bnPred ?bnObj }}
-  {g_close}
-}}"""
-    return SparqlHelper.prepare_paginated_query(q)
+    """Return the paged blank node query."""
+    return SparqlHelper.prepare_paginated_query(
+        _build_blank_node_query_plain(graph_uris, type_context_graph_uris)
+    )
 
 
 def _build_blank_node_query_plain(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Query 4 - blank-node patterns, no LIMIT/OFFSET placeholders."""
-    g_open, g_close = _graph_clause(graph_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     return f"""\
-SELECT DISTINCT ?sc ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
+SELECT DISTINCT ?sc ?p ?bnPred
+{dataset}
 WHERE {{
-  {g_open}
-    ?s ?p ?o .
-    ?s a ?sc .
+  {_type_pattern("?s", "?sc", type_context_graph_uris)}
+  {g_open} ?s ?p ?o . {g_close}
     FILTER(isBlank(?o))
     OPTIONAL {{ ?o ?bnPred ?bnObj }}
-  {g_close}
 }}"""
 
 
@@ -314,31 +427,74 @@ LIMIT {limit}"""
 
 def _build_class_discovery_query(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Discover all distinct rdf:type classes (paginated template)."""
-    g_open, g_close = _graph_clause(graph_uris)
-    q = f"""\
-SELECT DISTINCT ?class
-WHERE {{
-  {g_open}
-    ?s a ?class .
-  {g_close}
-}}"""
-    return SparqlHelper.prepare_paginated_query(q)
+    """Read classes of subjects present in the selected data."""
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    query = f"""SELECT DISTINCT ?class {dataset}
+WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}"""
+    return SparqlHelper.prepare_paginated_query(query)
+
+
+def _build_class_weight_query(
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Read classes of subjects present in the selected data."""
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    distinct = "DISTINCT " if graph_uris or type_context_graph_uris else ""
+    query = f"""SELECT ?class (COUNT({distinct}?s) AS ?n) {dataset}
+WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}\nGROUP BY ?class\nORDER BY ?class"""
+    return SparqlHelper.prepare_paginated_query(query)
+
+
+def _build_class_overlap_query(
+    cls: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count the members of a class that are members of each class, the class itself included.
+
+    The (member, class) pairs are made distinct before the count: a grouped COUNT(DISTINCT) of
+    genex:Expression (709,482,280 members) reached 600 s on QLever, the distinct pairs 133 s.
+    """
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    both = (
+        _subject_type_pattern("?s", f"<{cls}>", type_context_graph_uris)
+        + " "
+        + _subject_type_pattern("?s", "?other", type_context_graph_uris)
+    )
+    return (
+        f"SELECT ?other (COUNT(?s) AS ?n) {dataset} "
+        f"WHERE {{ {{ SELECT DISTINCT ?s ?other WHERE {{ {both} }} }} }} GROUP BY ?other"
+    )
+
+
+def _build_same_members_query(
+    first: str,
+    second: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count data subjects typed with both classes, to test identical member sets."""
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    both = (
+        _subject_type_pattern("?s", f"<{first}>", type_context_graph_uris)
+        + " "
+        + _subject_type_pattern("?s", f"<{second}>", type_context_graph_uris)
+    )
+    return f"SELECT (COUNT(DISTINCT ?s) AS ?n) {dataset} WHERE {{ {both} }}"
 
 
 def _build_class_discovery_query_plain(
     graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
-    """Discover all distinct rdf:type classes (single shot)."""
-    g_open, g_close = _graph_clause(graph_uris)
-    return f"""\
-SELECT DISTINCT ?class
-WHERE {{
-  {g_open}
-    ?s a ?class .
-  {g_close}
-}}"""
+    """Read classes of subjects present in the selected data."""
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    query = f"""SELECT DISTINCT ?class {dataset}
+WHERE {{ {_subject_type_pattern("?s", "?class", type_context_graph_uris)} }}"""
+    return query
 
 
 def _build_declared_classes_query(
@@ -362,6 +518,7 @@ def _build_properties_for_class_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Enumerate all distinct properties used by instances of *class_uri*.
 
@@ -379,19 +536,41 @@ def _build_properties_for_class_query(
         ``paginated=True``.  See
         :func:`_build_batched_typed_object_query` for caveats.
     """
-    g_open, g_close = _graph_clause(graph_uris)
-    distinct = "" if (paginated and drop_distinct) else "DISTINCT "
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    grouped = not (paginated and drop_distinct)
+    # The subjects typed by any member of a group of ontology terms, as in the pattern queries.
+    values, cls, _, _ = _bound([class_uri])
     q = f"""\
-SELECT {distinct}?p
+SELECT ?p
+{dataset}
 WHERE {{
-  {g_open}
-    ?s a <{class_uri}> .
-    ?s ?p ?o .
-  {g_close}
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s ?p ?o . {g_close}
 }}"""
+    if grouped:
+        q += "\nGROUP BY ?p"
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
+
+
+def _build_properties_for_class_patterns_query(
+    class_uri: str,
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """List the properties of the subjects of a class from their property sets (QLever).
+
+    A property set holds every property of a subject in the whole index, so the list holds the
+    properties of the class in any scope and can hold more; each listed property is then
+    queried in the scope.
+    """
+    values, cls, _, _ = _bound([class_uri])
+    return (
+        "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
+        f"SELECT ?p WHERE {{ {values} {_type_pattern('?s', cls, type_context_graph_uris)} "
+        "?s ql:has-predicate ?p } GROUP BY ?p"
+    )
 
 
 def _build_typed_object_for_class_property_query(
@@ -400,6 +579,7 @@ def _build_typed_object_for_class_property_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
 ) -> str:
     """Enumerate typed-object classes for a single *(class, property)* pair.
 
@@ -417,52 +597,19 @@ def _build_typed_object_for_class_property_query(
         ``paginated=True``.  See
         :func:`_build_batched_typed_object_query` for caveats.
     """
-    g_open, g_close = _graph_clause(graph_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?oc
+{dataset}
 WHERE {{
-  {g_open}
-    ?s a <{class_uri}> .
-    ?s <{prop_uri}> ?o .
-    ?o a ?oc .
-  {g_close}
-}}"""
-    if paginated:
-        return SparqlHelper.prepare_paginated_query(q)
-    return q
-
-
-def _build_literal_for_class_property_query(
-    class_uri: str,
-    prop_uri: str,
-    graph_uris: list[str] | None,
-    paginated: bool = False,
-    drop_distinct: bool = False,
-) -> str:
-    """Enumerate datatypes for a single *(class, property)* pair with literal objects.
-
-    Parameters
-    ----------
-    paginated:
-        When ``True`` returns a template with ``{offset}`` / ``{limit}``
-        placeholders.
-    drop_distinct:
-        When ``True`` omits ``DISTINCT`` from paginated queries; the
-        caller deduplicates in Python.  Only active when
-        ``paginated=True``.
-    """
-    g_open, g_close = _graph_clause(graph_uris)
-    distinct = "" if (paginated and drop_distinct) else "DISTINCT "
-    q = f"""\
-SELECT {distinct}?dt
-WHERE {{
-  {g_open}
-    ?s a <{class_uri}> .
-    ?s <{prop_uri}> ?o .
-    FILTER(isLiteral(?o))
-    BIND(DATATYPE(?o) AS ?dt)
-  {g_close}
+  {{
+    SELECT DISTINCT ?o WHERE {{
+      {_type_pattern("?s", f"<{class_uri}>", type_context_graph_uris)}
+      {g_open} ?s <{prop_uri}> ?o . {g_close}
+    }}
+  }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -474,20 +621,26 @@ def _build_batched_typed_object_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Typed-object patterns for a batch of classes."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p ?oc
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    ?o a ?oc .
-  {g_close}
+  {{
+    SELECT DISTINCT ?class ?p ?o WHERE {{
+      {values}
+      {_members(cls, type_context_graph_uris, window)}
+      {g_open} ?s {prop} ?o . {g_close}{binds}
+    }}
+  }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -499,20 +652,22 @@ def _build_batched_literal_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Literal patterns for a batch of classes."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p (DATATYPE(?o) AS ?dt)
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    FILTER(isLiteral(?o))
-  {g_close}
+  {values}
+  {_members(cls, type_context_graph_uris, window)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isLiteral(?o))
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -524,21 +679,23 @@ def _build_batched_untyped_uri_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Untyped-URI patterns for a batch of classes."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    FILTER(isURI(?o))
-    FILTER NOT EXISTS {{ ?o a ?any }}
-  {g_close}
+  {values}
+  {_members(cls, type_context_graph_uris, window)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isURI(?o))
+  FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -550,21 +707,23 @@ def _build_batched_blank_node_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    window: Window | None = None,
 ) -> str:
     """Blank-node patterns for a batch of classes."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
-SELECT {distinct}?class ?p ?bnPred ?bnObj (DATATYPE(?bnObj) AS ?bnObjType)
+SELECT {distinct}?class ?p ?bnPred
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    FILTER(isBlank(?o))
-    OPTIONAL {{ ?o ?bnPred ?bnObj }}
-  {g_close}
+  {values}
+  {_members(cls, type_context_graph_uris, window)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isBlank(?o))
+  OPTIONAL {{ ?o ?bnPred ?bnObj }}
 }}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
@@ -576,24 +735,70 @@ def _build_batched_typed_count_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
-    """Typed-object COUNT grouped by ``(class, p, oc)`` for a class batch."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
-    q = f"""\
-SELECT ?class ?p ?oc (COUNT(*) AS ?cnt)
+    """Typed-object COUNT grouped by ``(class, p, oc)`` and edge graph.
+
+    Without *subjects*, edges are first counted per object, which keeps triple
+    and distinct-object counts exact when distinct subjects exceed a budget.
+    """
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    edges = f"""{values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}"""
+    if subjects:
+        q = f"""\
+SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    ?o a ?oc .
-  {g_close}
+  {edges}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
 }}
-GROUP BY ?class ?p ?oc"""
+GROUP BY ?class ?p ?oc{graph_var}"""
+    else:
+        q = f"""\
+SELECT ?class ?p ?oc{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?objects)
+{dataset}
+WHERE {{
+  {{ SELECT ?class ?p ?o{graph_var} (COUNT(*) AS ?k) WHERE {{
+  {edges}
+  }} GROUP BY ?class ?p ?o{graph_var} }}
+  {_type_pattern("?o", "?oc", type_context_graph_uris)}
+}}
+GROUP BY ?class ?p ?oc{graph_var}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
+
+
+def _build_class_property_total_query(
+    class_uris: list[str],
+    property_uri: str,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None = None,
+    object_test: str = "",
+) -> str:
+    """Count the edges and distinct subjects of (class, property) and edge graph.
+
+    The edges are those of the count queries; *object_test* keeps the edges of one group.
+    """
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    return f"""\
+SELECT ?class{graph_var} (COUNT(*) AS ?cnt) (COUNT(DISTINCT ?s) AS ?subjects)
+{dataset}
+WHERE {{
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {object_test}
+}}
+GROUP BY ?class{graph_var}"""
 
 
 def _build_batched_literal_count_query(
@@ -601,22 +806,69 @@ def _build_batched_literal_count_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
-    """Literal COUNT grouped by ``(class, p, dt)`` for a class batch."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
-    q = f"""\
-SELECT ?class ?p ?dt (COUNT(*) AS ?cnt)
+    """Literal triple and distinct-subject counts grouped by ``(class, p, dt)`` and edge graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    edges = f"""{values}
+      {_type_pattern("?s", cls, type_context_graph_uris)}
+      {g_open} ?s {prop} ?o . {g_close}{binds}
+      FILTER(isLiteral(?o))
+      BIND(DATATYPE(?o) AS ?dt)"""
+    if subjects:
+        q = f"""\
+SELECT ?class ?p ?dt{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?subjects)
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    FILTER(isLiteral(?o))
-    BIND(DATATYPE(?o) AS ?dt)
-  {g_close}
+  {{
+    SELECT ?class ?p ?dt{graph_var} ?s (COUNT(*) AS ?k)
+    WHERE {{
+      {edges}
+    }}
+    GROUP BY ?class ?p ?dt{graph_var} ?s
+  }}
 }}
-GROUP BY ?class ?p ?dt"""
+GROUP BY ?class ?p ?dt{graph_var}"""
+    else:
+        q = f"""\
+SELECT ?class ?p ?dt{graph_var} (COUNT(*) AS ?cnt)
+{dataset}
+WHERE {{
+      {edges}
+}}
+GROUP BY ?class ?p ?dt{graph_var}"""
+    if paginated:
+        return SparqlHelper.prepare_paginated_query(q)
+    return q
+
+
+def _build_batched_literal_objects_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    paginated: bool = False,
+    drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+) -> str:
+    """Distinct literal objects grouped by ``(class, p, dt)`` and edge graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    q = f"""\
+SELECT ?class ?p ?dt{graph_var} (COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
+WHERE {{
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isLiteral(?o))
+  BIND(DATATYPE(?o) AS ?dt)
+}}
+GROUP BY ?class ?p ?dt{graph_var}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
@@ -627,22 +879,53 @@ def _build_batched_untyped_count_query(
     graph_uris: list[str] | None,
     paginated: bool = False,
     drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    subjects: bool = True,
 ) -> str:
-    """Untyped-URI COUNT grouped by ``(class, p)`` for a class batch."""
-    g_open, g_close = _graph_clause(graph_uris)
-    values = _values_block(class_uris)
+    """Untyped-URI COUNT grouped by ``(class, p)`` and edge graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
     q = f"""\
-SELECT ?class ?p (COUNT(*) AS ?cnt)
+SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
 WHERE {{
-  {g_open}
-    {values}
-    ?s a ?class .
-    ?s ?p ?o .
-    FILTER(isURI(?o))
-    FILTER NOT EXISTS {{ ?o a ?any }}
-  {g_close}
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isURI(?o))
+  FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
 }}
-GROUP BY ?class ?p"""
+GROUP BY ?class ?p{graph_var}"""
     if paginated:
         return SparqlHelper.prepare_paginated_query(q)
     return q
+
+
+def _build_batched_blank_node_count_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    paginated: bool = False,
+    drop_distinct: bool = False,
+    type_context_graph_uris: list[str] | None = None,
+    property_uri: str | None = None,
+    subjects: bool = True,
+) -> str:
+    """Count blank-node edges per class, property and graph."""
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
+    query = f"""SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)
+       {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
+WHERE {{
+  {values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}
+  FILTER(isBlank(?o))
+}}
+GROUP BY ?class ?p{graph_var}"""
+    return SparqlHelper.prepare_paginated_query(query) if paginated else query

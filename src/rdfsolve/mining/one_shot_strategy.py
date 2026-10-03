@@ -8,6 +8,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
     _build_blank_node_query_plain,
     _build_literal_query_plain,
@@ -50,10 +51,24 @@ class OneShotStrategy(MiningStrategy):
         )
 
         _specs: list[tuple[str, str]] = [
-            ("typed-object", _build_typed_object_query_plain(context.graph_uris)),
-            ("literal", _build_literal_query_plain(context.graph_uris)),
-            ("untyped-uri", _build_untyped_uri_query_plain(context.graph_uris)),
-            ("blank-node", _build_blank_node_query_plain(context.graph_uris)),
+            (
+                "typed-object",
+                _build_typed_object_query_plain(
+                    context.graph_uris, context.type_context_graph_uris
+                ),
+            ),
+            (
+                "literal",
+                _build_literal_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
+            (
+                "untyped-uri",
+                _build_untyped_uri_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
+            (
+                "blank-node",
+                _build_blank_node_query_plain(context.graph_uris, context.type_context_graph_uris),
+            ),
         ]
 
         patterns: list[SchemaPattern] = []
@@ -153,33 +168,7 @@ class OneShotStrategy(MiningStrategy):
                         context.report.record_dropped_uri(f"{sc} {p} Literal")
                         logger.debug("Skipping invalid pattern (%s %s Literal): %s", sc, p, exc)
         elif qtype == "blank-node":
-            # Group bindings by (sc, p) to collect all blank node predicates
-            bn_map: dict[tuple[str, str], list[str]] = {}
-            for b in bindings:
-                sc = b.get("sc", {}).get("value", "")
-                p = b.get("p", {}).get("value", "")
-                bn_pred = b.get("bnPred", {}).get("value")
-                if sc and p:
-                    key = (sc, p)
-                    if key not in bn_map:
-                        bn_map[key] = []
-                    if bn_pred and bn_pred not in bn_map[key]:
-                        bn_map[key].append(bn_pred)
-            # Create patterns with collected blank node predicates
-            for (sc, p), bn_preds in bn_map.items():
-                try:
-                    patterns.append(
-                        SchemaPattern(
-                            subject_class=sc,
-                            property_uri=p,
-                            object_class="BlankNode",
-                            blank_node_predicates=bn_preds if bn_preds else None,
-                            pattern_type=PatternType.BLANK_NODE_PROPERTY,
-                        )
-                    )
-                except (ValueError, ValidationError) as exc:
-                    context.report.record_dropped_uri(f"{sc} {p} BlankNode")
-                    logger.debug("Skipping invalid pattern (%s %s BlankNode): %s", sc, p, exc)
+            patterns.extend(blank_node_patterns(bindings, context))
         else:  # untyped-uri
             for b in bindings:
                 sc = b.get("sc", {}).get("value", "")

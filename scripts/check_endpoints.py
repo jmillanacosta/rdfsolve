@@ -11,38 +11,27 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import yaml
-from SPARQLWrapper import JSON, SPARQLWrapper
+
+from rdfsolve.endpoint_health import check_endpoint_health
 
 
 def get_hostname(url: str) -> str:
     return urlparse(url).hostname or url
 
 
-def check_endpoint(name: str, url: str) -> dict:
-    start = time.time()
-    try:
-        sparql = SPARQLWrapper(url)
-        sparql.setQuery("ASK { ?s ?p ?o }")
-        sparql.setReturnFormat(JSON)
-        sparql.setTimeout(1)
-        sparql.query()
-        elapsed = int((time.time() - start) * 1000)
-        return {
-            "endpoint": url,
-            "hostname": get_hostname(url),
-            "status": "up",
-            "response_time_ms": elapsed
-        }
-    except Exception as e:
-        elapsed = int((time.time() - start) * 1000)
-        status = "timeout" if elapsed >= 1000 else "down"
-        return {
-            "endpoint": url,
-            "hostname": get_hostname(url),
-            "status": status,
-            "response_time_ms": elapsed,
-            "error": str(e)[:100]
-        }
+def check_endpoint(url: str) -> dict:
+    health = check_endpoint_health(url)
+    result = {
+        "endpoint": url,
+        "hostname": get_hostname(url),
+        "status": health.status,
+        "response_time_ms": int(health.response_time * 1000)
+        if health.response_time is not None
+        else None,
+    }
+    if health.error_message:
+        result["error"] = health.error_message[:100]
+    return result
 
 
 def check_server_group(endpoints: list[tuple[str, str]], delay: float = 1.5) -> dict:
@@ -50,7 +39,7 @@ def check_server_group(endpoints: list[tuple[str, str]], delay: float = 1.5) -> 
     for i, (name, url) in enumerate(endpoints):
         if i > 0:
             time.sleep(delay)
-        results[name] = check_endpoint(name, url)
+        results[name] = check_endpoint(url)
         status = results[name]["status"]
         print(f"  {name}: {status}")
     return results
@@ -76,14 +65,11 @@ def main():
         by_host[host].append((name, url))
 
     print(f"Checking {len(endpoints)} endpoints across {len(by_host)} servers...")
-    print(f"Strategy: parallel across servers, sequential within server\n")
+    print("Strategy: parallel across servers, sequential within server\n")
 
     results = {}
-    with ThreadPoolExecutor(max_workers=len(by_host)) as ex:
-        futures = {
-            ex.submit(check_server_group, eps): host
-            for host, eps in by_host.items()
-        }
+    with ThreadPoolExecutor(max_workers=max(1, len(by_host))) as ex:
+        futures = {ex.submit(check_server_group, eps): host for host, eps in by_host.items()}
 
         for future in as_completed(futures):
             host = futures[future]
@@ -91,10 +77,7 @@ def main():
             host_results = future.result()
             results.update(host_results)
 
-    report = {
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-        "endpoints": results
-    }
+    report = {"checked_at": datetime.now(timezone.utc).isoformat(), "endpoints": results}
 
     output = args.output or (repo / "output" / "endpoint_status.json")
     output.parent.mkdir(parents=True, exist_ok=True)

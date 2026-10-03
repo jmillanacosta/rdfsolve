@@ -28,10 +28,11 @@
     /></a>
 </p>
 
-An RDF toolkit for retrieving SPARQL endpoint and RDF dump metadata, testing
-endpoint availability, running queries with batching and retries, extract and
-convert schemas between descriptive (VoID) and validation (SHACL) formats,
-generate typed Python models (Pydantic), and derive mappings across datasets.
+Tools and MCP to retrieve RDF metadata, test endpoint availability, run batched
+SPARQL queries and maintain source registries. Extract and convert schemas,
+generate typed Python clients, follow links between records and derive mappings
+across datasets. Keep the queries and results behind each exploration, and
+export back into RDF, allowing to generate RDF subsets.
 
 ## Installation
 
@@ -40,6 +41,78 @@ pip install rdfsolve
 ```
 
 ## Quick Start
+
+### Mine a local RDF snapshot
+
+```python
+from rdflib import Graph
+from rdfsolve import SchemaMiner
+
+graph = Graph().parse("data.ttl", format="turtle")
+with SchemaMiner.from_graph(graph, strategy="one-shot", delay=0) as miner:
+    schema = miner.mine(dataset_name="example")
+    report = miner.last_report
+print(len(schema.patterns), len(schema.collections or []))
+```
+
+Local mining uses RDFLib queries. `one-shot` sends four unpaged discovery
+queries; `two-phase` batches classes. Runtime depends on graph structure;
+compare report phases before choosing a strategy. Counting is enabled by
+default. Set `counts=False` if the task needs model structure without
+population/count enrichment; structural coverage checks still run.
+
+### Mine around chosen resources
+
+A large endpoint does not have to be mined completely when a client reads only
+some resources. `ScopeStrategy` reads every statement of seed subjects, of a
+sample of the members of chosen classes, and of the resources that chosen
+predicates reach from them in one hop. The schema is small, and a new run shows
+when the statements of these resources change. On Wikidata, items have no
+rdf:type: they are classified by P31, and by the class that an IRI prefix gives.
+`WikibaseScopeStrategy` also names each predicate after its property label
+(`wdt:P50` is `author`, `p:P50` is `author statement`).
+
+```python
+from rdfsolve import SchemaMiner
+from rdfsolve.mining.wikibase_strategy import WikibaseScopeStrategy
+
+WD = "http://www.wikidata.org/entity/"
+strategy = WikibaseScopeStrategy(
+    [WD + "Q42"],
+    follow=["http://www.wikidata.org/prop/P50"],
+    membership="http://www.wikidata.org/prop/direct/P31",
+    prefix_classes={WD + "Q": "http://wikiba.se/ontology#Item"},
+)
+with SchemaMiner("https://query.wikidata.org/sparql", strategy=strategy, counts=False) as miner:
+    schema = miner.mine(dataset_name="wikidata-around-q42")
+```
+
+Local SPARQL uses Oxigraph by default. Choose `local_backend="rdflib"` on
+`SchemaMiner.from_graph(...)`, `Client(...)`, `Client.open(...)`, or
+`MinedSchema.from_void(...)` to use RDFLib. Graph Store downloads use the
+same option on `SchemaMiner(...)`. HTTP endpoints use their own query engine.
+
+Oxigraph reads a snapshot of the supplied graph or dataset. Reopen the miner
+or client after changing the input. Named graphs, blank-node identifiers and
+literal forms are retained. If Oxigraph storage would change terms, or named graphs share triples, RDFLib
+executes the queries and a warning explains why. The overlap fallback preserves
+set-based RDF merge counts across multiple `FROM` clauses. Mining reports and client
+session metadata record the requested backend, actual engine, version and
+fallback reason under `local_backend`. RDFLib remains the graph/term API for
+parsing, authoring, exports and SHACL validation. No graph digest is computed.
+
+In-memory graphs use bulk structural mining automatically. One SPARQL result
+supplies uncovered edges, exact counts, distinct nodes and witness bindings.
+Recount and witness queries remain available for independent verification.
+A typed graph with no uncovered edges skips structural profile discovery.
+This path retains uncovered bindings in memory; SPARQL endpoints keep
+aggregate queries. Local reports separate `graph-census` (triple and type-presence
+counts), `structural-discovery` (uncovered edges and property sets), and
+`structural-patterns` (profile assembly). Query timings remain available under
+`query_stats`.
+
+Collection profiles are available as `schema.collections` and under
+`document["schema"]["collections"]` in canonical JSON.
 
 ### Mine an endpoint
 
@@ -56,7 +129,7 @@ schema.enrichment = miner.query_enrichment(schema)
 # Export formats
 schema.to_void_graph()  # VoID RDF graph
 schema.to_linkml_yaml()  # LinkML schema YAML string
-schema.to_shacl()  # SHACL shapes
+schema.to_shacl()  # Deactivated observed SHACL templates
 schema.to_pydantic()  # Python source for dataset-specific Pydantic classes
 schema.to_dict()  # Versioned canonical document (dict)
 
@@ -79,6 +152,20 @@ with open("example_schema.json", "w", encoding="utf-8") as f:
 Use `schema.to_dict()` with `json.dump()` for saved rdfsolve files.
 `MinedSchema.model_json_schema()` describes the internal model;
 `schema.to_pydantic()` instead generates Python classes for the mined RDF types.
+
+#### Probe for SHACL NodeShapes
+To measure joined support for longer paths, use `navigation_hops`,
+`navigation_limit` and `navigation_probes` in the mining API:
+
+```python
+from rdfsolve.api import mine_schema
+
+schema = mine_schema(endpoint, navigation_hops=3, navigation_limit=50, navigation_probes=20)
+```
+
+The `MinedSchema` JSON retains the queries and observations and its SHACL
+exports include deactivated, nested query profiles for observed routes. See
+[the mining API](docs/source/miner.rst).
 
 ### Discover existing VoID descriptions
 
@@ -154,16 +241,34 @@ schema.to_shacl()  # To SHACL
 
 ### Typed client generation
 
-Use `rdfsolve.client_api` to find names or identifiers, then follow the results.
-For an AOPWiki schema:
+Use `Client` to find names or identifiers, then follow the selected records.
+Start from a saved schema. Opening it makes no endpoint requests and does not
+mine the data:
 
 ```python
-from rdfsolve.client_api import Client
+from rdfsolve.api import Client
 
-data = Client(schema)
+data = Client.open("aopwikirdf.schema.json")
 matches = data.find("thyroid")
 matches.types()
 ```
+
+The schema supplies the types, fields and endpoint. Searches read the data when
+you ask for it. Use `Client.open(schema)` or `schema.client()` if you already
+have a `MinedSchema` in Python.
+
+Choose another endpoint, local data, or a supported RDF schema export:
+
+```python
+data = Client.open("schema.json", source="https://example.org/sparql")
+data = Client.open("schema.json", data_file="subset.ttl")
+data = Client.open("shapes.ttl", format="shacl", source=endpoint)
+data = Client.open("void.ttl", format="void", source=endpoint)
+```
+
+Prefer canonical schema JSON: it keeps all stored fields. SHACL and VoID use
+their supported import fields. Metadata-only VoID cannot supply a typed client.
+No missing fields are filled by automatic mining.
 
 Pick the records you want and see where they lead:
 
@@ -176,8 +281,8 @@ chemicals = stressors.related("Chemical entity")
 chemicals.show("identifier")
 ```
 
-Use `values("title")` to list values across your selected records.
-Use `target_value` when you know a name but not its class:
+Use `values("title")` to list values across your selected records. Use
+`target_value` when you know a name but not its class:
 
 ```python
 from IPython.display import Markdown, display
@@ -187,49 +292,121 @@ display(paths)
 display(Markdown(data.diagram(paths=paths)))
 ```
 
-This verifies mined class routes against matching names or identifiers, ignoring case.
-It does not link records just because they share a type. Passing a second class
-instead lists possible class routes without querying the data.
-Use `diagram(paths=paths, path=1)` for the first complete path. Add
+This verifies mined class routes against matching names or identifiers, ignoring
+case. It does not link records just because they share a type. Passing a second
+class instead lists possible class routes without querying the data. Use
+`diagram(paths=paths, path=1)` for the first complete path. Add
 `instances=False` to show its classes instead of its records.
 
-Start from one record to keep the search within its connections:
+Pass the whole selection to evaluate connections for every matching resource:
 
 ```python
-name_paths = data.paths_between(pathways[0], target_value="Phenobarbital", max_hops=3)
-chemical_paths = data.paths_between(pathways[0], "Chemical entity", max_hops=3)
+pathways = data.find("lung", kind="Adverse Outcome Pathway")
+chemical_paths = data.paths_between(pathways, "Chemical entity", max_hops=2)
+pathways.summary()
+data.trace()
 ```
 
-The first finds matching names; the second finds records of the chosen class.
-Both verify the links from this pathway, not all pathways of its class.
+Record and `Results` inputs retain their exact identities in the path queries.
+The path table contains observed bindings, source query IDs and per-route
+outcomes in its `attrs`. Its coverage distinguishes partial search from no
+match. A single record selects that record's connections. Two class names
+describe schema routes.
 
-Press Tab after `pathways.fields.` to discover fields while typing.
-`show()` retrieves only the fields you ask for; displaying results does not
-send requests.
+Retrieve a discovered route and its available fields:
 
-Start directly from an endpoint with `explore(endpoint, graph=graph_iri)`.
-Show each query and its returned data with `data.query_log()`.
+```python
+route = chemical_paths.iloc[0]["Reference"]
+result = data.retrieve(route, source="pathway", target="chemical", fields={"chemical": ["title"]})
+result.table()
+data.query_log()
+```
+
+Missing optional fields preserve the linked records. Exact RDF terms remain in
+`result.rows`; `data.query_log()` shows the queries and their results.
+
+Read the generated types and field paths without endpoint requests:
+
+```python
+data.describe(owners=["Key Events"], targets=["cellular organisms"])
+data.describe("measurement", owners=["Key Events"], source=False)
+```
+
+Start with a label or literal when the relevant class is unknown:
+
+```python
+matches = data.describe("donepezil")
+matches[["Kind", "Resource", "Types", "Predicate", "Literal", "Graph"]]
+matches.attrs["coverage"]
+```
+
+The source lookup tries the supplied spelling, lowercase, uppercase and title
+case as exact plain RDF literals. It uses direct object lookups, with no automatic
+substring scan. Pass an RDFLib `Literal` to match a specific language or datatype,
+for example `data.describe(Literal("Donepezil", lang="en"))`. These finite variants
+do not cover every mixed-case spelling or language. Coverage records the literals
+searched and marks budget-limited results as partial.
+
+Disambiguate a name with an identifier supplied by the user:
+
+```python
+chemical = data.describe("donepezil", identifier="CHEBI:53289")
+chemical.attrs["resolution"]
+```
+
+The identifier restricts the lookup before its row limit. Registered CURIEs
+use Bioregistry namespace candidates; full IRIs use exact identity. A candidate
+must also have matching literal evidence in the selected source. Multiple
+observed namespace forms remain ambiguous. Registry version and candidates
+are retained in the resolution metadata.
+
+`connections` accepts description tables directly when they contain one
+verified source identity. It rejects ambiguous, partial and external-only
+descriptions before querying; it never selects the first row.
+
+Resource matches retain reusable references for `prepare_network(values=...)`,
+including resources whose types have no generated model. Schema matches and
+external ontology candidates appear separately in `Kind`; ontology candidates
+require `ontology_grounding` and do not establish presence in the data source.
+Use `source=False` for schema-only inspection. A `targets` filter selects schema
+fields only. For broader text searches, use `search` with a selected class and
+fields.
+
+Names resolve within their class. Exact generated names remain usable when human
+labels collide. Missing metadata produces an empty description search; the
+client does not invent vocabulary for an unexplained field.
+
+Press Tab after `pathways.fields.` to discover fields while typing. `show()`
+retrieves only the fields you ask for; displaying results does not send
+requests.
+
+To create a new schema, use `SchemaMiner` separately and save its output.
+`explore(endpoint, graph=graph_iri)` is a quick mining shortcut, not required to
+open a client. Show each query and its returned data with `data.query_log()`.
 Save the queries, results, and steps with `data.save_session("session.json")`,
 then close the connection with `data.close()`.
 
-[Walk through the thyroid investigation](notebooks/pydantic_clients/01_mine_explore.ipynb).
+[Example](notebooks/pydantic_clients/01_mine_explore.ipynb).
+
+Client operations are in `rdfsolve.client`; the model tools are in
+`rdfsolve.mcp`. `rdfsolve.api` gives both for notebook use.
 
 ### SparqlHelper
 
 Large SPARQL queries can time out, and endpoints can fail intermittently.
 `SparqlHelper` retries temporary failures and fetches large results in smaller
-batches. It reduces page sizes with LIMIT/OFFSET steps after timeouts and spaces
-requests to ease the load on endpoints.
+batches. It reduces page sizes after timeouts and spaces requests to ease the
+load on endpoints.
 
 ```python
 from rdfsolve.sparql_helper import SparqlHelper
 
 endpoint = "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
-query = "SELECT DISTINCT ?class WHERE { ?s a ?class } ORDER BY ?class"
+query = "SELECT DISTINCT ?class WHERE { ?s a ?class }"
 
 with SparqlHelper(endpoint, timeout=30) as helper:
     pages = helper.prepare_paginated_query(query)
-    for rows in helper.select_chunked(pages, chunk_size=100):
+    for rows in helper.select_chunked(pages, chunk_size=100, pagination="cursor"):
         print(rows)
 ```
 
@@ -237,8 +414,16 @@ For a single request, use `helper.select(query)`. Use `helper.ask(query)` for
 yes/no questions or `helper.construct_graph(query)` to retrieve RDF. No mining
 pipeline or registry is required.
 
-Paging helps with result size; it cannot guarantee that an expensive query will
-finish.
+Cursor paging continues after the last returned value, avoiding server limits on
+large offsets. For `SELECT DISTINCT`, it uses the returned columns as keys;
+`cursor_keys=["class"]` selects keys explicitly. Keys must identify each row.
+Use `pagination="offset"` for offset paging. Paging cannot make every costly
+query finish.
+
+Mining accepts the same option:
+`SchemaMiner(endpoint_url=endpoint, pagination="cursor")` or
+`mine_schema(endpoint, pagination="cursor")`. It applies to paginated phases and
+their fallbacks; the mining report records the choice.
 
 ### Keep and share useful queries
 
@@ -270,10 +455,10 @@ print(helper.queries.paths)  # Choose a property shape
 query = helper.queries.path_query(property_shape_id, entity_iri, limit=20)
 ```
 
-### Add metadata to a source registry
+### Retrieve source metadata
 
-Start with a name and endpoint. Add `sources_file` to create or update a YAML
-entry; omit it to preview without writing:
+Start with a name and endpoint. Add `sources_file` to read existing settings.
+The function returns observations and leaves the registry unchanged:
 
 ```python
 from rdfsolve import enrich_source
@@ -291,8 +476,8 @@ This tests availability and retrieves dataset descriptions, not instance
 patterns. It fills supported metadata such as the description, license, and
 version when one dataset can be identified. Missing or ambiguous metadata stays
 blank; failed retrieval leaves previous values intact. Existing query settings
-and unrelated fields are kept. Saves make unique backups; YAML comments and
-layout are not preserved.
+and unrelated fields are kept. Save the returned observations in a separate
+report. Edit the human-curated source specification directly.
 
 Metadata comes from the default graph unless `metadata_graph_uris=[...]` is
 supplied or stored. Add `discover_void=True` to find published VoID descriptions
@@ -324,10 +509,10 @@ Mine multiple endpoints from a YAML file:
   endpoint: https://sparql.rhea-db.org/sparql
 ```
 
-To populate an entry from its name and endpoint, use
-`enrich_source(name, endpoint, sources_file="sources.yaml")` as above. Retrieved
-metadata is separate from settings such as `chunk_size`, `class_batch_size`, and
-`timeout`; choose those for the workload.
+To retrieve metadata for an entry, use
+`enrich_source(name, endpoint, sources_file="sources.yaml")` as above. The registry
+is read-only. Keep retrieved observations in separate reports; choose settings
+such as `chunk_size`, `class_batch_size`, and `timeout` for the workload.
 
 **Run batch mining:**
 
@@ -364,21 +549,6 @@ Mine local RDF dumps using QLever:
 python scripts/pipeline.py --sources-file sources.yaml --local-only
 ```
 
-### Probe endpoints for entity matching
-
-Match URI patterns across endpoints to find datasets containing specific entity
-types:
-
-```python
-from rdfsolve.instance_matcher import probe_endpoint
-
-match = probe_endpoint(
-    endpoint_url="https://sparql.example.org/sparql",
-    uri_prefix="http://identifiers.org/ncbigene/",
-    limit=100,
-)
-```
-
 ### Check endpoint health
 
 Test endpoint availability and response times:
@@ -394,14 +564,6 @@ check_endpoint_health("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
 # )
 ```
 
-### Infer cross-dataset mappings
-
-Derive new mappings through inversion and transitivity:
-
-```bash
-python scripts/infer_mappings.py mappings/*.jsonld -o inferred.jsonld --transitivity
-```
-
 ### Build connectivity graphs
 
 Create graphs showing dataset relationships via shared classes and mappings:
@@ -410,25 +572,70 @@ Create graphs showing dataset relationships via shared classes and mappings:
 python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
 ```
 
-### Let an agent use your typed client
+### Questions through MCP
 
-Install `rdfsolve[agents]` to give a PydanticAI agent the same classes, searches,
-and links of the typed client. Records stay in Python; queries and returned
-data remain in the session log.
+Install `rdfsolve[agents,mcp]`. A saved schema and one source (an endpoint or a
+local RDF file) are sufficient:
 
 ```python
-from pydantic_ai.usage import UsageLimits
-from rdfsolve.pydantic_ai import ClientTools
+from rdfsolve.api import ask_rdf
 
-tools = ClientTools(data)
-agent = tools.agent("openai:gpt-5.4-mini-2026-03-17")
-answer = await agent.run(
-    "Find Phenobarbital and tell me which classes and links describe it.",
-    usage_limits=UsageLimits(request_limit=8, tool_calls_limit=12),
+answer = await ask_rdf(
+    "Which Key Events of AOPs have NCBI gene identifiers?",
+    schema="notebooks/mcp/schemas/aopwikirdf.schema.json",
+    base_url="http://127.0.0.1:8080/v1",
+    model_name="qwen36-35b-a3b",
 )
-print(answer.output)
-data.query_log()
+print(answer.text)
+if answer.state == "complete":
+    display(answer.table())
 ```
+
+The model writes SPARQL SELECT queries. Five tools help it:
+
+| Tool     | Result                                                                                                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema` | The properties of classes, with value types, counts, example values and the links to each class. Search words find classes and properties.                                |
+| `find`   | Resources by name, words in their text, IRI or registered identifier.                                                                                                     |
+| `paths`  | The shortest chains of properties between two classes, as triple patterns.                                                                                                |
+| `run`    | The first rows of a query. Known prefixes are added. Notes tell about terms that are not in the schema, columns with no value, and the triple patterns that give no rows. |
+| `answer` | The final query is run on all data (in pages on an endpoint), and the task ends. The query must select the `output_variables`.                                            |
+
+All rows of the answer go to the caller (`answer.bindings`); the model sees
+only some rows. `answer.files` names the files of the tool calls, the answer
+and the source queries. When one tool call gives the same result three times,
+the task stops.
+
+`model=` accepts another PydanticAI model. `endpoint=`, `data_file=`,
+`graph_uris=` and `output_dir=` set the source and the files.
+`ontology_grounding=True` lets `find` use ontology names (OLS, or Ontobee with
+`ontology_provider="ontobee"`) when no name in the source matches.
+`ontology_cache=` and `ontology_offline=True` give reproducible runs.
+
+The client can use the same ontology lookup directly:
+
+```python
+from rdfsolve.api import Client, Ontologies
+
+lookup = Ontologies("ols", cache="ontology-cache.json")
+with Client.open("schema.json", ontology_grounding=lookup) as data:
+    display(data.describe("measurement method", owners=["Key Event"]))
+    print(data.trace()["ontology"])
+```
+
+External definitions, synonyms and direct parents are kept as separate
+evidence, with the provider, the basis of the IRI match and the fetch time. The
+mined schema does not change. An ontology alias is used only when a record of
+the source has the same IRI or registered identifier.
+
+For Claude or another MCP host, start a stdio server:
+
+```bash
+python -m rdfsolve.mcp --schema /absolute/path/schema.json --endpoint https://example.org/sparql
+```
+
+The resource `rdfsolve://overview` gives a summary of the source for the
+instructions of the host. `rdfsolve://diagnostics` gives the source queries.
 
 ## Documentation
 
@@ -437,3 +644,76 @@ Full docs: [rdfsolve.readthedocs.io](https://rdfsolve.readthedocs.io)
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+### Query catalogues
+
+The [WikiPathways catalogue](notebooks/sparql_helper/01_sparql_examples.ipynb)
+and [AOPWiki queries to SHACL](notebooks/sparql_helper/02_aopwiki_catalog.ipynb)
+examples to load, name and save queries through `QueryCollection`.
+
+### Retrieve a connected network
+
+Use references returned by `describe()` and `paths_between()` with named roles.
+Reusing a role joins the same resource. Available child fields remain optional.
+
+```python
+from rdfsolve.api import QueryPattern
+
+query = data.prepare_network(
+    [
+        QueryPattern(reference=route, bindings=["pathway", "chemical"]),
+        QueryPattern(reference=name_field, bindings=["chemical", "name"], optional=True),
+    ],
+    outputs=["pathway", "chemical", "name"],
+)
+result = data.select(query, exhaustive=True)
+result.table()
+```
+
+`route` and `name_field` are selected discovery references. An exact restriction
+uses `values={role: term_reference}`. MCP uses these client operations to
+construct queries and returns summaries; custom SPARQL remains available through
+Python.
+
+Schema connectivity and mapping analysis: [workflow and evidence](docs/source/analysis.rst).
+
+
+### External labels during source discovery
+
+`client.describe("IC50", ontology_fallback=True)` checks an ontology service
+when no matching source-used class is found. Labelled measurement instances
+do not count as a class match. Each external candidate retains its provider,
+a scoped literal check on the candidate IRI and a class-use witness.
+Use `ontology_grounding=Ontologies(...)` to configure caching, offline use
+and the request budget.
+
+An external label does not become a source label. A negative literal check
+applies only to the recorded literal forms and graph scope. Source errors
+propagate; incomplete source results remain incomplete. Candidates remain
+separate from source identities and require review before query composition.
+`save_session()` records the lookup strategy, candidates and query evidence.
+No schema patterns are added by this lookup.
+
+
+### Resolve names when composing a query
+
+`client.resolve(name, kind="class")` returns a `Resolution`: `status`
+(`resolved`, `ambiguous` or `unresolved`), every `candidate` with its origin
+(supplied IRI, registered identifier, schema label, source label or external
+ontology), whether it is used in the selected graphs and one witness. Nothing is
+chosen by precedence; two used candidates are ambiguous. `kind="class"` matches
+nodes typed with the class (not members of its subclasses); `kind="resource"`
+matches one exact RDF term, including a class IRI used as a value. CURIEs such as
+`CHEBI:53289` resolve through registered namespaces; a supplied IRI needs a
+statement in scope. `notes` state what the constraint means, `warnings` what the
+evidence does not cover (truncated searches, related-synonym matches).
+`external_names=True` adds external ontology class names to the candidates.
+
+`client.prepare_network(patterns, outputs=..., resolve=True)` accepts class
+names, IRIs or CURIEs and field names that match exactly (case, width and
+punctuation aside). Unresolved or ambiguous classes raise `ResolutionError`
+with the full resolution. A field declared for a class other than the bound one
+is allowed but adds its owner type; the prepared query's `warnings` say so.
+Shared bindings specify the joins. Resolutions are recorded in the prepared query
+and saved session. Dataset-specific roles and graph topologies belong in the
+caller's patterns.

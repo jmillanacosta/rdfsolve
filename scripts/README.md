@@ -28,38 +28,19 @@ python scripts/pipeline.py --sources wikipathways aopwikirdf
 python scripts/pipeline.py
 ```
 
-### `test_metadata_endpoints.py`
+## Source reports
 
-Test metadata capture across all endpoints.
-
-```bash
-python scripts/test_metadata_endpoints.py
-```
-
-## Mapping Scripts
-
-### `convert_semra.py`
-
-Convert SeMRA/SSSOM files to rdfsolve format. Preserves `mapping_justification`
-field.
+`sources.yaml` is a human-curated specification. Tools read it; observations go
+into separate output files.
 
 ```bash
-python scripts/convert_semra.py mappings.sssom.tsv -o output.jsonld
+python scripts/check_endpoints.py --sources data/sources.yaml --output output/endpoint_status.json
+python scripts/discover_void_partitions.py --sources data/sources.yaml --output-dir output/void
 ```
 
-### `infer_mappings.py`
-
-Run inference on mapping files (inversion, transitivity). Preserves
-`mapping_justification`.
-
-```bash
-python scripts/infer_mappings.py \
-    mappings/*.jsonld \
-    -o inferenced.jsonld \
-    --inversion \
-    --transitivity \
-    --chain-cutoff 3
-```
+These are the endpoint-health and VoID-discovery entry points. Source settings
+are edited directly. The package `enrich_source` function returns observations;
+its `sources_file` argument supplies read-only context.
 
 ## Graph Scripts
 
@@ -72,6 +53,39 @@ python scripts/build_graphs.py \
     output/schemas/ \
     --output results/graphs/ \
     --mappings output/mappings/
+```
+
+## Links between datasets
+
+### `verify_links.py`
+
+Infers the links between the datasets of runs or releases from their schemas and verifies each
+one: between two local indexes every value is looked up (exact share), otherwise a sample (share
+with a Wilson interval). For verified joins between local indexes it also writes the class
+associations (entity pairs and the coverage of each class). Local indexes are served on demand,
+at most `--servers` at a time. Writes `links.tsv`, `class_associations.tsv` and `failed.json`
+after each link and continues from them when run again. `analyze_mappings.py` then writes the
+SSSOM mapping set and the VoID linksets of the kept links.
+
+```bash
+python scripts/verify_links.py RUN_DIR... --data-dir ../data --output LINKS_DIR \
+    --replacements sets/*.sssom.tsv
+```
+
+## Declared identities
+
+### `declared_identities.py`
+
+Reads every identity that a local source declares (Bio2RDF x-* cross-references,
+skos:exactMatch, owl:sameAs) from its QLever index and writes
+`<source>_declared_identities.sssom.tsv` with the flags of each statement, and
+`<source>_declared_identities.json` with the verdict. A file with a statement that fails the
+identity checks is bad; the release manifest carries the verdict. Each table carries the
+licence of its source, from a licence table (TSV: name, spdx, evidence_url).
+
+```bash
+python scripts/declared_identities.py hgnc aopwikirdf --data-dir ../data --output RUN_DIR \
+    --licences ../article/licences/licences.tsv
 ```
 
 ## SLURM Jobs
@@ -94,37 +108,6 @@ Download and index local RDF dumps with QLever.
 sbatch scripts/slurm_local.sh
 ```
 
-### `slurm_inference.sh`
-
-Run mapping inference pipeline.
-
-```bash
-sbatch scripts/slurm_inference.sh
-```
-
-### `slurm_graphs.sh`
-
-Build connectivity graphs.
-
-```bash
-sbatch scripts/slurm_graphs.sh
-```
-
-### `slurm_full.sh`
-
-Run complete pipeline.
-
-```bash
-sbatch scripts/slurm_full.sh
-```
-
-### `slurm_void_discovery.sh`
-
-Discover VoID descriptions.
-
-```bash
-sbatch scripts/slurm_void_discovery.sh
-```
 
 ## Environment Variables
 
@@ -174,15 +157,6 @@ queries. The default download cap is 64 MiB, not a RAM limit. Keep large
 datasets in the disk-backed QLever workflow. Retrieval failures stop the run;
 they do not switch silently to another data source.
 
-```bash
-uv run scripts/test_aopwiki_graph_store.py --output-dir ../graph-store-aopwiki
-# Add --mine to run local instance mining after the count check.
-```
-
-At the September 8 check, AOPWiki returned 10,001 Graph Store triples for
-`http://aopwiki.org/`, while SPARQL counted 338,061. The script rejects this
-response. Do not treat it as a complete local dataset.
-
 For configured pipeline sources:
 
 ```bash
@@ -200,3 +174,35 @@ processes through shared storage. The mining launcher sets this explicitly. Use
 that same directory in interactive sessions to coordinate with jobs. Restart
 existing Python sessions to load changes; old processes do not gain these limits
 automatically.
+
+## Offline registry audit
+
+```bash
+python scripts/check_registry.py data/sources.yaml \
+  --overrides data/identity_overrides.yaml --output output/registry_checks.tsv
+```
+
+The report lists structure, scope and identity findings without network requests
+or registry edits. Exit status 1 means the report contains errors that block the
+freeze. Warnings require review. An existing output file is not overwritten.
+Provider membership is listed, but selected grouped members and prepared inputs
+need a separate run-level check; B7 reports them as not checked.
+
+
+## Curated source roles
+
+A source has `source_role: dataset` by default. Mark an access/catalogue
+record with `source_role: service`. The pipeline excludes service records
+from remote, local and grouped mining. Identity resolution keeps their access
+provenance but excludes them from dataset groups and candidate pairs.
+
+Use `skip_mining: true` to hold a dataset out of mining until its scope is
+resolved. It remains a dataset for identity review and release inventory.
+Explicit selection of an excluded source fails with its name and reason.
+These fields apply to registry-driven pipeline selection; direct endpoint
+calls to SchemaMiner do not read the registry.
+
+Releases retain service names in `service_records` and their full provenance
+in the hashed source registry. Summaries distinguish `registry_entries`,
+`dataset_entries` and `service_records`. Older registries without these fields
+keep their existing meaning; no service role is inferred from names or URLs.

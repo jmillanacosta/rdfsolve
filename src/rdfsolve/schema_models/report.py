@@ -211,11 +211,12 @@ class MiningReport(BaseModel):
 
     @computed_field  # type: ignore[prop-decorator]
     @property
-    def completion_state(self) -> Literal["complete", "partial", "failed"]:
+    def completion_state(self) -> Literal["complete", "partial", "failed", "unfinished"]:
         """Distinguish saved rows from a complete run; allow recovered retries."""
+        if not self.finished_at:
+            return "unfinished"
         incomplete = (
-            not self.finished_at
-            or self.abort_reason
+            self.abort_reason
             or self.query_failures
             or self.dropped_invalid_uris
             or any(phase.error or not phase.finished_at for phase in self.phases)

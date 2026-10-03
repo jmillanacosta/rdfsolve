@@ -2,36 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from rdfsolve.ontology.vocabulary import METADATA_RECORD_TYPES, NOT_DATA_TYPES
 
-if TYPE_CHECKING:
-    from rdfsolve.sparql_helper import SparqlHelper
+ONTOLOGY_METACLASSES = NOT_DATA_TYPES
 
-ONTOLOGY_METACLASSES = frozenset(
-    {
-        "http://www.w3.org/2002/07/owl#Class",
-        "http://www.w3.org/2000/01/rdf-schema#Class",
-        "http://www.w3.org/2002/07/owl#ObjectProperty",
-        "http://www.w3.org/2002/07/owl#DatatypeProperty",
-        "http://www.w3.org/2002/07/owl#AnnotationProperty",
-        "http://www.w3.org/2002/07/owl#FunctionalProperty",
-        "http://www.w3.org/2002/07/owl#InverseFunctionalProperty",
-        "http://www.w3.org/2002/07/owl#TransitiveProperty",
-        "http://www.w3.org/2002/07/owl#SymmetricProperty",
-        "http://www.w3.org/2002/07/owl#AsymmetricProperty",
-        "http://www.w3.org/2002/07/owl#ReflexiveProperty",
-        "http://www.w3.org/2002/07/owl#IrreflexiveProperty",
-        "http://www.w3.org/2002/07/owl#Restriction",
-        "http://www.w3.org/2002/07/owl#Axiom",
-        "http://www.w3.org/2002/07/owl#Ontology",
-        "http://www.w3.org/ns/shacl#SPARQLExecutable",
-        "http://www.w3.org/ns/shacl#NodeShape",
-        "http://www.w3.org/ns/shacl#PropertyShape",
-        "http://rdfs.org/ns/void#Dataset",
-        "http://rdfs.org/ns/void#Linkset",
-        "http://www.w3.org/ns/dcat#Dataset",
-        "http://www.w3.org/ns/dcat#Distribution",
-    }
-)
-
-__all__ = ["ONTOLOGY_METACLASSES"]
+__all__ = ["METADATA_RECORD_TYPES", "ONTOLOGY_METACLASSES"]

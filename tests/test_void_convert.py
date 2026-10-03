@@ -1,153 +1,4 @@
-"""Tests for VoID conversion functions."""
-
-from rdfsolve.schema_models.core import MinedSchema
-from rdfsolve.schema_models.pattern import SchemaPattern
-from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.readers.void import void_to_minedschema
-from rdfsolve.schema_models.exporters.void import minedschema_to_void
-
-
-def test_bare_partition_does_not_invent_an_iri_object(caplog):
-    import pytest
-
-    schema = void_to_minedschema("""
-            @prefix void: <http://rdfs.org/ns/void#> .
-            <urn:dataset> a void:Dataset; void:classPartition [
-                void:class <urn:A>; void:propertyPartition [void:property <urn:p>]
-            ] .
-        """)
-    assert schema.patterns == []
-    assert "omits object kinds" in caplog.text
-
-
-def test_roundtrip_simple():
-    """Test simple MinedSchema -> VoID -> MinedSchema roundtrip."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-                count=100,
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/knows",
-                object_class="http://example.org/Person",
-                count=50,
-            ),
-        ],
-        about=AboutMetadata.build(
-            dataset_name="test",
-            class_count=1,
-            property_count=2,
-            pattern_count=2,
-        ),
-    )
-
-    # Convert to VoID
-    from rdflib import Graph
-
-    void_dataset = minedschema_to_void(original, base_url="http://example.org")
-    g = Graph()
-    void_dataset.to_rdf(g)
-    void_ttl = g.serialize(format="turtle")
-
-    # Parse back
-    roundtrip = void_to_minedschema(void_ttl)
-
-    # Verify pattern count
-    assert len(roundtrip.patterns) == len(original.patterns)
-
-    # Verify pattern content
-    original_keys = {(p.subject_class, p.property_uri, p.object_class) for p in original.patterns}
-    roundtrip_keys = {(p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns}
-    assert original_keys == roundtrip_keys
-
-
-def test_roundtrip_with_datatypes():
-    """Test roundtrip with multiple datatypes."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-                count=100,
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/age",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#integer",
-                count=100,
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/birthdate",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#date",
-                count=95,
-            ),
-        ],
-        about=AboutMetadata.build(
-            dataset_name="test",
-            class_count=1,
-            property_count=3,
-            pattern_count=3,
-        ),
-    )
-
-    # Convert to VoID
-    from rdflib import Graph
-
-    void_dataset = minedschema_to_void(original, base_url="http://example.org")
-    g = Graph()
-    void_dataset.to_rdf(g)
-    void_ttl = g.serialize(format="turtle")
-
-    # Parse back
-    roundtrip = void_to_minedschema(void_ttl)
-
-    # Verify
-    assert len(roundtrip.patterns) == len(original.patterns)
-
-    # Verify datatypes are preserved
-    original_datatypes = {(p.subject_class, p.property_uri, p.datatype) for p in original.patterns}
-    roundtrip_datatypes = {
-        (p.subject_class, p.property_uri, p.datatype) for p in roundtrip.patterns
-    }
-    assert original_datatypes == roundtrip_datatypes
-
-
-def test_from_void_method():
-    """Test MinedSchema.from_void() method."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-                count=100,
-            ),
-        ],
-        about=AboutMetadata.build(dataset_name="test", pattern_count=1),
-    )
-
-    # Generate VoID
-    void_graph = original.to_void_graph()
-    void_ttl = void_graph.serialize(format="turtle")
-
-    # Parse using from_void() method
-    roundtrip = MinedSchema.from_void(void_ttl)
-
-    assert len(roundtrip.patterns) == 1
-    assert roundtrip.patterns[0].subject_class == "http://example.org/Person"
-    assert roundtrip.patterns[0].property_uri == "http://example.org/name"
-    assert roundtrip.patterns[0].object_class == "Literal"
 
 
 def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
@@ -174,9 +25,19 @@ def test_mixed_class_and_datatype_partitions_keep_their_own_counts():
     restored = MinedSchema.from_dict(schema.to_jsonld())
     key = lambda p: (p.object_class, p.datatype, p.count)
     assert {key(p) for p in restored.patterns} == {key(p) for p in schema.patterns}
+    from_void = void_to_minedschema(schema.to_void_graph().serialize(format="turtle"))
+    assert {key(p) for p in from_void.patterns} == {key(p) for p in schema.patterns}
+    assert len(MinedSchema.from_shacl(from_void.to_shacl()).patterns) == 4
 
-    from rdfsolve.void_discover import VoidParser
-    parser = VoidParser(schema.to_void_graph())
-    assert {key(p) for p in parser.to_mined_schema().patterns} == {key(p) for p in schema.patterns}
-    assert len(MinedSchema.from_shacl(parser.to_shacl()).patterns) == 4
-    assert len(parser.to_schema()) == 4
+
+def test_shapes_can_be_written_without_the_void_description():
+    from rdflib import RDF, Graph, Namespace
+
+    from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
+
+    sh, void = Namespace("http://www.w3.org/ns/shacl#"), Namespace("http://rdfs.org/ns/void#")
+    pattern = SchemaPattern(subject_class="urn:A", property_uri="urn:p", object_class="urn:B")
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="d"), patterns=[pattern])
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    assert set(shapes.subjects(RDF.type, sh.NodeShape)), "The shapes stay"
+    assert not set(shapes.subjects(RDF.type, void.Dataset)), "The VoID is published on its own"

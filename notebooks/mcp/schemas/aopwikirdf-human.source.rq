@@ -1,0 +1,7 @@
+CONSTRUCT { ?s ?p ?o . ?o ?q ?v . ?v a ?type . } WHERE { GRAPH <http://aopwiki.org/> {
+          { { SELECT DISTINCT ?s WHERE { ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> ; <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?human . VALUES ?human { <http://purl.bioontology.org/ontology/NCBITAXON/9606> } } ORDER BY ?s LIMIT 8 }
+            UNION
+            { SELECT DISTINCT ?s WHERE { ?s a <http://aopkb.org/aop_ontology#AdverseOutcomePathway> . FILTER NOT EXISTS { ?s <http://purl.bioontology.org/ontology/NCBITAXON/131567> ?human . VALUES ?human { <http://purl.bioontology.org/ontology/NCBITAXON/9606> } } } ORDER BY ?s LIMIT 8 } }
+          ?s ?p ?o . FILTER(!isIRI(?o) || REGEX(STR(?o), "^[A-Za-z][A-Za-z0-9+.-]*:"))
+          OPTIONAL { FILTER(isIRI(?o)) ?o ?q ?v . FILTER(!isIRI(?v) || REGEX(STR(?v), "^[A-Za-z][A-Za-z0-9+.-]*:")) OPTIONAL { ?v a ?type } }
+        } }

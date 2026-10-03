@@ -4,19 +4,25 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve._outcomes import QueryFailure, QueryOutcome
+from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve._uri import get_local_name, pick_label
 from rdfsolve.mining.query_builders import (
+    _build_batched_blank_node_count_query,
     _build_batched_literal_count_query,
+    _build_batched_literal_objects_query,
     _build_batched_typed_count_query,
     _build_batched_untyped_count_query,
     _build_label_query,
     _graph_clause,
+    _graph_scope,
+    _subject_type_pattern,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.models import SchemaPattern
+from rdfsolve.sparql_helper import EndpointRateLimitError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,6 +31,40 @@ if TYPE_CHECKING:
     from rdfsolve.sparql_helper import SparqlHelper
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class _PatternCount:
+    """One graph-attributed count result for a schema pattern."""
+
+    triples: int
+    distinct_subjects: int | None
+    distinct_objects: int | None
+
+
+def _count_from_binding(binding: dict[str, Any]) -> _PatternCount | None:
+    """Parse one count row without turning malformed metrics into zeros."""
+    try:
+        triples = int(binding["cnt"]["value"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    def optional_int(name: str) -> int | None:
+        """Return an integer binding, or None when it is absent or malformed."""
+        value = binding.get(name, {}).get("value")
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    return _PatternCount(
+        triples=triples,
+        distinct_subjects=optional_int("subjects"),
+        distinct_objects=optional_int("objects"),
+    )
+
 
 __all__ = [
     "enrich_patterns_with_counts",
@@ -39,28 +79,31 @@ def query_class_entity_counts(
     report: ReportCollector,
     batch_size: int = 50,
     delay: float = 0,
+    states_out: dict[str, QueryState] | None = None,
+    type_context_graph_uris: list[str] | None = None,
 ) -> dict[str, int]:
     """Count distinct typed entities, not overlapping pattern rows."""
     counts: dict[str, int] = {}
     if batch_size < 1:
         raise ValueError("Class count batch size must be positive")
     batch_size = min(batch_size, 10)
-    opening, closing = _graph_clause(graph_uris)
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
     phase = report.start_phase("class-entity-counts")
     for offset in range(0, len(classes), batch_size):
         batch = classes[offset : offset + batch_size]
-        aggregate = "COUNT(DISTINCT ?entity)" if graph_uris and len(graph_uris) > 1 else "COUNT(*)"
+        aggregate = "COUNT(DISTINCT ?entity)"
         branches = [
             f"{{ SELECT (<{iri}> AS ?class) ({aggregate} AS ?count) WHERE {{ "
-            f"{opening} ?entity a <{iri}> . {closing} }} }}"
+            f"{_subject_type_pattern('?entity', f'<{iri}>', type_context_graph_uris)} }} }}"
             for iri in batch
         ]
-        query = "SELECT ?class ?count WHERE { " + " UNION ".join(branches) + " }"
+        query = f"SELECT ?class ?count {dataset} WHERE {{ " + " UNION ".join(branches) + " }"
         started = time.monotonic()
         outcome = select_outcome(query, "class-entity-counts", helper, batch, graph_uris)
         report.record_query(
             "class-entity-counts", time.monotonic() - started, success=outcome.state == "complete"
         )
+        batch_found: set[str] = set()
         for row in outcome.rows:
             try:
                 iri = row["class"]["value"]
@@ -68,6 +111,7 @@ def query_class_entity_counts(
                 if iri not in batch or count < 0 or iri in counts:
                     raise ValueError("Invalid or duplicate class count")
                 counts[iri] = count
+                batch_found.add(iri)
             except (KeyError, TypeError, ValueError) as error:
                 outcome.state = "partial"
                 outcome.failures.append(
@@ -75,7 +119,7 @@ def query_class_entity_counts(
                         "invalid_response", str(error), "class-entity-counts", batch, graph_uris
                     )
                 )
-        missing = sorted(set(batch) - counts.keys())
+        missing = sorted(set(batch) - batch_found)
         if missing:
             outcome.state = "partial" if outcome.rows else "failed"
             outcome.failures.append(
@@ -87,6 +131,11 @@ def query_class_entity_counts(
                     graph_uris,
                 )
             )
+        if states_out is not None:
+            for iri in batch_found:
+                states_out[iri] = outcome.state
+            for iri in missing:
+                states_out[iri] = "failed" if not outcome.rows else "partial"
         report.record_outcome(outcome)
         if delay and offset + batch_size < len(classes):
             time.sleep(delay)
@@ -104,6 +153,9 @@ def enrich_patterns_with_counts(
     class_chunk_size: int | None,
     unsafe_paging: bool,
     delay: float,
+    class_batches: list[list[str]] | None = None,
+    type_context_graph_uris: list[str] | None = None,
+    shared_extensions: dict[str, str] | None = None,
 ) -> list[SchemaPattern]:
     """Run COUNT queries and merge counts into patterns.
 
@@ -117,37 +169,41 @@ def enrich_patterns_with_counts(
         patterns: Patterns to enrich with counts
         helper: SPARQL helper for query execution
         graph_uris: Named graphs to restrict queries to
+        type_context_graph_uris: Extra graphs for subject and object types
         report: Report collector for tracking query execution
         collect_bindings: Function to collect paginated results
         class_batch_size: Number of classes per batch
         class_chunk_size: Page size for class pagination
         unsafe_paging: Drop DISTINCT for faster paging
         delay: Delay between batches (seconds)
+        class_batches: Batches planned during pattern mining; subject classes
+            they do not cover are counted in fixed batches of *class_batch_size*
+        shared_extensions: Classes verified to have the same members as another
+            class; their counts are copied from that class instead of queried
 
     Returns:
         Patterns with count field populated
     """
     # Collect unique subject classes from already-mined patterns
-    subject_classes = sorted({p.subject_class for p in patterns})
+    shared = shared_extensions or {}
+    subject_classes = sorted({p.subject_class for p in patterns} - shared.keys())
     if not subject_classes:
         return patterns
 
     bs = class_batch_size
     total = len(subject_classes)
-    n_batches = (total + bs - 1) // bs
-    logger.info(
-        "Counting phase: %d classes in %d batches of ≤%d …",
-        total,
-        n_batches,
-        bs,
-    )
+    wanted = set(subject_classes)
+    batches = [kept for batch in class_batches or [] if (kept := [c for c in batch if c in wanted])]
+    covered = {c for batch in batches for c in batch}
+    rest = [c for c in subject_classes if c not in covered]
+    batches.extend(rest[i : i + bs] for i in range(0, len(rest), bs))
+    n_batches = len(batches)
+    logger.info("Counting phase: %d classes in %d batches …", total, n_batches)
 
-    # Build lookup: (sc, p, oc) -> count
-    counts: dict[tuple[str, str, str], int] = {}
+    # Build lookup: (sc, p, oc) -> {graph or "" : count}
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]] = {}
 
-    for batch_idx in range(n_batches):
-        start = batch_idx * bs
-        batch = subject_classes[start : start + bs]
+    for batch_idx, batch in enumerate(batches):
         label = f"batch {batch_idx + 1}/{n_batches}"
 
         _fetch_typed_count_batch(
@@ -160,6 +216,7 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
         _fetch_literal_count_batch(
             batch,
@@ -171,8 +228,9 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
-        _fetch_untyped_count_batch(
+        _fetch_resource_count_batch(
             batch,
             label,
             counts,
@@ -182,12 +240,32 @@ def enrich_patterns_with_counts(
             report,
             class_chunk_size or 10000,
             unsafe_paging,
+            type_context_graph_uris,
         )
+
+        if any(p.object_class == "BlankNode" and p.subject_class in batch for p in patterns):
+            _fetch_resource_count_batch(
+                batch,
+                label,
+                counts,
+                helper,
+                graph_uris,
+                collect_bindings,
+                report,
+                class_chunk_size or 10000,
+                unsafe_paging,
+                type_context_graph_uris,
+                object_class="BlankNode",
+            )
 
         # Delay between batches
         if delay > 0:
             time.sleep(delay)
 
+    for copy, source in shared.items():
+        for (cls, prop, obj), metric in list(counts.items()):
+            if cls == source:
+                counts[(copy, prop, obj)] = metric
     logger.info(
         "Counting phase: collected %d count entries",
         len(counts),
@@ -209,9 +287,39 @@ def enrich_patterns_with_counts(
                 pat.property_uri,
                 pat.object_class,
             )
-        cnt = counts.get(key)
+        per_graph = counts.get(key)
+        if per_graph is None:
+            enriched.append(pat.model_copy(update={"count": None}))
+            continue
+        attributed = {graph: metric.triples for graph, metric in per_graph.items() if graph}
+        # Distinct counts are only safe to expose directly when the selected
+        # scope has at most one named graph (or the endpoint default graph).
+        # Summing per-graph distinct counts across several graphs would double
+        # count subjects/objects repeated in multiple graphs. Dataset-scope
+        # support is represented separately by PropertyUsageEvidence.
+        distinct_subjects = None
+        distinct_objects = None
+        if not graph_uris or len(graph_uris) <= 1:
+            metrics = list(per_graph.values())
+            if len(metrics) == 1:
+                distinct_subjects = metrics[0].distinct_subjects
+                distinct_objects = metrics[0].distinct_objects
         enriched.append(
-            pat.model_copy(update={"count": cnt}),
+            pat.model_copy(
+                update={
+                    "count": sum(metric.triples for metric in per_graph.values()),
+                    "count_semantics": (
+                        "quad_occurrences"
+                        if len(graph_uris or []) > 1
+                        else "triples_in_graph"
+                        if graph_uris
+                        else "endpoint_default"
+                    ),
+                    "graphs": attributed or None,
+                    "distinct_subjects": distinct_subjects,
+                    "distinct_objects": distinct_objects,
+                }
+            ),
         )
 
     return enriched
@@ -220,13 +328,14 @@ def enrich_patterns_with_counts(
 def _fetch_typed_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
 ) -> None:
     """Query typed-object counts for one class batch and update *counts*."""
     try:
@@ -240,6 +349,7 @@ def _fetch_typed_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(
@@ -253,9 +363,9 @@ def _fetch_typed_count_batch(
                 b.get("p", {}).get("value", ""),
                 b.get("oc", {}).get("value", ""),
             )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts[key] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -274,16 +384,27 @@ def _fetch_typed_count_batch(
         )
 
 
+def _literal_key(binding: dict[str, Any]) -> tuple[str, str, str]:
+    """Return the count key of a literal row: class, property and ``Literal[:datatype]``."""
+    dt = binding.get("dt", {}).get("value", "")
+    return (
+        binding.get("class", {}).get("value", ""),
+        binding.get("p", {}).get("value", ""),
+        f"Literal:{dt}" if dt else "Literal",
+    )
+
+
 def _fetch_literal_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
 ) -> None:
     """Query literal counts for one class batch and update *counts*."""
     try:
@@ -297,6 +418,7 @@ def _fetch_literal_count_batch(
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(
@@ -305,15 +427,36 @@ def _fetch_literal_count_batch(
             success=outcome.state == "complete",
         )
         for b in outcome.rows:
-            dt = b.get("dt", {}).get("value", "")
-            key = (
-                b.get("class", {}).get("value", ""),
-                b.get("p", {}).get("value", ""),
-                f"Literal:{dt}" if dt else "Literal",
-            )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts[key] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(_literal_key(b), {})[b.get("_g", {}).get("value", "")] = metric
+
+        t0 = time.monotonic()
+        objects = query_with_bisect(
+            batch,
+            graph_uris,
+            _build_batched_literal_objects_query,
+            "counts/literal-objects",
+            helper,
+            collect_bindings,
+            chunk_size,
+            unsafe_paging,
+            type_context_graph_uris,
+        )
+        report.record_query(
+            "counts/literal-objects",
+            time.monotonic() - t0,
+            success=objects.state == "complete",
+        )
+        if objects.state != "complete":
+            logger.warning("Distinct literal objects unavailable (%s)", label)
+            return
+        for b in objects.rows:
+            key, graph = _literal_key(b), b.get("_g", {}).get("value", "")
+            metric = counts.get(key, {}).get(graph)
+            value = b.get("objects", {}).get("value")
+            if metric is not None and value is not None:
+                counts[key][graph] = replace(metric, distinct_objects=int(value))
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
@@ -330,33 +473,43 @@ def _fetch_literal_count_batch(
         )
 
 
-def _fetch_untyped_count_batch(
+def _fetch_resource_count_batch(
     batch: list[str],
     label: str,
-    counts: dict[tuple[str, str, str], int],
+    counts: dict[tuple[str, str, str], dict[str, _PatternCount]],
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     collect_bindings: Callable[[str, str, int | None], list[dict[str, Any]]],
     report: ReportCollector,
     chunk_size: int,
     unsafe_paging: bool,
+    type_context_graph_uris: list[str] | None = None,
+    *,
+    object_class: str = "Resource",
 ) -> None:
-    """Query untyped-URI counts for one class batch and update *counts*."""
+    """Count untyped URI or blank-node edges for one class batch."""
+    purpose = "counts/blank-node" if object_class == "BlankNode" else "counts/untyped-uri"
+    builder = (
+        _build_batched_blank_node_count_query
+        if object_class == "BlankNode"
+        else _build_batched_untyped_count_query
+    )
     try:
         t0 = time.monotonic()
         outcome = query_with_bisect(
             batch,
             graph_uris,
-            _build_batched_untyped_count_query,
-            "counts/untyped-uri",
+            builder,
+            purpose,
             helper,
             collect_bindings,
             chunk_size,
             unsafe_paging,
+            type_context_graph_uris,
         )
         report.record_outcome(outcome)
         report.record_query(
-            "counts/untyped-uri",
+            purpose,
             time.monotonic() - t0,
             success=outcome.state == "complete",
         )
@@ -364,20 +517,16 @@ def _fetch_untyped_count_batch(
             key = (
                 b.get("class", {}).get("value", ""),
                 b.get("p", {}).get("value", ""),
-                "Resource",
+                object_class,
             )
-            cnt = b.get("cnt", {}).get("value")
-            if cnt:
-                counts[key] = int(cnt)
+            metric = _count_from_binding(b)
+            if metric is not None:
+                counts.setdefault(key, {})[b.get("_g", {}).get("value", "")] = metric
     except (ValueError, TypeError) as e:
         report.record_outcome(
             QueryOutcome(
                 state="failed",
-                failures=[
-                    QueryFailure(
-                        "invalid_response", str(e), "counts/untyped-uri", batch, graph_uris
-                    )
-                ],
+                failures=[QueryFailure("invalid_response", str(e), purpose, batch, graph_uris)],
             )
         )
         logger.warning(
@@ -426,7 +575,13 @@ def enrich_patterns_with_labels(
 
     for start in range(0, len(uri_list), batch_size):
         batch = uri_list[start : start + batch_size]
-        _fetch_label_batch(batch, label_map, helper, graph_uris, report)
+        if not _fetch_label_batch(batch, label_map, helper, graph_uris, report):
+            logger.warning(
+                "Labels stopped: the endpoint asked for a longer pause than the wait budget; "
+                "%d IRIs keep their local names",
+                len(uri_list) - start,
+            )
+            break
 
     # Fill in labels using local name as fallback
     enriched = _enrich_with_local(patterns, label_map)
@@ -440,8 +595,11 @@ def _fetch_label_batch(
     helper: SparqlHelper,
     graph_uris: list[str] | None,
     report: ReportCollector,
-) -> None:
+) -> bool:
     """Query labels for one batch of URIs and update label_map in place.
+
+    Return False when the endpoint refuses because of a rate limit, so that no more batches
+    are sent.
 
     Args:
         batch: URIs to look up labels for
@@ -487,7 +645,10 @@ def _fetch_label_batch(
             time.monotonic() - t0,
             success=False,
         )
+        if isinstance(e, EndpointRateLimitError):
+            return False  # The next batches would be refused too.
         logger.warning("Label batch failed (%d IRIs): %s", len(batch), type(e).__name__)
+    return True
 
 
 def _enrich_with_local(

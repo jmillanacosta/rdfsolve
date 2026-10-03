@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdfsolve"
-version = "0.0.2"
+version = "0.1.0"
 description = "Wraps several RDF schema solver tools"
 readme = "README.md"
 authors = [
@@ -60,17 +60,17 @@ dependencies = [
     "typing-extensions>=4.0",
     # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
-    "sparqlwrapper>=2.0.0", # SPARQL endpoint communication
+    "pyoxigraph>=0.5.11,<0.6",
 
     # JSON processing
     "ujson>=5.0.0",  # Fast JSON parser for large mapping files
 
     # Other
-    "pandas>=2.0.0", # DataFrame operations for analysis results
+    # pandas 3 turns a column of rdflib BNodes (a str subclass) into plain strings when the
+    # DataFrame is built, so from_table cannot tell blank nodes from IRIs; pyobo held pandas<3
+    "pandas>=2.0.0,<3", # DataFrame operations for analysis results
     "numpy",
-    "bioregistry>=0.13.25",  # bioversions.sources.ols needs bioregistry.external.ols.get_ols_processing
-    "bioversions>=0.8.295",  # must stay in sync with bioregistry (transitive via pyobo)
-    # bioregistry is now available from PyPI (see above)
+    "bioregistry>=0.13.25",
     # Schema modeling
     "linkml>=1.10.0",
     "linkml-runtime>=1.10.0",  # Must match linkml major.minor — 1.9.x removed Format.JSON used by linkml<1.10
@@ -80,22 +80,25 @@ dependencies = [
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars
     "pyyaml>=6.0", # YAML source registry
-    "pyarrow==22.0.0", # Parquet support for DataFrames
+    "pyarrow>=23.0.1", # Parquet support for DataFrames; 22.0.0 has a security advisory
     # CLI and web framework
     "click",
     "more_click",
     "flask", # web framework,
-    "pyobo>=0.12.16",  # needs bioversions>=0.8.243 compatible with bioregistry>=0.13
-    "semra>=0.1.4",
 ]
 
 [project.optional-dependencies]
+validation = ["pyshacl>=0.27,<1"]
 agents = [
-    "pydantic-ai-slim[openai,anthropic]==1.97.0",
+    "pydantic-ai-slim[openai,anthropic]==2.0.0",
     "python-dotenv==1.2.3",
 ]
+mcp = ["mcp==2.2.0"]
 tests = [
-    "pydantic-ai-slim==1.97.0",
+    "pyshacl>=0.27,<1",
+    "psutil>=5.9",
+    "pydantic-ai-slim[openai]==2.0.0",
+    "mcp==2.2.0",
     "pytest",
     "coverage",
     "networkx>=2.8",
@@ -125,7 +128,7 @@ web = [
     "gunicorn>=22.0",
 ]
 notebooks = [
-    "pydantic-2-mermaid==0.7.3",
+    "psutil>=5.9",
     # Additional packages for notebook development and analysis
     "matplotlib>=3.10.7", # Plotting and visualization
     "seaborn>=0.11.0", # Statistical visualization
@@ -134,7 +137,9 @@ notebooks = [
     "jupyterlab>=4.0.0", # Full Jupyter Lab environment
     "ipywidgets>=8.0.0", # Interactive widgets for notebooks
     "narwhals==2.11.0",
-    "plotly==6.4.0"
+    "plotly==6.4.0",
+    "scipy>=1.15.3", # networkx layouts (kamada_kawai_layout) in the network plots
+    "kgx>=2.7.0", # Biolink validation of KGX exports (pins click<8.2)
 ]
 
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
@@ -315,7 +320,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.0.2"
+current_version = "0.1.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

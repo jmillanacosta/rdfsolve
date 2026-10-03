@@ -1,0 +1,2395 @@
+@prefix aopo: <http://aopkb.org/aop_ontology#> .
+@prefix aopwiki: <https://aopwiki.rdf.bigcat-bioinformatics.org/> .
+@prefix cheminf: <http://semanticscience.org/resource/CHEMINF_> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix edam_data: <http://edamontology.org/data_> .
+@prefix edam_operation: <http://edamontology.org/operation_> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix go: <http://purl.obolibrary.org/obo/GO_> .
+@prefix mmo: <http://purl.obolibrary.org/obo/MMO_> .
+@prefix ncbitaxon: <http://purl.bioontology.org/ontology/NCBITAXON/> .
+@prefix ncit: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#> .
+@prefix ns1: <http://ldf.fi/void-ext#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix pato: <http://purl.obolibrary.org/obo/PATO_> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<> a void:DatasetDescription ;
+    dcterms:created "2026-09-16T10:03:13.796285+00:00" ;
+    dcterms:creator "rdfsolve 0.3.0" ;
+    dcterms:title "VoID Description of aopwikirdf-small" ;
+    owl:versionInfo "snapshot:2026-09-16T10:03:13.796285+00:00" ;
+    foaf:primaryTopic <https://rdfsolve.bigcat-bioinformatics.nl/dataset/aopwikirdf-small> .
+
+<http://example.org/shapes/> sh:declare [ sh:namespace "http://edamontology.org/operation_"^^xsd:anyURI ;
+            sh:prefix "edam_operation" ],
+        [ sh:namespace "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"^^xsd:anyURI ;
+            sh:prefix "ncit" ],
+        [ sh:namespace "http://purl.bioontology.org/ontology/NCBITAXON/"^^xsd:anyURI ;
+            sh:prefix "ncbitaxon" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/PATO_"^^xsd:anyURI ;
+            sh:prefix "pato" ],
+        [ sh:namespace "http://www.w3.org/2001/XMLSchema#"^^xsd:anyURI ;
+            sh:prefix "xsd" ],
+        [ sh:namespace "http://www.w3.org/1999/02/22-rdf-syntax-ns#"^^xsd:anyURI ;
+            sh:prefix "rdf" ],
+        [ sh:namespace "https://aopwiki.rdf.bigcat-bioinformatics.org/"^^xsd:anyURI ;
+            sh:prefix "aopwiki" ],
+        [ sh:namespace "http://aopkb.org/aop_ontology#"^^xsd:anyURI ;
+            sh:prefix "aopo" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/GO_"^^xsd:anyURI ;
+            sh:prefix "go" ],
+        [ sh:namespace "http://semanticscience.org/resource/CHEMINF_"^^xsd:anyURI ;
+            sh:prefix "cheminf" ],
+        [ sh:namespace "http://edamontology.org/data_"^^xsd:anyURI ;
+            sh:prefix "edam_data" ],
+        [ sh:namespace "http://purl.org/dc/elements/1.1/"^^xsd:anyURI ;
+            sh:prefix "dc" ],
+        [ sh:namespace "http://www.w3.org/2000/01/rdf-schema#"^^xsd:anyURI ;
+            sh:prefix "rdfs" ],
+        [ sh:namespace "http://purl.org/dc/terms/"^^xsd:anyURI ;
+            sh:prefix "dcterms" ],
+        [ sh:namespace "http://purl.obolibrary.org/obo/MMO_"^^xsd:anyURI ;
+            sh:prefix "mmo" ],
+        [ sh:namespace "http://xmlns.com/foaf/0.1/"^^xsd:anyURI ;
+            sh:prefix "foaf" ] .
+
+<http://example.org/shapes/navigation-0762a119165ba3d3> a sh:NodeShape ;
+    sh:description "Schema-composed paths. Instance support and coverage are unknown. Edge triple counts are not joined counts or per-entity cardinalities. The path omits intermediate class filters listed in each description. Value types are candidate endpoints, not enforced constraints. 2 hops: 2 omitted; 3 hops: 2 omitted" ;
+    sh:name "Candidate navigation: http://purl.bioontology.org/ontology/NCBITAXON/131567" ;
+    sh:property <http://example.org/shapes/route-194a5ddc200a571217be>,
+        <http://example.org/shapes/route-36a9b6d5f5efe26f4adc>,
+        <http://example.org/shapes/route-b79d4a959a267b89751b>,
+        <http://example.org/shapes/route-bf200abfb711308e7af5>,
+        <http://example.org/shapes/route-cfcd647191ad42287278>,
+        <http://example.org/shapes/route-e66d42fdf3c278106d4d> ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/navigation-847c244daa61142e> a sh:NodeShape ;
+    sh:description "Schema-composed paths. Instance support and coverage are unknown. Edge triple counts are not joined counts or per-entity cardinalities. The path omits intermediate class filters listed in each description. Value types are candidate endpoints, not enforced constraints. 2 hops: 176 omitted; 3 hops: 1065 omitted" ;
+    sh:name "Candidate navigation: http://aopkb.org/aop_ontology#KeyEventRelationship" ;
+    sh:property <http://example.org/shapes/route-15e5473f7f4b8d1bf6e9>,
+        <http://example.org/shapes/route-708bf7e0675b38f3f640>,
+        <http://example.org/shapes/route-773f6779440d4e4f5b87>,
+        <http://example.org/shapes/route-b9d1999091dc39f4b617> ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/navigation-8e910fe48874fa34> a sh:NodeShape ;
+    sh:description "Schema-composed paths. Instance support and coverage are unknown. Edge triple counts are not joined counts or per-entity cardinalities. The path omits intermediate class filters listed in each description. Value types are candidate endpoints, not enforced constraints. 2 hops: 146 omitted; 3 hops: 677 omitted" ;
+    sh:name "Candidate navigation: http://aopkb.org/aop_ontology#KeyEvent" ;
+    sh:property <http://example.org/shapes/route-a73f3be14bf0e4cb8dca>,
+        <http://example.org/shapes/route-d4950140c4a51b84c2c2>,
+        <http://example.org/shapes/route-d729636e261d8e285ec9>,
+        <http://example.org/shapes/route-dcc6ca71a4d7200037b9>,
+        <http://example.org/shapes/route-e329b303b5f9fe05e195> ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/navigation-93f52951c6439f0a> a sh:NodeShape ;
+    sh:description "Schema-composed paths. Instance support and coverage are unknown. Edge triple counts are not joined counts or per-entity cardinalities. The path omits intermediate class filters listed in each description. Value types are candidate endpoints, not enforced constraints. 2 hops: 224 omitted; 3 hops: 1363 omitted" ;
+    sh:name "Candidate navigation: http://aopkb.org/aop_ontology#AdverseOutcomePathway" ;
+    sh:property <http://example.org/shapes/route-25005cab3b1daada08f7>,
+        <http://example.org/shapes/route-372573c79fda6c669c8e>,
+        <http://example.org/shapes/route-9ebffe767fb6e4c8093a>,
+        <http://example.org/shapes/route-a5ce655cafa36436c3e5>,
+        <http://example.org/shapes/route-b243a94f910a3ad529fa> ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/navigation-9f10d280fa82b8a3> a sh:NodeShape ;
+    sh:description "Schema-composed paths. Instance support and coverage are unknown. Edge triple counts are not joined counts or per-entity cardinalities. The path omits intermediate class filters listed in each description. Value types are candidate endpoints, not enforced constraints. 2 hops: 49 omitted; 3 hops: 329 omitted" ;
+    sh:name "Candidate navigation: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571" ;
+    sh:property <http://example.org/shapes/route-26ebb33feb06aa92aa32>,
+        <http://example.org/shapes/route-597c2bd115ca7801b756>,
+        <http://example.org/shapes/route-661706b1f6dccaea446f>,
+        <http://example.org/shapes/route-f7359755913fe91b33db> ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/ns-05326e66> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "KeyEventRelationship" ;
+    sh:property <http://example.org/shapes/ps-05326e66-1460a6fb>,
+        <http://example.org/shapes/ps-05326e66-25fc258d>,
+        <http://example.org/shapes/ps-05326e66-3674ef14>,
+        <http://example.org/shapes/ps-05326e66-38e1536b>,
+        <http://example.org/shapes/ps-05326e66-3e2f60da>,
+        <http://example.org/shapes/ps-05326e66-3eba0dea>,
+        <http://example.org/shapes/ps-05326e66-4f75ce12>,
+        <http://example.org/shapes/ps-05326e66-77f68bef>,
+        <http://example.org/shapes/ps-05326e66-7e72e214>,
+        <http://example.org/shapes/ps-05326e66-a037bb87>,
+        <http://example.org/shapes/ps-05326e66-a545e9ae>,
+        <http://example.org/shapes/ps-05326e66-a6bb7211>,
+        <http://example.org/shapes/ps-05326e66-be3d9cb9>,
+        <http://example.org/shapes/ps-05326e66-bee9e5e3>,
+        <http://example.org/shapes/ps-05326e66-c74e2b73>,
+        <http://example.org/shapes/ps-05326e66-cf78d212>,
+        <http://example.org/shapes/ps-05326e66-d2c31a8a>,
+        <http://example.org/shapes/ps-05326e66-d34cf2b2>,
+        <http://example.org/shapes/ps-05326e66-f31288f4>,
+        <http://example.org/shapes/ps-05326e66-f55f0e2f> ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/ns-1ca0598f> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "OrganContext" ;
+    sh:property <http://example.org/shapes/ps-1ca0598f-c74e2b73> ;
+    sh:targetClass aopo:OrganContext .
+
+<http://example.org/shapes/ns-1ca93c07> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "GO_0008150" ;
+    sh:property <http://example.org/shapes/ps-1ca93c07-c74e2b73> ;
+    sh:targetClass go:0008150 .
+
+<http://example.org/shapes/ns-6687515e> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "C54571" ;
+    sh:property <http://example.org/shapes/ps-6687515e-00a31fc7>,
+        <http://example.org/shapes/ps-6687515e-10a2b68e>,
+        <http://example.org/shapes/ps-6687515e-3e2f60da>,
+        <http://example.org/shapes/ps-6687515e-4f75ce12>,
+        <http://example.org/shapes/ps-6687515e-a545e9ae>,
+        <http://example.org/shapes/ps-6687515e-bee9e5e3>,
+        <http://example.org/shapes/ps-6687515e-c74e2b73>,
+        <http://example.org/shapes/ps-6687515e-cf78d212>,
+        <http://example.org/shapes/ps-6687515e-f31288f4> ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/ns-68cf9a8c> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "CHEMINF_000000" ;
+    sh:property <http://example.org/shapes/ps-68cf9a8c-c74e2b73> ;
+    sh:targetClass cheminf:000000 .
+
+<http://example.org/shapes/ns-71e025e3> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "KeyEvent" ;
+    sh:property <http://example.org/shapes/ps-71e025e3-0337fffb>,
+        <http://example.org/shapes/ps-71e025e3-0c2a9721>,
+        <http://example.org/shapes/ps-71e025e3-10a2b68e>,
+        <http://example.org/shapes/ps-71e025e3-1ca0598f>,
+        <http://example.org/shapes/ps-71e025e3-1ca93c07>,
+        <http://example.org/shapes/ps-71e025e3-2afae325>,
+        <http://example.org/shapes/ps-71e025e3-38e1536b>,
+        <http://example.org/shapes/ps-71e025e3-3eba0dea>,
+        <http://example.org/shapes/ps-71e025e3-49c6493d>,
+        <http://example.org/shapes/ps-71e025e3-4f75ce12>,
+        <http://example.org/shapes/ps-71e025e3-7e72e214>,
+        <http://example.org/shapes/ps-71e025e3-8b9ff8df>,
+        <http://example.org/shapes/ps-71e025e3-a545e9ae>,
+        <http://example.org/shapes/ps-71e025e3-a6bb7211>,
+        <http://example.org/shapes/ps-71e025e3-aceb8b58>,
+        <http://example.org/shapes/ps-71e025e3-be3d9cb9>,
+        <http://example.org/shapes/ps-71e025e3-bee9e5e3>,
+        <http://example.org/shapes/ps-71e025e3-c74e2b73>,
+        <http://example.org/shapes/ps-71e025e3-cf78d212>,
+        <http://example.org/shapes/ps-71e025e3-d34cf2b2>,
+        <http://example.org/shapes/ps-71e025e3-d8227896>,
+        <http://example.org/shapes/ps-71e025e3-f55f0e2f>,
+        <http://example.org/shapes/ps-71e025e3-f79a98d8>,
+        <http://example.org/shapes/ps-71e025e3-f8f2877f> ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/ns-78c723fd> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "data_2298" ;
+    sh:property <http://example.org/shapes/ps-78c723fd-c74e2b73> ;
+    sh:targetClass edam_data:2298 .
+
+<http://example.org/shapes/ns-860fa71e> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "Adverse Outcome Pathway" ;
+    sh:property <http://example.org/shapes/ps-860fa71e-0337fffb>,
+        <http://example.org/shapes/ps-860fa71e-0c2a9721>,
+        <http://example.org/shapes/ps-860fa71e-0c7e6f12>,
+        <http://example.org/shapes/ps-860fa71e-10a2b68e>,
+        <http://example.org/shapes/ps-860fa71e-1460a6fb>,
+        <http://example.org/shapes/ps-860fa71e-1a52ea9d>,
+        <http://example.org/shapes/ps-860fa71e-21087328>,
+        <http://example.org/shapes/ps-860fa71e-24afd213>,
+        <http://example.org/shapes/ps-860fa71e-2afae325>,
+        <http://example.org/shapes/ps-860fa71e-3494e2ce>,
+        <http://example.org/shapes/ps-860fa71e-38e1536b>,
+        <http://example.org/shapes/ps-860fa71e-3e2f60da>,
+        <http://example.org/shapes/ps-860fa71e-4f75ce12>,
+        <http://example.org/shapes/ps-860fa71e-5be8f735>,
+        <http://example.org/shapes/ps-860fa71e-5f0e3ff4>,
+        <http://example.org/shapes/ps-860fa71e-6687515e>,
+        <http://example.org/shapes/ps-860fa71e-7e72e214>,
+        <http://example.org/shapes/ps-860fa71e-8c7e3207>,
+        <http://example.org/shapes/ps-860fa71e-8cbd77d5>,
+        <http://example.org/shapes/ps-860fa71e-a545e9ae>,
+        <http://example.org/shapes/ps-860fa71e-a6bb7211>,
+        <http://example.org/shapes/ps-860fa71e-bb5ac1c9>,
+        <http://example.org/shapes/ps-860fa71e-bee9e5e3>,
+        <http://example.org/shapes/ps-860fa71e-c74e2b73>,
+        <http://example.org/shapes/ps-860fa71e-d8448f7d>,
+        <http://example.org/shapes/ps-860fa71e-de22702c>,
+        <http://example.org/shapes/ps-860fa71e-e41dbf37>,
+        <http://example.org/shapes/ps-860fa71e-f31288f4>,
+        <http://example.org/shapes/ps-860fa71e-f79a98d8> ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/ns-a6bb7211> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "131567" ;
+    sh:property <http://example.org/shapes/ps-a6bb7211-0c2a9721>,
+        <http://example.org/shapes/ps-a6bb7211-10a2b68e>,
+        <http://example.org/shapes/ps-a6bb7211-4f75ce12>,
+        <http://example.org/shapes/ps-a6bb7211-bee9e5e3>,
+        <http://example.org/shapes/ps-a6bb7211-c74e2b73> ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/ns-be3d9cb9> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "data_1025" ;
+    sh:property <http://example.org/shapes/ps-be3d9cb9-c74e2b73> ;
+    sh:targetClass edam_data:1025 .
+
+<http://example.org/shapes/ns-d8227896> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "PATO_0001241" ;
+    sh:property <http://example.org/shapes/ps-d8227896-c74e2b73> ;
+    sh:targetClass pato:0001241 .
+
+<http://example.org/shapes/ns-f40618e8> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "CHEMINF_000446" ;
+    sh:property <http://example.org/shapes/ps-f40618e8-c74e2b73> ;
+    sh:targetClass cheminf:000446 .
+
+<http://example.org/shapes/ns-f8f2877f> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Observed value-type template, not a source constraint. No required fields or per-entity cardinalities were inferred." ;
+    sh:name "CellTypeContext" ;
+    sh:property <http://example.org/shapes/ps-f8f2877f-c74e2b73> ;
+    sh:targetClass aopo:CellTypeContext .
+
+<http://example.org/shapes/observed-route-06aa706eb7b4a56307fc> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/7 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:19.604568+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_chemical_entity ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class cheminf:000446 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/observed-route-10fdde83bb3102aff5fc> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 7/7 focus entries matched. Observed endpoint degree 1..1; 2026-09-16T10:03:19.819367+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dcterms:isPartOf ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:AdverseOutcomePathway ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:AopContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                    sh:nodeKind sh:Literal ] ] ] ] ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/observed-route-14abb8f1d35689323fe5> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.862358+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/observed-route-26d4de0b61440877fe67> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 11/37 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:20.099332+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:CellTypeContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:CellTypeContext ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-446c2018b7ba7df1f02d> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 7/37 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.561350+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:CellTypeContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class pato:0001241 ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-456a9ccdc62cb3f8f3e0> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 8/38 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:19.518342+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:CellTypeContext ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class pato:0001241 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-54023053181a68fc4095> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/38 focus entries matched. Observed endpoint degree 0..8; 2026-09-16T10:03:20.342173+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path ncbitaxon:131567 ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path dc:title ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                                    sh:nodeKind sh:Literal ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-60eb21a5193a275dd950> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 14/37 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:20.651803+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:OrganContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:OrganContext ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-635aa41a59a54ee54031> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/38 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:20.039487+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path ncbitaxon:131567 ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path dc:source ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                                    sh:nodeKind sh:Literal ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-654d9d56396088fe574f> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/7 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:19.389340+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_chemical_entity ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class cheminf:000000 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/observed-route-67826929cf0021e4ec90> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 7/7 focus entries matched. Observed endpoint degree 1..1; 2026-09-16T10:03:20.702942+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dcterms:isPartOf ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:AdverseOutcomePathway ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:has_adverse_outcome ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path aopo:LifeStageContext ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                                    sh:nodeKind sh:Literal ] ] ] ] ] ] ;
+    sh:targetClass ncit:C54571 .
+
+<http://example.org/shapes/observed-route-6d74f88c049fe69f6c72> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 7/37 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:20.400960+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:CellTypeContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class pato:0001241 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-785b94b86c8d045ddabd> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.432341+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:source ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                    sh:nodeKind sh:Literal ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/observed-route-801a4fd4fecf7e22311e> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 16/38 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:19.733348+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:OrganContext ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:OrganContext ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-9c113111a1599cbc341c> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 14/38 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:19.303279+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:CellTypeContext ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:CellTypeContext ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path rdf:type ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-b2b3df29b1a61802db9b> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 2/86 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:20.811973+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_adverse_outcome ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:OrganContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class pato:0001241 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/observed-route-b79256c0dc9ffb14e30d> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:20.762567+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/observed-route-c82ecdc89757f84a7ebc> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/86 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.690333+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_adverse_outcome ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:LifeStageContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                    sh:nodeKind sh:Literal ] ] ] ] ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/observed-route-d2ccf363604ed29669c0> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:20.193136+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path dc:source ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                                    sh:nodeKind sh:Literal ] ] ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/observed-route-d68a90965d2456a5cd32> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 11/37 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.346341+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:CellTypeContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:CellTypeContext ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-e4ca9b3c869eebb48d80> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 2/86 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.905371+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_adverse_outcome ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:OrganContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:OrganContext ] ] ] ] ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/observed-route-f036526cab620f8f361d> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/38 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:20.602136+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path ncbitaxon:131567 ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:KeyEvent .
+
+<http://example.org/shapes/observed-route-f0d79fee0e2a26f1fdc9> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 2/86 focus entries matched. Observed endpoint degree 0..2; 2026-09-16T10:03:20.551962+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_adverse_outcome ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:OrganContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class aopo:OrganContext ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path rdf:type ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:nodeKind sh:IRI ] ] ] ] ] ] ;
+    sh:targetClass aopo:AdverseOutcomePathway .
+
+<http://example.org/shapes/observed-route-f233254a158ad0343d25> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..5; 2026-09-16T10:03:20.494626+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:identifier ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                                    sh:property [ a sh:PropertyShape ;
+                                            sh:path dc:title ;
+                                            sh:qualifiedMinCount 1 ;
+                                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                                    sh:nodeKind sh:Literal ] ] ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/observed-route-f316c24528a1cf006ce7> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 6/37 focus entries matched. Observed endpoint degree 0..1; 2026-09-16T10:03:19.776343+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path aopo:has_downstream_key_event ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class aopo:KeyEvent ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path aopo:LifeStageContext ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                    sh:nodeKind sh:Literal ] ] ] ] ;
+    sh:targetClass aopo:KeyEventRelationship .
+
+<http://example.org/shapes/observed-route-fc83946a6793428d21f9> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:description "Candidate query profile; 3/6 focus entries matched. Observed endpoint degree 0..5; 2026-09-16T10:03:19.647635+00:00. Qualified existence describes this route. It is not a dataset-wide requirement." ;
+    sh:name "Observed connected route" ;
+    sh:property [ a sh:PropertyShape ;
+            sh:path dc:identifier ;
+            sh:qualifiedMinCount 1 ;
+            sh:qualifiedValueShape [ sh:class ncbitaxon:131567 ;
+                    sh:property [ a sh:PropertyShape ;
+                            sh:path dc:title ;
+                            sh:qualifiedMinCount 1 ;
+                            sh:qualifiedValueShape [ sh:datatype xsd:string ;
+                                    sh:nodeKind sh:Literal ] ] ] ] ;
+    sh:targetClass ncbitaxon:131567 .
+
+<http://example.org/shapes/ps-05326e66-1460a6fb> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "operation_3799" ;
+    sh:nodeKind sh:Literal ;
+    sh:path edam_operation:3799 .
+
+<http://example.org/shapes/ps-05326e66-25fc258d> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "has_upstream_key_event" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_upstream_key_event .
+
+<http://example.org/shapes/ps-05326e66-3674ef14> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "data_2042" ;
+    sh:nodeKind sh:Literal ;
+    sh:path edam_data:2042 .
+
+<http://example.org/shapes/ps-05326e66-38e1536b> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "description" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:description .
+
+<http://example.org/shapes/ps-05326e66-3e2f60da> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "modified" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:modified .
+
+<http://example.org/shapes/ps-05326e66-3eba0dea> a sh:PropertyShape ;
+    sh:name "geneDetectedByRegex" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopwiki:geneDetectedByRegex .
+
+<http://example.org/shapes/ps-05326e66-4f75ce12> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "label" ;
+    sh:nodeKind sh:Literal ;
+    sh:path rdfs:label .
+
+<http://example.org/shapes/ps-05326e66-77f68bef> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C71478" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C71478 .
+
+<http://example.org/shapes/ps-05326e66-7e72e214> a sh:PropertyShape ;
+    sh:class aopo:KeyEventRelationship ;
+    sh:name "seeAlso" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path rdfs:seeAlso .
+
+<http://example.org/shapes/ps-05326e66-a037bb87> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "has_downstream_key_event" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_downstream_key_event .
+
+<http://example.org/shapes/ps-05326e66-a545e9ae> a sh:PropertyShape ;
+    sh:class aopo:KeyEventRelationship ;
+    sh:name "page" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path foaf:page .
+
+<http://example.org/shapes/ps-05326e66-a6bb7211> a sh:PropertyShape ;
+    sh:name "131567" ;
+    sh:or ( [ sh:class ncbitaxon:131567 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:datatype xsd:string ;
+                sh:nodeKind sh:Literal ] ) ;
+    sh:path ncbitaxon:131567 .
+
+<http://example.org/shapes/ps-05326e66-be3d9cb9> a sh:PropertyShape ;
+    sh:name "data_1025" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path edam_data:1025 .
+
+<http://example.org/shapes/ps-05326e66-bee9e5e3> a sh:PropertyShape ;
+    sh:class aopo:KeyEventRelationship ;
+    sh:name "identifier" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dc:identifier .
+
+<http://example.org/shapes/ps-05326e66-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-05326e66-cf78d212> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "isPartOf" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dcterms:isPartOf .
+
+<http://example.org/shapes/ps-05326e66-d2c31a8a> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C80263" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C80263 .
+
+<http://example.org/shapes/ps-05326e66-d34cf2b2> a sh:PropertyShape ;
+    sh:name "geneDetectedByNER" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopwiki:geneDetectedByNER .
+
+<http://example.org/shapes/ps-05326e66-f31288f4> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "created" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:created .
+
+<http://example.org/shapes/ps-05326e66-f55f0e2f> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C17469" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C17469 .
+
+<http://example.org/shapes/ps-1ca0598f-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-1ca93c07-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-6687515e-00a31fc7> a sh:PropertyShape ;
+    sh:name "has_chemical_entity" ;
+    sh:or ( [ sh:class cheminf:000000 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class cheminf:000446 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopo:has_chemical_entity .
+
+<http://example.org/shapes/ps-6687515e-10a2b68e> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:title .
+
+<http://example.org/shapes/ps-6687515e-3e2f60da> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "modified" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:modified .
+
+<http://example.org/shapes/ps-6687515e-4f75ce12> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "label" ;
+    sh:nodeKind sh:Literal ;
+    sh:path rdfs:label .
+
+<http://example.org/shapes/ps-6687515e-a545e9ae> a sh:PropertyShape ;
+    sh:class ncit:C54571 ;
+    sh:name "page" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path foaf:page .
+
+<http://example.org/shapes/ps-6687515e-bee9e5e3> a sh:PropertyShape ;
+    sh:class ncit:C54571 ;
+    sh:name "identifier" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dc:identifier .
+
+<http://example.org/shapes/ps-6687515e-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-6687515e-cf78d212> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "isPartOf" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dcterms:isPartOf .
+
+<http://example.org/shapes/ps-6687515e-f31288f4> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "created" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:created .
+
+<http://example.org/shapes/ps-68cf9a8c-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-71e025e3-0337fffb> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "PATO_0000047" ;
+    sh:nodeKind sh:Literal ;
+    sh:path pato:0000047 .
+
+<http://example.org/shapes/ps-71e025e3-0c2a9721> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "source" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:source .
+
+<http://example.org/shapes/ps-71e025e3-10a2b68e> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:title .
+
+<http://example.org/shapes/ps-71e025e3-1ca0598f> a sh:PropertyShape ;
+    sh:name "OrganContext" ;
+    sh:or ( [ sh:class aopo:OrganContext ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class pato:0001241 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopo:OrganContext .
+
+<http://example.org/shapes/ps-71e025e3-1ca93c07> a sh:PropertyShape ;
+    sh:name "GO_0008150" ;
+    sh:or ( [ sh:class go:0008150 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class pato:0001241 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path go:0008150 .
+
+<http://example.org/shapes/ps-71e025e3-2afae325> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "LifeStageContext" ;
+    sh:nodeKind sh:Literal ;
+    sh:path aopo:LifeStageContext .
+
+<http://example.org/shapes/ps-71e025e3-38e1536b> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "description" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:description .
+
+<http://example.org/shapes/ps-71e025e3-3eba0dea> a sh:PropertyShape ;
+    sh:name "geneDetectedByRegex" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopwiki:geneDetectedByRegex .
+
+<http://example.org/shapes/ps-71e025e3-49c6493d> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "PATO_0000001" ;
+    sh:nodeKind sh:Literal ;
+    sh:path pato:0000001 .
+
+<http://example.org/shapes/ps-71e025e3-4f75ce12> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "label" ;
+    sh:nodeKind sh:Literal ;
+    sh:path rdfs:label .
+
+<http://example.org/shapes/ps-71e025e3-7e72e214> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "seeAlso" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path rdfs:seeAlso .
+
+<http://example.org/shapes/ps-71e025e3-8b9ff8df> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "MMO_0000000" ;
+    sh:nodeKind sh:Literal ;
+    sh:path mmo:0000000 .
+
+<http://example.org/shapes/ps-71e025e3-a545e9ae> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "page" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path foaf:page .
+
+<http://example.org/shapes/ps-71e025e3-a6bb7211> a sh:PropertyShape ;
+    sh:name "131567" ;
+    sh:or ( [ sh:class ncbitaxon:131567 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:datatype xsd:string ;
+                sh:nodeKind sh:Literal ] ) ;
+    sh:path ncbitaxon:131567 .
+
+<http://example.org/shapes/ps-71e025e3-aceb8b58> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C25664" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C25664 .
+
+<http://example.org/shapes/ps-71e025e3-be3d9cb9> a sh:PropertyShape ;
+    sh:name "data_1025" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path edam_data:1025 .
+
+<http://example.org/shapes/ps-71e025e3-bee9e5e3> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "identifier" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dc:identifier .
+
+<http://example.org/shapes/ps-71e025e3-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-71e025e3-cf78d212> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "isPartOf" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dcterms:isPartOf .
+
+<http://example.org/shapes/ps-71e025e3-d34cf2b2> a sh:PropertyShape ;
+    sh:name "geneDetectedByNER" ;
+    sh:or ( [ sh:class edam_data:1025 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class edam_data:2298 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopwiki:geneDetectedByNER .
+
+<http://example.org/shapes/ps-71e025e3-d8227896> a sh:PropertyShape ;
+    sh:name "PATO_0001241" ;
+    sh:or ( [ sh:class aopo:CellTypeContext ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class go:0008150 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class pato:0001241 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path pato:0001241 .
+
+<http://example.org/shapes/ps-71e025e3-f55f0e2f> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C17469" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C17469 .
+
+<http://example.org/shapes/ps-71e025e3-f79a98d8> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "alternative" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:alternative .
+
+<http://example.org/shapes/ps-71e025e3-f8f2877f> a sh:PropertyShape ;
+    sh:name "CellTypeContext" ;
+    sh:or ( [ sh:class aopo:CellTypeContext ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:class pato:0001241 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] ) ;
+    sh:path aopo:CellTypeContext .
+
+<http://example.org/shapes/ps-78c723fd-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-860fa71e-0337fffb> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "PATO_0000047" ;
+    sh:nodeKind sh:Literal ;
+    sh:path pato:0000047 .
+
+<http://example.org/shapes/ps-860fa71e-0c2a9721> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "source" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:source .
+
+<http://example.org/shapes/ps-860fa71e-0c7e6f12> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "has_key_event" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_key_event .
+
+<http://example.org/shapes/ps-860fa71e-10a2b68e> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:title .
+
+<http://example.org/shapes/ps-860fa71e-1460a6fb> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "operation_3799" ;
+    sh:nodeKind sh:Literal ;
+    sh:path edam_operation:3799 .
+
+<http://example.org/shapes/ps-860fa71e-1a52ea9d> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "has_molecular_initiating_event" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_molecular_initiating_event .
+
+<http://example.org/shapes/ps-860fa71e-21087328> a sh:PropertyShape ;
+    sh:class aopo:KeyEventRelationship ;
+    sh:name "has_key_event_relationship" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_key_event_relationship .
+
+<http://example.org/shapes/ps-860fa71e-24afd213> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C25217" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C25217 .
+
+<http://example.org/shapes/ps-860fa71e-2afae325> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "LifeStageContext" ;
+    sh:nodeKind sh:Literal ;
+    sh:path aopo:LifeStageContext .
+
+<http://example.org/shapes/ps-860fa71e-3494e2ce> a sh:PropertyShape ;
+    sh:name "license" ;
+    sh:nodeKind sh:IRI ;
+    sh:path dcterms:license .
+
+<http://example.org/shapes/ps-860fa71e-38e1536b> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "description" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:description .
+
+<http://example.org/shapes/ps-860fa71e-3e2f60da> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "modified" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:modified .
+
+<http://example.org/shapes/ps-860fa71e-4f75ce12> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "label" ;
+    sh:nodeKind sh:Literal ;
+    sh:path rdfs:label .
+
+<http://example.org/shapes/ps-860fa71e-5be8f735> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "AopContext" ;
+    sh:nodeKind sh:Literal ;
+    sh:path aopo:AopContext .
+
+<http://example.org/shapes/ps-860fa71e-5f0e3ff4> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "has_evidence" ;
+    sh:nodeKind sh:Literal ;
+    sh:path aopo:has_evidence .
+
+<http://example.org/shapes/ps-860fa71e-6687515e> a sh:PropertyShape ;
+    sh:class ncit:C54571 ;
+    sh:name "C54571" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path ncit:C54571 .
+
+<http://example.org/shapes/ps-860fa71e-7e72e214> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "seeAlso" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path rdfs:seeAlso .
+
+<http://example.org/shapes/ps-860fa71e-8c7e3207> a sh:PropertyShape ;
+    sh:class aopo:KeyEvent ;
+    sh:name "has_adverse_outcome" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path aopo:has_adverse_outcome .
+
+<http://example.org/shapes/ps-860fa71e-8cbd77d5> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "abstract" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:abstract .
+
+<http://example.org/shapes/ps-860fa71e-a545e9ae> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "page" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path foaf:page .
+
+<http://example.org/shapes/ps-860fa71e-a6bb7211> a sh:PropertyShape ;
+    sh:name "131567" ;
+    sh:or ( [ sh:class ncbitaxon:131567 ;
+                sh:nodeKind sh:BlankNodeOrIRI ] [ sh:datatype xsd:string ;
+                sh:nodeKind sh:Literal ] ) ;
+    sh:path ncbitaxon:131567 .
+
+<http://example.org/shapes/ps-860fa71e-bb5ac1c9> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C25725" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C25725 .
+
+<http://example.org/shapes/ps-860fa71e-bee9e5e3> a sh:PropertyShape ;
+    sh:class aopo:AdverseOutcomePathway ;
+    sh:name "identifier" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dc:identifier .
+
+<http://example.org/shapes/ps-860fa71e-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-860fa71e-d8448f7d> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "creator" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:creator .
+
+<http://example.org/shapes/ps-860fa71e-de22702c> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C48192" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C48192 .
+
+<http://example.org/shapes/ps-860fa71e-e41dbf37> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "C25688" ;
+    sh:nodeKind sh:Literal ;
+    sh:path ncit:C25688 .
+
+<http://example.org/shapes/ps-860fa71e-f31288f4> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "created" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:created .
+
+<http://example.org/shapes/ps-860fa71e-f79a98d8> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "alternative" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dcterms:alternative .
+
+<http://example.org/shapes/ps-a6bb7211-0c2a9721> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "source" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:source .
+
+<http://example.org/shapes/ps-a6bb7211-10a2b68e> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dc:title .
+
+<http://example.org/shapes/ps-a6bb7211-4f75ce12> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:name "label" ;
+    sh:nodeKind sh:Literal ;
+    sh:path rdfs:label .
+
+<http://example.org/shapes/ps-a6bb7211-bee9e5e3> a sh:PropertyShape ;
+    sh:class ncbitaxon:131567 ;
+    sh:name "identifier" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dc:identifier .
+
+<http://example.org/shapes/ps-a6bb7211-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-be3d9cb9-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-d8227896-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-f40618e8-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/ps-f8f2877f-c74e2b73> a sh:PropertyShape ;
+    sh:name "type" ;
+    sh:nodeKind sh:IRI ;
+    sh:path rdf:type .
+
+<http://example.org/shapes/route-15e5473f7f4b8d1bf6e9> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14); http://aopkb.org/aop_ontology#CellTypeContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 11) | http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8); http://purl.obolibrary.org/obo/PATO_0001241 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 44)" ;
+    sh:name "has_downstream_key_event / CellTypeContext / type" ;
+    sh:path ( aopo:has_downstream_key_event aopo:CellTypeContext rdf:type ) .
+
+<http://example.org/shapes/route-194a5ddc200a571217be> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/source--> http://www.w3.org/2001/XMLSchema#string (edge triples: 3)" ;
+    sh:name "identifier / identifier / source" ;
+    sh:path ( dc:identifier dc:identifier dc:source ) .
+
+<http://example.org/shapes/route-25005cab3b1daada08f7> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14) | http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8)" ;
+    sh:name "has_adverse_outcome / CellTypeContext" ;
+    sh:path ( aopo:has_adverse_outcome aopo:CellTypeContext ) .
+
+<http://example.org/shapes/route-26ebb33feb06aa92aa32> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://aopkb.org/aop_ontology#has_chemical_entity--> http://semanticscience.org/resource/CHEMINF_000000 (edge triples: 6); http://semanticscience.org/resource/CHEMINF_000000 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 12) | http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://aopkb.org/aop_ontology#has_chemical_entity--> http://semanticscience.org/resource/CHEMINF_000446 (edge triples: 6); http://semanticscience.org/resource/CHEMINF_000446 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 12)" ;
+    sh:name "has_chemical_entity / type" ;
+    sh:path ( aopo:has_chemical_entity rdf:type ) .
+
+<http://example.org/shapes/route-36a9b6d5f5efe26f4adc> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 6)" ;
+    sh:name "identifier / identifier / type" ;
+    sh:path ( dc:identifier dc:identifier rdf:type ) .
+
+<http://example.org/shapes/route-372573c79fda6c669c8e> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#OrganContext--> http://aopkb.org/aop_ontology#OrganContext (edge triples: 16)" ;
+    sh:name "has_adverse_outcome / OrganContext" ;
+    sh:path ( aopo:has_adverse_outcome aopo:OrganContext ) .
+
+<http://example.org/shapes/route-597c2bd115ca7801b756> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://purl.org/dc/terms/isPartOf--> http://aopkb.org/aop_ontology#AdverseOutcomePathway (edge triples: 8); http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#AopContext--> http://www.w3.org/2001/XMLSchema#string (edge triples: 2)" ;
+    sh:name "isPartOf / AopContext" ;
+    sh:path ( dcterms:isPartOf aopo:AopContext ) .
+
+<http://example.org/shapes/route-661706b1f6dccaea446f> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://purl.org/dc/terms/isPartOf--> http://aopkb.org/aop_ontology#AdverseOutcomePathway (edge triples: 8); http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14) | http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://purl.org/dc/terms/isPartOf--> http://aopkb.org/aop_ontology#AdverseOutcomePathway (edge triples: 8); http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8)" ;
+    sh:name "isPartOf / has_adverse_outcome / CellTypeContext" ;
+    sh:path ( dcterms:isPartOf aopo:has_adverse_outcome aopo:CellTypeContext ) .
+
+<http://example.org/shapes/route-708bf7e0675b38f3f640> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#OrganContext--> http://aopkb.org/aop_ontology#OrganContext (edge triples: 16); http://aopkb.org/aop_ontology#OrganContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 14)" ;
+    sh:name "has_downstream_key_event / OrganContext / type" ;
+    sh:path ( aopo:has_downstream_key_event aopo:OrganContext rdf:type ) .
+
+<http://example.org/shapes/route-773f6779440d4e4f5b87> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14) | http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8)" ;
+    sh:name "has_downstream_key_event / CellTypeContext" ;
+    sh:path ( aopo:has_downstream_key_event aopo:CellTypeContext ) .
+
+<http://example.org/shapes/route-9ebffe767fb6e4c8093a> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14); http://aopkb.org/aop_ontology#CellTypeContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 11) | http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8); http://purl.obolibrary.org/obo/PATO_0001241 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 44)" ;
+    sh:name "has_adverse_outcome / CellTypeContext / type" ;
+    sh:path ( aopo:has_adverse_outcome aopo:CellTypeContext rdf:type ) .
+
+<http://example.org/shapes/route-a5ce655cafa36436c3e5> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#OrganContext--> http://aopkb.org/aop_ontology#OrganContext (edge triples: 16); http://aopkb.org/aop_ontology#OrganContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 14) | http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#OrganContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 10); http://purl.obolibrary.org/obo/PATO_0001241 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 44)" ;
+    sh:name "has_adverse_outcome / OrganContext / type" ;
+    sh:path ( aopo:has_adverse_outcome aopo:OrganContext rdf:type ) .
+
+<http://example.org/shapes/route-a73f3be14bf0e4cb8dca> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://aopkb.org/aop_ontology#CellTypeContext (edge triples: 14); http://aopkb.org/aop_ontology#CellTypeContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 11) | http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#CellTypeContext--> http://purl.obolibrary.org/obo/PATO_0001241 (edge triples: 8); http://purl.obolibrary.org/obo/PATO_0001241 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 44)" ;
+    sh:name "CellTypeContext / type" ;
+    sh:path ( aopo:CellTypeContext rdf:type ) .
+
+<http://example.org/shapes/route-b243a94f910a3ad529fa> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#LifeStageContext--> http://www.w3.org/2001/XMLSchema#string (edge triples: 7)" ;
+    sh:name "has_adverse_outcome / LifeStageContext" ;
+    sh:path ( aopo:has_adverse_outcome aopo:LifeStageContext ) .
+
+<http://example.org/shapes/route-b79d4a959a267b89751b> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/source--> http://www.w3.org/2001/XMLSchema#string (edge triples: 3)" ;
+    sh:name "identifier / source" ;
+    sh:path ( dc:identifier dc:source ) .
+
+<http://example.org/shapes/route-b9d1999091dc39f4b617> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEventRelationship --http://aopkb.org/aop_ontology#has_downstream_key_event--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 37); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#LifeStageContext--> http://www.w3.org/2001/XMLSchema#string (edge triples: 7)" ;
+    sh:name "has_downstream_key_event / LifeStageContext" ;
+    sh:path ( aopo:has_downstream_key_event aopo:LifeStageContext ) .
+
+<http://example.org/shapes/route-bf200abfb711308e7af5> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/title--> http://www.w3.org/2001/XMLSchema#string (edge triples: 9)" ;
+    sh:name "identifier / title" ;
+    sh:path ( dc:identifier dc:title ) .
+
+<http://example.org/shapes/route-cfcd647191ad42287278> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 6)" ;
+    sh:name "identifier / type" ;
+    sh:path ( dc:identifier rdf:type ) .
+
+<http://example.org/shapes/route-d4950140c4a51b84c2c2> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#OrganContext--> http://aopkb.org/aop_ontology#OrganContext (edge triples: 16); http://aopkb.org/aop_ontology#OrganContext --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 14)" ;
+    sh:name "OrganContext / type" ;
+    sh:path ( aopo:OrganContext rdf:type ) .
+
+<http://example.org/shapes/route-d729636e261d8e285ec9> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEvent --http://purl.bioontology.org/ontology/NCBITAXON/131567--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 14); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/title--> http://www.w3.org/2001/XMLSchema#string (edge triples: 9)" ;
+    sh:name "131567 / identifier / title" ;
+    sh:path ( ncbitaxon:131567 dc:identifier dc:title ) .
+
+<http://example.org/shapes/route-dcc6ca71a4d7200037b9> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEvent --http://purl.bioontology.org/ontology/NCBITAXON/131567--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 14); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/source--> http://www.w3.org/2001/XMLSchema#string (edge triples: 3)" ;
+    sh:name "131567 / identifier / source" ;
+    sh:path ( ncbitaxon:131567 dc:identifier dc:source ) .
+
+<http://example.org/shapes/route-e329b303b5f9fe05e195> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://aopkb.org/aop_ontology#KeyEvent --http://purl.bioontology.org/ontology/NCBITAXON/131567--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 14); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://www.w3.org/1999/02/22-rdf-syntax-ns#type--> Resource (edge triples: 6)" ;
+    sh:name "131567 / identifier / type" ;
+    sh:path ( ncbitaxon:131567 dc:identifier rdf:type ) .
+
+<http://example.org/shapes/route-e66d42fdf3c278106d4d> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/identifier--> http://purl.bioontology.org/ontology/NCBITAXON/131567 (edge triples: 3); http://purl.bioontology.org/ontology/NCBITAXON/131567 --http://purl.org/dc/elements/1.1/title--> http://www.w3.org/2001/XMLSchema#string (edge triples: 9)" ;
+    sh:name "identifier / identifier / title" ;
+    sh:path ( dc:identifier dc:identifier dc:title ) .
+
+<http://example.org/shapes/route-f7359755913fe91b33db> a sh:PropertyShape ;
+    sh:description "Candidate class-qualified routes: http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C54571 --http://purl.org/dc/terms/isPartOf--> http://aopkb.org/aop_ontology#AdverseOutcomePathway (edge triples: 8); http://aopkb.org/aop_ontology#AdverseOutcomePathway --http://aopkb.org/aop_ontology#has_adverse_outcome--> http://aopkb.org/aop_ontology#KeyEvent (edge triples: 12); http://aopkb.org/aop_ontology#KeyEvent --http://aopkb.org/aop_ontology#LifeStageContext--> http://www.w3.org/2001/XMLSchema#string (edge triples: 7)" ;
+    sh:name "isPartOf / has_adverse_outcome / LifeStageContext" ;
+    sh:path ( dcterms:isPartOf aopo:has_adverse_outcome aopo:LifeStageContext ) .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/dataset/aopwikirdf-small> a void:Dataset ;
+    dcterms:description "Mined with rdfsolve 0.3.0 on 2026-09-16T10:03:13.796285+00:00" ;
+    dcterms:title "aopwikirdf-small" ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca0598f>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca93c07>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-68cf9a8c>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-be3d9cb9>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-d8227896>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f40618e8>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f8f2877f> ;
+    void:classes 13 ;
+    void:properties 47 ;
+    void:vocabulary aopo:,
+        <http://edamontology.org/>,
+        ncit:,
+        ncbitaxon:,
+        <http://purl.obolibrary.org/obo/>,
+        dc:,
+        dcterms:,
+        <http://semanticscience.org/resource/>,
+        foaf:,
+        aopwiki: .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66> a void:Dataset ;
+    void:class aopo:KeyEventRelationship ;
+    void:entities 37 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-1460a6fb>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-25fc258d>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3674ef14>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-38e1536b>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3e2f60da>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-4f75ce12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-77f68bef>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-7e72e214>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a037bb87>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a545e9ae>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-bee9e5e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-c74e2b73>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-cf78d212>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d2c31a8a>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f31288f4>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f55f0e2f> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-1460a6fb> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-1460a6fb-dt-4e598fd1> ;
+    void:property edam_operation:3799 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-1460a6fb-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-25fc258d> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-25fc258d-obj-71e025e3> ;
+    void:property aopo:has_upstream_key_event .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-25fc258d-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3674ef14> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3674ef14-dt-4e598fd1> ;
+    void:property edam_data:2042 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3674ef14-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-38e1536b> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-38e1536b-dt-4e598fd1> ;
+    void:property dc:description .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-38e1536b-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3e2f60da> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3e2f60da-dt-4e598fd1> ;
+    void:property dcterms:modified .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3e2f60da-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea-obj-be3d9cb9> ;
+    void:property aopwiki:geneDetectedByRegex .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-3eba0dea-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-4f75ce12> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-4f75ce12-dt-4e598fd1> ;
+    void:property rdfs:label .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-4f75ce12-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-77f68bef> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-77f68bef-dt-4e598fd1> ;
+    void:property ncit:C71478 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-77f68bef-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-7e72e214> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-7e72e214-obj-05326e66> ;
+    void:property rdfs:seeAlso .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-7e72e214-obj-05326e66> a void:Dataset ;
+    void:class aopo:KeyEventRelationship ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a037bb87> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a037bb87-obj-71e025e3> ;
+    void:property aopo:has_downstream_key_event .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a037bb87-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a545e9ae> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a545e9ae-obj-05326e66> ;
+    void:property foaf:page .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a545e9ae-obj-05326e66> a void:Dataset ;
+    void:class aopo:KeyEventRelationship ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211-dt-4e598fd1> ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211-obj-a6bb7211> ;
+    void:property ncbitaxon:131567 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-a6bb7211-obj-a6bb7211> a void:Dataset ;
+    void:class ncbitaxon:131567 ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9-obj-be3d9cb9> ;
+    void:property edam_data:1025 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 13 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-be3d9cb9-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 13 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-bee9e5e3> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-bee9e5e3-obj-05326e66> ;
+    void:property dc:identifier .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-bee9e5e3-obj-05326e66> a void:Dataset ;
+    void:class aopo:KeyEventRelationship ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-cf78d212> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-cf78d212-obj-860fa71e> ;
+    void:property dcterms:isPartOf .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-cf78d212-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 47 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d2c31a8a> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d2c31a8a-dt-4e598fd1> ;
+    void:property ncit:C80263 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d2c31a8a-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2-obj-be3d9cb9> ;
+    void:property aopwiki:geneDetectedByNER .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-d34cf2b2-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f31288f4> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f31288f4-dt-4e598fd1> ;
+    void:property dcterms:created .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f31288f4-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f55f0e2f> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f55f0e2f-dt-4e598fd1> ;
+    void:property ncit:C17469 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-05326e66-prop-f55f0e2f-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca0598f> a void:Dataset ;
+    void:class aopo:OrganContext ;
+    void:entities 9 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca0598f-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca0598f-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca93c07> a void:Dataset ;
+    void:class go:0008150 ;
+    void:entities 30 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca93c07-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-1ca93c07-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e> a void:Dataset ;
+    void:class ncit:C54571 ;
+    void:entities 7 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-10a2b68e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-3e2f60da>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-4f75ce12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-a545e9ae>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-bee9e5e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-c74e2b73>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-cf78d212>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-f31288f4> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7-obj-68cf9a8c>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7-obj-f40618e8> ;
+    void:property aopo:has_chemical_entity .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7-obj-68cf9a8c> a void:Dataset ;
+    void:class cheminf:000000 ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-00a31fc7-obj-f40618e8> a void:Dataset ;
+    void:class cheminf:000446 ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-10a2b68e> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-10a2b68e-dt-4e598fd1> ;
+    void:property dc:title .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-10a2b68e-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-3e2f60da> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-3e2f60da-dt-4e598fd1> ;
+    void:property dcterms:modified .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-3e2f60da-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-4f75ce12> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-4f75ce12-dt-4e598fd1> ;
+    void:property rdfs:label .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-4f75ce12-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-a545e9ae> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-a545e9ae-obj-6687515e> ;
+    void:property foaf:page .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-a545e9ae-obj-6687515e> a void:Dataset ;
+    void:class ncit:C54571 ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-bee9e5e3> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-bee9e5e3-obj-6687515e> ;
+    void:property dc:identifier .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-bee9e5e3-obj-6687515e> a void:Dataset ;
+    void:class ncit:C54571 ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-cf78d212> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-cf78d212-obj-860fa71e> ;
+    void:property dcterms:isPartOf .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-cf78d212-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-f31288f4> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-f31288f4-dt-4e598fd1> ;
+    void:property dcterms:created .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-6687515e-prop-f31288f4-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-68cf9a8c> a void:Dataset ;
+    void:class cheminf:000000 ;
+    void:entities 6 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-68cf9a8c-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-68cf9a8c-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:entities 38 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0337fffb>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0c2a9721>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-10a2b68e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-2afae325>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-38e1536b>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-49c6493d>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-4f75ce12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-7e72e214>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-8b9ff8df>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a545e9ae>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-aceb8b58>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-bee9e5e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-c74e2b73>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-cf78d212>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f55f0e2f>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f79a98d8>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0337fffb> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0337fffb-dt-4e598fd1> ;
+    void:property pato:0000047 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0337fffb-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0c2a9721> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0c2a9721-dt-4e598fd1> ;
+    void:property dc:source .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-0c2a9721-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-10a2b68e> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-10a2b68e-dt-4e598fd1> ;
+    void:property dc:title .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-10a2b68e-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f-obj-1ca0598f>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f-obj-d8227896> ;
+    void:property aopo:OrganContext .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f-obj-1ca0598f> a void:Dataset ;
+    void:class aopo:OrganContext ;
+    void:triples 16 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca0598f-obj-d8227896> a void:Dataset ;
+    void:class pato:0001241 ;
+    void:triples 10 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07-obj-1ca93c07>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07-obj-d8227896> ;
+    void:property go:0008150 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07-obj-1ca93c07> a void:Dataset ;
+    void:class go:0008150 ;
+    void:triples 31 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-1ca93c07-obj-d8227896> a void:Dataset ;
+    void:class pato:0001241 ;
+    void:triples 2 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-2afae325> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-2afae325-dt-4e598fd1> ;
+    void:property aopo:LifeStageContext .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-2afae325-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-38e1536b> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-38e1536b-dt-4e598fd1> ;
+    void:property dc:description .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-38e1536b-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 10 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea-obj-be3d9cb9> ;
+    void:property aopwiki:geneDetectedByRegex .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-3eba0dea-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-49c6493d> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-49c6493d-dt-4e598fd1> ;
+    void:property pato:0000001 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-49c6493d-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 37 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-4f75ce12> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-4f75ce12-dt-4e598fd1> ;
+    void:property rdfs:label .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-4f75ce12-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-7e72e214> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-7e72e214-obj-71e025e3> ;
+    void:property rdfs:seeAlso .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-7e72e214-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-8b9ff8df> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-8b9ff8df-dt-4e598fd1> ;
+    void:property mmo:0000000 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-8b9ff8df-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 10 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a545e9ae> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a545e9ae-obj-71e025e3> ;
+    void:property foaf:page .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a545e9ae-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211-dt-4e598fd1> ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211-obj-a6bb7211> ;
+    void:property ncbitaxon:131567 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 11 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-a6bb7211-obj-a6bb7211> a void:Dataset ;
+    void:class ncbitaxon:131567 ;
+    void:triples 14 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-aceb8b58> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-aceb8b58-dt-4e598fd1> ;
+    void:property ncit:C25664 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-aceb8b58-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9-obj-be3d9cb9> ;
+    void:property edam_data:1025 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 48 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-be3d9cb9-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 48 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-bee9e5e3> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-bee9e5e3-obj-71e025e3> ;
+    void:property dc:identifier .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-bee9e5e3-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-cf78d212> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-cf78d212-obj-860fa71e> ;
+    void:property dcterms:isPartOf .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-cf78d212-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 152 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2-obj-78c723fd>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2-obj-be3d9cb9> ;
+    void:property aopwiki:geneDetectedByNER .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2-obj-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:triples 44 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d34cf2b2-obj-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:triples 44 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-1ca93c07>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-d8227896>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-f8f2877f> ;
+    void:property pato:0001241 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-1ca93c07> a void:Dataset ;
+    void:class go:0008150 ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-d8227896> a void:Dataset ;
+    void:class pato:0001241 ;
+    void:triples 28 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-d8227896-obj-f8f2877f> a void:Dataset ;
+    void:class aopo:CellTypeContext ;
+    void:triples 3 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f55f0e2f> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f55f0e2f-dt-4e598fd1> ;
+    void:property ncit:C17469 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f55f0e2f-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 10 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f79a98d8> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f79a98d8-dt-4e598fd1> ;
+    void:property dcterms:alternative .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f79a98d8-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 38 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f-obj-d8227896>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f-obj-f8f2877f> ;
+    void:property aopo:CellTypeContext .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f-obj-d8227896> a void:Dataset ;
+    void:class pato:0001241 ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-71e025e3-prop-f8f2877f-obj-f8f2877f> a void:Dataset ;
+    void:class aopo:CellTypeContext ;
+    void:triples 14 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-78c723fd> a void:Dataset ;
+    void:class edam_data:2298 ;
+    void:entities 47 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-78c723fd-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-78c723fd-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:entities 86 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0337fffb>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c2a9721>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c7e6f12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-10a2b68e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1460a6fb>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1a52ea9d>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-21087328>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-24afd213>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-2afae325>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3494e2ce>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-38e1536b>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3e2f60da>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-4f75ce12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5be8f735>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5f0e3ff4>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-6687515e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-7e72e214>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8c7e3207>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8cbd77d5>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a545e9ae>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bb5ac1c9>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bee9e5e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-c74e2b73>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-d8448f7d>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-de22702c>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-e41dbf37>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f31288f4>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f79a98d8> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0337fffb> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0337fffb-dt-4e598fd1> ;
+    void:property pato:0000047 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0337fffb-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c2a9721> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c2a9721-dt-4e598fd1> ;
+    void:property dc:source .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c2a9721-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c7e6f12> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c7e6f12-obj-71e025e3> ;
+    void:property aopo:has_key_event .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-0c7e6f12-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 54 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-10a2b68e> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-10a2b68e-dt-4e598fd1> ;
+    void:property dc:title .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-10a2b68e-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1460a6fb> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1460a6fb-dt-4e598fd1> ;
+    void:property edam_operation:3799 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1460a6fb-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1a52ea9d> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1a52ea9d-obj-71e025e3> ;
+    void:property aopo:has_molecular_initiating_event .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-1a52ea9d-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-21087328> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-21087328-obj-05326e66> ;
+    void:property aopo:has_key_event_relationship .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-21087328-obj-05326e66> a void:Dataset ;
+    void:class aopo:KeyEventRelationship ;
+    void:triples 46 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-24afd213> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-24afd213-dt-4e598fd1> ;
+    void:property ncit:C25217 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-24afd213-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 2 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-2afae325> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-2afae325-dt-4e598fd1> ;
+    void:property aopo:LifeStageContext .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-2afae325-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 6 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3494e2ce> a void:Dataset ;
+    void:property dcterms:license .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-38e1536b> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-38e1536b-dt-4e598fd1> ;
+    void:property dc:description .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-38e1536b-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3e2f60da> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3e2f60da-dt-4e598fd1> ;
+    void:property dcterms:modified .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-3e2f60da-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-4f75ce12> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-4f75ce12-dt-4e598fd1> ;
+    void:property rdfs:label .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-4f75ce12-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5be8f735> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5be8f735-dt-4e598fd1> ;
+    void:property aopo:AopContext .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5be8f735-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 2 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5f0e3ff4> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5f0e3ff4-dt-4e598fd1> ;
+    void:property aopo:has_evidence .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-5f0e3ff4-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-6687515e> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-6687515e-obj-6687515e> ;
+    void:property ncit:C54571 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-6687515e-obj-6687515e> a void:Dataset ;
+    void:class ncit:C54571 ;
+    void:triples 7 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-7e72e214> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-7e72e214-obj-860fa71e> ;
+    void:property rdfs:seeAlso .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-7e72e214-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8c7e3207> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8c7e3207-obj-71e025e3> ;
+    void:property aopo:has_adverse_outcome .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8c7e3207-obj-71e025e3> a void:Dataset ;
+    void:class aopo:KeyEvent ;
+    void:triples 12 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8cbd77d5> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8cbd77d5-dt-4e598fd1> ;
+    void:property dcterms:abstract .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-8cbd77d5-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 3 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a545e9ae> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a545e9ae-obj-860fa71e> ;
+    void:property foaf:page .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a545e9ae-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211-dt-4e598fd1> ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211-obj-a6bb7211> ;
+    void:property ncbitaxon:131567 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-a6bb7211-obj-a6bb7211> a void:Dataset ;
+    void:class ncbitaxon:131567 ;
+    void:triples 5 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bb5ac1c9> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bb5ac1c9-dt-4e598fd1> ;
+    void:property ncit:C25725 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bb5ac1c9-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bee9e5e3> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bee9e5e3-obj-860fa71e> ;
+    void:property dc:identifier .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-bee9e5e3-obj-860fa71e> a void:Dataset ;
+    void:class aopo:AdverseOutcomePathway ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-d8448f7d> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-d8448f7d-dt-4e598fd1> ;
+    void:property dc:creator .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-d8448f7d-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-de22702c> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-de22702c-dt-4e598fd1> ;
+    void:property ncit:C48192 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-de22702c-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-e41dbf37> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-e41dbf37-dt-4e598fd1> ;
+    void:property ncit:C25688 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-e41dbf37-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 1 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f31288f4> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f31288f4-dt-4e598fd1> ;
+    void:property dcterms:created .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f31288f4-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f79a98d8> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f79a98d8-dt-4e598fd1> ;
+    void:property dcterms:alternative .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-860fa71e-prop-f79a98d8-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 8 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211> a void:Dataset ;
+    void:class ncbitaxon:131567 ;
+    void:entities 6 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-0c2a9721>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-10a2b68e>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-4f75ce12>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-bee9e5e3>,
+        <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-0c2a9721> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-0c2a9721-dt-4e598fd1> ;
+    void:property dc:source .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-0c2a9721-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 3 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-10a2b68e> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-10a2b68e-dt-4e598fd1> ;
+    void:property dc:title .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-10a2b68e-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 9 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-4f75ce12> a void:Dataset ;
+    ns1:datatypePartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-4f75ce12-dt-4e598fd1> ;
+    void:property rdfs:label .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-4f75ce12-dt-4e598fd1> ns1:datatype xsd:string ;
+    void:triples 9 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-bee9e5e3> a void:Dataset ;
+    void:classPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-bee9e5e3-obj-a6bb7211> ;
+    void:property dc:identifier .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-bee9e5e3-obj-a6bb7211> a void:Dataset ;
+    void:class ncbitaxon:131567 ;
+    void:triples 3 .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-a6bb7211-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-be3d9cb9> a void:Dataset ;
+    void:class edam_data:1025 ;
+    void:entities 47 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-be3d9cb9-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-be3d9cb9-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-d8227896> a void:Dataset ;
+    void:class pato:0001241 ;
+    void:entities 32 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-d8227896-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-d8227896-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f40618e8> a void:Dataset ;
+    void:class cheminf:000446 ;
+    void:entities 6 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f40618e8-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f40618e8-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f8f2877f> a void:Dataset ;
+    void:class aopo:CellTypeContext ;
+    void:entities 7 ;
+    void:propertyPartition <https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f8f2877f-prop-c74e2b73> .
+
+<https://rdfsolve.bigcat-bioinformatics.nl/schema#class-f8f2877f-prop-c74e2b73> a void:Dataset ;
+    void:property rdf:type .
+
+aopo:has_evidence rdfs:label "has_evidence" .
+
+aopo:has_key_event rdfs:label "has_key_event" .
+
+aopo:has_key_event_relationship rdfs:label "has_key_event_relationship" .
+
+aopo:has_molecular_initiating_event rdfs:label "has_molecular_initiating_event" .
+
+aopo:has_upstream_key_event rdfs:label "has_upstream_key_event" .
+
+edam_data:2042 rdfs:label "data_2042" .
+
+ncit:C25217 rdfs:label "C25217" .
+
+ncit:C25664 rdfs:label "C25664" .
+
+ncit:C25688 rdfs:label "C25688" .
+
+ncit:C25725 rdfs:label "C25725" .
+
+ncit:C48192 rdfs:label "C48192" .
+
+ncit:C71478 rdfs:label "C71478" .
+
+ncit:C80263 rdfs:label "C80263" .
+
+mmo:0000000 rdfs:label "MMO_0000000" .
+
+pato:0000001 rdfs:label "PATO_0000001" .
+
+dc:creator rdfs:label "creator" .
+
+dcterms:abstract rdfs:label "abstract" .
+
+dcterms:license rdfs:label "license" .
+
+aopo:AopContext rdfs:label "AopContext" .
+
+edam_operation:3799 rdfs:label "operation_3799" .
+
+ncit:C17469 rdfs:label "C17469" .
+
+pato:0000047 rdfs:label "PATO_0000047" .
+
+dcterms:alternative rdfs:label "alternative" .
+
+aopwiki:geneDetectedByNER rdfs:label "geneDetectedByNER" .
+
+aopwiki:geneDetectedByRegex rdfs:label "geneDetectedByRegex" .
+
+aopo:has_chemical_entity rdfs:label "has_chemical_entity" .
+
+cheminf:000000 rdfs:label "CHEMINF_000000" .
+
+cheminf:000446 rdfs:label "CHEMINF_000446" .
+
+dc:description rdfs:label "description" .
+
+dcterms:created rdfs:label "created" .
+
+dcterms:modified rdfs:label "modified" .
+
+rdfs:seeAlso rdfs:label "seeAlso" .
+
+go:0008150 rdfs:label "GO_0008150" .
+
+foaf:page rdfs:label "page" .
+
+aopo:LifeStageContext rdfs:label "LifeStageContext" .
+
+rdfs:label rdfs:label "label" .
+
+dcterms:isPartOf rdfs:label "isPartOf" .
+
+aopo:has_downstream_key_event rdfs:label "has_downstream_key_event" .
+
+dc:source rdfs:label "source" .
+
+aopo:has_adverse_outcome rdfs:label "has_adverse_outcome" .
+
+edam_data:2298 rdfs:label "data_2298" .
+
+dc:title rdfs:label "title" .
+
+ncit:C54571 rdfs:label "C54571" .
+
+pato:0001241 rdfs:label "PATO_0001241" .
+
+aopo:KeyEventRelationship rdfs:label "KeyEventRelationship" .
+
+edam_data:1025 rdfs:label "data_1025" .
+
+aopo:OrganContext rdfs:label "OrganContext" .
+
+aopo:AdverseOutcomePathway rdfs:label "Adverse Outcome Pathway" .
+
+aopo:CellTypeContext rdfs:label "CellTypeContext" .
+
+dc:identifier rdfs:label "identifier" .
+
+aopo:KeyEvent rdfs:label "KeyEvent" .
+
+ncbitaxon:131567 rdfs:label "131567" .
+
+rdf:type rdfs:label "type" .
+

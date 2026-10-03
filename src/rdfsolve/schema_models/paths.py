@@ -1,4 +1,4 @@
-"""Store property paths without treating them as RDF predicates."""
+"""RDF property-path expressions and IRI validation."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class PropertyPath(BaseModel):
-    """A SHACL Core path expression. This model does not execute queries."""
+    """A SHACL Core property-path expression."""
 
     model_config = ConfigDict(extra="forbid")
     operator: Literal[
@@ -24,16 +24,20 @@ class PropertyPath(BaseModel):
     iri: str | None = None
     items: list[PropertyPath] = Field(default_factory=list)
 
+    @classmethod
+    def from_sparql(cls, text: str, prefixes: dict[str, str] | None = None) -> PropertyPath:
+        """Read SPARQL property path text, for example ``^schema:author/schema:name``."""
+        from rdfsolve.schema_models.readers.paths import read_sparql_path
+
+        return read_sparql_path(text, prefixes)
+
     @model_validator(mode="after")
     def check_expression(self) -> PropertyPath:
         """Check path arity and reject characters that change SPARQL syntax."""
         if self.operator == "predicate":
-            if self.items or not self.iri or not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", self.iri):
-                raise ValueError("A predicate path needs one absolute IRI")
-            if any(
-                char.isspace() or char in '<>"{}|^\x60\\' or ord(char) < 32 for char in self.iri
-            ):
-                raise ValueError("Invalid character in a path IRI")
+            if self.items:
+                raise ValueError("A predicate path has no child paths")
+            absolute_iri(self.iri or "")
         elif self.iri is not None:
             raise ValueError("Only predicate paths have an IRI")
         elif self.operator in ("sequence", "alternative"):
@@ -42,3 +46,17 @@ class PropertyPath(BaseModel):
         elif len(self.items) != 1:
             raise ValueError("Unary paths need exactly one item")
         return self
+
+
+_INVALID_IRI_CHAR = re.compile(r'[\s<>"{}|^`\\\x00-\x1f]')
+
+
+def absolute_iri(value: str) -> str:
+    """Validate an RDF IRI before serializing it into SPARQL."""
+    if not isinstance(value, str) or not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", value):
+        raise ValueError(
+            "Expected an absolute RDF IRI; relative or blank-node identifiers need an anchored query."
+        )
+    if _INVALID_IRI_CHAR.search(value):
+        raise ValueError("Invalid character in an RDF IRI")
+    return value

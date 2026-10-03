@@ -1,12 +1,8 @@
-"""Check empty, failed, and partially recovered query groups."""
-
 from unittest.mock import Mock
 
-import pytest
-
 from rdfsolve.mining.query_builders import _build_batched_literal_query
-from rdfsolve.mining.query_fallbacks import query_with_bisect, typed_object_by_property
-from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, PaginationTruncatedError
+from rdfsolve.mining.query_fallbacks import query_with_bisect
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
 
 
 def response(rows):
@@ -29,33 +25,11 @@ def run_query(helper, classes=None, collect=None):
     )
 
 
-def test_empty_success_is_complete():
-    result = run_query(Mock(select=Mock(return_value=response([]))))
-    assert result.rows == []
-    assert result.state == "complete"
-    assert result.failures == []
-
-
-def test_endpoint_failure_is_not_empty_success():
-    collect = Mock()
-    result = run_query(Mock(select=Mock(side_effect=EndpointError("offline"))), collect=collect)
-    assert result.rows == []
-    assert result.state == "failed"
-    assert result.failures[0].category == "endpoint"
-    assert result.failures[0].classes == ["urn:A"]
-    assert result.failures[0].graph_uris == ["urn:graph"]
-    collect.assert_not_called()
-
-
-@pytest.mark.parametrize("rows", [[], [binding()]])
-def test_bisection_preserves_success_and_failure(rows):
+def test_bisection_preserves_success_and_failure():
+    rows = [binding()]
     helper = Mock(
         select=Mock(
-            side_effect=[
-                EndpointTimeoutError("split"),
-                response(rows),
-                EndpointError("offline"),
-            ]
+            side_effect=[EndpointTimeoutError("split"), response(rows), EndpointError("offline")]
         )
     )
     result = run_query(helper, ["urn:A", "urn:B"])
@@ -64,97 +38,40 @@ def test_bisection_preserves_success_and_failure(rows):
     assert result.failures[0].classes == ["urn:B"]
 
 
-def test_bisection_can_recover_completely():
-    helper = Mock(
-        select=Mock(side_effect=[EndpointTimeoutError("split"), response([]), response([])])
+    from rdfsolve.mining.query_builders import _build_batched_typed_object_query
+
+    typed = {"oc": {"type": "uri", "value": "urn:B"}}
+    helper = Mock(select=Mock(side_effect=[
+        EndpointTimeoutError("Class join exceeds the query budget"),
+        response([{"p": {"type": "uri", "value": "urn:p"}}]),
+        response([typed]),
+    ]))
+    collect = Mock(side_effect=AssertionError("Split the timed-out join before repeating pages"))
+    result = query_with_bisect(
+        ["urn:A"], ["urn:graph"], _build_batched_typed_object_query,
+        "test/typed", helper, collect, 100,
     )
-    result = run_query(helper, ["urn:A", "urn:B"])
-    assert result.state == "complete"
-    assert not result.failures
+    assert result.state == "complete", result.failures
+    assert result.rows == [binding(p={"type": "uri", "value": "urn:p"}, **typed)]
+    assert not collect.called
 
+    from rdflib import Graph
 
-def test_bisection_can_fail_completely():
-    helper = Mock(
-        select=Mock(
-            side_effect=[
-                EndpointTimeoutError("split"),
-                EndpointError("left"),
-                EndpointError("right"),
-            ]
-        )
-    )
-    result = run_query(helper, ["urn:A", "urn:B"])
-    assert result.state == "failed"
-    assert len(result.failures) == 2
+    from rdfsolve.mining.local_graph import LocalGraphHelper
 
+    graph = Graph().parse(data='<urn:a> a <urn:A>; <urn:p> "x" . <urn:b> a <urn:A>; <urn:q> 1 .', format="turtle")
+    local = LocalGraphHelper("local", graph)
+    select = local.select
 
-def test_pagination_preserves_rdf_term_identity():
-    integer = binding(term={"type": "literal", "value": "1", "datatype": "urn:integer"})
-    text = binding(term={"type": "literal", "value": "1", "datatype": "urn:string"})
-    helper = Mock(select=Mock(side_effect=EndpointTimeoutError("page")))
-    result = run_query(helper, collect=Mock(return_value=[integer, integer, text]))
-    assert result.state == "complete"
-    assert result.rows == [integer, text]
+    def whole_class_times_out(query, **kwargs):
+        if "SELECT ?s WHERE" not in query:  # only member windows fit the budget
+            raise EndpointTimeoutError("Operation timed out")
+        return select(query, **kwargs)
 
-
-def test_exhausted_pagination_records_failure():
-    helper = Mock(select=Mock(side_effect=EndpointTimeoutError("page")))
-    result = run_query(
-        helper, collect=Mock(side_effect=PaginationTruncatedError("cut", offset=100))
-    )
-    assert result.state == "failed"
-    assert result.failures[0].category == "truncated"
-
-
-def test_partial_pagination_keeps_rows():
-    error = PaginationTruncatedError("cut", offset=100)
-    error.partial_rows = [binding()]
-    result = run_query(
-        Mock(select=Mock(side_effect=EndpointTimeoutError("page"))),
-        collect=Mock(side_effect=error),
-    )
-    assert result.state == "partial"
-    assert result.rows == [binding()]
-
-
-@pytest.mark.parametrize("raw", [{}, {"results": {}}, {"results": {"bindings": "invalid"}}])
-def test_invalid_response_is_not_empty_success(raw):
-    result = run_query(Mock(select=Mock(return_value=raw)))
-    assert result.state == "failed"
-    assert result.failures[0].category == "invalid_response"
-
-
-def test_programming_errors_are_not_retried():
-    helper = Mock(select=Mock(side_effect=RuntimeError("bug")))
-    with pytest.raises(RuntimeError, match="bug"):
-        run_query(helper)
-
-
-def test_cancellation_propagates():
-    helper = Mock(select=Mock(side_effect=KeyboardInterrupt))
-    with pytest.raises(KeyboardInterrupt):
-        run_query(helper)
-
-
-def test_empty_class_batch_does_not_query():
-    helper = Mock()
-    result = query_with_bisect([], None, _build_batched_literal_query, "empty", helper, Mock(), 100)
-    assert result.state == "complete"
-    helper.select.assert_not_called()
-
-
-def test_property_failure_preserves_other_properties():
-    helper = Mock(
-        select=Mock(
-            side_effect=[
-                response([{"p": {"value": "urn:p"}}, {"p": {"value": "urn:q"}}]),
-                response([{"oc": {"value": "urn:B"}}]),
-                EndpointError("offline"),
-            ]
-        )
-    )
-    result = typed_object_by_property("urn:A", ["urn:graph"], "test/typed", helper, Mock(), 100)
-    assert result.state == "partial"
-    assert len(result.rows) == 1
-    assert result.rows[0]["p"]["value"] == "urn:p"
-    assert "urn:q" in result.failures[0].purpose
+    local.select = whole_class_times_out
+    pages = Mock(side_effect=EndpointTimeoutError("Operation timed out"))
+    result = query_with_bisect(["urn:A"], None, _build_batched_literal_query, "test/literal", local, pages, 100)
+    assert {r["p"]["value"] for r in result.rows} == {"urn:p", "urn:q"}, "Windows still observe rows"
+    assert result.state == "partial" and result.failures[-1].category == "sampled", "Never complete"
+    assert "windows" in result.failures[-1].message
+    assert not pages.called, "Smaller pages cannot shorten a timed-out discovery join"

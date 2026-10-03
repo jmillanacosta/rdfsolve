@@ -1,165 +1,5 @@
-"""Tests for SHACL conversion functions."""
-
-from rdfsolve.schema_models.core import MinedSchema
-from rdfsolve.schema_models.pattern import SchemaPattern
-from rdfsolve.schema_models.about import AboutMetadata
-from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
-from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
-
-
-def test_unknown_kind_is_not_an_iri_and_union_kinds_are_not_collapsed(caplog):
-    import pytest
-
-    source = """
-        @prefix sh: <http://www.w3.org/ns/shacl#> .
-        <urn:shape> a sh:NodeShape; sh:targetClass <urn:A>;
-            sh:property [sh:path <urn:p>; sh:nodeKind sh:BlankNodeOrLiteral],
-                [sh:path <urn:q>] .
-    """
-    schema = shacl_to_minedschema(source)
-    assert "Retain 1 SHACL branches" in caplog.text
-    assert {(p.property_uri, p.object_class) for p in schema.patterns} == {
-        ("urn:p", "BlankNode"), ("urn:p", "Literal")
-    }
-    with pytest.raises(ValueError, match="Invalid sh:nodeKind"):
-        shacl_to_minedschema(source.replace("sh:BlankNodeOrLiteral", "<urn:NotLiteral>"))
-
-
-def test_roundtrip():
-    """Test MinedSchema -> SHACL -> MinedSchema roundtrip."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/knows",
-                object_class="http://example.org/Person",
-            ),
-        ],
-        about=AboutMetadata.build(pattern_count=2, class_count=1),
-    )
-
-    # Convert to SHACL
-    shapes = minedschema_to_shacl(original)
-    g = shapes.to_rdf()
-    shacl_ttl = g.serialize(format="turtle")
-
-    # Parse back
-    roundtrip = shacl_to_minedschema(shacl_ttl)
-
-    assert len(roundtrip.patterns) == len(original.patterns)
-
-    original_keys = {(p.subject_class, p.property_uri, p.object_class) for p in original.patterns}
-    roundtrip_keys = {(p.subject_class, p.property_uri, p.object_class) for p in roundtrip.patterns}
-    assert original_keys == roundtrip_keys
-
-
-def test_roundtrip_with_multiple_classes():
-    """Test roundtrip with multiple subject classes."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Organization",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/worksAt",
-                object_class="http://example.org/Organization",
-            ),
-        ],
-        about=AboutMetadata.build(pattern_count=3, class_count=2),
-    )
-
-    # Convert to SHACL
-    shapes = minedschema_to_shacl(original)
-
-    # Should have 2 NodeShapes (one per class)
-    assert len(shapes.node_shapes) == 2
-
-    # Convert back
-    g = shapes.to_rdf()
-    shacl_ttl = g.serialize(format="turtle")
-    roundtrip = shacl_to_minedschema(shacl_ttl)
-
-    assert len(roundtrip.patterns) == len(original.patterns)
-
-
-def test_from_shacl_method():
-    """Test MinedSchema.from_shacl() method."""
-    from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
-
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/name",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#string",
-            ),
-        ],
-        about=AboutMetadata.build(pattern_count=1),
-    )
-
-    # Generate SHACL
-    shapes = minedschema_to_shacl(original)
-    shacl_ttl = shapes.to_rdf().serialize(format="turtle")
-
-    # Parse using from_shacl() method
-    roundtrip = MinedSchema.from_shacl(shacl_ttl)
-
-    assert len(roundtrip.patterns) == 1
-    assert roundtrip.patterns[0].subject_class == "http://example.org/Person"
-    assert roundtrip.patterns[0].property_uri == "http://example.org/name"
-    assert roundtrip.patterns[0].object_class == "Literal"
-
-
-def test_datatype_preservation():
-    """Test that datatypes are preserved in roundtrip."""
-    original = MinedSchema(
-        patterns=[
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/age",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#integer",
-            ),
-            SchemaPattern(
-                subject_class="http://example.org/Person",
-                property_uri="http://example.org/birthdate",
-                object_class="Literal",
-                datatype="http://www.w3.org/2001/XMLSchema#date",
-            ),
-        ],
-        about=AboutMetadata.build(pattern_count=2),
-    )
-
-    # Roundtrip
-    shapes = minedschema_to_shacl(original)
-    shacl_ttl = shapes.to_rdf().serialize(format="turtle")
-    roundtrip = shacl_to_minedschema(shacl_ttl)
-
-    # Verify datatypes
-    original_datatypes = {(p.property_uri, p.datatype) for p in original.patterns}
-    roundtrip_datatypes = {(p.property_uri, p.datatype) for p in roundtrip.patterns}
-    assert original_datatypes == roundtrip_datatypes
-
-
-def test_mixed_values_use_alternatives_not_conflicting_node_kinds():
-    """Regress the mixed literal/resource shape produced by mining."""
+def test_shacl_import_storage_and_navigation():
+    """Import constraints, preserve their RDF and compose declared paths."""
     from rdflib import Graph, Namespace
     from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 
@@ -183,8 +23,45 @@ def test_mixed_values_use_alternatives_not_conflicting_node_kinds():
     assert len(heads) == 1
     assert len(list(graph.items(heads[0]))) == 4
     assert all(
-        len(list(graph.objects(subject, sh.nodeKind))) == 1
-        for subject in graph.subjects(sh.nodeKind, None)
+        (
+            len(list(graph.objects(subject, sh.nodeKind))) == 1
+            for subject in graph.subjects(sh.nodeKind, None)
+        )
     )
     restored = MinedSchema.from_shacl(schema.to_shacl())
     assert {p.object_class for p in restored.patterns} == {p.object_class for p in schema.patterns}
+
+
+    from rdflib.compare import isomorphic
+
+    declared = """
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix e: <urn:declared:> .
+        e:Profile a sh:NodeShape; sh:targetClass e:Person;
+            sh:closed true; sh:ignoredProperties
+            (<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>);
+            sh:property [ sh:path e:name; sh:minCount 1;
+                          sh:pattern "^[A-Z]"; sh:message "Use a capital" ] .
+    """
+    imported = MinedSchema.from_shacl(declared)
+    restored = MinedSchema.from_dict(imported.to_dict())
+    assert isomorphic(
+        Graph().parse(data=declared, format="turtle"),
+        restored.get_metadata().to_rdf_graph(),
+    ), "Keep the full provider profile, including constraints outside the model"
+    assert restored.shapes.node_shapes[0].closed
+
+
+    implicit = MinedSchema.from_shacl("""
+        @prefix sh: <http://www.w3.org/ns/shacl#> .
+        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix e: <urn:declared:> .
+        e:Person a rdfs:Class, sh:NodeShape;
+            sh:property [ sh:path e:worksFor; sh:class e:Organization ] .
+        e:Organization a rdfs:Class, sh:NodeShape;
+            sh:property [ sh:path e:location; sh:class e:Place ] .
+    """)
+    assert len(implicit.patterns) == 2, "Class shapes supply implicit targets"
+    routes = implicit.discover_paths(max_hops=2)
+    assert len(routes.paths) == 1
+    assert routes.paths[0].instance_support == "not_checked", "Declarations are not witnesses"

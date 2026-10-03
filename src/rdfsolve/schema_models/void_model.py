@@ -203,6 +203,7 @@ class VoidLinkset(BaseModel):
         # subjectsTarget with nested void:class
         subj_target = BNode()
         graph.add((uri, void.subjectsTarget, subj_target))
+        graph.add((subj_target, RDF.type, void.Dataset))
         graph.add((subj_target, void["class"], Ref(self.subjects_target_class)))
 
         # linkPredicate
@@ -211,6 +212,7 @@ class VoidLinkset(BaseModel):
         # objectsTarget with nested void:class
         obj_target = BNode()
         graph.add((uri, void.objectsTarget, obj_target))
+        graph.add((obj_target, RDF.type, void.Dataset))
         graph.add((obj_target, void["class"], Ref(self.objects_target_class)))
 
         if self.triples is not None:

@@ -4,10 +4,21 @@ from __future__ import annotations
 
 import importlib
 
+from rdfsolve.ontology.structure import (
+    DisjointClassRelation,
+    DomainAssertion,
+    EquivalentClassRelation,
+    EquivalentPropertyRelation,
+    InverseRelation,
+    OntologyStructure,
+    PropertyCharacteristic,
+    RangeAssertion,
+    Restriction,
+    SubClassRelation,
+    SubPropertyRelation,
+)
 from rdfsolve.schema_models._constants import (
-    _BASE_URI,
     _BLANK_NODE_URIS,
-    _GRAPH_SKIP_KEYS,
     _RESOURCE_URIS,
     _SENTINEL_OBJECTS,
     _URI_SCHEMES,
@@ -19,15 +30,6 @@ from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import MetadataDocument
-from rdfsolve.schema_models.ontology import (
-    DomainAssertion,
-    InverseRelation,
-    OntologyStructure,
-    PropertyCharacteristic,
-    RangeAssertion,
-    Restriction,
-    SubClassRelation,
-)
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 from rdfsolve.schema_models.readers.void import void_to_minedschema
@@ -70,9 +72,7 @@ def __getattr__(name: str) -> object:
 __all__ = [
     # constants
     "SERVICE_NAMESPACE_PREFIXES",
-    "_BASE_URI",
     "_BLANK_NODE_URIS",
-    "_GRAPH_SKIP_KEYS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",
     "_URI_SCHEMES",
@@ -80,7 +80,10 @@ __all__ = [
     "AboutMetadata",
     # metadata
     # ontology
+    "DisjointClassRelation",
     "DomainAssertion",
+    "EquivalentClassRelation",
+    "EquivalentPropertyRelation",
     "InverseRelation",
     "MetadataDocument",
     "MinedSchema",
@@ -101,6 +104,7 @@ __all__ = [
     "ShaclPropertyShape",
     "ShaclShapesGraph",
     "SubClassRelation",
+    "SubPropertyRelation",
     # void models
     "VoidClassPartition",
     "VoidDataset",

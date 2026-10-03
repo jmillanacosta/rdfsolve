@@ -1,0 +1,84 @@
+def test_models_keep_download_fields_for_mode_classification(tmp_path):
+    from rdfsolve.sources import classify_source_mode, load_sources
+
+    path = tmp_path / "sources.yaml"
+    path.write_text(
+        "- name: dump\n  download_nt: [https://example.org/a.nt.gz]\n- name: both\n  endpoint: https://example.org/sparql\n  download_ttl: https://example.org/b.ttl\n"
+    )
+    dump, both = load_sources(path)
+    assert dump.model_extra == {"download_nt": ["https://example.org/a.nt.gz"]}
+    assert (classify_source_mode(dump), classify_source_mode(both)) == ("local", "both")
+
+
+def test_sidecar_supplies_namespaces_without_changing_access(tmp_path):
+    import json
+
+    import pytest
+
+    from rdfsolve.identifiers import resolve_identifiers
+    from rdfsolve.schema_models.enrichment import RdfTerm
+    from rdfsolve.sources import load_sources
+
+    path = tmp_path / "sources.yaml"
+    path.write_text(
+        "- name: mesh\n  bioregistry_prefix: mesh\n  endpoint: https://example.org/sparql\n"
+    )
+    original = path.read_bytes()
+    sidecar = path.with_suffix(".metadata.json")
+    records = {
+        "mesh": {
+            "bioregistry_prefix": "mesh",
+            "bioregistry_uri_prefixes": ["http://id.nlm.nih.gov/mesh/"],
+            "bioregistry_package_version": "test-snapshot",
+        }
+    }
+    sidecar.write_text(json.dumps({"sources": records}))
+    source = load_sources(path)[0]
+    report = resolve_identifiers(
+        [RdfTerm(kind="literal", value="mesh:D000001")],
+        source,
+        target_iris=["http://id.nlm.nih.gov/mesh/D000001"],
+        mode="namespace",
+    )
+    assert report.results[0].status == "resolved", report
+    assert report.registry_version == "test-snapshot"
+    assert source.endpoint == "https://example.org/sparql"
+    assert path.read_bytes() == original
+    records["mesh"]["endpoint"] = "https://wrong.example/sparql"
+    sidecar.write_text(json.dumps({"sources": records}))
+    with pytest.raises(ValueError, match="metadata"):
+        load_sources(path)
+    records["mesh"].pop("endpoint")
+    records["mesh"]["bioregistry_prefix"] = "chebi"
+    sidecar.write_text(json.dumps({"sources": records}))
+    with pytest.raises(ValueError, match="prefix"):
+        load_sources(path)
+
+
+def test_the_shipped_registry_loads_with_its_metadata_sidecar():
+    """data/sources.yaml and data/sources.metadata.json agree on every prefix: a curated prefix
+    change without the sidecar's record refused the whole registry (2026-09-28 to 2026-10-03)."""
+    from pathlib import Path
+
+    from rdfsolve.sources import load_sources
+
+    sources = load_sources(Path(__file__).parents[1] / "data" / "sources.yaml")
+    assert len(sources) > 200
+    assert {s.name for s in sources if s.classes_as_data} >= {"rhea", "swisslipids"}
+
+
+def test_the_registry_adds_iri_formats_that_bioregistry_lacks(tmp_path, monkeypatch):
+    """A source's uri_formats join Bioregistry's formats of its prefix in identifier candidates
+    (Rhea's RDF writes http://rdf.rhea-db.org/<id>, which Bioregistry does not list)."""
+    from rdfsolve import identifiers, sources
+
+    registry = tmp_path / "sources.yaml"
+    registry.write_text(
+        "- name: rhea\n  bioregistry_prefix: rhea\n  uri_formats:\n  - http://rdf.rhea-db.org/$1\n"
+    )
+    monkeypatch.setattr(sources, "DEFAULT_SOURCES_YAML", registry)
+    identifiers.registry_uri_formats.cache_clear()
+    try:
+        assert "http://rdf.rhea-db.org/21812" in identifiers.candidates("rhea:21812")[0]
+    finally:
+        identifiers.registry_uri_formats.cache_clear()
