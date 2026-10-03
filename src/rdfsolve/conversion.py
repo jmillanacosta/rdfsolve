@@ -29,7 +29,16 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
     from rdfsolve.schema_models.paths import PropertyPath
 
-__all__ = ["Biolink", "Profile", "Query", "Rule", "to_kgx", "within", "write_query"]
+__all__ = [
+    "Biolink",
+    "Profile",
+    "Query",
+    "Rule",
+    "derive_conversions",
+    "to_kgx",
+    "within",
+    "write_query",
+]
 
 
 def _expand(text: str, client: Client | None = None) -> str:
@@ -1471,13 +1480,16 @@ def to_kgx(
         if edge.source in associations and slot in _ASSOCIATION_SLOTS:
             parts[edge.source][slot] = edge.target
         elif slot:
-            rows.append(
-                {
-                    "subject": short(edge.source),
-                    "predicate": term(edge.type),
-                    "object": short(edge.target),
-                }
-            )
+            row = {
+                "subject": short(edge.source),
+                "predicate": term(edge.type),
+                "object": short(edge.target),
+            }
+            # Qualifiers a graph step attached to the edge (derive_conversions: the catalysts).
+            for key, values in edge.attached.items():
+                if key.startswith(base) and key.endswith("_qualifier") and values:
+                    row[key[len(base) :]] = "|".join(short(v.lexical) for v in values)
+            rows.append(row)
     for nid in sorted(associations):
         node, found = graph.nodes[nid], parts[nid]
         predicate = found.get("predicate") or next(
@@ -1533,3 +1545,56 @@ def to_kgx(
             )
     (folder / "prefixes.json").write_text(json.dumps(dict(sorted(used.items())), indent=1))
     return nodes_path, edges_path
+
+
+def derive_conversions(graph: Any, biolink: Biolink) -> dict[str, int]:
+    """Add the derivation edges that Biolink's reaction nodes imply; return how many.
+
+    Biolink's chemical-to-chemical derivation association states the rule: a reaction that has
+    input C1, has output C2 and is catalyzed by P gives C1 derives_into C2, with P as its
+    catalyst_qualifier. Each such edge is added between the inputs and outputs of each reaction
+    node of *graph* (PropertyGraph), with the catalysts of the reaction attached. The edges are
+    derived (not given back as RDF): the reaction's own statements are.
+    """
+    from rdfsolve.property_graph import REFERENCE, PGEdge, Value
+
+    base = biolink.BASE
+    inputs: dict[str, list[str]] = defaultdict(list)
+    outputs: dict[str, list[str]] = defaultdict(list)
+    catalysts: dict[str, set[str]] = defaultdict(set)
+    for edge in graph.edges:
+        if edge.type == base + "has_input":
+            inputs[edge.source].append(edge.target)
+        elif edge.type == base + "has_output":
+            outputs[edge.source].append(edge.target)
+        elif edge.type == base + "catalyzes":
+            catalysts[edge.target].add(edge.source)
+    added = with_catalyst = 0
+    for reaction in sorted(inputs):
+        for start in inputs[reaction]:
+            for end in outputs.get(reaction, []):
+                if start == end:
+                    continue
+                attached = (
+                    {
+                        base + "catalyst_qualifier": [
+                            Value(c, REFERENCE) for c in sorted(catalysts[reaction])
+                        ]
+                    }
+                    if catalysts.get(reaction)
+                    else {}
+                )
+                graph.edges.append(
+                    PGEdge(
+                        start,
+                        base + "derives_into",
+                        end,
+                        via=reaction,
+                        derived=True,
+                        attached=attached,
+                    )
+                )
+                added += 1
+                with_catalyst += bool(attached)
+    graph._name = None  # names are made again with the new edge type
+    return {"reactions": len(inputs), "derivations": added, "with catalyst": with_catalyst}

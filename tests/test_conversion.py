@@ -562,3 +562,38 @@ def test_a_rule_can_require_a_link_of_its_focus(tmp_path):
     (tmp_path / "wp-biolink-pairs.rq").write_text(text)
     back = Query.read(tmp_path / "wp-biolink-pairs.rq").rules()
     assert [r.requires for r in back] == [((f"<{WP}partOf>", WP + "Pathway"),)]
+
+
+def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
+    """Biolink's rule: input derives_into output, with the reaction's catalysts as
+    catalyst_qualifier; derived edges keep the round trip and are written to KGX."""
+    import csv
+
+    from rdfsolve.conversion import Biolink, derive_conversions, to_kgx
+
+    (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    data = f"""<urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <https://identifiers.org/chebi/CHEBI:1> ;
+        <{BL}has_output> <https://identifiers.org/chebi/CHEBI:2>, <https://identifiers.org/chebi/CHEBI:3> .
+    <https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}catalyzes> <urn:r1> .
+    <https://identifiers.org/chebi/CHEBI:1> a <{BL}ChemicalEntity> . <https://identifiers.org/chebi/CHEBI:2> a <{BL}ChemicalEntity> .
+    <https://identifiers.org/chebi/CHEBI:3> a <{BL}ChemicalEntity> ."""
+    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
+    assert derive_conversions(graph, biolink) == {
+        "reactions": 1,
+        "derivations": 2,
+        "with catalyst": 2,
+    }
+    assert (
+        graph.report()["lossless"]["passed"] and graph.report()["edge_types"]["derives_into"] == 2
+    )
+    _, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test")
+    rows = [
+        r
+        for r in csv.DictReader(edges.open(), delimiter="\t")
+        if r["predicate"] == "biolink:derives_into"
+    ]
+    assert {(r["subject"], r["object"], r["catalyst_qualifier"]) for r in rows} == {
+        ("chebi:1", "chebi:2", "NCBIGene:3156"),
+        ("chebi:1", "chebi:3", "NCBIGene:3156"),
+    }
