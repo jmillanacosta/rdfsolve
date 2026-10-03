@@ -189,14 +189,15 @@ class Client(DatasetClient):
         source: str | SparqlHelper | Graph | ox.Dataset | ox.Store | None = None,
         *,
         format: FormatLiteral["json", "shacl", "void"] | None = None,
-        data_file: str | Path | None = None,
+        data_file: str | Path | Sequence[str | Path] | None = None,
         **kwargs: Any,
     ) -> Client:
         """Open a saved schema without mining or making source requests.
 
         JSON uses the canonical or VoID JSON-LD reader. For Turtle, choose
         format="shacl" or "void". RDF imports retain only supported fields.
-        The source defaults to the schema endpoint. data_file selects local RDF.
+        The source defaults to the schema endpoint. data_file selects local RDF: one file or
+        several (the dumps of one release), read into one store.
         """
         if isinstance(schema, MinedSchema):
             if format is not None:
@@ -1645,18 +1646,36 @@ class Results:
         return routes
 
     def paths(self, *, incoming: bool = False) -> pd.DataFrame:
-        """Show the types and named links available from these records."""
+        """Show the types and named links available from these records.
+
+        A type whose name other types share is shown as a CURIE (wp:DataNode), so every name
+        shown can be given back to related().
+        """
         return pd.DataFrame(
             [
                 {
-                    "From": self.client.type_name(source),
+                    "From": self._shown(source),
                     "Link": self.client.link_name(target if incoming else source, field),
-                    "To": self.client.type_name(target),
+                    "To": self._shown(target),
                 }
                 for source, field, target in self._routes(incoming)
             ],
             columns=["From", "Link", "To"],
         ).drop_duplicates()
+
+    def _shown(self, model: type[BaseModel]) -> str:
+        """Return a type's name, or its CURIE when the name is shared by other types."""
+        name = self.client.type_name(model)
+        try:
+            if self.client.model(name) is model:
+                return name
+        except ValueError:
+            pass
+        iri = class_iri(model)
+        for prefix, namespace in self.client.schema.get_prefixes().items():
+            if namespace and iri.startswith(namespace):
+                return f"{prefix}:{iri[len(namespace) :]}"
+        return iri
 
     def related(
         self,

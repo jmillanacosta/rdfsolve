@@ -57,41 +57,46 @@ def to_oxigraph(graph: Graph) -> ox.Dataset:
     return ox.Dataset(ox.Quad(_node(s), ox.NamedNode(str(p)), _term(o)) for s, p, o in graph)
 
 
-def load_store(path: str | Path) -> ox.Store:
+def load_store(path: str | Path | Iterable[str | Path]) -> ox.Store:
     """Load an RDF file (gzip allowed), or every RDF file in a zip archive (a source's dump),
-    into an Oxigraph store, with Oxigraph's bulk loader.
+    into an Oxigraph store, with Oxigraph's bulk loader. Several paths (the dumps of one
+    release) load into the same store.
 
     The format comes from the extension; a format Oxigraph does not read is parsed by RDFLib.
     """
+    store = ox.Store()
+    for one in [path] if isinstance(path, (str, Path)) else path:
+        _load_file(Path(one), store)
+    return store
+
+
+def _load_file(path: Path, store: ox.Store) -> None:
+    """Load one RDF file or zip archive into *store*."""
     import gzip
 
-    path = Path(path)
     if path.suffix == ".zip":
-        return _load_zip(path)
+        _load_zip(path, store)
+        return
     suffixes = [s.lstrip(".") for s in path.suffixes]
     zipped = suffixes[-1:] == ["gz"]
     extension = suffixes[-2] if zipped and len(suffixes) > 1 else suffixes[-1] if suffixes else ""
     rdf_format = ox.RdfFormat.from_extension(extension)
-    store = ox.Store()
     if rdf_format is None:
         store.extend(to_oxigraph(Dataset().parse(path)))
-        return store
-    if zipped:
+    elif zipped:
         with gzip.open(path, "rb") as handle:
             store.bulk_load(cast("IO[bytes]", handle), format=rdf_format)
     else:
         store.bulk_load(path=str(path), format=rdf_format)
-    return store
 
 
 _RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})
 
 
-def _load_zip(path: Path) -> ox.Store:
+def _load_zip(path: Path, store: ox.Store) -> None:
     """Load every member of a zip archive whose extension is an RDF format Oxigraph reads."""
     import zipfile
 
-    store = ox.Store()
     with zipfile.ZipFile(path) as archive:
         for member in archive.namelist():
             extension = Path(member).suffix.lstrip(".").lower()
@@ -102,7 +107,6 @@ def _load_zip(path: Path) -> ox.Store:
                 continue
             with archive.open(member) as handle:
                 store.bulk_load(handle, format=rdf_format)
-    return store
 
 
 def to_rdflib(quads: Iterable[ox.Quad]) -> Dataset:

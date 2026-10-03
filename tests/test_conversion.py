@@ -391,8 +391,11 @@ def test_rules_take_curies_and_a_and_within_names_the_scope():
 BIOLINK_YAML = """version: 9.9
 classes:
   named thing: {}
-  gene: {is_a: named thing, id_prefixes: [NCBIGene, ENSEMBL]}
-  protein: {is_a: named thing, id_prefixes: [UniProtKB]}
+  gene: {is_a: named thing, mixins: [gene or gene product], id_prefixes: [NCBIGene, ENSEMBL]}
+  protein: {is_a: named thing, mixins: [gene product mixin], id_prefixes: [UniProtKB]}
+  macromolecular machine mixin: {mixin: true}
+  gene or gene product: {is_a: macromolecular machine mixin, mixin: true}
+  gene product mixin: {is_a: gene or gene product, mixin: true}
   molecular activity: {is_a: named thing, id_prefixes: [RHEA]}
   association: {is_a: named thing}
 slots:
@@ -576,17 +579,25 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
     data = f"""<urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <https://identifiers.org/chebi/CHEBI:1> ;
         <{BL}has_output> <https://identifiers.org/chebi/CHEBI:2>, <https://identifiers.org/chebi/CHEBI:3> .
     <https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}catalyzes> <urn:r1> .
+    <https://identifiers.org/uniprot/P04035> a <{BL}Protein> ; <{BL}catalyzes> <urn:r1> .
     <https://identifiers.org/chebi/CHEBI:1> a <{BL}ChemicalEntity> . <https://identifiers.org/chebi/CHEBI:2> a <{BL}ChemicalEntity> .
     <https://identifiers.org/chebi/CHEBI:3> a <{BL}ChemicalEntity> ."""
     graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
     assert derive_conversions(graph, biolink) == {
         "reactions": 1,
         "derivations": 2,
+        "unknown processes": 0,
+        "related": 0,
         "with catalyst": 2,
     }
     assert (
         graph.report()["lossless"]["passed"] and graph.report()["edge_types"]["derives_into"] == 2
     )
+    # every catalyst of a reaction stays on its derived edges, also in networkx
+    network = graph.to_networkx(edge_types=["derives_into"])
+    assert [sorted(d["catalyst_qualifier"]) for *_, d in network.edges(data=True)] == [
+        ["https://identifiers.org/ncbigene/3156", "https://identifiers.org/uniprot/P04035"]
+    ] * 2
     _, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test")
     rows = [
         r
@@ -594,6 +605,97 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
         if r["predicate"] == "biolink:derives_into"
     ]
     assert {(r["subject"], r["object"], r["catalyst_qualifier"]) for r in rows} == {
-        ("chebi:1", "chebi:2", "NCBIGene:3156"),
-        ("chebi:1", "chebi:3", "NCBIGene:3156"),
+        ("chebi:1", "chebi:2", "NCBIGene:3156|UniProtKB:P04035"),
+        ("chebi:1", "chebi:3", "NCBIGene:3156|UniProtKB:P04035"),
     }
+
+
+def test_biolink_ancestors_with_mixins_join_genes_and_proteins(tmp_path):
+    """Along is_a only, a gene and a protein meet at named thing; with their mixins, both are a
+    gene or gene product (and a macromolecular machine mixin, catalyst_qualifier's range)."""
+    from rdfsolve.conversion import Biolink
+
+    (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    assert biolink.ancestors("protein") == ["named thing"]
+    assert biolink.ancestors("protein", mixins=True) == [
+        "named thing",
+        "gene product mixin",
+        "gene or gene product",
+        "macromolecular machine mixin",
+    ]
+    shared = set(biolink.ancestors("gene", mixins=True)) & set(
+        biolink.ancestors("protein", mixins=True)
+    )
+    assert shared == {"named thing", "gene or gene product", "macromolecular machine mixin"}
+
+
+def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
+    """A process that is no molecular activity (the source does not say what it is) links its
+    input to its output with related_to, Biolink's root predicate, also when both are the same
+    chemical; its catalyst stays attached. No derives_into is claimed."""
+    from rdfsolve.conversion import Biolink, derive_conversions
+
+    (tmp_path / "b.yaml").write_text(
+        BIOLINK_YAML.replace(
+            "  molecular activity: {is_a: named thing, id_prefixes: [RHEA]}",
+            "  biological process or activity: {is_a: named thing}\n"
+            "  molecular activity: {is_a: biological process or activity, id_prefixes: [RHEA]}",
+        )
+    )
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    data = f"""<urn:p1> a <{BL}BiologicalProcessOrActivity> ;
+        <{BL}has_input> <https://identifiers.org/chebi/CHEBI:16113> ;
+        <{BL}has_output> <https://identifiers.org/chebi/CHEBI:16113> .
+    <urn:complex> <{BL}catalyzes> <urn:p1> .
+    <https://identifiers.org/chebi/CHEBI:16113> a <{BL}ChemicalEntity> ."""
+    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
+    assert derive_conversions(graph, biolink) == {
+        "reactions": 0,
+        "derivations": 0,
+        "unknown processes": 1,
+        "related": 1,
+        "with catalyst": 1,
+    }
+    network = graph.to_networkx(edge_types=["related_to"])
+    assert [(u, v, d["catalyst_qualifier"]) for u, v, d in network.edges(data=True)] == [
+        (
+            "https://identifiers.org/chebi/CHEBI:16113",
+            "https://identifiers.org/chebi/CHEBI:16113",
+            ["urn:complex"],
+        )
+    ]
+
+
+def test_an_association_gives_one_direct_edge_and_one_kgx_row(tmp_path):
+    """An association node (regulates, decreased) gives one edge from its subject to its object
+    with the qualifier attached; KGX still writes it as one row."""
+    import csv
+
+    from rdfsolve.conversion import Biolink, derive_associations, to_kgx
+
+    (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    data = f"""<https://identifiers.org/ncbigene/335> a <{BL}Gene> .
+    <https://identifiers.org/ncbigene/19> a <{BL}Gene> .
+    <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/335> ;
+        <{BL}predicate> <{BL}regulates> ; <{BL}object> <https://identifiers.org/ncbigene/19> ;
+        <{BL}object_direction_qualifier> "increased" ."""
+    graph = PropertyGraph.from_rdf(
+        ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)), identity=Identity()
+    )
+    assert derive_associations(graph, biolink) == 1
+    assert graph.report()["lossless"]["passed"]
+    network = graph.to_networkx(edge_types=["regulates"])
+    assert [(u, v, d["object_direction_qualifier"]) for u, v, d in network.edges(data=True)] == [
+        (
+            "https://identifiers.org/ncbigene/335",
+            "https://identifiers.org/ncbigene/19",
+            "increased",
+        )
+    ]
+    _, edges = to_kgx(graph, biolink, tmp_path / "kgx", "infores:test")
+    rows = list(csv.DictReader(edges.open(), delimiter="\t"))
+    assert [(r["subject"], r["predicate"], r["object"]) for r in rows] == [
+        ("NCBIGene:335", "biolink:regulates", "NCBIGene:19")
+    ]

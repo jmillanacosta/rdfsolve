@@ -135,3 +135,35 @@ def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
         attributed = {(p.subject_class, p.property_uri, p.object_class): p for p in term_part.term_patterns}
         assert attributed["urn:S", "urn:ref", "urn:a"].graphs == {"urn:data": 1}
         assert attributed["urn:a", "urn:description", "Literal"].count == 1
+
+
+CLASS_LEVEL = """@prefix rh: <urn:rh:> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+rh:Reaction a rdfs:Class . rh:ReactionSide a rdfs:Class . rh:Compound a rdfs:Class .
+rh:r1 a rdfs:Class ; rdfs:subClassOf rh:Reaction ; rh:side rh:r1_L ; rh:equation "A = B" .
+rh:r2 a rdfs:Class ; rdfs:subClassOf rh:Reaction ; rh:side rh:r2_L ; rh:equation "C = D" .
+rh:r1_L a rdfs:Class ; rdfs:subClassOf rh:ReactionSide ; rh:contains rh:c1 .
+rh:r2_L a rdfs:Class ; rdfs:subClassOf rh:ReactionSide ; rh:contains rh:c2 .
+rh:c1 a rdfs:Class ; rdfs:subClassOf rh:Compound ; rh:name "A" .
+rh:c2 a rdfs:Class ; rdfs:subClassOf rh:Compound ; rh:name "C" .
+"""
+
+
+@pytest.mark.parametrize("classes_as_data", [False, True])
+def test_a_source_that_keeps_its_records_as_classes(classes_as_data):
+    """Every entity is a class under its kind (Rhea's model): with classes_as_data, the rows of
+    these classes are grouped under their kinds (a reaction has a side, a side contains a
+    compound); without it, they stay exact term rows only."""
+    graph = Graph().parse(data=CLASS_LEVEL, format="turtle")
+    with SchemaMiner.from_graph(graph, delay=0, classes_as_data=classes_as_data) as miner:
+        schema = mine_with_ontology(
+            miner, dataset_name="class-level", ontology_as_data=True, ontology_term_budget=3
+        ).data_schema
+    kinds = {(p.subject_class, p.property_uri, p.object_class) for p in schema.patterns}
+    expected = {
+        ("urn:rh:Reaction", "urn:rh:side", "urn:rh:ReactionSide"),
+        ("urn:rh:ReactionSide", "urn:rh:contains", "urn:rh:Compound"),
+        ("urn:rh:Reaction", "urn:rh:equation", "Literal"),
+    }
+    assert (expected <= kinds) is classes_as_data
+    terms = {(p.subject_class, p.property_uri, p.object_class) for p in schema.term_patterns}
+    assert ("urn:rh:r1", "urn:rh:side", "urn:rh:r1_L") in terms, "Exact rows are kept either way"

@@ -34,6 +34,7 @@ __all__ = [
     "Profile",
     "Query",
     "Rule",
+    "derive_associations",
     "derive_conversions",
     "to_kgx",
     "within",
@@ -1049,12 +1050,22 @@ class Biolink:
         """Return the IRI of a slot, from its name in the model."""
         return self.BASE + name.replace(" ", "_")
 
-    def ancestors(self, name: str) -> list[str]:
-        """Return a class's ancestors along is_a, nearest first."""
-        out, current = [], self.classes.get(name, {}).get("is_a")
-        while current and current not in out:
-            out.append(current)
-            current = self.classes.get(current, {}).get("is_a")
+    def ancestors(self, name: str, mixins: bool = False) -> list[str]:
+        """Return a class's ancestors along is_a, nearest first.
+
+        With *mixins*, also the mixins of the class and of its ancestors, with their own
+        parents: the categories the model says a node should carry (a protein is a gene or
+        gene product through its gene product mixin).
+        """
+        out: list[str] = []
+        todo = [name]
+        while todo:
+            current = self.classes.get(todo.pop(0), {})
+            parents = [current.get("is_a"), *((current.get("mixins") or []) if mixins else [])]
+            for parent in parents:
+                if parent and parent != name and parent not in out:
+                    out.append(parent)
+                    todo.append(parent)
         return out
 
     def name_of(self, term: str) -> str:
@@ -1106,6 +1117,13 @@ class Biolink:
                     edges.append(
                         f'{child} -.->|"mixin"| {node(mixin, "mixin", "fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")}'
                     )
+                    # a mixin's own parents, where it meets the other classes drawn
+                    current = mixin
+                    for parent in self.ancestors(mixin)[:2]:
+                        edge = f'{nodes[current]} -->|"is a"| {node(parent)}'
+                        if edge not in edges:
+                            edges.append(edge)
+                        current = parent
             else:
                 slot = self.slots[name]
                 domain = node(slot.get("domain") or "any class")
@@ -1479,6 +1497,8 @@ def to_kgx(
         slot = edge.type[len(base) :] if edge.type.startswith(base) else None
         if edge.source in associations and slot in _ASSOCIATION_SLOTS:
             parts[edge.source][slot] = edge.target
+        elif edge.derived and edge.via in associations:
+            continue  # derive_associations: the association is written as its own row
         elif slot:
             row = {
                 "subject": short(edge.source),
@@ -1548,17 +1568,32 @@ def to_kgx(
 
 
 def derive_conversions(graph: Any, biolink: Biolink) -> dict[str, int]:
-    """Add the derivation edges that Biolink's reaction nodes imply; return how many.
+    """Add the direct edges that Biolink's process nodes imply; return how many.
 
-    Biolink's chemical-to-chemical derivation association states the rule: a reaction that has
-    input C1, has output C2 and is catalyzed by P gives C1 derives_into C2, with P as its
-    catalyst_qualifier. Each such edge is added between the inputs and outputs of each reaction
-    node of *graph* (PropertyGraph), with the catalysts of the reaction attached. The edges are
-    derived (not given back as RDF): the reaction's own statements are.
+    Biolink's chemical-to-chemical derivation association states the rule: a reaction (a
+    molecular activity) that has input C1, has output C2 and is catalyzed by P gives C1
+    derives_into C2, with P as its catalyst_qualifier. A process of no more specific kind
+    (a biological process or activity: the source does not say what it is) gives only
+    related_to, Biolink's root predicate, from each input to each output, so nothing is added
+    that the source does not state; its catalysts are attached the same way. Each edge is
+    added between the inputs and outputs of each process node of *graph* (PropertyGraph). The
+    edges are derived (not given back as RDF): the process's own statements are.
     """
     from rdfsolve.property_graph import REFERENCE, PGEdge, Value
 
     base = biolink.BASE
+    activity = biolink.name_of("MolecularActivity")
+
+    def is_reaction(node: str) -> bool:
+        """Return whether a node is a molecular activity (or more specific), by its labels."""
+        found = graph.nodes.get(node)
+        for label in found.labels if found is not None else ():
+            if label.startswith(base):
+                name = biolink.name_of(label)
+                if name == activity or activity in biolink.ancestors(name):
+                    return True
+        return False
+
     inputs: dict[str, list[str]] = defaultdict(list)
     outputs: dict[str, list[str]] = defaultdict(list)
     catalysts: dict[str, set[str]] = defaultdict(set)
@@ -1569,32 +1604,82 @@ def derive_conversions(graph: Any, biolink: Biolink) -> dict[str, int]:
             outputs[edge.source].append(edge.target)
         elif edge.type == base + "catalyzes":
             catalysts[edge.target].add(edge.source)
-    added = with_catalyst = 0
-    for reaction in sorted(inputs):
-        for start in inputs[reaction]:
-            for end in outputs.get(reaction, []):
-                if start == end:
-                    continue
+    counts = dict.fromkeys(
+        ("reactions", "derivations", "unknown processes", "related", "with catalyst"), 0
+    )
+    for process in sorted(inputs):
+        reaction = is_reaction(process)
+        counts["reactions" if reaction else "unknown processes"] += 1
+        for start in inputs[process]:
+            for end in outputs.get(process, []):
+                if reaction and start == end:
+                    continue  # a chemical does not derive into itself
                 attached = (
                     {
                         base + "catalyst_qualifier": [
-                            Value(c, REFERENCE) for c in sorted(catalysts[reaction])
+                            Value(c, REFERENCE) for c in sorted(catalysts[process])
                         ]
                     }
-                    if catalysts.get(reaction)
+                    if catalysts.get(process)
                     else {}
                 )
                 graph.edges.append(
                     PGEdge(
                         start,
-                        base + "derives_into",
+                        base + ("derives_into" if reaction else "related_to"),
                         end,
-                        via=reaction,
+                        via=process,
                         derived=True,
                         attached=attached,
                     )
                 )
-                added += 1
-                with_catalyst += bool(attached)
-    graph._name = None  # names are made again with the new edge type
-    return {"reactions": len(inputs), "derivations": added, "with catalyst": with_catalyst}
+                counts["derivations" if reaction else "related"] += 1
+                counts["with catalyst"] += bool(attached)
+    graph.lists.add(base + "catalyst_qualifier")  # several enzymes: a list, also with one
+    graph._name = None  # names are made again with the new edge types
+    return counts
+
+
+def derive_associations(graph: Any, biolink: Biolink) -> int:
+    """Add a direct edge for each association node of *graph* (PropertyGraph); return how many.
+
+    A Biolink association states one edge: its subject, predicate and object, with its
+    qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
+    qualifiers attached (as derive_conversions attaches catalysts). The edges are derived:
+    the association's own statements are given back as RDF, and to_kgx writes it as one row.
+    """
+    from rdfsolve.property_graph import PGEdge
+
+    base = biolink.BASE
+    associations = {n for n, node in graph.nodes.items() if base + "Association" in node.labels}
+    ends: dict[str, dict[str, str]] = defaultdict(dict)
+    for edge in graph.edges:
+        slot = edge.type[len(base) :] if edge.type.startswith(base) else None
+        if edge.source in associations and slot in _ASSOCIATION_SLOTS:
+            ends[edge.source][slot] = edge.target
+    added = 0
+    for nid in sorted(associations):
+        node, found = graph.nodes[nid], ends[nid]
+        predicate = found.get("predicate") or next(
+            (v.lexical for v in node.properties.get(base + "predicate", [])), None
+        )
+        if not (found.get("subject") and found.get("object") and predicate):
+            continue
+        qualifiers = {
+            key: list(values)
+            for key, values in node.properties.items()
+            if key.startswith(base) and key.endswith("_qualifier") and values
+        }
+        graph.edges.append(
+            PGEdge(
+                found["subject"],
+                predicate,
+                found["object"],
+                via=nid,
+                derived=True,
+                attached=qualifiers,
+            )
+        )
+        added += 1
+    graph._name = None  # names are made again with the new edge types
+    return added

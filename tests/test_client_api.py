@@ -83,3 +83,26 @@ def test_find_follow_values_and_saved_links(tmp_path):
         assert "Phenobarbital" in rendered and "Query text" in rendered
         assert all((query["result_retained"] for query in log.queries))
         assert len(log.queries) == len(data.queries)
+
+
+def test_paths_show_a_shared_type_name_as_a_curie(tmp_path):
+    """Two classes with one name (a drawing's node and a biological node): paths() shows
+    each as a CURIE, and the name it shows finds the records again."""
+    data = tmp_path / "two.ttl"
+    data.write_text(
+        """@prefix bio: <https://bio.example.org/> . @prefix draw: <https://draw.example.org/> .
+        @prefix dcterms: <http://purl.org/dc/terms/> .
+        <urn:pathway> a bio:Pathway .
+        <urn:gene> a bio:Node ; dcterms:isPartOf <urn:pathway> .
+        <urn:box> a draw:Node ; dcterms:isPartOf <urn:pathway> ."""
+    )
+    with client(data) as found:
+        found.schema.prefixes = {
+            "bio": "https://bio.example.org/",
+            "draw": "https://draw.example.org/",
+        }
+        pathway = found.fetch(["urn:pathway"], kind="https://bio.example.org/Pathway")
+        assert len(pathway) == 1
+        shown = set(pathway.paths(incoming=True)["To"])
+        assert {"bio:Node", "draw:Node"} <= shown
+        assert [r.uri for r in pathway.related("draw:Node", incoming=True)] == ["urn:box"]

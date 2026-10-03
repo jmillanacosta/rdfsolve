@@ -98,6 +98,7 @@ class SchemaMiner:
         sparql_engine: str = "",
         sparql_strategy: str = "",
         enrich: bool = False,
+        classes_as_data: bool = False,
         examples_per_pattern: int = 2,
         max_response_bytes: int = 64 * 1024 * 1024,
         get_graphs_from_store: bool = False,
@@ -110,8 +111,14 @@ class SchemaMiner:
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
     ) -> None:
-        """Initialize a SchemaMiner."""
+        """Initialize a SchemaMiner.
+
+        *classes_as_data* is for a source that keeps its records as classes (each entity an
+        rdfs:Class under its kind, as Rhea's reactions under rh:Reaction): with ontology-as-data,
+        the rows of these terms join the typed patterns and are grouped under their ancestors.
+        """
         self.endpoint_url = endpoint_url
+        self.classes_as_data = classes_as_data
         self.local_backend = local_backend
         if pagination not in {"offset", "cursor"}:
             raise ValueError("pagination must be offset or cursor")
@@ -499,7 +506,11 @@ class SchemaMiner:
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int
     ) -> tuple[list[SchemaPattern], list[SchemaPattern] | None]:
-        """Retain exact term probes and group typed patterns by ancestry."""
+        """Retain exact term probes and group typed patterns by ancestry.
+
+        With classes_as_data, the term rows also join the typed patterns (in place of the rows
+        that say only that a property points at a class) before the grouping.
+        """
         from rdfsolve._outcomes import QueryFailure, QueryOutcome
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
@@ -508,6 +519,7 @@ class SchemaMiner:
             subsume_patterns,
         )
         from rdfsolve.ontology.hierarchy import fetch_superclasses
+        from rdfsolve.ontology.vocabulary import OWL_CLASS, RDFS_CLASS
         from rdfsolve.sparql_helper import EndpointError
 
         phase = self._report.start_phase("ontology-terms")
@@ -533,6 +545,29 @@ class SchemaMiner:
                     "reason": str(error)[:500],
                 }
                 probed = None
+            if self.classes_as_data and probed:
+                covered = {(p.subject_class, p.property_uri) for p in probed}
+                patterns = [
+                    p
+                    for p in patterns
+                    if not (
+                        p.object_class in (OWL_CLASS, RDFS_CLASS)
+                        and (p.subject_class, p.property_uri) in covered
+                    )
+                ]
+                # the copies take each term as the class of its records; the exact rows stay
+                patterns = patterns + [
+                    p.model_copy(
+                        deep=True,
+                        update={
+                            "subject_binding": "type",
+                            "object_binding": "type"
+                            if p.object_binding == "term"
+                            else p.object_binding,
+                        },
+                    )
+                    for p in probed
+                ]
             classes = pattern_classes(patterns)
             summary: dict[str, Any] = {
                 "budget": budget,
@@ -541,6 +576,7 @@ class SchemaMiner:
                 "classes_after": len(classes),
                 "subsumed": False,
                 "representative_members": {},
+                "classes_as_data": self.classes_as_data,
             }
             if len(classes) > budget:
                 t0 = time.monotonic()

@@ -202,6 +202,7 @@ class RemoteMiningStage(Stage):
                 examples_per_pattern=self.config.examples_per_pattern,
                 max_response_bytes=self.config.max_response_bytes,
                 excluded_graph_prefixes=self.config.exclude_graph_prefixes,
+                classes_as_data=source.classes_as_data,
                 report_path=str(report_path),
                 resume_checkpoint=previous if previous and previous.is_file() else None,
             )

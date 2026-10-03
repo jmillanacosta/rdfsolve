@@ -322,6 +322,7 @@ class LocalMiningStage(Stage):
             report_path, type_context_graph_uris=source.type_context_graph_uris,
             resume_checkpoint=previous if previous and previous.is_file() else None,
         )
+        miner.classes_as_data = source.classes_as_data
         schema = self._mine_schema(miner, source.name, output_dir,
                                    ontology_graph_uris=source.ontology_graph_uris or None)
         with self._output_phase(miner, report_path):

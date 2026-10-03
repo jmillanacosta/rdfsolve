@@ -129,3 +129,18 @@ def test_a_zip_archive_of_rdf_files_loads_every_file(tmp_path):
         z.writestr("two.nt", "<urn:c> <urn:p> <urn:d> .\n")
         z.writestr("README.txt", "not RDF")
     assert len(load_store(archive)) == 2
+
+
+def test_the_dumps_of_one_release_load_into_one_store(tmp_path):
+    """Two dumps of one release (a zip and a file) give one store with both layers."""
+    import zipfile
+
+    from rdfsolve.local_rdf import load_store
+
+    archive = tmp_path / "layer-one.zip"
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("one.ttl", "<urn:a> <urn:p> <urn:b> .")
+    (tmp_path / "layer-two.ttl").write_text("<urn:a> <urn:q> <urn:c> .")
+    store = load_store([archive, tmp_path / "layer-two.ttl"])
+    assert len(store) == 2
+    assert len(load_store(archive)) == 1

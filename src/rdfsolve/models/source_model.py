@@ -108,6 +108,10 @@ class SourceModel(BaseModel):
         Whether to mine instance counts.
     unsafe_paging:
         Use offset paging even on endpoints that don't support it well.
+    classes_as_data:
+        The source keeps its records as classes (each entity an rdfs:Class under its kind,
+        as Rhea's reactions under rh:Reaction): with ontology-as-data, their rows are grouped
+        under their kinds in the typed schema.
     notes:
         Free-text notes about the source.
     local_provider:
@@ -181,6 +185,7 @@ class SourceModel(BaseModel):
     delay: float | None = None
     counts: bool = False
     unsafe_paging: bool = False
+    classes_as_data: bool = False
     notes: str = ""
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
