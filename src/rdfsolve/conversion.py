@@ -733,36 +733,46 @@ class Query:
         found = re.search(r"\bWHERE\b", self.text, re.IGNORECASE)
         return self.text[found.start() :] if found else self.text
 
-    def _pattern(self) -> tuple[list[tuple[Any, Any, Any]], list[Any]]:
-        """Return the triple patterns and filters of the WHERE, or raise ValueError."""
+    def _pattern(self) -> tuple[list[tuple[Any, Any, Any]], list[Any], set[Any]]:
+        """Return the triple patterns and filters of the WHERE, and the variables bound only in
+        OPTIONAL groups (the ends of some rules, not requirements); or raise ValueError.
+        """
         triples: list[tuple[Any, Any, Any]] = []
         filters: list[Any] = []
+        optional: list[tuple[Any, Any, Any]] = []
 
-        def walk(node: Any) -> None:
+        def walk(node: Any, into: list[tuple[Any, Any, Any]]) -> None:
             """Collect the triples and filters of a plain pattern."""
             kind = getattr(node, "name", "")
             if kind in ("Project", "Distinct"):
-                walk(node.p)
+                walk(node.p, into)
             elif kind == "Filter":
                 filters.append(node.expr)
-                walk(node.p)
+                walk(node.p, into)
             elif kind == "Join":
-                walk(node.p1)
-                walk(node.p2)
+                walk(node.p1, into)
+                walk(node.p2, into)
+            elif kind == "LeftJoin":
+                walk(node.p1, into)
+                walk(node.p2, optional)
+                if getattr(node.expr, "name", "") != "TrueFilter":
+                    filters.append(node.expr)
             elif kind == "BGP":
-                triples.extend(node.triples)
+                into.extend(node.triples)
             else:
                 raise ValueError(f"{kind or type(node).__name__} is outside the plain subset")
 
-        walk(self._parsed().p)
-        return triples, filters
+        walk(self._parsed().p, triples)
+        bound = {term for t in triples for term in (t[0], t[2])}
+        only_optional = {term for t in optional for term in (t[0], t[2])} - bound
+        return triples + optional, filters, only_optional
 
     def rules(self) -> list[Rule]:
         """Return the rules of the query; [] (with :attr:`problem`) outside the plain subset."""
         from rdflib import Literal, URIRef, Variable
 
         try:
-            triples, filters = self._pattern()
+            triples, filters, optional = self._pattern()
         except ValueError as error:
             self.problem = str(error)
             return []
@@ -819,7 +829,7 @@ class Query:
             requires = tuple(
                 (paths[v], types[v][0] if types.get(v) else None)
                 for v in sorted(variables, key=str)
-                if v != focus and v not in ends
+                if v != focus and v not in ends and v not in optional
             )
             common: dict[str, Any] = {
                 "focus": cls,
@@ -851,7 +861,7 @@ class Query:
         from rdflib import URIRef, Variable
 
         try:
-            triples, filters = self._pattern()
+            triples, filters, _ = self._pattern()
         except ValueError:
             return None
         types = {s for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
@@ -887,7 +897,7 @@ class Query:
 
         from rdfsolve.schema_models.exporters.shacl import shape_iri
 
-        triples, _ = self._pattern()
+        triples, _, _ = self._pattern()
         types = {s: str(o) for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
         counted: dict[tuple[str, str], int] = defaultdict(int)
         for pattern in schema.patterns:
@@ -1337,6 +1347,8 @@ def write_query(
     where = [f"{root} a {term(focus)} ."]
     template, filters, later = [], [], []
     classes: dict[str, str] = {}
+    ends: list[set[str]] = []  # the variables each rule's statement uses
+    needed_by_all: set[str] = set()  # the variables of the requirements: plain patterns
     for rule in rules:
         subject = root if rule.subject is None else var(rule.subject, rule.subject_as)
         if rule.subject is not None and rule.subject_class:
@@ -1360,8 +1372,10 @@ def write_query(
                 classes[obj] = rule.object_class
         for path, cls in rule.requires:
             needed = var(path, short(cls) if cls else None)
+            needed_by_all.add(needed)
             if cls:
                 classes[needed] = cls
+        ends.append({v for v in (subject, obj) if v.startswith("?") and v != root})
         predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)
         template.append(f"  {subject} {predicate} {obj} .")
         for unless in rule.unless_classes:
@@ -1371,12 +1385,28 @@ def write_query(
         if obj.startswith("?"):
             for unless in rule.object_unless_classes:
                 filters.append(f"FILTER NOT EXISTS {{ {obj} a {term(unless)} }}")
-    for path, name in names.items():
-        if not path.endswith(" other"):
-            where.append(f"{root} {path_text(path)} {name} .")
-    where += later
-    where += [f"{v} a {term(c)} ." for v, c in classes.items()]
-    where += sorted(set(filters))
+    # A variable that every rule uses (or that a rule requires) is a plain pattern. The others
+    # are each rule's own: an OPTIONAL group, so that a rule does not need another rule's ends
+    # (an unbound variable leaves its template statement out).
+    plain = needed_by_all | {v for v in names.values() if all(v in own for own in ends)}
+
+    def lines_of(variables: set[str]) -> list[str]:
+        """Return the patterns, classes and filters that bind and keep *variables*."""
+        out = [
+            f"{root} {path_text(path)} {name} ."
+            for path, name in names.items()
+            if name in variables and not path.endswith(" other")
+        ]
+        out += [line for line in later if line.split()[-2] in variables]
+        out += [f"{v} a {term(c)} ." for v, c in classes.items() if v in variables]
+        out += [f for f in sorted(set(filters)) if set(re.findall(r"\?\w+", f)) & variables]
+        return out
+
+    where += lines_of(plain)
+    where += [f for f in sorted(set(filters)) if not set(re.findall(r"\?\w+", f)) - {root}]
+    for own in ends:
+        if own - plain:
+            where.append("OPTIONAL { " + " ".join(lines_of(own - plain)) + " }")
     header = {
         "title": title,
         "description": description,

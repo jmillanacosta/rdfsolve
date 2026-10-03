@@ -699,3 +699,42 @@ def test_an_association_gives_one_direct_edge_and_one_kgx_row(tmp_path):
     assert [(r["subject"], r["predicate"], r["object"]) for r in rows] == [
         ("NCBIGene:335", "biolink:regulates", "NCBIGene:19")
     ]
+
+
+def test_one_query_of_several_rules_keeps_each_rule_to_its_own_ends(tmp_path):
+    """A complex drawn without members (a Complex Portal node) is still a complex: the members
+    that the has_part rule needs are OPTIONAL in the query file, so the type rule does not need
+    them, both when the file runs whole and when it is read back into rules."""
+    from rdfsolve.conversion import Profile, Query, Rule, write_query
+
+    rdf_type = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    requires = ((f"<{WP}partOf>", WP + "Pathway"),)
+    rules = [
+        Rule(WP + "Complex", rdf_type, value=BL + "MacromolecularComplex", requires=requires),
+        Rule(WP + "Complex", BL + "has_part", object=f"<{WP}participants>", requires=requires),
+    ]
+    text = write_query(rules, title="complex", prefixes={"wp": WP, "biolink": BL})
+    assert "OPTIONAL { ?complex wp:participants ?participants . }" in text
+    data = ox.Store()
+    data.load(
+        f"""@prefix wp: <{WP}> .
+    <urn:wp1> a wp:Pathway .
+    <urn:c1> a wp:Complex ; wp:partOf <urn:wp1> ; wp:participants <urn:p1> .
+    <urn:c2> a wp:Complex ; wp:partOf <urn:wp1> .""".encode(),
+        ox.RdfFormat.TURTLE,
+    )
+    typed = {
+        t.subject.value for t in data.query(text) if t.object.value == BL + "MacromolecularComplex"
+    }
+    assert typed == {"urn:c1", "urn:c2"}
+    (tmp_path / "wp-biolink-complex.rq").write_text(text)
+    back = Query.read(tmp_path / "wp-biolink-complex.rq").rules()
+    assert [r.requires for r in back] == [requires, requires]
+    profile = Profile("complex", back)
+    rebuilt = {
+        t.subject.value
+        for query in profile.constructs("")
+        for t in data.query(query)
+        if t.object.value == BL + "MacromolecularComplex"
+    }
+    assert rebuilt == {"urn:c1", "urn:c2"}
