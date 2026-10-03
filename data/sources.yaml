@@ -3551,6 +3551,7 @@
   supports_graph: true
 - name: rhea
   dataset_kind: instance
+  classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
   endpoint: https://sparql.rhea-db.org/sparql/
   void_iri: https://sparql.rhea-db.org/
   graph_uris: []
@@ -4998,6 +4999,7 @@
   supports_graph: true
 - name: swisslipids
   dataset_kind: instance
+  classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
   endpoint: https://beta.sparql.swisslipids.org/
   bioregistry_prefix: swisslipids
   keywords:
@@ -7134,6 +7136,7 @@
   - Tag sequence (nucleic acid)
 - name: rdfportal.rhea
   dataset_kind: instance
+  classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
   catalogs: ["rdfportal"]
   catalog_local_name: rhea
   endpoint: https://rdfportal.org/sib/sparql

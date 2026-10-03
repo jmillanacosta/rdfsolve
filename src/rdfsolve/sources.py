@@ -145,7 +145,11 @@ def _extract_scalar_metadata(resource: Any, meta: dict[str, Any]) -> None:
     homepage = resource.get_homepage()
     if homepage:
         meta["homepage"] = homepage
-    license_ = resource.get_license()
+    try:
+        license_ = resource.get_license()
+    except Exception as error:  # the standardizer imports pyobo, which can fail to import
+        logger.warning("Licence of %s kept unstandardized: %s", resource.prefix, error)
+        license_ = getattr(resource, "license", None)
     if license_:
         meta["license"] = license_
     if resource.domain:
