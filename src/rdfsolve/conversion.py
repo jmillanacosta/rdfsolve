@@ -14,6 +14,7 @@ provenance). Joins across sources are not rules: they go through the SSSOM resol
 
 from __future__ import annotations
 
+import logging
 import re
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -36,10 +37,14 @@ __all__ = [
     "Rule",
     "derive_associations",
     "derive_conversions",
+    "keep_kinds",
+    "kind_conflicts",
     "to_kgx",
     "within",
     "write_query",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 def _expand(text: str, client: Client | None = None) -> str:
@@ -1064,8 +1069,7 @@ class Biolink:
         """Return a class's ancestors along is_a, nearest first.
 
         With *mixins*, also the mixins of the class and of its ancestors, with their own
-        parents: the categories the model says a node should carry (a protein is a gene or
-        gene product through its gene product mixin).
+        parents: the categories the model says a node should carry.
         """
         out: list[str] = []
         todo = [name]
@@ -1665,7 +1669,7 @@ def derive_conversions(graph: Any, biolink: Biolink) -> dict[str, int]:
                 )
                 counts["derivations" if reaction else "related"] += 1
                 counts["with catalyst"] += bool(attached)
-    graph.lists.add(base + "catalyst_qualifier")  # several enzymes: a list, also with one
+    graph.lists.add(base + "catalyst_qualifier")  # several catalysts: a list, also with one
     graph._name = None  # names are made again with the new edge types
     return counts
 
@@ -1713,3 +1717,108 @@ def derive_associations(graph: Any, biolink: Biolink) -> int:
         added += 1
     graph._name = None  # names are made again with the new edge types
     return added
+
+
+def kind_conflicts(
+    client: Client,
+    statements: ox.Dataset,
+    biolink: Biolink,
+    same: Iterable[tuple[str, str]] = (),
+) -> Any:
+    """Return the nodes with two Biolink kinds of which neither is under the other (mixins too).
+
+    A node that sources give two kinds, or nodes that *same* makes one, hold both; Biolink keeps
+    one kind, so it is decided (keep_kinds) before the graph is built. Found by a CONSTRUCT of the conflicting type statements, recorded
+    in *client*'s session (step "Kind conflicts"); each conflict is logged as a warning.
+    Rows: nodes and kinds (Biolink names), sorted.
+    """
+    import pandas as pd
+
+    kinds = sorted(
+        {q.object.value for q in statements if q.predicate.value == _TYPE}
+        & {biolink.class_iri(name) for name in biolink.classes}
+    )
+    above = {k: set(biolink.ancestors(biolink.name_of(k), mixins=True)) for k in kinds}
+    apart = [
+        (a, b)
+        for a in kinds
+        for b in kinds
+        if a < b and biolink.name_of(a) not in above[b] and biolink.name_of(b) not in above[a]
+    ]
+    group: dict[str, str] = {}
+
+    def find(node: str) -> str:
+        """Return the node that stands for the group of *node*."""
+        while group.get(node, node) != node:
+            node = group[node]
+        return node
+
+    same = list(same)
+    for a, b in same:
+        group[find(a)] = find(b)
+    members: defaultdict[str, set[str]] = defaultdict(set)
+    for node in {n for pair in same for n in pair}:
+        members[find(node)].add(node)
+    joined = [(a, b) for nodes in members.values() for a in nodes for b in nodes if a != b]
+    pairs = " ".join(f"(<{a}> <{b}>)" for a, b in apart)
+    query = (
+        f"CONSTRUCT {{ ?node a ?kind . ?other a ?second }} WHERE {{\n"
+        f"  VALUES (?kind ?second) {{ {pairs} }}\n"
+        f"  {{ ?node a ?kind, ?second . BIND(?node AS ?other) }}\n"
+        + (
+            "  UNION { VALUES (?node ?other) { "
+            + " ".join(f"(<{a}> <{b}>)" for a, b in joined)
+            + " }\n    ?node a ?kind . ?other a ?second . }\n"
+            if joined
+            else ""
+        )
+        + "}"
+    )
+    found: defaultdict[str, set[str]] = defaultdict(set)
+    with client.step("Kind conflicts"):
+        for q in client.construct(query, data=statements):
+            found[q.subject.value].add(biolink.name_of(q.object.value))
+    rows: dict[str, tuple[set[str], set[str]]] = defaultdict(lambda: (set(), set()))
+    for node, names in found.items():
+        nodes, kinds_of = rows[find(node)]
+        nodes.add(node)
+        kinds_of |= names
+    table = pd.DataFrame(
+        sorted((tuple(sorted(n)), tuple(sorted(k))) for n, k in rows.values()),
+        columns=["nodes", "kinds"],
+    )
+    for nodes, kinds_of in table.itertuples(index=False):
+        logger.warning("One node, kinds apart: %s as %s", " ".join(nodes), " and ".join(kinds_of))
+    return table
+
+
+def keep_kinds(
+    client: Client, statements: ox.Dataset, biolink: Biolink, kept: Mapping[str, str]
+) -> int:
+    """Keep one Biolink kind of each node in *kept* (node: Biolink name); return how many type
+    statements were taken out of *statements*.
+
+    The other kinds of a node, those that are not the kept one or above it, are taken out. They
+    are the statements of a CONSTRUCT recorded in *client*'s session (step "Keep kinds"), so
+    the decision can be read and run again.
+    """
+    import pyoxigraph as ox
+
+    allowed = " ".join(
+        f"(<{node}> <{biolink.class_iri(name)}>)"
+        for node, kind in kept.items()
+        for name in [kind, *biolink.ancestors(kind, mixins=True)]
+    )
+    query = (
+        f"CONSTRUCT {{ ?node a ?kind }} WHERE {{\n"
+        f"  VALUES ?node {{ {' '.join(f'<{n}>' for n in kept)} }}\n"
+        f"  ?node a ?kind . FILTER(STRSTARTS(STR(?kind), {_literal(biolink.BASE)}))\n"
+        f"  MINUS {{ VALUES (?node ?kind) {{ {allowed} }} }}\n}}"
+    )
+    with client.step("Keep kinds"):
+        out = list(client.construct(query, data=statements))
+    for t in out:
+        for q in list(statements.quads_for_subject(t.subject)):
+            if (q.predicate, q.object) == (t.predicate, t.object):
+                statements.discard(q)
+    return len(out)

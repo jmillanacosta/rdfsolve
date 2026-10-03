@@ -96,7 +96,7 @@ def _type_pattern(
     """Match each node/type pair once across data and companion graphs.
 
     *membership* is the property that places a record in its class when the source does not use
-    rdf:type (rdfs:subClassOf for Rhea, whose records are classes; wdt:P31 for Wikidata).
+    rdf:type (rdfs:subClassOf for a source whose records are classes).
     """
     triple = f"{node} {f'<{membership}>' if membership else 'a'} {cls} ."
     if not context_graph_uris:

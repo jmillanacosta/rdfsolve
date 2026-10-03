@@ -32,7 +32,10 @@ def source():
 
     def select(query):
         result = store.query(query)
-        return [{v.value: {"value": row[v].value} for v in result.variables if row[v] is not None} for row in result]
+        return [
+            {v.value: {"value": row[v].value} for v in result.variables if row[v] is not None}
+            for row in result
+        ]
 
     return UberGraph(select, batch_size=1)
 
@@ -40,7 +43,10 @@ def source():
 def test_parents_closure_and_relations():
     u = source()
     assert u.parents([OBO + "CL_2"]) == {OBO + "CL_2": {OBO + "CL_1"}}
-    assert u.ancestors([OBO + "CL_2", OBO + "CL_9"]) == {OBO + "CL_2": {OBO + "CL_1", OBO + "CL_0"}, OBO + "CL_9": set()}
+    assert u.ancestors([OBO + "CL_2", OBO + "CL_9"]) == {
+        OBO + "CL_2": {OBO + "CL_1", OBO + "CL_0"},
+        OBO + "CL_9": set(),
+    }
     assert u.descendants(OBO + "CL_0") == {OBO + "CL_1", OBO + "CL_2"}
     assert u.relations([OBO + "CL_2"]) == [(OBO + "CL_2", OBO + "BFO_0000050", OBO + "UBERON_1")]
 
@@ -71,7 +77,10 @@ def test_a_term_ubergraph_does_not_hold_is_asked_of_ols_not_taken_as_parentless(
 
     def answer(path, **params):
         assert path.endswith("/ancestors") and "/ontologies/edam/" in path
-        return {"_embedded": {"terms": [{"iri": i} for i in pages[params["page"]]]}, "page": {"totalPages": 2}}
+        return {
+            "_embedded": {"terms": [{"iri": i} for i in pages[params["page"]]]},
+            "page": {"totalPages": 2},
+        }
 
     monkeypatch.setattr(ontologies, "_json", answer)
     found = ontologies.ancestors([OBO + "CL_2", edam, "http://example.org/unknown"])
@@ -85,3 +94,13 @@ def test_variants_are_tautomers_and_conjugates_not_enantiomers():
     ontologies = Ontologies(ubergraph=source())
     terms = [OBO + "CHEBI_17115", OBO + "CHEBI_33384", OBO + "CHEBI_16523"]
     assert ontologies.variants(terms) == [(OBO + "CHEBI_33384", OBO + "CHEBI_17115")]
+
+
+def test_terms_meet_as_the_same_another_form_or_a_narrower_term():
+    """One source's terms against another's, in any IRI form or CURIE: the same term, another
+    form of it (a tautomer), the other's term under it, or not at all."""
+    ontologies = Ontologies(ubergraph=source())
+    assert ontologies.meets(["chebi:17115"], [OBO + "CHEBI_17115"]) == "exact"
+    assert ontologies.meets([OBO + "CHEBI_33384"], [OBO + "CHEBI_17115"]) == "form"
+    assert ontologies.meets([OBO + "CL_1"], [OBO + "CL_2"]) == "narrower"
+    assert ontologies.meets([OBO + "CL_2"], [OBO + "CHEBI_17115"]) is None

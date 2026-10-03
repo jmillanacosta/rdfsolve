@@ -114,7 +114,7 @@ class SchemaMiner:
         """Initialize a SchemaMiner.
 
         *classes_as_data* is for a source that keeps its records as classes (each entity an
-        rdfs:Class under its kind, as Rhea's reactions under rh:Reaction): with ontology-as-data,
+        rdfs:Class under its kind): with ontology-as-data,
         the rows of these terms join the typed patterns and are grouped under their ancestors.
         """
         self.endpoint_url = endpoint_url

@@ -1163,12 +1163,19 @@ class PropertyGraph:
         return out
 
     def to_networkx(
-        self, edge_types: Iterable[str] | None = None, without: Iterable[str] = ()
+        self,
+        edge_types: Iterable[str] | None = None,
+        without: Iterable[str] = (),
+        qualifiers: Iterable[str] = (),
+        keep: str | None = None,
     ) -> Any:
         """Return a ``networkx.MultiDiGraph``: node and edge attributes are native values.
 
         With *edge_types* (edge type names), only those edges and their nodes. *without* names
         node types to leave out, with their edges (the other views of the same statements stay).
+        *qualifiers* (edge attributes) are shown with the edge type, in brackets. With *keep*
+        (an edge attribute that names nodes), the nodes a view leaves without edges are left
+        out, except those that an edge's *keep* names.
         Each node also carries ``category`` (its node types joined by " + ", or "no category")
         and ``title`` (its name: a name or label property, else the end of its IRI), for
         drawing.
@@ -1218,7 +1225,13 @@ class PropertyGraph:
                 **_aside(self._plain(edge.attached)),
             }
             key = f"{kind} {edge.via}" if edge.via else kind
+            shown = [str(v) for q in qualifiers for v in _listed(attrs.get(q))]
+            if shown:
+                attrs["type"] = f"{kind} ({', '.join(shown)})"
             graph.add_edge(edge.source, edge.target, key=key, **attrs)
+        if keep is not None:
+            named = {n for *_, d in graph.edges(data=True) for n in _listed(d.get(keep))}
+            graph.remove_nodes_from([n for n in list(nx.isolates(graph)) if n not in named])
         return graph
 
     def to_pg_schema(self, name: str = "graph") -> str:
@@ -2411,3 +2424,8 @@ def _write_neo4j_csv(
         writer.writerow([header[k] for k in keys])
         for row in rows:
             writer.writerow([cell(k, row[k]) if k in row else "" for k in keys])
+
+
+def _listed(value: Any) -> list[Any]:
+    """Return an attribute's values: none, one, or a list."""
+    return [] if value is None else value if isinstance(value, list) else [value]

@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, cast
@@ -94,6 +94,8 @@ class Ontologies:
         self.http.headers["User-Agent"] = "rdfsolve ontologies"
         self.helper: SparqlHelper | None = None
         self.ubergraph = ubergraph
+        self._met: dict[str, set[str]] = {}  # term -> its other forms, for meets()
+        self._above: dict[str, set[str]] = {}  # term -> its ancestors, for meets()
 
     def close(self) -> None:
         """Release provider connections."""
@@ -536,6 +538,39 @@ class Ontologies:
         ) or []
         back = {canonical[t]: t for t in terms}
         return sorted({(back.get(s, s), back.get(o, o)) for s, o in found})
+
+    def meets(self, named: Iterable[str], others: Iterable[str]) -> str | None:
+        """Tell how one source's terms meet another's: "exact", "form", "narrower" or None.
+
+        Terms meet when one is in both, when one is another form of the other (variants), or
+        when one of *named* is above one of *others* ("narrower": the other's term is more
+        specific). Terms in any registered IRI form or CURIE. Answers are kept: a first call with every term of a workflow takes two
+        requests, and later calls on those terms none.
+        """
+        from rdfsolve.identifiers import parse
+
+        def iri(term: str) -> str:
+            """Return the preferred IRI of a term given in any form."""
+            found = parse(term)
+            return (found.iri() if found else None) or term
+
+        mine, theirs = {iri(t) for t in named}, {iri(t) for t in others}
+        new = sorted((mine | theirs) - self._met.keys())
+        if new:
+            for term in new:
+                self._met[term] = set()
+            for a, b in self.variants(sorted(self._met)):
+                self._met[a].add(b)
+                self._met[b].add(a)
+            self._above.update((t, set(up or ())) for t, up in self.ancestors(new).items())
+        if mine & theirs:
+            return "exact"
+        mine |= {form for term in mine for form in self._met[term]}
+        if mine & theirs:
+            return "form"
+        if any(mine & self._above[term] for term in theirs):
+            return "narrower"
+        return None
 
     def _ols_related(self, iri: str, relation: str) -> list[str] | None:
         """Return the ancestors or descendants of a term from OLS, or None when OLS lacks it."""

@@ -93,6 +93,44 @@ def _load_file(path: Path, store: ox.Store) -> None:
 _RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})
 
 
+def registry_files(name: str) -> list[Path]:
+    """Return the RDF downloads of a registry entry, fetched once into $RDFSOLVE_DOWNLOADS/<name>.
+
+    The registry lists them (its download_* fields); the files that load_store reads are kept
+    (RDF, gzip, zip).
+    """
+    import os
+    import urllib.request
+
+    from rdfsolve.sources import load_sources
+
+    entry = next((s for s in load_sources() if s.name == name), None)
+    if entry is None:
+        raise FileNotFoundError(f"{name!r} is neither a file nor a registry entry")
+    folder = Path(os.environ.get("RDFSOLVE_DOWNLOADS", "~/.cache/rdfsolve")).expanduser() / name
+    folder.mkdir(parents=True, exist_ok=True)
+    fields = {**(entry.model_extra or {}), "download_ttl": entry.download_ttl}
+    urls = [
+        url
+        for key, value in fields.items()
+        if key.startswith("download_")
+        for url in (value if isinstance(value, list) else [value])
+        if url
+    ]
+    files = []
+    for url in urls:
+        path = folder / Path(url.split("?")[0]).name
+        kinds = [s.lstrip(".") for s in path.suffixes if s != ".gz"]
+        if not kinds or kinds[-1] not in _RDF_EXTENSIONS | {"zip"}:
+            continue
+        if not path.exists():
+            partial = path.with_name(path.name + ".part")
+            urllib.request.urlretrieve(url, partial)  # noqa: S310 (registry URLs)
+            partial.replace(path)
+        files.append(path)
+    return files
+
+
 def _load_zip(path: Path, store: ox.Store) -> None:
     """Load every member of a zip archive whose extension is an RDF format Oxigraph reads."""
     import zipfile

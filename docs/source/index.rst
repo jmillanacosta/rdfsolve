@@ -12,6 +12,7 @@ Table of Contents
 
    installation
    usage
+   workflow_steps
 
 .. toctree::
    :maxdepth: 2

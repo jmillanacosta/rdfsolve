@@ -197,7 +197,8 @@ class Client(DatasetClient):
         JSON uses the canonical or VoID JSON-LD reader. For Turtle, choose
         format="shacl" or "void". RDF imports retain only supported fields.
         The source defaults to the schema endpoint. data_file selects local RDF: one file or
-        several (the dumps of one release), read into one store.
+        several (the dumps of one release), read into one store; or the name of a registry
+        entry, whose RDF downloads are fetched once (local_rdf.registry_files) and read together.
         """
         if isinstance(schema, MinedSchema):
             if format is not None:
@@ -225,8 +226,10 @@ class Client(DatasetClient):
         if data_file is not None:
             if source is not None:
                 raise ValueError("Choose source or data_file, not both")
-            from rdfsolve.local_rdf import load_store
+            from rdfsolve.local_rdf import load_store, registry_files
 
+            if isinstance(data_file, str) and not Path(data_file).exists():
+                data_file = registry_files(data_file)
             store = load_store(data_file)
             if next(iter(store.named_graphs()), None) is None:
                 if kwargs.get("graph_uris"):
@@ -325,6 +328,38 @@ class Client(DatasetClient):
         iris = sorted({r.iri for r in found.values() if r.iri})
         records = self.from_table(kind, pd.DataFrame({"iri": iris}), id_column="iri")
         return records.load(*(fields or self.record_fields(kind)))
+
+    def naming(self, identifiers: Iterable[str], *, kind: str, via: str) -> Results:
+        """Return the records of *kind* whose link *via* names one of the identifiers.
+
+        Any registered IRI form is matched: a source cites an identifier in its own form, not
+        in the one asked for. links() gives each identifier, as given, its records.
+        """
+        from rdfsolve.client.exploration import _path
+        from rdfsolve.identifiers import candidates
+        from rdfsolve.schema_models.exporters.paths import path_to_sparql
+
+        model = self.model(kind)
+        path = path_to_sparql(_path(model, self.field_name(model, via)))
+        forms = {form: given for given in identifiers for form in candidates(given)[0]}
+        names, pairs = sorted(forms), set()
+        with self.step(f"Read {self.type_name(model)} naming the identifiers"):
+            for start in range(0, len(names), self.batch_size):
+                values = " ".join(_iri(name) for name in names[start : start + self.batch_size])
+                body = self._scope(
+                    f"VALUES ?named {{ {values} }} ?record {path} ?named . "
+                    + self._type_pattern("?record", _iri(class_iri(model)))
+                )
+                rows = self._select(f"SELECT DISTINCT ?record ?named WHERE {{ {body} }}")
+                pairs |= {(r["record"]["value"], forms[r["named"]["value"]]) for r in rows}
+            records = self.get_many(
+                model, sorted({r for r, _ in pairs}), fields=_name_fields(model)
+            )
+        return Results(
+            self,
+            records,
+            evidence=[{"source": given, "target": r, "via": via} for r, given in sorted(pairs)],
+        )
 
     def record_fields(self, kind: str) -> list[str]:
         """Return the fields of a class that hold its values: literals and cross-references."""
@@ -672,15 +707,20 @@ class Client(DatasetClient):
             out[start] = seen
         return out
 
-    def construct(self, query: str) -> ox.Dataset:
+    def construct(self, query: str, *, data: ox.Dataset | ox.Store | None = None) -> ox.Dataset:
         """Run a SPARQL CONSTRUCT on this client's endpoint or local RDF; return the statements.
 
         The query is recorded in the session like any other (the log can rebuild a product
         from its CONSTRUCTs, such as Fold.to_construct). A client scoped to several named
         graphs is refused: the scope would have to be written into the query's WHERE.
+
+        *data* runs it on a workflow's own statements instead: a choice that changes them, or a
+        check of them, is then in the session too.
         """
         from rdfsolve.local_rdf import to_oxigraph
 
+        if data is not None:
+            return self._construct_local(query, data=data)
         if self.is_local:
             return self._construct_local(query)
         if not isinstance(self.source, SparqlHelper):
@@ -692,22 +732,38 @@ class Client(DatasetClient):
             raise ValueError("Write the graph scope into the CONSTRUCT (FROM or GRAPH) yourself")
         return to_oxigraph(self.source.construct_graph(query))
 
-    def _construct_local(self, query: str) -> ox.Dataset:
-        """Run a CONSTRUCT on the client's local RDF, recorded in the session like a SELECT."""
+    def _construct_local(
+        self, query: str, *, data: ox.Dataset | ox.Store | None = None
+    ) -> ox.Dataset:
+        """Run a CONSTRUCT on the client's local RDF (or on *data*), recorded in the session."""
         import time
 
         from rdfsolve.local_rdf import to_oxigraph
         from rdfsolve.sparql_helper import QueryRecord
 
-        if self._local_rdf is None:
+        if data is None and self._local_rdf is None:
             raise RuntimeError("Local RDF backend is not initialized")
-        query = self._scope_query(query)
+        if data is None:
+            query = self._scope_query(query)
         self.queries.append(query)
         record = QueryRecord(query, "CONSTRUCT", "", success=False, purpose="construct")
-        self._local_records.append(record)
+        if isinstance(self.source, SparqlHelper):
+            self.source._record_query(record)
+        else:
+            self._local_records.append(record)
         started = time.monotonic()
         try:
-            graph = self._local_rdf.query(query).graph
+            if data is not None:
+                store = data if isinstance(data, ox.Store) else ox.Store()
+                if store is not data:
+                    store.extend(data)
+                triples = store.query(query)
+                if not isinstance(triples, ox.QueryTriples):
+                    raise ValueError("Give a CONSTRUCT query")
+                found = ox.Dataset(ox.Quad(t.subject, t.predicate, t.object) for t in triples)
+                record.success = True
+                return found
+            graph = self._local_rdf.query(query).graph  # type: ignore[union-attr]
             record.success = True
         except Exception as error:
             record.error = type(error).__name__
@@ -1648,7 +1704,7 @@ class Results:
     def paths(self, *, incoming: bool = False) -> pd.DataFrame:
         """Show the types and named links available from these records.
 
-        A type whose name other types share is shown as a CURIE (wp:DataNode), so every name
+        A type whose name other types share is shown as a CURIE, so every name
         shown can be given back to related().
         """
         return pd.DataFrame(
@@ -1662,6 +1718,21 @@ class Results:
             ],
             columns=["From", "Link", "To"],
         ).drop_duplicates()
+
+    def links(self, via: str | None = None) -> dict[str, set[str]]:
+        """Return the records each record reached (source -> targets), from this set's evidence.
+
+        A related() step is read back by the record it started from; the evidence holds it.
+        With *via* (as given to related()), that link only. Only targets in this set are given (after where()).
+        """
+        kept = {vars(record)["uri"] for record in self.records}
+        found: defaultdict[str, set[str]] = defaultdict(set)
+        for link in self.evidence:
+            if link["target"] in kept and (
+                via is None or _key(via.lstrip("^")) == _key(str(link.get("via")).lstrip("^"))
+            ):
+                found[link["source"]].add(link["target"])
+        return dict(found)
 
     def _shown(self, model: type[BaseModel]) -> str:
         """Return a type's name, or its CURIE when the name is shared by other types."""
@@ -1681,27 +1752,54 @@ class Results:
         self,
         kind: str | None = None,
         *,
-        via: str | None = None,
+        via: str | Sequence[str] | None = None,
         value: str | None = None,
         incoming: bool = False,
+        depth: int = 1,
     ) -> Results:
         """Follow a link or an intermediate class, optionally matching a name or identifier.
 
-        A class in via means two hops. A link name selects one direct link.
+        A class in via means two hops. A link name selects one direct link. Without kind, every
+        type the link reaches (types() then counts them).
         Text is a case-insensitive substring, tested only on connected targets.
+
+        via may be a path, a list of links that each reach *kind* ("^name" backwards). depth
+        repeats the path on what it reaches, until nothing new is reached; every record
+        reached is returned, with the evidence of every hop (links()).
         """
-        if kind is None and value is None:
-            raise ValueError("Choose kind or value")
+        if depth > 1 or not (via is None or isinstance(via, str)):
+            hops = (
+                [(via, incoming)]
+                if via is None or isinstance(via, str)
+                else [(hop.lstrip("^"), hop.startswith("^")) for hop in via]
+            )
+            reached: dict[str, BaseModel] = {}
+            evidence: list[dict[str, Any]] = []
+            level = self
+            for _ in range(depth):
+                for hop, backwards in hops:
+                    level = level.related(kind, via=hop, value=value, incoming=backwards)
+                    evidence += level.evidence
+                new = [r for r in level if vars(r)["uri"] not in reached]
+                reached.update((vars(r)["uri"], r) for r in new)
+                if not new:
+                    break
+                level = Results(self.client, new)
+            return Results(self.client, list(reached.values()), evidence=evidence)
+        if kind is None and value is None and via is None:
+            raise ValueError("Choose kind, via or value")
         if value is not None and not value.strip():
             raise ValueError("Enter a word or name to find")
+
+        def named(source: type[BaseModel], field: str, dest: type[BaseModel]) -> bool:
+            """Whether via names this link (its field or its label)."""
+            owner = dest if incoming else source
+            return _key(str(via)) in {_key(field), _key(self.client.link_name(owner, field))}
+
         if via is not None:
             # A link of these records with that name is followed directly, also when a class
-            # has the same name (UniProt's annotation link and up:Annotation).
-            direct = any(
-                _key(via)
-                in {_key(field), _key(self.client.link_name(dest if incoming else source, field))}
-                for source, field, dest in self._routes(incoming)
-            )
+            # has the same name.
+            direct = any(named(*route) for route in self._routes(incoming))
             try:
                 intermediate = None if direct else self.client.model(via)
             except ValueError:
@@ -1710,7 +1808,13 @@ class Results:
                 middle = self.related(class_iri(intermediate), incoming=incoming)
                 return middle.related(kind, value=value, incoming=incoming)
         if kind is None:
-            targets = sorted({class_iri(target) for _, _, target in self._routes(incoming)})
+            targets = sorted(
+                {
+                    class_iri(target)
+                    for source, field, target in self._routes(incoming)
+                    if via is None or named(source, field, target)
+                }
+            )
             records: list[BaseModel] = []
             for name in targets:
                 records.extend(self.related(name, via=via, value=value, incoming=incoming))
@@ -1719,12 +1823,7 @@ class Results:
         routes = [
             (source, field)
             for source, field, dest in self._routes(incoming)
-            if dest is target
-            and (
-                via is None
-                or _key(via)
-                in {_key(field), _key(self.client.link_name(dest if incoming else source, field))}
-            )
+            if dest is target and (via is None or named(source, field, dest))
         ]
         by_source: dict[type[BaseModel], set[str]] = defaultdict(set)
         for source, field in routes:
@@ -1760,7 +1859,7 @@ class Results:
             self.client,
             list(found.values()),
             evidence=[
-                link
+                {**link, "via": via}
                 for link in self.client._matches
                 if link["query_id"] in self.client._steps[-1]["query_ids"]
             ],

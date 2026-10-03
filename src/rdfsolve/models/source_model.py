@@ -110,11 +110,11 @@ class SourceModel(BaseModel):
         Use offset paging even on endpoints that don't support it well.
     uri_formats:
         IRI formats of the source's identifiers, with $1 for the local identifier, that
-        Bioregistry does not list (Rhea's RDF writes http://rdf.rhea-db.org/$1); identifier
+        Bioregistry does not list; identifier
         resolution adds them to Bioregistry's formats of the source's prefix.
     classes_as_data:
-        The source keeps its records as classes (each entity an rdfs:Class under its kind,
-        as Rhea's reactions under rh:Reaction): with ontology-as-data, their rows are grouped
+        The source keeps its records as classes (each entity an rdfs:Class under its
+        kind): with ontology-as-data, their rows are grouped
         under their kinds in the typed schema.
     notes:
         Free-text notes about the source.

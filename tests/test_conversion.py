@@ -374,7 +374,7 @@ def test_rules_take_curies_and_a_and_within_names_the_scope():
     record = type("Pathway", (), {})()
     vars(record)["uri"] = "urn:wp1"
     client = SimpleNamespace(type_name=lambda model: "Pathway")
-    import rdfsolve.conversion as conversion
+    from rdfsolve import conversion
 
     original = conversion._link
     conversion._link = lambda client, name, focus: WP + "partOf"
@@ -738,3 +738,83 @@ def test_one_query_of_several_rules_keeps_each_rule_to_its_own_ends(tmp_path):
         if t.object.value == BL + "MacromolecularComplex"
     }
     assert rebuilt == {"urn:c1", "urn:c2"}
+
+
+def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path, caplog):
+    """A node drawn as a protein in one place and as a chemical in another (one node through
+    same), and a node with gene and protein: both found, logged, and each decision taken out by a
+    CONSTRUCT recorded in the client's session."""
+    from rdfsolve import MinedSchema, SchemaPattern
+    from rdfsolve.client.api import Client
+    from rdfsolve.conversion import Biolink, keep_kinds, kind_conflicts
+
+    (tmp_path / "b.yaml").write_text(
+        BIOLINK_YAML.replace(
+            "  association:", "  chemical entity: {is_a: named thing}\n  association:"
+        )
+    )
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    mapped = ox.Dataset(
+        ox.parse(
+            f"""<urn:a> a <{BL}Protein> . <urn:b> a <{BL}ChemicalEntity> .
+        <urn:d> a <{BL}Gene>, <{BL}Protein> . <urn:e> a <{BL}Gene> .""".encode(),
+            ox.RdfFormat.TURTLE,
+        )
+    )
+    schema = MinedSchema(
+        about={"dataset_name": "s"},
+        patterns=[
+            SchemaPattern(
+                subject_class=WP + "Protein", property_uri=WP + "label", object_class="Literal"
+            )
+        ],
+    )
+    with Client(schema, rdflib.Graph(), graph_uris=[]) as client:
+        conflicts = kind_conflicts(
+            client=client, statements=mapped, biolink=biolink, same=[("urn:a", "urn:b")]
+        )
+        assert [(row.nodes, row.kinds) for row in conflicts.itertuples()] == [
+            (("urn:a", "urn:b"), ("chemical entity", "protein")),
+            (("urn:d",), ("gene", "protein")),
+        ]
+        assert "urn:a urn:b" in caplog.text
+        kept = {"urn:a": "protein", "urn:b": "protein", "urn:d": "gene"}
+        assert keep_kinds(client=client, statements=mapped, biolink=biolink, kept=kept) == 2
+        assert {(q.subject.value, q.object.value) for q in mapped} == {
+            ("urn:a", BL + "Protein"),
+            ("urn:d", BL + "Gene"),
+            ("urn:e", BL + "Gene"),
+        }
+        session = client.session_metadata()
+        assert [s["name"] for s in session["steps"]] == ["Kind conflicts", "Keep kinds"]
+        assert all(q["query"].lstrip().startswith("CONSTRUCT") for q in session["queries"])
+
+
+def test_a_view_shows_qualifiers_and_keeps_the_nodes_an_edge_names(tmp_path):
+    """Direct edges without reaction and association nodes: a regulation shows its direction,
+    an enzyme left without edges stays (an edge's catalyst_qualifier names it), others go."""
+    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions
+
+    (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
+    biolink = Biolink.read(tmp_path / "b.yaml")
+    data = f"""<urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <urn:c1> ; <{BL}has_output> <urn:c2> .
+    <urn:g1> a <{BL}Gene> ; <{BL}catalyzes> <urn:r1> . <urn:alone> a <{BL}Gene> .
+    <urn:c1> a <{BL}ChemicalEntity> . <urn:c2> a <{BL}ChemicalEntity> .
+    <urn:g2> a <{BL}Gene> . <urn:g3> a <{BL}Gene> .
+    <urn:i1> a <{BL}Association> ; <{BL}subject> <urn:g2> ; <{BL}predicate> <{BL}regulates> ;
+        <{BL}object> <urn:g3> ; <{BL}object_direction_qualifier> "increased" ."""
+    graph = PropertyGraph.from_rdf(
+        ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)), identity=Identity()
+    )
+    derive_conversions(graph, biolink)
+    derive_associations(graph, biolink)
+    network = graph.to_networkx(
+        without=["MolecularActivity", "Association"],
+        qualifiers=["object_direction_qualifier"],
+        keep="catalyst_qualifier",
+    )
+    assert sorted(d["type"] for *_, d in network.edges(data=True)) == [
+        "derives_into",
+        "regulates (increased)",
+    ]
+    assert sorted(network.nodes) == ["urn:c1", "urn:c2", "urn:g1", "urn:g2", "urn:g3"]
