@@ -17,6 +17,7 @@ from sssom import Mapping, MappingSetDataFrame, write_tsv
 
 from rdfsolve.config import get_base_uri
 from rdfsolve.mappings.models.core import MappingEdge
+from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
@@ -39,7 +40,7 @@ def create_sssom_mappings(
     license_uri: str = "https://creativecommons.org/publicdomain/zero/1.0/",
     mapping_provider: str | None = None,
     mapping_tool: str = "rdfsolve",
-    mapping_tool_version: str = "0.3.0",
+    mapping_tool_version: str | None = None,
     converter: Converter | None = None,
 ) -> MappingSetDataFrame:
     """Create SSSOM MappingSetDataFrame from individual mappings.
@@ -55,7 +56,7 @@ def create_sssom_mappings(
         license_uri: License URI
         mapping_provider: Source that provided the mapping
         mapping_tool: Tool used to generate mappings
-        mapping_tool_version: Version of the tool
+        mapping_tool_version: Version of the tool (by default, rdfsolve's version)
         converter: Prefixes of the CURIEs in the mappings, added to the SSSOM built-in ones
 
     Returns:
@@ -75,7 +76,7 @@ def create_sssom_mappings(
         "mapping_date": str(datetime.now(timezone.utc).date()),
         "mapping_provider": mapping_provider,
         "mapping_tool": mapping_tool,
-        "mapping_tool_version": mapping_tool_version,
+        "mapping_tool_version": mapping_tool_version or VERSION,
     }
 
     if creator_id:
