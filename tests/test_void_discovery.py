@@ -7,7 +7,7 @@ from rdflib.compare import isomorphic
 from rdfsolve.sparql_helper import SparqlHelper
 from rdfsolve.void_source import discover_void_graphs, discover_void_source
 
-from tests.test_navigation import aop_schema
+from tests.mining.test_navigation import aop_schema
 
 
 @pytest.fixture
