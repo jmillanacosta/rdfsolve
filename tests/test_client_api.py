@@ -195,7 +195,9 @@ def test_related_follows_a_path_to_a_depth_and_gives_its_links(tmp_path):
 
     (tmp_path / "parts.ttl").write_text(PARTS)
     with client(tmp_path / "parts.ttl") as found:
-        start = found.from_table(X + "Pathway", pd.DataFrame({"iri": [X + "P1"]}), id_column="iri")
+        start = found.from_table(X + "Pathway", [X + "P1"])
+        one = start.related([X + "Pathway", X + "Pathway"], via=["^isPartOf", "hasVersion"])
+        assert one.links() == {X + "P1": {X + "P2"}}, "each start record and what its path reaches"
         two = start.related(X + "Pathway", via=["^isPartOf", "hasVersion"], depth=2)
         assert sorted(r.uri for r in two) == [X + "P2", X + "P3"]
         three = start.related(X + "Pathway", via=["^isPartOf", "hasVersion"], depth=3)
@@ -265,6 +267,5 @@ def test_a_registry_entry_opens_with_its_downloads(tmp_path, monkeypatch):
     with Client.open(schema=schema, data_file="demo") as found:
         import pandas as pd
 
-        one = found.from_table(X + "Pathway", pd.DataFrame({"iri": [X + "P1"]}), id_column="iri")
-        assert [vars(r)["title"] for r in one.load("title")] == [["One"]]
+        assert found.from_table(X + "Pathway", [X + "P1"]).links(via="title") == {X + "P1": {"One"}}
     assert sorted(p.name for p in (tmp_path / "cache" / "demo").iterdir()) == ["dump.ttl"]

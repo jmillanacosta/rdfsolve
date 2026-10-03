@@ -1524,41 +1524,33 @@ def to_kgx(
         """Return a Biolink term as biolink:<local>."""
         return "biolink:" + iri[len(base) :] if iri.startswith(base) else iri
 
-    associations = {n for n, node in graph.nodes.items() if base + "Association" in node.labels}
-    parts: dict[str, dict[str, str]] = defaultdict(dict)
+    from rdfsolve.property_graph import REFERENCE
+
+    associations = _association_parts(graph, biolink)
     rows = []
     for edge in graph.edges:
         slot = edge.type[len(base) :] if edge.type.startswith(base) else None
-        if edge.source in associations and slot in _ASSOCIATION_SLOTS:
-            parts[edge.source][slot] = edge.target
-        elif edge.derived and edge.via in associations:
-            continue  # derive_associations: the association is written as its own row
-        elif slot:
+        if edge.source in associations or (edge.derived and edge.via in associations):
+            continue  # an association is written as its own row
+        if slot:
             row = {
                 "subject": short(edge.source),
                 "predicate": term(edge.type),
                 "object": short(edge.target),
             }
-            # Qualifiers a graph step attached to the edge (derive_conversions: the catalysts).
-            for key, values in edge.attached.items():
-                if key.startswith(base) and key.endswith("_qualifier") and values:
-                    row[key[len(base) :]] = "|".join(short(v.lexical) for v in values)
             rows.append(row)
-    for nid in sorted(associations):
-        node, found = graph.nodes[nid], parts[nid]
-        predicate = found.get("predicate") or next(
-            (v.lexical for v in node.properties.get(base + "predicate", [])), None
-        )
-        if not (found.get("subject") and found.get("object") and predicate):
+    for _, found in sorted(associations.items()):
+        if not (found.get("subject") and found.get("object") and found["predicate"]):
             continue
         row = {
             "subject": short(found["subject"]),
-            "predicate": term(predicate),
+            "predicate": term(found["predicate"]),
             "object": short(found["object"]),
         }
-        for key, values in node.properties.items():
-            if key.startswith(base) and key.endswith("_qualifier") and values:
-                row[key[len(base) :]] = values[0].lexical
+        for key, values in found["qualifiers"].items():
+            row[key[len(base) :]] = "|".join(
+                sorted(short(v.lexical) if v.datatype == REFERENCE else v.lexical for v in values)
+            )
         rows.append(row)
     nodes_path, edges_path = folder / "nodes.tsv", folder / "edges.tsv"
     with nodes_path.open("w", newline="") as f:
@@ -1601,77 +1593,86 @@ def to_kgx(
     return nodes_path, edges_path
 
 
-def derive_conversions(graph: Any, biolink: Biolink) -> dict[str, int]:
-    """Add the direct edges that Biolink's process nodes imply; return how many.
+def derive_conversions(client: Client, statements: ox.Dataset, biolink: Biolink) -> dict[str, int]:
+    """State the associations that Biolink's process nodes imply; return how many of each kind.
 
-    Biolink's chemical-to-chemical derivation association states the rule: a reaction (a
-    molecular activity) that has input C1, has output C2 and is catalyzed by P gives C1
-    derives_into C2, with P as its catalyst_qualifier. A process of no more specific kind
-    (a biological process or activity: the source does not say what it is) gives only
-    related_to, Biolink's root predicate, from each input to each output, so nothing is added
-    that the source does not state; its catalysts are attached the same way. Each edge is
-    added between the inputs and outputs of each process node of *graph* (PropertyGraph). The
-    edges are derived (not given back as RDF): the process's own statements are.
+    Biolink's chemical-to-chemical derivation association states the rule: a molecular
+    activity (or a kind below it) that has input C1, has output C2 and is catalyzed by P gives
+    C1 derives_into C2, with P as its catalyst_qualifier. A process of no more specific kind
+    gives only related_to, Biolink's root predicate, from each input to each output (an
+    Association), so nothing is claimed that the source does not state; its catalysts are
+    qualifiers the same way. The associations are added to *statements* by a CONSTRUCT recorded
+    in *client*'s session (step "Conversions"); derive_associations makes each one an edge.
     """
-    from rdfsolve.property_graph import REFERENCE, PGEdge, Value
+    import pyoxigraph as ox
+
+    from rdfsolve.config import mint
 
     base = biolink.BASE
     activity = biolink.name_of("MolecularActivity")
-
-    def is_reaction(node: str) -> bool:
-        """Return whether a node is a molecular activity (or more specific), by its labels."""
-        found = graph.nodes.get(node)
-        for label in found.labels if found is not None else ():
-            if label.startswith(base):
-                name = biolink.name_of(label)
-                if name == activity or activity in biolink.ancestors(name):
-                    return True
-        return False
-
-    inputs: dict[str, list[str]] = defaultdict(list)
-    outputs: dict[str, list[str]] = defaultdict(list)
-    catalysts: dict[str, set[str]] = defaultdict(set)
-    for edge in graph.edges:
-        if edge.type == base + "has_input":
-            inputs[edge.source].append(edge.target)
-        elif edge.type == base + "has_output":
-            outputs[edge.source].append(edge.target)
-        elif edge.type == base + "catalyzes":
-            catalysts[edge.target].add(edge.source)
-    counts = dict.fromkeys(
-        ("reactions", "derivations", "unknown processes", "related", "with catalyst"), 0
+    reactions = " ".join(
+        f"<{biolink.class_iri(n)}>"
+        for n in biolink.classes
+        if n == activity or activity in biolink.ancestors(n)
     )
-    for process in sorted(inputs):
-        reaction = is_reaction(process)
-        counts["reactions" if reaction else "unknown processes"] += 1
-        for start in inputs[process]:
-            for end in outputs.get(process, []):
-                if reaction and start == end:
-                    continue  # a chemical does not derive into itself
-                attached = (
-                    {
-                        base + "catalyst_qualifier": [
-                            Value(c, REFERENCE) for c in sorted(catalysts[process])
-                        ]
-                    }
-                    if catalysts.get(process)
-                    else {}
-                )
-                graph.edges.append(
-                    PGEdge(
-                        start,
-                        base + ("derives_into" if reaction else "related_to"),
-                        end,
-                        via=process,
-                        derived=True,
-                        attached=attached,
-                    )
-                )
-                counts["derivations" if reaction else "related"] += 1
-                counts["with catalyst"] += bool(attached)
-    graph.lists.add(base + "catalyst_qualifier")  # several catalysts: a list, also with one
-    graph._name = None  # names are made again with the new edge types
-    return counts
+    derivation = biolink.class_iri(biolink.name_of("ChemicalEntityToChemicalDerivationAssociation"))
+    query = f"""PREFIX biolink: <{base}>
+CONSTRUCT {{
+  ?association a ?kind ; biolink:subject ?input ; biolink:predicate ?predicate ;
+    biolink:object ?output ; biolink:catalyst_qualifier ?catalyst .
+}} WHERE {{
+  ?process biolink:has_input ?input ; biolink:has_output ?output .
+  OPTIONAL {{ ?catalyst biolink:catalyzes ?process }}
+  BIND(EXISTS {{ VALUES ?reaction {{ {reactions} }} ?process a ?reaction }} AS ?is_reaction)
+  FILTER(!?is_reaction || ?input != ?output)
+  BIND(IF(?is_reaction, <{derivation}>, biolink:Association) AS ?kind)
+  BIND(IF(?is_reaction, biolink:derives_into, biolink:related_to) AS ?predicate)
+  BIND(IRI(CONCAT({_literal(mint("association") + "/")},
+    MD5(CONCAT(STR(?process), " ", STR(?input), " ", STR(?output))))) AS ?association)
+}}"""
+    with client.step("Conversions"):
+        found = list(client.construct(query, data=statements))
+    for q in found:
+        statements.add(ox.Quad(q.subject, q.predicate, q.object))
+    counts = Counter(biolink.name_of(q.object.value) for q in found if q.predicate.value == _TYPE)
+    catalysed = {q.subject for q in found if q.predicate.value == base + "catalyst_qualifier"}
+    return {**counts, "with catalyst": len(catalysed)}
+
+
+def _association_parts(graph: Any, biolink: Biolink) -> dict[str, dict[str, Any]]:
+    """Return the association nodes of *graph* (an Association or a kind below it), each with its
+    subject, predicate and object, and its qualifiers (key: values), from its edges and values.
+    """
+    from rdfsolve.property_graph import REFERENCE, Value
+
+    base = biolink.BASE
+    root = biolink.name_of("Association")
+    kinds = {
+        biolink.class_iri(n) for n in biolink.classes if n == root or root in biolink.ancestors(n)
+    }
+    parts: dict[str, dict[str, Any]] = {
+        n: {"qualifiers": defaultdict(list)}
+        for n, node in graph.nodes.items()
+        if kinds & set(node.labels)
+    }
+    for edge in graph.edges:
+        if edge.source not in parts or edge.derived or not edge.type.startswith(base):
+            continue
+        slot = edge.type[len(base) :]
+        if slot in _ASSOCIATION_SLOTS:
+            parts[edge.source][slot] = edge.target
+        elif slot.endswith("_qualifier"):
+            parts[edge.source]["qualifiers"][edge.type].append(Value(edge.target, REFERENCE))
+    for nid, found in parts.items():
+        properties = graph.nodes[nid].properties
+        if "predicate" not in found:
+            found["predicate"] = next(
+                (v.lexical for v in properties.get(base + "predicate", [])), None
+            )
+        for key, values in properties.items():
+            if key.startswith(base) and key.endswith("_qualifier") and values:
+                found["qualifiers"][key] += list(values)
+    return parts
 
 
 def derive_associations(graph: Any, biolink: Biolink) -> int:
@@ -1679,35 +1680,24 @@ def derive_associations(graph: Any, biolink: Biolink) -> int:
 
     A Biolink association states one edge: its subject, predicate and object, with its
     qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
-    qualifiers attached (as derive_conversions attaches catalysts). The edges are derived:
-    the association's own statements are given back as RDF, and to_kgx writes it as one row.
+    qualifiers attached; a qualifier that names nodes is a list, also with one. The edges are
+    derived: the association's own statements are given back as RDF, and to_kgx writes it as
+    one row.
     """
-    from rdfsolve.property_graph import PGEdge
+    from rdfsolve.property_graph import REFERENCE, PGEdge
 
-    base = biolink.BASE
-    associations = {n for n, node in graph.nodes.items() if base + "Association" in node.labels}
-    ends: dict[str, dict[str, str]] = defaultdict(dict)
-    for edge in graph.edges:
-        slot = edge.type[len(base) :] if edge.type.startswith(base) else None
-        if edge.source in associations and slot in _ASSOCIATION_SLOTS:
-            ends[edge.source][slot] = edge.target
     added = 0
-    for nid in sorted(associations):
-        node, found = graph.nodes[nid], ends[nid]
-        predicate = found.get("predicate") or next(
-            (v.lexical for v in node.properties.get(base + "predicate", [])), None
-        )
-        if not (found.get("subject") and found.get("object") and predicate):
+    for nid, found in sorted(_association_parts(graph, biolink).items()):
+        if not (found.get("subject") and found.get("object") and found["predicate"]):
             continue
-        qualifiers = {
-            key: list(values)
-            for key, values in node.properties.items()
-            if key.startswith(base) and key.endswith("_qualifier") and values
-        }
+        qualifiers = dict(found["qualifiers"])
+        graph.lists.update(
+            k for k, values in qualifiers.items() if any(v.datatype == REFERENCE for v in values)
+        )
         graph.edges.append(
             PGEdge(
                 found["subject"],
-                predicate,
+                found["predicate"],
                 found["object"],
                 via=nid,
                 derived=True,

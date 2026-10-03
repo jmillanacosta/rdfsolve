@@ -1284,7 +1284,7 @@ class Client(DatasetClient):
     def from_table(
         self,
         kind: str,
-        table: pd.DataFrame,
+        table: pd.DataFrame | Iterable[str],
         *,
         id_column: str | None = None,
         language: str | None = None,
@@ -1297,8 +1297,12 @@ class Client(DatasetClient):
 
         Missing identifiers create distinct blank nodes; missing field values are
         omitted. Explicit RDF terms retain their metadata. Errors identify the row.
+        A list of IRIs gives one record of *kind* each, with no values.
         """
         from rdfsolve.client.authoring import create_record, table_literal
+
+        if not isinstance(table, pd.DataFrame):
+            table, id_column = pd.DataFrame({"iri": list(dict.fromkeys(table))}), "iri"
 
         model = self.model(kind)
         missing = ({id_column} if id_column is not None else set()) | set(columns.values())
@@ -1543,6 +1547,7 @@ class Results:
         self.records = records
         self.evidence = evidence or []
         self.coverage = coverage or {"status": "complete", "basis": "Retrieved records"}
+        self.through: dict[str, set[str]] | None = None  # a path's start -> end (related)
         self.references = client.catalogue.retain_records(self)
 
     def __len__(self) -> int:
@@ -1719,19 +1724,33 @@ class Results:
             columns=["From", "Link", "To"],
         ).drop_duplicates()
 
-    def links(self, via: str | None = None) -> dict[str, set[str]]:
-        """Return the records each record reached (source -> targets), from this set's evidence.
+    def links(self, via: str | None = None) -> dict[str, set[Any]]:
+        """Return what each record leads to: the records a related() step reached from it, or
+        the values of a field.
 
-        A related() step is read back by the record it started from; the evidence holds it.
-        With *via* (as given to related()), that link only. Only targets in this set are given (after where()).
+        A related() step is read back by the record it started from; the evidence holds it
+        (after a path, each start record and the records at its end). With *via* (as given to
+        related()), that link only; a field of these records gives each record its values
+        (records without a value are left out). Only targets in this set are given.
         """
         kept = {vars(record)["uri"] for record in self.records}
-        found: defaultdict[str, set[str]] = defaultdict(set)
+        if via is None and self.through is not None:
+            return {s: t & kept for s, t in self.through.items() if t & kept}
+        found: defaultdict[str, set[Any]] = defaultdict(set)
+        linked = False
         for link in self.evidence:
-            if link["target"] in kept and (
-                via is None or _key(via.lstrip("^")) == _key(str(link.get("via")).lstrip("^"))
-            ):
-                found[link["source"]].add(link["target"])
+            if via is None or _key(via.lstrip("^")) == _key(str(link.get("via")).lstrip("^")):
+                linked = True
+                if link["target"] in kept:
+                    found[link["source"]].add(link["target"])
+        if linked or via is None:
+            return dict(found)
+        self._load(via)
+        for record in self.records:
+            values = vars(record).get(self.client.field_name(type(record), via))
+            for value in values if isinstance(values, list) else [values]:
+                if value is not None:
+                    found[vars(record)["uri"]].add(value)
         return dict(found)
 
     def _shown(self, model: type[BaseModel]) -> str:
@@ -1750,7 +1769,7 @@ class Results:
 
     def related(
         self,
-        kind: str | None = None,
+        kind: str | Sequence[str] | None = None,
         *,
         via: str | Sequence[str] | None = None,
         value: str | None = None,
@@ -1763,29 +1782,45 @@ class Results:
         type the link reaches (types() then counts them).
         Text is a case-insensitive substring, tested only on connected targets.
 
-        via may be a path, a list of links that each reach *kind* ("^name" backwards). depth
-        repeats the path on what it reaches, until nothing new is reached; every record
-        reached is returned, with the evidence of every hop (links()).
+        via may be a path, a list of links ("^name" backwards) that each reach *kind*, or the
+        kind of each hop when *kind* is a list. depth repeats the path on what it reaches,
+        until nothing new is reached; every record reached is returned, with the evidence of
+        every hop. links() then gives each start record the records its path reaches.
         """
-        if depth > 1 or not (via is None or isinstance(via, str)):
+        if (
+            depth > 1
+            or not (via is None or isinstance(via, str))
+            or not (kind is None or isinstance(kind, str))
+        ):
             hops = (
                 [(via, incoming)]
                 if via is None or isinstance(via, str)
                 else [(hop.lstrip("^"), hop.startswith("^")) for hop in via]
             )
+            kinds = [kind] * len(hops) if kind is None or isinstance(kind, str) else list(kind)
+            if len(kinds) != len(hops):
+                raise ValueError("Give one kind for each link of the path")
             reached: dict[str, BaseModel] = {}
             evidence: list[dict[str, Any]] = []
+            through: defaultdict[str, set[str]] = defaultdict(set)
             level = self
             for _ in range(depth):
-                for hop, backwards in hops:
-                    level = level.related(kind, via=hop, value=value, incoming=backwards)
+                ends = {vars(r)["uri"]: {vars(r)["uri"]} for r in level}
+                for hop_kind, (hop, backwards) in zip(kinds, hops, strict=True):
+                    level = level.related(hop_kind, via=hop, value=value, incoming=backwards)
                     evidence += level.evidence
+                    step = level.links()
+                    ends = {s: {t for m in e for t in step.get(m, ())} for s, e in ends.items()}
+                for start, end in ends.items():
+                    through[start] |= end
                 new = [r for r in level if vars(r)["uri"] not in reached]
                 reached.update((vars(r)["uri"], r) for r in new)
                 if not new:
                     break
                 level = Results(self.client, new)
-            return Results(self.client, list(reached.values()), evidence=evidence)
+            result = Results(self.client, list(reached.values()), evidence=evidence)
+            result.through = dict(through)
+            return result
         if kind is None and value is None and via is None:
             raise ValueError("Choose kind, via or value")
         if value is not None and not value.strip():

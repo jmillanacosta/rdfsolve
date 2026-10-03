@@ -24,6 +24,22 @@ def store():
     return found
 
 
+def biolink_client():
+    """A client whose session records the steps run on a workflow's own statements."""
+    from rdfsolve import MinedSchema, SchemaPattern
+    from rdfsolve.client.api import Client
+
+    schema = MinedSchema(
+        about={"dataset_name": "s"},
+        patterns=[
+            SchemaPattern(
+                subject_class=WP + "Protein", property_uri=WP + "label", object_class="Literal"
+            )
+        ],
+    )
+    return Client(schema, rdflib.Graph(), graph_uris=[])
+
+
 def pairs(rule):
     return {(t.subject.value, t.object.value) for t in store().query(rule.to_construct())}
 
@@ -398,6 +414,7 @@ classes:
   gene product mixin: {is_a: gene or gene product, mixin: true}
   molecular activity: {is_a: named thing, id_prefixes: [RHEA]}
   association: {is_a: named thing}
+  chemical entity to chemical derivation association: {is_a: association}
 slots:
   catalyzes: {is_a: related to}
   has input: {is_a: has participant, domain: molecular activity, range: named thing}
@@ -572,7 +589,7 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
     catalyst_qualifier; derived edges keep the round trip and are written to KGX."""
     import csv
 
-    from rdfsolve.conversion import Biolink, derive_conversions, to_kgx
+    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions, to_kgx
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
     biolink = Biolink.read(tmp_path / "b.yaml")
@@ -582,14 +599,15 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
     <https://identifiers.org/uniprot/P04035> a <{BL}Protein> ; <{BL}catalyzes> <urn:r1> .
     <https://identifiers.org/chebi/CHEBI:1> a <{BL}ChemicalEntity> . <https://identifiers.org/chebi/CHEBI:2> a <{BL}ChemicalEntity> .
     <https://identifiers.org/chebi/CHEBI:3> a <{BL}ChemicalEntity> ."""
-    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
-    assert derive_conversions(graph, biolink) == {
-        "reactions": 1,
-        "derivations": 2,
-        "unknown processes": 0,
-        "related": 0,
-        "with catalyst": 2,
-    }
+    mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
+    with biolink_client() as client:
+        assert derive_conversions(client, mapped, biolink) == {
+            "chemical entity to chemical derivation association": 2,
+            "with catalyst": 2,
+        }
+        assert [s["name"] for s in client.session_metadata()["steps"]] == ["Conversions"]
+    graph = PropertyGraph.from_rdf(mapped)
+    assert derive_associations(graph, biolink) == 2
     assert (
         graph.report()["lossless"]["passed"] and graph.report()["edge_types"]["derives_into"] == 2
     )
@@ -634,7 +652,7 @@ def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
     """A process that is no molecular activity (the source does not say what it is) links its
     input to its output with related_to, Biolink's root predicate, also when both are the same
     chemical; its catalyst stays attached. No derives_into is claimed."""
-    from rdfsolve.conversion import Biolink, derive_conversions
+    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions
 
     (tmp_path / "b.yaml").write_text(
         BIOLINK_YAML.replace(
@@ -649,14 +667,11 @@ def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
         <{BL}has_output> <https://identifiers.org/chebi/CHEBI:16113> .
     <urn:complex> <{BL}catalyzes> <urn:p1> .
     <https://identifiers.org/chebi/CHEBI:16113> a <{BL}ChemicalEntity> ."""
-    graph = PropertyGraph.from_rdf(ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)))
-    assert derive_conversions(graph, biolink) == {
-        "reactions": 0,
-        "derivations": 0,
-        "unknown processes": 1,
-        "related": 1,
-        "with catalyst": 1,
-    }
+    mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
+    with biolink_client() as client:
+        assert derive_conversions(client, mapped, biolink) == {"association": 1, "with catalyst": 1}
+    graph = PropertyGraph.from_rdf(mapped)
+    derive_associations(graph, biolink)
     network = graph.to_networkx(edge_types=["related_to"])
     assert [(u, v, d["catalyst_qualifier"]) for u, v, d in network.edges(data=True)] == [
         (
@@ -744,8 +759,6 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
     """A node drawn as a protein in one place and as a chemical in another (one node through
     same), and a node with gene and protein: both found, logged, and each decision taken out by a
     CONSTRUCT recorded in the client's session."""
-    from rdfsolve import MinedSchema, SchemaPattern
-    from rdfsolve.client.api import Client
     from rdfsolve.conversion import Biolink, keep_kinds, kind_conflicts
 
     (tmp_path / "b.yaml").write_text(
@@ -761,15 +774,7 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
             ox.RdfFormat.TURTLE,
         )
     )
-    schema = MinedSchema(
-        about={"dataset_name": "s"},
-        patterns=[
-            SchemaPattern(
-                subject_class=WP + "Protein", property_uri=WP + "label", object_class="Literal"
-            )
-        ],
-    )
-    with Client(schema, rdflib.Graph(), graph_uris=[]) as client:
+    with biolink_client() as client:
         conflicts = kind_conflicts(
             client=client, statements=mapped, biolink=biolink, same=[("urn:a", "urn:b")]
         )
@@ -803,13 +808,17 @@ def test_a_view_shows_qualifiers_and_keeps_the_nodes_an_edge_names(tmp_path):
     <urn:g2> a <{BL}Gene> . <urn:g3> a <{BL}Gene> .
     <urn:i1> a <{BL}Association> ; <{BL}subject> <urn:g2> ; <{BL}predicate> <{BL}regulates> ;
         <{BL}object> <urn:g3> ; <{BL}object_direction_qualifier> "increased" ."""
-    graph = PropertyGraph.from_rdf(
-        ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE)), identity=Identity()
-    )
-    derive_conversions(graph, biolink)
+    mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
+    with biolink_client() as client:
+        derive_conversions(client, mapped, biolink)
+    graph = PropertyGraph.from_rdf(mapped, identity=Identity())
     derive_associations(graph, biolink)
     network = graph.to_networkx(
-        without=["MolecularActivity", "Association"],
+        without=[
+            "MolecularActivity",
+            "Association",
+            "ChemicalEntityToChemicalDerivationAssociation",
+        ],
         qualifiers=["object_direction_qualifier"],
         keep="catalyst_qualifier",
     )
