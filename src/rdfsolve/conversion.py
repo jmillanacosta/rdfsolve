@@ -19,7 +19,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     import pyoxigraph as ox
@@ -170,6 +170,7 @@ class Rule:
         unless_kinds: Sequence[str] = (),
         subject_unless_kinds: Sequence[str] = (),
         object_unless_kinds: Sequence[str] = (),
+        requires: Mapping[str, str | None] | None = None,
         exact_kind: bool = False,
         literal: bool = False,
         name: str | None = None,
@@ -183,7 +184,9 @@ class Rule:
         record types; *exact_kind* leaves out nodes that are also of a kind at the same level as
         the focus or below it, as the whole source's mined schema relates its classes, so the
         rule is for nodes of exactly that kind. *subject_unless_kinds* and *object_unless_kinds*
-        leave out ends of these record types.
+        leave out ends of these record types. *requires* maps links of the focus (written as
+        *subject*) to the record type they must reach (or None): the rule holds only for focus
+        nodes that have them.
         """
         from rdfsolve.client.hydration import class_iri
 
@@ -239,6 +242,13 @@ class Rule:
             ),
             object_unless_classes=tuple(
                 c for k in object_unless_kinds if (c := kind(k, end(object)))
+            ),
+            requires=tuple(
+                (
+                    cast(str, path(link)),
+                    kind(reached, end(link), focus_iri if "/" not in link else None),
+                )
+                for link, reached in (requires or {}).items()
             ),
             literal=literal,
             subject_as=subject_as,
@@ -1322,7 +1332,7 @@ def write_query(
             if rule.object_class:
                 classes[obj] = rule.object_class
         for path, cls in rule.requires:
-            needed = var(path, None)
+            needed = var(path, short(cls) if cls else None)
             if cls:
                 classes[needed] = cls
         predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)

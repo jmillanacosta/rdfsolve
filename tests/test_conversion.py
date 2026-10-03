@@ -529,3 +529,36 @@ WHERE { ?pathway a wp:Pathway . ?entity a wp:DataNode ; wp:partOf ?pathway . FIL
     assert "FILTER NOT EXISTS { ?partof a wp:Pathway }" in written
     shapes = rdflib.Graph().parse(data=Profile(name="p", rules=rules).to_shacl(), format="turtle")
     assert len(list(shapes.objects(None, rdflib.SH["not"]))) == 1
+
+
+def test_a_rule_can_require_a_link_of_its_focus(tmp_path):
+    """Pairs of proteins only from a complex that is part of a pathway: the condition is in the
+    compiled rule and in the query written from it, and the query gives back the same rule."""
+    from rdfsolve.conversion import write_query
+
+    rule = Rule(
+        WP + "Complex",
+        BL + "in_complex_with",
+        subject=f"<{WP}participants>",
+        subject_class=WP + "Protein",
+        pairs=True,
+        requires=((f"<{WP}partOf>", WP + "Pathway"),),
+        subject_as="protein",
+    )
+    data = ox.Store()
+    data.load(
+        f"""@prefix wp: <{WP}> .
+    <urn:c1> a wp:Complex ; wp:participants <urn:p1>, <urn:p2> ; wp:partOf <urn:wp1> .
+    <urn:c2> a wp:Complex ; wp:participants <urn:p3>, <urn:p4> ; wp:partOf <urn:i1> .
+    <urn:wp1> a wp:Pathway . <urn:i1> a wp:Interaction .
+    <urn:p1> a wp:Protein . <urn:p2> a wp:Protein . <urn:p3> a wp:Protein . <urn:p4> a wp:Protein .""".encode(),
+        ox.RdfFormat.TURTLE,
+    )
+    assert {(t.subject.value, t.object.value) for t in data.query(rule.to_construct())} == {
+        ("urn:p1", "urn:p2")
+    }
+    text = write_query([rule], title="pairs", prefixes={"wp": WP, "biolink": BL})
+    assert "?complex wp:partOf ?pathway ." in text and "?pathway a wp:Pathway ." in text
+    (tmp_path / "wp-biolink-pairs.rq").write_text(text)
+    back = Query.read(tmp_path / "wp-biolink-pairs.rq").rules()
+    assert [r.requires for r in back] == [((f"<{WP}partOf>", WP + "Pathway"),)]
