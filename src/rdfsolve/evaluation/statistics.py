@@ -24,9 +24,10 @@ from dataclasses import dataclass
 from itertools import combinations, product
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
-Vector = np.ndarray
+Vector = npt.NDArray[np.float64]
 
 
 def question_means(attempts: pd.DataFrame, metric: str) -> pd.DataFrame:
