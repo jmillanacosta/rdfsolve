@@ -5755,7 +5755,15 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
-  science_area: life sciences
+  kg_registry_id: wikidata
+  science_area: other
+  download_ttl:
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.ttl.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.ttl.gz
+  download_nt:
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.nt.gz
 - name: rdfportal.pdb
   catalogs: ["rdfportal"]
   catalog_local_name: pdb
@@ -6304,7 +6312,7 @@
   science_area: life sciences
 - name: biobricks-aopwiki
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
+  endpoint: https://apps.okn.us/biobricks-aopwiki/sparql
   notes: 'KG Registry: BioBricks AOP-Wiki'
   kg_registry_id: biobricks-aopwiki
   keywords:
@@ -6317,7 +6325,7 @@
   science_area: life sciences
 - name: biobricks-ice
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-ice/sparql
+  endpoint: https://apps.okn.us/biobricks-ice/sparql
   notes: 'KG Registry: BioBricks ICE'
   kg_registry_id: biobricks-ice
   keywords:
@@ -6329,7 +6337,7 @@
   science_area: life sciences
 - name: biobricks-mesh
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-mesh/sparql
+  endpoint: https://apps.okn.us/biobricks-mesh/sparql
   notes: 'KG Registry: BioBricks MeSH'
   kg_registry_id: biobricks-mesh
   keywords: null
@@ -6343,7 +6351,7 @@
   science_area: life sciences
 - name: biobricks-pubchem-annotations
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-pubchem-annotations/sparql
+  endpoint: https://apps.okn.us/biobricks-pubchem-annotations/sparql
   notes: 'KG Registry: BioBricks PubChem Annotations'
   kg_registry_id: biobricks-pubchem-annotations
   keywords:
@@ -6356,7 +6364,7 @@
   science_area: life sciences
 - name: biobricks-tox21
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-tox21/sparql
+  endpoint: https://apps.okn.us/biobricks-tox21/sparql
   notes: 'KG Registry: BioBricks Tox21'
   kg_registry_id: biobricks-tox21
   keywords:
@@ -6369,7 +6377,7 @@
   science_area: life sciences
 - name: biobricks-toxcast
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biobricks-toxcast/sparql
+  endpoint: https://apps.okn.us/biobricks-toxcast/sparql
   notes: 'KG Registry: BioBricks ToxCast'
   kg_registry_id: biobricks-toxcast
   keywords:
@@ -6382,7 +6390,7 @@
   science_area: life sciences
 - name: biohealth
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/biohealth/sparql
+  endpoint: https://apps.okn.us/biohealth/sparql
   notes: 'KG Registry: Bio-Health KG'
   kg_registry_id: biohealth
   keywords:
@@ -6405,7 +6413,7 @@
   science_area: life sciences
 - name: climatemodelskg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/climatemodelskg/sparql
+  endpoint: https://apps.okn.us/climatemodelskg/sparql
   notes: 'KG Registry: Climate Models KG'
   kg_registry_id: climatemodelskg
   keywords:
@@ -6418,7 +6426,7 @@
   science_area: other
 - name: dreamkg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/dreamkg/sparql
+  endpoint: https://apps.okn.us/dreamkg/sparql
   notes: 'KG Registry: DREAM-KG'
   kg_registry_id: dreamkg
   keywords:
@@ -6459,7 +6467,7 @@
   science_area: life sciences
 - name: fiokg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/fiokg/sparql
+  endpoint: https://apps.okn.us/fiokg/sparql
   notes: 'KG Registry: SAWGraph FIO KG'
   kg_registry_id: fiokg
   keywords:
@@ -6471,7 +6479,7 @@
   science_area: other
 - name: geoconnex
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/geoconnex/sparql
+  endpoint: https://apps.okn.us/geoconnex/sparql
   notes: 'KG Registry: GEOCONNEX'
   kg_registry_id: geoconnex
   keywords:
@@ -6570,7 +6578,7 @@
   science_area: life sciences
 - name: nasa-gesdisc-kg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/nasa-gesdisc-kg/sparql
+  endpoint: https://apps.okn.us/nasa-gesdisc-kg/sparql
   notes: 'KG Registry: NASA-GESDISC-KG'
   kg_registry_id: nasa-gesdisc-kg
   keywords:
@@ -6583,7 +6591,7 @@
   science_area: other
 - name: nde
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/nde/sparql
+  endpoint: https://apps.okn.us/nde/sparql
   notes: 'KG Registry: NIAID Data Ecosystem KG'
   kg_registry_id: nde
   keywords:
@@ -6653,7 +6661,10 @@
   - phenotype
   - gene
   - biomedical science
+  kg_registry_id: kg-monarch
   science_area: life sciences
+  download_rdf:
+  - https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz
 - name: pathophenodb
   dataset_kind: instance
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
@@ -6698,7 +6709,7 @@
   science_area: life sciences
 - name: ruralkg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/ruralkg/sparql
+  endpoint: https://apps.okn.us/ruralkg/sparql
   notes: 'KG Registry: Rural Resilience KG'
   kg_registry_id: ruralkg
   keywords:
@@ -6710,7 +6721,7 @@
   science_area: life sciences
 - name: sawgraph
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/sawgraph/sparql
+  endpoint: https://apps.okn.us/sawgraph/sparql
   notes: 'KG Registry: SAWGraph PFAS graph'
   kg_registry_id: sawgraph
   keywords:
@@ -6723,7 +6734,7 @@
   science_area: life sciences
 - name: scales
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/scales/sparql
+  endpoint: https://apps.okn.us/scales/sparql
   notes: 'KG Registry: SCALES'
   kg_registry_id: scales
   keywords:
@@ -6734,7 +6745,7 @@
   science_area: other
 - name: securechainkg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/securechainkg/sparql
+  endpoint: https://apps.okn.us/securechainkg/sparql
   notes: 'KG Registry: SecureChain KG'
   kg_registry_id: securechainkg
   keywords:
@@ -6746,7 +6757,7 @@
   science_area: other
 - name: semopenalex
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/semopenalex/sparql
+  endpoint: https://apps.okn.us/semopenalex/sparql
   notes: 'KG Registry: SemOpenAlex'
   kg_registry_id: semopenalex
   keywords:
@@ -6758,7 +6769,7 @@
   science_area: other
 - name: sockg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/sockg/sparql
+  endpoint: https://apps.okn.us/sockg/sparql
   notes: 'KG Registry: SOC-KG'
   kg_registry_id: sockg
   keywords:
@@ -6770,7 +6781,7 @@
   science_area: other
 - name: spatialkg
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/spatialkg/sparql
+  endpoint: https://apps.okn.us/spatialkg/sparql
   notes: 'KG Registry: SAWGraph Spatial KG'
   kg_registry_id: spatialkg
   keywords:
@@ -6782,7 +6793,7 @@
   science_area: other
 - name: spoke
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/spoke-okn/sparql
+  endpoint: https://apps.okn.us/spoke-okn/sparql
   notes: 'KG Registry: SPOKE'
   kg_registry_id: spoke
   keywords:
@@ -6794,7 +6805,7 @@
   science_area: life sciences
 - name: spoke-genelab
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/spoke-genelab/sparql
+  endpoint: https://apps.okn.us/spoke-genelab/sparql
   notes: 'KG Registry: SPOKE GeneLab'
   kg_registry_id: spoke-genelab
   keywords:
@@ -6807,7 +6818,7 @@
   science_area: life sciences
 - name: sudokn
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/sudokn/sparql
+  endpoint: https://apps.okn.us/sudokn/sparql
   notes: 'KG Registry: SUDOKN'
   kg_registry_id: sudokn
   keywords:
@@ -6862,7 +6873,7 @@
   science_area: life sciences
 - name: wildlifekn
   dataset_kind: instance
-  endpoint: https://frink.apps.renci.org/wildlifekg/sparql
+  endpoint: https://apps.okn.us/wildlifekn/sparql
   notes: 'KG Registry: Wildlife-KN'
   kg_registry_id: wildlifekn
   keywords:
@@ -7651,13 +7662,6 @@
   science_area: life sciences
   notes: 'KG Registry: ENPKG'
   endpoint: https://enpkg.commons-lab.org/graphdb/sparql
-- name: kg-monarch
-  dataset_kind: instance
-  kg_registry_id: kg-monarch
-  science_area: life sciences
-  notes: 'KG Registry: KG Monarch'
-  download_rdf:
-  - https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz
 - name: maudekg
   dataset_kind: instance
   kg_registry_id: maudekg
@@ -7733,28 +7737,27 @@
   science_area: life sciences
   notes: 'KG Registry: Protein Knowledge Network'
   endpoint: https://apps.okn.us/prokn/sparql
-- name: spoke-okn
-  dataset_kind: instance
-  kg_registry_id: spoke-okn
-  science_area: life sciences
-  notes: 'KG Registry: SPOKE-OKN'
-  endpoint: https://apps.okn.us/spoke-okn/sparql
 - name: uf-okn
   dataset_kind: instance
   kg_registry_id: uf-okn
   science_area: other
   notes: 'KG Registry: UF-OKN'
   endpoint: https://apps.okn.us/ufokn/sparql
-- name: wikidata
+- name: acukg
   dataset_kind: instance
-  kg_registry_id: wikidata
-  science_area: other
-  notes: 'KG Registry: Wikidata'
-  endpoint: https://frink.apps.renci.org/wikidata/sparql
+  kg_registry_id: acukg
+  science_area: life sciences
+  notes: 'KG Registry: AcuKG; files of the AcuKG_RDF folder of its repository (main branch)'
   download_ttl:
-  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.ttl.gz
-  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.ttl.gz
-  download_nt:
-  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz
-  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz
-  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.nt.gz
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/Action_target.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/Chinesename.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/Englishname.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/Indication.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/PubMed.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/clinicaltrial.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/direction_of.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/distance_of.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/located_near.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/near_acupoint.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/part_of.ttl
+  - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/pinyinname.ttl

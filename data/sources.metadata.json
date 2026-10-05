@@ -9533,6 +9533,104 @@
         }
       ]
     },
+    "rdfportal.wikidata": {
+      "kg_registry_category": "KnowledgeGraph",
+      "kg_registry_domains": [
+        "general"
+      ],
+      "kg_registry_products": [
+        {
+          "id": "wikidata.portal",
+          "category": "GraphicalInterface",
+          "format": "http",
+          "product_url": "https://www.wikidata.org/"
+        },
+        {
+          "id": "wikidata.sparql",
+          "category": "ProgrammingInterface",
+          "format": "http",
+          "product_url": "https://frink.apps.renci.org/wikidata/sparql"
+        },
+        {
+          "id": "wikidata.query.editor",
+          "category": "GraphicalInterface",
+          "format": "http",
+          "product_url": "https://query.wikidata.org/"
+        },
+        {
+          "id": "wikidata.dumps.json",
+          "category": "Product",
+          "format": "json",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.json.gz"
+        },
+        {
+          "id": "wikidata.dumps.rdf.full.ttl",
+          "category": "Product",
+          "format": "ttl",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.ttl.gz"
+        },
+        {
+          "id": "wikidata.dumps.rdf.full.nt",
+          "category": "Product",
+          "format": "ntriples",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz"
+        },
+        {
+          "id": "wikidata.dumps.rdf.truthy.nt",
+          "category": "Product",
+          "format": "ntriples",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz"
+        },
+        {
+          "id": "wikidata.dumps.lexemes.json",
+          "category": "Product",
+          "format": "json",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.json.gz"
+        },
+        {
+          "id": "wikidata.dumps.lexemes.ttl",
+          "category": "Product",
+          "format": "ttl",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.ttl.gz"
+        },
+        {
+          "id": "wikidata.dumps.lexemes.nt",
+          "category": "Product",
+          "format": "ntriples",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.nt.gz"
+        },
+        {
+          "id": "wikidata.dumps.xml",
+          "category": "Product",
+          "format": "xml",
+          "product_url": "https://dumps.wikimedia.org/wikidatawiki/"
+        },
+        {
+          "id": "wikidata.dumps.incremental",
+          "category": "Product",
+          "format": "xml",
+          "product_url": "https://dumps.wikimedia.org/other/incr/wikidatawiki/"
+        },
+        {
+          "id": "wikidata.api",
+          "category": "ProgrammingInterface",
+          "format": "http",
+          "product_url": "https://www.wikidata.org/w/api.php"
+        },
+        {
+          "id": "wikidata.entity.api",
+          "category": "ProgrammingInterface",
+          "format": "http",
+          "product_url": "https://www.wikidata.org/wiki/Special:EntityData"
+        },
+        {
+          "id": "wikidata.tpf",
+          "category": "ProgrammingInterface",
+          "format": "http",
+          "product_url": "https://frink.apps.renci.org/ldf/wikidata"
+        }
+      ]
+    },
     "forum": {
       "kg_registry_category": "KnowledgeGraph",
       "kg_registry_domains": [
@@ -10561,6 +10659,225 @@
           "category": "DocumentationProduct",
           "format": "http",
           "product_url": "https://github.com/pensoft/OpenBiodiv/tree/master/ontology"
+        }
+      ]
+    },
+    "monarch-kg": {
+      "kg_registry_category": "KnowledgeGraph",
+      "kg_registry_domains": [
+        "biomedical",
+        "genomics",
+        "phenotype"
+      ],
+      "kg_registry_products": [
+        {
+          "id": "kg-monarch.graph",
+          "category": "GraphProduct",
+          "format": "kgx",
+          "product_url": "http://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.tar.gz"
+        },
+        {
+          "id": "kg-monarch.graph.jsonl.edges",
+          "category": "GraphProduct",
+          "format": "kgx-jsonl",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
+        },
+        {
+          "id": "kg-monarch.graph.jsonl.nodes",
+          "category": "GraphProduct",
+          "format": "kgx-jsonl",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
+        },
+        {
+          "id": "kg-monarch.graph.rdf",
+          "category": "GraphProduct",
+          "format": "rdfxml",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz"
+        },
+        {
+          "id": "kg-monarch.graph.neo4j.edges",
+          "category": "GraphProduct",
+          "format": "neo4j",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg_edges.neo4j.csv"
+        },
+        {
+          "id": "kg-monarch.graph.neo4j.nodes",
+          "category": "GraphProduct",
+          "format": "neo4j",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg_nodes.neo4j.csv"
+        },
+        {
+          "id": "kg-monarch.graph.duckdb",
+          "category": "GraphProduct",
+          "format": "mixed",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.duckdb"
+        },
+        {
+          "id": "kg-monarch.graph.jsonl",
+          "category": "GraphProduct",
+          "format": "kgx-jsonl",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
+        },
+        {
+          "id": "kg-monarch.graph.neo4j",
+          "category": "GraphProduct",
+          "format": "neo4j",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.neo4j.dump"
+        },
+        {
+          "id": "kg-monarch.associations.all",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.causal_gene_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/causal_gene_to_disease_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.chemical_or_drug_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_or_drug_or_treatment_to_disease_or_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.chemical_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_entity_to_disease_or_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.chemical_to_pathway",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_entity_to_pathway_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.correlated_gene_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/correlated_gene_to_disease_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.disease_to_inheritance",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_or_phenotypic_feature_to_genetic_inheritance_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.disease_to_location",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_or_phenotypic_feature_to_location_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.disease_to_phenotype",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_to_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.gene_to_expression_site",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_expression_site_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.gene_to_gene_homology",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_gene_homology_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.gene_to_pathway",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_pathway_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.gene_to_phenotype",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.genotype_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_disease_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.genotype_to_gene",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_gene_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.genotype_to_phenotype",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.genotype_to_variant",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_variant_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.macromolecular_machine_to_biological_process",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_biological_process_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.macromolecular_machine_to_cellular_component",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_cellular_component_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.macromolecular_machine_to_molecular_activity",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_molecular_activity_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.pairwise_gene_to_gene_interaction",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/pairwise_gene_to_gene_interaction.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.variant_to_disease",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_disease_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.variant_to_gene",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_gene_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.associations.variant_to_phenotype",
+          "category": "Product",
+          "format": "tsv",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_phenotypic_feature_association.all.tsv.gz"
+        },
+        {
+          "id": "kg-monarch.phenio.semsql",
+          "category": "Product",
+          "format": "sqlite",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/phenio.db.gz"
+        },
+        {
+          "id": "kg-monarch.solr",
+          "category": "Product",
+          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/solr.tar.gz"
         }
       ]
     },
@@ -11858,225 +12175,6 @@
         }
       ]
     },
-    "kg-monarch": {
-      "kg_registry_category": "KnowledgeGraph",
-      "kg_registry_domains": [
-        "biomedical",
-        "genomics",
-        "phenotype"
-      ],
-      "kg_registry_products": [
-        {
-          "id": "kg-monarch.graph",
-          "category": "GraphProduct",
-          "format": "kgx",
-          "product_url": "http://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.tar.gz"
-        },
-        {
-          "id": "kg-monarch.graph.jsonl.edges",
-          "category": "GraphProduct",
-          "format": "kgx-jsonl",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
-        },
-        {
-          "id": "kg-monarch.graph.jsonl.nodes",
-          "category": "GraphProduct",
-          "format": "kgx-jsonl",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
-        },
-        {
-          "id": "kg-monarch.graph.rdf",
-          "category": "GraphProduct",
-          "format": "rdfxml",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz"
-        },
-        {
-          "id": "kg-monarch.graph.neo4j.edges",
-          "category": "GraphProduct",
-          "format": "neo4j",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg_edges.neo4j.csv"
-        },
-        {
-          "id": "kg-monarch.graph.neo4j.nodes",
-          "category": "GraphProduct",
-          "format": "neo4j",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg_nodes.neo4j.csv"
-        },
-        {
-          "id": "kg-monarch.graph.duckdb",
-          "category": "GraphProduct",
-          "format": "mixed",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.duckdb"
-        },
-        {
-          "id": "kg-monarch.graph.jsonl",
-          "category": "GraphProduct",
-          "format": "kgx-jsonl",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.jsonl.tar.gz"
-        },
-        {
-          "id": "kg-monarch.graph.neo4j",
-          "category": "GraphProduct",
-          "format": "neo4j",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.neo4j.dump"
-        },
-        {
-          "id": "kg-monarch.associations.all",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.causal_gene_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/causal_gene_to_disease_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.chemical_or_drug_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_or_drug_or_treatment_to_disease_or_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.chemical_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_entity_to_disease_or_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.chemical_to_pathway",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/chemical_entity_to_pathway_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.correlated_gene_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/correlated_gene_to_disease_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.disease_to_inheritance",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_or_phenotypic_feature_to_genetic_inheritance_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.disease_to_location",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_or_phenotypic_feature_to_location_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.disease_to_phenotype",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/disease_to_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.gene_to_expression_site",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_expression_site_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.gene_to_gene_homology",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_gene_homology_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.gene_to_pathway",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_pathway_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.gene_to_phenotype",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/gene_to_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.genotype_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_disease_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.genotype_to_gene",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_gene_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.genotype_to_phenotype",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.genotype_to_variant",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/genotype_to_variant_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.macromolecular_machine_to_biological_process",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_biological_process_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.macromolecular_machine_to_cellular_component",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_cellular_component_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.macromolecular_machine_to_molecular_activity",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/macromolecular_machine_to_molecular_activity_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.pairwise_gene_to_gene_interaction",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/pairwise_gene_to_gene_interaction.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.variant_to_disease",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_disease_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.variant_to_gene",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_gene_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.associations.variant_to_phenotype",
-          "category": "Product",
-          "format": "tsv",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/tsv/all_associations/variant_to_phenotypic_feature_association.all.tsv.gz"
-        },
-        {
-          "id": "kg-monarch.phenio.semsql",
-          "category": "Product",
-          "format": "sqlite",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/phenio.db.gz"
-        },
-        {
-          "id": "kg-monarch.solr",
-          "category": "Product",
-          "product_url": "https://data.monarchinitiative.org/monarch-kg/latest/solr.tar.gz"
-        }
-      ]
-    },
     "maudekg": {
       "kg_registry_category": "KnowledgeGraph",
       "kg_registry_domains": [
@@ -13092,36 +13190,6 @@
         }
       ]
     },
-    "spoke-okn": {
-      "kg_registry_category": "KnowledgeGraph",
-      "kg_registry_domains": [
-        "biomedical",
-        "genomics",
-        "clinical",
-        "precision medicine",
-        "pharmacology"
-      ],
-      "kg_registry_products": [
-        {
-          "id": "spoke-okn.sparql",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://apps.okn.us/spoke-okn/sparql"
-        },
-        {
-          "id": "spoke-okn.tpf",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://apps.okn.us/ldf/spoke-okn"
-        },
-        {
-          "id": "spoke-okn.graph",
-          "category": "GraphProduct",
-          "format": "ttl",
-          "product_url": "https://spoke.ucsf.edu"
-        }
-      ]
-    },
     "uf-okn": {
       "kg_registry_category": "KnowledgeGraph",
       "kg_registry_domains": [
@@ -13158,104 +13226,6 @@
           "category": "ProgrammingInterface",
           "format": "http",
           "product_url": "https://apps.okn.us/ldf/ufokn"
-        }
-      ]
-    },
-    "wikidata": {
-      "kg_registry_category": "KnowledgeGraph",
-      "kg_registry_domains": [
-        "general"
-      ],
-      "kg_registry_products": [
-        {
-          "id": "wikidata.portal",
-          "category": "GraphicalInterface",
-          "format": "http",
-          "product_url": "https://www.wikidata.org/"
-        },
-        {
-          "id": "wikidata.sparql",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://frink.apps.renci.org/wikidata/sparql"
-        },
-        {
-          "id": "wikidata.query.editor",
-          "category": "GraphicalInterface",
-          "format": "http",
-          "product_url": "https://query.wikidata.org/"
-        },
-        {
-          "id": "wikidata.dumps.json",
-          "category": "Product",
-          "format": "json",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.json.gz"
-        },
-        {
-          "id": "wikidata.dumps.rdf.full.ttl",
-          "category": "Product",
-          "format": "ttl",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.ttl.gz"
-        },
-        {
-          "id": "wikidata.dumps.rdf.full.nt",
-          "category": "Product",
-          "format": "ntriples",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz"
-        },
-        {
-          "id": "wikidata.dumps.rdf.truthy.nt",
-          "category": "Product",
-          "format": "ntriples",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz"
-        },
-        {
-          "id": "wikidata.dumps.lexemes.json",
-          "category": "Product",
-          "format": "json",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.json.gz"
-        },
-        {
-          "id": "wikidata.dumps.lexemes.ttl",
-          "category": "Product",
-          "format": "ttl",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.ttl.gz"
-        },
-        {
-          "id": "wikidata.dumps.lexemes.nt",
-          "category": "Product",
-          "format": "ntriples",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.nt.gz"
-        },
-        {
-          "id": "wikidata.dumps.xml",
-          "category": "Product",
-          "format": "xml",
-          "product_url": "https://dumps.wikimedia.org/wikidatawiki/"
-        },
-        {
-          "id": "wikidata.dumps.incremental",
-          "category": "Product",
-          "format": "xml",
-          "product_url": "https://dumps.wikimedia.org/other/incr/wikidatawiki/"
-        },
-        {
-          "id": "wikidata.api",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://www.wikidata.org/w/api.php"
-        },
-        {
-          "id": "wikidata.entity.api",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://www.wikidata.org/wiki/Special:EntityData"
-        },
-        {
-          "id": "wikidata.tpf",
-          "category": "ProgrammingInterface",
-          "format": "http",
-          "product_url": "https://frink.apps.renci.org/ldf/wikidata"
         }
       ]
     }
