@@ -274,14 +274,31 @@ class LocalMiningStage(Stage):
             merge_counts,
             write_census,
         )
+        from rdfsolve.qlever.repair import REPAIRS_FILE, repair_inputs
 
         files = [(path, input_format(path)) for path, _ in mapped]
         census = ProcessPoolExecutor(max(1, min(len(files), (os.cpu_count() or 2) // 2)))
-        log.info(f"    Indexing {len(mapped)} files...")
-        try:
+
+        def index() -> dict:
             counting = [census.submit(count_literal_datatypes, [item]) for item in files]
             subprocess.run(cmd, cwd=workdir, check=True)
-            counts = merge_counts(future.result() for future in counting)
+            return merge_counts(future.result() for future in counting)
+
+        log.info(f"    Indexing {len(mapped)} files...")
+        try:
+            try:
+                counts = index()
+            except subprocess.CalledProcessError:
+                # QLever refuses a whole file for one IRI holding < > or "; such IRIs of a
+                # line-based input are written percent-encoded, recorded, and indexed again.
+                changes = repair_inputs(workdir, [path for path, _ in mapped])
+                if not changes:
+                    raise
+                log.warning(
+                    f"    {len(changes)} input lines hold IRIs with < > or \"; written "
+                    f"percent-encoded ({REPAIRS_FILE}); indexing again"
+                )
+                counts = index()
             write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
         finally:
             census.shutdown(cancel_futures=True)
@@ -420,8 +437,12 @@ class LocalMiningStage(Stage):
         return schema
 
     def _restore_literal_datatypes(self, miner, schema, name: str) -> None:
-        """Restore the numeric datatypes that the index folds, from the census of its sources."""
+        """Restore the numeric datatypes that the index folds, from the census of its sources.
+
+        The input lines written percent-encoded before indexing are recorded (input_repairs).
+        """
         from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census, restore_datatypes
+        from rdfsolve.qlever.repair import REPAIRS_FILE
 
         census = self.config.data_dir / "qlever_workdirs" / name / CENSUS_FILE
         if census.is_file():
@@ -436,6 +457,10 @@ class LocalMiningStage(Stage):
             }
         if miner.last_report is not None:
             miner.last_report.config["literal_datatypes"] = record
+            repairs = census.with_name(REPAIRS_FILE)
+            if repairs.is_file():
+                repaired = json.loads(repairs.read_text(encoding="utf-8"))
+                miner.last_report.config["input_repairs"] = repaired
 
     def _save_dataset_outputs(
         self,
