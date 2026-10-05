@@ -138,6 +138,53 @@ def test_triples_of_refused_properties_are_counted_as_not_discovered():
     assert structural_strategy._undiscovered_triples({}) == 0
 
 
+def split_select(refuse):
+    """Answer the split query with the triples of the subjects that have each property, refuse
+    the discovery queries that *refuse* accepts and answer the others with one row."""
+
+    def select(context, query, purpose, **options):
+        if purpose == "structural/discovery-split":
+            sizes = {"urn:p:slow": 5, "urn:x": 3, "urn:y": 5}
+            if "MINUS { ?s ql:has-predicate <urn:x> }" in query:
+                sizes = {"urn:p:slow": 2, "urn:y": 2}
+            return [{"sp": {"value": p}, "n": {"value": str(n)}} for p, n in sizes.items()]
+        if refuse(query):
+            raise EndpointTimeoutError("Operation timed out. Last operation: GroupBy")
+        return [{"p": {"value": "urn:p:slow"}, "q": {"value": query}}]
+
+    return select
+
+
+def test_a_refused_property_is_split_by_a_property_of_its_subjects(monkeypatch):
+    """A refused discovery is split by a property that holds about half of its triples: the
+    subject's property set is a key of the groups, so both parts give the rows of the whole
+    (OMA dcterms:identifier: 49,916,389 edges timed out in the final GROUP BY)."""
+    outcomes = []
+    context = SimpleNamespace(report=SimpleNamespace(record_outcome=outcomes.append))
+    select = split_select(lambda q: "ql:has-predicate <urn:x>" not in q)
+    monkeypatch.setattr(structural_strategy, "_select", select)
+    entry = {"census_properties": {"urn:p:slow": {"uncoveredTriples": 5, "untypedTriples": 5}}}
+    rows = structural_strategy._patterns_discovery(context, None, [], entry)
+    parts = [row["q"]["value"] for row in rows]
+    assert len(parts) == 2 and not outcomes
+    assert all(q.count("ql:has-predicate <urn:x>") == 3 for q in parts), "In all three patterns"
+    assert "MINUS { ?s ql:has-predicate <urn:x> }" in parts[1]
+    assert "discovery_refused" not in entry["census_properties"]["urn:p:slow"]
+
+
+def test_a_part_that_cannot_be_split_is_recorded_with_its_triples(monkeypatch):
+    outcomes = []
+    context = SimpleNamespace(report=SimpleNamespace(record_outcome=outcomes.append))
+    select = split_select(lambda q: "?s ql:has-predicate <urn:x> ." not in q)
+    monkeypatch.setattr(structural_strategy, "_select", select)
+    entry = {"census_properties": {"urn:p:slow": {"uncoveredTriples": 5, "untypedTriples": 5}}}
+    rows = structural_strategy._patterns_discovery(context, None, [], entry)
+    census = entry["census_properties"]["urn:p:slow"]
+    assert len(rows) == 1 and census["undiscoveredTriples"] == 2
+    assert "discovery_refused" in census and structural_strategy._undiscovered_triples(entry) == 2
+    assert len(outcomes) == 1 and outcomes[0].state == "partial"
+
+
 def test_a_refused_property_is_recorded_when_each_property_is_discovered_alone(monkeypatch):
     """The discovery with one query for each property has the same rule: a refused query is
     recorded and does not fail the source."""

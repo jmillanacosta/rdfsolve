@@ -234,6 +234,104 @@ def _patterns_census(
     return counts
 
 
+def _patterns_query(
+    graph: str | None, named: list[str], predicate: str, part: Sequence[str] = ()
+) -> str:
+    """Return the query of the patterns of the edges of *predicate* whose subject is untyped and
+    is in *part* (clauses on the subject's properties, see _split_property).
+    """
+    prop = f"<{predicate}>"
+    subject = " ".join([_untyped_subject(), *part])
+    return (
+        QLEVER_PREFIX
+        + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
+  (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), ">", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
+{_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
+  ?s {prop} ?o . {subject}
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=">") AS ?ss)
+     WHERE {{ ?s {prop} ?_o . {subject} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
+  OPTIONAL {{
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=">") AS ?os)
+       WHERE {{ ?s {prop} ?o . {subject} ?o ql:has-predicate ?op }} GROUP BY ?o }}
+  }}
+  BIND({prop} AS ?p)
+  BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
+  BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
+  BIND(DATATYPE(?o) AS ?dt)
+  BIND(LANG(?o) AS ?lang)
+}} }} }}
+GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
+    )
+
+
+def _split_property(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    predicate: str,
+    part: Sequence[str],
+    triples: int,
+) -> tuple[str, int] | None:
+    """Choose a property of the subjects of *part* that holds about half of its *triples*.
+
+    Return the property and the triples of the subjects that have it; None when no property
+    divides the part or the endpoint refuses. The subject's property set is a key of the
+    groups of _patterns_query, so the groups of the subjects with the property and of those
+    without it are disjoint and the rows of both parts are those of the whole.
+    """
+    subject = " ".join([_untyped_subject(), *part])
+    query = (
+        QLEVER_PREFIX + f"SELECT ?sp (COUNT(*) AS ?n) {_dataset(graph, named)} WHERE {{ "
+        f"?s <{predicate}> ?_o . {subject} ?s ql:has-predicate ?sp }} GROUP BY ?sp"
+    )
+    try:
+        rows = _select(context, query, "structural/discovery-split", paged=False)
+    except (SparqlHelperError, ValueError) as error:
+        logger.warning("Discovery: %s not split: %s", predicate, str(error)[:200])
+        return None
+    sizes = {row["sp"]["value"]: int(row["n"]["value"]) for row in rows}
+    dividing = [(abs(2 * n - triples), p, n) for p, n in sizes.items() if 0 < n < triples]
+    if not dividing:
+        return None
+    _, chosen, inside = min(dividing)
+    return chosen, inside
+
+
+def _discover_part(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    predicate: str,
+    part: list[str],
+    triples: int,
+    refused: list[tuple[int, Exception]],
+) -> list[dict[str, Any]]:
+    """Discover the patterns of a part, splitting it by a property of its subjects when the
+    endpoint refuses it; a part that cannot be split is added to *refused* with its triples.
+    """
+    try:
+        return _select(
+            context, _patterns_query(graph, named, predicate, part), "structural/discovery"
+        )
+    except (SparqlHelperError, ValueError) as error:
+        split = _split_property(context, graph, named, predicate, part, triples)
+        if split is None:
+            refused.append((triples, error))
+            return []
+        chosen, inside = split
+        logger.info(
+            "Discovery: %s split by %s (%d of %d triples)", predicate, chosen, inside, triples
+        )
+        has = f"?s ql:has-predicate <{chosen}> ."
+        lacks = f"MINUS {{ ?s ql:has-predicate <{chosen}> }}"
+        return _discover_part(
+            context, graph, named, predicate, [*part, has], inside, refused
+        ) + _discover_part(
+            context, graph, named, predicate, [*part, lacks], triples - inside, refused
+        )
+
+
 def _patterns_discovery(
     context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -246,48 +344,40 @@ def _patterns_discovery(
     gpml:hasDataNode (137,699 edges), and a query with GROUP_CONCAT is not paged. The witness
     of a pattern is one edge of its group: the kinds, datatype and language of the object are
     keys of the group, so the text of the subject and object gives the edge.
+
+    A refused property is split by the properties of its subjects (_split_property): OMA
+    dcterms:identifier, with 49,916,389 edges of untyped subjects, timed out after 600 s in
+    the final GROUP BY (corpus-local-4a3affdf-8). The parts that cannot be split further are
+    recorded with their triples.
     """
     rows: list[dict[str, Any]] = []
     for predicate, n in sorted(entry["census_properties"].items()):
         if not n.get("uncoveredTriples"):
             continue
-        prop = f"<{predicate}>"
-        query = (
-            QLEVER_PREFIX
-            + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
-  (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
-  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), ">", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
-{_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
-  ?s {prop} ?o . {_untyped_subject()}
-  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=">") AS ?ss)
-     WHERE {{ ?s {prop} ?_o . {_untyped_subject()} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
-  OPTIONAL {{
-    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=">") AS ?os)
-       WHERE {{ ?s {prop} ?o . {_untyped_subject()} ?o ql:has-predicate ?op }} GROUP BY ?o }}
-  }}
-  BIND({prop} AS ?p)
-  BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
-  BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok)
-  BIND(DATATYPE(?o) AS ?dt)
-  BIND(LANG(?o) AS ?lang)
-}} }} }}
-GROUP BY ?p ?ss ?os ?sk ?ok ?dt ?lang"""
-        )
-        try:
-            rows += _select(context, query, "structural/discovery")
-        except (SparqlHelperError, ValueError) as error:
-            _refused(context, n, predicate, error)
+        refused: list[tuple[int, Exception]] = []
+        rows += _discover_part(context, graph, named, predicate, [], n["uncoveredTriples"], refused)
+        if refused:
+            _refused(context, n, predicate, refused[0][1], sum(t for t, _ in refused))
     return rows
 
 
-def _refused(context: MiningContext, n: dict[str, Any], predicate: str, error: Exception) -> None:
-    """Record a property whose discovery was refused; the source is then partial.
+def _refused(
+    context: MiningContext,
+    n: dict[str, Any],
+    predicate: str,
+    error: Exception,
+    triples: int | None = None,
+) -> None:
+    """Record a property whose discovery was refused, for all its uncovered triples or for
+    *triples* of them; the source is then partial.
 
     The discovery query groups with GROUP_CONCAT and cannot be read in pages (UberGraph:
     IAO_0000115).
     """
     logger.warning("Discovery: %s not discovered: %s", predicate, str(error)[:200])
     n["discovery_refused"] = str(error)[:500]
+    if triples is not None and triples != n.get("uncoveredTriples"):
+        n["undiscoveredTriples"] = triples
     failure = QueryFailure(
         "timeout", f"{predicate}: structural discovery refused", "structural/discovery"
     )
@@ -331,9 +421,9 @@ def _property_discovery(
 
 
 def _undiscovered_triples(entry: dict[str, Any]) -> int:
-    """Return the uncovered triples of the properties whose discovery was refused."""
+    """Return the triples of the properties, or of the parts of them, whose discovery was refused."""
     return sum(
-        int(n.get("uncoveredTriples") or 0)
+        int(n.get("undiscoveredTriples", n.get("uncoveredTriples")) or 0)
         for n in (entry.get("census_properties") or {}).values()
         if "discovery_refused" in n
     )
@@ -819,7 +909,12 @@ class StructuralStrategy(MiningStrategy):
             found: Counter[str] = Counter()
             for row in rows:  # A grouped row counts its edges (_patterns_discovery).
                 found[row["p"]["value"]] += int(row["n"]["value"]) if "n" in row else 1
-            untyped = {p for p, n in found.items() if census.get(p, {}).get("untypedTriples") == n}
+            untyped = {
+                p
+                for p, n in found.items()
+                if census.get(p, {}).get("untypedTriples")
+                == n + census.get(p, {}).get("undiscoveredTriples", 0)
+            }
         candidates: dict[str, StructuralPattern] = {}
         bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for row in rows:
