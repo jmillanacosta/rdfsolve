@@ -114,6 +114,25 @@ def test_an_empty_archive_member_is_left_out(tmp_path):
     assert "empty archive member left out: ./extraction/Person.nq" in done.stdout
 
 
+def test_a_plain_tar_named_as_compressed_is_extracted(tmp_path):
+    import tarfile
+
+    member = tmp_path / "kg.ttl"
+    member.write_text("<urn:a> <urn:p> <urn:o> .\n")
+    with tarfile.open(tmp_path / "metrin-kg.tar.gz", "w") as archive:
+        archive.add(member, "metrin-kg/KG/kg.ttl")
+    member.unlink()
+    done = subprocess.run(
+        ["bash"],
+        input=" && ".join(_extract_archives_steps()),
+        text=True,
+        cwd=tmp_path,
+        capture_output=True,
+    )
+    assert done.returncode == 0, done.stderr
+    assert (tmp_path / "kg.ttl").is_file()
+
+
 def test_each_download_command_retries_passing_faults():
     for url in ("https://example.org/a/data.ttl.gz", "https://example.org/download?id=7"):
         command = _wget_cmd(url)

@@ -472,10 +472,13 @@ def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
 
 
 def _extract_archives_steps() -> list[str]:
-    """Shell steps: extract archives, collect, repeat for nested archives."""
+    """Shell steps: extract archives, collect, repeat for nested archives.
+
+    tar reads the compression from the content: MetRIn-KG publishes a plain tar as .tar.gz.
+    """
     _tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
-        'echo "  extracting $f"; tar xzf "$f"; echo "$f" >> .extracted-archives; done'
+        'echo "  extracting $f"; tar xf "$f"; echo "$f" >> .extracted-archives; done'
     )
     _zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
@@ -487,7 +490,7 @@ def _extract_archives_steps() -> list[str]:
     _nested_tar = (
         'for f in *.tar.gz *.tgz; do [ -f "$f" ] || continue; '
         'grep -qxF -- "$f" .extracted-archives 2>/dev/null && continue; '
-        'echo "  extracting nested $f"; tar xzf "$f" 2>/dev/null || true; done'
+        'echo "  extracting nested $f"; tar xf "$f" 2>/dev/null || true; done'
     )
     _nested_zip = (
         'for f in *.zip; do [ -f "$f" ] || continue; '
