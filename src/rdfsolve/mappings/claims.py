@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from sssom import Mapping, MappingSetDataFrame
 
     from rdfsolve.client.api import Client
+    from rdfsolve.reconciliation.policy import Policy
 
 __all__ = ["Claims", "Resolution", "claim"]
 
@@ -157,6 +158,7 @@ class Resolution:
     groups: list[dict[str, Any]] = field(default_factory=list)
     overruled: list[tuple[str, str, str]] = field(default_factory=list)
     exact: frozenset[str] = frozenset()  # namespaces whose cross-references are taken as exact
+    policy: str | None = None  # the IRI of the policy applied, when one was given
 
     def targets(self, namespace: str) -> list[str]:
         """Return the accepted IRIs in *namespace*: the records worth fetching."""
@@ -560,6 +562,7 @@ class Claims:
         namespaces: Iterable[str] | None = None,
         prefer: Iterable[Any] = (),
         exact: Iterable[str] = (),
+        policy: Policy | None = None,
     ) -> Resolution:
         """Decide which claims are accepted, for each subject and target namespace.
 
@@ -578,8 +581,12 @@ class Claims:
         cross-references are taken as exact matches: an assumption, recorded in each group it
         applies to; only exact mappings are pairs (Resolution.pairs). A mapping found through
         another identifier is exact only when both of its links are.
+
+        A *policy* (rdfsolve.reconciliation.policy) gives the authorities, after *authority*, and
+        the namespaces taken as exact, with *exact*; the resolution names it.
         """
-        order = list(authority or [])
+        order = list(dict.fromkeys([*(authority or []), *(policy.order if policy else [])]))
+        exact = [*exact, *(policy.exact if policy else [])]
         preferred = {_key(iri) for iri in _iris(prefer)}
         if namespaces is None:
             namespaces = {i for s in {source_of(c) for c in self.claims} if (i := _issuer(s))}
@@ -655,7 +662,14 @@ class Claims:
         for group in groups:
             if group["namespace"] in assumed:
                 group["assumption"] = f"cross-references to {group['namespace']} taken as exact"
-        return Resolution(accepted, sorted(set(variant_pairs)), groups, overruled_by, assumed)
+        return Resolution(
+            accepted,
+            sorted(set(variant_pairs)),
+            groups,
+            overruled_by,
+            assumed,
+            policy.iri if policy else None,
+        )
 
 
 def _iris(items: Any) -> list[str]:
