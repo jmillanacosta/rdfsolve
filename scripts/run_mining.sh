@@ -35,6 +35,7 @@ preflight_only=false
 for arg in "$@"; do
     case "$arg" in
         --preflight) preflight_only=true ;;
+        --index-only) ;;
         --output-dir*|--data-dir*|--sources-file*|--*-only)
             echo "Choose the wrapper mode; use OUTPUT_DIR, DATA_DIR, SOURCES_FILE for paths" >&2
             exit 2 ;;
