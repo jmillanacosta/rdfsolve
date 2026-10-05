@@ -265,7 +265,7 @@ class LocalMiningStage(Stage):
         # datatypes of the source are counted from the input files, beside the index, while
         # it is built (rdfsolve.qlever.datatypes).
         import os
-        from concurrent.futures import ProcessPoolExecutor
+        from concurrent.futures import ProcessPoolExecutor, wait
 
         from rdfsolve.qlever.datatypes import (
             CENSUS_FILE,
@@ -279,26 +279,40 @@ class LocalMiningStage(Stage):
         files = [(path, input_format(path)) for path, _ in mapped]
         census = ProcessPoolExecutor(max(1, min(len(files), (os.cpu_count() or 2) // 2)))
 
-        def index() -> dict:
-            counting = [census.submit(count_literal_datatypes, [item]) for item in files]
-            subprocess.run(cmd, cwd=workdir, check=True)
-            return merge_counts(future.result() for future in counting)
+        def count() -> dict:
+            return merge_counts(
+                future.result()
+                for future in [census.submit(count_literal_datatypes, [item]) for item in files]
+            )
 
         log.info(f"    Indexing {len(mapped)} files...")
+        changes: list = []
         try:
+            counting = [census.submit(count_literal_datatypes, [item]) for item in files]
             try:
-                counts = index()
+                subprocess.run(cmd, cwd=workdir, check=True)
             except subprocess.CalledProcessError:
-                # QLever refuses a whole file for one IRI holding < > or "; such IRIs of a
-                # line-based input are written percent-encoded, recorded, and indexed again.
+                # QLever refuses a whole file for one term it cannot read (an IRI holding < > or
+                # ", an ill-typed number or boolean); such terms of a line-based input are written
+                # anew, recorded, and indexed again. The census is of the files as published.
+                wait(counting)
                 changes = repair_inputs(workdir, [path for path, _ in mapped])
                 if not changes:
                     raise
                 log.warning(
-                    f"    {len(changes)} input lines hold IRIs with < > or \"; written "
-                    f"percent-encoded ({REPAIRS_FILE}); indexing again"
+                    f"    {len(changes)} input lines hold terms that QLever cannot read; "
+                    f"written anew ({REPAIRS_FILE}); indexing again"
                 )
-                counts = index()
+                subprocess.run(cmd, cwd=workdir, check=True)
+            try:
+                counts = merge_counts(future.result() for future in counting)
+            except Exception as error:
+                if not changes:
+                    raise
+                # The census parser refuses what was repaired (an IRI holding <): it counts the
+                # repaired files.
+                log.warning(f"    Counting the repaired files: {error}")
+                counts = count()
             write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
         finally:
             census.shutdown(cancel_futures=True)
