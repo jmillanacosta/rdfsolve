@@ -301,7 +301,36 @@ def _match(
             matched[name] = by_key[_key(name)]
         elif "." not in name and _key(entry.get("bioregistry_prefix", "")) in by_key:
             matched[name] = by_key[_key(entry["bioregistry_prefix"])]
+    # Names may differ (monarch-kg, kg-monarch): an entry with the same file or the same named
+    # endpoint path as a resource's own product is that resource.
+    by_place: dict[str, str] = {}
+    for resource in resources:
+        for field, urls in _locations(_own(resource, ids)).items():
+            for url in urls:
+                by_place.setdefault(_place(field, url), resource["id"])
+    for entry in entries:
+        name = str(entry["name"])
+        if name in matched:
+            continue
+        for field in ACCESS:
+            values = entry.get(field) or []
+            for url in values if isinstance(values, list) else [values]:
+                place = _place(field, str(url))
+                if place and place in by_place:
+                    matched[name] = by_place[place]
     return matched
+
+
+def _place(field: str, url: str) -> str:
+    """Return what identifies a location across hosts: a file's name, or an endpoint's path
+    when it names a graph (/name/sparql); "" when it identifies nothing.
+    """
+    from urllib.parse import urlsplit
+
+    if field != "endpoint":
+        return f"file:{_file_name(url) or ''}" if _file_name(url) else ""
+    parts = [p for p in urlsplit(url).path.split("/") if p]
+    return f"endpoint:{parts[-2]}" if len(parts) >= 2 and parts[-1] == "sparql" else ""
 
 
 def sync(
@@ -380,7 +409,11 @@ def sync(
     taken = set(matched.values())
     names = {str(e["name"]) for e in result}
     endpoints = {
-        str(e["endpoint"]).rstrip("/"): str(e["name"]) for e in result if e.get("endpoint")
+        key: str(e["name"])
+        for e in result
+        if e.get("endpoint")
+        for key in (str(e["endpoint"]).rstrip("/"), _place("endpoint", str(e["endpoint"])))
+        if key
     }
     for resource in resources:
         if resource["id"] in taken or resource.get("activity_status") not in (None, "active"):
@@ -406,7 +439,12 @@ def sync(
         name = resource["id"].lower()
         if name in names:
             continue
-        used = endpoints.get(locations.get("endpoint", [""])[0].rstrip("/"))
+        url = locations.get("endpoint", [""])[0]
+        used = (
+            (endpoints.get(url.rstrip("/")) or endpoints.get(_place("endpoint", url)))
+            if url
+            else None
+        )
         if used:
             report.append(
                 {

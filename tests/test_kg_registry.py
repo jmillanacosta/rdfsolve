@@ -6,7 +6,23 @@ lacks becomes a new entry; curated values are never replaced."""
 
 from rdfsolve.kg_registry import science_area, sync
 
+KG_MONARCH = {
+    "id": "kg-monarch",
+    "name": "Monarch KG",
+    "category": "KnowledgeGraph",
+    "domains": ["biomedical"],
+    "activity_status": "active",
+    "products": [
+        {
+            "id": "kg-monarch.graph",
+            "category": "GraphProduct",
+            "format": "ntriples",
+            "product_url": "https://example.org/monarch-kg.nt.gz",
+        },
+    ],
+}
 KG = [
+    KG_MONARCH,
     {
         "id": "aopwiki-rdf",
         "name": "AOP-Wiki RDF",
@@ -51,7 +67,7 @@ KG = [
                 "id": "water-kg.sparql",
                 "category": "ProgrammingInterface",
                 "format": "http",
-                "product_url": "https://water.example.org/sparql",
+                "product_url": "https://new-host.example.org/water-kg/sparql",
             },
         ],
     },
@@ -84,7 +100,8 @@ def test_entries_are_matched_completed_and_added():
         {"name": "aopwikirdf", "endpoint": "https://curated.example.org/sparql"},
         {"name": "unrelated", "bioregistry_prefix": "go"},
         {"name": "climate", "keywords": ["Climate"]},
-        {"name": "lake", "endpoint": "https://water.example.org/sparql/"},
+        {"name": "lake", "endpoint": "https://old-host.example.org/water-kg/sparql"},
+        {"name": "monarch-like", "download_nt": "https://mirror.example.org/x/monarch-kg.nt.gz"},
         {"name": "unknown"},
     ]
     synced, sidecar, report = sync(
@@ -99,6 +116,7 @@ def test_entries_are_matched_completed_and_added():
     )
     assert "water-kg" not in by_name, "Its only location is the endpoint of another entry"
     assert "csv-only" not in by_name, "A resource without RDF or SPARQL is not added"
+    assert by_name["monarch-like"]["kg_registry_id"] == "kg-monarch", "Matched by the same file"
     assert "kg_registry_id" not in by_name["unrelated"]
     assert [by_name[n]["science_area"] for n in ("unrelated", "climate", "unknown")] == [
         "life sciences",
@@ -119,7 +137,8 @@ def test_entries_are_matched_completed_and_added():
         "retrieved_at": "2026-10-05",
     }
     actions = {(r["name"], r["action"]) for r in report}
-    assert ("aopwikirdf", "matched") in actions and ("water-kg", "endpoint not taken") in actions
+    assert ("aopwikirdf", "matched") in actions and ("lake", "kept curated endpoint") in actions
+    assert by_name["lake"]["kg_registry_id"] == "water-kg", "Matched by its endpoint's graph path"
     assert ("aopwikirdf", "kept curated endpoint") in actions
     assert ("unknown", "science area to review") in actions
 
