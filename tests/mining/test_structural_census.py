@@ -284,3 +284,37 @@ def test_the_census_lines_of_a_checkpoint_are_read_on_resume(tmp_path):
     miner._rc = SimpleNamespace(report=SimpleNamespace(config={}))
     batches = miner._resumed_batches(str(path), path.read_text())
     assert batches[("census|abc",)] == [{"triples": 7}]
+
+
+def test_a_refused_property_is_counted_from_its_untyped_subjects(monkeypatch):
+    """When every discovered class was mined, every typed edge is covered: a property whose
+    coverage test is refused is counted from the edges of its untyped subjects."""
+    entry, state, _, _ = refused_census(monkeypatch, 2, "Query cost/time limit")
+    assert "per object" in entry["census_properties"]["urn:c"]["refused"], "All queries refused"
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", 2)
+    with SchemaMiner.from_graph(
+        Dataset().parse(data=REFUSED_DATA, format="turtle"), delay=0
+    ) as miner:
+        select = miner.helper.select
+
+        def coverage_refused(query, *args, purpose="", **kwargs):
+            if (
+                purpose == "structural/coverage"
+                and "<urn:c>" in query
+                and "uncoveredTriples" in query
+            ):
+                raise EndpointTimeoutError("Query cost/time limit")
+            return select(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", coverage_refused)
+        miner.mine("untyped")
+        (entry,) = miner.last_report.config["structural_coverage"]
+        state = miner.last_report.completion_state
+    assert entry["census_properties"]["urn:c"] == {
+        "triples": 4,
+        "untypedTriples": 0,
+        "uncoveredTriples": 0,
+        "census": "untyped subjects",
+    }
+    assert not entry.get("unchecked_triples") and state == "complete"

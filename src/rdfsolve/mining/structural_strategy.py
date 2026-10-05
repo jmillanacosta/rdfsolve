@@ -160,6 +160,17 @@ def _untyped_subject() -> str:
     return " ".join(f"MINUS {{ ?s ql:has-predicate <{p}> }}" for p in MEMBERSHIP.get())
 
 
+def _typed_edges_covered(context: MiningContext) -> bool:
+    """Return whether every edge of a typed subject is in a typed profile: typed mining mined
+    every discovered class and skipped no type value.
+    """
+    batches = context.class_batches or []
+    mined = {str(c) for batch in batches for c in batch}
+    mined |= {m for batch in batches for c in batch for m in getattr(c, "members", ())}
+    discovered = context.discovered_classes
+    return not (discovered is None or context.skipped_type_values or not set(discovered) <= mined)
+
+
 def _patterns_census(
     context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
 ) -> Counter[str] | None:
@@ -175,11 +186,7 @@ def _patterns_census(
     """
     if str(getattr(context.helper, "sparql_engine", "")).lower() != "qlever":
         return None
-    batches = context.class_batches or []
-    mined = {str(c) for batch in batches for c in batch}
-    mined |= {m for batch in batches for c in batch for m in getattr(c, "members", ())}
-    discovered = context.discovered_classes
-    if discovered is None or context.skipped_type_values or not set(discovered) <= mined:
+    if not _typed_edges_covered(context):
         return None
     dataset = _dataset(graph, named)
     scope = list(dict.fromkeys(([graph] if graph else []) + named))
@@ -482,6 +489,18 @@ def _census(
         try:
             found = _property_census(context, graph, named, own, local, predicate, entry)
         except CensusRefusedError as refused:
+            untyped = (
+                _untyped_census(context, graph, named, predicate)
+                if (_typed_edges_covered(context))
+                else None
+            )
+            if untyped is not None:
+                # Every edge of a typed subject is in a typed profile, so the uncovered edges are
+                # the edges of untyped subjects; the test of each edge is not needed.
+                logger.info("Census: %s counted from its untyped subjects (%s)", predicate, refused)
+                per_property[predicate] = {**untyped, "census": "untyped subjects"}
+                counts.update(untyped)
+                continue
             logger.warning("Census: %s not counted: %s", predicate, refused)
             failure = QueryFailure("timeout", f"{predicate}: {refused}", "structural/coverage")
             context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
@@ -510,6 +529,24 @@ def _object_term(binding: dict[str, Any]) -> str:
         return f"<{binding['value']}>"
     language, datatype = binding.get("xml:lang"), binding.get("datatype")
     return Literal(binding["value"], lang=language, datatype=datatype).n3()
+
+
+def _untyped_census(
+    context: MiningContext, graph: str | None, named: list[str], predicate: str
+) -> dict[str, int] | None:
+    """Count the triples of a property and those of its untyped subjects, which are its uncovered
+    triples when typed edges are covered; None when the endpoint refuses.
+    """
+    queries = _census_queries(graph, named, "false", True, predicate)
+    try:
+        counts = _count(context, queries)
+    except EndpointTimeoutError:
+        return None
+    return {
+        "triples": counts["triples"],
+        "untypedTriples": counts["untypedTriples"],
+        "uncoveredTriples": counts["untypedTriples"],
+    }
 
 
 def _property_census(
