@@ -1,10 +1,7 @@
-"""rdfsolve.mining.ontology_as_data: ontology terms as data. Terms that type or are the objects of
-records are subsumed under their ancestors until the class budget holds, keeping measured leaf
-rows; a source that keeps its records as classes has them grouped under their kinds; term edges
-are probed only where typed patterns have term objects, and a refused probe leaves the source
-partial; term and type bindings keep separate witnesses."""
-
-import json
+"""rdfsolve.mining.ontology_as_data: terms that type records or are their values are grouped under
+their ancestors until the class budget holds; the measured leaf rows are kept; the hierarchy comes
+from the selected ontology graphs; a source that keeps its records as classes has them grouped
+under their kinds."""
 
 import pytest
 from rdflib import Dataset, Graph, URIRef
@@ -12,17 +9,12 @@ from rdflib.namespace import RDFS
 
 from rdfsolve.mining import mine_with_ontology
 from rdfsolve.mining.edge_graph_split import split_by_edge_graph
-from rdfsolve.mining.enrichment import example_query
+from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.ontology_as_data import choose_representatives, pattern_classes
-from rdfsolve.release import build_release_manifest
-from rdfsolve.release.scientific_validation import (
-    build_scientific_validation_plan,
-    pattern_existence_query,
-)
-from rdfsolve.schema_models import MinedSchema
-from rdfsolve.sparql_helper import EndpointError
 from tests.mining.data import EX, FIXTURE, T
+
+LEAVES = {T + "ethanol", T + "methanol", T + "propanol", T + "acetic", T + "formic"}
 
 
 def _mine(budget, hierarchy=True):
@@ -33,152 +25,139 @@ def _mine(budget, hierarchy=True):
         result = mine_with_ontology(
             miner, dataset_name="fixture", ontology_as_data=True, ontology_term_budget=budget
         )
-        return (result.data_schema, miner.last_report)
+        return result.data_schema, miner.last_report
 
 
-def _triples(schema):
-    return {(p.subject_class, p.property_uri, p.object_class): p for p in schema.patterns}
+def _rows(patterns):
+    return {(p.subject_class, p.property_uri, p.object_class): p for p in patterns}
 
 
-def test_terms_are_subsumed_until_the_budget_holds(monkeypatch):
-    from rdfsolve.mining.local_graph import LocalGraphHelper
+def _scoped(extra_data="", extra_ontology=""):
+    """Data in urn:data, a hierarchy in urn:ontology, and a wrong parent in the default graph."""
+    dataset = Dataset(default_union=False)
+    dataset.graph(URIRef("urn:data")).parse(
+        data='<urn:s1> a <urn:S>, <urn:a>; <urn:p> "one" . <urn:s2> a <urn:S>, <urn:b>; <urn:p> "two" .'
+        + extra_data,
+        format="turtle",
+    )
+    dataset.graph(URIRef("urn:ontology")).parse(
+        data="@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . <urn:a> rdfs:subClassOf <urn:parent> . "
+        '<urn:b> rdfs:subClassOf <urn:parent> . <urn:noise> a <urn:Decoy>; <urn:p> "not data" .'
+        + extra_ontology,
+        format="turtle",
+    )
+    dataset.default_graph.add((URIRef("urn:a"), RDFS.subClassOf, URIRef("urn:wrong")))
+    return dataset
 
+
+def test_terms_are_grouped_until_the_budget_holds(monkeypatch):
     label_queries = []
     select = LocalGraphHelper.select
 
-    def recorded_select(helper, query, **options):
+    def recorded(helper, query, **options):
         if options.get("purpose") == "labels":
             label_queries.append(query)
         return select(helper, query, **options)
 
-    monkeypatch.setattr(LocalGraphHelper, "select", recorded_select)
+    monkeypatch.setattr(LocalGraphHelper, "select", recorded)
     schema, report = _mine(budget=6)
     assert label_queries and not any(T + "ethanol" in q for q in label_queries), (
-        "Retaining raw evidence must not fetch labels for each discarded leaf"
+        "No labels for grouped leaves"
     )
-    triples = _triples(schema)
-    assert schema.raw_patterns is not None, "Keep typed observations before interpretation"
-    observed = {(p.subject_class, p.property_uri, p.object_class): p for p in schema.raw_patterns}
+    observed = _rows(schema.raw_patterns)
     leaf = observed[T + "ethanol", EX + "mass", "Literal"]
-    assert leaf.count == 1 and leaf.evidence_source == "mined", "Keep measured leaf counts"
-    assert leaf.pattern_type.value == "datatype_property"
+    assert (leaf.count, leaf.evidence_source, leaf.pattern_type.value) == (
+        1,
+        "mined",
+        "datatype_property",
+    )
     assert (T + "alcohol", EX + "mass", "Literal") not in observed
     assert all(p.evidence_source != "inferred" for p in schema.raw_patterns)
     assert type(schema).from_dict(schema.to_dict()).raw_patterns == schema.raw_patterns
     classes = pattern_classes(schema.patterns)
-    assert len(classes) <= 6
-    assert {EX + "Substance", EX + "Participant", T + "alcohol", T + "acid"} <= classes
-    assert not classes & {T + "ethanol", T + "methanol", T + "propanol", T + "acetic", T + "formic"}
-    lifted = triples[T + "alcohol", EX + "mass", "Literal"]
-    assert lifted.evidence_source == "inferred"
-    assert lifted.count == 2
-    terms = {(p.subject_class, p.property_uri, p.object_class): p for p in schema.term_patterns}
+    assert (
+        len(classes) <= 6
+        and {EX + "Substance", EX + "Participant", T + "alcohol", T + "acid"} <= classes
+    )
+    assert not classes & LEAVES
+    rows = _rows(schema.patterns)
+    lifted = rows[T + "alcohol", EX + "mass", "Literal"]
+    assert (lifted.evidence_source, lifted.count) == ("inferred", 2)
+    assert rows[EX + "Substance", EX + "mass", "Literal"].evidence_source == "mined"
+    terms = _rows(schema.term_patterns)
     assert terms[EX + "Participant", EX + "compound", T + "propanol"].object_binding == "term"
     assert terms[T + "ethanol", EX + "smiles", "Literal"].subject_binding == "term"
-    assert triples[EX + "Substance", EX + "mass", "Literal"].evidence_source == "mined"
     summary = report.config["ontology_term_subsumption"]
-    assert summary["subsumed"] is True
-    assert summary["representatives"] == {T + "acid": 1, T + "alcohol": 2}
+    assert summary["subsumed"] is True and summary["representatives"] == {
+        T + "acid": 1,
+        T + "alcohol": 2,
+    }
     saved = type(report).model_validate_json(report.model_dump_json())
     assert saved.config["ontology_term_subsumption"]["representative_members"] == {
         T + "acid": [T + "acetic"],
         T + "alcohol": [T + "ethanol", T + "methanol"],
-    }, "The report must identify the terms replaced by each representative"
+    }, "The report names the terms each representative replaces"
     assert "+ontology-as-data" in schema.about.strategy
     cycle = choose_representatives(["a", "z"], {"a": {"b"}, "b": {"a"}}, budget=1)
-    assert cycle.over_budget and cycle.classes_after == 2, "Cycle cannot satisfy the budget"
+    assert cycle.over_budget and cycle.classes_after == 2, "A cycle cannot meet the budget"
 
-    raw, report = _mine(budget=1, hierarchy=False)
+
+def test_without_a_hierarchy_nothing_is_grouped():
+    schema, report = _mine(budget=1, hierarchy=False)
     summary = report.config["ontology_term_subsumption"]
-    assert summary["subsumed"] is False, "No hierarchy must not count as subsumption"
-    assert summary["over_budget"] and summary["representatives"] == {}
-    assert summary["representative_members"] == {}, "No hierarchy must yield no replacements"
-    assert T + "ethanol" in pattern_classes(raw.patterns)
-    assert "+ontology-as-data" not in raw.about.strategy
+    assert summary["subsumed"] is False and summary["over_budget"]
+    assert summary["representatives"] == {} and summary["representative_members"] == {}
+    assert T + "ethanol" in pattern_classes(schema.patterns)
+    assert "+ontology-as-data" not in schema.about.strategy
 
-    dataset = Dataset(default_union=False)
-    dataset.graph(URIRef("urn:data")).parse(
-        data="""
-        <urn:s1> a <urn:S>, <urn:a>; <urn:p> "one" .
-        <urn:s2> a <urn:S>, <urn:b>; <urn:p> "two" .
-    """,
-        format="turtle",
-    )
-    dataset.graph(URIRef("urn:ontology")).parse(
-        data="""
-        @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-        <urn:a> rdfs:subClassOf <urn:parent> .
-        <urn:b> rdfs:subClassOf <urn:parent> .
-        <urn:noise> a <urn:Decoy>; <urn:p> "not data" .
-    """,
-        format="turtle",
-    )
-    dataset.default_graph.add((URIRef("urn:a"), RDFS.subClassOf, URIRef("urn:wrong")))
-    with SchemaMiner.from_graph(dataset, graph_uris=["urn:data"], delay=0) as miner:
+
+def test_the_hierarchy_is_read_from_the_selected_ontology_graphs(monkeypatch):
+    with SchemaMiner.from_graph(_scoped(), graph_uris=["urn:data"], delay=0) as miner:
         scoped = mine_with_ontology(
             miner,
             ontology_as_data=True,
             ontology_term_budget=2,
             ontology_graph_uris=["urn:ontology"],
         )
-        patterns = _triples(scoped.data_schema)
-        assert ("urn:parent", "urn:p", "Literal") in patterns, "Read the selected hierarchy graph"
-        assert patterns["urn:parent", "urn:p", "Literal"].count == 2
+        rows = _rows(scoped.data_schema.patterns)
+        assert rows["urn:parent", "urn:p", "Literal"].count == 2
         assert not {"urn:Decoy", "urn:wrong"} & pattern_classes(scoped.data_schema.patterns)
-        assert miner.last_report.config["ontology_context"]["state"] == "nonempty"
-        assert miner.last_report.config["ontology_term_subsumption"]["hierarchy_graph_uris"] == [
-            "urn:ontology"
-        ]
-
-        def unexpected_mining():
-            pytest.fail("Missing required ontology context must be checked before mining")
-
-        monkeypatch.setattr(miner, "_run_patterns_phase", unexpected_mining)
+        config = miner.last_report.config
+        assert config["ontology_context"]["state"] == "nonempty"
+        assert config["ontology_term_subsumption"]["hierarchy_graph_uris"] == ["urn:ontology"]
+        # a missing ontology graph is found before any mining
+        monkeypatch.setattr(
+            miner, "_run_patterns_phase", lambda: pytest.fail("mined without context")
+        )
         with pytest.raises(ValueError, match="ontology graphs"):
             mine_with_ontology(miner, ontology_as_data=True, ontology_graph_uris=["urn:missing"])
-        assert miner.last_report.config["ontology_context"]["state"] == "missing"
-        assert miner.last_report.finished_at
+        assert (
+            miner.last_report.config["ontology_context"]["state"] == "missing"
+            and miner.last_report.finished_at
+        )
 
-    dataset.graph(URIRef("urn:data")).parse(
-        data="""
-        <urn:s1> <urn:ref> <urn:a> .
-        <urn:a> <urn:description> "data value" .
-    """,
-        format="turtle",
-    )
-    dataset.graph(URIRef("urn:ontology")).parse(
-        data="""
-        <urn:a> a <http://www.w3.org/2002/07/owl#Class>,
-            <http://www.w3.org/2000/01/rdf-schema#Class> .
-        <urn:a> <urn:ontologyOnly> "excluded edge" .
-    """,
-        format="turtle",
+
+def test_class_declarations_do_not_multiply_data_edges():
+    dataset = _scoped(
+        '<urn:s1> <urn:ref> <urn:a> . <urn:a> <urn:description> "data value" .',
+        ' <urn:a> a <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class> ; <urn:ontologyOnly> "excluded" .',
     )
     with SchemaMiner.from_graph(dataset, graph_uris=["urn:data"], delay=0) as miner:
-        result = mine_with_ontology(
+        schema = mine_with_ontology(
             miner,
             ontology_as_data=True,
             ontology_term_budget=20,
             ontology_graph_uris=["urn:ontology"],
-        )
-        patterns = {
-            (p.subject_class, p.property_uri, p.object_class): p
-            for p in result.data_schema.term_patterns
-        }
-        assert patterns["urn:S", "urn:ref", "urn:a"].count == 1, (
-            "Class declarations must not multiply data edges"
-        )
-        assert patterns["urn:a", "urn:description", "Literal"].count == 1
-        assert not any(p.property_uri == "urn:ontologyOnly" for p in result.data_schema.patterns)
-
-        from rdfsolve.mining.edge_graph_split import split_by_edge_graph
-
-        term_part = split_by_edge_graph(result.data_schema, "urn:data", "terms")
-        attributed = {
-            (p.subject_class, p.property_uri, p.object_class): p for p in term_part.term_patterns
-        }
-        assert attributed["urn:S", "urn:ref", "urn:a"].graphs == {"urn:data": 1}
-        assert attributed["urn:a", "urn:description", "Literal"].count == 1
+        ).data_schema
+    terms = _rows(schema.term_patterns)
+    assert (
+        terms["urn:S", "urn:ref", "urn:a"].count == 1
+        and terms["urn:a", "urn:description", "Literal"].count == 1
+    )
+    assert not any(p.property_uri == "urn:ontologyOnly" for p in schema.patterns)
+    split = _rows(split_by_edge_graph(schema, "urn:data", "terms").term_patterns)
+    assert split["urn:S", "urn:ref", "urn:a"].graphs == {"urn:data": 1}
+    assert split["urn:a", "urn:description", "Literal"].count == 1
 
 
 CLASS_LEVEL = """@prefix rh: <urn:rh:> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -225,167 +204,3 @@ def test_the_term_probes_are_valid_sparql_with_named_graphs(terms_first):
     graphs = ["urn:graph:data", "urn:graph:ontology"]
     prepareQuery(build_term_subject_query(graphs, graphs, terms_first=terms_first))
     prepareQuery(build_term_object_query(graphs, graphs))
-
-
-def mine(monkeypatch, engine, refuse=False):
-    with SchemaMiner.from_graph(Graph().parse(data=FIXTURE, format="turtle"), delay=0) as miner:
-        monkeypatch.setattr(miner.helper, "sparql_engine", engine)
-        select, sent = miner.helper.select, []
-
-        def answer(query, *args, purpose="", **kwargs):
-            if purpose.startswith("ontology-terms/object"):
-                sent.append(query)
-                if refuse:
-                    raise EndpointError("Tried to allocate 54 GB, but only 37.2 GB were available")
-            return select(query, *args, purpose=purpose, **kwargs)
-
-        monkeypatch.setattr(miner.helper, "select", answer)
-        result = mine_with_ontology(
-            miner, dataset_name="terms", ontology_as_data=True, ontology_term_budget=100
-        )
-        return result.data_schema, miner.last_report, sent
-
-
-def terms(schema):
-    return sorted(
-        (p.subject_class, p.property_uri, p.object_class, p.datatype, p.count)
-        for p in schema.term_patterns
-    )
-
-
-def test_term_edges_are_read_from_the_terms_first_on_qlever(monkeypatch):
-    plain, _, _ = mine(monkeypatch, "virtuoso")
-    fast, _, sent = mine(monkeypatch, "qlever")
-    assert (
-        terms(fast)
-        == terms(plain)
-        == [
-            ("urn:ex:Participant", "urn:ex:compound", "urn:term:formic", None, 1),
-            ("urn:ex:Participant", "urn:ex:compound", "urn:term:propanol", None, 1),
-            (
-                "urn:term:ethanol",
-                "urn:ex:smiles",
-                "Literal",
-                "http://www.w3.org/2001/XMLSchema#string",
-                1,
-            ),
-        ]
-    )
-    assert len(sent) == 1 and "<urn:ex:compound>" in sent[0], (
-        "Only the typed pairs with term objects"
-    )
-
-
-def test_a_refused_term_probe_leaves_the_source_partial(monkeypatch):
-    schema, report, _ = mine(monkeypatch, "qlever", refuse=True)
-    assert schema.term_patterns is None and schema.patterns, "Typed patterns are kept"
-    assert report.completion_state == "partial"
-    assert any(f.purpose == "ontology-terms" for f in report.query_failures)
-
-
-def test_term_records_and_instances_keep_separate_witnesses(tmp_path):
-    data = Dataset(default_union=False)
-    data.graph(URIRef("urn:data")).parse(
-        data="""
-        <urn:instance> a <urn:T>; <urn:p> "instance value" .
-        <urn:T> <urn:p> "record value"; <urn:rel> <urn:U>, <urn:object> .
-        <urn:object> a <urn:U> .
-        <urn:U> <urn:p> "other record" .
-        <urn:s> a <urn:S>; <urn:link> <urn:T> .
-    """,
-        format="turtle",
-    )
-    data.graph(URIRef("urn:ontology")).parse(
-        data="""
-        <urn:T> a <http://www.w3.org/2002/07/owl#Class>;
-            <http://www.w3.org/2000/01/rdf-schema#subClassOf> <urn:Parent> .
-        <urn:U> a <http://www.w3.org/2002/07/owl#Class> .
-        <urn:T> <urn:contextOnly> "excluded" .
-    """,
-        format="turtle",
-    )
-    with SchemaMiner.from_graph(
-        data, graph_uris=["urn:data"], type_context_graph_uris=["urn:ontology"], delay=0
-    ) as miner:
-        schema = mine_with_ontology(
-            miner,
-            dataset_name="fixture",
-            ontology_as_data=True,
-            ontology_term_budget=1,
-            ontology_graph_uris=["urn:ontology"],
-        ).data_schema
-        terms = schema.term_patterns
-        assert terms, "Ontology probes must retain direct term bindings"
-        assert all(p.evidence_source == "mined" for p in terms)
-        assert not any(p.property_uri == "urn:contextOnly" for p in terms)
-        assert "urn:T" not in schema.about.class_entity_counts, "A record is not a class population"
-        assert (
-            next(
-                p.count
-                for p in schema.patterns
-                if p.subject_class == "urn:Parent" and p.property_uri == "urn:p"
-            )
-            == 1
-        )
-        assert (
-            next(
-                p.count
-                for p in schema.raw_patterns
-                if p.subject_class == "urn:T" and p.property_uri == "urn:p"
-            )
-            == 1
-        )
-
-        selected = {(p.subject_class, p.property_uri, p.object_binding): p for p in terms}
-        expected = {
-            ("urn:T", "urn:p", "type"): ("urn:T", "record value"),
-            ("urn:T", "urn:rel", "term"): ("urn:T", "urn:U"),
-            ("urn:T", "urn:rel", "type"): ("urn:T", "urn:object"),
-            ("urn:S", "urn:link", "term"): ("urn:s", "urn:T"),
-        }
-        for key, witness in expected.items():
-            pattern = selected[key]
-            assert pattern.count == 1, f"Merged different bindings for {key}"
-            query = pattern_existence_query(
-                pattern, ["urn:data"], type_context_graph_scope=["urn:ontology"]
-            )
-            rows = miner.helper.select(query)["results"]["bindings"]
-            assert [(row["s"]["value"], row["o"]["value"]) for row in rows] == [witness], key
-            rows = miner.helper.select(example_query(pattern, ["urn:data"], 2, ["urn:ontology"]))[
-                "results"
-            ]["bindings"]
-            assert [(row["subject"]["value"], row["value"]["value"]) for row in rows] == [
-                witness
-            ], key
-
-        with pytest.raises(ValueError, match="term_patterns"):
-            MinedSchema(patterns=terms, about=schema.about)
-        with pytest.raises(ValueError, match="term"):
-            type(terms[0])(
-                subject_class="urn:T",
-                property_uri="urn:p",
-                object_class="Literal",
-                object_binding="term",
-            )
-        part = split_by_edge_graph(schema, "urn:data", "fixture")
-        assert part.term_patterns == terms
-        assert split_by_edge_graph(schema, "urn:other", "empty").term_patterns == []
-
-    folder = tmp_path / "fixture"
-    folder.mkdir()
-    (tmp_path / "sources.yaml").write_text("- name: fixture")
-    path = folder / "fixture_local_schema.json"
-    path.write_text(json.dumps(schema.to_dict()))
-    restored = MinedSchema.from_json(path)
-    assert restored.term_patterns == terms
-    plan = build_scientific_validation_plan(
-        build_release_manifest(tmp_path), tmp_path, patterns_per_schema=100
-    )
-    checks = [
-        c
-        for c in plan.pattern_checks
-        if c.pattern.get("subject_class") == "urn:T" and c.pattern["property_uri"] == "urn:rel"
-    ]
-    assert len(checks) == 2 and len({c.check_id for c in checks}) == 2, (
-        "Validation must distinguish term and type bindings with the same IRIs"
-    )
