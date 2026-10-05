@@ -94,8 +94,10 @@ agents = [
     "python-dotenv==1.2.3",
 ]
 mcp = ["mcp==2.2.0"]
+reconciliation = ["nanopub>=2.2,<3"]
 tests = [
     "pyshacl>=0.27,<1",
+    "nanopub>=2.2,<3",
     "psutil>=5.9",
     "pydantic-ai-slim[openai]==2.0.0",
     "mcp==2.2.0",
