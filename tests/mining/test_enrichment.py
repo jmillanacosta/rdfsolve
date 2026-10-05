@@ -80,8 +80,8 @@ def test_enrichment_keeps_language_and_scope(source):
 
 
 def test_a_failed_example_batch_is_asked_again_one_query_at_a_time(source):
-    """One costly example query failed its whole batch of 10 (ChEMBL, 2026-09-30); now only the
-    costly query fails, and a batch that fails only as a batch is not a failure."""
+    """A costly example query fails alone, not its whole batch; a batch that fails only as a
+    batch is not a failure."""
     from rdfsolve.sparql_helper import EndpointTimeoutError
 
     schema, helper = source

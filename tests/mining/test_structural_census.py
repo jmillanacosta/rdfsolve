@@ -110,7 +110,7 @@ def batched_census(monkeypatch, refuse):
 
 def too_large(query):
     """Refuse the whole graph, the whole of urn:p, and each batch of more than one object. QLever
-    evaluates EXISTS with a VALUES of 768 objects wrongly (Bgee), so a batch is a FILTER IN."""
+    evaluates EXISTS with a large VALUES wrongly, so a batch is a FILTER IN."""
     assert "VALUES ?o" not in query
     edge = query.split("WHERE {", 1)[1].lstrip()
     if edge.startswith("?s ?p ?o ."):
@@ -144,7 +144,7 @@ def test_a_refused_property_is_counted_in_object_batches(monkeypatch, caplog):
 
 def test_the_typed_test_reads_only_the_edges_of_a_batch():
     """The typed test repeats the edge and the batch, so that QLever reads the types of the
-    subjects of the batch only (Bgee RO_0002206: 455.7 GB for every batch without it)."""
+    subjects of the batch only, not every type triple."""
     queries = structural_strategy._census_queries(
         None, [], "false", False, "urn:p", "VALUES ?o { <urn:b> }"
     )
@@ -160,9 +160,9 @@ def test_the_typed_test_reads_only_the_edges_of_a_batch():
 
 
 def test_the_census_counts_with_filters():
-    """Virtuoso gives wrong counts for a group by BIND(EXISTS ...) (AOP-Wiki prov:used: 1 of 2).
-    Uncovered edges are counted with FILTER(!test), the filter of the discovery: Rhea counts
-    550,753 covered rdf:type edges of 550,634 with FILTER(test), and 0 with FILTER(!test)."""
+    """Virtuoso gives wrong counts for a group by BIND(EXISTS ...). Uncovered edges are counted
+    with FILTER(!test), the filter of the discovery; a covered count with FILTER(test) can
+    exceed the edges on Virtuoso."""
     match = "(EXISTS { ?s a ?_t } || EXISTS { ?o a ?_t })"
     for scope in ((), ("urn:p", "VALUES ?o { <urn:b> }")):
         queries = structural_strategy._census_queries(None, [], match, False, *scope)

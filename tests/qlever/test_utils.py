@@ -108,9 +108,8 @@ def test_each_download_command_retries_passing_faults():
 
 
 def test_a_failed_connection_is_tried_again_and_a_missing_file_is_not(tmp_path):
-    """wget does not try again after "Unable to establish SSL connection" (exit 5): the rebuild
-    of MetaNetX failed four times on it (2026-09-30). The download step tries such a file
-    again; a missing file (exit 8) fails at once."""
+    """wget does not try again after "Unable to establish SSL connection" (exit 5). The download
+    step tries such a file again; a missing file (exit 8) fails at once."""
     import os
     import subprocess
 
@@ -174,8 +173,8 @@ def test_a_failed_download_is_not_hidden_by_the_rename_step(tmp_path):
 
 
 def test_a_failed_download_is_not_hidden_by_the_decompression_step(tmp_path):
-    """The decompression step ends with '|| true', which made the whole chain a success: ChEMBL
-    was indexed from 1 of its 23 files after a download failed (job 114418, 2026-09-30)."""
+    """The decompression step ends with '|| true'; a failed download still fails the chain, so a
+    source is not indexed from part of its files."""
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     (bin_dir / "wget").write_text(
@@ -223,8 +222,8 @@ def test_a_failed_obo_conversion_stops_the_step(tmp_path):
 
 
 def test_turtle_in_an_owl_file_is_indexed_as_turtle(tmp_path):
-    """GlyCosmos publishes glycovid/sugarbind/ontology.owl in Turtle: it is named .ttl, not
-    given to the RDF/XML converter (which refused it and stopped the build, 2026-09-30)."""
+    """A .owl file that holds Turtle is named .ttl, not given to the RDF/XML converter, which
+    refuses it and would stop the build."""
     (tmp_path / "ontology.owl").write_text("@prefix : <urn:x#> .\n:a a :B .\n")
     (tmp_path / "model.owl").write_text('<?xml version="1.0"?>\n<rdf:RDF/>\n')
     bin_dir = tmp_path / "bin"
@@ -246,8 +245,8 @@ def test_turtle_in_an_owl_file_is_indexed_as_turtle(tmp_path):
 
 
 def test_an_empty_file_is_skipped(tmp_path):
-    """UniProt publishes enzyme-hierarchy.rdf.xz empty (release 2026-09-03): an empty file has no
-    statements, and the converter's "Premature end of file" stopped the Swiss-Prot build."""
+    """A published file can be empty: it has no statements, and the converter's "Premature end of
+    file" would stop the build."""
     (tmp_path / "enzyme-hierarchy.rdf").write_text("")
     done = _run(_convert_rdfxml_steps(), tmp_path)
     assert done.returncode == 0, done.stderr

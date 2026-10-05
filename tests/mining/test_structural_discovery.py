@@ -137,8 +137,8 @@ def test_triples_of_refused_properties_are_counted_as_not_discovered():
 
 
 def test_a_refused_property_is_recorded_when_each_property_is_discovered_alone(monkeypatch):
-    """The discovery with one query for each property has the same rule (UberGraph, job 114345:
-    the census was counted for each property, and the refused query failed the source)."""
+    """The discovery with one query for each property has the same rule: a refused query is
+    recorded and does not fail the source."""
     outcomes = []
     context = SimpleNamespace(
         report=SimpleNamespace(record_outcome=outcomes.append),

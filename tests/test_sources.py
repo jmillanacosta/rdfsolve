@@ -166,7 +166,7 @@ def test_sidecar_supplies_namespaces_without_changing_access(tmp_path):
 
 def test_the_shipped_registry_loads_with_its_metadata_sidecar():
     """data/sources.yaml and data/sources.metadata.json agree on every prefix: a curated prefix
-    change without the sidecar's record refused the whole registry (2026-09-28 to 2026-10-03)."""
+    change without the sidecar's record would refuse the whole registry."""
     from pathlib import Path
 
     from rdfsolve.sources import load_sources

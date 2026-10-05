@@ -110,7 +110,7 @@ def test_the_pipeline_tests_paths_within_a_budget(monkeypatch):
 
 def test_each_query_has_the_rest_of_the_budget_and_no_pages():
     """A query that does not answer within the budget fails at once: it is not retried, nor
-    recovered in pages (Bgee run 13 spent 12 h on one query that way)."""
+    recovered in pages, which could take far longer than the budget."""
     graph = Graph().parse(data=DATA, format="turtle")
     with SchemaMiner.from_graph(graph, delay=0) as miner:
         schema = miner.mine()

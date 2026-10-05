@@ -51,7 +51,7 @@ def test_coverage_matches_edges_as_a_relation():
     batch = typed_match(keys, None, None, "urn:link", "FILTER(?o IN (<urn:typed>))")
     for test in (expression, batch):
         assert "VALUES" not in test, (
-            "No VALUES list of profiles: QLever joins it with every type triple (Bgee: 455.7 GB) and"
+            "No VALUES list of profiles: QLever joins it with every type triple and"
             " evaluates EXISTS with a large VALUES wrongly; types are compared with IRIs"
         )
         assert "?_subjectType = <urn:Record>" in test and "?_objectType = <urn:Target>" in test
@@ -62,7 +62,7 @@ def test_coverage_matches_edges_as_a_relation():
     untyped = batch.split("!EXISTS {", 1)[1].split("?o a ?_anyObjectType")[0]
     assert "?s <urn:link> ?o ." in untyped and "FILTER(?o IN (<urn:typed>))" in untyped, (
         "The test of an untyped object repeats the edge and the batch: QLever evaluates the group"
-        " on its own, and ?o a ?_anyObjectType alone reads every type triple (Bgee: 455.7 GB)"
+        " on its own, and ?o a ?_anyObjectType alone reads every type triple"
     )
 
 
@@ -77,8 +77,8 @@ def test_the_coverage_test_does_not_rebind_outer_variables():
 
 
 def test_the_coverage_test_of_one_property_reads_only_that_property():
-    """QLever evaluates the group of EXISTS on its own: a constant property keeps it small
-    (Bgee RO_0002162: 20 s, not 217 s, with the same counts)."""
+    """QLever evaluates the group of EXISTS on its own: a constant property keeps it small, with
+    the same counts."""
     match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None, predicate="urn:p")
     body = match.split("EXISTS {", 1)[1]
     assert body.lstrip().startswith("?s <urn:p> ?o ."), "The group reads one property"

@@ -166,5 +166,5 @@ def test_distinct_subjects_follow_from_a_group_with_all_edges(monkeypatch):
     assert found[("urn:A", "Literal", xsd + "string")] == (2, 2)
     assert "counts/literal/property/urn:q/group" in sent
     assert heavy + "/group" in sent and heavy not in sent and state == "complete", (
-        "A group with part of the edges counts its own distinct subjects (Bgee ExpressionCondition: 93 s)"
+        "A group with part of the edges counts its own distinct subjects"
     )
