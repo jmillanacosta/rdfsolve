@@ -17,6 +17,7 @@
     configured downloads do not prove that an endpoint holds those ontologies.
     Pin input hashes and ontology versions for local runs. Recipe equivalence
     does not establish equality with the live endpoint snapshot.
+  science_area: life sciences
 - name: pubchem.ftp.schema
   catalogs: ["pubchem_ftp"]
   catalog_local_name: schema
@@ -37,6 +38,7 @@
   - structure
   source_role: service
   notes: Publisher VoID and SHACL documents for PubChem. These are declared schema artifacts.
+  science_area: life sciences
 - name: pubchem.ftp
   dataset_kind: instance
   local_provider: pubchem
@@ -2427,6 +2429,7 @@
     a separate graph layout and no supplied dump. Recipe equivalence does not establish snapshot equality
     with the live QLever endpoint. BAO and NDF-RT retrieval requires provider access; prepare those inputs
     before indexing.
+  science_area: life sciences
 
 - name: aopwikirdf
   dataset_kind: instance
@@ -2448,6 +2451,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: aopwiki-rdf
+  science_area: life sciences
 - name: aopdb
   dataset_kind: instance
   endpoint: https://aopdb.rdf.bigcat-bioinformatics.org/sparql
@@ -2457,6 +2462,8 @@
   - adverse outcome pathway
   - efsa
   - biology
+  kg_registry_id: aop-db
+  science_area: life sciences
 - name: wikipathways
   dataset_kind: instance
   uri_formats:  # IRI formats the RDF writes that Bioregistry does not list
@@ -2497,6 +2504,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: wikipathways
+  science_area: life sciences
 - name: pubchem.taxonomy
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2522,6 +2531,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.endpoint
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2547,6 +2557,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.measuregroup
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2572,6 +2583,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: iocb.ontology
   dataset_kind: ontology
   catalogs: ["idsm"]
@@ -2587,6 +2599,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.gene
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2612,6 +2625,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.bioassay
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2634,6 +2648,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.substance
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2659,6 +2674,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: drugbank.drugs
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2680,6 +2696,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.descriptor.substance
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2704,6 +2721,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: chebi.idsm
   dataset_kind: ontology
   catalogs: ["idsm"]
@@ -2741,6 +2759,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.pathway
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2765,6 +2784,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.cell
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2784,6 +2804,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: isdb
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2800,6 +2821,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.anatomy
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2824,6 +2846,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.conserveddomain
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2849,6 +2872,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.organization
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2873,6 +2897,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: mona
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2889,6 +2914,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: chembl
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2934,6 +2960,8 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: chembl
+  science_area: life sciences
 - name: pubchem.journal
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2958,6 +2986,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.author
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2982,6 +3011,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.disease
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3006,6 +3036,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: wikidata.idsm.entity
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3021,6 +3052,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.book
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3045,6 +3077,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.inchikey
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3070,6 +3103,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.descriptor.compound
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3094,6 +3128,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.grant
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3118,6 +3153,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.concept
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3142,6 +3178,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.source
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3166,6 +3203,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.protein
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3190,6 +3228,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.reference
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3214,6 +3253,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: mesh.heading
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3233,6 +3273,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.synonym
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3257,6 +3298,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.compound
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3282,6 +3324,7 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: pubchem.cooccurrence
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3306,6 +3349,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: pubchem.patent
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3330,6 +3374,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: nanosafetyrdf
   dataset_kind: instance
   endpoint: https://nanosafety.rdf.bigcat-bioinformatics.org/sparql//
@@ -3341,6 +3386,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.uniprot
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -3373,6 +3419,7 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  science_area: life sciences
 - name: uniprot
   source_role: service
   void_iri: https://sparql.uniprot.org/
@@ -3409,6 +3456,8 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  kg_registry_id: uniprot
+  science_area: life sciences
 - name: uniprot.chebi
   dataset_kind: ontology
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3424,6 +3473,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.citationmapping
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3438,6 +3488,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.citations
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3452,6 +3503,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.database
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3465,6 +3517,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.diseases
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3480,6 +3533,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.enzymes
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3495,6 +3549,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.go
   dataset_kind: ontology
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3510,6 +3565,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.core
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3523,6 +3579,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: uniprot.uniparc
   dataset_kind: instance
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3538,6 +3595,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: bgee
   dataset_kind: instance
   endpoint: https://www.bgee.org/sparql/
@@ -3551,6 +3609,10 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: bgee
+  science_area: life sciences
+  download_ttl:
+  - https://www.bgee.org/ftp/current/rdf_easybgee.zip
 - name: rhea
   dataset_kind: instance
   uri_formats:  # IRI formats the RDF writes that Bioregistry does not list
@@ -3570,6 +3632,8 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: rhea
+  science_area: life sciences
 - name: rdfportal.pdb.graph
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -3593,6 +3657,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.pubcasefinder
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -3614,6 +3679,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.medgen
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -3656,6 +3722,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.jpost
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -3678,6 +3745,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.affymetrix
   dataset_kind: instance
   catalogs: ["bio2rdf", "rdfportal"]
@@ -3693,6 +3761,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: clinicaltrials
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3710,6 +3779,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: ctd
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3738,6 +3808,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: ctd
+  science_area: life sciences
 - name: kegg
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3774,6 +3846,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: kegg
+  science_area: life sciences
 - name: irefindex
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3790,6 +3864,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: irefindex
+  science_area: life sciences
 - name: drugbank
   catalogs: ["bio2rdf"]
   dataset_kind: instance
@@ -3810,6 +3886,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: drugbank
+  science_area: life sciences
 - name: homologene
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3831,6 +3909,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: homologene
+  science_area: life sciences
 - name: ncbigene
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3860,6 +3940,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: entrez
+  science_area: life sciences
 - name: goa
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3892,6 +3974,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: goa
+  science_area: life sciences
 - name: hgnc
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3914,6 +3998,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: hgnc
+  science_area: life sciences
 - name: interpro
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3933,6 +4019,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: interpro
+  science_area: life sciences
 - name: lsr
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3947,6 +4035,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: mgi
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -3992,6 +4081,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: mgd
+  science_area: life sciences
 - name: mesh
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4013,6 +4104,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: mesh
+  science_area: life sciences
 - name: ndc
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4028,6 +4121,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: ndcd
+  science_area: life sciences
 - name: omim
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4056,6 +4151,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: omim
+  science_area: life sciences
 - name: pharmgkb
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4081,6 +4178,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: pharmgkb
+  science_area: life sciences
 - name: bio2rdf.uniprot
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4098,6 +4197,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: sgd
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4128,6 +4228,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: sgd
+  science_area: life sciences
 - name: hp
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4146,6 +4248,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: hp
+  science_area: life sciences
 - name: eco
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4159,6 +4263,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: eco
+  science_area: life sciences
 - name: apo
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4172,6 +4278,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: apo
+  science_area: life sciences
 - name: taxonomy
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4207,6 +4315,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: sider
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4227,6 +4336,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: sider
+  science_area: life sciences
 - name: wormbase
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4281,6 +4392,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: wormbase
+  science_area: life sciences
 - name: bio2rdf.biomodels
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4294,6 +4407,7 @@
   - systems biology
   - interaction/pathway
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.bioportal
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4616,6 +4730,7 @@
   terminology_nomenclature:
   - portal
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.chembl
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4655,6 +4770,7 @@
   - molecules
   - protein
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.dbsnp
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4673,6 +4789,7 @@
   - sequence
   - variant
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.genage
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4689,6 +4806,7 @@
   - ageing
   - biology
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.gendr
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4705,6 +4823,7 @@
   - dietary restriction
   - biology
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.iproclass
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4793,6 +4912,7 @@
   - classification
   - sequence
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.linkedspl
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4807,6 +4927,7 @@
   - pharmacology
   - label
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.orphanet
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4826,6 +4947,7 @@
   - rare disease
   - phenotype
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.pathwaycommons
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4839,6 +4961,7 @@
   - enzyme and pathway databases
   - pathway
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.pubmed
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4853,6 +4976,7 @@
   - biomedical science
   - literature
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.reactome
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4926,6 +5050,7 @@
   - reaction
   - sbml
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.sabiork
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4939,6 +5064,7 @@
   - enzyme kinetics
   - biochemistry
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.wikipathways
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -4989,6 +5115,7 @@
   - signaling
   - virology
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: omabrowser
   dataset_kind: instance
   endpoint: https://sparql.omabrowser.org/sparql/
@@ -5001,6 +5128,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: swisslipids
   dataset_kind: instance
   classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
@@ -5015,6 +5143,8 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: swisslipid
+  science_area: life sciences
 - name: earthmetabolome
   dataset_kind: instance
   endpoint: https://kg.earthmetabolome.org/metrin/api/
@@ -5026,6 +5156,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: stringdb
   dataset_kind: instance
   endpoint: https://sparql.string-db.org/sparql
@@ -5036,6 +5167,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: cellosaurus
   dataset_kind: instance
   endpoint: https://sparql.cellosaurus.org/sparql
@@ -5053,6 +5185,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: cellosaurus
+  science_area: life sciences
 - name: rdfportal.cellosaurus
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5071,6 +5205,7 @@
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://rdfportal.org/dataset/cellosaurus
+  science_area: life sciences
 - name: sibils
   dataset_kind: instance
   endpoint: https://sparql.sibils.org/sparql
@@ -5082,6 +5217,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: sibils
+  science_area: life sciences
 - name: spsp
   dataset_kind: instance
   endpoint: https://spsp.sib.swiss/sparql
@@ -5102,6 +5239,7 @@
     snapshot of the endpoint (article/experiments/spsp-20260927), which is not a provider
     distribution. The endpoint also has 302 triples in a graph whose IRI contains a line
     break (https://w3id.org/sps + newline + p/graph); they are outside the selected graph.
+  science_area: life sciences
 - name: orthodb
   dataset_kind: instance
   endpoint: https://sparql.orthodb.org/sparql
@@ -5114,6 +5252,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: orthodb
+  science_area: life sciences
 - name: compoundwiki
   dataset_kind: instance
   endpoint: https://compoundcloud.wikibase.cloud/query
@@ -5124,6 +5264,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: plantmetwiki
   dataset_kind: instance
   endpoint: https://plantmetwiki.bioinformatics.nl/sparql
@@ -5135,6 +5276,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: chembl.bigcat
   dataset_kind: instance
   endpoint: https://chemblmirror.rdf.bigcat-bioinformatics.org/sparql/
@@ -5152,6 +5294,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: allie
   dataset_kind: instance
   endpoint: http://data.allie.dbcls.jp/sparql
@@ -5164,6 +5307,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: ''
 - name: polyadenylation.magnaporthe
   dataset_kind: instance
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
@@ -5175,6 +5319,7 @@
   sparql_engine: dydra
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: lifesciencedict
   dataset_kind: instance
   endpoint: http://lsd.dbcls.jp/sparql
@@ -5188,6 +5333,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.pubchem
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5232,6 +5378,7 @@
   - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
   - http://rdf.ncbi.nlm.nih.gov/pubchem/void
   skip_remote: true
+  science_area: life sciences
 - name: rdfportal.chebi
   catalogs: ["rdfportal"]
   catalog_local_name: chebi
@@ -5247,6 +5394,7 @@
   supports_graph: true
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/chebi
+  science_area: life sciences
 - name: rdfportal.primary
   catalogs: ["rdfportal"]
   catalog_local_name: primary
@@ -5257,6 +5405,7 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  science_area: life sciences
 - name: mesh.nlm
   dataset_kind: instance
   endpoint: https://id.nlm.nih.gov/mesh/sparql
@@ -5275,6 +5424,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: glycosmos
   dataset_kind: instance
   endpoint: https://ts.glycosmos.org/sparql
@@ -5509,6 +5659,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: fanavi
   dataset_kind: instance
   endpoint: http://navi.first.lifesciencedb.jp/fanavi/sparql
@@ -5519,6 +5670,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.sib
   catalogs: ["rdfportal"]
   catalog_local_name: sib
@@ -5530,6 +5682,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: colil
   dataset_kind: instance
   endpoint: http://colil.dbcls.jp/sparql
@@ -5540,6 +5693,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: ''
 - name: agrold
   dataset_kind: instance
   endpoint: http://sparql.southgreen.fr/sparql
@@ -5548,6 +5702,7 @@
   - plant biology
   - genomics
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: biogateway
   dataset_kind: instance
   endpoint: https://2407.biogateway.eu/sparql/
@@ -5556,6 +5711,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: ideal
   dataset_kind: instance
   endpoint: https://ideal-rdf.dbcls.jp/sparql
@@ -5569,6 +5725,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.kero
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5587,6 +5744,7 @@
   graph_uris:
   - http://kero.hgc.jp/ontology/kero.owl
   - http://rdfportal.org/dataset/kero/Cancer_Cell_Line
+  science_area: life sciences
 - name: rdfportal.wikidata
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5597,6 +5755,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.pdb
   catalogs: ["rdfportal"]
   catalog_local_name: pdb
@@ -5610,6 +5769,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.ebi
   catalogs: ["rdfportal"]
   catalog_local_name: ebi
@@ -5620,6 +5780,7 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.ncbi
   catalogs: ["rdfportal"]
   catalog_local_name: ncbi
@@ -5631,6 +5792,7 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  science_area: life sciences
 - name: linkdb
   dataset_kind: instance
   endpoint: http://www.genome.jp/sparql/linkdb
@@ -5640,6 +5802,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.ddbj
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5664,6 +5827,7 @@
   graph_uris:
   - http://rdfportal.org/dataset/ddbj
   - http://rdfportal.org/ontology/taxonomy
+  science_area: life sciences
 - name: rdfportal.bioportal
   catalogs: ["rdfportal"]
   catalog_local_name: bioportal
@@ -5674,6 +5838,7 @@
   sparql_engine: virtuoso
   sparql_strategy: post+form+json
   supports_graph: true
+  science_area: life sciences
 - name: regulatorycircuits
   dataset_kind: instance
   endpoint: https://regulatorycircuits-lod.genouest.org/sparql/
@@ -5684,6 +5849,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: forum
   dataset_kind: instance
   endpoint: https://forum.semantic-metabolomics.fr/sparql/
@@ -5692,6 +5858,8 @@
   - biomedical science
   sparql_engine: virtuoso
   sparql_strategy: get+json
+  kg_registry_id: forum
+  science_area: life sciences
 - name: glyconavi
   dataset_kind: instance
   endpoint: https://sparql.glyconavi.org/sparql
@@ -5703,6 +5871,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: glyconavi
+  science_area: life sciences
 - name: coxpresdb
   dataset_kind: instance
   endpoint: https://coxpresdb.jp/sparql
@@ -5725,6 +5895,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: lipidmaps
   dataset_kind: instance
   endpoint: https://lipidmaps.org/sparql
@@ -5740,6 +5911,8 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: lipidmaps
+  science_area: life sciences
 - name: imgtkg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
@@ -5750,24 +5923,28 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: imgt.mabkg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/MabkgKg/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: ''
 - name: imgt.genekg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/GENEKG/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: ''
 - name: imgt.inferences
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/IMGTKGINFERENCES/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: ''
 - name: brenda
   dataset_kind: instance
   endpoint: https://sparql.dsmz.de/api/brenda
@@ -5780,6 +5957,8 @@
   - sbml
   sparql_engine: qlever
   sparql_strategy: get+json
+  kg_registry_id: brenda
+  science_area: life sciences
 - name: bioresource.riken
   dataset_kind: instance
   endpoint: https://knowledge.brc.riken.jp/sparql
@@ -5789,6 +5968,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: riken.metadb
   dataset_kind: instance
   endpoint: http://metadb.riken.jp/sparql
@@ -5796,6 +5976,7 @@
   - database
   - life science
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: agrovoc
   dataset_kind: instance
   endpoint: https://agrovoc.fao.org/sparql
@@ -5819,6 +6000,7 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: chebi
   dataset_kind: ontology
   catalogs: ["idsm"]
@@ -5852,6 +6034,8 @@
   sparql_engine: idsm
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: chebi
+  science_area: life sciences
 - name: rdfportal.mediadive
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5864,6 +6048,7 @@
   - Bioresource
   - Cell
   - Organism
+  science_area: life sciences
 - name: mediadive
   dataset_kind: instance
   endpoint: https://sparql.dsmz.de/api/mediadive
@@ -5873,6 +6058,8 @@
   - organism
   sparql_engine: qlever
   sparql_strategy: get+json
+  kg_registry_id: mediadive
+  science_area: life sciences
 - name: rdfportal.glytoucan
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5886,6 +6073,7 @@
   graph_uris:
   - http://rdf.glycoinfo.org/glytoucan
   - http://www.glytoucan.org/glyco/owl/glytoucan
+  science_area: ''
 - name: glytoucan
   dataset_kind: instance
   endpoint: https://ts.glytoucan.org/sparql
@@ -5904,6 +6092,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: glytoucan
+  science_area: life sciences
 - name: glyconnect
   dataset_kind: instance
   endpoint: https://glyconnect.expasy.org/sparql
@@ -5914,6 +6104,8 @@
   sparql_engine: graphdb
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: glyconnect
+  science_area: life sciences
 - name: string
   dataset_kind: instance
   endpoint: https://sparql.string-db.org/
@@ -5928,6 +6120,8 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: string
+  science_area: life sciences
 - name: attedii
   dataset_kind: instance
   endpoint: https://atted.jp/sparql
@@ -5938,6 +6132,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: rdfportal.bacdive
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5953,6 +6148,7 @@
   - organism
   sparql_engine: qlever
   sparql_strategy: get+json
+  science_area: life sciences
 - name: rdfportal.proteinatlas
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -5965,6 +6161,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: prokino
   dataset_kind: instance
   endpoint: http://vulcan.cs.uga.edu/sparql
@@ -5972,6 +6169,7 @@
   - protein
   - kinase
   - sequence
+  science_area: life sciences
 - name: linkeddrugs
   dataset_kind: instance
   endpoint: http://linkeddata.finki.ukim.mk/sparql
@@ -5980,6 +6178,7 @@
   - pharmacology
   - health
   - disease
+  science_area: life sciences
 - name: pdbj.bmrb
   dataset_kind: instance
   endpoint: https://bmrbpub.pdbj.org/search/rdf
@@ -5993,6 +6192,7 @@
   - rna
   - structure
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: glic
   dataset_kind: instance
   endpoint: https://sparql.glycoinfo.org/sparql
@@ -6003,6 +6203,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: metabobank
   dataset_kind: instance
   endpoint: https://mb2.ddbj.nig.ac.jp/sparql
@@ -6010,12 +6211,14 @@
   - metabolite
   - mass spectrometry
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: linkedlifedata
   dataset_kind: instance
   endpoint: http://linkedlifedata.com/sparql
   keywords:
   - biomedical science
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: microbedb
   dataset_kind: instance
   endpoint: http://genome.microbedb.jp/sparql
@@ -6024,6 +6227,7 @@
   - genome
   - organism
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: mbgd
   dataset_kind: instance
   endpoint: http://sparql.nibb.ac.jp/sparql
@@ -6031,6 +6235,7 @@
   - microbiology
   - genome
   - orthology
+  science_area: life sciences
 - name: gocam
   dataset_kind: instance
   endpoint: http://rdf.geneontology.org/blazegraph/sparql
@@ -6040,6 +6245,8 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  kg_registry_id: go-cam
+  science_area: life sciences
 - name: chemdb
   dataset_kind: instance
   endpoint: http://chemdb.semweb.csdb.cn/sparql
@@ -6050,6 +6257,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: covidontheweb
   dataset_kind: instance
   endpoint: https://covidontheweb.inria.fr/sparql
@@ -6060,6 +6268,7 @@
   - bibliography/documents
   - virology
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: bio2rdf.kegg.cu
   dataset_kind: instance
   catalogs: ["bio2rdf"]
@@ -6071,6 +6280,7 @@
   - interaction/pathway
   - chemical
   sparql_engine: virtuoso
+  science_area: life sciences
 - name: rdfportal.nadd
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6091,6 +6301,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: biobricks-aopwiki
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-aopwiki/sparql
@@ -6103,6 +6314,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: biobricks-ice
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-ice/sparql
@@ -6114,6 +6326,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: biobricks-mesh
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-mesh/sparql
@@ -6127,6 +6340,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: biobricks-pubchem-annotations
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-pubchem-annotations/sparql
@@ -6139,6 +6353,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: biobricks-tox21
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-tox21/sparql
@@ -6151,6 +6366,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: biobricks-toxcast
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biobricks-toxcast/sparql
@@ -6163,6 +6379,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: biohealth
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/biohealth/sparql
@@ -6175,6 +6392,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: cam-kp
   dataset_kind: instance
   endpoint: https://stars-app.renci.org/cam/sparql
@@ -6184,6 +6402,7 @@
   - biomedical science
   - reasoning
   sparql_engine: blazegraph
+  science_area: life sciences
 - name: climatemodelskg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/climatemodelskg/sparql
@@ -6196,6 +6415,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: other
 - name: dreamkg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/dreamkg/sparql
@@ -6208,6 +6428,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: emi
   dataset_kind: instance
   endpoint: https://qlever.earthmetabolome.org/metrin-kg
@@ -6222,6 +6443,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: emikg
   dataset_kind: instance
   skip_mining: true
@@ -6234,6 +6456,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: fiokg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/fiokg/sparql
@@ -6245,6 +6468,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: other
 - name: geoconnex
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/geoconnex/sparql
@@ -6256,6 +6480,7 @@
   - environment
   sparql_engine: qlever
   sparql_strategy: get+json
+  science_area: other
 - name: globi
   dataset_kind: instance
   skip_mining: true
@@ -6270,6 +6495,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: gtopdb
   dataset_kind: instance
   download_ttl:
@@ -6283,6 +6509,9 @@
   - drug
   - pharmacology
   - receptor
+  science_area: life sciences
+  download_rdf:
+  - https://www.guidetopharmacology.org/DATA/rdf/2025.1/gtp-rdf.n3
 - name: hpa
   dataset_kind: instance
   download_trig: https://v19.proteinatlas.org/download/proteinatlas.trig.gz
@@ -6293,6 +6522,7 @@
   - organism-specific databases
   - protein
   - structure
+  science_area: life sciences
 - name: hra-kg
   dataset_kind: instance
   download_nq: https://cdn.humanatlas.io/digital-objects/collection/hra/v2.5/graph.nq
@@ -6300,6 +6530,11 @@
   kg_registry_id: hra-kg
   keywords:
   - cell line
+  science_area: life sciences
+  download_ttl:
+  - https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.ttl
+  download_nt:
+  - https://cdn.humanatlas.io/digital-objects/collection/hra/v2.2/graph.nt
 - name: metanetx
   dataset_kind: instance
   endpoint: https://rdf.metanetx.org/sparql
@@ -6332,6 +6567,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: nasa-gesdisc-kg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/nasa-gesdisc-kg/sparql
@@ -6344,6 +6580,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: other
 - name: nde
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/nde/sparql
@@ -6355,6 +6592,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: oma
   dataset_kind: instance
   endpoint: https://sparql.omabrowser.org/lode/sparql
@@ -6368,6 +6606,9 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
+  download_ttl:
+  - https://omabrowser.org/All/oma-rdf-turtle.tgz
 - name: openbiodiv
   dataset_kind: instance
   endpoint: http://graph.openbiodiv.net/
@@ -6380,6 +6621,7 @@
   - taxonomy
   - bibliography/documents
   sparql_engine: graphdb
+  science_area: life sciences
 - name: ordo
   dataset_kind: ontology
   endpoint: https://www.orphadata.com/ordo-sparql-endpoint/
@@ -6398,6 +6640,7 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: monarch-kg
   dataset_kind: instance
   membership_properties:  # nodes are placed by their Biolink category, associations by rdf:type
@@ -6410,6 +6653,7 @@
   - phenotype
   - gene
   - biomedical science
+  science_area: life sciences
 - name: pathophenodb
   dataset_kind: instance
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
@@ -6420,6 +6664,7 @@
   - disease
   - phenotype
   - pathogen
+  science_area: life sciences
 - name: pf1600
   dataset_kind: instance
   skip_mining: true
@@ -6432,6 +6677,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: reactome
   dataset_kind: instance
   download_rdf:
@@ -6449,6 +6695,7 @@
   - psi-mi
   - reaction
   - sbml
+  science_area: life sciences
 - name: ruralkg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/ruralkg/sparql
@@ -6460,6 +6707,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: sawgraph
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sawgraph/sparql
@@ -6472,6 +6720,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: scales
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/scales/sparql
@@ -6482,6 +6731,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: other
 - name: securechainkg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/securechainkg/sparql
@@ -6493,6 +6743,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: other
 - name: semopenalex
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/semopenalex/sparql
@@ -6504,6 +6755,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: other
 - name: sockg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sockg/sparql
@@ -6515,6 +6767,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: other
 - name: spatialkg
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spatialkg/sparql
@@ -6526,6 +6779,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: other
 - name: spoke
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spoke-okn/sparql
@@ -6537,6 +6791,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: spoke-genelab
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/spoke-genelab/sparql
@@ -6549,6 +6804,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: false
+  science_area: life sciences
 - name: sudokn
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/sudokn/sparql
@@ -6560,6 +6816,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: other
 - name: tera
   dataset_kind: instance
   download_nt:
@@ -6574,6 +6831,7 @@
   keywords:
   - environment
   - ecology
+  science_area: life sciences
 - name: try
   dataset_kind: instance
   skip_mining: true
@@ -6587,6 +6845,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: ubergraph
   dataset_kind: ontology
   endpoint: https://ubergraph.apps.renci.org/sparql
@@ -6600,6 +6859,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: wildlifekn
   dataset_kind: instance
   endpoint: https://frink.apps.renci.org/wildlifekg/sparql
@@ -6612,6 +6872,7 @@
   sparql_engine: qlever
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: diseaseontology
   dataset_kind: ontology
   endpoint: https://sparql.disease-ontology.org
@@ -6625,6 +6886,7 @@
   sparql_engine: blazegraph
   sparql_strategy: get+json
   supports_graph: true
+  science_area: life sciences
 - name: dbcls.allie.pubmed
   dataset_kind: instance
   download_nt:
@@ -6634,6 +6896,7 @@
   - bibliography/documents
   - abbreviation
   - literature curation
+  science_area: ''
 - name: dbcls.mesh
   dataset_kind: instance
   download_nt:
@@ -6644,6 +6907,7 @@
   - bibliography/documents
   - health
   - disease
+  science_area: life sciences
 - name: nanosolveit.rdf
   dataset_kind: instance
   download_nq:
@@ -6657,6 +6921,7 @@
   - toxicology
   - nanomaterial
   - chemical
+  science_area: life sciences
 - name: rdfportal.amrportal
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6667,6 +6932,7 @@
   keywords:
   - Microbes
   - Phenotype
+  science_area: life sciences
 - name: rdfportal.bgee
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6677,6 +6943,7 @@
   keywords:
   - Gene
   - Gene expression
+  science_area: life sciences
 - name: rdfportal.biomodels
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6686,6 +6953,7 @@
   - http://rdf.ebi.ac.uk/dataset/biomodels
   keywords:
   - Others
+  science_area: ''
 - name: rdfportal.biosample
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6694,6 +6962,7 @@
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biosamples
   keywords: []
+  science_area: ''
 - name: rdfportal.bmrb
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6708,6 +6977,7 @@
   - Protein
   - Sequence
   - Structure
+  science_area: life sciences
 - name: rdfportal.brenda
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6719,6 +6989,7 @@
   - Biocatalysis
   - Bioresource
   - Enzyme
+  science_area: life sciences
 - name: rdfportal.chembl
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6728,6 +6999,7 @@
   - http://rdf.ebi.ac.uk/dataset/chembl
   keywords:
   - Drug/Chemical
+  science_area: life sciences
 - name: rdfportal.clinvar
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6739,6 +7011,7 @@
   - Health/Disease
   - Polymorphism
   - Sequence
+  science_area: life sciences
 - name: rdfportal.dbcatalog
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6749,6 +7022,7 @@
   - http://rdfportal.org/dataset/dbcatalog/tag
   keywords:
   - Others
+  science_area: ''
 - name: rdfportal.ensembl
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6760,6 +7034,7 @@
   keywords:
   - Gene
   - Protein
+  science_area: life sciences
 - name: rdfportal.ensembl_grch37
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6771,6 +7046,7 @@
   keywords:
   - Gene
   - Protein
+  science_area: life sciences
 - name: rdfportal.famsbase
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6782,6 +7058,7 @@
   keywords:
   - Protein
   - Structure
+  science_area: life sciences
 - name: rdfportal.glycoepitope
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6793,6 +7070,7 @@
   keywords:
   - Other biomolecule
   - Structure
+  science_area: life sciences
 - name: rdfportal.gtdb
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6804,6 +7082,7 @@
   - Archaea
   - Bacteria
   - Taxonomy
+  science_area: life sciences
 - name: rdfportal.gwas-catalog
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6814,6 +7093,7 @@
   keywords:
   - Genome
   - Variation
+  science_area: life sciences
 - name: rdfportal.hco
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6823,6 +7103,7 @@
   - http://rdfportal.org/dataset/hco
   keywords:
   - Ontology/Terminology/Nomenclature
+  science_area: ''
 - name: rdfportal.hgnc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6833,6 +7114,7 @@
   keywords:
   - Gene
   - Ontology/Terminology/Nomenclature
+  science_area: life sciences
 - name: rdfportal.homologene
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6844,6 +7126,7 @@
   - Gene
   - Genome
   - Phylogeny/Classification
+  science_area: life sciences
 - name: rdfportal.icgc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6855,6 +7138,7 @@
   - Genome
   - Health/Disease
   - Sequence
+  science_area: life sciences
 - name: rdfportal.jcm
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6865,6 +7149,7 @@
   keywords:
   - Bioresource
   - Organism
+  science_area: life sciences
 - name: rdfportal.knapsack
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6877,6 +7162,7 @@
   - Compound
   - Publication
   - Taxonomy
+  science_area: life sciences
 - name: rdfportal.ligandbox
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6888,6 +7174,7 @@
   keywords:
   - Drug/Chemical
   - Structure
+  science_area: life sciences
 - name: rdfportal.massbank
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6897,6 +7184,7 @@
   - http://rdfportal.org/dataset/massbank
   keywords:
   - Compound
+  science_area: life sciences
 - name: rdfportal.mbgd
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6918,6 +7206,7 @@
   - Gene
   - Genome
   - Phylogeny/Classification
+  science_area: life sciences
 - name: rdfportal.mco
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6927,6 +7216,7 @@
   - http://rdfportal.org/dataset/mco
   keywords:
   - Ontology/Terminology/Nomenclature
+  science_area: ''
 - name: rdfportal.mesh
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6936,6 +7226,7 @@
   - http://id.nlm.nih.gov/mesh
   keywords:
   - Ontology/Terminology/Nomenclature
+  science_area: ''
 - name: rdfportal.microbedbjp
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6946,6 +7237,7 @@
   keywords:
   - Metagenome
   - Microbe
+  science_area: life sciences
 - name: rdfportal.mogplus
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6957,6 +7249,7 @@
   - Genome
   - Mouse
   - Variation
+  science_area: life sciences
 - name: rdfportal.nando
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6968,6 +7261,7 @@
   - Health/Disease
   - Ontology/Terminology/Nomenclature
   - Tag sequence (nucleic acid)
+  science_area: life sciences
 - name: rdfportal.naro_genebank
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6978,6 +7272,7 @@
   keywords:
   - Bioresource
   - Organism
+  science_area: life sciences
 - name: rdfportal.nbrc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6991,6 +7286,7 @@
   - Bioresource
   - Cell
   - Organism
+  science_area: life sciences
 - name: rdfportal.ncbigene
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7000,6 +7296,7 @@
   - http://rdfportal.org/dataset/ncbigene
   keywords:
   - Gene
+  science_area: life sciences
 - name: rdfportal.nikkaji
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7017,6 +7314,7 @@
   - Image/Movie
   - Others
   - Structure
+  science_area: life sciences
 - name: rdfportal.nlm-catalog
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7027,6 +7325,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Ontology/Terminology/Nomenclature
+  science_area: ''
 - name: rdfportal.oma
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7038,6 +7337,7 @@
   - Gene
   - Genome
   - Phylogeny/Classification
+  science_area: life sciences
 - name: rdfportal.opentggates
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7050,6 +7350,7 @@
   - Gene
   - Gene expression
   - Health/Disease
+  science_area: life sciences
 - name: rdfportal.paconto
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7066,6 +7367,7 @@
   download_rdf:
   - http://jcggdb.jp/rdf/diseases/paconto.rdf
   - http://jcggdb.jp/rdf/diseases/paconto-schema.rdf
+  science_area: life sciences
 - name: rdfportal.pgdbj
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7079,6 +7381,7 @@
   - Genome
   - Phylogeny/Classification
   - Sequence
+  science_area: life sciences
 - name: rdfportal.polyinfo
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7092,6 +7395,7 @@
   - http://rdfportal.org/ontology/taxonomy
   keywords:
   - Drug/Chemical
+  science_area: life sciences
 - name: rdfportal.pubmed
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7102,6 +7406,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Others
+  science_area: ''
 - name: rdfportal.pubtator
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7112,6 +7417,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Others
+  science_area: ''
 - name: rdfportal.quanto
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7122,6 +7428,7 @@
   - http://quanto.dbcls.jp
   keywords:
   - Others
+  science_area: ''
 - name: rdfportal.reactome
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7131,6 +7438,7 @@
   - http://rdf.ebi.ac.uk/dataset/reactome
   keywords:
   - Interaction/Pathway
+  science_area: life sciences
 - name: rdfportal.refex
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7144,6 +7452,7 @@
   - Gene
   - Gene expression
   - Tag sequence (nucleic acid)
+  science_area: life sciences
 - name: rdfportal.rhea
   dataset_kind: instance
   classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
@@ -7155,6 +7464,7 @@
   keywords:
   - Enzyme
   - Protein
+  science_area: life sciences
 - name: rdfportal.ssbd
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7169,16 +7479,21 @@
   - Organism
   - Other biomolecule
   - Others
+  science_area: life sciences
 - name: civic
   dataset_kind: instance
   endpoint: http://sparql.med2rdf.org/sparql
   graph_uris:
   - http://med2rdf.org/graph/civic
+  kg_registry_id: civic
+  science_area: life sciences
 - name: dgidb
   dataset_kind: instance
   endpoint: http://sparql.med2rdf.org/sparql
   graph_uris:
   - http://med2rdf.org/graph/dgidb
+  kg_registry_id: dgidb
+  science_area: life sciences
 - name: rdfportal.ggdonto
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7190,6 +7505,7 @@
   download_rdf:
   - http://jcggdb.jp/rdf/diseases/ggdonto.rdf
   - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
+  science_area: ''
 - name: rdfportal.go
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7197,6 +7513,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/go
+  science_area: ''
 - name: rdfportal.hpo
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7204,6 +7521,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/hp
+  science_area: ''
 - name: rdfportal.linked_icgc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7212,6 +7530,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://icgc.link/release_20
+  science_area: ''
 - name: rdfportal.mondo
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7219,6 +7538,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/mondo
+  science_area: ''
 - name: rdfportal.mp
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7226,6 +7546,7 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/mp
+  science_area: ''
 - name: rdfportal.ncit
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7233,6 +7554,7 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/ncit
+  science_area: ''
 - name: rdfportal.uberon
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7240,3 +7562,199 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/uberon
+  science_area: ''
+- name: biomarker
+  dataset_kind: instance
+  kg_registry_id: biomarker
+  science_area: life sciences
+  notes: 'KG Registry: BiomarkerKB'
+  endpoint: https://apps.okn.us/biomarkerkg/sparql
+- name: culture-knowledge-graph
+  dataset_kind: instance
+  kg_registry_id: culture-knowledge-graph
+  science_area: other
+  notes: 'KG Registry: Culture Knowledge Graph'
+  endpoint: https://nfdi4culture.de/resources/knowledge-graph.html
+- name: dbpedia
+  dataset_kind: instance
+  kg_registry_id: dbpedia
+  science_area: other
+  notes: 'KG Registry: DBpedia'
+  endpoint: http://dbpedia.org/sparql
+- name: ekg
+  dataset_kind: instance
+  kg_registry_id: ekg
+  science_area: life sciences
+  notes: 'KG Registry: eKG'
+  download_rdf:
+  - https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ETOHA/ETOHA-OPEN/epidemicIE-DONs.rdf
+  download_ttl:
+  - https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ETOHA/ETOHA-OPEN/epidemicIE-DONs.ttl
+  endpoint: https://data.jrc.ec.europa.eu/yasgui
+- name: era-kg
+  dataset_kind: instance
+  kg_registry_id: era-kg
+  science_area: other
+  notes: 'KG Registry: ERA Knowledge Graph'
+  endpoint: https://graph.data.era.europa.eu/repositories/rinf-plus
+- name: eu-knowledge-graph
+  dataset_kind: instance
+  kg_registry_id: eu-knowledge-graph
+  science_area: other
+  notes: 'KG Registry: EU Knowledge Graph'
+  endpoint: https://query.linkedopendata.eu/sparql
+- name: eurio
+  dataset_kind: instance
+  kg_registry_id: eurio
+  science_area: other
+  notes: 'KG Registry: EURIO Knowledge Graph'
+  endpoint: https://cordis.europa.eu/datalab/sparql
+  download_nq:
+  - https://cordis.europa.eu/data/cordis-EURIOKnowledgeGraph-nq.zip
+  - https://cordis.europa.eu/data/cordis-projectNamedGraph-nq.zip
+  - https://cordis.europa.eu/data/cordis-organisationNamedGraph-nq.zip
+  - https://cordis.europa.eu/data/cordis-resultNamedGraph-nq.zip
+- name: evoweb
+  dataset_kind: instance
+  kg_registry_id: evoweb
+  science_area: life sciences
+  notes: 'KG Registry: EvoWeb'
+  endpoint: https://apps.okn.us/evoweb/sparql
+- name: gene-expression-atlas-okn
+  dataset_kind: instance
+  kg_registry_id: gene-expression-atlas-okn
+  science_area: life sciences
+  notes: 'KG Registry: Gene Expression Atlas'
+  endpoint: https://apps.okn.us/gene-expression-atlas-okn/sparql
+- name: go
+  dataset_kind: ontology
+  kg_registry_id: go
+  science_area: life sciences
+  notes: 'KG Registry: Gene Ontology'
+  download_ttl:
+  - http://current.geneontology.org/products/ttl/pathway-like_go-cams.tar.gz
+- name: hydrologykg
+  dataset_kind: instance
+  kg_registry_id: hydrologykg
+  science_area: other
+  notes: 'KG Registry: SAWGraph Hydrology KG'
+  endpoint: https://apps.okn.us/hydrologykg/sparql
+- name: identifier-mappings
+  dataset_kind: instance
+  kg_registry_id: identifier-mappings
+  science_area: other
+  notes: 'KG Registry: ID Mappings'
+  endpoint: https://apps.okn.us/identifier-mappings/sparql
+- name: kg-enp
+  dataset_kind: instance
+  kg_registry_id: kg-enp
+  science_area: life sciences
+  notes: 'KG Registry: ENPKG'
+  endpoint: https://enpkg.commons-lab.org/graphdb/sparql
+- name: kg-monarch
+  dataset_kind: instance
+  kg_registry_id: kg-monarch
+  science_area: life sciences
+  notes: 'KG Registry: KG Monarch'
+  download_rdf:
+  - https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz
+- name: maudekg
+  dataset_kind: instance
+  kg_registry_id: maudekg
+  science_area: life sciences
+  notes: 'KG Registry: FDA MAUDE Adverse Event Knowledge Graph'
+  endpoint: https://apps.okn.us/maudekg/sparql
+- name: ncipidkg
+  dataset_kind: instance
+  kg_registry_id: ncipidkg
+  science_area: life sciences
+  notes: 'KG Registry: NCI-PID 2.0 KG'
+  endpoint: https://apps.okn.us/ncipidkg/sparql
+- name: nextprot
+  dataset_kind: instance
+  kg_registry_id: nextprot
+  science_area: life sciences
+  notes: 'KG Registry: neXtProt'
+  endpoint: https://sparql.nextprot.org/
+- name: nikg
+  dataset_kind: instance
+  kg_registry_id: nikg
+  science_area: other
+  notes: 'KG Registry: Neighborhood Information KG'
+  endpoint: https://apps.okn.us/nikg/sparql
+- name: oard-kg
+  dataset_kind: instance
+  kg_registry_id: oard-kg
+  science_area: life sciences
+  notes: 'KG Registry: Open Annotations for Rare Diseases (OARD) Knowledge Graph'
+  endpoint: https://apps.okn.us/oard-kg/sparql
+- name: okn-void
+  dataset_kind: instance
+  kg_registry_id: okn-void
+  science_area: other
+  notes: 'KG Registry: OKN VoID graph descriptions'
+  endpoint: https://apps.okn.us/okn-void/sparql
+- name: onco
+  dataset_kind: instance
+  kg_registry_id: onco
+  science_area: life sciences
+  notes: 'KG Registry: OnCo'
+  download_nt:
+  - https://onco.cc/api/v1/onco.nt
+- name: oregano
+  dataset_kind: instance
+  kg_registry_id: oregano
+  science_area: life sciences
+  notes: 'KG Registry: OREGANO'
+  endpoint: https://zenodo.org/records/10103842
+- name: orkg
+  dataset_kind: instance
+  kg_registry_id: orkg
+  science_area: other
+  notes: 'KG Registry: Open Research Knowledge Graph'
+  endpoint: https://orkg.org/sparql/
+  download_nt:
+  - https://orkg.org/files/rdf-dumps/rdf-export-orkg.nt
+- name: pankgraph
+  dataset_kind: instance
+  kg_registry_id: pankgraph
+  science_area: life sciences
+  notes: 'KG Registry: PanKgraph'
+  endpoint: https://apps.okn.us/pankgraph/sparql
+- name: phaseskg
+  dataset_kind: instance
+  kg_registry_id: phaseskg
+  science_area: life sciences
+  notes: 'KG Registry: PHASES KG'
+  endpoint: https://apps.okn.us/phaseskg/sparql
+- name: prokn
+  dataset_kind: instance
+  kg_registry_id: prokn
+  science_area: life sciences
+  notes: 'KG Registry: Protein Knowledge Network'
+  endpoint: https://apps.okn.us/prokn/sparql
+- name: spoke-okn
+  dataset_kind: instance
+  kg_registry_id: spoke-okn
+  science_area: life sciences
+  notes: 'KG Registry: SPOKE-OKN'
+  endpoint: https://apps.okn.us/spoke-okn/sparql
+- name: uf-okn
+  dataset_kind: instance
+  kg_registry_id: uf-okn
+  science_area: other
+  notes: 'KG Registry: UF-OKN'
+  endpoint: https://apps.okn.us/ufokn/sparql
+- name: wikidata
+  dataset_kind: instance
+  kg_registry_id: wikidata
+  science_area: other
+  notes: 'KG Registry: Wikidata'
+  endpoint: https://frink.apps.renci.org/wikidata/sparql
+  download_ttl:
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.ttl.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.ttl.gz
+  download_nt:
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.nt.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-truthy.nt.gz
+  - https://dumps.wikimedia.org/wikidatawiki/entities/latest-lexemes.nt.gz
