@@ -22,12 +22,35 @@ FEED_PIPES = "index-feed.pipes"
 
 
 def qlever_format(path: Path) -> str:
-    """Map a prepared input to a QLever input format (a .gz suffix is skipped)."""
+    """Map a prepared input to a QLever input format (a .gz suffix is skipped).
+
+    An N-Triples file whose statements name a graph is read as N-Quads: RDF Portal publishes
+    the Human Protein Atlas as quads in .nt.gz files, which QLever refuses as N-Triples.
+    """
     suffix = (path.with_suffix("") if path.suffix == ".gz" else path).suffix.lstrip(".").lower()
     try:
-        return _QLEVER_FORMATS[suffix]
+        found = _QLEVER_FORMATS[suffix]
     except KeyError:
         raise ValueError(f"Unsupported RDF input format: {path}") from None
+    return "nq" if found == "nt" and path.exists() and _holds_quads(path) else found
+
+
+def _holds_quads(path: Path, lines: int = 100) -> bool:
+    """Whether the first statements of a line-based file name a graph."""
+    from itertools import islice
+
+    from pyoxigraph import DefaultGraph, RdfFormat, parse
+
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rb") as stream:
+        head = b"".join(islice(stream, lines))
+    try:
+        return any(
+            not isinstance(quad.graph_name, DefaultGraph)
+            for quad in parse(head, RdfFormat.N_QUADS, lenient=True)
+        )
+    except SyntaxError:
+        return False
 
 
 def _is_gzip(path: Path) -> bool:
@@ -221,8 +244,12 @@ def index_command(
         # The feed is a script of its own: one argument cannot hold it (PDB: 220,000 files).
         (workdir / FEED_PIPES).write_text("".join(f"{pipe}\n" for _, pipe in feeds))
         (workdir / FEED).write_text(
-            "set -euo pipefail\n"
-            + "".join(f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)}\n" for src, pipe in feeds)
+            # A write that fails (qlever-index stopped reading a pipe) goes on to the next pipe:
+            # every pipe that qlever-index opens gets a writer, so that it ends, with its error.
+            "".join(
+                f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)} || true\n"
+                for src, pipe in feeds
+            )
         )
         lines += [
             f"rm -rf {PIPES} && mkdir {PIPES}",

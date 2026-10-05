@@ -99,4 +99,17 @@ def test_compressed_inputs_are_streamed_through_pipes(tmp_path):
     )
     script = (tmp_path / "index-command.sh").read_text()
     assert "-f .index-pipes/0.nt -F nt -f rdf/b.ttl -F ttl" in script
-    assert (tmp_path / FEED).read_text().endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt\n")
+    assert (
+        (tmp_path / FEED).read_text().endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt || true\n")
+    ), "A failed write goes on to the next pipe"
+
+
+def test_n_triples_that_name_graphs_are_indexed_as_n_quads(tmp_path):
+    import gzip
+
+    quads = tmp_path / "proteinatlas.0.nt.gz"
+    with gzip.open(quads, "wt") as stream:
+        stream.write("<urn:a> <urn:p> <urn:o> <urn:g> .\n")
+    triples = tmp_path / "plain.nt"
+    triples.write_text("<urn:a> <urn:p> <urn:o> .\n")
+    assert (qlever_format(quads), qlever_format(triples)) == ("nq", "nt")
