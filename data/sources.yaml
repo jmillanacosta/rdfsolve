@@ -7599,7 +7599,6 @@
   notes: 'KG Registry: eKG'
   download_ttl:
   - https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ETOHA/ETOHA-OPEN/epidemicIE-DONs.ttl
-  endpoint: https://data.jrc.ec.europa.eu/yasgui
 - name: era-kg
   dataset_kind: instance
   kg_registry_id: era-kg
