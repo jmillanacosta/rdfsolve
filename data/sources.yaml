@@ -7585,7 +7585,7 @@
   kg_registry_id: culture-knowledge-graph
   science_area: other
   notes: 'KG Registry: Culture Knowledge Graph'
-  endpoint: https://nfdi4culture.de/resources/knowledge-graph.html
+  endpoint: https://nfdi4culture.de/sparql
 - name: dbpedia
   dataset_kind: instance
   kg_registry_id: dbpedia
@@ -7658,13 +7658,14 @@
   kg_registry_id: kg-enp
   science_area: life sciences
   notes: 'KG Registry: ENPKG'
-  endpoint: https://enpkg.commons-lab.org/graphdb/sparql
+  endpoint: https://enpkg.commons-lab.org/graphdb/repositories/ENPKG
 - name: maudekg
   dataset_kind: instance
   kg_registry_id: maudekg
   science_area: life sciences
   notes: 'KG Registry: FDA MAUDE Adverse Event Knowledge Graph'
   endpoint: https://apps.okn.us/maudekg/sparql
+  sparql_strategy: get+json
 - name: ncipidkg
   dataset_kind: instance
   kg_registry_id: ncipidkg
@@ -7677,6 +7678,7 @@
   science_area: life sciences
   notes: 'KG Registry: neXtProt'
   endpoint: https://sparql.nextprot.org/
+  skip_remote: true  # neXtProt is retired; its endpoint redirects to https://www.expasy.org/archives/nextprot
 - name: nikg
   dataset_kind: instance
   kg_registry_id: nikg
@@ -7707,13 +7709,13 @@
   kg_registry_id: oregano
   science_area: life sciences
   notes: 'KG Registry: OREGANO'
-  endpoint: https://zenodo.org/records/10103842
+  download_ttl: https://zenodo.org/api/records/10103842/files/oreganov2.1_metadata_complete.ttl/content
 - name: orkg
   dataset_kind: instance
   kg_registry_id: orkg
   science_area: other
   notes: 'KG Registry: Open Research Knowledge Graph'
-  endpoint: https://orkg.org/sparql/
+  endpoint: https://orkg.org/triplestore
 - name: pankgraph
   dataset_kind: instance
   kg_registry_id: pankgraph
