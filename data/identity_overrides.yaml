@@ -303,3 +303,9 @@
   relation: distribution_of
   note: >-
     The UniProt endpoint serves a copy of the ChEBI ontology in its graph sparql.uniprot.org/chebi.
+- left: rdfportal.pubchem
+  right: pubchem.ftp
+  relation: distribution_of
+  note: >-
+    RDF Portal mirrors PubChem RDF, which pubchem.ftp indexes whole from PubChem's FTP (owner,
+    2026-10-05: covered by pubchem.ftp, no index of its own).

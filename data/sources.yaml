@@ -2514,7 +2514,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/taxonomy
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: ncbitaxon
   keywords:
@@ -2540,7 +2539,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/endpoint
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.bioassay
   keywords:
@@ -2566,7 +2564,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/measuregroup
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.bioassay
   keywords:
@@ -2592,7 +2589,6 @@
   graph_uris:
   - http://bioinfo.iocb.cz/dataset/ontology
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   keywords:
   - chemical
   - organic chemistry
@@ -2608,7 +2604,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/gene
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: ncbigene
   keywords:
@@ -2634,7 +2629,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/bioassay
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.bioassay
   keywords:
@@ -2657,7 +2651,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/substance
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.substance
   keywords:
@@ -2683,7 +2676,6 @@
   graph_uris:
   - http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugs/
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: drugbank
   keywords:
@@ -2705,7 +2697,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/substance
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.substance
   keywords:
@@ -2768,7 +2759,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/pathway
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -2793,7 +2783,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/cell
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.cell
   keywords:
@@ -2805,6 +2794,32 @@
   supports_graph: true
   skip_remote: true
   science_area: life sciences
+- name: molmedb
+  dataset_kind: instance
+  catalogs: ["idsm"]
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  graph_uris:
+  - https://rdf.molmedb.upol.cz
+  local_provider: idsm
+  notes: MolMeDB (molecules and membranes) as served by IDSM, described in IDSM's VoID; MolMeDB publishes no RDF dump (2026-10-05).
+  bioregistry_prefix: molmedb
+  sparql_engine: idsm
+  sparql_strategy: get+json
+  supports_graph: true
+  science_area: life sciences
+- name: pdb-ccd.idsm
+  dataset_kind: instance
+  catalogs: ["idsm"]
+  endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+  graph_uris:
+  - https://identifiers.org/pdb-ccd/
+  local_provider: idsm
+  notes: The PDB Chemical Component Dictionary as served by IDSM, described in IDSM's VoID.
+  bioregistry_prefix: pdb-ccd
+  sparql_engine: idsm
+  sparql_strategy: get+json
+  supports_graph: true
+  science_area: life sciences
 - name: isdb
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -2813,7 +2828,6 @@
   graph_uris:
   - https://idsm.elixir-czech.cz/rdf/isdb/
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   keywords:
   - metabolite
   - natural product
@@ -2830,7 +2844,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/anatomy
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -2855,7 +2868,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/conserveddomain
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: cdd
   keywords:
@@ -2881,7 +2893,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/organization
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -2906,7 +2917,6 @@
   graph_uris:
   - https://idsm.elixir-czech.cz/rdf/mona/
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   keywords:
   - metabolite
   - mass spectrometry
@@ -2970,7 +2980,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/journal
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -2995,7 +3004,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/author
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3020,7 +3028,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/disease
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3045,7 +3052,6 @@
   graph_uris:
   - http://www.wikidata.org/entity/
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   bioregistry_prefix: wikidata
   keywords:
   - chemical
@@ -3061,7 +3067,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/book
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3086,7 +3091,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/inchikey
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: inchikey
   keywords:
@@ -3112,7 +3116,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/descriptor/compound
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: pubchem.compound
   keywords:
@@ -3137,7 +3140,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/grant
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3162,7 +3164,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/concept
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3187,7 +3188,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/source
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3212,7 +3212,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/protein
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3237,7 +3236,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/reference
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3262,7 +3260,6 @@
   graph_uris:
   - http://id.nlm.nih.gov/mesh/heading
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   bioregistry_prefix: mesh
   keywords:
@@ -3282,7 +3279,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/synonym
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3307,7 +3303,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/compound
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   chunk_size: 20000
   bioregistry_prefix: pubchem.compound
@@ -3333,7 +3328,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/cooccurrence
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -3358,7 +3352,6 @@
   graph_uris:
   - http://rdf.ncbi.nlm.nih.gov/pubchem/patent
   local_provider: idsm
-  local_tar_url: https://idsm.elixir-czech.cz/export/idsm-2026-03-06.tar
   in_kamdar: true
   keywords:
   - bibliography/documents
@@ -4282,6 +4275,8 @@
   science_area: life sciences
 - name: taxonomy
   dataset_kind: instance
+  skip_mining: true
+  notes: Bio2RDF Taxonomy; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
@@ -4410,10 +4405,11 @@
   science_area: life sciences
 - name: bio2rdf.bioportal
   dataset_kind: instance
+  skip_mining: true
   catalogs: ["bio2rdf"]
   catalog_local_name: bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
-  notes: Bio2RDF mirror - BioPortal
+  notes: Bio2RDF mirror - BioPortal; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
   download_nq:
   - https://download.bio2rdf.org/files/release/3/bioportal/aao.nq.gz
   - https://download.bio2rdf.org/files/release/3/bioportal/aba-amb.nq.gz
@@ -4915,10 +4911,11 @@
   science_area: life sciences
 - name: bio2rdf.linkedspl
   dataset_kind: instance
+  skip_mining: true
   catalogs: ["bio2rdf"]
   catalog_local_name: linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
-  notes: Bio2RDF mirror - LinkedSPL
+  notes: Bio2RDF mirror - LinkedSPL; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
   download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
   download_nq: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.nt.gz
   download_nt: https://download.bio2rdf.org/files/release/3/linkedspllinkedspl.nt.gz
@@ -5747,6 +5744,8 @@
   science_area: life sciences
 - name: rdfportal.wikidata
   dataset_kind: instance
+  skip_mining: true
+  notes: Left out of the corpus (owner, 2026-10-05); its IDSM subset is wikidata.idsm.entity.
   catalogs: ["rdfportal"]
   catalog_local_name: wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
@@ -6522,7 +6521,7 @@
   - https://www.guidetopharmacology.org/DATA/rdf/2025.1/gtp-rdf.n3
 - name: hpa
   dataset_kind: instance
-  download_trig: https://v19.proteinatlas.org/download/proteinatlas.trig.gz
+  download_trig: https://v24.proteinatlas.org/download/proteinatlas.trig.gz
   notes: 'Updates KG Registry: Human Protein Atlas'
   kg_registry_id: hpa
   bioregistry_prefix: hpa
@@ -7363,7 +7362,7 @@
   - Health/Disease
   science_area: life sciences
 - name: rdfportal.paconto
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: paconto
   endpoint: https://rdfportal.org/primary/sparql
@@ -7506,7 +7505,7 @@
   kg_registry_id: dgidb
   science_area: life sciences
 - name: rdfportal.ggdonto
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: ggdonto
   endpoint: https://rdfportal.org/primary/sparql
