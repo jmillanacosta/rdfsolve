@@ -7619,9 +7619,6 @@
   endpoint: https://cordis.europa.eu/datalab/sparql
   download_nq:
   - https://cordis.europa.eu/data/cordis-EURIOKnowledgeGraph-nq.zip
-  - https://cordis.europa.eu/data/cordis-projectNamedGraph-nq.zip
-  - https://cordis.europa.eu/data/cordis-organisationNamedGraph-nq.zip
-  - https://cordis.europa.eu/data/cordis-resultNamedGraph-nq.zip
 - name: evoweb
   dataset_kind: instance
   kg_registry_id: evoweb
