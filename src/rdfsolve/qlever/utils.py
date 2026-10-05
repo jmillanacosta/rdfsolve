@@ -580,29 +580,20 @@ def _decompress_xz_steps() -> list[str]:
 
 
 def _decompress_gz_steps(*, include_data_formats: bool = False) -> list[str]:
-    """Shell steps to gunzip .gz files.
+    """Shell steps to gunzip the .gz files that are converted before indexing (RDF/XML, OWL,
+    JSON-LD, ...).
 
-    Parameters
-    ----------
-    include_data_formats:
-        When True, also decompress .nq.gz / .nt.gz (needed when
-        the primary format is NQ/NT and we want uniform plain-text files).
+    Turtle, N-Triples, N-Quads, TriG and N3 stay compressed: the index reads them streamed
+    (rdfsolve.qlever.inputs.index_command), so no plain copy fills the disk. *include_data_formats*
+    is kept for callers and has no effect.
     """
-    if include_data_formats:
-        globs = "*.ttl.gz *.owl.gz *.rdf.gz *.n3.gz *.jsonld.gz *.nq.gz *.nt.gz"
-        loop = (
-            f'for f in {globs}; do [ -f "$f" ] || continue; '
-            'gunzip -fk "$f" 2>/dev/null || true; done'
-        )
-    else:
-        loop = (
-            'for f in *.gz; do [ -f "$f" ] || continue; '
-            'case "$f" in *.tar.gz) continue;; esac; '
-            'gunzip -fk "$f" 2>/dev/null || true; done'
-        )
-    # Fix extensionless files (e.g., *_nt_latest -> *_nt_latest.nt)
-    fix_extensions = 'for f in *_nt_latest *_nt; do [ -f "$f" ] && [ ! -f "${f}.nt" ] && mv "$f" "${f}.nt"; done 2>/dev/null || true'
-    return ["echo 'Decompressing .gz files ...'", loop, fix_extensions]
+    del include_data_formats
+    loop = (
+        'for f in *.gz; do [ -f "$f" ] || continue; '
+        'case "$f" in *.tar.gz|*.ttl.gz|*.nt.gz|*.nq.gz|*.trig.gz|*.n3.gz) continue;; esac; '
+        'gunzip -fk "$f" 2>/dev/null || true; done'
+    )
+    return ["echo 'Decompressing .gz files to be converted ...'", loop]
 
 
 def _convert_rdfxml_steps() -> list[str]:

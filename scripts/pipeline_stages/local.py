@@ -12,11 +12,11 @@ from typing import Any
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
 from rdfsolve.qlever.inputs import (
-    expand_inputs,
+    convert_trig,
     graph_input_directory,
     index_command,
+    index_inputs,
     mapped_input_files,
-    rdf_input_files,
 )
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
@@ -214,9 +214,10 @@ class LocalMiningStage(Stage):
         settings_json = config.get("index", "SETTINGS_JSON")
 
         directories = [graph_input_directory(workdir, graph) for graph in source.graph_sources] or [workdir]
-        expanded = [path for directory in directories for path in expand_inputs(directory)]
+        # Compressed inputs are streamed to the index, not decompressed; TriG is converted.
+        expanded = [path for directory in directories for path in convert_trig(directory)]
         try:
-            has_inputs = all(rdf_input_files(directory) for directory in directories)
+            has_inputs = all(index_inputs(directory) for directory in directories)
             urls = list(source.download_urls)
             if needs_download(workdir, urls, has_inputs=has_inputs):
                 if not skip_download and not self.config.no_download:
@@ -228,7 +229,7 @@ class LocalMiningStage(Stage):
                     # The server is asked about the files only in a run that asks for updates.
                     head = server_state if self.config.update_downloads else (lambda url: None)
                     write_record(workdir, urls, head)
-                    expanded.extend(path for directory in directories for path in expand_inputs(directory))
+                    expanded.extend(path for directory in directories for path in convert_trig(directory))
             if source.graph_sources:
                 mapped = mapped_input_files(workdir, list(source.graph_sources))
                 for graph, fields in source.graph_sources.items():
@@ -237,7 +238,7 @@ class LocalMiningStage(Stage):
                     if found != expected:
                         raise ValueError(f"Graph {graph} has {found} input files; expected {expected}")
             else:
-                mapped = [(path, "") for path in rdf_input_files(workdir)]
+                mapped = [(path, "") for path in index_inputs(workdir)]
             if not mapped:
                 raise ValueError(f"No prepared RDF inputs in {workdir}")
         except BaseException:
@@ -247,11 +248,12 @@ class LocalMiningStage(Stage):
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
+        index_name = config.get("data", "NAME", fallback=source.name)
         cmd = index_command(
             self.config.data_dir / "qlever.sif",
             self.config.data_dir,
             workdir,
-            config.get("data", "NAME", fallback=source.name),
+            index_name,
             settings_path,
             mapped,
             parallel=config.get("index", "PARALLEL_PARSING"),
@@ -314,6 +316,10 @@ class LocalMiningStage(Stage):
                 log.warning(f"    Counting the repaired files: {error}")
                 counts = count()
             write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
+            built = json.loads((workdir / f"{index_name}.meta-data.json").read_text(encoding="utf-8"))
+            if not built["num-triples"]["normal"]:
+                # qlever-index builds an empty index from input it cannot read (gzip) and succeeds.
+                raise ValueError(f"The index of {index_name} holds no triple")
         finally:
             census.shutdown(cancel_futures=True)
             for path in expanded:

@@ -273,9 +273,11 @@
     RDF Portal mirrors the MediaDive RDF of DSMZ.
 - left: glytoucan
   right: rdfportal.glytoucan
-  relation: distribution_of
+  relation: version_of
   note: >-
-    RDF Portal mirrors the GlyTouCan RDF (graph rdf.glycoinfo.org/glytoucan).
+    RDF Portal's GlyTouCan files are a 2015 release (graph rdf.glycoinfo.org/glytoucan, 1.63 M
+    triples); ts.glytoucan.org serves the current one (rdf.glytoucan.org/* graphs, 4.1 M triples,
+    2026-10-05), with no dump: glytoucan is mined remotely (owner, 2026-10-05).
 - left: mbgd
   right: rdfportal.mbgd
   relation: distribution_of

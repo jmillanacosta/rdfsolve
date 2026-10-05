@@ -69,3 +69,14 @@ def test_nothing_is_written_without_a_change(tmp_path):
     data.write_text("<urn:a> <urn:p> <urn:o> .\n")
     assert repair_inputs(tmp_path, [data]) == []
     assert not (tmp_path / REPAIRS_FILE).exists() and not (tmp_path / "ok.nt.part").exists()
+
+
+def test_a_compressed_input_is_repaired_compressed(tmp_path):
+    import gzip
+
+    data = tmp_path / "onco.nt.gz"
+    with gzip.open(data, "wt") as stream:
+        stream.write(f"<urn:a> <urn:p> {SICI} .\n")
+    assert len(repair_inputs(tmp_path, [data])) == 1
+    with gzip.open(data, "rt") as stream:
+        assert "%3C141" in stream.read()

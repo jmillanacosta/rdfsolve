@@ -4,7 +4,14 @@ import shlex
 from pathlib import Path
 
 from rdfsolve.qlever.datatypes import _format
-from rdfsolve.qlever.inputs import expand_inputs, index_command, qlever_format, rdf_input_files
+from rdfsolve.qlever.inputs import (
+    FEED,
+    expand_inputs,
+    index_command,
+    index_inputs,
+    qlever_format,
+    rdf_input_files,
+)
 
 
 def test_n3_files_are_turtle_inputs(tmp_path):
@@ -65,3 +72,31 @@ def test_trig_is_indexed_as_n_quads(tmp_path):
     ]
     assert rdf_input_files(tmp_path) == [converted], "The TriG file itself is not indexed"
     assert qlever_format(converted) == "nq"
+
+
+def test_compressed_inputs_are_streamed_through_pipes(tmp_path):
+    import gzip
+
+    (tmp_path / "rdf").mkdir()
+    with gzip.open(tmp_path / "rdf" / "a.nt.gz", "wt") as stream:
+        stream.write("<urn:a> <urn:p> _:b .\n")
+    (tmp_path / "rdf" / "b.ttl").write_text("<urn:b> <urn:p> <urn:o> .\n")
+    with gzip.open(tmp_path / "rdf" / "b.ttl.gz", "wt") as stream:
+        stream.write("<urn:b> <urn:p> <urn:o> .\n")
+    inputs = index_inputs(tmp_path)
+    assert [p.name for p in inputs] == ["a.nt.gz", "b.ttl"], "A plain copy is used when present"
+    assert qlever_format(inputs[0]) == "nt"
+    index_command(
+        Path("/data/qlever.sif"),
+        tmp_path,
+        tmp_path,
+        "t",
+        tmp_path / "s.json",
+        [(p, "") for p in inputs],
+        parallel="false",
+        buffer="10M",
+        memory="1G",
+    )
+    script = (tmp_path / "index-command.sh").read_text()
+    assert "-f .index-pipes/0.nt -F nt -f rdf/b.ttl -F ttl" in script
+    assert (tmp_path / FEED).read_text().endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt\n")

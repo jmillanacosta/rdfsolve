@@ -149,9 +149,12 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     stage._prepare_qleverfile(workdir, source, 7020)
     run = subprocess.run
     calls = []
-    monkeypatch.setattr(
-        "scripts.pipeline_stages.local.subprocess.run", lambda cmd, **kw: calls.append(cmd)
-    )
+    def index(cmd, **kw):
+        # As qlever-index: the index states its triples.
+        calls.append(cmd)
+        (workdir / "fixture.meta-data.json").write_text('{"num-triples": {"normal": 4}}')
+
+    monkeypatch.setattr("scripts.pipeline_stages.local.subprocess.run", index)
     stage._execute_qleverfile(workdir, source)
     assert calls[-1][-1] == str(workdir / "index-command.sh")
     import shlex

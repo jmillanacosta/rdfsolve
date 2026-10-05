@@ -5,6 +5,7 @@ import hashlib
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import IO, cast
 
 RDF_SUFFIXES = ("ttl", "nt", "nq", "trig", "n3")
 
@@ -13,10 +14,16 @@ _QLEVER_FORMATS = {"ttl": "ttl", "nt": "nt", "nq": "nq", "trig": "ttl", "n3": "t
 
 _GZIP_MAGIC = b"\x1f\x8b"
 
+# The named pipes through which compressed inputs reach qlever-index, in the work folder.
+PIPES = ".index-pipes"
+# The script that fills them, beside the index command.
+FEED = "index-feed.sh"
+FEED_PIPES = "index-feed.pipes"
+
 
 def qlever_format(path: Path) -> str:
-    """Map a prepared input to a QLever input format."""
-    suffix = path.suffix.lstrip(".").lower()
+    """Map a prepared input to a QLever input format (a .gz suffix is skipped)."""
+    suffix = (path.with_suffix("") if path.suffix == ".gz" else path).suffix.lstrip(".").lower()
     try:
         return _QLEVER_FORMATS[suffix]
     except KeyError:
@@ -55,8 +62,8 @@ def unusable_inputs(workdir: Path) -> list[tuple[Path, str]]:
 
 
 def _converted(trig: Path) -> Path:
-    """Return the N-Quads file that a TriG input is converted to."""
-    return trig.with_name(f"{trig.name}.nq")
+    """Return the N-Quads file that a TriG input (plain or compressed) is converted to."""
+    return trig.with_name(f"{trig.name.removesuffix('.gz')}.nq")
 
 
 def convert_trig(workdir: Path) -> list[Path]:
@@ -69,14 +76,17 @@ def convert_trig(workdir: Path) -> list[Path]:
 
     created: list[Path] = []
     for directory in (workdir, workdir / "rdf"):
-        for trig in sorted(directory.glob("*.trig")):
+        for trig in sorted([*directory.glob("*.trig"), *directory.glob("*.trig.gz")]):
             target = _converted(trig)
             if not trig.is_file() or target.exists():
                 continue
             partial = target.with_name(f"{target.name}.part")
             try:
-                with trig.open("rb") as stream, partial.open("wb") as output:
-                    quads = parse(stream, RdfFormat.TRIG, lenient=True)
+                with (
+                    gzip.open(trig, "rb") if trig.suffix == ".gz" else trig.open("rb") as stream,
+                    partial.open("wb") as output,
+                ):
+                    quads = parse(cast("IO[bytes]", stream), RdfFormat.TRIG, lenient=True)
                     serialize(quads, output, RdfFormat.N_QUADS)
                 partial.replace(target)
             except BaseException:
@@ -124,6 +134,26 @@ def rdf_input_files(workdir: Path) -> list[Path]:
     return sorted(found.values())
 
 
+def index_inputs(workdir: Path) -> list[Path]:
+    """Return the inputs to index: the plain files, and the compressed ones without a plain copy.
+
+    A compressed input is streamed to the index (index_command), not decompressed beside it:
+    RDF Portal's DDBJ is 508 GB compressed, several TB plain.
+    """
+    plain = rdf_input_files(workdir)
+    names = {path.name for path in plain}
+    compressed = []
+    for path in cached_archives(workdir):
+        if path.name.removesuffix(".gz") in names:
+            continue
+        if path.name.endswith(".trig.gz") and _converted(path).is_file():
+            continue
+        if not path.stat().st_size or not _is_gzip(path):
+            raise ValueError(f"Missing, empty or not gzip RDF input: {path}")
+        compressed.append(path)
+    return sorted([*plain, *compressed])
+
+
 def graph_input_directory(workdir: Path, graph: str) -> Path:
     """Return the input directory for a named graph."""
     return workdir / "graphs" / hashlib.sha256(graph.encode()).hexdigest()
@@ -133,10 +163,10 @@ def mapped_input_files(workdir: Path, graphs: list[str]) -> list[tuple[Path, str
     """Require prepared triple files for every mapped graph."""
     inputs: list[tuple[Path, str]] = []
     for graph in graphs:
-        files = rdf_input_files(graph_input_directory(workdir, graph))
+        files = index_inputs(graph_input_directory(workdir, graph))
         if not files:
             raise ValueError(f"No prepared inputs for graph {graph}")
-        if any(path.suffix not in {".ttl", ".nt"} for path in files):
+        if any(qlever_format(path) not in {"ttl", "nt"} for path in files):
             raise ValueError(f"Mapped graph {graph} requires triple inputs")
         inputs.extend((path, graph) for path in files)
     return inputs
@@ -160,21 +190,55 @@ def index_command(
     file list does not pass through the command line of Singularity, which refuses a long one
     (WikiPathways: 12,543 files). Each input stays its own file, so that blank nodes of different
     documents stay apart.
+
+    qlever-index does not read gzip: given a .gz file it builds an empty index and reports
+    success. A compressed input is given as a named pipe that one feeder fills with the
+    decompressed file, in the order of the inputs, which is the order qlever-index reads them;
+    no plain copy is written. When qlever-index ends, the feeder is stopped.
     """
     import os
     import shlex
 
     args = ["qlever-index", "-i", name, "-s", str(settings_path)]
+    feeds: list[tuple[str, str]] = []
     for path, graph in mapped:
-        args += ["-f", os.path.relpath(path, workdir), "-F", qlever_format(path)]
+        relative = os.path.relpath(path, workdir)
+        if path.suffix == ".gz":
+            pipe = f"{PIPES}/{len(feeds)}.{qlever_format(path)}"
+            feeds.append((relative, pipe))
+            relative = pipe
+        args += ["-f", relative, "-F", qlever_format(path)]
         if graph:
             args += ["-g", graph]
     args += ["-p", parallel, "-b", buffer, "-m", memory]
+    lines = [
+        "#!/bin/bash",
+        "# Written by rdfsolve: the index command, run inside the container.",
+        "set -euo pipefail",
+        f"cd {shlex.quote(str(workdir))}",
+    ]
+    if feeds:
+        # The feed is a script of its own: one argument cannot hold it (PDB: 220,000 files).
+        (workdir / FEED_PIPES).write_text("".join(f"{pipe}\n" for _, pipe in feeds))
+        (workdir / FEED).write_text(
+            "set -euo pipefail\n"
+            + "".join(f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)}\n" for src, pipe in feeds)
+        )
+        lines += [
+            f"rm -rf {PIPES} && mkdir {PIPES}",
+            f"xargs -d '\\n' -a {FEED_PIPES} mkfifo --",
+            # The feeder is a process group of its own: a gzip waiting for its pipe is stopped
+            # with it when qlever-index ends early.
+            f"setsid bash {FEED} &",
+            "feeder=$!",
+            f"trap 'kill -- -$feeder 2>/dev/null || true; rm -rf {PIPES}' EXIT",
+            shlex.join(args),
+            "wait $feeder",
+        ]
+    else:
+        lines.append(f"exec {shlex.join(args)}")
     script = workdir / "index-command.sh"
-    script.write_text(
-        "#!/bin/bash\n# Written by rdfsolve: the index command, run inside the container.\n"
-        f"set -euo pipefail\ncd {shlex.quote(str(workdir))}\nexec {shlex.join(args)}\n"
-    )
+    script.write_text("\n".join(lines) + "\n")
     return [
         "singularity",
         "exec",

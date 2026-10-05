@@ -18,6 +18,7 @@ changed line is recorded with its original text as a data-quality finding beside
 
 from __future__ import annotations
 
+import gzip
 import json
 import math
 import re
@@ -117,9 +118,11 @@ def repair_file(path: Path) -> list[dict[str, Any]]:
     """Write the unreadable terms of one N-Triples or N-Quads file anew; return the changes."""
     changes: list[dict[str, Any]] = []
     partial = path.with_name(f"{path.name}.part")
+    # A compressed input is read and written compressed (it is streamed to the index).
+    opener: Any = gzip.open if path.suffix == ".gz" else open
     with (
-        path.open(encoding="utf-8", newline="") as stream,
-        partial.open("w", encoding="utf-8", newline="") as out,
+        opener(path, "rt", encoding="utf-8", newline="") as stream,
+        opener(partial, "wt", encoding="utf-8", newline="") as out,
     ):
         for number, line in enumerate(stream, 1):
             repaired, kinds = repair_line(line)
@@ -144,7 +147,10 @@ def repair_file(path: Path) -> list[dict[str, Any]]:
 def repair_inputs(workdir: Path, paths: list[Path]) -> list[dict[str, Any]]:
     """Repair the line-based inputs and record the changes in WORKDIR/REPAIRS_FILE."""
     changes = [
-        change for path in paths if path.suffix in LINE_FORMATS for change in repair_file(path)
+        change
+        for path in paths
+        if (path.with_suffix("") if path.suffix == ".gz" else path).suffix in LINE_FORMATS
+        for change in repair_file(path)
     ]
     if changes:
         record = {
