@@ -72,10 +72,13 @@ def test_the_schema_is_read_from_the_void_and_its_gaps_are_mined():
     assert found == {
         (str(E.A), str(E.link), str(E.B), 1, "void"),
         (str(E.A), str(E.name), "Literal", 1, "void"),
-        (str(E.A), str(E.link), "Resource", 1, "mined"),
+        (str(E.A), str(E.link), "Resource", None, "mined"),
     }, "The link to B is typed in another graph; u1 has no class"
     assert schema.about.class_entity_counts == {str(E.A): 1}
     record = miner.last_report.config["void_source"]
+    assert [s["objects_by_class"] for s in record["object_samples"]] == [
+        {str(E.B): 1, "Resource": 1}
+    ], "A sample of the objects: b1 has class B (in another graph), u1 none"
     assert [
         (s["property"], s["triples_at_least"], s["example"]["subject"]["value"])
         for s in record["untyped_subjects"]

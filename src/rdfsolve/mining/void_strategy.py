@@ -147,6 +147,7 @@ class VoidStrategy(MiningStrategy):
         drift_largest: int = 20,
         drift_random: int = 20,
         language_sample: int = 10_000,
+        object_sample: int = 1_000,
         seed: int = 0,
     ) -> None:
         """Keep the scoped VoID description and the limits of the light mining."""
@@ -159,6 +160,7 @@ class VoidStrategy(MiningStrategy):
         self.drift_largest = drift_largest
         self.drift_random = drift_random
         self.language_sample = language_sample
+        self.object_sample = object_sample
         self.random = random.Random(seed)  # noqa: S311 (a sample of patterns, not a secret)
         self.examples: list[PatternExample] = []
         self.labels: list[Any] = []
@@ -166,6 +168,8 @@ class VoidStrategy(MiningStrategy):
         self.entity_counts: dict[str, int] = {}
         self.record: dict[str, Any] = {}
         self.untyped_subjects: list[dict[str, Any]] = []
+        self.object_samples: list[dict[str, Any]] = []
+        self._void_patterns: list[SchemaPattern] = []
 
     @property
     def name(self) -> str:
@@ -182,6 +186,7 @@ class VoidStrategy(MiningStrategy):
         for pattern in patterns:
             pattern.count_semantics = "endpoint_default"
         self.entity_counts = dict(schema.about.class_entity_counts)
+        self._void_patterns = list(patterns)
         for partition in set(self.void.objects(None, VOID.classPartition)):
             cls = self.void.value(partition, VOID["class"])
             subjects = optional_count(self.void.value(partition, VOID.distinctSubjects))
@@ -201,6 +206,7 @@ class VoidStrategy(MiningStrategy):
         self._class_samples(context.helper, patterns, failures, context.graph_uris)
         self._examples(context.helper, patterns, failures, context.graph_uris)
         self.record["untyped_subjects"] = self.untyped_subjects
+        self.record["object_samples"] = self.object_samples
         self.record["drift"] = self._drift(context.helper, patterns, failures, context.graph_uris)
         context.report.record_outcome(QueryOutcome(state="complete", gaps=failures))
         context.report.report.config["void_source"] = self.record
@@ -264,8 +270,12 @@ class VoidStrategy(MiningStrategy):
     ) -> list[SchemaPattern]:
         """Find one witness of each gap; a found gap becomes a pattern with the VoID's count."""
         found: list[SchemaPattern] = []
+        known = {(p.subject_class, p.property_uri, p.object_class) for p in self._void_patterns}
         for gap in gaps:
             edge = self._edge(graph_uris, gap.property_uri)
+            if gap.kind == "objects":
+                found += self._type_objects(helper, gap, known, failures, graph_uris)
+                continue
             if gap.kind == "subjects":
                 query = f"SELECT ?s ?o WHERE {{ {edge} {self._untyped('?s')} }} LIMIT 1"
                 classes = []
@@ -322,6 +332,55 @@ class VoidStrategy(MiningStrategy):
                 )
             )
         return found
+
+    def _type_objects(
+        self,
+        helper: SparqlHelper,
+        gap: VoidGap,
+        known: set[tuple[str, str, str]],
+        failures: list[QueryFailure],
+        graph_uris: list[str] | None,
+    ) -> list[SchemaPattern]:
+        """Read the classes of a sample of the IRI objects that the VoID gives no class for.
+
+        A VoID with few linksets (Bgee's of 2023: 22) leaves most links without an object class;
+        searching the whole property for an object without a class does not end in time (Bgee:
+        814 M triples). A sample of the objects says which classes they have and how many have
+        none; each class not in the VoID becomes a pattern, without a count (the sample is not
+        one), and the sample is recorded.
+        """
+        edge = self._edge(graph_uris, gap.property_uri)
+        typed = self._typed("?s", gap.subject_class or "")
+        query = (
+            f"SELECT ?c (COUNT(DISTINCT ?o) AS ?n) WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ {edge} "
+            f"FILTER(isIRI(?o)) {typed} }} LIMIT {self.object_sample} }} OPTIONAL {{ "
+            f"{{ ?o a ?c }} UNION {{ GRAPH ?_t {{ ?o a ?c }} }} }} }} GROUP BY ?c"
+        )
+        rows = self._ask(
+            helper, query, "void/gap/objects", failures, graph_uris, [gap.subject_class or ""]
+        )
+        if rows is None:
+            return []
+        sample = {r["c"]["value"] if "c" in r else "Resource": int(r["n"]["value"]) for r in rows}
+        self.object_samples.append(
+            {
+                "subject_class": gap.subject_class,
+                "property": gap.property_uri,
+                "triples_without_object_class_in_void": gap.triples,
+                "sample": self.object_sample,
+                "objects_by_class": sample,
+            }
+        )
+        return [
+            SchemaPattern(
+                subject_class=gap.subject_class or "",
+                property_uri=gap.property_uri,
+                object_class=cls,
+                evidence_source="mined",
+            )
+            for cls in sorted(sample)
+            if (gap.subject_class, gap.property_uri, cls) not in known
+        ]
 
     def _blank_predicates(
         self,
