@@ -17,6 +17,18 @@ from .config import PipelineConfig
 log = logging.getLogger(__name__)
 
 
+def rdf_only(graph, what: str):
+    """Return *graph* without the triples whose terms are not RDF IRIs, which no RDF syntax
+    writes (rdfsolve.schema_models.iri_quality), and log how many were left out."""
+    from rdfsolve.schema_models.iri_quality import rdf_terms_only
+
+    before = len(graph)
+    rdf_terms_only(graph)
+    if len(graph) < before:
+        log.warning("%s: %d triples with terms that are not RDF IRIs left out", what, before - len(graph))
+    return graph
+
+
 def _logged_step(step: str):
     """Log when an output step starts and ends, so that a long step is seen in the job log."""
 

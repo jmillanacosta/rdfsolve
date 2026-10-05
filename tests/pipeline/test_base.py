@@ -176,3 +176,25 @@ def test_pipeline_writes_discovery_and_usage_scoped_acquisition(monkeypatch, tmp
     assert chebi["graph_evidence"][0]["access_context"] == "remote_endpoint"
     assert chebi["reference_sources"][0]["source_url"].endswith("/chebi.owl")
     assert schema.about.ontology_graph_uris == ["http://example.org/ontology"]
+
+
+def test_an_exported_graph_leaves_out_terms_that_are_not_rdf_iris(caplog):
+    """A dataset's metadata can name a namespace with a leading space; the graph is written
+    without that triple, not refused."""
+    from rdflib import Graph, Literal, URIRef
+
+    from scripts.pipeline_stages.base import rdf_only
+
+    graph = Graph()
+    graph.add(
+        (
+            URIRef("urn:dataset"),
+            URIRef("http://rdfs.org/ns/void#uriSpace"),
+            URIRef(" http://identifiers.org/obo.aeo/"),
+        )
+    )
+    graph.add((URIRef("urn:dataset"), URIRef("http://purl.org/dc/terms/title"), Literal("x")))
+    with caplog.at_level("WARNING"):
+        written = rdf_only(graph, "metadata").serialize(format="turtle")
+    assert "obo.aeo" not in written and '"x"' in written
+    assert "1 triples with terms that are not RDF IRIs left out" in caplog.text

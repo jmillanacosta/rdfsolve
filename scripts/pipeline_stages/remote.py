@@ -10,7 +10,7 @@ from typing import Any
 
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
-from .base import PartialMiningError, Stage
+from .base import PartialMiningError, Stage, rdf_only
 from .config import Source
 
 log = logging.getLogger(__name__)
@@ -239,7 +239,7 @@ class RemoteMiningStage(Stage):
                                 include_examples=False,
                                 trim_descriptions=self.config.trim_descriptions,
                             )
-                            ont_ttl = ontology_graph.serialize(format="turtle")
+                            ont_ttl = rdf_only(ontology_graph, "ontology").serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
                         raise RuntimeError(
@@ -252,7 +252,7 @@ class RemoteMiningStage(Stage):
                             result.metadata, self.config.trim_descriptions
                         ).to_rdf_graph()
                         if metadata_graph:
-                            meta_ttl = metadata_graph.serialize(format="turtle")
+                            meta_ttl = rdf_only(metadata_graph, "metadata").serialize(format="turtle")
                             metadata_path.write_text(meta_ttl, encoding="utf-8")
                     except Exception as e:
                         raise RuntimeError(
