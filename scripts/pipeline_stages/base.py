@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import subprocess
@@ -14,6 +15,24 @@ from typing import Any
 from .config import PipelineConfig
 
 log = logging.getLogger(__name__)
+
+
+def _logged_step(step: str):
+    """Log when an output step starts and ends, so that a long step is seen in the job log."""
+
+    def wrap(method):
+        @functools.wraps(method)
+        def run(self, *args, **kwargs):
+            started = time.monotonic()
+            log.info("Output step %s started", step)
+            try:
+                return method(self, *args, **kwargs)
+            finally:
+                log.info("Output step %s finished in %.1f s", step, time.monotonic() - started)
+
+        return run
+
+    return wrap
 
 
 class PartialMiningError(RuntimeError):
@@ -140,6 +159,7 @@ class Stage:
             raise error(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
 
 
+    @_logged_step("ontology discovery")
     def _save_ontology_discovery(
         self,
         schema: Any,
@@ -208,6 +228,7 @@ class Stage:
         acquisition_path = output_dir / f"{name}{suffix}_ontology_acquisition.json"
         acquisition_path.write_text(acquisition.model_dump_json(indent=2), encoding="utf-8")
 
+    @_logged_step("declared artifacts")
     def _save_declared_artifacts(
         self,
         source: Any,
@@ -236,6 +257,7 @@ class Stage:
             path = output_dir / f"{name}{suffix}_declared_artifacts.json"
             path.write_text(bundle.model_dump_json(indent=2), encoding="utf-8")
 
+    @_logged_step("property usage evidence")
     def _save_property_usage_evidence(
         self,
         schema: Any,
@@ -290,6 +312,7 @@ class Stage:
         )
         return cleaned
 
+    @_logged_step("schema outputs")
     def _save_schema_outputs(
         self,
         schema: Any,
@@ -320,6 +343,7 @@ class Stage:
             from rdfsolve.mining.navigation import find_tested_paths
 
             # Only paths that instances of the data follow are written (owner, 2026-09-30).
+            log.info("[%s] Navigation: testing paths (budget %s s)", name, self.config.navigation_budget)
             schema.navigation = find_tested_paths(
                 schema,
                 helper,
@@ -331,6 +355,7 @@ class Stage:
         if self.config.restriction_patterns and helper is not None:
             from rdfsolve.mining.restrictions import mine_restriction_patterns
 
+            log.info("[%s] Restriction patterns: mining", name)
             schema.restriction_patterns = mine_restriction_patterns(
                 helper, graph_uris=restriction_scope(schema.about)
             )

@@ -8,6 +8,7 @@ import logging
 import os
 import secrets
 import socket
+import threading
 import time
 import warnings
 from collections.abc import Iterator
@@ -35,6 +36,8 @@ from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.sparql_terms import writable_query
 
 logger = logging.getLogger(__name__)
+# Seconds between the log lines of a query that is still running.
+HEARTBEAT_S = 300.0
 
 
 class SelectExecution(TypedDict, total=False):
@@ -596,6 +599,15 @@ class SparqlHelper:
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         started = time.monotonic()
         token = _active_record.set(record)
+        label = f"{query_type} [{purpose or '-'}]"
+        done = threading.Event()
+
+        def heartbeat() -> None:
+            """Log the query while it runs, so that a long query is seen in the job log."""
+            while not done.wait(HEARTBEAT_S):
+                logger.info("%s still running after %.0f s", label, time.monotonic() - started)
+
+        threading.Thread(target=heartbeat, daemon=True).start()
         try:
             result = self._execute_request(
                 query, accept, query_type, parse_json, purpose, record=record
@@ -610,9 +622,16 @@ class SparqlHelper:
             record.error_message = str(error)
             raise
         finally:
+            done.set()
             _active_record.reset(token)
             self._record_query(record)
             record.elapsed_seconds = time.monotonic() - started
+            logger.info(
+                "%s %s in %.1f s",
+                label,
+                "completed" if record.success else "failed",
+                record.elapsed_seconds,
+            )
 
     def _execute_request(
         self,
@@ -679,11 +698,8 @@ class SparqlHelper:
 
                 parsed = json.loads(result) if parse_json else result
 
-                logger.info(
-                    "%s completed (%s)",
-                    query_type,
-                    "HTTP fallback used" if fallback_used else "no HTTP fallback",
-                )
+                if fallback_used:
+                    logger.info("%s [%s] used the HTTP fallback", query_type, purpose or "-")
                 return parsed
 
             except requests.exceptions.HTTPError as e:

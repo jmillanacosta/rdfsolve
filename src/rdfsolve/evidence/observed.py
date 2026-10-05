@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
@@ -9,6 +10,8 @@ from pydantic import BaseModel, Field, computed_field
 from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.sparql_helper import SparqlHelper
+
+logger = logging.getLogger(__name__)
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
@@ -309,8 +312,15 @@ def collect_property_usage_evidence(
 
     shared = {k: v for k, v in (shared_extensions or {}).items() if v in classes}
     measured = [c for c in classes if c not in shared]
-    for offset in range(0, len(measured), max(1, batch_size)):
-        batch = measured[offset : offset + max(1, batch_size)]
+    size = max(1, batch_size)
+    for offset in range(0, len(measured), size):
+        batch = measured[offset : offset + size]
+        logger.info(
+            "Property usage evidence: batch %d/%d (%d classes)",
+            offset // size + 1,
+            -(-len(measured) // size),
+            len(batch),
+        )
         outcome = query_with_bisect(
             batch,
             graph_scope or None,

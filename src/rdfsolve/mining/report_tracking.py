@@ -181,6 +181,7 @@ class ReportCollector:
             started_at=datetime.now(timezone.utc).isoformat(),
         )
         self._report.phases.append(phase)
+        logger.info("Phase %s started", name)
         return phase
 
     def finish_phase(
@@ -200,6 +201,13 @@ class ReportCollector:
             )
         phase.items_discovered = items
         phase.error = error
+        logger.info(
+            "Phase %s finished: %d items in %.1f s%s",
+            phase.name,
+            items,
+            phase.duration_s or 0.0,
+            f" ({error})" if error else "",
+        )
         self.flush()
 
     def set_abort_reason(self, reason: str) -> None:
