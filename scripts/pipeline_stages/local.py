@@ -113,6 +113,10 @@ class LocalMiningStage(Stage):
                         )
                         continue
 
+                if self.config.index_only:
+                    log.info("  Index only: %s is not mined", source.name)
+                    continue
+
                 log.info(f"  Starting QLever on port {port}...")
                 server_pid = self._qlever_start(workdir, source.name, port)
 

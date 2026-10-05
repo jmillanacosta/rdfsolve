@@ -298,3 +298,27 @@ def test_a_failed_stage_stops_the_run(tmp_path):
     assert results["failed"]["state"] == "failed"
     assert "after" not in results
     assert exit_code(results) == 1
+
+
+def test_index_only_does_not_mine(tmp_path, monkeypatch):
+    registry = tmp_path / "sources.yaml"
+    registry.write_text(yaml.safe_dump([{"name": "fixture", "local_provider": "fixture"}]))
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        no_download=True,
+        index_only=True,
+    )
+    config.load_sources()
+    config.archive_run_inputs()
+
+    def no_server(*args):
+        raise AssertionError("An index-only run starts no server")
+
+    monkeypatch.setattr(LocalMiningStage, "_ensure_qlever_image", lambda self: None)
+    monkeypatch.setattr(LocalMiningStage, "_has_qlever_index", lambda *args: True)
+    monkeypatch.setattr(LocalMiningStage, "_qlever_start", no_server)
+    result = Pipeline(config).add_stage(LocalMiningStage).run()[LocalMiningStage.name]
+    assert not result["mined"] and not result["failed"]

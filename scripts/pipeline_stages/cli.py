@@ -419,6 +419,11 @@ Examples:
         help="Use existing RDF and indices; do not fetch source data",
     )
     parser.add_argument(
+        "--index-only",
+        action="store_true",
+        help="Download and index local sources, and do not mine them",
+    )
+    parser.add_argument(
         "--parallelism", type=int, default=4, help="Maximum concurrent remote hosts"
     )
     parser.add_argument("--chunk-size", type=int, default=10000, help="Rows per query page")
@@ -490,6 +495,7 @@ Examples:
     config.no_download = args.no_download
     config.update_downloads = args.update_downloads
     config.no_index = args.no_index
+    config.index_only = args.index_only
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file

@@ -109,6 +109,8 @@ class PipelineConfig:
     # Ask the server for updates of the files of a local source; download and index again
     update_downloads: bool = False
     no_index: bool = False
+    # Download and index local sources only (prepare their indexes for a later mining run).
+    index_only: bool = False
 
     skip_remote: bool = False
     skip_local: bool = False
