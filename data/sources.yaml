@@ -3635,7 +3635,12 @@
   void_iri: http://rdfportal.org/dataset/pdbj
   graph_uris:
   - http://rdfportal.org/dataset/pdb
-  download_nt: https://rdfportal.org/ntriples/pdb/latest/pdbx-v50.nt.gz
+  download_nt:
+  - https://rdfportal.org/ntriples/pdb/latest/pdb/
+  - https://rdfportal.org/ntriples/pdb/latest/cc/
+  - https://rdfportal.org/ntriples/pdb/latest/prd/
+  - https://rdfportal.org/ntriples/pdb/latest/family/
+  notes: RDF Portal's PDB data, one file per entry, with chemical components, PRD and families; the validation reports (vrpt/) are another dataset and pdbx-v50.nt.gz is the PDBx ontology (owner, 2026-10-05).
   bioregistry_prefix: pdb
   keywords:
   - Drug/Chemical
@@ -5144,7 +5149,7 @@
   science_area: life sciences
 - name: earthmetabolome
   dataset_kind: instance
-  endpoint: https://kg.earthmetabolome.org/metrin/api/
+  endpoint: https://qlever.earthmetabolome.org/api/metrin-kg
   download_tgz: https://zenodo.org/api/records/15689187/files/metrin-kg.tar.gz/content
   keywords:
   - metabolite
@@ -5886,15 +5891,15 @@
   download_n3:
   - https://zenodo.org/api/records/7252155/files/Hsa-u.c4-0.n3/content
   - https://zenodo.org/api/records/7252155/files/Mmu-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Rno-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Dre-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Dme-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Cel-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Sce-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Spo-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Gga-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Cfa-u.c4-0.n3/content
-  - https://zenodo.org/api/records/7252155/files/Mcc-u.c4-0.n3/content
+  - https://zenodo.org/api/records/7252155/files/Rno-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Dre-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Dme-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Cel-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Sce-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Spo-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Gga-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Cfa-u.c3-1.n3/content
+  - https://zenodo.org/api/records/7252155/files/Mcc-u.c3-1.n3/content
   keywords:
   - gene expression
   - gene
