@@ -4,7 +4,7 @@ import shlex
 from pathlib import Path
 
 from rdfsolve.qlever.datatypes import _format
-from rdfsolve.qlever.inputs import index_command, qlever_format, rdf_input_files
+from rdfsolve.qlever.inputs import expand_inputs, index_command, qlever_format, rdf_input_files
 
 
 def test_n3_files_are_turtle_inputs(tmp_path):
@@ -50,3 +50,18 @@ def test_n3_is_counted_as_turtle():
     from pyoxigraph import RdfFormat
 
     assert _format("n3") == RdfFormat.TURTLE
+
+
+def test_trig_is_indexed_as_n_quads(tmp_path):
+    (tmp_path / "rdf").mkdir()
+    trig = tmp_path / "rdf" / "proteinatlas.trig"
+    trig.write_text("@prefix : <urn:> .\n:g { :a :p :o . }\n:b :p :o .\n")
+    created = expand_inputs(tmp_path)
+    converted = tmp_path / "rdf" / "proteinatlas.trig.nq"
+    assert created == [converted]
+    assert sorted(converted.read_text().splitlines()) == [
+        "<urn:a> <urn:p> <urn:o> <urn:g> .",
+        "<urn:b> <urn:p> <urn:o> .",
+    ]
+    assert rdf_input_files(tmp_path) == [converted], "The TriG file itself is not indexed"
+    assert qlever_format(converted) == "nq"

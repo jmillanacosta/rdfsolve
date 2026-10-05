@@ -54,8 +54,40 @@ def unusable_inputs(workdir: Path) -> list[tuple[Path, str]]:
     return problems
 
 
+def _converted(trig: Path) -> Path:
+    """Return the N-Quads file that a TriG input is converted to."""
+    return trig.with_name(f"{trig.name}.nq")
+
+
+def convert_trig(workdir: Path) -> list[Path]:
+    """Write each TriG input as N-Quads beside it. Return the files created.
+
+    QLever reads Turtle and N-Quads, not TriG: a TriG file read as Turtle fails at its first
+    graph block (HPA's nanopublications, 2.3 GB).
+    """
+    from pyoxigraph import RdfFormat, parse, serialize
+
+    created: list[Path] = []
+    for directory in (workdir, workdir / "rdf"):
+        for trig in sorted(directory.glob("*.trig")):
+            target = _converted(trig)
+            if not trig.is_file() or target.exists():
+                continue
+            partial = target.with_name(f"{target.name}.part")
+            try:
+                with trig.open("rb") as stream, partial.open("wb") as output:
+                    quads = parse(stream, RdfFormat.TRIG, lenient=True)
+                    serialize(quads, output, RdfFormat.N_QUADS)
+                partial.replace(target)
+            except BaseException:
+                partial.unlink(missing_ok=True)
+                raise
+            created.append(target)
+    return created
+
+
 def expand_inputs(workdir: Path) -> list[Path]:
-    """Decompress cached inputs beside the archive. Return the files created."""
+    """Decompress cached inputs beside the archive and convert TriG. Return the files created."""
     created: list[Path] = []
     for archive in cached_archives(workdir):
         target = archive.with_suffix("")
@@ -72,7 +104,7 @@ def expand_inputs(workdir: Path) -> list[Path]:
             partial.unlink(missing_ok=True)
             raise
         created.append(target)
-    return created
+    return created + convert_trig(workdir)
 
 
 def rdf_input_files(workdir: Path) -> list[Path]:
@@ -81,6 +113,8 @@ def rdf_input_files(workdir: Path) -> list[Path]:
     for directory in (workdir, workdir / "rdf"):
         for suffix in RDF_SUFFIXES:
             for path in sorted(directory.glob(f"*.{suffix}")):
+                if suffix == "trig" and _converted(path).is_file():
+                    continue
                 if not path.is_file() or path.stat().st_size == 0:
                     raise ValueError(f"Missing or empty RDF input: {path}")
                 previous = found.get(path.name)
