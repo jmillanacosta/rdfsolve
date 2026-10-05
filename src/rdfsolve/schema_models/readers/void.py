@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from rdfsolve.local_rdf import LocalBackend, LocalRdf
@@ -15,6 +15,54 @@ from rdfsolve.schema_models.pattern import SchemaPattern
 
 VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
+
+
+SD = Namespace("http://www.w3.org/ns/sparql-service-description#")
+# The links from a VoID dataset to the parts that describe it.
+_PARTS = (VOID.classPartition, VOID.propertyPartition, VOID.subset, VOID_EXT.datatypePartition)
+
+
+def void_datasets_of_graphs(g: Graph, graph_names: list[str]) -> list[URIRef]:
+    """Return the VoID datasets that a service description gives for the named graphs."""
+    return sorted(
+        {
+            dataset
+            for name in graph_names
+            for named in g.subjects(SD.name, URIRef(name))
+            for dataset in g.objects(named, SD.graph)
+            if isinstance(dataset, URIRef)
+        }
+    )
+
+
+def scope_void_graph(g: Graph, datasets: list[URIRef]) -> Graph:
+    """Return the part of a VoID description that describes DATASETS.
+
+    A description of a whole endpoint (void-generator: IDSM describes 39 graphs and their union)
+    holds every graph's partitions. From each dataset its partitions, subsets and linksets are
+    followed; the end of a linkset that another dataset describes contributes its class only.
+    """
+    scoped = Graph()
+    for prefix, namespace in g.namespaces():
+        scoped.bind(prefix, namespace)
+    seen: set[object] = set()
+    stack: list[object] = list(datasets)
+    while stack:
+        node = stack.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+        for triple in g.triples((node, None, None)):  # type: ignore[arg-type]
+            scoped.add(triple)
+        for part in _PARTS:
+            stack.extend(g.objects(node, part))  # type: ignore[arg-type]
+    for linkset in list(scoped.subjects(VOID.linkPredicate, None)):
+        for end in (VOID.subjectsTarget, VOID.objectsTarget):
+            for target in list(scoped.objects(linkset, end)):
+                if target not in seen:
+                    for cls in g.objects(target, VOID["class"]):
+                        scoped.add((target, VOID["class"], cls))
+    return scoped
 
 
 def void_to_minedschema(void_ttl: str, *, local_backend: LocalBackend = "oxigraph") -> MinedSchema:
@@ -157,11 +205,14 @@ def _extract_patterns_from_void(
                 )
             )
 
-    # Also extract from LinkSets
+    # Linksets give the class at each end of a link (void-generator, as published by IDSM, UniProt,
+    # Rhea, Bgee, SwissLipids). Read with the nested partitions: a description with datatype
+    # partitions states its links between classes only as linksets. A link that a nested
+    # partition already states is not read twice.
     linkset_query = """
     PREFIX void: <http://rdfs.org/ns/void#>
 
-    SELECT ?subjectClass ?predicate ?objectClass ?count
+    SELECT ?subjectClass ?predicate ?objectClass ?count ?subjects ?objects
     WHERE {
         ?ls a void:Linkset .
         ?ls void:subjectsTarget ?st .
@@ -170,31 +221,44 @@ def _extract_patterns_from_void(
         ?ls void:objectsTarget ?ot .
         ?ot void:class ?objectClass .
         OPTIONAL { ?ls void:triples ?count }
+        OPTIONAL { ?ls void:distinctSubjects ?subjects }
+        OPTIONAL { ?ls void:distinctObjects ?objects }
     }
     """
-
-    # Use linksets only if no nested partitions found (avoid duplicates)
-    if not patterns:
-        for row in engine.query(linkset_query):
-            if not isinstance(row, ResultRow):
-                raise TypeError("Expected a SELECT result row")
-            count_val = row.get("count")
-            count = optional_count(count_val)
-            subject_class = str(row.subjectClass)
-            property_uri = str(row.predicate)
-            object_class = str(row.objectClass)
-            patterns.append(
-                SchemaPattern(
-                    subject_class=subject_class,
-                    property_uri=property_uri,
-                    object_class=object_class,
-                    count=count,
-                    evidence_source="void",
-                    subject_label=labels.get(subject_class),
-                    property_label=labels.get(property_uri),
-                    object_label=labels.get(object_class),
-                )
-            )
+    nested = {(p.subject_class, p.property_uri, p.object_class) for p in patterns}
+    linked: dict[tuple[str, str, str], SchemaPattern] = {}
+    for row in engine.query(linkset_query):
+        if not isinstance(row, ResultRow):
+            raise TypeError("Expected a SELECT result row")
+        key = (str(row.subjectClass), str(row.predicate), str(row.objectClass))
+        # A linkset of rdf:type states that members of a class are typed with classes
+        # (owl:Class): membership, which the class partitions state, not a link.
+        if key in nested or key[1] == str(RDF.type):
+            continue
+        count = optional_count(row.get("count"))
+        previous = linked.get(key)
+        if previous is not None:
+            # The same links described twice, with their ends typed in the graph and in the union
+            # of graphs (IDSM): the larger description holds the other.
+            if count is not None and (previous.count is None or count > previous.count):
+                previous.count = count
+                previous.distinct_subjects = optional_count(row.get("subjects"))
+                previous.distinct_objects = optional_count(row.get("objects"))
+            continue
+        subject_class, property_uri, object_class = key
+        linked[key] = SchemaPattern(
+            subject_class=subject_class,
+            property_uri=property_uri,
+            object_class=object_class,
+            count=count,
+            distinct_subjects=optional_count(row.get("subjects")),
+            distinct_objects=optional_count(row.get("objects")),
+            evidence_source="void",
+            subject_label=labels.get(subject_class),
+            property_label=labels.get(property_uri),
+            object_label=labels.get(object_class),
+        )
+    patterns.extend(linked.values())
 
     return patterns
 

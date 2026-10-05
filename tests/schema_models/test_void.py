@@ -146,3 +146,53 @@ def test_void_and_shacl_exports_use_registered_terms(schema, caplog):
     assert list(observed.subjects(sh.deactivated, Literal(True)))
     active = Graph().parse(data=sample.to_shacl(activate_observed=True), format="turtle")
     assert not list(active.subjects(sh.deactivated, Literal(True)))
+
+
+IDSM_STYLE = """
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <urn:ex:> .
+
+[] sd:namedGraph [ sd:name <urn:g1> ; sd:graph <urn:void:g1> ] ,
+                 [ sd:name <urn:g2> ; sd:graph <urn:void:g2> ] .
+<urn:void:g1> void:classPartition <urn:cp:1A> , <urn:cp:1B> .
+<urn:cp:1A> void:class ex:A ; void:propertyPartition <urn:cpp:1> ;
+    void:subset <urn:ls:graph> , <urn:ls:union> , <urn:ls:type> .
+<urn:cp:1B> void:class ex:B .
+<urn:cpp:1> void:property ex:name ; void-ext:datatypePartition <urn:dp:1> .
+<urn:dp:1> void-ext:datatype xsd:string ; void:triples 5 .
+<urn:ls:graph> a void:Linkset ; void:subjectsTarget <urn:cp:1A> ; void:linkPredicate ex:link ;
+    void:objectsTarget <urn:cp:1B> ; void:triples 3 .
+<urn:ls:union> a void:Linkset ; void:subjectsTarget <urn:cp:1A> ; void:linkPredicate ex:link ;
+    void:objectsTarget <urn:cp:unionB> ; void:triples 4 ; void:distinctObjects 2 .
+<urn:ls:type> a void:Linkset ; void:subjectsTarget <urn:cp:1A> ; void:linkPredicate rdf:type ;
+    void:objectsTarget <urn:cp:owl> ; void:triples 9 .
+<urn:cp:unionB> void:class ex:B ; void:propertyPartition <urn:cpp:union> .
+<urn:cp:owl> void:class owl:Class .
+<urn:void:g2> void:classPartition [ void:class ex:C ;
+    void:propertyPartition [ void:property ex:name ;
+        void-ext:datatypePartition [ void-ext:datatype xsd:string ; void:triples 1 ] ] ] .
+"""
+
+
+def test_a_whole_endpoint_description_is_read_per_graph():
+    from rdflib import Graph
+
+    from rdfsolve.schema_models.readers.void import (
+        scope_void_graph,
+        void_datasets_of_graphs,
+        void_graph_to_minedschema,
+    )
+
+    g = Graph().parse(data=IDSM_STYLE, format="turtle")
+    datasets = void_datasets_of_graphs(g, ["urn:g1"])
+    schema = void_graph_to_minedschema(scope_void_graph(g, datasets), report_untyped=False)
+    found = {(p.subject_class, p.property_uri, p.object_class, p.count) for p in schema.patterns}
+    assert found == {
+        ("urn:ex:A", "urn:ex:name", "Literal", 5),
+        ("urn:ex:A", "urn:ex:link", "urn:ex:B", 4),
+    }, "Linksets read with datatype partitions; the union description kept; rdf:type and g2 not"
