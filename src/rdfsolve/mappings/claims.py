@@ -66,14 +66,29 @@ EXACT = "skos:exactMatch"
 AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group (owner decision 2026-10-02)
 
 
+def _record_id(source: str, subject: str, predicate: str, object: str) -> str:
+    """Return the record IRI (as an rdfsolve CURIE) of a mapping: it follows from its content."""
+    import hashlib
+
+    digest = hashlib.sha256(f"{source}\t{subject}\t{predicate}\t{object}".encode()).hexdigest()
+    return f"rdfsolve:mapping/{digest[:24]}"
+
+
 def claim(
-    subject: str, object: str, source: str, predicate: str, through: str | None = None
+    subject: str,
+    object: str,
+    source: str,
+    predicate: str,
+    through: str | None = None,
+    derived_from: Sequence[str] = (),
 ) -> Mapping:
     """Return the SSSOM record of *source* stating, with *predicate*, that *subject* is *object*.
 
     *subject* and *object* are IRIs (or CURIEs) of registered identifiers, as the source wrote
     them; the record keeps them, the source and the predicate in ``other``, and *through*, the
-    identifier of the subject that the source was asked about when it is another.
+    identifier of the subject that the source was asked about when it is another, with the
+    records of the mappings it came from (*derived_from*). The record IRI follows from the
+    source, subject, predicate and object.
     """
     from sssom import Mapping
 
@@ -83,9 +98,11 @@ def claim(
     s, o = parse(subject), parse(object)
     if s is None or o is None:
         raise ValueError(f"Not registered identifiers: {subject}, {object}")
+    predicate_id = EXACT if predicate in IDENTITY_PROPERTIES else CROSS_REFERENCE
     return Mapping(
+        record_id=_record_id(source, s.curie, predicate_id, o.curie),
         subject_id=s.curie,
-        predicate_id=EXACT if predicate in IDENTITY_PROPERTIES else CROSS_REFERENCE,
+        predicate_id=predicate_id,
         object_id=o.curie,
         mapping_justification=CHAINED if through else STATED,
         mapping_provider=mint("dataset", source),
@@ -96,6 +113,7 @@ def claim(
                 "source": source,
                 "property": predicate,
                 **({"through": through} if through else {}),
+                **({"derived_from": list(derived_from)} if derived_from else {}),
             },
             sort_keys=True,
         ),
@@ -445,13 +463,22 @@ class Claims:
         found = [claim(s, o, name, p) for s, o, p in matches if _valid(s, o)]
         invalid = [(s, o, name) for s, o, _ in matches if not _valid(s, o)]
         if through:
-            asked: dict[str, list[tuple[str, str]]] = defaultdict(list)
+            asked: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
             for s, o, p in matches:
                 if _valid(s, o):
-                    asked[_key(s)].append((o, p))
+                    asked[_key(s)].append((o, p, str(claim(s, o, name, p).record_id)))
             for c in self.claims:
-                for o, p in asked.get(_key(object_of(c)), []):
-                    found.append(claim(subject_of(c), o, name, p, through=object_of(c)))
+                for o, p, record in asked.get(_key(object_of(c)), []):
+                    found.append(
+                        claim(
+                            subject_of(c),
+                            o,
+                            name,
+                            p,
+                            through=object_of(c),
+                            derived_from=[str(c.record_id), record],
+                        )
+                    )
         return self + Claims(found, invalid)
 
     def table(self) -> Any:

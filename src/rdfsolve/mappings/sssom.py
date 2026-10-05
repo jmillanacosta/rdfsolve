@@ -13,6 +13,7 @@ from math import isnan
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from rdflib import Graph
 from sssom import Mapping, MappingSetDataFrame, write_tsv
 
 from rdfsolve.config import get_base_uri
@@ -115,6 +116,30 @@ def converter_for(curies: Iterable[str]) -> Converter:
             bioregistry.get_uri_prefix(prefix) or f"https://bioregistry.io/{prefix}:"
         )
     return Converter.from_prefix_map(prefix_map)
+
+
+def to_owl(msdf: MappingSetDataFrame) -> Graph:
+    """Return the mapping set in SSSOM's OWL form (an ``owl:Axiom`` for each mapping).
+
+    A mapping found through another identifier (``semapv:MappingChaining``) keeps the records of
+    the mappings it came from in ``other`` (derived_from, proposed for SSSOM); they are written
+    as ``prov:wasDerivedFrom`` of its axiom, to the record IRIs of those mappings.
+    """
+    import json
+
+    from rdflib import PROV, Namespace, URIRef
+    from sssom.writers import to_owl_graph
+
+    graph = to_owl_graph(msdf)
+    sssom = Namespace("https://w3id.org/sssom/")
+    for axiom, other in list(graph.subject_objects(sssom.other)):
+        try:
+            records = json.loads(str(other)).get("derived_from", [])
+        except (ValueError, AttributeError):
+            continue
+        for record in records:
+            graph.add((axiom, PROV.wasDerivedFrom, URIRef(msdf.converter.expand(record))))
+    return graph
 
 
 def write_sssom_tsv(msdf: MappingSetDataFrame, output_path: Path) -> None:
