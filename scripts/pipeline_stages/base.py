@@ -17,15 +17,31 @@ from .config import PipelineConfig
 log = logging.getLogger(__name__)
 
 
-def rdf_only(graph, what: str):
+def rdf_only(graph, what: str, report=None):
     """Return *graph* without the triples whose terms are not RDF IRIs, which no RDF syntax
-    writes (rdfsolve.schema_models.iri_quality), and log how many were left out."""
-    from rdfsolve.schema_models.iri_quality import rdf_terms_only
+    writes (rdfsolve.schema_models.iri_quality), and log how many were left out.
 
+    With a mining *report*, the terms left out and their triples are recorded as data-quality
+    findings (config iri_findings, graphs: *what*).
+    """
+    from rdfsolve.schema_models.iri_quality import graph_findings, rdf_terms_only
+
+    terms = graph_findings(graph)
     before = len(graph)
     rdf_terms_only(graph)
     if len(graph) < before:
-        log.warning("%s: %d triples with terms that are not RDF IRIs left out", what, before - len(graph))
+        log.warning(
+            "%s: %d triples with %d terms that are not RDF IRIs left out (report: iri_findings)",
+            what,
+            before - len(graph),
+            len(terms),
+        )
+        if report is not None:
+            found = report.config.setdefault("iri_findings", {})
+            found.setdefault("graphs", {})[what] = {
+                "triples_left_out": before - len(graph),
+                "terms": [{"iri": iri, "triples": n} for iri, n in terms.items()],
+            }
     return graph
 
 

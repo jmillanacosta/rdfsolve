@@ -62,3 +62,17 @@ def test_enrichment_rdf_leaves_out_terms_that_are_not_rdf_iris_without_rdflib_wa
     assert not [r for r in caplog.records if r.name == "rdflib.term"]
     terms = {str(t) for triple in graph for t in triple}
     assert not {BAD_P, BAD_C, BAD_O} & terms and A in terms
+
+
+def test_graph_findings_count_the_triples_that_rdf_terms_only_leaves_out():
+    from rdfsolve.schema_models.iri_quality import graph_findings, rdf_terms_only
+
+    logging.getLogger("rdflib.term").setLevel(logging.ERROR)
+    graph = Graph()
+    graph.add((URIRef("urn:d"), URIRef("urn:ns"), URIRef(" http://example.org/ns/")))
+    graph.add((URIRef(BAD_O), URIRef(BAD_P), URIRef(" http://example.org/ns/")))
+    graph.add((URIRef("urn:d"), URIRef("urn:title"), Literal("x")))
+    found = graph_findings(graph)
+    assert found == {" http://example.org/ns/": 2, BAD_O: 1, BAD_P: 1}
+    assert len(rdf_terms_only(graph)) == 1
+    assert graph_findings(graph) == {}

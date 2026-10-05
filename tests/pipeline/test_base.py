@@ -238,7 +238,14 @@ def test_an_exported_graph_leaves_out_terms_that_are_not_rdf_iris(caplog):
         )
     )
     graph.add((URIRef("urn:dataset"), URIRef("http://purl.org/dc/terms/title"), Literal("x")))
+    report = SimpleNamespace(config={"iri_findings": {"terms": []}})
     with caplog.at_level("WARNING"):
-        written = rdf_only(graph, "metadata").serialize(format="turtle")
+        written = rdf_only(graph, "metadata", report).serialize(format="turtle")
     assert "obo.aeo" not in written and '"x"' in written
-    assert "1 triples with terms that are not RDF IRIs left out" in caplog.text
+    assert "1 triples with 1 terms that are not RDF IRIs left out" in caplog.text
+    # The triples left out are data-quality findings of the report, not only a log line.
+    assert report.config["iri_findings"]["graphs"]["metadata"] == {
+        "triples_left_out": 1,
+        "terms": [{"iri": " http://identifiers.org/obo.aeo/", "triples": 1}],
+    }
+    assert report.config["iri_findings"]["terms"] == []

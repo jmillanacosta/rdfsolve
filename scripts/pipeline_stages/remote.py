@@ -282,7 +282,8 @@ class RemoteMiningStage(Stage):
                                 include_examples=False,
                                 trim_descriptions=self.config.trim_descriptions,
                             )
-                            ont_ttl = rdf_only(ontology_graph, "ontology").serialize(format="turtle")
+                            rdf_only(ontology_graph, "ontology", miner.last_report)
+                            ont_ttl = ontology_graph.serialize(format="turtle")
                             ontology_path.write_text(ont_ttl, encoding="utf-8")
                     except Exception as e:
                         raise RuntimeError(
@@ -295,7 +296,8 @@ class RemoteMiningStage(Stage):
                             result.metadata, self.config.trim_descriptions
                         ).to_rdf_graph()
                         if metadata_graph:
-                            meta_ttl = rdf_only(metadata_graph, "metadata").serialize(format="turtle")
+                            rdf_only(metadata_graph, "metadata", miner.last_report)
+                            meta_ttl = metadata_graph.serialize(format="turtle")
                             metadata_path.write_text(meta_ttl, encoding="utf-8")
                     except Exception as e:
                         raise RuntimeError(

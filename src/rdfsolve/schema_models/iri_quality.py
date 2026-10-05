@@ -19,7 +19,7 @@ from rdfsolve.schema_models.paths import is_rdf_iri
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
 
-__all__ = ["findings", "rdf_terms_only", "rdf_writable"]
+__all__ = ["findings", "graph_findings", "rdf_terms_only", "rdf_writable"]
 
 SENTINELS = frozenset({"Literal", "Resource", "BlankNode"})
 _TEST = '!REGEX(STR(?term), "^[^\\\\s<>\\"{}|^`\\\\\\\\]*$")'
@@ -111,6 +111,18 @@ def rdf_writable(schema: MinedSchema) -> MinedSchema:
     if schema.structural_patterns is not None:
         update["structural_patterns"] = [s for s in schema.structural_patterns if structural(s)]
     return schema.model_copy(update=update)
+
+
+def graph_findings(graph: Graph) -> dict[str, int]:
+    """Return each term of *graph* that is not an RDF IRI with the triples that hold it.
+
+    These are the triples that rdf_terms_only leaves out.
+    """
+    triples: Counter[str] = Counter()
+    for triple in graph:
+        for term in {t for t in triple if isinstance(t, URIRef) and not is_rdf_iri(t)}:
+            triples[str(term)] += 1
+    return dict(sorted(triples.items()))
 
 
 def rdf_terms_only(graph: Graph) -> Graph:
