@@ -6371,6 +6371,7 @@
 - name: openbiodiv
   dataset_kind: instance
   endpoint: http://graph.openbiodiv.net/
+  download_nq: https://zenodo.org/api/records/5283207/files/openbiodiv_v3.nq.gz/content  # OpenBiodiv Archive 0.0.3, the graph on 2021-08-23 (doi:10.5281/zenodo.5283207)
   download_ttl: https://raw.githubusercontent.com/pensoft/OpenBiodiv/refs/heads/master/ontology/openbiodiv-ontology-latest.ttl
   notes: 'KG Registry: OpenBiodiv'
   kg_registry_id: openbiodiv
