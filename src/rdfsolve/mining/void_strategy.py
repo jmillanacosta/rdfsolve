@@ -231,6 +231,16 @@ class VoidStrategy(MiningStrategy):
         return f"FILTER EXISTS {{ {{ {variable} a <{cls}> }} UNION {{ GRAPH ?_t {{ {variable} a <{cls}> }} }} }}"
 
     @staticmethod
+    def _member(variable: str, cls: str) -> str:
+        """Return the members of a class, typed in the default graph or in a named graph.
+
+        Samples start from the class (the type index): starting from all the triples of a
+        property and filtering their subjects does not end when the class is rare (Bgee). A
+        member typed in two places is matched twice; samples are DISTINCT or LIMITed.
+        """
+        return f"{{ {{ {variable} a <{cls}> }} UNION {{ GRAPH ?_m {{ {variable} a <{cls}> }} }} }}"
+
+    @staticmethod
     def _untyped(variable: str) -> str:
         """Return a filter: the term has no class in the default graph or in a named graph."""
         return f"FILTER NOT EXISTS {{ {{ {variable} a ?_c }} UNION {{ GRAPH ?_t {{ {variable} a ?_c }} }} }}"
@@ -282,8 +292,8 @@ class VoidStrategy(MiningStrategy):
             else:
                 test = "isBlank(?o)" if gap.kind == "blank" else "isIRI(?o)"
                 query = (
-                    f"SELECT ?s ?o WHERE {{ {edge} FILTER({test}) "
-                    f"{self._typed('?s', gap.subject_class or '')} "
+                    f"SELECT ?s ?o WHERE {{ {self._member('?s', gap.subject_class or '')} {edge} "
+                    f"FILTER({test}) "
                     + (self._untyped("?o") if gap.kind == "objects" else "")
                     + " } LIMIT 1"
                 )
@@ -350,10 +360,10 @@ class VoidStrategy(MiningStrategy):
         one), and the sample is recorded.
         """
         edge = self._edge(graph_uris, gap.property_uri)
-        typed = self._typed("?s", gap.subject_class or "")
+        member = self._member("?s", gap.subject_class or "")
         query = (
-            f"SELECT ?c (COUNT(DISTINCT ?o) AS ?n) WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ {edge} "
-            f"FILTER(isIRI(?o)) {typed} }} LIMIT {self.object_sample} }} OPTIONAL {{ "
+            f"SELECT ?c (COUNT(DISTINCT ?o) AS ?n) WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ {member} "
+            f"{edge} FILTER(isIRI(?o)) }} LIMIT {self.object_sample} }} OPTIONAL {{ "
             f"{{ ?o a ?c }} UNION {{ GRAPH ?_t {{ ?o a ?c }} }} }} }} GROUP BY ?c"
         )
         rows = self._ask(
@@ -391,9 +401,9 @@ class VoidStrategy(MiningStrategy):
     ) -> list[str] | None:
         """Return the predicates of a sample of the blank-node objects of a gap."""
         edge = self._edge(graph_uris, gap.property_uri)
-        typed = self._typed("?s", gap.subject_class or "")
+        member = self._member("?s", gap.subject_class or "")
         query = (
-            f"SELECT DISTINCT ?p WHERE {{ {{ SELECT ?o WHERE {{ {edge} FILTER(isBlank(?o)) {typed} }} "
+            f"SELECT DISTINCT ?p WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ {member} {edge} FILTER(isBlank(?o)) }} "
             f"LIMIT 1000 }} ?o ?p ?v }} LIMIT 200"
         )
         rows = self._ask(
@@ -414,7 +424,7 @@ class VoidStrategy(MiningStrategy):
             if p.datatype != RDF_LANG_STRING:
                 continue
             query = (
-                f"SELECT ?l (COUNT(*) AS ?n) WHERE {{ {{ SELECT ?o WHERE {{ {self._match(p, graph_uris)} }} "
+                f"SELECT ?l (COUNT(*) AS ?n) WHERE {{ {{ SELECT DISTINCT ?s ?o WHERE {{ {self._match(p, graph_uris, sample=True)} }} "
                 f"LIMIT {self.language_sample} }} BIND(LANG(?o) AS ?l) }} GROUP BY ?l"
             )
             rows = self._ask(
@@ -446,18 +456,33 @@ class VoidStrategy(MiningStrategy):
             from rdfsolve.mining.query_builders import _graph_clause
 
             opening, closing = _graph_clause(graph_uris)
-            # A member of the class with a statement in the graphs of the source.
+            # Members of the class (from the type index), with a statement in the graphs of the
+            # source when it has graphs; starting from all statements does not end (Bgee).
+            in_graphs = (
+                f"FILTER EXISTS {{ {opening} ?s ?_p ?_o . {closing} }}" if graph_uris else ""
+            )
             query = (
-                f"SELECT DISTINCT ?s WHERE {{ {opening} ?s ?_p ?_o . {closing} "
-                f"{self._typed('?s', cls)} }} LIMIT {self.class_samples}"
+                f"SELECT DISTINCT ?s WHERE {{ {{ {{ ?s a <{cls}> }} UNION {{ GRAPH ?_t {{ ?s a <{cls}> }} }} }} "
+                f"{in_graphs} }} LIMIT {self.class_samples}"
             )
             rows = self._ask(helper, query, "void/class-samples", failures, graph_uris, [cls])
             if rows:
                 self.class_examples[cls] = [_term(r["s"]) for r in rows]
 
-    def _match(self, p: SchemaPattern, graph_uris: list[str] | None) -> str:
-        """Return the graph pattern of a pattern's triples."""
-        head = f"{self._edge(graph_uris, p.property_uri)} {self._typed('?s', p.subject_class)}"
+    def _match(
+        self, p: SchemaPattern, graph_uris: list[str] | None, *, sample: bool = False
+    ) -> str:
+        """Return the graph pattern of a pattern's triples.
+
+        For a count, each triple once; for a sample, starting from the members of the subject
+        class.
+        """
+        edge = self._edge(graph_uris, p.property_uri)
+        head = (
+            f"{self._member('?s', p.subject_class)} {edge}"
+            if sample
+            else f"{edge} {self._typed('?s', p.subject_class)}"
+        )
         if p.object_class == "Literal":
             return head + (f" FILTER(DATATYPE(?o) = <{p.datatype}>)" if p.datatype else "")
         if p.object_class in ("Resource", "BlankNode"):
@@ -480,7 +505,7 @@ class VoidStrategy(MiningStrategy):
         for p in largest:
             if (p.subject_class, p.property_uri) in done:
                 continue
-            query = f"SELECT ?s ?o WHERE {{ {self._match(p, graph_uris)} }} LIMIT 1"
+            query = f"SELECT ?s ?o WHERE {{ {self._match(p, graph_uris, sample=True)} }} LIMIT 1"
             rows = self._ask(
                 helper, query, "void/examples", failures, graph_uris, [p.subject_class]
             )
