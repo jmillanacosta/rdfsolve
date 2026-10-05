@@ -208,6 +208,9 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
     ),
 }
 
+# The formats a download field can name for a file whose name has no RDF extension.
+_DATA_FORMATS = ("nt", "nq", "ttl", "trig", "n3")
+
 # Extensions we recognise in a URL for smart wget naming.
 _RDF_EXTS = (
     ".ttl",
@@ -414,14 +417,27 @@ def _folder_cmd(url: str, suffix: str) -> str:
     )
 
 
-def _saved_names(urls: list[str]) -> dict[str, str]:
-    """Return the name each download is saved under when another download has its file name.
+def _saved_names(urls_by_suffix: dict[str, list[str]]) -> dict[str, str]:
+    """Return the name a download is saved under when its own name does not serve.
 
-    Zenodo serves each record's file at .../files/dataset.nq (NanoSolveIT: three records); under
-    one name, wget -c would take the second as the first, complete, and not fetch it. Each such
-    download is saved as N__NAME.
+    - A file whose name has no RDF extension is named by the format of its download field:
+      ALLIE publishes N-Triples as pubmed_rdf_nt_latest.gz, saved as pubmed_rdf_nt_latest.nt.gz,
+      so that it is decompressed and indexed.
+    - Zenodo serves each record's file at .../files/dataset.nq (NanoSolveIT: three records); under
+      one name, wget -c would take the second as the first, complete, and not fetch it. Each such
+      download is saved as N__NAME.
     """
-    names = [(url, _file_name(url)) for url in urls if not url.endswith("/")]
+    names: list[tuple[str, str | None]] = []
+    for suffix, urls in urls_by_suffix.items():
+        for url in urls:
+            if url.endswith("/"):
+                continue
+            name = _file_name(url)
+            base = url.split("?", 1)[0].rstrip("/").rsplit("/", 1)[-1]
+            if name is None and suffix in _DATA_FORMATS and base:
+                stem, gz = (base[:-3], ".gz") if base.endswith(".gz") else (base, "")
+                name = f"{stem}.{suffix}{gz}"
+            names.append((url, name))
     counts = Counter(name for _, name in names if name)
     seen: Counter[str] = Counter()
     saved = {}
@@ -429,6 +445,8 @@ def _saved_names(urls: list[str]) -> dict[str, str]:
         if name and counts[name] > 1:
             seen[name] += 1
             saved[url] = f"{seen[name]}__{name}"
+        elif name and name != _file_name(url):
+            saved[url] = name
     return saved
 
 
@@ -688,7 +706,7 @@ def _build_get_data_steps(
     src_data_dir: str,
 ) -> list[str]:
     """Assemble the full GET_DATA_CMD shell steps from an analysis."""
-    saved = _saved_names(analysis.urls)
+    saved = _saved_names(analysis.urls_by_suffix)
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",

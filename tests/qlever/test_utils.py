@@ -177,6 +177,15 @@ def test_downloads_with_one_file_name_are_saved_apart():
     assert '"https://zenodo.org/records/3/files/other.nq"' in script and "__other" not in script
 
 
+def test_a_download_without_an_rdf_name_is_named_by_its_field():
+    from rdfsolve.qlever.utils import _build_get_data_steps, analyse_source
+
+    url = "https://ftp.dbcls.jp/allie/allie_rdf/pubmed_rdf_nt_latest.gz"
+    script = " ".join(_build_get_data_steps(analyse_source({"download_nt": [url]}), "rdf"))
+    assert f'-O "pubmed_rdf_nt_latest.nt.gz" "{url}"' in script
+    assert "*.nt.gz" in script, "Decompressed as N-Triples"
+
+
 def test_each_download_command_retries_passing_faults():
     for url in ("https://example.org/a/data.ttl.gz", "https://example.org/download?id=7"):
         command = _wget_cmd(url)
