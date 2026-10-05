@@ -57,3 +57,16 @@ def test_an_index_lists_its_nanopublications(tmp_path):
     assert listed == {URIRef(m.source_uri) for m in members}
     assert (URIRef(grouped.source_uri), NPX.hasNanopubType, NPX.NanopubIndex) in grouped.pubinfo
     assert load(save(grouped, tmp_path)).source_uri == grouped.source_uri
+
+
+def test_blank_nodes_give_the_same_uri_in_every_run():
+    from rdflib import BNode
+
+    def shaped():
+        graph = Graph()
+        node = BNode()
+        graph.add((URIRef("urn:shape"), URIRef("urn:property"), node))
+        graph.add((node, URIRef("urn:path"), URIRef("urn:p")))
+        return nanopublication(graph, kinds=[], attributed_to=TOOL, created="2026-10-05")
+
+    assert shaped().source_uri == shaped().source_uri
