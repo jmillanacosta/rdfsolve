@@ -154,6 +154,12 @@ class SourceModel(BaseModel):
         Additional provider entries from Bioregistry.
     kg_registry_id:
         Resource identifier in the KG-Registry.
+    kg_registry_category, kg_registry_domains, kg_registry_products:
+        KG-Registry's category, domains and own products of the resource (generated, in the
+        metadata sidecar; rdfsolve.kg_registry).
+    science_area:
+        ``life sciences`` or ``other``, from the KG-Registry domains (rdfsolve.kg_registry);
+        analyses of life-science linked data keep the life-science sources.
     in_kamdar:
         Whether the resource is in the Kamdar et al. LSLOD analysis.
     terminology_nomenclature:
@@ -232,6 +238,10 @@ class SourceModel(BaseModel):
     bioregistry_package_version: str = ""
 
     kg_registry_id: str = ""
+    kg_registry_category: str = ""
+    kg_registry_domains: list[str] = Field(default_factory=list)
+    kg_registry_products: list[dict[str, str]] = Field(default_factory=list)
+    science_area: Literal["life sciences", "other", ""] = ""
     in_kamdar: bool = False
     terminology_nomenclature: list[str] = Field(default_factory=list)
 
