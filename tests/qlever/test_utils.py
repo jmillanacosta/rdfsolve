@@ -133,6 +133,39 @@ def test_a_plain_tar_named_as_compressed_is_extracted(tmp_path):
     assert (tmp_path / "kg.ttl").is_file()
 
 
+def test_a_published_folder_is_fetched_with_its_subfolders(tmp_path):
+    import functools
+    import http.server
+    import threading
+
+    from rdfsolve.qlever.utils import _build_get_data_steps, analyse_source
+
+    site = tmp_path / "site" / "ntriples" / "pdb" / "latest" / "pdb"
+    for folder, name in (("00", "100d"), ("01", "101d")):
+        (site / folder).mkdir(parents=True)
+        (site / folder / f"{name}.nt").write_text(f"<urn:{name}> <urn:p> <urn:o> .\n")
+    (site / "00" / "notes.txt").write_text("not RDF")
+    handler = functools.partial(
+        http.server.SimpleHTTPRequestHandler, directory=str(tmp_path / "site")
+    )
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        url = f"http://127.0.0.1:{server.server_port}/ntriples/pdb/latest/pdb/"
+        steps = _build_get_data_steps(analyse_source({"download_nt": [url]}), str(tmp_path / "rdf"))
+        env = {**os.environ, "no_proxy": "127.0.0.1", "NO_PROXY": "127.0.0.1"}
+        done = subprocess.run(
+            ["bash"], input=" && ".join(steps), text=True, capture_output=True, env=env
+        )
+    finally:
+        server.shutdown()
+    assert done.returncode == 0, done.stderr
+    assert sorted(p.name for p in (tmp_path / "rdf").glob("*.nt")) == ["100d.nt", "101d.nt"]
+    assert not list((tmp_path / "rdf").rglob("*.txt")) and not list(
+        (tmp_path / "rdf").rglob("index.html*")
+    )
+
+
 def test_each_download_command_retries_passing_faults():
     for url in ("https://example.org/a/data.ttl.gz", "https://example.org/download?id=7"):
         command = _wget_cmd(url)

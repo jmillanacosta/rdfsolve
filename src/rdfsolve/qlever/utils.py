@@ -397,6 +397,22 @@ def _file_name(url: str) -> str | None:
     )
 
 
+def _folder_cmd(url: str, suffix: str) -> str:
+    """Return a wget command that fetches the SUFFIX files of a published folder (a URL ending
+    in /) and of its subfolders, kept in a folder named after it.
+
+    RDF Portal publishes PDB as about 220,000 files in 1,080 folders under one folder. The listing
+    pages are read and not kept; a fetch that stops resumes its files.
+    """
+    from urllib.parse import urlparse
+
+    depth = len([part for part in urlparse(url).path.split("/") if part]) - 1
+    accept = f"*.{suffix},*.{suffix}.gz"
+    return (
+        f'wget -r -np -nH --cut-dirs={depth} -c -q {_RETRY} -A "{accept}" -R "index.html*" "{url}"'
+    )
+
+
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
@@ -657,11 +673,20 @@ def _build_get_data_steps(
         _WGET_AGAIN,
         # A later step can end with '|| true'; the downloads end the script when one fails.
         "{ "
-        + " && ".join(_wget_cmd(u) for u in analysis.urls)
+        + " && ".join(
+            _folder_cmd(u, suffix) if u.endswith("/") else _wget_cmd(u)
+            for suffix, urls in analysis.urls_by_suffix.items()
+            for u in urls
+        )
         + "; } || { echo 'A download failed' >&2; exit 1; }",
     ]
 
     steps.extend(_rename_mislabelled_steps(analysis))
+
+    if any(u.endswith("/") for u in analysis.urls):
+        steps.extend(
+            ["echo 'Collecting files from fetched folders ...'", _collect_from_subdirs_step()]
+        )
 
     if analysis.needs_archive:
         steps.extend(_extract_archives_steps())
