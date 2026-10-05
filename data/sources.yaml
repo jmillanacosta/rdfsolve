@@ -3660,6 +3660,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubcasefinder
+  download_nt:
+  - https://rdfportal.org/ntriples/pubcasefinder/latest/
   endpoint: https://rdfportal.org/primary/sparql
   void_iri: https://pubcasefinder.dbcls.jp/rdf
   graph_uris:
@@ -3725,6 +3727,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: jpost
+  download_nt:
+  - https://rdfportal.org/ntriples/jpostdb/latest/
   endpoint: https://rdfportal.org/primary/sparql
   void_iri: http://jpost.org/graph/database
   graph_uris:
@@ -5732,6 +5736,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: kero
+  download_nt:
+  - https://rdfportal.org/ntriples/kero/latest/
   endpoint: https://rdfportal.org/kero/sparql
   keywords:
   - Gene expression
@@ -5819,6 +5825,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ddbj
+  download_nt:
+  - https://rdfportal.org/ntriples/ddbj/latest/
   endpoint: https://rdfportal.org/ddbj/sparql
   keywords:
   - Gene
@@ -6165,6 +6173,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: proteinatlas
+  download_nt:
+  - https://rdfportal.org/ntriples/proteinatlas/latest/
   endpoint: https://rdfportal.org/proteinatlas/sparql
   keywords:
   - protein
@@ -6941,6 +6951,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: amrportal
+  download_nt:
+  - https://rdfportal.org/ntriples/amrportal/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/amrportal
@@ -6952,6 +6964,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: bgee
+  download_nt:
+  - https://rdfportal.org/ntriples/bgee/latest/
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://bgee.org
@@ -6963,6 +6977,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: biomodels
+  download_nt:
+  - https://rdfportal.org/ntriples/biomodels/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biomodels
@@ -6973,6 +6989,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: biosample
+  download_nt:
+  - https://rdfportal.org/ntriples/biosample/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biosamples
@@ -6982,6 +7000,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: bmrb
+  download_nt:
+  - https://rdfportal.org/ntriples/bmrb/latest/
   endpoint: https://rdfportal.org/pdb/sparql
   graph_uris:
   - http://bmrbpub.protein.osaka-u.ac.jp/rdf/bmr
@@ -6997,6 +7017,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: brenda
+  download_nt:
+  - https://rdfportal.org/ntriples/brenda/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/brenda
@@ -7009,6 +7031,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: chembl
+  download_nt:
+  - https://rdfportal.org/ntriples/chembl/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/chembl
@@ -7019,6 +7043,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: clinvar
+  download_nt:
+  - https://rdfportal.org/ntriples/clinvar/latest/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/clinvar
@@ -7031,6 +7057,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: dbcatalog
+  download_nt:
+  - https://rdfportal.org/ntriples/dbcatalog/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/dbcatalog/main
@@ -7066,6 +7094,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: famsbase
+  download_nt:
+  - https://rdfportal.org/ntriples/famsbase/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://fams.bio.chuo-u.ac.jp/GPCR/rdf/
@@ -7078,6 +7108,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: glycoepitope
+  download_nt:
+  - https://rdfportal.org/ntriples/glycoepitope/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdf.glycoinfo.org/glycoepitope
@@ -7090,6 +7122,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: gtdb
+  download_nt:
+  - https://rdfportal.org/ntriples/gtdb/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/gtdb
@@ -7102,6 +7136,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: gwas-catalog
+  download_nt:
+  - https://rdfportal.org/ntriples/gwas-catalog/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/gwas_catalog
@@ -7113,6 +7149,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: hco
+  download_nt:
+  - https://rdfportal.org/ntriples/hco/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/hco
@@ -7123,6 +7161,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: hgnc
+  download_nt:
+  - https://rdfportal.org/ntriples/hgnc/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/hgnc
@@ -7134,6 +7174,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: homologene
+  download_nt:
+  - https://rdfportal.org/ntriples/homologene/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/homologene
@@ -7146,6 +7188,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: icgc
+  download_nt:
+  - https://rdfportal.org/ntriples/icgc/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://icgc.link/release_20
@@ -7158,6 +7202,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: jcm
+  download_nt:
+  - https://rdfportal.org/ntriples/jcm/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://metadb.riken.jp/db/xsearch_jcm_brso
@@ -7169,6 +7215,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: knapsack
+  download_nt:
+  - https://rdfportal.org/ntriples/knapsack/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/knapsack/
@@ -7182,6 +7230,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ligandbox
+  download_nt:
+  - https://rdfportal.org/ntriples/ligandbox/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/5/ligandbox/
@@ -7194,6 +7244,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: massbank
+  download_nt:
+  - https://rdfportal.org/ntriples/massbank/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/massbank
@@ -7204,6 +7256,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mbgd
+  download_nt:
+  - https://rdfportal.org/ntriples/mbgd/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://mbgd.genome.ad.jp/rdf/resource/default
@@ -7226,6 +7280,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mco
+  download_nt:
+  - https://rdfportal.org/ntriples/mco/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/mco
@@ -7236,6 +7292,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: mesh
+  download_nt:
+  - https://rdfportal.org/ntriples/mesh/2025/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://id.nlm.nih.gov/mesh
@@ -7246,6 +7304,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: microbedbjp
+  download_nt:
+  - https://rdfportal.org/ntriples/microbedbjp/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/microbedbjp
@@ -7269,6 +7329,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nando
+  download_nt:
+  - https://rdfportal.org/ntriples/nando/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://nanbyodata.jp/ontology/nando
@@ -7281,6 +7343,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: naro_genebank
+  download_nt:
+  - https://rdfportal.org/ntriples/naro_genebank/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/naro_genebank
@@ -7306,6 +7370,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ncbigene
+  download_nt:
+  - https://rdfportal.org/ntriples/ncbigene/latest/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/ncbigene
@@ -7316,6 +7382,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nikkaji
+  download_nt:
+  - https://rdfportal.org/ntriples/nikkaji/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/nikkaji/core
@@ -7334,6 +7402,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: nlm-catalog
+  download_nt:
+  - https://rdfportal.org/ntriples/nlm-catalog/latest/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/nlm_catalog
@@ -7345,6 +7415,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: oma
+  download_nt:
+  - https://rdfportal.org/ntriples/oma/latest/
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://rdfportal.org/dataset/oma
@@ -7357,6 +7429,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: opentggates
+  download_nt:
+  - https://rdfportal.org/ntriples/opentggates/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/open-tggates
@@ -7387,6 +7461,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pgdbj
+  download_nt:
+  - https://rdfportal.org/ntriples/pgdbj/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://pgdbj.jp/od/
@@ -7401,6 +7477,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: polyinfo
+  download_nt:
+  - https://rdfportal.org/ntriples/polyinfo/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/dataset/polyinfo
@@ -7415,6 +7493,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubmed
+  download_nt:
+  - https://rdfportal.org/ntriples/pubmed/latest/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/pubmed
@@ -7426,6 +7506,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: pubtator
+  download_nt:
+  - https://rdfportal.org/ntriples/pubtator/latest/
   endpoint: https://rdfportal.org/ncbi/sparql
   graph_uris:
   - http://rdfportal.org/dataset/pubtator_central
@@ -7437,6 +7519,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: quanto
+  download_nt:
+  - https://rdfportal.org/ntriples/quanto/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/01/quanto/ontology/sos#
@@ -7448,6 +7532,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: reactome
+  download_nt:
+  - https://rdfportal.org/ntriples/reactome/latest/
   endpoint: https://rdfportal.org/ebi/sparql
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/reactome
@@ -7458,6 +7544,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: refex
+  download_nt:
+  - https://rdfportal.org/ntriples/refex/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://purl.jp/bio/01/refexo
@@ -7473,6 +7561,8 @@
   classes_as_data: true  # records are classes (each entity an rdfs:Class under its kind)
   catalogs: ["rdfportal"]
   catalog_local_name: rhea
+  download_nt:
+  - https://rdfportal.org/ntriples/rhea/latest/
   endpoint: https://rdfportal.org/sib/sparql
   graph_uris:
   - http://rdfportal.org/dataset/rhea
@@ -7484,6 +7574,8 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: ssbd
+  download_nt:
+  - https://rdfportal.org/ntriples/ssbd/latest/
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://metadb.riken.jp/db/SSBD
@@ -7522,7 +7614,7 @@
   - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
   science_area: life sciences
 - name: rdfportal.go
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: go
   endpoint: https://rdfportal.org/primary/sparql
@@ -7530,7 +7622,7 @@
   - http://rdfportal.org/ontology/go
   science_area: life sciences
 - name: rdfportal.hpo
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: hpo
   endpoint: https://rdfportal.org/primary/sparql
@@ -7547,7 +7639,7 @@
   - http://icgc.link/release_20
   science_area: life sciences
 - name: rdfportal.mondo
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: mondo
   endpoint: https://rdfportal.org/primary/sparql
@@ -7555,7 +7647,7 @@
   - http://rdfportal.org/ontology/mondo
   science_area: life sciences
 - name: rdfportal.mp
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: mp
   endpoint: https://rdfportal.org/bioportal/sparql
@@ -7563,7 +7655,7 @@
   - http://rdfportal.org/dataset/bioportal/mp
   science_area: life sciences
 - name: rdfportal.ncit
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: ncit
   endpoint: https://rdfportal.org/bioportal/sparql
@@ -7571,7 +7663,7 @@
   - http://rdfportal.org/dataset/bioportal/ncit
   science_area: life sciences
 - name: rdfportal.uberon
-  dataset_kind: instance
+  dataset_kind: ontology
   catalogs: ["rdfportal"]
   catalog_local_name: uberon
   endpoint: https://rdfportal.org/bioportal/sparql
