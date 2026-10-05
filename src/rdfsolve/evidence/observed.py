@@ -88,13 +88,14 @@ class PropertyUsageCollection(BaseModel):
 
 def _edges(classes: list[str], property_uri: str | None, context: list[str] | None) -> str:
     """Match class members' edges other than rdf:type, with constants where possible."""
-    from rdfsolve.mining.query_builders import _bound
+    from rdfsolve.mining.query_builders import MEMBERSHIP, _bound, membership_path
 
     if context:
         raise ValueError("Property evidence reads types from the selected data only")
     values, cls, prop, binds = _bound(classes, property_uri)
-    rest = "" if property_uri else f" FILTER(?p != <{RDF_TYPE}>)"
-    return f"{values} ?s a {cls} . ?s {prop} ?o .{rest}{binds}"
+    members = ", ".join(f"<{p}>" for p in MEMBERSHIP.get())
+    rest = "" if property_uri else f" FILTER(?p NOT IN ({members}))"
+    return f"{values} ?s {membership_path()} {cls} . ?s {prop} ?o .{rest}{binds}"
 
 
 def _dataset_clause(graph_uris: list[str] | None) -> str:

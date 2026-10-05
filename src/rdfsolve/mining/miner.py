@@ -23,6 +23,7 @@ from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_labels,
 )
 from rdfsolve.mining.query_builders import (
+    MEMBERSHIP,
     _build_declared_classes_query,
 )
 from rdfsolve.mining.report_tracking import ReportCollector
@@ -99,6 +100,7 @@ class SchemaMiner:
         sparql_strategy: str = "",
         enrich: bool = False,
         classes_as_data: bool = False,
+        membership_properties: list[str] | None = None,
         examples_per_pattern: int = 2,
         max_response_bytes: int = 64 * 1024 * 1024,
         get_graphs_from_store: bool = False,
@@ -116,9 +118,12 @@ class SchemaMiner:
         *classes_as_data* is for a source that keeps its records as classes (each entity an
         rdfs:Class under its kind): with ontology-as-data,
         the rows of these terms join the typed patterns and are grouped under their ancestors.
+        *membership_properties* are the properties that place a record in its class when the
+        source does not use rdf:type alone (rdf:type and a category, for example).
         """
         self.endpoint_url = endpoint_url
         self.classes_as_data = classes_as_data
+        self.membership_properties = list(membership_properties or [])
         self.local_backend = local_backend
         if pagination not in {"offset", "cursor"}:
             raise ValueError("pagination must be offset or cursor")
@@ -883,6 +888,7 @@ class SchemaMiner:
         )
         self.last_report = self._report.report
         remote_helper = self._helper
+        member = MEMBERSHIP.set(tuple(self.membership_properties or [RDF_TYPE]))
         try:
             if self.get_graphs_from_store:
                 from dataclasses import asdict
@@ -932,6 +938,7 @@ class SchemaMiner:
             )
             raise
         finally:
+            MEMBERSHIP.reset(member)
             if self._helper is not remote_helper:
                 self._helper.close()
                 self._helper = remote_helper
@@ -990,7 +997,7 @@ class SchemaMiner:
         kept = [
             p
             for p in schema.patterns
-            if not (p.property_uri == RDF_TYPE and p.object_class == "Resource")
+            if not (p.property_uri in MEMBERSHIP.get() and p.object_class == "Resource")
         ]
         self._report.report.config["membership_rows_left_out"] = len(schema.patterns) - len(kept)
         schema.patterns = kept
@@ -1032,7 +1039,9 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.type_context_graph_uris = self.type_context_graph_uris or None
-        schema.about.membership_property = self._membership
+        schema.about.membership_property = self._membership or (
+            self.membership_properties if len(self.membership_properties) > 1 else None
+        )
         schema.about.ontology_graph_uris = self._ontology_graph_uris
         schema.about.class_entity_counts = entity_counts
         schema.about.class_entity_count_states = entity_count_states

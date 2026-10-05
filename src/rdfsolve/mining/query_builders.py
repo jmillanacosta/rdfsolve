@@ -2,12 +2,38 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any
 
 from typing_extensions import Self
 
 from rdfsolve.sparql_helper import SparqlHelper
+
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# The properties that place a record in its class in a mining run: rdf:type, or with it a
+# property such as a category (set by membership() for the run).
+MEMBERSHIP: ContextVar[tuple[str, ...]] = ContextVar("membership", default=(RDF_TYPE,))
+
+
+@contextmanager
+def membership(properties: Sequence[str] | None) -> Iterator[None]:
+    """Use *properties* as class membership in the queries written inside the block."""
+    token = MEMBERSHIP.set(tuple(properties) if properties else (RDF_TYPE,))
+    try:
+        yield
+    finally:
+        MEMBERSHIP.reset(token)
+
+
+def membership_path(properties: str | Sequence[str] | None = None) -> str:
+    """Write class membership as a SPARQL path: ``a``, one property, or alternatives."""
+    chosen = (properties,) if isinstance(properties, str) else tuple(properties or MEMBERSHIP.get())
+    terms = ["a" if p == RDF_TYPE else f"<{p}>" for p in chosen]
+    return terms[0] if len(terms) == 1 else "(" + "|".join(terms) + ")"
+
 
 __all__ = [
     "Window",
@@ -91,14 +117,17 @@ def _context_pattern(pattern: str, graph_uris: list[str] | None) -> str:
 
 
 def _type_pattern(
-    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+    node: str,
+    cls: str,
+    context_graph_uris: list[str] | None = None,
+    membership: str | Sequence[str] | None = None,
 ) -> str:
     """Match each node/type pair once across data and companion graphs.
 
-    *membership* is the property that places a record in its class when the source does not use
-    rdf:type (rdfs:subClassOf for a source whose records are classes).
+    *membership* is the property, or the properties, that place a record in its class when the
+    source does not use rdf:type alone; by default, the membership of the mining run.
     """
-    triple = f"{node} {f'<{membership}>' if membership else 'a'} {cls} ."
+    triple = f"{node} {membership_path(membership)} {cls} ."
     if not context_graph_uris:
         return triple
     variables = " ".join(term for term in (node, cls) if term.startswith("?"))
@@ -106,7 +135,10 @@ def _type_pattern(
 
 
 def _subject_type_pattern(
-    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+    node: str,
+    cls: str,
+    context_graph_uris: list[str] | None = None,
+    membership: str | Sequence[str] | None = None,
 ) -> str:
     """Match typed subjects with an outgoing edge in the selected data."""
     pattern = _type_pattern(node, cls, context_graph_uris, membership)
@@ -396,7 +428,7 @@ WHERE {{
     SELECT ?s ?p (COUNT(?o) AS ?cnt)
     WHERE {{
       {g_open}
-        ?s a <{subject_class}> .
+        ?s {membership_path()} <{subject_class}> .
         ?s ?p ?o .
       {g_close}
     }}
@@ -418,7 +450,7 @@ def _build_example_query(
 SELECT DISTINCT ?s ?o
 WHERE {{
   {g_open}
-    ?s a <{subject_class}> .
+    ?s {membership_path()} <{subject_class}> .
     ?s <{property_uri}> ?o .
   {g_close}
 }}

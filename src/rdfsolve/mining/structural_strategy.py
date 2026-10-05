@@ -13,6 +13,7 @@ from rdflib import Literal, URIRef
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.local_graph import LocalGraphHelper
+from rdfsolve.mining.query_builders import MEMBERSHIP, membership_path
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 
@@ -33,9 +34,11 @@ def _dataset(graph: str | None, type_graphs: list[str] | None = None) -> str:
 
 def _types(graphs: list[str] | None) -> str:
     if not graphs:
-        return "?s a ?_type ."
+        return f"?s {membership_path()} ?_type ."
     values = " ".join(f"<{g}>" for g in graphs)
-    return f"VALUES ?_typeGraph {{ {values} }} GRAPH ?_typeGraph {{ ?s a ?_type }}"
+    return (
+        f"VALUES ?_typeGraph {{ {values} }} GRAPH ?_typeGraph {{ ?s {membership_path()} ?_type }}"
+    )
 
 
 def _untyped(graphs: list[str] | None, predicate: str) -> str:
@@ -150,7 +153,11 @@ def _select(
 
 QLEVER_PREFIX = "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-UNTYPED_SUBJECT = f"MINUS {{ ?s ql:has-predicate <{RDF_TYPE}> }}"
+
+
+def _untyped_subject() -> str:
+    """Keep the subjects without a membership property (read from QLever's property sets)."""
+    return " ".join(f"MINUS {{ ?s ql:has-predicate <{p}> }}" for p in MEMBERSHIP.get())
 
 
 def _patterns_census(
@@ -197,7 +204,7 @@ def _patterns_census(
         untyped = _select(
             context,
             QLEVER_PREFIX + f"SELECT ?p (COUNT(*) AS ?n) {dataset} "
-            f"WHERE {{ ?s ?p ?o . {UNTYPED_SUBJECT} }} GROUP BY ?p",
+            f"WHERE {{ ?s ?p ?o . {_untyped_subject()} }} GROUP BY ?p",
             "structural/coverage",
             paged=False,
         )
@@ -244,12 +251,12 @@ def _patterns_discovery(
   (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
   (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), "\\n", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
 {_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
-  ?s {prop} ?o . {UNTYPED_SUBJECT}
+  ?s {prop} ?o . {_untyped_subject()}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR="\\n") AS ?ss)
-     WHERE {{ ?s {prop} ?_o . {UNTYPED_SUBJECT} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
+     WHERE {{ ?s {prop} ?_o . {_untyped_subject()} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
   OPTIONAL {{
     {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR="\\n") AS ?os)
-       WHERE {{ ?s {prop} ?o . {UNTYPED_SUBJECT} ?o ql:has-predicate ?op }} GROUP BY ?o }}
+       WHERE {{ ?s {prop} ?o . {_untyped_subject()} ?o ql:has-predicate ?op }} GROUP BY ?o }}
   }}
   BIND({prop} AS ?p)
   BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)

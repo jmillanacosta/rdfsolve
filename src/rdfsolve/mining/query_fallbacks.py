@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.query_builders import (
+    MEMBERSHIP,
     _build_batched_typed_object_query,
     _build_properties_for_class_patterns_query,
     _build_properties_for_class_query,
@@ -283,7 +284,7 @@ def enumerate_properties_for_class(
         # Every subject typed by the class has rdf:type in its property set: a list without it
         # means that the property sets were not read (an engine without them answers no row).
         listed = {row.get("p", {}).get("value") for row in sets.rows}
-        if sets.state == "complete" and RDF_TYPE_IRI in listed:
+        if sets.state == "complete" and listed & set(MEMBERSHIP.get()):
             return sets
     query = _build_properties_for_class_query(
         class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris

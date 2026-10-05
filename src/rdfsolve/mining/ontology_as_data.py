@@ -14,7 +14,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from rdfsolve.mining.query_builders import _bound, _context_pattern, _graph_scope, _type_pattern
+from rdfsolve.mining.query_builders import (
+    MEMBERSHIP,
+    _bound,
+    _context_pattern,
+    _graph_scope,
+    _type_pattern,
+    membership_path,
+)
 from rdfsolve.mining.types import ONTOLOGY_METACLASSES
 from rdfsolve.ontology.terms import namespace
 from rdfsolve.ontology.vocabulary import NON_DATA_NAMESPACES, OWL_CLASS, RDF_TYPE, RDFS_CLASS
@@ -67,7 +74,7 @@ SELECT ?sc ?p ?t{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
   {g_open} ?s ?p ?t . {g_close}
-  ?s a ?sc .
+  ?s {membership_path()} ?sc .
   {_term_filter("?t", ontology_graph_uris)}
   FILTER(isIRI(?s) && isIRI(?sc) && isIRI(?t))
   FILTER NOT EXISTS {{ ?s a <{OWL_CLASS}> }}
@@ -467,17 +474,17 @@ def fetch_shapes(
         if qlever:
             props = (
                 "PREFIX ql: <http://qlever.cs.uni-freiburg.de/builtin-functions/>\n"
-                f"SELECT ?c ?p WHERE {{ VALUES ?c {{ {values} }} ?s a ?c . "
+                f"SELECT ?c ?p WHERE {{ VALUES ?c {{ {values} }} ?s {membership_path()} ?c . "
                 "?s ql:has-predicate ?p } GROUP BY ?c ?p"
             )
         else:
             props = (
                 f"SELECT DISTINCT ?c ?p {dataset} WHERE {{ VALUES ?c {{ {values} }} "
-                "?s a ?c . ?s ?p ?o }"
+                f"?s {membership_path()} ?c . ?s ?p ?o }}"
             )
         counts = (
             f"SELECT ?c (COUNT(DISTINCT ?s) AS ?n) (SAMPLE(?s) AS ?x) {dataset} "
-            f"WHERE {{ VALUES ?c {{ {values} }} ?s a ?c }} GROUP BY ?c"
+            f"WHERE {{ VALUES ?c {{ {values} }} ?s {membership_path()} ?c }} GROUP BY ?c"
         )
         try:
             prop_rows, count_rows = rows(props), rows(counts)
@@ -493,7 +500,7 @@ def fetch_shapes(
         found: dict[str, set[str]] = {iri: set() for iri in batch}
         for row in prop_rows:
             term, prop = row.get("c", {}).get("value"), row.get("p", {}).get("value")
-            if term in found and prop and prop != RDF_TYPE:
+            if term in found and prop and prop not in MEMBERSHIP.get():
                 found[term].add(prop)
         for iri in batch:
             shapes[iri] = Shape(frozenset(found[iri]))

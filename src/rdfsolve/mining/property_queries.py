@@ -199,7 +199,7 @@ def query_by_property(
         result = QueryOutcome(state=found.state, failures=found.failures)
         properties = [r["p"]["value"] for r in found.rows if r.get("p", {}).get("type") == "uri"]
     for prop in dict.fromkeys(properties):
-        if prop == RDF_TYPE and builder.__name__ in TYPE_EXCLUDED:
+        if prop in builders.MEMBERSHIP.get() and builder.__name__ in TYPE_EXCLUDED:
             continue
         kinds = object_kinds(prop, graphs, context_graphs, helper)
         if kinds is not None and not kinds & OBJECT_KINDS[builder.__name__]:

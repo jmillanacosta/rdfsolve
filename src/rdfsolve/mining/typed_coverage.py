@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from rdflib import URIRef
 
-from rdfsolve.mining.query_builders import _context_pattern
+from rdfsolve.mining.query_builders import _context_pattern, membership_path
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 
@@ -48,13 +48,13 @@ def typed_match(
         else:
             typed[prop, subject].add(obj)
     objects = list(dict.fromkeys((type_graphs or []) + (context_graphs or [])))
-    subject_type = _context_pattern("?s a ?_subjectType .", objects).replace(
+    subject_type = _context_pattern(f"?s {membership_path()} ?_subjectType .", objects).replace(
         "?_contextGraph", "?_subjectTypeGraph"
     )
-    object_type = _context_pattern("?o a ?_objectType .", objects).replace(
+    object_type = _context_pattern(f"?o {membership_path()} ?_objectType .", objects).replace(
         "?_contextGraph", "?_objectTypeGraph"
     )
-    any_type = _context_pattern("?o a ?_anyObjectType .", objects).replace(
+    any_type = _context_pattern(f"?o {membership_path()} ?_anyObjectType .", objects).replace(
         "?_contextGraph", "?_objectAnyGraph"
     )
     if predicate:

@@ -63,10 +63,11 @@ class AboutMetadata(BaseModel):
     type_context_graph_uris: list[str] | None = Field(
         None, description="Additional graphs used only for subject and object type lookups"
     )
-    membership_property: str | None = Field(
+    membership_property: str | list[str] | None = Field(
         None,
         description="Property that assigns subjects to classes instead of rdf:type "
-        "(for example Wikibase 'instance of'); classes in the patterns come from it",
+        "(for example Wikibase 'instance of'), or the properties that do so together (for "
+        "example rdf:type and a category); classes in the patterns come from it",
     )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,

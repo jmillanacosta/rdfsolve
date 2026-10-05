@@ -116,6 +116,9 @@ class SourceModel(BaseModel):
         The source keeps its records as classes (each entity an rdfs:Class under its
         kind): with ontology-as-data, their rows are grouped
         under their kinds in the typed schema.
+    membership_properties:
+        The properties that place a record in its class, when the source does not use
+        rdf:type alone (for example rdf:type and a category property).
     notes:
         Free-text notes about the source.
     local_provider:
@@ -190,6 +193,7 @@ class SourceModel(BaseModel):
     counts: bool = False
     unsafe_paging: bool = False
     classes_as_data: bool = False
+    membership_properties: list[str] = Field(default_factory=list)
     uri_formats: list[str] = Field(default_factory=list)
     notes: str = ""
     local_provider: str = ""
