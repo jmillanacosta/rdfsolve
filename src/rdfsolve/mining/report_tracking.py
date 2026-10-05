@@ -157,7 +157,10 @@ class ReportCollector:
     _MAX_DROPPED_SAMPLES: int = 20
 
     def record_outcome(self, outcome: QueryOutcome) -> None:
-        """Record unresolved failures after all permitted fallbacks finish."""
+        """Record unresolved failures after all permitted fallbacks finish, and the measures
+        that were refused for rows that stand (measurement gaps).
+        """
+        self._report.measurement_gaps.extend(outcome.gaps)
         if outcome.state != "complete":
             self._report.query_failures.extend(outcome.failures)
             self.set_abort_reason(f"{len(self._report.query_failures)} required queries incomplete")

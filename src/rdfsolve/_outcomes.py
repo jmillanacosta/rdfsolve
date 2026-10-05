@@ -14,11 +14,9 @@ FailureCategory = Literal[
     "invalid_response",
     "sampled",
     "rate_limited",
-    "budget",
 ]
 # "sampled": rows come from bounded member windows because the whole query exceeded its budget.
 # "rate_limited": the endpoint asked for a pause longer than the wait budget of the client.
-# "budget": a fallback stopped at its fixed number of queries; the rest is recorded as not counted.
 Bindings = list[dict[str, Any]]
 
 
@@ -40,8 +38,13 @@ class QueryOutcome:
     rows: Bindings = field(default_factory=list)
     state: QueryState = "complete"
     failures: list[QueryFailure] = field(default_factory=list)
+    # Measures of complete rows that the engine refused (such as the distinct subjects of one
+    # object group): the rows stand, and each gap is reported with its reason.
+    gaps: list[QueryFailure] = field(default_factory=list)
 
     def merge(self, other: QueryOutcome) -> QueryOutcome:
         """Combine independent query groups, including successful empty groups."""
         state: QueryState = self.state if self.state == other.state else "partial"
-        return QueryOutcome(self.rows + other.rows, state, self.failures + other.failures)
+        return QueryOutcome(
+            self.rows + other.rows, state, self.failures + other.failures, self.gaps + other.gaps
+        )

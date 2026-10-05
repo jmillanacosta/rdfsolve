@@ -164,7 +164,7 @@ def test_distinct_subjects_follow_from_a_group_with_all_edges(monkeypatch):
     xsd = "http://www.w3.org/2001/XMLSchema#"
     assert found[("urn:A", "Literal", xsd + "integer")] == (1, 1)
     assert found[("urn:A", "Literal", xsd + "string")] == (2, 2)
-    assert "counts/literal/property/urn:q/group" in sent
-    assert heavy + "/group" in sent and heavy not in sent and state == "complete", (
-        "A group with part of the edges counts its own distinct subjects"
+    assert "counts/literal/property/urn:q/groups" in sent
+    assert heavy + "/groups" in sent and heavy not in sent and state == "complete", (
+        "The groups with part of the edges count their distinct subjects together"
     )

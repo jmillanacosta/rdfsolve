@@ -811,14 +811,16 @@ def _build_class_property_total_query(
     graph_uris: list[str] | None,
     type_context_graph_uris: list[str] | None = None,
     object_test: str = "",
+    group: str = "",
 ) -> str:
     """Count the edges and distinct subjects of (class, property) and edge graph.
 
-    The edges are those of the count queries; *object_test* keeps the edges of one group.
+    The edges are those of the count queries; *object_test* keeps the edges of some groups,
+    and *group* is the variable that tells the groups apart in the result.
     """
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
-    graph_var = " ?_g" if g_open else ""
+    graph_var = (" ?_g" if g_open else "") + (f" {group}" if group else "")
     return f"""\
 SELECT ?class{graph_var} (COUNT(*) AS ?cnt) (COUNT(DISTINCT ?s) AS ?subjects)
 {dataset}

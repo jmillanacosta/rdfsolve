@@ -200,6 +200,12 @@ class MiningReport(BaseModel):
         description="First few examples of dropped invalid URIs.",
     )
 
+    measurement_gaps: list[QueryFailure] = Field(
+        default_factory=list,
+        description="Measures the engine refused for rows that stand (the distinct subjects of an "
+        "object group whose edges and objects are counted), each with its reason.",
+    )
+
     # Author provenance
     authors: list[dict[str, str]] | None = Field(None)
 

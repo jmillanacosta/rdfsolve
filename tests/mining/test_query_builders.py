@@ -1,6 +1,8 @@
 """rdfsolve.mining.query_builders: the queries of mining are valid SPARQL, subject counts are taken
 from total counts where these suffice, and the census of a local graph is counted."""
 
+import re
+
 from rdflib import Dataset, Graph
 
 from rdfsolve import SchemaMiner
@@ -42,42 +44,57 @@ def test_property_usage_takes_distinct_subjects_from_the_class_and_property(monk
     ]
 
 
-def test_distinct_subjects_of_object_groups_are_counted_within_a_budget(monkeypatch):
-    """Each object group that holds part of the edges needs its own query; beyond the budget,
-    the largest groups have their distinct subjects and the others keep edges and objects."""
-    group = [("urn:ex:Y", "3"), ("urn:ex:X", "5"), ("urn:ex:Z", "1")]
-    answers = iter(
-        [
-            QueryOutcome(
-                [
-                    {
-                        "class": {"value": C},
-                        "p": {"value": P},
-                        "oc": {"type": "uri", "value": oc},
-                        "cnt": {"value": n},
-                    }
-                    for oc, n in group
-                ]
-            ),
-            QueryOutcome([{"cnt": {"value": "9"}, "subjects": {"value": "4"}}]),
-            QueryOutcome([{"cnt": {"value": "5"}, "subjects": {"value": "2"}}]),
-        ]
+GROUPS = """
+<urn:a1> a <urn:A> ; <urn:p> <urn:b1>, <urn:c1> . <urn:a2> a <urn:A> ; <urn:p> <urn:b1>, <urn:b2> .
+<urn:a3> a <urn:A> ; <urn:p> <urn:d1> .
+<urn:b1> a <urn:B> . <urn:b2> a <urn:B> . <urn:c1> a <urn:C> . <urn:d1> a <urn:D> .
+"""
+
+
+def counted(monkeypatch, refuse=lambda query: False):
+    """Mine GROUPS as QLever mines a large class: the count of the whole class is refused, so
+    each property is counted alone; *refuse* fails other chosen queries."""
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
+    with SchemaMiner.from_graph(Graph().parse(data=GROUPS, format="turtle"), delay=0) as miner:
+        monkeypatch.setattr(miner.helper, "sparql_engine", "qlever")
+        select, sent = miner.helper.select, []
+
+        def answer(query, **kwargs):
+            sent.append(kwargs.get("purpose", ""))
+            if kwargs.get("purpose") == "counts/typed-object" or refuse(query):
+                raise EndpointTimeoutError("Query cost/time limit")
+            return select(query, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", answer)
+        schema = miner.mine("groups")
+    found = {
+        p.object_class: p.distinct_subjects for p in schema.patterns if p.property_uri == "urn:p"
+    }
+    return found, sent, miner.last_report
+
+
+def test_distinct_subjects_of_object_groups_are_counted_in_batches(monkeypatch):
+    """Groups that hold part of the edges of (class, property) are counted together, in one
+    query; a refused batch is split, and a group refused alone keeps its edges and objects."""
+    found, sent, _ = counted(monkeypatch)
+    assert found == {"urn:B": 2, "urn:C": 1, "urn:D": 1}
+    assert sum(p.endswith("/groups") for p in sent) == 1, "One query for all groups"
+    found, sent, report = counted(
+        monkeypatch, refuse=lambda q: re.search(r"VALUES \?_group \{ <[^>]+> <", q) is not None
     )
-    sent = []
-    monkeypatch.setattr(
-        "rdfsolve.mining.query_fallbacks.select_outcome",
-        lambda query, purpose, *args, **kwargs: sent.append(purpose) or next(answers),
+    assert found == {"urn:B": 2, "urn:C": 1, "urn:D": 1}, "Split down to one group each"
+    found, _, report = counted(
+        monkeypatch, refuse=lambda q: "VALUES ?_group" in q and "<urn:C>" in q
     )
-    monkeypatch.setattr(property_queries, "GROUP_QUERIES", 1)
-    outcome = property_queries._subjects_from_total(
-        C, P, None, None, _build_batched_typed_count_query, "counts", helper=None
-    )
-    assert sent == ["counts/per-object", "counts/total", "counts/group"], "One group query"
-    subjects = {row["oc"]["value"]: row.get("subjects", {}).get("value") for row in outcome.rows}
-    assert subjects == {"urn:ex:X": "2", "urn:ex:Y": None, "urn:ex:Z": None}, "The largest first"
-    assert outcome.state == "partial"
-    (failure,) = outcome.failures
-    assert failure.category == "budget" and "2 of 3" in failure.message
+    assert found == {"urn:B": 2, "urn:C": None, "urn:D": 1}
+    (gap,) = report.measurement_gaps
+    assert gap.category == "timeout" and gap.classes == ["urn:A"]
+    assert "1 edges to urn:C" in gap.message, "The report names the group and its edges"
+    assert not [f for f in report.query_failures if f.purpose.endswith("/groups")]
+    coverage = report.config["count_coverage"]
+    assert coverage["measurement_gaps"] == 1 and report.completion_state == "complete"
+    assert coverage["with_distinct_subjects"] == coverage["patterns"] - 1
 
 
 def test_queries_count_edges_in_the_selected_graph():

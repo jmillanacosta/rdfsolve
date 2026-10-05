@@ -44,10 +44,6 @@ SUBJECT_COUNTS = frozenset(
 )
 PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-# Object groups of one (class, property) whose distinct subjects are counted by a query each,
-# from the largest. A property whose objects are typed by a large ontology has one group for
-# each term in use; the others keep their edges and objects, and their subjects are not counted.
-GROUP_QUERIES = 10
 logger = logging.getLogger(__name__)
 _KINDS: WeakKeyDictionary[SparqlHelper, dict[tuple[str, ...], set[str] | None]] = (
     WeakKeyDictionary()
@@ -116,65 +112,138 @@ def _subjects_from_total(
         return None
     by_graph = {row.get("_g", {}).get("value"): row for row in totals.rows}
     subjects: dict[int, dict[str, Any]] = {}
-    alone: list[tuple[int, str, str]] = []
+    alone: list[int] = []
     for index, row in enumerate(groups.rows):
         whole = by_graph.get(row.get("_g", {}).get("value"))
-        edges = _edges(row)
-        if whole is None or edges is None:
+        if whole is None or _edges(row) is None:
             return None
-        test = _group_test(builder, row, context_graphs)
-        if edges == whole["cnt"]["value"]:
+        if _edges(row) == whole["cnt"]["value"]:
             subjects[index] = whole["subjects"]
-        elif test is None:
+        elif _group(builder, row) is None:
             return None
         else:
-            alone.append((index, edges, test))
-    alone.sort(key=lambda item: -int(item[1]))
-    for index, edges, test in alone[:GROUP_QUERIES]:
-        graph = groups.rows[index].get("_g", {}).get("value")
-        one = builders._build_class_property_total_query(
-            [class_uri], prop, graphs, context_graphs, test
+            alone.append(index)
+    failures: list[QueryFailure] = []
+    if alone:
+        logger.info("%s: distinct subjects of %d object groups, in batches", purpose, len(alone))
+        found = _count_groups(
+            alone,
+            groups.rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            f"{purpose}/groups",
+            helper,
+            failures,
         )
-        counted = select_outcome(one, f"{purpose}/group", helper, [class_uri], graphs)
-        if counted.state != "complete":
+        if found is None:
             return None
-        match = [r for r in counted.rows if r.get("_g", {}).get("value") == graph]
-        if len(match) != 1 or match[0]["cnt"]["value"] != edges:
-            return None
-        subjects[index] = match[0]["subjects"]
+        subjects.update(found)
     rows = [
         {**row, "subjects": subjects[i]} if i in subjects else row
         for i, row in enumerate(groups.rows)
     ]
-    rest = len(alone) - GROUP_QUERIES
-    if rest <= 0:
-        return QueryOutcome(rows, "complete", [])
-    message = (
-        f"distinct subjects of {rest} of {len(alone)} object groups not counted: each needs its "
-        f"own query, beyond the budget of {GROUP_QUERIES}"
+    return QueryOutcome(rows, "complete", gaps=failures)
+
+
+def _group(builder: Callable[..., str], row: dict[str, Any]) -> tuple[str, str] | None:
+    """Return the term that names the group of a row and the test that keeps its edges, with
+    the group as ?_group; None when the builder's groups cannot be told apart.
+    """
+    name = getattr(builder, "__name__", "")
+    if name == "_build_batched_typed_count_query" and row.get("oc", {}).get("type") == "uri":
+        return row["oc"]["value"], "?o a ?_group ."
+    if name == "_build_batched_literal_count_query" and row.get("dt", {}).get("type") == "uri":
+        return row["dt"]["value"], "FILTER(isLiteral(?o) && DATATYPE(?o) = ?_group)"
+    return None
+
+
+def _count_groups(
+    indexes: list[int],
+    rows: list[dict[str, Any]],
+    class_uri: str,
+    prop: str,
+    graphs: list[str] | None,
+    context_graphs: list[str] | None,
+    builder: Callable[..., str],
+    purpose: str,
+    helper: SparqlHelper,
+    failures: list[QueryFailure],
+) -> dict[int, dict[str, Any]] | None:
+    """Count the distinct subjects of these groups in one query; a refused batch is split in
+    two, and a group refused alone is recorded in *failures*. None on a result that does not
+    match the edges counted before.
+    """
+    from rdfsolve.mining.query_fallbacks import select_outcome
+
+    found = {i: g for i in indexes if (g := _group(builder, rows[i])) is not None}
+    terms = sorted({term for term, _ in found.values()})
+    test = found[indexes[0]][1]
+    if test.startswith("?o a "):
+        test = builders._type_pattern("?o", "?_group", context_graphs)
+    values = "VALUES ?_group { " + " ".join(f"<{t}>" for t in terms) + " } "
+    query = builders._build_class_property_total_query(
+        [class_uri], prop, graphs, context_graphs, values + test, group="?_group"
     )
-    logger.info("%s: %s", purpose, message)
-    return QueryOutcome(
-        rows, "partial", [QueryFailure("budget", message, purpose, [class_uri], graphs)]
-    )
+    outcome = select_outcome(query, purpose, helper, [class_uri], graphs)
+    if outcome.state != "complete":
+        if len(indexes) == 1:
+            for failure in outcome.failures:
+                failures.append(
+                    QueryFailure(
+                        failure.category,
+                        f"distinct subjects of the {_edges(rows[indexes[0]])} edges to {terms[0]} "
+                        f"not counted: {failure.message}",
+                        purpose,
+                        [class_uri],
+                        graphs,
+                    )
+                )
+            return {}
+        half = len(indexes) // 2
+        left = _count_groups(
+            indexes[:half],
+            rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            purpose,
+            helper,
+            failures,
+        )
+        right = _count_groups(
+            indexes[half:],
+            rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            purpose,
+            helper,
+            failures,
+        )
+        return None if left is None or right is None else {**left, **right}
+    answered = {
+        (r.get("_g", {}).get("value"), r.get("_group", {}).get("value")): r for r in outcome.rows
+    }
+    counted: dict[int, dict[str, Any]] = {}
+    for i in indexes:
+        match = answered.get((rows[i].get("_g", {}).get("value"), found[i][0]))
+        if match is None or match["cnt"]["value"] != _edges(rows[i]):
+            return None
+        counted[i] = match["subjects"]
+    return counted
 
 
 def _edges(row: dict[str, Any]) -> str | None:
     """Return the edge count of a row: ?cnt in the count builders, ?triples in property usage."""
     value: str | None = (row.get("cnt") or row.get("triples") or {}).get("value")
     return value
-
-
-def _group_test(
-    builder: Callable[..., str], row: dict[str, Any], context_graphs: list[str] | None
-) -> str | None:
-    """Return the test of the object that keeps the edges of one group, or None."""
-    name = getattr(builder, "__name__", "")
-    if name == "_build_batched_typed_count_query" and row.get("oc", {}).get("type") == "uri":
-        return builders._type_pattern("?o", f"<{row['oc']['value']}>", context_graphs)
-    if name == "_build_batched_literal_count_query" and row.get("dt", {}).get("type") == "uri":
-        return f"FILTER(isLiteral(?o) && DATATYPE(?o) = <{row['dt']['value']}>)"
-    return None
 
 
 def query_by_property(

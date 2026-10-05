@@ -1052,6 +1052,23 @@ class SchemaMiner:
         schema.prefixes = schema.get_prefixes()
         from rdfsolve.schema_models.iri_quality import findings
 
+        rows = [*schema.patterns, *(schema.structural_patterns or [])]
+        report.config["count_coverage"] = {
+            "patterns": len(rows),
+            "with_triples": sum(getattr(p, "count", None) is not None for p in rows),
+            "with_distinct_subjects": sum(
+                getattr(p, "distinct_subjects", None) is not None for p in rows
+            ),
+            "with_distinct_objects": sum(
+                getattr(p, "distinct_objects", None) is not None for p in rows
+            ),
+            "measurement_gaps": len(report.measurement_gaps),
+        }
+        if report.measurement_gaps:
+            logger.warning(
+                "%d measures refused for rows that stand (report: measurement_gaps)",
+                len(report.measurement_gaps),
+            )
         found = findings(schema, report.config.get("dataset_statistics"))
         report.config["iri_findings"] = found
         self._report.flush()
