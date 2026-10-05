@@ -98,6 +98,22 @@ def test_the_second_pass_skips_extracted_archives(tmp_path):
     assert turtle == ["a.ttl", "b.ttl"], "Each file once, the nested archive extracted too"
 
 
+def test_an_empty_archive_member_is_left_out(tmp_path):
+    with zipfile.ZipFile(tmp_path / "cordis.zip", "w") as z:
+        z.writestr("extraction/Grant.nq", "<urn:a> <urn:p> <urn:o> <urn:g> .\n")
+        z.writestr("extraction/Person.nq", "")
+    done = subprocess.run(
+        ["bash"],
+        input=" && ".join(_extract_archives_steps()),
+        text=True,
+        cwd=tmp_path,
+        capture_output=True,
+    )
+    assert done.returncode == 0, done.stderr
+    assert [p.name for p in tmp_path.rglob("*.nq")] == ["Grant.nq"]
+    assert "empty archive member left out: ./extraction/Person.nq" in done.stdout
+
+
 def test_each_download_command_retries_passing_faults():
     for url in ("https://example.org/a/data.ttl.gz", "https://example.org/download?id=7"):
         command = _wget_cmd(url)

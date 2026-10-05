@@ -435,6 +435,20 @@ def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
     )
 
 
+def _drop_empty_members_step() -> str:
+    """Shell fragment: leave out the empty files that archives hold, and name each.
+
+    An archive can hold an empty member (CORDIS publishes EURIO's Person.nq empty); it has no
+    statements, and the index refuses an empty input. A download that is empty is not affected.
+    """
+    return (
+        "find . -mindepth 2 -type f -empty \\( -name '*.ttl' -o -name '*.nt' -o -name '*.nq' "
+        "-o -name '*.trig' -o -name '*.n3' -o -name '*.owl' -o -name '*.rdf' -o -name '*.jsonld' "
+        '\\) -print0 | while IFS= read -r -d "" fp; do '
+        'echo "  empty archive member left out: $fp"; rm -f "$fp"; done'
+    )
+
+
 def _rename_mislabelled_steps(analysis: SourceAnalysis) -> list[str]:
     """Give a Turtle download a .ttl name when its URL says otherwise.
 
@@ -487,12 +501,14 @@ def _extract_archives_steps() -> list[str]:
         _tar,
         _zip,
         "echo 'Collecting files from subdirectories ...'",
+        _drop_empty_members_step(),
         _collect_from_subdirs_step(include_archives=True),
         # Pass 2 -- nested archives that were moved up.
         "echo 'Extracting nested archives (pass 2) ...'",
         _nested_tar,
         _nested_zip,
         "echo 'Collecting files from nested extraction ...'",
+        _drop_empty_members_step(),
         _collect_from_subdirs_step(include_archives=False),
         "rm -f .extracted-archives",
     ]
