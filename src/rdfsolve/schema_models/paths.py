@@ -48,15 +48,28 @@ class PropertyPath(BaseModel):
         return self
 
 
+# Characters that RDF IRIs exclude. Lenient engines keep terms with them, and a query writes such
+# a term with IRI("...") (rdfsolve.sparql_terms).
 _INVALID_IRI_CHAR = re.compile(r'[\s<>"{}|^`\\\x00-\x1f]')
+# Characters that end the term or the string of IRI("..."): such a term cannot be written.
+_UNWRITABLE_IRI_CHAR = re.compile(r'[<>"{}\n\r]')
+
+
+def is_rdf_iri(value: str) -> bool:
+    """Return whether *value* has no character that RDF IRIs exclude."""
+    return _INVALID_IRI_CHAR.search(value) is None
 
 
 def absolute_iri(value: str) -> str:
-    """Validate an RDF IRI before serializing it into SPARQL."""
+    """Validate an absolute IRI before serializing it into SPARQL.
+
+    A term with a character that RDF IRIs exclude, such as a space, is accepted: it is written
+    with IRI("...") when the query is sent. A character that would end the term is refused.
+    """
     if not isinstance(value, str) or not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", value):
         raise ValueError(
             "Expected an absolute RDF IRI; relative or blank-node identifiers need an anchored query."
         )
-    if _INVALID_IRI_CHAR.search(value):
+    if _UNWRITABLE_IRI_CHAR.search(value):
         raise ValueError("Invalid character in an RDF IRI")
     return value

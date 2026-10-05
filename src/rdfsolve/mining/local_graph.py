@@ -11,6 +11,7 @@ from rdflib import Dataset
 
 from rdfsolve.local_rdf import LocalBackend, LocalRdf, to_rdflib
 from rdfsolve.sparql_helper import SparqlHelper
+from rdfsolve.sparql_terms import writable_query
 
 
 class LocalGraphHelper(SparqlHelper):
@@ -43,15 +44,15 @@ class LocalGraphHelper(SparqlHelper):
 
     def select(self, query: str, purpose: str = "") -> dict[str, Any]:
         """Return SPARQL JSON bindings from the local dataset."""
-        return self.local.select_json(query)
+        return self.local.select_json(writable_query(query))
 
     def construct(self, query: str) -> str:
         """Return local query results as Turtle."""
-        data = self.local.query(query).serialize(format="turtle")
+        data = self.local.query(writable_query(query)).serialize(format="turtle")
         if data is None:
             raise RuntimeError("RDFLib returned no serialized query result")
         return data.decode()
 
     def ask(self, query: str) -> bool:
         """Evaluate a local existence query."""
-        return bool(self.local.query(query).askAnswer)
+        return bool(self.local.query(writable_query(query)).askAnswer)

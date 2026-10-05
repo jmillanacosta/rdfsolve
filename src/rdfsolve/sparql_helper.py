@@ -32,6 +32,7 @@ from urllib3.connection import HTTPConnection
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
 from rdfsolve.schema_models.paths import PropertyPath
+from rdfsolve.sparql_terms import writable_query
 
 logger = logging.getLogger(__name__)
 
@@ -591,6 +592,7 @@ class SparqlHelper:
         purpose: str = "",
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
+        query = writable_query(query)
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         started = time.monotonic()
         token = _active_record.set(record)

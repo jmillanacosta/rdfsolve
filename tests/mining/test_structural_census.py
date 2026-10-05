@@ -284,19 +284,3 @@ def test_the_census_lines_of_a_checkpoint_are_read_on_resume(tmp_path):
     miner._rc = SimpleNamespace(report=SimpleNamespace(config={}))
     batches = miner._resumed_batches(str(path), path.read_text())
     assert batches[("census|abc",)] == [{"triples": 7}]
-
-
-def test_a_property_that_is_not_a_valid_iri_is_counted_and_not_checked():
-    """A property IRI with a space cannot be written in a query."""
-    from rdfsolve.mining.structural_strategy import _checkable
-
-    report = Mock()
-    marked = _checkable(
-        Mock(report=report),
-        {"urn:p": {"uncoveredTriples": 1}, "urn:bad name": {"triples": 2, "uncoveredTriples": 2}},
-    )
-    assert marked == {
-        "urn:p": {"uncoveredTriples": 1},
-        "urn:bad name": {"triples": 2, "refused": "not a valid IRI"},
-    }
-    report.record_dropped_uri.assert_called_once_with("property urn:bad name")

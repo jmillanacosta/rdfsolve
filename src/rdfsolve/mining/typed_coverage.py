@@ -12,7 +12,7 @@ from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 def _is(variable: str, iris: set[str]) -> str:
     """Compare a variable with one IRI or a list of IRIs."""
-    terms = sorted(URIRef(iri).n3() for iri in iris)
+    terms = sorted(f"<{iri}>" for iri in iris)
     return f"{variable} = {terms[0]}" if len(terms) == 1 else f"{variable} IN ({', '.join(terms)})"
 
 
@@ -58,7 +58,7 @@ def typed_match(
         "?_contextGraph", "?_objectAnyGraph"
     )
     if predicate:
-        edge = f"?s {URIRef(predicate).n3()} ?o . {restriction}"
+        edge = f"?s <{predicate}> ?o . {restriction}"
     else:
         edge = f"?s ?p ?o . {restriction}"
 

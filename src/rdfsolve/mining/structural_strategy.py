@@ -18,7 +18,6 @@ from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 
 logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
-from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
 from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, SparqlHelperError
@@ -70,10 +69,10 @@ def _discovery_query(
     return f"""SELECT DISTINCT {edges}?ss ?os ?p ?sk ?ok ?dt ?lang
 {_dataset(graph, named_graphs)} WHERE {{
   {edge_pattern}
-  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR="\\n") AS ?ss)
      WHERE {{ {{ SELECT DISTINCT ?s WHERE {{ ?s ?p ?o . {residual} }} }} ?s ?sp ?sv }} GROUP BY ?s }}
   OPTIONAL {{
-    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=" ") AS ?os)
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR="\\n") AS ?os)
        WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ ?s ?p ?o . {residual} }} }} ?o ?op ?ov }} GROUP BY ?o }}
   }}
   BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
@@ -217,24 +216,8 @@ def _patterns_census(
         }
         counts.update(triples=total, untypedTriples=missing, uncoveredTriples=missing)
     entry["census"] = "qlever_patterns"
-    entry["census_properties"] = _checkable(context, per_property)
+    entry["census_properties"] = per_property
     return counts
-
-
-def _checkable(
-    context: MiningContext, per_property: dict[str, dict[str, Any]]
-) -> dict[str, dict[str, Any]]:
-    """Mark the properties that cannot be written in a query: their triples are counted and not
-    checked, and the property is recorded as dropped.
-    """
-    for predicate, n in per_property.items():
-        try:
-            absolute_iri(predicate)
-        except ValueError:
-            context.report.record_dropped_uri(f"property {predicate}")
-            n.pop("uncoveredTriples", None)
-            n["refused"] = "not a valid IRI"
-    return per_property
 
 
 def _patterns_discovery(
@@ -254,18 +237,18 @@ def _patterns_discovery(
     for predicate, n in sorted(entry["census_properties"].items()):
         if not n.get("uncoveredTriples"):
             continue
-        prop = URIRef(predicate).n3()
+        prop = f"<{predicate}>"
         query = (
             QLEVER_PREFIX
             + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
   (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
-  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), " ", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
+  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), "\\n", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
 {_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
   ?s {prop} ?o . {UNTYPED_SUBJECT}
-  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=" ") AS ?ss)
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR="\\n") AS ?ss)
      WHERE {{ ?s {prop} ?_o . {UNTYPED_SUBJECT} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
   OPTIONAL {{
-    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=" ") AS ?os)
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR="\\n") AS ?os)
        WHERE {{ ?s {prop} ?o . {UNTYPED_SUBJECT} ?o ql:has-predicate ?op }} GROUP BY ?o }}
   }}
   BIND({prop} AS ?p)
@@ -347,7 +330,8 @@ def _witness(row: dict[str, Any]) -> dict[str, Any]:
 
     A blank node has no label that another query can use; it is given as a blank node only.
     """
-    subject, value = row["witness"]["value"].split(" ", 1)
+    # A subject IRI may hold a space but not a newline; a literal object may hold both.
+    subject, value = row["witness"]["value"].split("\n", 1)
     edge: dict[str, Any] = {
         "s": {"type": "uri", "value": subject}
         if row["sk"]["value"] == "IRI"
@@ -475,13 +459,10 @@ def _census(
             for row in _select(context, query, "structural/coverage", paged=False):
                 if "p" in row:
                     grouped[row["p"]["value"]][name] = int(row["n"]["value"])
-        entry["census_properties"] = _checkable(
-            context,
-            {
-                prop: {"triples": n.get("triples", 0), "untypedTriples": n.get("untypedTriples", 0)}
-                for prop, n in sorted(grouped.items())
-            },
-        )
+        entry["census_properties"] = {
+            prop: {"triples": n.get("triples", 0), "untypedTriples": n.get("untypedTriples", 0)}
+            for prop, n in sorted(grouped.items())
+        }
         return counts
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
@@ -490,10 +471,6 @@ def _census(
     per_property: dict[str, dict[str, Any]] = {}
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
-        checked = _checkable(context, {predicate: {}})[predicate]
-        if checked:
-            per_property[predicate] = checked
-            continue
         own = [key for key in keys if key[1] == predicate]
         try:
             found = _property_census(context, graph, named, own, local, predicate, entry)
@@ -513,10 +490,15 @@ def _census(
     return counts
 
 
+def _properties(joined: str) -> list[str]:
+    """Split a property set joined by newlines (a property IRI may hold a space)."""
+    return [p for p in joined.split("\n") if p]
+
+
 def _object_term(binding: dict[str, Any]) -> str:
     """Write an IRI or literal of a SPARQL JSON result as a SPARQL term."""
     if binding["type"] == "uri":
-        return URIRef(binding["value"]).n3()
+        return f"<{binding['value']}>"
     language, datatype = binding.get("xml:lang"), binding.get("datatype")
     return Literal(binding["value"], lang=language, datatype=datatype).n3()
 
@@ -777,8 +759,8 @@ class StructuralStrategy(MiningStrategy):
         for row in rows:
             predicate = row["p"]["value"]
             candidate = StructuralPattern(
-                subject_properties=row["ss"]["value"].split(),
-                object_properties=row.get("os", {}).get("value", "").split(),
+                subject_properties=_properties(row["ss"]["value"]),
+                object_properties=_properties(row.get("os", {}).get("value", "")),
                 subject_kind=row["sk"]["value"],
                 object_kind=row["ok"]["value"],
                 property_uri=predicate,

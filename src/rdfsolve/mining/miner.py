@@ -1042,6 +1042,17 @@ class SchemaMiner:
                 {prefix: str(namespace) for prefix, namespace in dataset.namespaces()}
             )
         schema.prefixes = schema.get_prefixes()
+        from rdfsolve.schema_models.iri_quality import findings
+
+        found = findings(schema, report.config.get("dataset_statistics"))
+        report.config["iri_findings"] = found
+        self._report.flush()
+        if found["terms"]:
+            logger.warning(
+                "%d terms are not RDF IRIs: queried with IRI(), kept in the JSON schema and left "
+                "out of the RDF outputs (report: iri_findings)",
+                len(found["terms"]),
+            )
         return schema
 
     def query_enrichment(

@@ -18,7 +18,6 @@ from typing import Any
 
 from rdflib import URIRef
 
-from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.sparql_helper import EndpointError
 
 # Seconds for the distinct subjects and objects of the properties (Bgee: 2,197 s for 48
@@ -91,7 +90,7 @@ def count_dataset(
             continue
         for name, variable in (("distinct_subjects", "?s"), ("distinct_objects", "?o")):
             try:
-                query = f"SELECT (COUNT(DISTINCT {variable}) AS ?n) WHERE {{ ?s <{absolute_iri(prop)}> ?o }}"
+                query = f"SELECT (COUNT(DISTINCT {variable}) AS ?n) WHERE {{ ?s <{prop}> ?o }}"
                 partitions[prop][name] = number(query)
             except (EndpointError, ValueError) as error:
                 refused[prop] = f"{name}: {error}"

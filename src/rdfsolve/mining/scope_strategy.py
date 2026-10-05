@@ -20,7 +20,6 @@ from rdfsolve.mining.query_fallbacks import select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, TermAnnotation
-from rdfsolve.schema_models.paths import _INVALID_IRI_CHAR as _INVALID
 from rdfsolve.sparql_helper import SparqlHelper
 
 LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
@@ -238,9 +237,8 @@ class ScopeStrategy(MiningStrategy):
 
 def _batches(iris: list[str], size: int = BATCH) -> Iterator[str]:
     """Yield the IRIs as SPARQL terms, in groups that fit in one VALUES block."""
-    iris = [iri for iri in iris if _INVALID.search(iri) is None]  # not writable in a query
     for start in range(0, len(iris), size):
-        yield " ".join(URIRef(iri).n3() for iri in iris[start : start + size])
+        yield " ".join(f"<{iri}>" for iri in iris[start : start + size])
 
 
 def _term(binding: dict[str, Any]) -> dict[str, Any]:

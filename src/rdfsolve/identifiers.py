@@ -23,7 +23,7 @@ from rdflib import URIRef
 from rdfsolve._uri import make_expander
 from rdfsolve.models.source_model import SourceModel
 from rdfsolve.schema_models.enrichment import RdfTerm
-from rdfsolve.schema_models.paths import absolute_iri
+from rdfsolve.schema_models.paths import absolute_iri, is_rdf_iri
 
 
 @dataclass(frozen=True)
@@ -81,7 +81,7 @@ def registry_uri_formats() -> dict[str, tuple[str, ...]]:
 def _valid_iri(text: str) -> str | None:
     """Return the IRI, or None when it is not valid (registries list some formats with spaces)."""
     try:
-        return absolute_iri(text)
+        return absolute_iri(text) if is_rdf_iri(text) else None
     except ValueError:
         return None
 

@@ -627,8 +627,13 @@ class MinedSchema(BaseModel):
             logging.getLogger(__name__).warning(
                 "VoID does not encode SHACL profiles, collections or composed navigation. Keep canonical JSON."
             )
-        return to_void_graph(
-            trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
+
+        return rdf_terms_only(
+            to_void_graph(
+                rdf_writable(trim_export_text(self, trim_descriptions)),
+                trim_descriptions=trim_descriptions,
+            )
         )
 
     def to_linkml(
@@ -644,9 +649,10 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.exporters.linkml import to_linkml
         from rdfsolve.schema_models.exporters.text import clip_description
+        from rdfsolve.schema_models.iri_quality import rdf_writable
 
         return to_linkml(
-            trim_export_text(self, trim_descriptions),
+            rdf_writable(trim_export_text(self, trim_descriptions)),
             schema_name=schema_name or self.about.dataset_name,
             schema_description=clip_description(schema_description, trim_descriptions),
         )
@@ -763,8 +769,9 @@ class MinedSchema(BaseModel):
             @prefix sh: <http://www.w3.org/ns/shacl#> .
         """
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
 
-        schema = trim_export_text(self, trim_descriptions)
+        schema = rdf_writable(trim_export_text(self, trim_descriptions))
         if paths == "without":
             schema = schema.model_copy(update={"navigation": None})
         elif paths == "only":
@@ -780,7 +787,7 @@ class MinedSchema(BaseModel):
         if void:
             graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
         schema.annotate_rdf(graph)
-        result: str = graph.serialize(format="turtle")
+        result: str = rdf_terms_only(graph).serialize(format="turtle")
         return result
 
 

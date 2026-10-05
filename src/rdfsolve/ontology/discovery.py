@@ -244,7 +244,7 @@ def _overlap_query(
 ) -> str | None:
     branches: list[str] = []
     if classes:
-        values = " ".join(URIRef(item).n3() for item in classes)
+        values = " ".join(f"<{item}>" for item in classes)
         kinds = " ".join(URIRef(item).n3() for item in _CLASS_KINDS)
         branches.append(
             "{ VALUES ?term { "
@@ -254,7 +254,7 @@ def _overlap_query(
             + ' } BIND("class" AS ?termKind) }'
         )
     if properties:
-        values = " ".join(URIRef(item).n3() for item in properties)
+        values = " ".join(f"<{item}>" for item in properties)
         kinds = " ".join(URIRef(item).n3() for item in _PROPERTY_KINDS)
         branches.append(
             "{ VALUES ?term { "
