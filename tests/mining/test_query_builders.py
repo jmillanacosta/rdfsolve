@@ -42,6 +42,44 @@ def test_property_usage_takes_distinct_subjects_from_the_class_and_property(monk
     ]
 
 
+def test_distinct_subjects_of_object_groups_are_counted_within_a_budget(monkeypatch):
+    """Each object group that holds part of the edges needs its own query; beyond the budget,
+    the largest groups have their distinct subjects and the others keep edges and objects."""
+    group = [("urn:ex:Y", "3"), ("urn:ex:X", "5"), ("urn:ex:Z", "1")]
+    answers = iter(
+        [
+            QueryOutcome(
+                [
+                    {
+                        "class": {"value": C},
+                        "p": {"value": P},
+                        "oc": {"type": "uri", "value": oc},
+                        "cnt": {"value": n},
+                    }
+                    for oc, n in group
+                ]
+            ),
+            QueryOutcome([{"cnt": {"value": "9"}, "subjects": {"value": "4"}}]),
+            QueryOutcome([{"cnt": {"value": "5"}, "subjects": {"value": "2"}}]),
+        ]
+    )
+    sent = []
+    monkeypatch.setattr(
+        "rdfsolve.mining.query_fallbacks.select_outcome",
+        lambda query, purpose, *args, **kwargs: sent.append(purpose) or next(answers),
+    )
+    monkeypatch.setattr(property_queries, "GROUP_QUERIES", 1)
+    outcome = property_queries._subjects_from_total(
+        C, P, None, None, _build_batched_typed_count_query, "counts", helper=None
+    )
+    assert sent == ["counts/per-object", "counts/total", "counts/group"], "One group query"
+    subjects = {row["oc"]["value"]: row.get("subjects", {}).get("value") for row in outcome.rows}
+    assert subjects == {"urn:ex:X": "2", "urn:ex:Y": None, "urn:ex:Z": None}, "The largest first"
+    assert outcome.state == "partial"
+    (failure,) = outcome.failures
+    assert failure.category == "budget" and "2 of 3" in failure.message
+
+
 def test_queries_count_edges_in_the_selected_graph():
     data = Dataset()
     data.parse(

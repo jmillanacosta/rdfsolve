@@ -136,7 +136,36 @@ def test_interrupted_mining_keeps_completed_class_batches(tmp_path, monkeypatch)
     assert report.config["resumed_batches"] == [[cls]], "Record which evidence was reused"
     phases = [json.loads(line)["phase"] for line in checkpoint.read_text().splitlines()]
     assert phases.count("patterns") == 2, "The new checkpoint holds every batch"
-    assert set(phases) <= {"patterns", "census"}, "and the census counts"
+    assert set(phases) <= {"patterns", "census", "counts"}, "and the census and counts"
+
+
+def test_resumed_mining_reuses_the_counts_of_each_batch(tmp_path, monkeypatch):
+    graph = Graph().parse(
+        data='@prefix e: <urn:stop:> . e:a a e:A; e:p "x" . e:b a e:B; e:q e:a .', format="turtle"
+    )
+    path = tmp_path / "report.json"
+    with SchemaMiner.from_graph(graph, delay=0, class_batch_size=1, report_path=path) as miner:
+        whole = miner.mine("counts")
+    saved = [
+        json.loads(line) for line in path.with_suffix(".checkpoint.jsonl").read_text().splitlines()
+    ]
+    assert sum(line["phase"] == "counts" for line in saved) == 2, "One line for each batch"
+    kept = tmp_path / "previous.checkpoint.jsonl"
+    kept.write_text(path.with_suffix(".checkpoint.jsonl").read_text())
+    with SchemaMiner.from_graph(
+        graph, delay=0, class_batch_size=1, report_path=path, resume_checkpoint=kept
+    ) as miner:
+        select, sent = miner.helper.select, []
+        monkeypatch.setattr(
+            miner.helper,
+            "select",
+            lambda q, **kw: sent.append(kw.get("purpose", "")) or select(q, **kw),
+        )
+        resumed = miner.mine("counts")
+    assert not [p for p in sent if p.startswith("counts/")], "Counts are reused, not re-queried"
+    assert [(p.property_uri, p.count, p.distinct_subjects) for p in resumed.patterns] == [
+        (p.property_uri, p.count, p.distinct_subjects) for p in whole.patterns
+    ]
 
 
 PHASE_QUERIES_RECORDED_DATA = (

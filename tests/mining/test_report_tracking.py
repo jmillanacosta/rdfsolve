@@ -146,7 +146,8 @@ def test_a_partial_batch_is_mined_again_on_resume(tmp_path, monkeypatch):
     lines = [
         json.loads(line) for line in first.with_suffix(".checkpoint.jsonl").read_text().splitlines()
     ]
-    assert {line["classes"][0]: line["state"] for line in lines} == {
+    patterns = [line for line in lines if line["phase"] == "patterns"]
+    assert {line["classes"][0]: line["state"] for line in patterns} == {
         "urn:A": "complete",
         "urn:B": "partial",
     }

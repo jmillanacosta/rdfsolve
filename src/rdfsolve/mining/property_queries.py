@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 from weakref import WeakKeyDictionary
 
-from rdfsolve._outcomes import QueryOutcome
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining import query_builders as builders
 
 if TYPE_CHECKING:
@@ -43,6 +44,11 @@ SUBJECT_COUNTS = frozenset(
 )
 PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# Object groups of one (class, property) whose distinct subjects are counted by a query each,
+# from the largest. A property whose objects are typed by a large ontology has one group for
+# each term in use; the others keep their edges and objects, and their subjects are not counted.
+GROUP_QUERIES = 10
+logger = logging.getLogger(__name__)
 _KINDS: WeakKeyDictionary[SparqlHelper, dict[tuple[str, ...], set[str] | None]] = (
     WeakKeyDictionary()
 )
@@ -109,30 +115,54 @@ def _subjects_from_total(
     if totals.state != "complete":
         return None
     by_graph = {row.get("_g", {}).get("value"): row for row in totals.rows}
-    rows = []
-    for row in groups.rows:
-        # The count builders name the edge count ?cnt; the property usage query names it ?triples.
-        edges = (row.get("cnt") or row.get("triples") or {}).get("value")
-        graph = row.get("_g", {}).get("value")
-        whole = by_graph.get(graph)
-        if whole is None:
+    subjects: dict[int, dict[str, Any]] = {}
+    alone: list[tuple[int, str, str]] = []
+    for index, row in enumerate(groups.rows):
+        whole = by_graph.get(row.get("_g", {}).get("value"))
+        edges = _edges(row)
+        if whole is None or edges is None:
             return None
-        if edges != whole["cnt"]["value"]:
-            test = _group_test(builder, row, context_graphs)
-            if test is None:
-                return None
-            one = builders._build_class_property_total_query(
-                [class_uri], prop, graphs, context_graphs, test
-            )
-            counted = select_outcome(one, f"{purpose}/group", helper, [class_uri], graphs)
-            if counted.state != "complete":
-                return None
-            match = [r for r in counted.rows if r.get("_g", {}).get("value") == graph]
-            if len(match) != 1 or match[0]["cnt"]["value"] != edges:
-                return None
-            whole = match[0]
-        rows.append({**row, "subjects": whole["subjects"]})
-    return QueryOutcome(rows, "complete", [])
+        test = _group_test(builder, row, context_graphs)
+        if edges == whole["cnt"]["value"]:
+            subjects[index] = whole["subjects"]
+        elif test is None:
+            return None
+        else:
+            alone.append((index, edges, test))
+    alone.sort(key=lambda item: -int(item[1]))
+    for index, edges, test in alone[:GROUP_QUERIES]:
+        graph = groups.rows[index].get("_g", {}).get("value")
+        one = builders._build_class_property_total_query(
+            [class_uri], prop, graphs, context_graphs, test
+        )
+        counted = select_outcome(one, f"{purpose}/group", helper, [class_uri], graphs)
+        if counted.state != "complete":
+            return None
+        match = [r for r in counted.rows if r.get("_g", {}).get("value") == graph]
+        if len(match) != 1 or match[0]["cnt"]["value"] != edges:
+            return None
+        subjects[index] = match[0]["subjects"]
+    rows = [
+        {**row, "subjects": subjects[i]} if i in subjects else row
+        for i, row in enumerate(groups.rows)
+    ]
+    rest = len(alone) - GROUP_QUERIES
+    if rest <= 0:
+        return QueryOutcome(rows, "complete", [])
+    message = (
+        f"distinct subjects of {rest} of {len(alone)} object groups not counted: each needs its "
+        f"own query, beyond the budget of {GROUP_QUERIES}"
+    )
+    logger.info("%s: %s", purpose, message)
+    return QueryOutcome(
+        rows, "partial", [QueryFailure("budget", message, purpose, [class_uri], graphs)]
+    )
+
+
+def _edges(row: dict[str, Any]) -> str | None:
+    """Return the edge count of a row: ?cnt in the count builders, ?triples in property usage."""
+    value: str | None = (row.get("cnt") or row.get("triples") or {}).get("value")
+    return value
 
 
 def _group_test(

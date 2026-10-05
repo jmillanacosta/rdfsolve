@@ -7,10 +7,18 @@ from typing import Any, Literal
 
 QueryState = Literal["complete", "partial", "failed"]
 FailureCategory = Literal[
-    "endpoint", "timeout", "truncated", "query", "invalid_response", "sampled", "rate_limited"
+    "endpoint",
+    "timeout",
+    "truncated",
+    "query",
+    "invalid_response",
+    "sampled",
+    "rate_limited",
+    "budget",
 ]
 # "sampled": rows come from bounded member windows because the whole query exceeded its budget.
 # "rate_limited": the endpoint asked for a pause longer than the wait budget of the client.
+# "budget": a fallback stopped at its fixed number of queries; the rest is recorded as not counted.
 Bindings = list[dict[str, Any]]
 
 

@@ -414,6 +414,7 @@ class SchemaMiner:
 
         if self._resume is not None:
             context.resumed = self._resumed_batches(*self._resume)
+        self._resumed: dict[tuple[str, ...], list[dict[str, Any]]] = context.resumed
         # Run strategy
         patterns = self._strategy.mine(context)
         if not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
@@ -458,7 +459,7 @@ class SchemaMiner:
         batches = {}
         skipped = []
         for line in map(json.loads, text.splitlines()):
-            if line.get("phase") not in ("patterns", "census"):
+            if line.get("phase") not in ("patterns", "census", "counts"):
                 continue
             state = line.get("state")
             if state is None and self._resume_failed & set(line["classes"]):
@@ -496,6 +497,7 @@ class SchemaMiner:
                 class_batches=self._class_batches,
                 type_context_graph_uris=self.type_context_graph_uris,
                 shared_extensions=self._shared_extensions,
+                resumed=self._resumed,
             )
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:
@@ -872,6 +874,7 @@ class SchemaMiner:
         self._subsumed_classes = set()
         self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
+        self._resumed = {}
         self._structural_patterns = None
         self._subsumed_classes = set()
         self._declared_classes = set()

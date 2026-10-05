@@ -156,6 +156,7 @@ def enrich_patterns_with_counts(
     class_batches: list[list[str]] | None = None,
     type_context_graph_uris: list[str] | None = None,
     shared_extensions: dict[str, str] | None = None,
+    resumed: dict[tuple[str, ...], list[dict[str, Any]]] | None = None,
 ) -> list[SchemaPattern]:
     """Run COUNT queries and merge counts into patterns.
 
@@ -180,6 +181,9 @@ def enrich_patterns_with_counts(
             they do not cover are counted in fixed batches of *class_batch_size*
         shared_extensions: Classes verified to have the same members as another
             class; their counts are copied from that class instead of queried
+        resumed: Checkpointed batches of an earlier run; the counts of a batch kept there
+            ("counts" and its classes) are reused instead of queried. The counts of each
+            batch are checkpointed.
 
     Returns:
         Patterns with count field populated
@@ -205,6 +209,16 @@ def enrich_patterns_with_counts(
 
     for batch_idx, batch in enumerate(batches):
         label = f"batch {batch_idx + 1}/{n_batches}"
+        key = ("counts", *batch)
+        if resumed and key in resumed:
+            logger.info("Counting %s: %d classes reused from the checkpoint", label, len(batch))
+            for row in resumed[key]:
+                counts.setdefault(tuple(row["key"]), {})[row["graph"]] = _PatternCount(
+                    row["triples"], row["distinct_subjects"], row["distinct_objects"]
+                )
+            continue
+        logger.info("Counting %s: %d classes", label, len(batch))
+        failed = len(report.report.query_failures)
 
         _fetch_typed_count_batch(
             batch,
@@ -257,6 +271,19 @@ def enrich_patterns_with_counts(
                 type_context_graph_uris,
                 object_class="BlankNode",
             )
+
+        members = set(batch)
+        report.checkpoint(
+            "counts",
+            list(key),
+            [
+                {"key": list(k), "graph": graph, **vars(metric)}
+                for k, per_graph in counts.items()
+                if k[0] in members
+                for graph, metric in per_graph.items()
+            ],
+            "complete" if len(report.report.query_failures) == failed else "partial",
+        )
 
         # Delay between batches
         if delay > 0:
