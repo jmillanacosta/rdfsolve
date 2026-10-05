@@ -23,7 +23,7 @@ def mined():
         ("urn:b", "urn:q", Literal("y")),
     ):
         data.add((URIRef(s), URIRef(p), o))
-    with SchemaMiner.from_graph(data, delay=0) as miner:
+    with SchemaMiner.from_graph(data, delay=0, enrich=True) as miner:  # as the pipeline
         return miner.mine("quality"), miner.last_report
 
 

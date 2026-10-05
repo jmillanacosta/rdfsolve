@@ -25,14 +25,17 @@ from rdfsolve.schema_models.enrichment import (
     SchemaEnrichment,
     TermAnnotation,
 )
+from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.sparql_helper import SparqlHelper
 
 
 def _iri(value: str) -> str:
-    if not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", value) or re.search(r'[<>"{}|^`\\\s]', value):
-        raise ValueError(f"Invalid IRI in enrichment query: {value!r}")
-    return f"<{value}>"
+    """Write an IRI of the data in a query; one that is not an RDF IRI is written when sent."""
+    try:
+        return f"<{absolute_iri(value)}>"
+    except ValueError as error:
+        raise ValueError(f"Invalid IRI in enrichment query: {value!r}") from error
 
 
 def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
