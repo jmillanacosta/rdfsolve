@@ -251,3 +251,12 @@ def test_an_empty_file_is_skipped(tmp_path):
     done = _run(_convert_rdfxml_steps(), tmp_path)
     assert done.returncode == 0, done.stderr
     assert not (tmp_path / "enzyme-hierarchy.nq").exists()
+
+
+def test_a_compressed_file_behind_a_download_url_is_decompressed():
+    """Zenodo serves a file at .../files/NAME.nq.gz/content: the file is saved as NAME.nq.gz,
+    and its compression is read from that name, not from the end of the URL."""
+    url = "https://zenodo.org/api/records/1/files/graph_v3.nq.gz/content"
+    analysis = analyse_source({"name": "demo", "download_nq": url})
+    assert analysis.needs_gz
+    assert _wget_cmd(url).endswith(f'-O "graph_v3.nq.gz" "{url}"')

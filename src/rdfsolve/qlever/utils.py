@@ -318,7 +318,7 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
         for u in urls_from_field(entry, key):
             urls.append(u)
             urls_by_suffix.setdefault(suffix, []).append(u)
-            low = u.lower()
+            low = (_file_name(u) or u).lower()
             if low.endswith(".gz") and not low.endswith(".tar.gz"):
                 needs_gz = True
             if low.endswith(".xz"):
@@ -386,17 +386,23 @@ _WGET_AGAIN = (
 )
 
 
+def _file_name(url: str) -> str | None:
+    """Return the name a download is saved under: the last part of its URL path that names an
+    RDF file (a service may serve NAME.nq.gz at .../NAME.nq.gz/content), or None.
+    """
+    parts = url.rstrip("/").split("/")
+    return next(
+        (p for p in reversed(parts) if any(p.lower().endswith(e) for e in _RDF_EXTS)),
+        None,
+    )
+
+
 def _wget_cmd(url: str) -> str:
     """Return a single wget command string for url."""
     fname = url.rsplit("/", 1)[-1]
     if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
         return f'wget -c -q {_RETRY} "{url}"'
-    # Derive a filename from the URL path.
-    parts = url.rstrip("/").split("/")
-    derived = next(
-        (p for p in reversed(parts) if any(p.lower().endswith(e) for e in _RDF_EXTS)),
-        None,
-    )
+    derived = _file_name(url)
     if derived:
         return f'wget -c -q {_RETRY} -O "{derived}" "{url}"'
     return f'wget -c -q {_RETRY} --content-disposition "{url}"'
