@@ -92,6 +92,8 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
         discover_ontology_graphs=True,
         no_index=True,
         no_download=True,
+        # The fixture endpoint publishes no VoID: the sources are mined.
+        void_first=False,
     )
     config.load_sources()
     config.archive_run_inputs()

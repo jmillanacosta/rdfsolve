@@ -419,6 +419,11 @@ Examples:
         help="Use existing RDF and indices; do not fetch source data",
     )
     parser.add_argument(
+        "--no-void-first",
+        action="store_true",
+        help="Mine remote sources even when their endpoint publishes a full VoID description",
+    )
+    parser.add_argument(
         "--index-only",
         action="store_true",
         help="Download and index local sources, and do not mine them",
@@ -496,6 +501,7 @@ Examples:
     config.update_downloads = args.update_downloads
     config.no_index = args.no_index
     config.index_only = args.index_only
+    config.void_first = not args.no_void_first
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file

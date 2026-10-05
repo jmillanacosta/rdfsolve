@@ -963,11 +963,13 @@ class SchemaMiner:
                 state="partial",
                 labels=getattr(self._strategy, "labels", []),
                 examples=getattr(self._strategy, "examples", []),
+                class_examples=getattr(self._strategy, "class_examples", {}),
             )
         elif self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
-        entity_counts = {}
+        # A strategy with its own view may state the members of its classes (VoID).
+        entity_counts = dict(getattr(self._strategy, "entity_counts", {})) if self._own_view else {}
         entity_count_states: dict[str, QueryState] = {}
         if self.counts and not self._own_view:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts

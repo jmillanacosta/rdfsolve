@@ -111,6 +111,9 @@ class PipelineConfig:
     no_index: bool = False
     # Download and index local sources only (prepare their indexes for a later mining run).
     index_only: bool = False
+    # Read a remote source's schema from the full VoID its endpoint publishes (void-generator),
+    # mining only what the VoID leaves out; off: mine every remote source.
+    void_first: bool = True
 
     skip_remote: bool = False
     skip_local: bool = False

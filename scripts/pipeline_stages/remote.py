@@ -112,6 +112,47 @@ class RemoteMiningStage(Stage):
         log.info(f"[{source.name}] Endpoint against the local record: {match.state}")
         return match.state == "equal"
 
+    def _void_strategy(self, source: Source, graphs: list[str] | None) -> Any:
+        """Return a strategy that reads the source's schema from the VoID its endpoint publishes.
+
+        None when the endpoint publishes no full VoID, when the VoID does not describe the
+        source's graphs, or when --no-void-first is given: the source is then mined. The VoID of
+        an endpoint is fetched once; the sources of one endpoint are mined one after another.
+        """
+        if not self.config.void_first:
+            return None
+        if source.classes_as_data or source.membership_properties:
+            # VoID partitions by rdf:type: records that are classes (Rhea, SwissLipids) or that a
+            # category property places (Monarch) are described by the miner, not by the VoID.
+            log.info("[%s] Its classes are not read from rdf:type alone; mined", source.name)
+            return None
+        from rdfsolve.mining.void_strategy import VoidStrategy, find_published_void, void_for_source
+        from rdfsolve.sparql_helper import SparqlHelper
+
+        cache: dict[str, Any] = self.__dict__.setdefault("_published_void", {})
+        if source.endpoint not in cache:
+            entry = source.model_dump()
+            with SparqlHelper.from_source_entry(entry, timeout=300) as helper:
+                cache[source.endpoint] = find_published_void(helper)
+        published = cache[source.endpoint]
+        if published is None:
+            return None
+        scoped = void_for_source(published, graphs or source.graph_uris or None)
+        if scoped is None:
+            log.info(
+                "[%s] The VoID of %s does not describe its graphs; mined",
+                source.name,
+                published.graph,
+            )
+            return None
+        log.info(
+            "[%s] Schema from the VoID in %s (issued %s)",
+            source.name,
+            published.graph,
+            published.issued,
+        )
+        return VoidStrategy(scoped, void_graph=published.graph, issued=published.issued)
+
     def _mine_single_source(self, source: Source) -> dict[str, Any]:
         """Mine a single source. Returns dict with status and data."""
         from datetime import timezone
@@ -177,7 +218,9 @@ class RemoteMiningStage(Stage):
             )
             if previous and not previous.is_file():
                 log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
+            strategy = None if use_graph_store else self._void_strategy(source, empirical_graphs)
             miner = SchemaMiner(
+                strategy=strategy,
                 endpoint_url=source.endpoint,
                 get_graphs_from_store=use_graph_store,
                 graph_store_url=self.config.graph_store_urls.get(source.name),
