@@ -166,6 +166,17 @@ def test_a_published_folder_is_fetched_with_its_subfolders(tmp_path):
     )
 
 
+def test_downloads_with_one_file_name_are_saved_apart():
+    from rdfsolve.qlever.utils import _build_get_data_steps, analyse_source
+
+    urls = [f"https://zenodo.org/records/{r}/files/dataset.nq" for r in (1, 2)]
+    entry = {"download_nq": [*urls, "https://zenodo.org/records/3/files/other.nq"]}
+    script = " ".join(_build_get_data_steps(analyse_source(entry), "rdf"))
+    assert f'-O "1__dataset.nq" "{urls[0]}"' in script
+    assert f'-O "2__dataset.nq" "{urls[1]}"' in script
+    assert '"https://zenodo.org/records/3/files/other.nq"' in script and "__other" not in script
+
+
 def test_each_download_command_retries_passing_faults():
     for url in ("https://example.org/a/data.ttl.gz", "https://example.org/download?id=7"):
         command = _wget_cmd(url)

@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import shlex
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -413,8 +414,28 @@ def _folder_cmd(url: str, suffix: str) -> str:
     )
 
 
-def _wget_cmd(url: str) -> str:
-    """Return a single wget command string for url."""
+def _saved_names(urls: list[str]) -> dict[str, str]:
+    """Return the name each download is saved under when another download has its file name.
+
+    Zenodo serves each record's file at .../files/dataset.nq (NanoSolveIT: three records); under
+    one name, wget -c would take the second as the first, complete, and not fetch it. Each such
+    download is saved as N__NAME.
+    """
+    names = [(url, _file_name(url)) for url in urls if not url.endswith("/")]
+    counts = Counter(name for _, name in names if name)
+    seen: Counter[str] = Counter()
+    saved = {}
+    for url, name in names:
+        if name and counts[name] > 1:
+            seen[name] += 1
+            saved[url] = f"{seen[name]}__{name}"
+    return saved
+
+
+def _wget_cmd(url: str, name: str | None = None) -> str:
+    """Return a single wget command string for url, saved as NAME when given."""
+    if name:
+        return f'wget -c -q {_RETRY} -O "{name}" "{url}"'
     fname = url.rsplit("/", 1)[-1]
     if any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
         return f'wget -c -q {_RETRY} "{url}"'
@@ -667,6 +688,7 @@ def _build_get_data_steps(
     src_data_dir: str,
 ) -> list[str]:
     """Assemble the full GET_DATA_CMD shell steps from an analysis."""
+    saved = _saved_names(analysis.urls)
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
         f"cd {src_data_dir}",
@@ -674,7 +696,7 @@ def _build_get_data_steps(
         # A later step can end with '|| true'; the downloads end the script when one fails.
         "{ "
         + " && ".join(
-            _folder_cmd(u, suffix) if u.endswith("/") else _wget_cmd(u)
+            _folder_cmd(u, suffix) if u.endswith("/") else _wget_cmd(u, saved.get(u))
             for suffix, urls in analysis.urls_by_suffix.items()
             for u in urls
         )
