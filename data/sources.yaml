@@ -7597,8 +7597,6 @@
   kg_registry_id: ekg
   science_area: life sciences
   notes: 'KG Registry: eKG'
-  download_rdf:
-  - https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ETOHA/ETOHA-OPEN/epidemicIE-DONs.rdf
   download_ttl:
   - https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/ETOHA/ETOHA-OPEN/epidemicIE-DONs.ttl
   endpoint: https://data.jrc.ec.europa.eu/yasgui
@@ -7717,8 +7715,6 @@
   science_area: other
   notes: 'KG Registry: Open Research Knowledge Graph'
   endpoint: https://orkg.org/sparql/
-  download_nt:
-  - https://orkg.org/files/rdf-dumps/rdf-export-orkg.nt
 - name: pankgraph
   dataset_kind: instance
   kg_registry_id: pankgraph
