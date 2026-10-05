@@ -327,6 +327,7 @@ class RemoteMiningStage(Stage):
                     suffix,
                     helper=miner.helper,
                     mining_context="remote_endpoint",
+                    published_void=self.__dict__.get("_published_void", {}).get(source.endpoint),
                 )
                 self._save_declared_artifacts(
                     source,

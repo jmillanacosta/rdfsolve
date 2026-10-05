@@ -22,6 +22,18 @@ SD = Namespace("http://www.w3.org/ns/sparql-service-description#")
 _PARTS = (VOID.classPartition, VOID.propertyPartition, VOID.subset, VOID_EXT.datatypePartition)
 
 
+def service_description_graph_names(g: Graph) -> list[str]:
+    """Return the names of the named graphs that a SPARQL service description lists."""
+    return sorted(
+        {
+            str(name)
+            for named in g.objects(None, SD.namedGraph)
+            for name in g.objects(named, SD.name)
+            if isinstance(name, URIRef)
+        }
+    )
+
+
 def void_datasets_of_graphs(g: Graph, graph_names: list[str]) -> list[URIRef]:
     """Return the VoID datasets that a service description gives for the named graphs."""
     return sorted(

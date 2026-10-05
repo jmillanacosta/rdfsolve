@@ -182,6 +182,7 @@ class Stage:
         helper: Any,
         mining_context: str = "unknown",
         local_ontology_file_candidates: list[Any] | None = None,
+        published_void: Any | None = None,
     ) -> None:
         """Save ontology discovery/acquisition evidence for one mined snapshot.
 
@@ -189,6 +190,10 @@ class Stage:
         deliberately separate evidence channels.  ``download_owl``-derived file
         candidates must only be passed by local/grouped mining stages; they say
         nothing about which graphs are loaded or exposed by a remote endpoint.
+
+        When the endpoint publishes a VoID whose service description lists its named
+        graphs, those names are inspected and the endpoint is not scanned for them; the
+        discovery file records the VoID graph as their source.
         """
         local_candidates = list(local_ontology_file_candidates or [])
         if not self.config.discover_ontology_graphs and not local_candidates:
@@ -197,12 +202,34 @@ class Stage:
         graph_candidates = []
         if self.config.discover_ontology_graphs:
             from rdfsolve.ontology.discovery import discover_remote_ontology_graphs
+            from rdfsolve.schema_models.readers.void import service_description_graph_names
 
+            named = (
+                service_description_graph_names(published_void.void)
+                if published_void is not None
+                else []
+            )
+            known: dict[str, Any] = {}
+            if named:
+                evidence = f"{published_void.graph} (issued {published_void.issued})"
+                log.info(
+                    "[%s] Ontology discovery: %d named graphs from the service description "
+                    "in %s; the endpoint is not scanned for graphs",
+                    name,
+                    len(named),
+                    evidence,
+                )
+                known = {
+                    "graph_uris": named,
+                    "graph_names_source": "service_description",
+                    "graph_names_evidence": evidence,
+                }
             result = discover_remote_ontology_graphs(
                 helper,
                 observed_classes=schema.get_classes(),
                 observed_properties=schema.get_properties(),
                 max_graphs=self.config.ontology_discovery_max_graphs,
+                **known,
             )
             graph_candidates = result.candidates
             path = output_dir / f"{name}{suffix}_ontology_discovery.json"

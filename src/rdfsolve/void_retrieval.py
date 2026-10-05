@@ -34,6 +34,9 @@ def discover_graph_names(helper: SparqlHelper, *, batch_size: int, max_pages: in
             chunk_size=batch_size,
             max_pages=max_pages,
             purpose="void/graph-discovery",
+            # DISTINCT and ORDER BY read every quad whatever the LIMIT: a smaller page costs
+            # the same, so a timeout is not retried with one (UniProt: 4 cuts of 15 min).
+            max_page_retries=0,
         )
         for row in page
     ]

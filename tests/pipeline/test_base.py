@@ -178,6 +178,50 @@ def test_pipeline_writes_discovery_and_usage_scoped_acquisition(monkeypatch, tmp
     assert schema.about.ontology_graph_uris == ["http://example.org/ontology"]
 
 
+def test_ontology_discovery_takes_the_graphs_from_a_published_service_description(
+    monkeypatch, tmp_path: Path
+):
+    """An endpoint whose published VoID lists its named graphs is not scanned for them, and the
+    discovery file says where the graph names came from."""
+    from rdfsolve.mining.void_strategy import PublishedVoid
+    from rdfsolve.ontology import discovery
+
+    void = Graph().parse(
+        data="""
+        @prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+        <https://example.org/sparql#service> sd:defaultDataset <https://example.org/sparql#d> .
+        <https://example.org/sparql#d> sd:namedGraph [ sd:name <http://example.org/core> ] ,
+            [ sd:name <http://example.org/data> ] .
+        """,
+        format="turtle",
+    )
+    published = PublishedVoid("https://example.org/.well-known/void", void, "2026-09-02")
+
+    def no_scan(*args, **kwargs):
+        raise AssertionError("the endpoint was scanned for graph names")
+
+    monkeypatch.setattr(discovery, "discover_graph_names", no_scan)
+    monkeypatch.setattr(discovery, "inspect_remote_ontology_graph", lambda *a, **k: None)
+    config = PipelineConfig()
+    config.discover_ontology_graphs = True
+    helper = SimpleNamespace(endpoint_url="https://example.org/sparql")
+    Stage(config)._save_ontology_discovery(
+        Schema(),
+        tmp_path,
+        "demo",
+        "_remote",
+        helper=helper,
+        mining_context="remote_endpoint",
+        published_void=published,
+    )
+    saved = json.loads((tmp_path / "demo_remote_ontology_discovery.json").read_text())
+    assert saved["discovered_named_graphs"] == 2
+    assert saved["graph_names_source"] == "service_description"
+    assert saved["graph_names_evidence"] == (
+        "https://example.org/.well-known/void (issued 2026-09-02)"
+    )
+
+
 def test_an_exported_graph_leaves_out_terms_that_are_not_rdf_iris(caplog):
     """A dataset's metadata can name a namespace with a leading space; the graph is written
     without that triple, not refused."""

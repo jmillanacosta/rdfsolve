@@ -87,3 +87,36 @@ def test_usage_requires_overlap_with_observed_classes_or_properties():
     assert candidate.used_by_schema is True
     assert candidate.observed_class_overlap == ["https://example.org/C"]
     assert candidate.observed_property_overlap == ["https://example.org/p"]
+
+
+def test_remote_discovery_records_where_the_graph_names_came_from():
+    helper = DatasetHelper(_dataset())
+    scanned = discover_remote_ontology_graphs(helper, include_default_graph=False)
+    given = discover_remote_ontology_graphs(
+        helper,
+        graph_uris=["https://example.org/graph/ontology.owl"],
+        include_default_graph=False,
+        graph_names_source="service_description",
+        graph_names_evidence="https://example.org/.well-known/void",
+    )
+    assert scanned.graph_names_source == "endpoint_scan"
+    assert scanned.graph_names_evidence is None
+    assert given.graph_names_source == "service_description"
+    assert given.graph_names_evidence == "https://example.org/.well-known/void"
+    assert given.discovered_named_graphs == 1
+
+
+def test_graph_names_are_not_requested_again_with_a_smaller_page():
+    """DISTINCT and ORDER BY read every quad whatever the LIMIT; a timeout is not retried."""
+    from rdfsolve.void_retrieval import discover_graph_names
+
+    calls: list[dict] = []
+
+    class Helper(DatasetHelper):
+        def select_chunked(self, query: str, **kwargs):
+            calls.append(kwargs)
+            yield from super().select_chunked(query, **kwargs)
+
+    names = discover_graph_names(Helper(_dataset()), batch_size=100, max_pages=10)
+    assert len(names) == 3
+    assert calls[0]["max_page_retries"] == 0

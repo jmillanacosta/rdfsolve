@@ -278,6 +278,10 @@ class OntologyDiscoverySummary(BaseModel):
     scanned_named_graphs: int
     graph_scan_truncated: bool = False
     default_graph_scanned: bool = False
+    # Where the named graphs came from: the caller ("given"), the service description the
+    # endpoint publishes ("service_description"), or a scan of the endpoint ("endpoint_scan").
+    graph_names_source: Literal["given", "service_description", "endpoint_scan"] = "endpoint_scan"
+    graph_names_evidence: str | None = None
     candidates: list[OntologyGraphCandidate] = Field(default_factory=list)
 
 
@@ -448,13 +452,17 @@ def discover_remote_ontology_graphs(
     max_pages: int = 100,
     max_graphs: int = 500,
     term_batch_size: int = 100,
+    graph_names_source: Literal["given", "service_description"] = "given",
+    graph_names_evidence: str | None = None,
 ) -> OntologyDiscoverySummary:
     """Discover ontology-bearing graphs without downloading complete ontologies.
 
     ``graph_uris`` limits discovery to known graphs.  Otherwise named graph
     identities are enumerated using the existing graph-discovery machinery and
     capped by ``max_graphs``.  A cap is reported as truncation rather than being
-    silently interpreted as complete endpoint coverage.
+    silently interpreted as complete endpoint coverage.  ``graph_names_source`` and
+    ``graph_names_evidence`` record where given graph names came from (the service
+    description of a published VoID lists every named graph, so no scan is needed).
     """
     if min(batch_size, max_pages, max_graphs, term_batch_size) < 1:
         raise ValueError("discovery limits must be positive")
@@ -494,6 +502,8 @@ def discover_remote_ontology_graphs(
         scanned_named_graphs=len(names),
         graph_scan_truncated=truncated,
         default_graph_scanned=include_default_graph,
+        graph_names_source="endpoint_scan" if graph_uris is None else graph_names_source,
+        graph_names_evidence=None if graph_uris is None else graph_names_evidence,
         candidates=sorted(candidates, key=lambda item: item.graph_uri),
     )
 
