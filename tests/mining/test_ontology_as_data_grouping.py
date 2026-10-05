@@ -175,3 +175,32 @@ def test_parentless_terms_are_mined_as_shape_groups(monkeypatch):
     }
     assert rows[group, EX + "mass", "Literal"].count == 2
     assert rows[group, EX + "mass", "Literal"].evidence_source == "inferred"
+
+
+def test_objects_typed_by_shape_grouped_terms_join_their_group(monkeypatch):
+    """Terms grouped before mining also group the objects they type: no ancestor can do it after
+    mining for terms without a parent (lifesciencedict: MeSH terms that type the objects of
+    skos:closeMatch, one row each)."""
+    monkeypatch.setattr(ontology_as_data, "NAMESPACE_GROUP_MIN_TERMS", 3)
+    data = FIXTURE + "\nex:r1 a <urn:other:Reaction> ; ex:product ex:s1 , ex:s2 .\n"
+    graph = Graph().parse(data=data, format="turtle")
+    graph.remove((None, RDFS.subClassOf, None))
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        result = mine_with_ontology(
+            miner,
+            dataset_name="fixture",
+            ontology_as_data=True,
+            ontology_term_budget=1,
+            ontology_group_before_mining=1,
+        )
+        report = miner.last_report
+    group = shape_group_iri({EX + "mass"})
+    rows = {
+        p.object_class: p for p in result.data_schema.patterns if p.property_uri == EX + "product"
+    }
+    assert set(rows) == {EX + "Substance", group}, "No grouped term stays an object class"
+    assert rows[group].subject_class == "urn:other:Reaction"
+    assert rows[group].count == 2 and rows[group].count_semantics == "upper_bound"
+    assert rows[group].evidence_source == "inferred"
+    grouped = report.config["ontology_term_subsumption"]["object_classes_grouped_before_mining"]
+    assert grouped["after"] < grouped["before"]

@@ -186,6 +186,7 @@ class SchemaMiner:
         self._class_batches: list[list[str]] | None = None
         self._shared_extensions: dict[str, str] = {}
         self._subsumed_classes: set[str] = set()
+        self._grouped_members: dict[str, list[str]] = {}
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
         self._structural_patterns: list[StructuralPattern] | None = None
@@ -428,6 +429,7 @@ class SchemaMiner:
             # A row of a representative is a grouping of its members' rows, not an observation
             # of the representative itself, and its direct instances do not describe it.
             self._subsumed_classes |= set(context.grouped_members)
+            self._grouped_members = dict(context.grouped_members)
             for pattern in patterns:
                 if pattern.subject_class in context.grouped_members:
                     pattern.evidence_source = "inferred"
@@ -574,6 +576,13 @@ class SchemaMiner:
                     )
                     for p in probed
                 ]
+            # The objects typed by terms grouped before mining are counted per term; their rows
+            # join the group, as the subjects did (lifesciencedict: 33,030 MeSH terms as objects
+            # in 158,056 rows, one shape group each as subjects).
+            grouped = {m: rep for rep, terms in self._grouped_members.items() for m in terms}
+            objects_before = len({p.object_class for p in patterns})
+            if grouped:
+                patterns = subsume_patterns(patterns, grouped)
             classes = pattern_classes(patterns)
             summary: dict[str, Any] = {
                 "budget": budget,
@@ -583,6 +592,10 @@ class SchemaMiner:
                 "subsumed": False,
                 "representative_members": {},
                 "classes_as_data": self.classes_as_data,
+                "object_classes_grouped_before_mining": {
+                    "before": objects_before,
+                    "after": len({p.object_class for p in patterns}),
+                },
             }
             if len(classes) > budget:
                 t0 = time.monotonic()
@@ -593,7 +606,7 @@ class SchemaMiner:
                 chosen = choose_representatives(classes, parents, budget)
                 patterns = subsume_patterns(patterns, chosen.representative)
                 members = chosen.members()
-                self._subsumed_classes = set(members)
+                self._subsumed_classes |= set(members)
                 summary.update(
                     {
                         "classes_after": chosen.classes_after,
@@ -881,6 +894,7 @@ class SchemaMiner:
         self._resumed = {}
         self._structural_patterns = None
         self._subsumed_classes = set()
+        self._grouped_members = {}
         self._declared_classes = set()
         self._init_report(
             dataset_name, self._build_strategy_string(), datetime.now(UTC).isoformat()
