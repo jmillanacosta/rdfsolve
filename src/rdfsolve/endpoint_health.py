@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from rdfsolve.models.source_model import SourceModel
 from rdfsolve.sparql_helper import (
@@ -65,7 +65,7 @@ def check_endpoint_health(
         max_retries=1,  # Single attempt for health check
     )
 
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     start_time = time.time()
 
     try:

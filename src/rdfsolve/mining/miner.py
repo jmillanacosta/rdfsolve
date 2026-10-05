@@ -7,13 +7,12 @@ import sys
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import pyoxigraph as ox
 from rdflib import Graph
-from typing_extensions import Self
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve.local_rdf import LocalBackend
@@ -884,7 +883,7 @@ class SchemaMiner:
         self._subsumed_classes = set()
         self._declared_classes = set()
         self._init_report(
-            dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
+            dataset_name, self._build_strategy_string(), datetime.now(UTC).isoformat()
         )
         self.last_report = self._report.report
         remote_helper = self._helper

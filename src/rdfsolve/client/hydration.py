@@ -10,18 +10,17 @@ from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from importlib.metadata import version
 from pathlib import Path
 from platform import python_version
-from typing import Any, TypeVar
+from typing import Any, Self, TypeVar
 from uuid import uuid4
 
 import pyoxigraph as ox
 from pydantic import BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
 from rdflib import Graph, Literal
-from typing_extensions import Self
 
 from rdfsolve.local_rdf import LocalBackend, LocalRdf
 from rdfsolve.schema_models.core import MinedSchema
@@ -168,7 +167,7 @@ class Hydrator:
         started = time.perf_counter()
         item: dict[str, Any] = {
             "name": name,
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
             "status": "failed",
         }
         self._steps.append(item)
@@ -181,7 +180,7 @@ class Hydrator:
             raise
         finally:
             item["query_ids"] = list(range(start + 1, len(self._records()) + 1))
-            item["finished_at"] = datetime.now(timezone.utc).isoformat()
+            item["finished_at"] = datetime.now(UTC).isoformat()
             item["seconds"] = round(time.perf_counter() - started, 4)
             logger.info(
                 "%s: %s; queries=%s; %.3fs",
@@ -569,7 +568,7 @@ class Hydrator:
                     "graph_uris": self.graph_uris,
                     "blank_node_scope": response_scopes[iri],
                     "query_id": query_ids[iri],
-                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                    "retrieved_at": datetime.now(UTC).isoformat(),
                 },
             }
             for name in selected:

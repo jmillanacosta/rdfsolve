@@ -7,7 +7,7 @@ sssom library.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from itertools import product
 from math import isnan
 from pathlib import Path
@@ -63,7 +63,7 @@ def create_sssom_mappings(
         MappingSetDataFrame ready for serialization
     """
     if mapping_set_version is None:
-        mapping_set_version = str(datetime.now(timezone.utc).date())
+        mapping_set_version = str(datetime.now(UTC).date())
 
     if mapping_provider is None:
         mapping_provider = "https://github.com/jmillanacosta/rdfsolve"
@@ -73,7 +73,7 @@ def create_sssom_mappings(
         "mapping_set_id": mapping_set_id,
         "mapping_set_version": mapping_set_version,
         "license": license_uri,
-        "mapping_date": str(datetime.now(timezone.utc).date()),
+        "mapping_date": str(datetime.now(UTC).date()),
         "mapping_provider": mapping_provider,
         "mapping_tool": mapping_tool,
         "mapping_tool_version": mapping_tool_version or VERSION,

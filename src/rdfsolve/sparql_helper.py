@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from itertools import count
 from pathlib import Path
 from typing import Any, ClassVar, Literal, NoReturn, TypedDict
@@ -26,9 +26,10 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
     from requests.adapters import HTTPAdapter
+from typing import Self
+
 from rdflib import Graph, URIRef, Variable
 from rdflib import Literal as RdfLiteral
-from typing_extensions import Self
 from urllib3.connection import HTTPConnection
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
@@ -64,7 +65,7 @@ class QueryRecord:
     query: str
     query_type: Literal["SELECT", "CONSTRUCT", "ASK"]
     endpoint_url: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     description: str = ""
     keywords: list[str] = field(default_factory=list)
     success: bool = True
@@ -328,7 +329,7 @@ class SparqlHelper:
         saved = self.queries.queries[name]
         if saved.requires_context:
             raise ValueError("This query requires SHACL validation context")
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = datetime.now(UTC).isoformat()
         started = time.monotonic()
         error_text = ""
         success = False

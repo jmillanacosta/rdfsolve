@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -151,7 +151,7 @@ def _compare(
         state="not_checked",
         endpoint=getattr(helper, "endpoint_url", None),
         graph_uris=list(graph_uris or []),
-        checked_at=datetime.now(timezone.utc).isoformat(),
+        checked_at=datetime.now(UTC).isoformat(),
     )
     if not counts:
         result.reason = "the local record has no exact triple counts of its properties"

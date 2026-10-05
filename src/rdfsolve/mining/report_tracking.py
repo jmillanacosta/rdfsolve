@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -178,7 +178,7 @@ class ReportCollector:
         """Start a new phase and return its report object."""
         phase = PhaseReport(
             name=name,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
         self._report.phases.append(phase)
         logger.info("Phase %s started", name)
@@ -191,7 +191,7 @@ class ReportCollector:
         error: str | None = None,
     ) -> None:
         """Mark a phase as finished and flush the report."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         phase.finished_at = now.isoformat()
         if phase.started_at:
             started = datetime.fromisoformat(phase.started_at)
@@ -225,7 +225,7 @@ class ReportCollector:
         """Set final summary fields and flush."""
         r = self._report
         r.finished_at = datetime.now(
-            timezone.utc,
+            UTC,
         ).isoformat()
         if r.started_at:
             started = datetime.fromisoformat(r.started_at)
@@ -268,7 +268,7 @@ class ReportCollector:
             "classes": classes,
             "rows": rows,
             "state": state,
-            "at": datetime.now(timezone.utc).isoformat(),
+            "at": datetime.now(UTC).isoformat(),
         }
         with self._checkpoint.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(line, default=str) + "\n")

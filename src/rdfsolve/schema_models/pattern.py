@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
 
 
-class PatternType(str, Enum):
+class PatternType(StrEnum):
     """Semantic type of an RDF pattern.
 
     Distinguishes what kind of RDF construct a pattern represents,

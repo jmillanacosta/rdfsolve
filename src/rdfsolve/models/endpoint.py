@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class EndpointStatus(str, Enum):
+class EndpointStatus(StrEnum):
     """Health status of a SPARQL endpoint."""
 
     UNKNOWN = "unknown"
@@ -45,7 +45,7 @@ class EndpointHealth(BaseModel):
         description="Current health status",
     )
     checked_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="When the health check was performed",
     )
     latency_ms: float | None = Field(
@@ -173,7 +173,7 @@ class Endpoint(BaseModel):
 
     # Timestamps ---
     added_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="When endpoint was added to registry",
     )
     last_mined_at: datetime | None = Field(

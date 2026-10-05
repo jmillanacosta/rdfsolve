@@ -6,6 +6,7 @@ import logging
 import time
 from collections import Counter, defaultdict, deque
 from collections.abc import Callable, Iterator, Mapping, Sequence
+from datetime import UTC
 from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.mining.query_builders import _graph_scope, _subject_type_pattern, _type_pattern
@@ -296,7 +297,7 @@ def observe_path(
     route.graph_uris = list(graphs)
     route.type_context_graph_uris = list(type_context_graph_uris or [])
     route.query = query
-    route.observed_at = datetime.now(timezone.utc).isoformat()
+    route.observed_at = datetime.now(UTC).isoformat()
     try:
         result = helper.select_with_fallback(query, purpose="mine joined path support")
         rows = result.get("results", {}).get("bindings", [])
@@ -545,7 +546,7 @@ def find_tested_paths(
                 continue
             rows = result.get("results", {}).get("bindings", [])
             tested[hops] += len(candidates)
-            observed_at = datetime.now(timezone.utc).isoformat()
+            observed_at = datetime.now(UTC).isoformat()
             for edge in candidates:
                 if not _matched_starts(edge, rows, members):
                     continue

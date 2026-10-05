@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from hashlib import sha256
 from importlib.metadata import version
 from typing import TYPE_CHECKING, Literal
@@ -97,7 +97,7 @@ def assess(
         artifact_id="declared:" + digest,
         dataset_id=dataset,
         kind="shacl",
-        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        retrieved_at=datetime.now(UTC).isoformat(),
         sha256=digest,
         local_path="",
         representation="serialized_graph",

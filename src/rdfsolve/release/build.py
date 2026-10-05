@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import mimetypes
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -574,7 +574,7 @@ def build_release_manifest(
     return ReleaseManifest(
         release_id=release_id,
         base_uri=frozen_base_uri,
-        issued=issued or datetime.now(timezone.utc),
+        issued=issued or datetime.now(UTC),
         rdfsolve_version=rdfsolve_version,
         code_commit=code_commit,
         run_root=run_root.name,

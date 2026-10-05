@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -311,7 +311,7 @@ def inspect_remote_ontology_graph(
     hint = graph_uri is not None and (
         "ontology" in graph_uri.lower() or ".owl" in graph_uri.lower()
     )
-    observed_at = datetime.now(timezone.utc).isoformat()
+    observed_at = datetime.now(UTC).isoformat()
     query_ids: list[str] = []
 
     probe = _candidate_probe_query(graph_uri)
@@ -489,7 +489,7 @@ def discover_remote_ontology_graphs(
             candidates.append(candidate)
     return OntologyDiscoverySummary(
         endpoint=helper.endpoint_url,
-        observed_at=datetime.now(timezone.utc).isoformat(),
+        observed_at=datetime.now(UTC).isoformat(),
         discovered_named_graphs=discovered_count,
         scanned_named_graphs=len(names),
         graph_scan_truncated=truncated,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
@@ -338,7 +338,7 @@ class AboutMetadata(BaseModel):
 
         from rdfsolve.config import mint
 
-        generated_at = finished_at or datetime.now(timezone.utc).isoformat()
+        generated_at = finished_at or datetime.now(UTC).isoformat()
         version = (
             source_version_iri
             or source_version

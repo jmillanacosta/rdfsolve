@@ -8,7 +8,7 @@ import re
 import socket
 import subprocess
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 
 
@@ -123,7 +123,7 @@ def start_server(
     memory = _query_memory(config.get("server", "MEMORY_FOR_QUERIES", fallback="30G"))
     timeout = config.get("server", "TIMEOUT", fallback="600s")
     token = config.get("server", "ACCESS_TOKEN", fallback=name)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     log_path = workdir / f"server-{port}-{stamp}.log"
     command = [
         "singularity",

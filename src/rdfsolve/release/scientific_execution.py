@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -47,7 +47,7 @@ def _observe(
     result = ScientificCheckResult(
         check_id=check.check_id,
         snapshot_id=check.snapshot_id,
-        observed_at=datetime.now(timezone.utc).isoformat(),
+        observed_at=datetime.now(UTC).isoformat(),
     )
     started = time.monotonic()
     try:

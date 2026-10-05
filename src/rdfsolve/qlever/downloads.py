@@ -12,7 +12,7 @@ import calendar
 import email.utils
 import json
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +50,7 @@ def write_record(workdir: Path, urls: list[str], head: Head = server_state) -> N
     """Write the record of a download that ended, and remove the marker of a running one."""
     record = {
         "urls": list(urls),
-        "completed_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
         "files": {url: head(url) for url in urls},
     }
     (workdir / RECORD).write_text(json.dumps(record, indent=1), encoding="utf-8")

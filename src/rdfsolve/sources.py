@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -245,7 +245,7 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
         if value:
             meta[key] = str(value)
     meta["package_version"] = _bioregistry_package_version()
-    meta["enriched_at"] = datetime.now(timezone.utc).isoformat()
+    meta["enriched_at"] = datetime.now(UTC).isoformat()
     return meta
 
 

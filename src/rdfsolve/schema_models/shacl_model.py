@@ -5,10 +5,9 @@ Specification: https://www.w3.org/TR/shacl/
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast, get_args
+from typing import TYPE_CHECKING, Literal, Self, cast, get_args
 
 from pydantic import BaseModel, Field, model_validator
-from typing_extensions import Self
 
 from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.enrichment import RdfTerm
