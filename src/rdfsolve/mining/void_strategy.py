@@ -11,7 +11,10 @@ class and property that its linksets and datatype partitions do not account for 
 without a class (or blank nodes, when its distinct objects exceed its IRIs and literals); the
 triples of a property beyond those of its class partitions have subjects without a class. Each
 such gap is mined with a few small queries under a time limit (helper.budget); a query that is
-refused leaves a measurement gap in the report, and mining goes on.
+refused leaves a measurement gap in the report, and mining goes on. When the endpoint cuts the
+queries of one purpose at a fixed limit (rdfsolve.sparql_helper.QueryCuts), no more queries of
+that purpose are sent: the record (stopped) and a measurement gap say why, and how many queries
+were cut and not sent.
 
 Also asked: the language tags of language-tagged literals (from a sample), five subjects of
 every class (their IRI namespaces), one example of the largest patterns, and a re-count of the
@@ -33,6 +36,7 @@ from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm
 from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.sparql_helper import QueryCuts
 
 if TYPE_CHECKING:
     from rdfsolve.sparql_helper import SparqlHelper
@@ -170,6 +174,7 @@ class VoidStrategy(MiningStrategy):
         self.untyped_subjects: list[dict[str, Any]] = []
         self.object_samples: list[dict[str, Any]] = []
         self._void_patterns: list[SchemaPattern] = []
+        self.cuts = QueryCuts()
 
     @property
     def name(self) -> str:
@@ -201,6 +206,7 @@ class VoidStrategy(MiningStrategy):
         }
         context.report.finish_phase(phase, items=len(patterns))
         failures: list[QueryFailure] = []
+        self.cuts = QueryCuts()
         patterns += self._mine_gaps(context.helper, gaps, failures, context.graph_uris)
         self._languages(context.helper, patterns, failures, context.graph_uris)
         self._class_samples(context.helper, patterns, failures, context.graph_uris)
@@ -208,6 +214,21 @@ class VoidStrategy(MiningStrategy):
         self.record["untyped_subjects"] = self.untyped_subjects
         self.record["object_samples"] = self.object_samples
         self.record["drift"] = self._drift(context.helper, patterns, failures, context.graph_uris)
+        stopped = self.cuts.record()
+        if stopped:
+            self.record["stopped"] = stopped
+            self.record["drift"]["stopped"] = stopped.get("void/drift", {}).get("stopped")
+        for purpose, stop in stopped.items():
+            failures.append(
+                QueryFailure(
+                    "timeout",
+                    f"{stop['stopped']} ({stop['cut_by']}): {stop['queries_cut']} queries cut, "
+                    f"{stop['queries_not_sent']} not sent",
+                    purpose,
+                    [],
+                    context.graph_uris,
+                )
+            )
         context.report.record_outcome(QueryOutcome(state="complete", gaps=failures))
         context.report.report.config["void_source"] = self.record
         return patterns
@@ -254,21 +275,30 @@ class VoidStrategy(MiningStrategy):
         graph_uris: list[str] | None,
         classes: list[str],
     ) -> list[dict[str, Any]] | None:
-        """Send one light query under the time limit; record a refusal as a gap."""
+        """Send one light query under the time limit; record a refusal as a gap.
+
+        A query of a purpose that the endpoint cuts at a fixed limit is not sent (self.cuts).
+        """
         from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
 
+        if self.cuts.skip(purpose):
+            return None
         try:
             with helper.budget(self.query_seconds):
                 rows: list[dict[str, Any]] = helper.select(query, purpose=purpose)["results"][
                     "bindings"
                 ]
-                return rows
         except EndpointTimeoutError as error:
+            self.cuts.failed(purpose, error)
             failures.append(QueryFailure("timeout", str(error)[:300], purpose, classes, graph_uris))
         except (EndpointError, KeyError) as error:
+            self.cuts.failed(purpose, error)
             failures.append(
                 QueryFailure("endpoint", str(error)[:300], purpose, classes, graph_uris)
             )
+        else:
+            self.cuts.answered(purpose)
+            return rows
         return None
 
     def _mine_gaps(

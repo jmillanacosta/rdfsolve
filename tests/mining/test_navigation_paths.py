@@ -176,3 +176,35 @@ def test_the_earlier_list_form_is_still_read():
         for row in rows
     ]
     assert MinedSchema.from_dict(document).navigation == schema.navigation
+
+
+def test_queries_that_the_endpoint_cuts_at_a_fixed_limit_stop_the_search():
+    """After three extension queries in a row cut at the same limit (a gateway's HTTP 524 at
+    128 s), no more queries are sent: the summary says why, with the queries cut and not sent,
+    and keeps the paths found before (Bgee: 13 queries in a row cut until the budget ended)."""
+    from rdfsolve.sparql_helper import EndpointError, QueryCut
+
+    graph = Graph().parse(data=DATA, format="turtle")
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine()
+        helper = miner.helper
+        select = helper.select_with_fallback
+        sent = []
+
+        def gateway(query, purpose=""):
+            sent.append(purpose)
+            if purpose == "navigation/tested-paths" and sent.count(purpose) > 1:
+                error = EndpointError("HTTP 524: A timeout occurred")
+                error.cut = QueryCut("HTTP 524", 128.0)
+                raise error
+            return select(query, purpose=purpose)
+
+        helper.select_with_fallback = gateway
+        nav = schema.navigation = find_tested_paths(schema, helper, max_hops=4, budget_s=600)
+    assert sent.count("navigation/tested-paths") == 4, "One answered, then three cut"
+    assert nav.stop_reason == "endpoint_cuts" and nav.complete_lengths == []
+    stop = nav.cuts["navigation/tested-paths"]
+    assert stop["stopped"] == "endpoint cuts queries at 128 s" and stop["cut_by"] == "HTTP 524"
+    assert (stop["queries_cut"], stop["queries_not_sent"]) == (3, 0), "The third cut was the last"
+    assert nav.paths, "The paths found before the stop are kept"
+    assert MinedSchema.from_dict(schema.to_dict()).navigation == nav

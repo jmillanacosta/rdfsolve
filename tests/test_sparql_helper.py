@@ -13,6 +13,8 @@ from rdfsolve.sparql_helper import (
     EndpointRateLimitError,
     EndpointTimeoutError,
     PaginationTruncatedError,
+    QueryCut,
+    QueryCuts,
     SparqlHelper,
 )
 
@@ -263,3 +265,96 @@ def test_incomplete_results_are_a_cost_limit(monkeypatch, tmp_path):
         request = Mock(return_value=answer(200, None))
         monkeypatch.setattr(helper._session, "request", request)
         assert helper.select("SELECT ?s WHERE { ?s ?p ?o }")["results"]["bindings"]
+
+
+def _cut(seconds: float = 128.0, kind: str = "HTTP 524") -> EndpointError:
+    error = EndpointError(f"{kind}: A timeout occurred")
+    error.cut = QueryCut(kind, seconds)
+    return error
+
+
+def test_a_gateway_timeout_or_a_late_close_is_a_cut_and_the_own_timeout_is_not(
+    monkeypatch, tmp_path
+):
+    """The helper says how a query was cut: a gateway-timeout status, or a server error or a
+    connection closed after a long wait. A quick refusal and the client's own read timeout
+    (the limit the caller set) are not cuts."""
+    monkeypatch.setenv("RDFSOLVE_HTTP_LOCK_DIR", str(tmp_path))
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    response = requests.Response()
+    response.status_code = 524
+    response.headers["Content-Type"] = "application/json"
+    response._content = b'{"title":"Error 524: A timeout occurred","status":524}'
+    response._content_consumed = True
+    dropped = requests.exceptions.ProxyError(
+        "RemoteDisconnected('Remote end closed connection without response')"
+    )
+    with SparqlHelper("https://example.org/sparql", max_retries=1) as helper:
+        request = Mock(return_value=response)
+        monkeypatch.setattr(helper._session, "request", request)
+        with pytest.raises(EndpointError, match="HTTP 524") as raised:
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert raised.value.cut is not None and raised.value.cut.kind == "HTTP 524"
+        response.status_code = 500
+        response._content = b"Internal error"
+        with pytest.raises(EndpointError) as raised:
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert raised.value.cut is None, "A server error at once is a refusal, not a cut"
+        helper.DROPPED_AFTER_SECONDS = 0.0
+        with pytest.raises(EndpointError) as raised:
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert raised.value.cut.kind == "HTTP 500", "A server error after a long wait is a cut"
+        request.side_effect = dropped
+        with pytest.raises(EndpointTimeoutError, match="closed") as raised:
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert raised.value.cut.kind == "connection closed without a response"
+        request.side_effect = requests.exceptions.ReadTimeout("Read timed out")
+        with pytest.raises(EndpointTimeoutError) as raised:
+            helper.select("SELECT ?s WHERE { ?s ?p ?o }")
+        assert raised.value.cut is None, "The client's own limit is not a cut of the endpoint"
+
+
+def test_a_step_stops_after_three_cuts_at_the_same_limit():
+    cuts = QueryCuts()
+    assert cuts.after == 3
+    for _ in range(2):
+        assert cuts.failed("nav", _cut()) is None
+    assert not cuts.skip("nav"), "Two cuts can be two slow queries"
+    assert cuts.failed("nav", _cut(128.4)) == "endpoint cuts queries at 128 s"
+    assert cuts.skip("nav") and cuts.skip("nav")
+    assert not cuts.skip("other"), "Another purpose of the step goes on"
+    assert cuts.skip("other", whole_step=True)
+    assert cuts.record() == {
+        "nav": {
+            "stopped": "endpoint cuts queries at 128 s",
+            "cut_by": "HTTP 524",
+            "queries_cut": 3,
+            "queries_not_sent": 2,
+        },
+        "other": {
+            "stopped": "endpoint cuts queries at 128 s",
+            "cut_by": None,
+            "queries_cut": 0,
+            "queries_not_sent": 1,
+        },
+    }
+
+
+def test_an_answer_or_another_limit_starts_the_count_again():
+    cuts = QueryCuts()
+    cuts.failed("nav", _cut())
+    cuts.failed("nav", _cut())
+    cuts.answered("nav")
+    cuts.failed("nav", _cut())
+    cuts.failed("nav", _cut())
+    assert cuts.stopped("nav") is None, "An answer resets the count"
+    cuts.failed("nav", _cut(900.0, "connection closed without a response"))
+    cuts.failed("nav", _cut(60.0))
+    cuts.failed("nav", _cut(128.0))
+    assert cuts.stopped("nav") is None, "Cuts of another kind or time are another limit"
+    cuts.failed("nav", EndpointError("HTTP 400: syntax error"))
+    cuts.failed("nav", _cut(128.0))
+    assert cuts.stopped("nav") is None, "A refused query neither counts nor resets"
+    cuts.failed("nav", _cut(128.0))
+    assert cuts.stopped("nav") == "endpoint cuts queries at 128 s"
+    assert cuts.record()["nav"]["queries_cut"] == 9

@@ -81,6 +81,8 @@ class QueryRecord:
     elapsed_seconds: float = 0.0
     wait_seconds: float = 0.0
     request_seconds: float = 0.0
+    # How the last request was cut by a limit on the way to the server (see QueryCut).
+    cut: QueryCut | None = None
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
@@ -130,8 +132,129 @@ class _KeepaliveAdapter(HTTPAdapter):
         super().init_poolmanager(*args, **kwargs)
 
 
+@dataclass(frozen=True)
+class QueryCut:
+    """A request that a limit on the way to the data ended: the server, a proxy or a gateway.
+
+    *kind* is how it ended ("HTTP 524", "connection closed without a response"); *seconds* is
+    how long the request ran. A fixed limit ends every query that exceeds it at the same time:
+    the rehearsal of 2026-10-05 saw Bgee's gateway answer HTTP 524 after 127.0 to 128.2 s, and
+    the cluster's proxy close UniProt's connections after 899.9 to 903.0 s. Two cuts are at
+    the same limit within 2 s or 2 %, which holds both spreads with a margin.
+    """
+
+    kind: str
+    seconds: float
+
+    def same_limit(self, other: QueryCut) -> bool:
+        """Return whether two cuts are of the same kind, at the same time."""
+        window = max(2.0, 0.02 * max(self.seconds, other.seconds))
+        return self.kind == other.kind and abs(self.seconds - other.seconds) <= window
+
+
+# Consecutive cuts at the same limit after which a step stops sending queries of a purpose.
+# One cut is one slow query, and two can be two neighbouring queries of one heavy class (steps
+# send their queries class by class). Three in a row, with no answer between, show the limit:
+# Bgee's path testing (rehearsal 2026-10-05) answered one query, then had 13 in a row cut at
+# 128 s until its budget ended; no step that sends its queries unchanged answered after three
+# such cuts. Timeouts of the client's own limit do not count (QueryCut): there, runs of three
+# timeouts followed by an answer were seen (VoID gap queries, 60 s).
+CUTS_BEFORE_STOP = 3
+
+
+@dataclass
+class _PurposeCuts:
+    """The cuts of the queries of one purpose in a step."""
+
+    last: QueryCut | None = None
+    run: int = 0
+    cut: int = 0
+    not_sent: int = 0
+    stopped: str | None = None
+
+
+class QueryCuts:
+    """Stop a step from sending queries that the endpoint cuts at a fixed limit.
+
+    A step reports each answer (answered) and each failure (failed) of a purpose; after
+    *after* consecutive cuts at the same limit, the purpose is stopped, and the step asks
+    (skip) before each query, which counts the queries not sent. An answer resets the count.
+    A failure that is not a cut (a refused query) neither counts nor resets. record() says,
+    for each stopped purpose, why, how many queries were cut and how many were not sent.
+    """
+
+    def __init__(self, after: int = CUTS_BEFORE_STOP) -> None:
+        """Stop after *after* consecutive cuts at the same limit."""
+        if after < 1:
+            raise ValueError("Stop after at least one cut")
+        self.after = after
+        self._purposes: dict[str, _PurposeCuts] = {}
+
+    def _of(self, purpose: str) -> _PurposeCuts:
+        return self._purposes.setdefault(purpose, _PurposeCuts())
+
+    def stopped(self, purpose: str | None = None) -> str | None:
+        """Return why a purpose (by default: any purpose of the step) was stopped."""
+        if purpose is not None:
+            return self._of(purpose).stopped
+        return next((c.stopped for c in self._purposes.values() if c.stopped), None)
+
+    def skip(self, purpose: str, *, whole_step: bool = False) -> bool:
+        """Return whether not to send a query of *purpose*; count it as not sent if so.
+
+        With *whole_step*, a stop of any purpose of the step stops this one too.
+        """
+        if not self.stopped(None if whole_step else purpose):
+            return False
+        self._of(purpose).not_sent += 1
+        return True
+
+    def answered(self, purpose: str) -> None:
+        """Record an answer: the queries of this purpose are not all cut."""
+        state = self._of(purpose)
+        state.last, state.run = None, 0
+
+    def failed(self, purpose: str, error: BaseException) -> str | None:
+        """Record a failed query; return why the purpose is stopped, once it is."""
+        cut: QueryCut | None = getattr(error, "cut", None)
+        state = self._of(purpose)
+        if cut is None or state.stopped:
+            return state.stopped
+        state.cut += 1
+        same = state.last is not None and state.last.same_limit(cut)
+        state.run = state.run + 1 if same else 1
+        state.last = cut
+        if state.run >= self.after:
+            state.stopped = f"endpoint cuts queries at {cut.seconds:.0f} s"
+            logger.warning(
+                "%s: %d queries in a row cut (%s) at %.0f s - no more queries of it are sent",
+                purpose,
+                state.run,
+                cut.kind,
+                cut.seconds,
+            )
+        return state.stopped
+
+    def record(self) -> dict[str, dict[str, Any]]:
+        """Return, for each stopped purpose, why it stopped and what was cut and not sent."""
+        step = self.stopped()
+        return {
+            purpose: {
+                "stopped": state.stopped or step,
+                "cut_by": state.last.kind if state.last else None,
+                "queries_cut": state.cut,
+                "queries_not_sent": state.not_sent,
+            }
+            for purpose, state in sorted(self._purposes.items())
+            if state.stopped or state.not_sent
+        }
+
+
 class SparqlHelperError(Exception):
     """Base exception for SPARQL helper errors."""
+
+    # How the endpoint, or a proxy or gateway before it, cut the query (QueryCuts).
+    cut: QueryCut | None = None
 
 
 class EndpointError(SparqlHelperError):
@@ -269,6 +392,9 @@ class SparqlHelper:
         "memory limit exceeded",
         "tried to allocate",
     )
+
+    # HTTP statuses with which a gateway says that it stopped waiting for the server.
+    GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
 
     def enable_query_collection(
         self, *, clear: bool = True, include_results: bool | None = None
@@ -621,6 +747,8 @@ class SparqlHelper:
         except Exception as error:
             record.error = type(error).__name__
             record.error_message = str(error)
+            if isinstance(error, SparqlHelperError):
+                error.cut = record.cut
             raise
         finally:
             done.set()
@@ -1003,9 +1131,16 @@ class SparqlHelper:
                 cooldown_wait=self.rate_limit_wait,
             ):
                 request_started = time.monotonic()
-                return self._request_serial(method, query, accept, raw=raw)
+                text = self._request_serial(method, query, accept, raw=raw)
+                if record is not None:
+                    record.cut = None
+                return text
         except HostBusyError as error:
             raise EndpointRateLimitError(str(error)) from error
+        except Exception as error:
+            if record is not None and request_started is not None:
+                record.cut = self._cut(error, time.monotonic() - request_started)
+            raise
         finally:
             finished = time.monotonic()
             if record is not None:
@@ -1078,6 +1213,29 @@ class SparqlHelper:
                 )
             self._check_response_health(response, text)
             return text
+
+    def _cut(self, error: BaseException, seconds: float) -> QueryCut | None:
+        """Return how a request was cut, when a limit on the way to the data ended it.
+
+        A gateway-timeout status is a cut; any other server error, or a connection closed
+        without a response, is one after DROPPED_AFTER_SECONDS: a timer that fired, not a
+        query that was refused. The client's own read timeout is not a cut: it is the limit
+        that the caller set, and the queries of a step differ in what they cost.
+        """
+        if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
+            status = error.response.status_code
+            if status in self.GATEWAY_TIMEOUT_STATUS or (
+                status >= 500 and seconds >= self.DROPPED_AFTER_SECONDS
+            ):
+                return QueryCut(f"HTTP {status}", seconds)
+            return None
+        if (
+            isinstance(error, requests.exceptions.ConnectionError)
+            and not isinstance(error, requests.exceptions.Timeout)
+            and seconds >= self.DROPPED_AFTER_SECONDS
+        ):
+            return QueryCut("connection closed without a response", seconds)
+        return None
 
     def _handle_retry(
         self,

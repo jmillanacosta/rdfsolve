@@ -249,3 +249,48 @@ def test_an_exported_graph_leaves_out_terms_that_are_not_rdf_iris(caplog):
         "terms": [{"iri": " http://identifiers.org/obo.aeo/", "triples": 1}],
     }
     assert report.config["iri_findings"]["terms"] == []
+
+
+def test_the_report_says_why_path_testing_stopped(tmp_path, monkeypatch):
+    """A path search that the endpoint's cuts stopped is recorded in the mining report
+    (config navigation), with the queries cut and not sent; the source does not fail."""
+    from rdfsolve.schema_models.navigation import NavigationSummary
+
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        restriction_patterns=False,
+        navigation_hops=3,
+        output_formats=["json"],
+    )
+    cuts = {
+        "navigation/tested-paths": {
+            "stopped": "endpoint cuts queries at 128 s",
+            "cut_by": "HTTP 524",
+            "queries_cut": 3,
+            "queries_not_sent": 11,
+        }
+    }
+    stopped = NavigationSummary(
+        max_hops=3,
+        max_paths_per_length=0,
+        edge_count=0,
+        walk_counts={},
+        strategy="tested",
+        stop_reason="endpoint_cuts",
+        cuts=cuts,
+    )
+    monkeypatch.setattr(
+        "rdfsolve.mining.navigation.find_tested_paths", lambda *args, **kwargs: stopped
+    )
+    report = SimpleNamespace(config={})
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[])
+    AnyStage(config)._save_schema_outputs(
+        schema, tmp_path, "x", "_remote", helper=object(), report=report
+    )
+    assert report.config["navigation"]["stop_reason"] == "endpoint_cuts"
+    assert report.config["navigation"]["cuts"] == cuts

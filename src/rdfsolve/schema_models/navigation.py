@@ -74,9 +74,13 @@ class NavigationSummary(BaseModel):
     matched_by_length: dict[int, int] = Field(default_factory=dict)
     complete_lengths: list[int] = Field(default_factory=list)
     budget_s: float | None = Field(default=None, ge=0)
-    stop_reason: Literal["budget"] | None = None
+    # "budget": the time budget was spent; "endpoint_cuts": the endpoint cut the queries of a
+    # purpose at a fixed limit, and the search sent no more queries (cuts says which, why, and
+    # how many queries were cut and not sent; rdfsolve.sparql_helper.QueryCuts).
+    stop_reason: Literal["budget", "endpoint_cuts"] | None = None
     query_count: int = Field(default=0, ge=0)
     failed_queries: int = Field(default=0, ge=0)
+    cuts: dict[str, dict[str, Any]] = Field(default_factory=dict)
     # Member terms of the groups of ontology terms that kept paths go through (for their queries)
     member_terms: dict[str, list[str]] = Field(default_factory=dict)
 

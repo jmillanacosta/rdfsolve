@@ -321,6 +321,7 @@ class RemoteMiningStage(Stage):
                     suffix,
                     helper=miner.helper,
                     members=self._group_members(miner),
+                    report=miner.last_report,
                 )
                 self._save_ontology_discovery(
                     schema,

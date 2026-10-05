@@ -496,10 +496,13 @@ def find_tested_paths(
     page recovery: a query that does not answer in that time is a failed query (Bgee run 13
     waited for one extension query 2 h at a time, in ever smaller pages, until the job ended). *members* gives the member terms of each group of
     ontology terms (the report of the mining), which the data use as types instead of the group.
+    The search also stops when the endpoint cuts its queries at a fixed limit (QueryCuts: Bgee's
+    gateway cut 13 extension queries in a row at 128 s, until the budget ended); the summary
+    says so (stop_reason "endpoint_cuts", cuts) and counts the queries not sent.
     """
     from datetime import datetime, timezone
 
-    from rdfsolve.sparql_helper import SparqlHelperError
+    from rdfsolve.sparql_helper import QueryCuts, SparqlHelperError
 
     if not 2 <= max_hops <= 6 or budget_s < 0:
         raise ValueError("Use 2..6 hops and a nonnegative budget")
@@ -519,17 +522,23 @@ def find_tested_paths(
     kept: list[NavigationPath] = []
     complete: list[int] = []
     queries = failed = 0
-    stop: Literal["budget"] | None = None
+    stop: Literal["budget", "endpoint_cuts"] | None = None
+    cuts = QueryCuts()
+    extension, support_purpose = "navigation/tested-paths", "navigation/path-support"
     frontier: list[tuple[SchemaPattern, ...]] = [
         (unique[k],) for k in sorted(unique) if unique[k].object_class in outgoing
     ]
     for hops in range(2, max_hops + 1):
         extended: list[tuple[SchemaPattern, ...]] = []
-        whole = not complete or complete[-1] == hops - 1
+        # A length is complete only when the shorter one is (hop 2 starts from the edges).
+        whole = hops == 2 or (bool(complete) and complete[-1] == hops - 1)
         for prefix in frontier:
             used = {key(step) for step in prefix}
             candidates = [e for e in outgoing[prefix[-1].object_class] if key(e) not in used]
             if not candidates:
+                continue
+            if cuts.skip(extension, whole_step=True):
+                stop, whole = "endpoint_cuts", False
                 continue
             if clock() >= deadline:
                 stop, whole = "budget", False
@@ -538,12 +547,15 @@ def find_tested_paths(
             queries += 1
             try:
                 with helper.budget(max(1.0, deadline - clock())):
-                    result = helper.select_with_fallback(query, purpose="navigation/tested-paths")
+                    result = helper.select_with_fallback(query, purpose=extension)
             except (SparqlHelperError, TimeoutError, OSError) as error:
                 logger.warning("Path extension query failed: %s", error)
+                if cuts.failed(extension, error):
+                    stop = "endpoint_cuts"
                 failed += 1
                 whole = False
                 continue
+            cuts.answered(extension)
             rows = result.get("results", {}).get("bindings", [])
             tested[hops] += len(candidates)
             observed_at = datetime.now(UTC).isoformat()
@@ -552,6 +564,9 @@ def find_tested_paths(
                     continue
                 # The path is kept when its own query matches; support_query makes that query
                 # again (the release validation repeats it), so it is not stored with the path.
+                if cuts.skip(support_purpose, whole_step=True):
+                    stop, whole = "endpoint_cuts", False
+                    continue
                 if clock() >= deadline:
                     stop, whole = "budget", False
                     break
@@ -560,14 +575,15 @@ def find_tested_paths(
                 queries += 1
                 try:
                     with helper.budget(max(1.0, deadline - clock())):
-                        answer = helper.select_with_fallback(
-                            support, purpose="navigation/path-support"
-                        )
+                        answer = helper.select_with_fallback(support, purpose=support_purpose)
+                    cuts.answered(support_purpose)
                     row = answer.get("results", {}).get("bindings", [{}])[0]
                     sources = int(row["sources"]["value"])
                     followed = int(row["matched"]["value"]) if sources else 0
                 except (SparqlHelperError, TimeoutError, OSError, LookupError, ValueError) as error:
                     logger.warning("Path support query failed: %s", error)
+                    if cuts.failed(support_purpose, error):
+                        stop = "endpoint_cuts"
                     failed += 1
                     whole = False
                     continue
@@ -588,11 +604,11 @@ def find_tested_paths(
                 )
                 if edge.object_class in outgoing:
                     extended.append((*prefix, edge))
-            if stop:
+            if stop == "budget":
                 break
         if whole:
             complete.append(hops)
-        if stop:
+        if stop == "budget":
             break
         frontier = extended
     through = {s.subject_class for r in kept for s in r.steps} | {
@@ -613,6 +629,7 @@ def find_tested_paths(
         stop_reason=stop,
         query_count=queries,
         failed_queries=failed,
+        cuts=cuts.record(),
     )
 
 

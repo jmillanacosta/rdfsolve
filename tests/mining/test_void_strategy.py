@@ -90,3 +90,46 @@ def test_the_schema_is_read_from_the_void_and_its_gaps_are_mined():
     }
     assert schema.enrichment.class_examples[str(E.A)][0].value == str(E.a1)
     assert {e.property_uri for e in schema.enrichment.examples} == {str(E.link), str(E.name)}
+
+
+def test_a_purpose_whose_queries_the_endpoint_cuts_is_stopped_and_recorded(monkeypatch):
+    """Drift re-counts that a gateway cuts at a fixed limit stop once the limit is shown; the
+    record and a measurement gap say why, with the queries cut and not sent, and the schema
+    from the VoID stands."""
+    from functools import partial
+
+    from rdfsolve.mining import void_strategy
+    from rdfsolve.sparql_helper import EndpointError, QueryCut, QueryCuts
+
+    monkeypatch.setattr(void_strategy, "QueryCuts", partial(QueryCuts, after=1))
+    strategy = _strategy()
+    miner = SchemaMiner.from_graph(_data(), graph_uris=[G1], strategy=strategy, delay=0)
+    select = miner.helper.select
+    sent = []
+
+    def gateway(query, purpose=""):
+        sent.append(purpose)
+        if purpose == "void/drift":
+            error = EndpointError("HTTP 524: A timeout occurred")
+            error.cut = QueryCut("HTTP 524", 120.0)
+            raise error
+        return select(query, purpose=purpose)
+
+    miner.helper.select = gateway
+    try:
+        schema = miner.mine(dataset_name="fixture")
+    finally:
+        miner.close()
+    assert sent.count("void/drift") == 1, "Two re-counts: one cut, one not sent"
+    record = miner.last_report.config["void_source"]
+    stop = {
+        "stopped": "endpoint cuts queries at 120 s",
+        "cut_by": "HTTP 524",
+        "queries_cut": 1,
+        "queries_not_sent": 1,
+    }
+    assert record["stopped"] == {"void/drift": stop}
+    assert record["drift"]["stopped"] == stop["stopped"] and record["drift"]["measured"] == 0
+    gaps = [g for g in miner.last_report.measurement_gaps if g.purpose == "void/drift"]
+    assert any("1 not sent" in g.message for g in gaps)
+    assert len(schema.patterns) == 3 and not miner.last_report.query_failures

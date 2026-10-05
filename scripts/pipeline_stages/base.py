@@ -376,6 +376,7 @@ class Stage:
         suffix: str,
         helper=None,
         members: dict[str, list[str]] | None = None,
+        report: Any = None,
     ) -> None:
         """Save schema in requested output formats.
 
@@ -384,6 +385,8 @@ class Stage:
             output_dir: Directory to save outputs
             name: Source name
             suffix: Output file suffix
+            report: Mining report that records why path testing stopped early (config
+                navigation), when given
         """
         path = output_dir / f"{name}{suffix}_schema.json"
         path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
@@ -406,6 +409,18 @@ class Stage:
                 budget_s=self.config.navigation_budget,
                 members=members,
             )
+            navigation = schema.navigation
+            if navigation.stop_reason is not None:
+                stopped = {
+                    "stop_reason": navigation.stop_reason,
+                    "cuts": navigation.cuts,
+                    "complete_lengths": navigation.complete_lengths,
+                    "query_count": navigation.query_count,
+                    "failed_queries": navigation.failed_queries,
+                }
+                log.warning("[%s] Navigation: stopped early: %s", name, stopped)
+                if report is not None:
+                    report.config["navigation"] = stopped
 
         if self.config.restriction_patterns and helper is not None:
             from rdfsolve.mining.restrictions import mine_restriction_patterns
