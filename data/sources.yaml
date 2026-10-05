@@ -6380,8 +6380,9 @@
   - bibliography/documents
   sparql_engine: graphdb
 - name: ordo
-  dataset_kind: instance
+  dataset_kind: ontology
   endpoint: https://www.orphadata.com/ordo-sparql-endpoint/
+  download_owl: https://www.orphadata.com/data/ontologies/ordo/last_version/ordo_orphanet.owl
   notes: 'KG Registry: Orphanet Rare Disease Ontology (ORDO)'
   kg_registry_id: ordo
   bioregistry_prefix: ordo
@@ -6396,6 +6397,18 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
+- name: monarch-kg
+  dataset_kind: instance
+  membership_properties:  # nodes are placed by their Biolink category, associations by rdf:type
+  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+  - https://w3id.org/biolink/vocab/category
+  download_nt: https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz
+  notes: Monarch Initiative knowledge graph (KGX export to N-Triples); no SPARQL endpoint
+  keywords:
+  - disease
+  - phenotype
+  - gene
+  - biomedical science
 - name: pathophenodb
   dataset_kind: instance
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
