@@ -318,3 +318,51 @@ def test_a_refused_property_is_counted_from_its_untyped_subjects(monkeypatch):
         "census": "untyped subjects",
     }
     assert not entry.get("unchecked_triples") and state == "complete"
+
+
+def _census_sent(monkeypatch, refuse):
+    """Mine REFUSED_DATA through an endpoint that refuses the test of each edge of *refuse*."""
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    with SchemaMiner.from_graph(
+        Dataset().parse(data=REFUSED_DATA, format="turtle"), delay=0
+    ) as miner:
+        select = miner.helper.select
+        sent = []
+
+        def edge_test_refused(query, *args, purpose="", **kwargs):
+            if purpose == "structural/coverage" and "uncoveredTriples" in query:
+                sent.append(query)
+                if refuse and f"<{refuse}>" in query:
+                    raise EndpointTimeoutError("Query cost/time limit")
+            return select(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", edge_test_refused)
+        miner.mine("skipped")
+        (entry,) = miner.last_report.config["structural_coverage"]
+        return entry, miner.last_report.completion_state, sent
+
+
+def test_the_test_of_each_edge_is_skipped_after_a_refusal_when_typed_edges_are_covered(
+    monkeypatch,
+):
+    """Every discovered class was mined and the test of urn:c was refused: urn:p, the next
+    property, is counted from its untyped subjects without its test, with the same counts."""
+    tested, state, sent = _census_sent(monkeypatch, None)
+    assert "census_edge_test" not in tested and state == "complete", "No refusal, no skip"
+    assert any("<urn:p>" in q for q in sent), "Without a refusal each edge is tested"
+    entry, state, sent = _census_sent(monkeypatch, "urn:c")
+    assert not any("<urn:p>" in q for q in sent), "No test of each edge after the refusal"
+    assert entry["census_edge_test"] == {
+        "state": "skipped",
+        "reason": "typed_edges_covered",
+        "refused": "urn:c",
+        "properties": ["urn:p"],
+    }, "The skipped properties are recorded"
+    assert entry["census_properties"]["urn:p"] == {
+        **tested["census_properties"]["urn:p"],
+        "census": "untyped subjects",
+    }, "The same counts as the test of each edge (urn:u is untyped)"
+    assert entry["census_properties"]["urn:p"]["uncoveredTriples"] == 1
+    for count in ("triple_count", "covered_triples", "uncovered_triples", "unchecked_triples"):
+        assert entry[count] == tested[count], count
+    assert entry["state"] == tested["state"] and state == "complete"

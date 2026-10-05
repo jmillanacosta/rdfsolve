@@ -483,15 +483,29 @@ def _census(
     logger.info("Census: counting %d properties one at a time", len(predicates))
     counts = Counter[str]()
     per_property: dict[str, dict[str, Any]] = {}
+    # After the endpoint has refused the test of each edge of one property, and when typed
+    # mining mined every discovered class and skipped no type value, the test is not sent for
+    # the next properties: their uncovered edges are the edges of their untyped subjects, the
+    # counts that a refused test falls back to (pharmgkb: 600 s refused for each of 7
+    # properties). The skipped properties are recorded. A graph whose tests are all answered is
+    # counted by the test of each edge, which also finds typed profiles that cover no edge.
+    skipped: dict[str, Any] | None = None
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
         own = [key for key in keys if key[1] == predicate]
+        untyped = _untyped_census(context, graph, named, predicate) if skipped else None
+        if skipped and untyped is not None:
+            logger.info("Census: %s counted from its untyped subjects", predicate)
+            skipped["properties"].append(predicate)
+            per_property[predicate] = {**untyped, "census": "untyped subjects"}
+            counts.update(untyped)
+            continue
         try:
             found = _property_census(context, graph, named, own, local, predicate, entry)
         except CensusRefusedError as refused:
             untyped = (
                 _untyped_census(context, graph, named, predicate)
-                if (_typed_edges_covered(context))
+                if not skipped and _typed_edges_covered(context)
                 else None
             )
             if untyped is not None:
@@ -500,6 +514,12 @@ def _census(
                 logger.info("Census: %s counted from its untyped subjects (%s)", predicate, refused)
                 per_property[predicate] = {**untyped, "census": "untyped subjects"}
                 counts.update(untyped)
+                skipped = entry["census_edge_test"] = {
+                    "state": "skipped",
+                    "reason": "typed_edges_covered",
+                    "refused": predicate,
+                    "properties": [],
+                }
                 continue
             logger.warning("Census: %s not counted: %s", predicate, refused)
             failure = QueryFailure("timeout", f"{predicate}: {refused}", "structural/coverage")
