@@ -5,6 +5,7 @@ taken again on resume."""
 
 import re
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 from rdflib import Dataset
 
@@ -17,6 +18,9 @@ DATA = """
 <urn:b> a <urn:B> ; <urn:q> "x" .
 <urn:c> <urn:p> <urn:b> .
 """
+
+
+COUNTS = ("triple_count", "covered_triples", "uncovered_triples", "untyped_subject_triples")
 
 
 def census(monkeypatch, *, endpoint=True):
@@ -54,12 +58,7 @@ def test_an_endpoint_census_is_counted_by_property(monkeypatch):
     census_queries = [q for purpose, q in sent if purpose == "structural/coverage"]
     assert census_queries and not any("?s ?p ?o ." in q for q in census_queries)
     assert entry["census"] == "per_property" and local["census"] == "whole_graph"
-    for count in (
-        "triple_count",
-        "covered_triples",
-        "uncovered_triples",
-        "untyped_subject_triples",
-    ):
+    for count in COUNTS:
         assert entry[count] == local[count], f"{count}: the same as the local census"
     assert entry["census_properties"]["urn:p"] == {
         "triples": 2,
@@ -79,29 +78,6 @@ def test_uncovered_edges_are_discovered_by_property(monkeypatch):
         "One query for each property with uncovered edges"
     )
     assert {q.split("VALUES ?p { <", 1)[1].split(">", 1)[0] for q in discovery} == uncovered
-
-
-def test_the_coverage_test_does_not_rebind_outer_variables():
-    """Virtuoso rejects VALUES that bind an outer variable inside EXISTS (SP031), and IF around
-    EXISTS (SQ156)."""
-    from rdfsolve.mining.typed_coverage import typed_match
-
-    match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None)
-    assert "VALUES" not in match and "?p = <urn:p>" in match, "The property is compared"
-    assert "IF(EXISTS" not in match.replace(" ", "")
-    body = match.split("EXISTS {", 1)[1]
-    assert body.lstrip().startswith("?s ?p ?o ."), "Engines that join EXISTS need the pattern"
-
-
-def test_the_coverage_test_of_one_property_reads_only_that_property():
-    """QLever evaluates the group of EXISTS on its own: a constant property keeps it small
-    (Bgee RO_0002162: 20 s, not 217 s, with the same counts)."""
-    from rdfsolve.mining.typed_coverage import typed_match
-
-    match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None, predicate="urn:p")
-    body = match.split("EXISTS {", 1)[1]
-    assert body.lstrip().startswith("?s <urn:p> ?o ."), "The group reads one property"
-    assert "?p " not in body and "?p)" not in body, "No outer variable is bound again (SP031)"
 
 
 BATCH_DATA = """
@@ -162,12 +138,7 @@ def test_a_refused_property_is_counted_in_object_batches(monkeypatch, caplog):
     assert split["census_batches"] == {"urn:p": 3}, "A refused batch is split until it is counted"
     whole = batched_census(monkeypatch, lambda query: False)
     assert batched["census_batches"] == {"urn:p": 3}, "Two single objects and the blank nodes"
-    for count in (
-        "triple_count",
-        "covered_triples",
-        "uncovered_triples",
-        "untyped_subject_triples",
-    ):
+    for count in COUNTS:
         assert batched[count] == whole[count], f"{count}: the batches add up to the whole census"
 
 
@@ -214,9 +185,10 @@ REFUSED_DATA = """
 """
 
 
-def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatch):
+def refused_census(monkeypatch, minimum, error):
+    """Mine REFUSED_DATA through an endpoint whose census of urn:c fails with *error*."""
     monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
-    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", 2)
+    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", minimum)
     with SchemaMiner.from_graph(
         Dataset().parse(data=REFUSED_DATA, format="turtle"), delay=0
     ) as miner:
@@ -226,7 +198,7 @@ def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatc
         def limited(query, *args, purpose="", **kwargs):
             sent.append((purpose, query))
             if purpose == "structural/coverage" and "<urn:c>" in query:
-                raise EndpointTimeoutError("Query cost/time limit: Virtuoso ANYTIME timeout")
+                raise EndpointTimeoutError(error)
             return select(query, *args, purpose=purpose, **kwargs)
 
         def limited_pages(query, *args, purpose="", **kwargs):
@@ -237,7 +209,13 @@ def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatc
         monkeypatch.setattr(miner.helper, "select_with_fallback", limited_pages)
         result = miner.mine("refused")
         (entry,) = miner.last_report.config["structural_coverage"]
-        state = miner.last_report.completion_state
+        return entry, miner.last_report.completion_state, sent, result
+
+
+def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatch):
+    entry, state, sent, result = refused_census(
+        monkeypatch, 2, "Query cost/time limit: ANYTIME timeout"
+    )
     counted = entry["census_properties"]["urn:c"]
     assert counted["triples"] == 4 and "per object" in counted["refused"]
     assert entry["unchecked_triples"] == 4 and entry["census_refused"] == ["urn:c"]
@@ -248,24 +226,9 @@ def test_a_refused_property_with_one_triple_per_object_is_not_checked(monkeypatc
 
 
 def test_a_refused_batch_of_one_object_leaves_the_property_not_checked(monkeypatch):
-    """SIBiLS rdf:type: batches of classes were refused down to one class (the proxy drops a
-    query after 900 s); the property is then not checked, and the source is partial."""
-    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
-    monkeypatch.setattr(structural_strategy, "CENSUS_MIN_TRIPLES_PER_OBJECT", 1)
-    with SchemaMiner.from_graph(
-        Dataset().parse(data=REFUSED_DATA, format="turtle"), delay=0
-    ) as miner:
-        select = miner.helper.select
-
-        def limited(query, *args, purpose="", **kwargs):
-            if purpose == "structural/coverage" and "<urn:c>" in query:
-                raise EndpointTimeoutError("Connection closed without a response after 902 s")
-            return select(query, *args, purpose=purpose, **kwargs)
-
-        monkeypatch.setattr(miner.helper, "select", limited)
-        miner.mine("refused batches")
-        (entry,) = miner.last_report.config["structural_coverage"]
-        state = miner.last_report.completion_state
+    """Batches of objects refused down to one object: the property is not checked, and the
+    source is partial."""
+    entry, state, _, _ = refused_census(monkeypatch, 1, "Connection closed without a response")
     assert "one object" in entry["census_properties"]["urn:c"]["refused"]
     assert entry["unchecked_triples"] == 4 and state == "partial"
 
@@ -321,3 +284,19 @@ def test_the_census_lines_of_a_checkpoint_are_read_on_resume(tmp_path):
     miner._rc = SimpleNamespace(report=SimpleNamespace(config={}))
     batches = miner._resumed_batches(str(path), path.read_text())
     assert batches[("census|abc",)] == [{"triples": 7}]
+
+
+def test_a_property_that_is_not_a_valid_iri_is_counted_and_not_checked():
+    """A property IRI with a space cannot be written in a query."""
+    from rdfsolve.mining.structural_strategy import _checkable
+
+    report = Mock()
+    marked = _checkable(
+        Mock(report=report),
+        {"urn:p": {"uncoveredTriples": 1}, "urn:bad name": {"triples": 2, "uncoveredTriples": 2}},
+    )
+    assert marked == {
+        "urn:p": {"uncoveredTriples": 1},
+        "urn:bad name": {"triples": 2, "refused": "not a valid IRI"},
+    }
+    report.record_dropped_uri.assert_called_once_with("property urn:bad name")

@@ -71,3 +71,9 @@ def test_a_prefix_implies_a_class_and_a_full_class_sample_keeps_the_run_partial(
     assert not {c for row in rows for c in row} & {ARTICLE}, "Ignored types are no classes"
     assert report.config["scope"]["classes"] == {PERSON: {"members": 1, "state": "sampled"}}
     assert report.completion_state == "partial", "Other members may add rows"
+
+
+def test_an_iri_that_cannot_be_written_in_a_query_is_left_out_of_a_batch():
+    from rdfsolve.mining.scope_strategy import _batches
+
+    assert list(_batches(["urn:a", "urn:bad name"])) == ["<urn:a>"]

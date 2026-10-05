@@ -183,3 +183,23 @@ def test_labels_stop_at_the_first_rate_limit():
     ]
     assert len(enrich_patterns_with_labels(patterns, helper, None, miner._report)) == 120
     assert helper.select.call_count == 1, "The other batches are not sent to a host that refuses"
+
+
+def test_a_property_that_is_not_a_valid_iri_keeps_its_triples():
+    """A property IRI with a space cannot be written in a query: its triples are kept and its
+    distinct counts are recorded as refused."""
+
+    def select(query, **kwargs):
+        if "GROUP BY ?p" in query:
+            rows = [("urn:p", 3), ("urn:bad name", 2)]
+            return {
+                "results": {"bindings": [{"p": {"value": p}, "n": {"value": n}} for p, n in rows]}
+            }
+        return {"results": {"bindings": [{"n": {"value": "1"}}]}}
+
+    helper = Mock(sparql_engine="qlever", select=select)
+    record = dataset_statistics.count_dataset(helper, None)
+    assert record["state"] == "counted" and record["triples"] == 5
+    assert record["property_partitions"]["urn:bad name"] == {"triples": 2}
+    assert "urn:bad name" in record["refused_partitions"]
+    assert record["property_partitions"]["urn:p"]["distinct_objects"] == 1

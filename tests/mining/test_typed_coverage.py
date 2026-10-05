@@ -64,3 +64,22 @@ def test_coverage_matches_edges_as_a_relation():
         "The test of an untyped object repeats the edge and the batch: QLever evaluates the group"
         " on its own, and ?o a ?_anyObjectType alone reads every type triple (Bgee: 455.7 GB)"
     )
+
+
+def test_the_coverage_test_does_not_rebind_outer_variables():
+    """Virtuoso rejects VALUES that bind an outer variable inside EXISTS (SP031), and IF around
+    EXISTS (SQ156)."""
+    match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None)
+    assert "VALUES" not in match and "?p = <urn:p>" in match, "The property is compared"
+    assert "IF(EXISTS" not in match.replace(" ", "")
+    body = match.split("EXISTS {", 1)[1]
+    assert body.lstrip().startswith("?s ?p ?o ."), "Engines that join EXISTS need the pattern"
+
+
+def test_the_coverage_test_of_one_property_reads_only_that_property():
+    """QLever evaluates the group of EXISTS on its own: a constant property keeps it small
+    (Bgee RO_0002162: 20 s, not 217 s, with the same counts)."""
+    match = typed_match([("urn:A", "urn:p", "urn:B", None)], None, None, predicate="urn:p")
+    body = match.split("EXISTS {", 1)[1]
+    assert body.lstrip().startswith("?s <urn:p> ?o ."), "The group reads one property"
+    assert "?p " not in body and "?p)" not in body, "No outer variable is bound again (SP031)"

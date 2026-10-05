@@ -18,6 +18,7 @@ from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
 
 logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
+from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
 from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, SparqlHelperError
@@ -216,8 +217,24 @@ def _patterns_census(
         }
         counts.update(triples=total, untypedTriples=missing, uncoveredTriples=missing)
     entry["census"] = "qlever_patterns"
-    entry["census_properties"] = per_property
+    entry["census_properties"] = _checkable(context, per_property)
     return counts
+
+
+def _checkable(
+    context: MiningContext, per_property: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Mark the properties that cannot be written in a query: their triples are counted and not
+    checked, and the property is recorded as dropped.
+    """
+    for predicate, n in per_property.items():
+        try:
+            absolute_iri(predicate)
+        except ValueError:
+            context.report.record_dropped_uri(f"property {predicate}")
+            n.pop("uncoveredTriples", None)
+            n["refused"] = "not a valid IRI"
+    return per_property
 
 
 def _patterns_discovery(
@@ -458,10 +475,13 @@ def _census(
             for row in _select(context, query, "structural/coverage", paged=False):
                 if "p" in row:
                     grouped[row["p"]["value"]][name] = int(row["n"]["value"])
-        entry["census_properties"] = {
-            prop: {"triples": n.get("triples", 0), "untypedTriples": n.get("untypedTriples", 0)}
-            for prop, n in sorted(grouped.items())
-        }
+        entry["census_properties"] = _checkable(
+            context,
+            {
+                prop: {"triples": n.get("triples", 0), "untypedTriples": n.get("untypedTriples", 0)}
+                for prop, n in sorted(grouped.items())
+            },
+        )
         return counts
     listing = f"SELECT DISTINCT ?p {_dataset(graph, named)} WHERE {{ ?s ?p ?o }}"
     predicates = sorted(r["p"]["value"] for r in _select(context, listing, "structural/properties"))
@@ -470,6 +490,10 @@ def _census(
     per_property: dict[str, dict[str, Any]] = {}
     for number, predicate in enumerate(predicates, start=1):
         logger.info("Census: property %d/%d %s", number, len(predicates), predicate)
+        checked = _checkable(context, {predicate: {}})[predicate]
+        if checked:
+            per_property[predicate] = checked
+            continue
         own = [key for key in keys if key[1] == predicate]
         try:
             found = _property_census(context, graph, named, own, local, predicate, entry)
