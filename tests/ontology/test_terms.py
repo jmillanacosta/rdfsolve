@@ -44,3 +44,24 @@ def test_namespaces_of_terms():
         "http://purl.bioontology.org/ontology/SNOMEDCT/"
     )
     assert term_namespace("urn:term:ethanol") == "urn:term:"
+
+
+def test_no_replace_pattern_matches_the_empty_string():
+    # Virtuoso refuses REPLACE with a pattern that matches "" (error 22023).
+    import re
+
+    for pattern in re.findall(r'REPLACE\([^,]+, "([^"]*)"', namespace_expression("?t")):
+        assert re.search(pattern, "") is None, pattern
+
+
+@pytest.mark.parametrize(
+    "iri", [*sorted(CASES), "http://example.org/ends/", "http://example.org/ends#", "urn:x:"]
+)
+def test_rdflib_gives_the_same_namespace(iri):
+    import rdflib
+
+    query = f"SELECT ({namespace_expression('?t')} AS ?ns) WHERE {{ BIND(<{iri}> AS ?t) }}"
+    (row,) = rdflib.Graph().query(query)
+    assert str(row[0]) == namespace(iri)
+    (ox_row,) = ox.Store().query(query)
+    assert ox_row["ns"].value == namespace(iri)
