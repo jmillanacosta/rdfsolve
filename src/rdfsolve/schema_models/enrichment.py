@@ -14,6 +14,7 @@ from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier, Node
 
 from rdfsolve._outcomes import QueryFailure
+from rdfsolve.schema_models.paths import is_rdf_iri
 
 _SAFE_BNODE = re.compile(r"^[A-Za-z_][A-Za-z0-9._-]*$")
 
@@ -196,26 +197,33 @@ class SchemaEnrichment(BaseModel):
         return candidates[0].text.value
 
     def to_rdf_graph(self) -> Graph:
-        """Copy source definitions and observed triples; do not add constraints."""
+        """Copy source definitions and observed triples; do not add constraints.
+
+        A triple with a term that is not an RDF IRI is left out, as in every RDF output, before
+        rdflib builds the term; the JSON schema keeps it.
+        """
         graph = Graph()
-        for definition in self.definitions + self.labels:
-            graph.add(
-                (
-                    URIRef(definition.term_iri),
-                    URIRef(definition.predicate),
-                    definition.text.to_rdf(),
+
+        def add(*terms: str | RdfTerm) -> None:
+            """Add the triple of *terms*, an IRI string or an RDF term each, if RDF can write it."""
+            if all(
+                is_rdf_iri(t) if isinstance(t, str) else t.kind != "uri" or is_rdf_iri(t.value)
+                for t in terms
+            ):
+                graph.add(
+                    tuple(URIRef(t) if isinstance(t, str) else t.to_rdf() for t in terms)  # type: ignore[arg-type]
                 )
-            )
+
+        for definition in self.definitions + self.labels:
+            add(definition.term_iri, definition.predicate, definition.text)
         for iri, examples in self.class_examples.items():
             for term in examples:
-                graph.add((term.to_rdf(), RDF.type, URIRef(iri)))
-                graph.add((URIRef(iri), RDFS.seeAlso, term.to_rdf()))
+                add(term, str(RDF.type), iri)
+                add(iri, str(RDFS.seeAlso), term)
         for example in self.examples:
-            graph.add((URIRef(example.subject_class), RDFS.seeAlso, example.subject.to_rdf()))
-            graph.add((example.subject.to_rdf(), RDF.type, URIRef(example.subject_class)))
-            graph.add(
-                (example.subject.to_rdf(), URIRef(example.property_uri), example.value.to_rdf())
-            )
+            add(example.subject_class, str(RDFS.seeAlso), example.subject)
+            add(example.subject, str(RDF.type), example.subject_class)
+            add(example.subject, example.property_uri, example.value)
         return graph
 
     @classmethod

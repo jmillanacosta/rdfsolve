@@ -48,3 +48,17 @@ def test_terms_that_are_not_rdf_iris_are_mined_reported_and_left_out_of_rdf():
         terms = {str(t) for triple in graph for t in triple}
         assert not {BAD_P, BAD_C} & terms and A in terms
     assert BAD_P not in schema.to_linkml_yaml()
+
+
+def test_enrichment_rdf_leaves_out_terms_that_are_not_rdf_iris_without_rdflib_warnings(caplog):
+    """The examples and labels of such a term stay in the JSON schema; the RDF outputs do not
+    build the term, so rdflib logs no warning for each of its examples (Bio2RDF BioModels)."""
+    schema, _ = mined()
+    enrichment = schema.enrichment
+    assert BAD_C in enrichment.class_examples, "The JSON schema keeps the examples of the term"
+    logging.getLogger("rdflib.term").setLevel(logging.WARNING)
+    with caplog.at_level(logging.WARNING, logger="rdflib.term"):
+        graph = enrichment.to_rdf_graph()
+    assert not [r for r in caplog.records if r.name == "rdflib.term"]
+    terms = {str(t) for triple in graph for t in triple}
+    assert not {BAD_P, BAD_C, BAD_O} & terms and A in terms
