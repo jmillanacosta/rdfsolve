@@ -191,3 +191,33 @@ def test_the_registry_adds_iri_formats_that_bioregistry_lacks(tmp_path, monkeypa
         assert "http://rdf.rhea-db.org/21812" in identifiers.candidates("rhea:21812")[0]
     finally:
         identifiers.registry_uri_formats.cache_clear()
+
+
+def test_a_sampled_graph_is_a_mapped_graph_that_says_how_it_was_sampled():
+    """A local index can hold a sample of a large graph (UniProt's UniParc: 1 of 201 files); the
+    registry states which graphs are sampled and how, and the release record carries it."""
+    from pydantic import ValidationError
+
+    from rdfsolve.models.source_model import SourceModel
+    from rdfsolve.release.model import DatasetReleaseRecord
+
+    row = {
+        "name": "fixture",
+        "graph_uris": ["urn:big", "urn:small"],
+        "graph_sources": {
+            "urn:big": {"download_rdf": ["https://example.org/big_p1.rdf.xz"]},
+            "urn:small": {"download_rdf": ["https://example.org/small.rdf.xz"]},
+        },
+        "sampled_graphs": {"urn:big": "Sample: big_p1 only, 1 of 201 parts."},
+    }
+    source = SourceModel.model_validate(row)
+    assert source.sampled_graphs == {"urn:big": "Sample: big_p1 only, 1 of 201 parts."}
+    assert SourceModel.model_validate({"name": "plain"}).sampled_graphs == {}
+    for invalid in (
+        {**row, "sampled_graphs": {"urn:unmapped": "Sample"}},
+        {**row, "sampled_graphs": {"urn:big": " "}},
+    ):
+        with pytest.raises(ValidationError):
+            SourceModel.model_validate(invalid)
+    record = DatasetReleaseRecord(dataset_id="fixture", sampled_graphs=source.sampled_graphs)
+    assert record.sampled_graphs == source.sampled_graphs

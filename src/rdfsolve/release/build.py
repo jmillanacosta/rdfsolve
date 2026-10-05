@@ -514,6 +514,7 @@ def build_release_manifest(
                 access_files=access_files,
                 graph_scope=[str(item) for item in graphs],
                 graph_sources=source.get("graph_sources") or {},
+                sampled_graphs=source.get("sampled_graphs") or {},
                 extraction_mode=mode,
                 completion_state=_combined_completion(
                     [item.completion_state for item in extractions]

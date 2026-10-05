@@ -93,6 +93,10 @@ class SourceModel(BaseModel):
         Named graphs for ontology interpretation and extraction.
     graph_sources:
         Download fields keyed by the named graph that receives their triples.
+    sampled_graphs:
+        Graphs of graph_sources whose inputs are a sample of the graph that the endpoint
+        holds, each with how it was sampled. Counts of these graphs in the local index
+        are counts of the sample, not of the dataset.
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -189,6 +193,7 @@ class SourceModel(BaseModel):
     type_context_graph_uris: list[str] = Field(default_factory=list)
     ontology_graph_uris: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    sampled_graphs: dict[str, str] = Field(default_factory=dict)
     skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
@@ -279,6 +284,17 @@ class SourceModel(BaseModel):
                     raise ValueError(f"Unsupported graph input format: {key}")
                 if not urls or any(not url.strip() for url in urls):
                     raise ValueError(f"Empty input locations for {graph}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_sampled_graphs(self) -> Self:
+        """Require that each sampled graph is a mapped graph and says how it was sampled."""
+        unmapped = sorted(set(self.sampled_graphs) - set(self.graph_sources))
+        if unmapped:
+            raise ValueError(f"sampled_graphs names graphs without graph_sources: {unmapped}")
+        for graph, how in self.sampled_graphs.items():
+            if not how.strip():
+                raise ValueError(f"sampled_graphs does not say how {graph} was sampled")
         return self
 
     @property

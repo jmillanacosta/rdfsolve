@@ -3412,6 +3412,10 @@
   sparql_strategy: get+json
   supports_graph: true
   skip_remote: true
+  skip_mining: true
+  notes: >-
+    Not mined: dropped from the corpus (owner, 2026-10-05: "drop rdfportal uniprot"). Its local
+    file is the UniProt core ontology only (core.nt.gz); UniProt is mined as uniprot.
   science_area: life sciences
 - name: uniprot
   dataset_kind: instance
@@ -3433,14 +3437,19 @@
   - http://sparql.uniprot.org/journal
   - http://sparql.uniprot.org/keywords
   - http://sparql.uniprot.org/locations
+  - http://sparql.uniprot.org/obsolete
   - http://sparql.uniprot.org/pathways
   - http://sparql.uniprot.org/proteomes
   - http://sparql.uniprot.org/taxonomy
   - http://sparql.uniprot.org/tissues
+  - http://sparql.uniprot.org/uniparc
   - http://sparql.uniprot.org/uniprot
+  - http://sparql.uniprot.org/uniref
+  - https://sparql.rhea-db.org/rhea
   type_context_graph_uris: []
   ontology_graph_uris:
   - http://purl.uniprot.org/core/
+  - http://sparql.uniprot.org/chebi
   - http://sparql.uniprot.org/go
   graph_sources:
     http://sparql.uniprot.org/citationmapping:
@@ -3470,6 +3479,42 @@
       download_rdf:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations-hierarchy.rdf.xz
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations.rdf.xz
+    http://sparql.uniprot.org/obsolete:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_10000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_20000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_30000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_40000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_50000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_60000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_70000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_80000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_90000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_100000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_110000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_120000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_130000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_140000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_150000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_160000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_170000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_180000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_190000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_200000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_210000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_220000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_230000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_240000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_250000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_260000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_270000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_280000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_290000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_300000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_310000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_320000000.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_obsolete_entries_330000000.rdf.xz
     http://sparql.uniprot.org/pathways:
       download_rdf:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways-hierarchy.rdf.xz
@@ -3484,6 +3529,9 @@
     http://sparql.uniprot.org/tissues:
       download_rdf:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/tissues.rdf.xz
+    http://sparql.uniprot.org/uniparc:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniparc_p1.rdf.xz
     http://sparql.uniprot.org/uniprot:
       download_rdf:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_environmental_samples_48510_0.rdf.xz
@@ -3519,13 +3567,36 @@
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_sar_2698737_0.rdf.xz
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_viridiplantae_33090_0.rdf.xz
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_viruses_10239_0.rdf.xz
+    http://sparql.uniprot.org/uniref:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniref50_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniref90_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniref100_0.rdf.xz
+    https://sparql.rhea-db.org/rhea:
+      download_rdf:
+      - https://ftp.expasy.org/databases/rhea/rdf/rhea.rdf.gz
     http://purl.uniprot.org/core/:
       download_owl:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/core.owl
+    http://sparql.uniprot.org/chebi:
+      download_owl:
+      - https://ftp.expasy.org/databases/rhea/rdf/chebi.owl.gz
     http://sparql.uniprot.org/go:
       download_owl:
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go-hierarchy.owl.xz
       - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go.owl.xz
+  sampled_graphs:
+    http://sparql.uniprot.org/uniparc: >-
+      Sample: uniparc_p1.rdf.xz only, 1 of the 201 uniparc_p* files of release 2026_03 (6.0 GB of
+      xz). The endpoint's VoID states the whole graph.
+    http://sparql.uniprot.org/uniprot: >-
+      Sample: UniProtKB reviewed (Swiss-Prot) only, the 33 uniprotkb_reviewed_* files of release
+      2026_03; the 222 uniprotkb_unreviewed_* (TrEMBL) files are left out. The endpoint's VoID
+      states the whole graph.
+    http://sparql.uniprot.org/uniref: >-
+      Sample: uniref50_0, uniref90_0 and uniref100_0.rdf.xz, the first of the 9, 12 and 15 files
+      of UniRef50, UniRef90 and UniRef100 of release 2026_03. The endpoint's VoID states the whole
+      graph.
   keywords:
   - biology
   - protein
@@ -3533,19 +3604,20 @@
   - taxonomic classification
   kg_registry_id: uniprot
   notes: >-
-    UniProtKB/Swiss-Prot (reviewed entries) with the UniProt vocabularies, release 2026_03 (FTP
-    current_release of 2026-09-03; the endpoint answers X-Release 2026_03), indexed and mined as one
-    source (owner, 2026-10-05). Each file is mapped to the named graph that holds it on
-    sparql.uniprot.org (evidence: article/corpus/agent-findings/uniprot-whole.md). The local
-    http://sparql.uniprot.org/uniprot graph holds the 33 reviewed files only; on the endpoint the
-    same graph also holds TrEMBL (37.3 billion triples in its VoID of 2026-09-02), so local and
-    remote counts of that graph differ by design. UniRef, UniParc, obsolete entries, ChEBI and Rhea
-    are not in the scope. The core ontology is in http://purl.uniprot.org/core/ on the endpoint,
-    while its service description names http://purl.uniprot.org/core (empty). keywords-, locations-,
-    pathways- and enzyme-hierarchy.rdf.xz are published empty in this release. The release VoID
-    (void.rdf) is in no graph of the endpoint and is recorded in uniprot.schema. The former per-
-    graph entries are graph scopes of this entry (identity_overrides.yaml) and are not mined one by
-    one.
+    Every named graph that the service description of sparql.uniprot.org names, except its service
+    graph .well-known/sparql-examples, indexed and mined as one source (owner, 2026-10-05). UniProt
+    release 2026_03 (FTP current_release of 2026-09-03; the endpoint answers X-Release 2026_03). The
+    large graphs are sampled (sampled_graphs): uniprot (Swiss-Prot), uniparc and uniref; every other
+    graph is complete, obsolete included (all 34 uniprotkb_obsolete_entries files). Their full
+    counts come from the endpoint's VoID (the remote record). Rhea (release 142) and ChEBI are
+    Rhea's RDF files on Expasy's FTP: sampled triples of both equal the endpoint's graphs, while
+    EBI's chebi.owl differs (other synonym properties, identifiers and SMILES). These files are
+    replaced at each Rhea release, which follows the UniProt release cycle. The core ontology is in
+    http://purl.uniprot.org/core/ on the endpoint; its service description names
+    http://purl.uniprot.org/core, which is empty. keywords-, locations-, pathways- and enzyme-
+    hierarchy.rdf.xz are published empty in this release. The release VoID (void.rdf) is in no graph
+    of the endpoint and is recorded in uniprot.schema. Evidence: article/corpus/agent-
+    findings/uniprot-whole.md.
   science_area: life sciences
 - name: uniprot.schema
   source_role: service
@@ -3565,9 +3637,9 @@
   dataset_kind: ontology
   skip_mining: true
   notes: >-
-    ChEBI as the UniProt endpoint serves it; not in UniProt's RDF release and not in the uniprot
-    index (owner, 2026-10-05: Swiss-Prot and the UniProt vocabularies only); an ontology, not mined
-    (owner, 2026-10-02)
+    Ontology graph of uniprot (its ontology_graph_uris, from Rhea's chebi.owl.gz on Expasy's FTP,
+    whose sampled triples equal this graph); ontologies are not mined (owner, 2026-10-02 and
+    2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
   graph_uris:
@@ -3721,8 +3793,8 @@
   dataset_kind: instance
   skip_mining: true
   notes: >-
-    UniParc, a separate UniProt database (UniProt RDF README) outside the uniprot scope (owner,
-    2026-10-05: Swiss-Prot and the UniProt vocabularies only); not mined
+    Graph scope of uniprot, which indexes a sample of it (uniparc_p1.rdf.xz, 1 of 201 parts) and
+    mines it with the other UniProt graphs; not mined on its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/uniparc
   graph_uris:
@@ -3750,6 +3822,10 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
+  skip_remote: true
+  notes: >-
+    Remote channel given up (owner, 2026-10-05: "give up on remote bgee, we have it local"):
+    Cloudflare in front of www.bgee.org cuts responses at 120 s, and the local index holds Bgee.
   kg_registry_id: bgee
   science_area: life sciences
   download_ttl:

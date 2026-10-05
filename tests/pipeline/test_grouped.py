@@ -104,6 +104,7 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
                 ["urn:edges:a", "urn:edges:b", "urn:types", "urn:ontology"]
             )
         },
+        "sampled_graphs": {"urn:edges:b": "Sample: one of the files of urn:edges:b."},
     }
     registry = tmp_path / "sources.yaml"
     registry.write_text(yaml.safe_dump([row]))
@@ -207,6 +208,7 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     assert len(manifest.datasets) == 1
     record = manifest.datasets[0]
     assert record.graph_sources == row["graph_sources"]
+    assert record.sampled_graphs == row["sampled_graphs"]
     assert record.graph_scope == row["graph_uris"]
     assert record.extractions[0].type_context_graph_scope == ["urn:types"]
     assert record.extractions[0].ontology_graph_scope == ["urn:ontology"]

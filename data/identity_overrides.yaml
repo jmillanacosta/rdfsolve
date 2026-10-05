@@ -359,22 +359,25 @@
     graph of uniprot.
 - left: uniprot.chebi
   right: uniprot
-  relation: distinct
+  relation: graph_scope_of
   note: >-
-    ChEBI, which the UniProt endpoint serves beside UniProt; it is not in UniProt's RDF release
-    and not in the uniprot scope (owner, 2026-10-05). Its identity is chebi (distribution_of).
+    http://sparql.uniprot.org/chebi is an ontology graph of uniprot, indexed from Rhea's
+    chebi.owl.gz on Expasy's FTP, whose sampled triples equal the graph (checked 2026-10-05).
+    Its identity stays chebi (distribution_of).
 - left: uniprot.uniparc
   right: uniprot
-  relation: distinct
+  relation: graph_scope_of
   note: >-
-    UniParc is a separate UniProt database (UniProt RDF README), outside the uniprot scope (owner,
-    2026-10-05: Swiss-Prot and the UniProt vocabularies only).
+    http://sparql.uniprot.org/uniparc is a data graph of uniprot, indexed as a sample
+    (uniparc_p1.rdf.xz; sampled_graphs) and counted whole from the endpoint's VoID (owner,
+    2026-10-05).
 - left: rdfportal.uniprot
   right: uniprot
   relation: distribution_of
   note: >-
     RDF Portal's SIB endpoint mirrors UniProt's RDF under its sparql.uniprot.org graph names; its
-    download is the core ontology only (core.nt.gz).
+    download is the core ontology only (core.nt.gz). Not mined (owner, 2026-10-05: "drop
+    rdfportal uniprot").
 - left: bio2rdf.uniprot
   right: uniprot
   relation: same_upstream

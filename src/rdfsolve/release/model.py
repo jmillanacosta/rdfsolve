@@ -97,6 +97,8 @@ class DatasetReleaseRecord(BaseModel):
     access_files: dict[str, list[str]] = Field(default_factory=dict)
     graph_scope: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    # Graphs whose local inputs are a sample of the endpoint's graph, with how they were sampled.
+    sampled_graphs: dict[str, str] = Field(default_factory=dict)
     extraction_mode: str | None = None
     completion_state: CompletionState = "unknown"
     report_path: str | None = None
