@@ -348,3 +348,75 @@ def test_a_compressed_file_behind_a_download_url_is_decompressed():
     analysis = analyse_source({"name": "demo", "download_nq": url})
     assert analysis.needs_gz
     assert _wget_cmd(url).endswith(f'-O "graph_v3.nq.gz" "{url}"')
+
+
+def test_rdfxml_mapped_to_a_graph_is_converted_and_an_empty_file_is_accounted_for(tmp_path):
+    """RDF/XML inputs of a graph mapping become N-Triples with the graph of the mapping. A file
+    published empty (UniProt's enzyme-hierarchy.rdf.xz) is marked, not converted: the converter
+    would stop the build at it, and the index would lack an input that the entry lists."""
+    import functools
+    import http.server
+    import json
+    import lzma
+    import threading
+
+    from rdfsolve.qlever.inputs import empty_inputs, graph_input_directory, mapped_input_files
+
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "enzyme.rdf.xz").write_bytes(lzma.compress(b'<?xml version="1.0"?><rdf:RDF/>'))
+    (site / "enzyme-hierarchy.rdf.xz").write_bytes(lzma.compress(b""))
+    (site / "core.owl").write_text('<?xml version="1.0"?><rdf:RDF/>')
+    (site / "go.owl.xz").write_bytes(lzma.compress(b""))
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    entry = {
+        "name": "fixture",
+        "graph_sources": {
+            "urn:enzymes": {
+                "download_rdf": [f"{base}/enzyme.rdf.xz", f"{base}/enzyme-hierarchy.rdf.xz"]
+            },
+            "urn:core": {"download_owl": [f"{base}/core.owl"]},
+            # A graph whose only input is empty holds nothing; it is not an error.
+            "urn:go": {"download_owl": [f"{base}/go.owl.xz"]},
+        },
+    }
+    workdir = tmp_path / "work"
+    parsed = configparser.ConfigParser(interpolation=None)
+    parsed.read_string(build_qleverfile(entry, tmp_path, 7000, "docker", workdir=workdir))
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    # As rapper -o ntriples: one statement without a graph, whatever the input.
+    (bin_dir / "rapper").write_text(
+        '#!/bin/sh\n[ "$5" = ntriples ] || exit 1\n[ -s "$6" ] || exit 1\n'
+        'echo "<urn:s> <urn:p> <urn:o> ."\n'
+    )
+    (bin_dir / "rapper").chmod(0o755)
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "no_proxy": "127.0.0.1",
+        "NO_PROXY": "127.0.0.1",
+    }
+    try:
+        done = subprocess.run(
+            ["bash"], input=parsed["data"]["GET_DATA_CMD"], text=True, capture_output=True, env=env
+        )
+    finally:
+        server.shutdown()
+    assert done.returncode == 0, done.stderr
+
+    mapped = mapped_input_files(workdir, list(entry["graph_sources"]))
+    assert sorted(graph for _, graph in mapped) == ["urn:core", "urn:enzymes"]
+    assert all(path.suffix == ".nt" for path, _ in mapped)
+    assert len(empty_inputs(graph_input_directory(workdir, "urn:enzymes"))) == 1
+    assert len(empty_inputs(graph_input_directory(workdir, "urn:go"))) == 1
+    streams = json.loads(parsed["index"]["MULTI_INPUT_JSON"])
+    outputs = [
+        subprocess.run(["bash"], input=s["cmd"], text=True, capture_output=True, check=True).stdout
+        for s in streams
+    ]
+    assert sorted(o for o in outputs if o) == ["<urn:s> <urn:p> <urn:o> .\n"] * 2
+    assert {s["format"] for s in streams} == {"nt"}

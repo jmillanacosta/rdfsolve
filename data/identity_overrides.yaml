@@ -311,3 +311,72 @@
   note: >-
     RDF Portal mirrors PubChem RDF, which pubchem.ftp indexes whole from PubChem's FTP (owner,
     2026-10-05: covered by pubchem.ftp, no index of its own).
+
+# Decided 2026-10-05 (the owner): UniProt is one source, uniprot (Swiss-Prot and the UniProt
+# vocabularies, each file mapped to its graph on sparql.uniprot.org); evidence in
+# article/corpus/agent-findings/uniprot-whole.md.
+- left: uniprot.citationmapping
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    citation_mapping.rdf.xz is in http://sparql.uniprot.org/citationmapping on the endpoint
+    (checked 2026-10-05); uniprot indexes and mines it with its other graphs.
+- left: uniprot.citations
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    citations.rdf.xz is in http://sparql.uniprot.org/citations on the endpoint (checked
+    2026-10-05); uniprot indexes and mines it with its other graphs.
+- left: uniprot.database
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    databases.rdf.xz is in http://sparql.uniprot.org/database on the endpoint (checked
+    2026-10-05); uniprot indexes and mines it with its other graphs.
+- left: uniprot.diseases
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    diseases.rdf.xz is in http://sparql.uniprot.org/diseases on the endpoint (checked
+    2026-10-05); uniprot indexes and mines it with its other graphs.
+- left: uniprot.enzymes
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    enzyme.rdf.xz is in http://sparql.uniprot.org/enzymes on the endpoint (checked 2026-10-05);
+    uniprot indexes and mines it with its other graphs.
+- left: uniprot.go
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    go.owl.xz and go-hierarchy.owl.xz are in http://sparql.uniprot.org/go on the endpoint
+    (checked 2026-10-05), an ontology graph of uniprot; not mined (owner, 2026-10-02).
+- left: uniprot.core
+  right: uniprot
+  relation: graph_scope_of
+  note: >-
+    core.owl is in http://purl.uniprot.org/core/ on the endpoint (checked 2026-10-05), an ontology
+    graph of uniprot.
+- left: uniprot.chebi
+  right: uniprot
+  relation: distinct
+  note: >-
+    ChEBI, which the UniProt endpoint serves beside UniProt; it is not in UniProt's RDF release
+    and not in the uniprot scope (owner, 2026-10-05). Its identity is chebi (distribution_of).
+- left: uniprot.uniparc
+  right: uniprot
+  relation: distinct
+  note: >-
+    UniParc is a separate UniProt database (UniProt RDF README), outside the uniprot scope (owner,
+    2026-10-05: Swiss-Prot and the UniProt vocabularies only).
+- left: rdfportal.uniprot
+  right: uniprot
+  relation: distribution_of
+  note: >-
+    RDF Portal's SIB endpoint mirrors UniProt's RDF under its sparql.uniprot.org graph names; its
+    download is the core ontology only (core.nt.gz).
+- left: bio2rdf.uniprot
+  right: uniprot
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.

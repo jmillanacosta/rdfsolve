@@ -19,6 +19,9 @@ PIPES = ".index-pipes"
 # The script that fills them, beside the index command.
 FEED = "index-feed.sh"
 FEED_PIPES = "index-feed.pipes"
+# Beside a converted input that was published empty: the download is accounted for and holds no
+# statement (UniProt publishes enzyme-hierarchy.rdf.xz empty), so there is no file to index.
+EMPTY = ".empty"
 
 
 def qlever_format(path: Path) -> str:
@@ -182,12 +185,23 @@ def graph_input_directory(workdir: Path, graph: str) -> Path:
     return workdir / "graphs" / hashlib.sha256(graph.encode()).hexdigest()
 
 
+def empty_inputs(directory: Path) -> list[Path]:
+    """List the markers of inputs that were published empty, in the root or rdf/ layout."""
+    return sorted(
+        path for folder in (directory, directory / "rdf") for path in folder.glob(f"*{EMPTY}")
+    )
+
+
 def mapped_input_files(workdir: Path, graphs: list[str]) -> list[tuple[Path, str]]:
-    """Require prepared triple files for every mapped graph."""
+    """Require prepared triple files for every mapped graph.
+
+    A graph whose inputs were all published empty has no file to index and is not an error.
+    """
     inputs: list[tuple[Path, str]] = []
     for graph in graphs:
-        files = index_inputs(graph_input_directory(workdir, graph))
-        if not files:
+        directory = graph_input_directory(workdir, graph)
+        files = index_inputs(directory)
+        if not files and not empty_inputs(directory):
             raise ValueError(f"No prepared inputs for graph {graph}")
         if any(qlever_format(path) not in {"ttl", "nt"} for path in files):
             raise ValueError(f"Mapped graph {graph} requires triple inputs")

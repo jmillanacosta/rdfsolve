@@ -3414,45 +3414,160 @@
   skip_remote: true
   science_area: life sciences
 - name: uniprot
-  source_role: service
-  void_iri: https://sparql.uniprot.org/
+  dataset_kind: instance
+  local_provider: uniprot
   endpoint: https://sparql.uniprot.org/sparql/
+  void_iri: https://sparql.uniprot.org/.well-known/void
+  sparql_engine: blazegraph
+  sparql_strategy: get+json
+  supports_graph: true
+  bioregistry_prefix: uniprot
+  aliases:
+  - uniprot.swissprot
+  graph_uris:
+  - http://sparql.uniprot.org/citationmapping
+  - http://sparql.uniprot.org/citations
+  - http://sparql.uniprot.org/database
+  - http://sparql.uniprot.org/diseases
+  - http://sparql.uniprot.org/enzymes
+  - http://sparql.uniprot.org/journal
+  - http://sparql.uniprot.org/keywords
+  - http://sparql.uniprot.org/locations
+  - http://sparql.uniprot.org/pathways
+  - http://sparql.uniprot.org/proteomes
+  - http://sparql.uniprot.org/taxonomy
+  - http://sparql.uniprot.org/tissues
+  - http://sparql.uniprot.org/uniprot
+  type_context_graph_uris: []
+  ontology_graph_uris:
+  - http://purl.uniprot.org/core/
+  - http://sparql.uniprot.org/go
+  graph_sources:
+    http://sparql.uniprot.org/citationmapping:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citation_mapping.rdf.xz
+    http://sparql.uniprot.org/citations:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citations.rdf.xz
+    http://sparql.uniprot.org/database:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/databases.rdf.xz
+    http://sparql.uniprot.org/diseases:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/diseases.rdf.xz
+    http://sparql.uniprot.org/enzymes:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme-hierarchy.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme.rdf.xz
+    http://sparql.uniprot.org/journal:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/journals.rdf.xz
+    http://sparql.uniprot.org/keywords:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords-hierarchy.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords.rdf.xz
+    http://sparql.uniprot.org/locations:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations-hierarchy.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations.rdf.xz
+    http://sparql.uniprot.org/pathways:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways-hierarchy.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways.rdf.xz
+    http://sparql.uniprot.org/proteomes:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/proteomes.rdf.xz
+    http://sparql.uniprot.org/taxonomy:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy-hierarchy.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy.rdf.xz
+    http://sparql.uniprot.org/tissues:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/tissues.rdf.xz
+    http://sparql.uniprot.org/uniprot:
+      download_rdf:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_environmental_samples_48510_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_methanobacteriati_3366610_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_nanobdellati_1783276_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_promethearchaeati_1935183_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_archea_thermoproteati_1783275_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_bacillati_1783272_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_bacteria_incertae_sedis_2323_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_environmental_samples_48479_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_fusobacteriati_3384189_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_acidithiobacillia_1807140_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_alphaproteobacteria_28211_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_betaproteobacteria_28216_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_gammaproteobacteria_1236_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_hydrogenophilia_2008785_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_magnetococcia_3118669_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_proteobacteria_pseudomonadota_incertae_sedis_32045_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_pseudomonadati_3379134_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_thermotogati_3384194_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_bacteria_unclassified_bacteria_49928_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_amoebozoa_554915_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_cryptophyceae_3027_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_discoba_2611352_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_glaucocystophyceae_38254_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_haptista_2608109_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_metamonada_2611341_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_opisthokonta_choanoflagellata_28009_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_opisthokonta_filasterea_2687318_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_opisthokonta_fungi_4751_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_opisthokonta_metazoa_33208_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_rhodophyta_2763_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_sar_2698737_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_eukaryota_viridiplantae_33090_0.rdf.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/uniprotkb_reviewed_viruses_10239_0.rdf.xz
+    http://purl.uniprot.org/core/:
+      download_owl:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/core.owl
+    http://sparql.uniprot.org/go:
+      download_owl:
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go-hierarchy.owl.xz
+      - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go.owl.xz
+  keywords:
+  - biology
+  - protein
+  - sequence
+  - taxonomic classification
+  kg_registry_id: uniprot
+  notes: >-
+    UniProtKB/Swiss-Prot (reviewed entries) with the UniProt vocabularies, release 2026_03 (FTP
+    current_release of 2026-09-03; the endpoint answers X-Release 2026_03), indexed and mined as one
+    source (owner, 2026-10-05). Each file is mapped to the named graph that holds it on
+    sparql.uniprot.org (evidence: article/corpus/agent-findings/uniprot-whole.md). The local
+    http://sparql.uniprot.org/uniprot graph holds the 33 reviewed files only; on the endpoint the
+    same graph also holds TrEMBL (37.3 billion triples in its VoID of 2026-09-02), so local and
+    remote counts of that graph differ by design. UniRef, UniParc, obsolete entries, ChEBI and Rhea
+    are not in the scope. The core ontology is in http://purl.uniprot.org/core/ on the endpoint,
+    while its service description names http://purl.uniprot.org/core (empty). keywords-, locations-,
+    pathways- and enzyme-hierarchy.rdf.xz are published empty in this release. The release VoID
+    (void.rdf) is in no graph of the endpoint and is recorded in uniprot.schema. The former per-
+    graph entries are graph scopes of this entry (identity_overrides.yaml) and are not mined one by
+    one.
+  science_area: life sciences
+- name: uniprot.schema
+  source_role: service
   download_rdf:
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citation_mapping.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/citations.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/core.owl
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/databases.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/diseases.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme-hierarchy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/enzyme.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go-hierarchy.owl.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/go.owl.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/journals.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords-hierarchy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/keywords.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations-hierarchy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/locations.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways-hierarchy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/pathways.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/proteomes.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy-hierarchy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/taxonomy.rdf.xz
-  - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/tissues.rdf.xz
   - https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/void.rdf
   bioregistry_prefix: uniprot
   keywords:
   - biology
   - protein
   - sequence
-  - taxonomic classification
-  sparql_engine: blazegraph
-  sparql_strategy: get+json
-  supports_graph: true
-  skip_remote: true
-  kg_registry_id: uniprot
+  notes: >-
+    Publisher VoID of the UniProt RDF release (file-level datasets and linksets), a declared schema
+    artifact. sparql.uniprot.org holds it in no graph (checked 2026-10-05), so it is not part of the
+    uniprot index.
   science_area: life sciences
 - name: uniprot.chebi
   dataset_kind: ontology
+  skip_mining: true
+  notes: >-
+    ChEBI as the UniProt endpoint serves it; not in UniProt's RDF release and not in the uniprot
+    index (owner, 2026-10-05: Swiss-Prot and the UniProt vocabularies only); an ontology, not mined
+    (owner, 2026-10-02)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
   graph_uris:
@@ -3469,6 +3584,10 @@
   science_area: life sciences
 - name: uniprot.citationmapping
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
+    its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citationmapping
   graph_uris:
@@ -3484,6 +3603,10 @@
   science_area: life sciences
 - name: uniprot.citations
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
+    its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citations
   graph_uris:
@@ -3499,6 +3622,10 @@
   science_area: life sciences
 - name: uniprot.database
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
+    its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/database
   graph_uris:
@@ -3513,6 +3640,10 @@
   science_area: life sciences
 - name: uniprot.diseases
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
+    its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/diseases
   graph_uris:
@@ -3529,6 +3660,10 @@
   science_area: life sciences
 - name: uniprot.enzymes
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
+    its own (owner, 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/enzymes
   graph_uris:
@@ -3545,6 +3680,10 @@
   science_area: life sciences
 - name: uniprot.go
   dataset_kind: ontology
+  skip_mining: true
+  notes: >-
+    Ontology graph of uniprot (its ontology_graph_uris, from go.owl.xz and go-hierarchy.owl.xz);
+    ontologies are not mined (owner, 2026-10-02 and 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/go
   graph_uris:
@@ -3560,11 +3699,16 @@
   supports_graph: true
   science_area: life sciences
 - name: uniprot.core
-  dataset_kind: instance
+  dataset_kind: ontology
+  skip_mining: true
+  notes: >-
+    The UniProt core ontology, an ontology graph of uniprot (from core.owl); not mined (owner,
+    2026-10-05). The endpoint holds it in http://purl.uniprot.org/core/; its service description
+    names http://purl.uniprot.org/core, which is empty (checked 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://purl.uniprot.org/core
   graph_uris:
-  - http://purl.uniprot.org/core
+  - http://purl.uniprot.org/core/
   bioregistry_prefix: uniprot.core
   keywords:
   - biology
@@ -3575,6 +3719,10 @@
   science_area: life sciences
 - name: uniprot.uniparc
   dataset_kind: instance
+  skip_mining: true
+  notes: >-
+    UniParc, a separate UniProt database (UniProt RDF README) outside the uniprot scope (owner,
+    2026-10-05: Swiss-Prot and the UniProt vocabularies only); not mined
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/uniparc
   graph_uris:

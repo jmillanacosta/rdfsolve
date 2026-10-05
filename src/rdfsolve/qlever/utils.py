@@ -826,7 +826,7 @@ def build_qleverfile(
 
     graph_sources = entry.get("graph_sources")
     if graph_sources:
-        from rdfsolve.qlever.inputs import graph_input_directory
+        from rdfsolve.qlever.inputs import EMPTY, graph_input_directory
 
         commands: list[str] = []
         streams: list[dict[str, str]] = []
@@ -849,18 +849,26 @@ def build_qleverfile(
                         executable = "gunzip" if compression == ".gz" else "xz -d"
                         commands.append(f"{executable} -fk {filename}")
                         filename = filename.removesuffix(compression)
+                    cat = ""
                     if suffix in {"rdf", "owl"}:
+                        # RDF/XML is converted to N-Triples, which take the graph of the mapping.
+                        # A file published empty (UniProt's enzyme-hierarchy.rdf.xz) has no
+                        # statements and would stop the converter: it is marked, not converted.
                         target = filename.rsplit(".", 1)[0] + ".nt"
+                        marker = f"{target}{EMPTY}"
                         commands.append(
-                            f"rapper -q -i rdfxml -o ntriples {filename} > {target}.part"
+                            f"if [ -s {filename} ]; then rm -f {marker} && "
+                            f"rapper -q -i rdfxml -o ntriples {filename} > {target}.part && "
+                            f"mv {target}.part {target}; "
+                            f"else rm -f {target} && touch {marker}; fi"
                         )
-                        commands.append(f"mv {target}.part {target}")
                         filename = target
+                        cat = f"[ -e {shlex.quote(str(directory / marker))} ] || "
                     path = directory / filename
                     files.append(shlex.quote(str(path)))
                     streams.append(
                         {
-                            "cmd": f"cat {shlex.quote(str(path))}",
+                            "cmd": f"{cat}cat {shlex.quote(str(path))}",
                             "format": path.suffix[1:],
                             "graph": graph,
                         }

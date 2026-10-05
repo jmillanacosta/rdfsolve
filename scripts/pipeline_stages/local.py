@@ -13,6 +13,7 @@ from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
 from rdfsolve.qlever.inputs import (
     convert_trig,
+    empty_inputs,
     graph_input_directory,
     index_command,
     index_inputs,
@@ -221,7 +222,9 @@ class LocalMiningStage(Stage):
         # Compressed inputs are streamed to the index, not decompressed; TriG is converted.
         expanded = [path for directory in directories for path in convert_trig(directory)]
         try:
-            has_inputs = all(index_inputs(directory) for directory in directories)
+            has_inputs = all(
+                index_inputs(directory) or empty_inputs(directory) for directory in directories
+            )
             urls = list(source.download_urls)
             if needs_download(workdir, urls, has_inputs=has_inputs):
                 if not skip_download and not self.config.no_download:
@@ -238,7 +241,10 @@ class LocalMiningStage(Stage):
                 mapped = mapped_input_files(workdir, list(source.graph_sources))
                 for graph, fields in source.graph_sources.items():
                     expected = sum(len(urls) for urls in fields.values())
-                    found = sum(mapped_graph == graph for _, mapped_graph in mapped)
+                    # A file published empty is accounted for by its marker; it has no input.
+                    found = sum(mapped_graph == graph for _, mapped_graph in mapped) + len(
+                        empty_inputs(graph_input_directory(workdir, graph))
+                    )
                     if found != expected:
                         raise ValueError(f"Graph {graph} has {found} input files; expected {expected}")
             else:
