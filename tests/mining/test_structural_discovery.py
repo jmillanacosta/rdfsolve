@@ -95,7 +95,9 @@ def test_discovery_groups_only_the_nodes_of_uncovered_edges():
         for row in found:
             for key in ("ss", "os"):
                 if key in row:
-                    row[key]["value"] = " ".join(sorted(row[key]["value"].split()))
+                    row[key]["value"] = ">".join(
+                        sorted(structural_strategy._properties(row[key]["value"]))
+                    )
         return sorted(json.dumps(r, sort_keys=True) for r in found)
 
     assert rows(own) == rows(whole) and len(rows(own)) == 2
@@ -196,3 +198,15 @@ def test_the_language_is_tested_only_for_a_language_string():
         assert f"DATATYPE(?o) = <{datatype}>" in recount and "LANG(?o)" not in recount + witness
     witness, recount = structural_queries(pattern(LANG_STRING, "en"))
     assert 'FILTER(LANG(?o) = "en")' in recount and 'FILTER(LANG(?o) = "en")' in witness
+
+
+def test_the_discovery_queries_hold_no_string_escapes():
+    """Virtuoso returns the escape of a newline in a SPARQL string undecoded, so the separators
+    of property sets and witnesses are plain characters that no IRI holds."""
+    import inspect
+
+    from rdfsolve.mining import structural_strategy
+
+    source = inspect.getsource(structural_strategy)
+    assert 'SEPARATOR=">"' in source and "\\\\n" not in source
+    assert structural_strategy._properties("urn:a b>urn:c") == ["urn:a b", "urn:c"]

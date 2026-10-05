@@ -72,10 +72,10 @@ def _discovery_query(
     return f"""SELECT DISTINCT {edges}?ss ?os ?p ?sk ?ok ?dt ?lang
 {_dataset(graph, named_graphs)} WHERE {{
   {edge_pattern}
-  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR="\\n") AS ?ss)
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=">") AS ?ss)
      WHERE {{ {{ SELECT DISTINCT ?s WHERE {{ ?s ?p ?o . {residual} }} }} ?s ?sp ?sv }} GROUP BY ?s }}
   OPTIONAL {{
-    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR="\\n") AS ?os)
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=">") AS ?os)
        WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ ?s ?p ?o . {residual} }} }} ?o ?op ?ov }} GROUP BY ?o }}
   }}
   BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk)
@@ -249,13 +249,13 @@ def _patterns_discovery(
             QLEVER_PREFIX
             + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
   (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
-  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), "\\n", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
+  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), ">", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
 {_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
   ?s {prop} ?o . {_untyped_subject()}
-  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR="\\n") AS ?ss)
+  {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=">") AS ?ss)
      WHERE {{ ?s {prop} ?_o . {_untyped_subject()} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
   OPTIONAL {{
-    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR="\\n") AS ?os)
+    {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=">") AS ?os)
        WHERE {{ ?s {prop} ?o . {_untyped_subject()} ?o ql:has-predicate ?op }} GROUP BY ?o }}
   }}
   BIND({prop} AS ?p)
@@ -337,8 +337,8 @@ def _witness(row: dict[str, Any]) -> dict[str, Any]:
 
     A blank node has no label that another query can use; it is given as a blank node only.
     """
-    # A subject IRI may hold a space but not a newline; a literal object may hold both.
-    subject, value = row["witness"]["value"].split("\n", 1)
+    # No IRI holds ">" (one that would cannot be written in a query); a literal object may.
+    subject, value = row["witness"]["value"].split(">", 1)
     edge: dict[str, Any] = {
         "s": {"type": "uri", "value": subject}
         if row["sk"]["value"] == "IRI"
@@ -498,8 +498,10 @@ def _census(
 
 
 def _properties(joined: str) -> list[str]:
-    """Split a property set joined by newlines (a property IRI may hold a space)."""
-    return [p for p in joined.split("\n") if p]
+    """Split a property set joined by ">", which no IRI holds (a property IRI may hold a space;
+    Virtuoso returns the escape of a newline in a SPARQL string undecoded).
+    """
+    return [p for p in joined.split(">") if p]
 
 
 def _object_term(binding: dict[str, Any]) -> str:
