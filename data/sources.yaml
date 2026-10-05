@@ -5307,7 +5307,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
-  science_area: ''
+  science_area: life sciences
 - name: polyadenylation.magnaporthe
   dataset_kind: instance
   endpoint: https://dydra.com/markw/polyadenylation-sites-in-magnaporthe-oryza/sparql
@@ -5693,7 +5693,7 @@
   sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
-  science_area: ''
+  science_area: life sciences
 - name: agrold
   dataset_kind: instance
   endpoint: http://sparql.southgreen.fr/sparql
@@ -5930,21 +5930,21 @@
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
-  science_area: ''
+  science_area: life sciences
 - name: imgt.genekg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/GENEKG/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
-  science_area: ''
+  science_area: life sciences
 - name: imgt.inferences
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/IMGTKGINFERENCES/sparql
   sparql_engine: fuseki
   sparql_strategy: get+json
   supports_graph: true
-  science_area: ''
+  science_area: life sciences
 - name: brenda
   dataset_kind: instance
   endpoint: https://sparql.dsmz.de/api/brenda
@@ -6073,7 +6073,7 @@
   graph_uris:
   - http://rdf.glycoinfo.org/glytoucan
   - http://www.glytoucan.org/glyco/owl/glytoucan
-  science_area: ''
+  science_area: life sciences
 - name: glytoucan
   dataset_kind: instance
   endpoint: https://ts.glytoucan.org/sparql
@@ -6896,7 +6896,7 @@
   - bibliography/documents
   - abbreviation
   - literature curation
-  science_area: ''
+  science_area: life sciences
 - name: dbcls.mesh
   dataset_kind: instance
   download_nt:
@@ -6953,7 +6953,7 @@
   - http://rdf.ebi.ac.uk/dataset/biomodels
   keywords:
   - Others
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.biosample
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -6962,7 +6962,7 @@
   graph_uris:
   - http://rdf.ebi.ac.uk/dataset/biosamples
   keywords: []
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.bmrb
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7022,7 +7022,7 @@
   - http://rdfportal.org/dataset/dbcatalog/tag
   keywords:
   - Others
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.ensembl
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7103,7 +7103,7 @@
   - http://rdfportal.org/dataset/hco
   keywords:
   - Ontology/Terminology/Nomenclature
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.hgnc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7216,7 +7216,7 @@
   - http://rdfportal.org/dataset/mco
   keywords:
   - Ontology/Terminology/Nomenclature
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.mesh
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7226,7 +7226,7 @@
   - http://id.nlm.nih.gov/mesh
   keywords:
   - Ontology/Terminology/Nomenclature
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.microbedbjp
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7325,7 +7325,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Ontology/Terminology/Nomenclature
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.oma
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7406,7 +7406,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Others
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.pubtator
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7417,7 +7417,7 @@
   keywords:
   - Journal article/Report/Bibliography
   - Others
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.quanto
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7428,7 +7428,7 @@
   - http://quanto.dbcls.jp
   keywords:
   - Others
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.reactome
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7505,7 +7505,7 @@
   download_rdf:
   - http://jcggdb.jp/rdf/diseases/ggdonto.rdf
   - http://jcggdb.jp/rdf/diseases/ggdonto-schema.rdf
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.go
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7513,7 +7513,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/go
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.hpo
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7521,7 +7521,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/hp
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.linked_icgc
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7530,7 +7530,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://icgc.link/release_20
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.mondo
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7538,7 +7538,7 @@
   endpoint: https://rdfportal.org/primary/sparql
   graph_uris:
   - http://rdfportal.org/ontology/mondo
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.mp
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7546,7 +7546,7 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/mp
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.ncit
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7554,7 +7554,7 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/ncit
-  science_area: ''
+  science_area: life sciences
 - name: rdfportal.uberon
   dataset_kind: instance
   catalogs: ["rdfportal"]
@@ -7562,7 +7562,7 @@
   endpoint: https://rdfportal.org/bioportal/sparql
   graph_uris:
   - http://rdfportal.org/dataset/bioportal/uberon
-  science_area: ''
+  science_area: life sciences
 - name: biomarker
   dataset_kind: instance
   kg_registry_id: biomarker
