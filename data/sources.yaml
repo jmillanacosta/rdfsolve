@@ -6620,14 +6620,6 @@
   - bibliography/documents
   - abbreviation
   - literature curation
-- name: lsd
-  dataset_kind: instance
-  endpoint: https://lsd.spatialepidemiology.net/sparql
-  download_nt: https://ftp.dbcls.jp/allie/allie_rdf/lsd_rdf_nt_latest.gz
-  notes: Life Science Dictionary
-  keywords:
-  - life science
-  - database
 - name: dbcls.mesh
   dataset_kind: instance
   download_nt:
