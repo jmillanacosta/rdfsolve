@@ -501,7 +501,7 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} {oc}")
+                        context.report.record_dropped_uri(f"{cls} {p} {oc}", b)
             patterns.extend(blank_node_patterns(anonymous_typed, context, "class"))
 
             # 2b. Literal patterns
@@ -529,7 +529,7 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} Literal")
+                        context.report.record_dropped_uri(f"{cls} {p} Literal", b)
 
             # 2c. Untyped-URI patterns
             t0 = time.monotonic()
@@ -557,7 +557,7 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} {untyped_oc}")
+                        context.report.record_dropped_uri(f"{cls} {p} {untyped_oc}", b)
 
             # 2d. Blank node patterns
             t0 = time.monotonic()

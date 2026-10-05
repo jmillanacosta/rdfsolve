@@ -165,12 +165,25 @@ class ReportCollector:
             self._report.query_failures.extend(outcome.failures)
             self.set_abort_reason(f"{len(self._report.query_failures)} required queries incomplete")
 
-    def record_dropped_uri(self, sample: str) -> None:
+    def record_dropped_uri(self, sample: str, binding: dict[str, Any] | None = None) -> None:
         """Record a pattern dropped due to an invalid URI value.
 
         Increments the counter and keeps the first few examples so
-        the report gives actionable debugging info.
+        the report gives actionable debugging info. A class that the engine returns as a literal
+        (``?s rdf:type "strain"``) names no class: like a literal type value in class discovery,
+        it is skipped, and counted under ``literal_type_values`` as a finding of the source.
         """
+        if binding and any(
+            binding.get(key, {}).get("type") in ("literal", "typed-literal")
+            for key in ("sc", "class", "oc")
+        ):
+            found = self._report.config.setdefault(
+                "literal_type_values", {"count": 0, "samples": []}
+            )
+            found["count"] += 1
+            if len(found["samples"]) < self._MAX_DROPPED_SAMPLES:
+                found["samples"].append(sample)
+            return
         self._report.dropped_invalid_uris += 1
         if len(self._report.dropped_invalid_uri_samples) < self._MAX_DROPPED_SAMPLES:
             self._report.dropped_invalid_uri_samples.append(sample)
