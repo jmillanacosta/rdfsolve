@@ -3100,8 +3100,6 @@
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: http://www.wikidata.org/entity/
-  graph_uris:
-  - http://www.wikidata.org/entity/
   local_provider: idsm
   bioregistry_prefix: wikidata
   keywords:
@@ -3110,6 +3108,25 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  graph_uris:
+  - http://www.wikidata.org/entity/
+  graph_sources:
+    http://www.wikidata.org/entity/:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/g0001.p0006.nt.gz
+  endpoint_export:
+    endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+    finished: '2026-10-06T18:06:50+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/wikidata.idsm.entity/20261006/manifest.json
+    manifest_sha256: 8223ac1cbfaff00da6cbbae4d980d78e9b04d7140f6432d246d6fc7273aca24e
+    graphs: 1
+    triples: 8194434
+    verified: true
 - name: pubchem.book
   dataset_kind: instance
   catalogs: ["idsm"]
@@ -3328,9 +3345,9 @@
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/mesh.heading/20261006/g0001.whole.nt.gz
   endpoint_export:
     endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
-    finished: '2026-10-06T15:31:19+00:00'
+    finished: '2026-10-06T18:06:57+00:00'
     manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/mesh.heading/20261006/manifest.json
-    manifest_sha256: 653a1d5cf1dfd2150de6d25706da74c03cde5c882f6ce1b6c937098868b4be3b
+    manifest_sha256: bb93b91f2f73611ce786f2d9c8573f8b2ca144aee285157ee08420793b50159e
     graphs: 1
     triples: 18334011
     verified: true
@@ -8031,6 +8048,304 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  graph_uris:
+  - https://www.imgt.org/imgt-kg/graph/gene-kg
+  - https://www.imgt.org/imgt-kg/graph/imgt-ontology
+  - https://www.imgt.org/imgt-kg/graph/mab-kg
+  - https://www.imgt.org/imgt-kg/graph/sequence-kg
+  - https://www.imgt.org/imgt-kg/graph/structure-kg
+  graph_sources:
+    https://www.imgt.org/imgt-kg/graph/gene-kg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0003.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0025.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0028.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0029.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0030.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0031.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0032.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0033.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0034.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0035.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0036.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0037.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0038.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0039.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0040.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0041.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0042.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0043.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0044.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0045.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0046.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0047.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0048.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0049.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0050.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0051.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0052.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0053.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0054.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0055.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0056.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0057.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0058.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0059.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0060.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0061.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0062.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0063.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0064.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0065.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0066.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0067.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0068.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0069.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0070.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0071.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0072.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0073.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0074.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0075.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0076.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0077.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0078.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0079.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0080.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0081.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0082.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0083.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0084.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0085.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0086.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0087.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0088.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0089.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0090.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0091.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0092.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0093.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0094.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0095.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0096.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0001.p0097.nt.gz
+    https://www.imgt.org/imgt-kg/graph/imgt-ontology:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0002.whole.nt.gz
+    https://www.imgt.org/imgt-kg/graph/mab-kg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0003.whole.nt.gz
+    https://www.imgt.org/imgt-kg/graph/sequence-kg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0025.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0028.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0029.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0030.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0031.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0032.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0033.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0034.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0035.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0036.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0037.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0038.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0039.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0040.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0041.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0042.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0043.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0044.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0045.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0046.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0047.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0048.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0049.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0050.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0051.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0052.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0053.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0054.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0055.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0056.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0057.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0058.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0059.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0060.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0061.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0062.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0063.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0064.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0065.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0066.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0067.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0068.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0069.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0070.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0071.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0072.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0073.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0004.p0074.nt.gz
+    https://www.imgt.org/imgt-kg/graph/structure-kg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0025.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0028.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0029.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0030.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0031.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0032.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0033.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0034.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0035.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0036.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0037.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0038.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0039.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0040.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0041.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0042.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0043.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0044.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0045.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0046.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0047.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0048.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0049.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0050.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0051.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0052.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0053.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0054.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0055.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0056.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0057.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0058.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0059.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0060.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0061.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0062.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0063.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0064.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0065.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0066.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0067.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0068.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0069.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0070.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0071.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0072.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0073.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0074.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0075.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0076.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0077.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0078.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0079.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0080.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0081.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0082.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0083.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0084.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0085.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0086.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0087.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0088.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0089.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0090.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0091.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0092.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0093.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0094.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0095.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0096.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0097.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0098.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0099.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/g0005.p0100.nt.gz
+  endpoint_export:
+    endpoint: https://www.imgt.org/fuseki/ImgtKg/sparql
+    finished: '2026-10-06T18:44:20+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/imgtkg/20261006/manifest.json
+    manifest_sha256: 57d7c779d50fc1137637cdda43dd10ce7d7296d78f9dbe4623deaedcb1b23311
+    graphs: 5
+    triples: 118136107
+    verified: true
 - name: imgt.mabkg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/MabkgKg/sparql
@@ -8038,6 +8353,16 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  download_nt:
+  - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/imgt.mabkg/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://www.imgt.org/fuseki/MabkgKg/sparql
+    finished: '2026-10-06T18:44:29+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/imgt.mabkg/20261006/manifest.json
+    manifest_sha256: fa3d1a7d69ba8926b2dcd7de96205b6ef6a821ada86397db73dff27bf1abf722
+    graphs: 1
+    triples: 176237
+    verified: true
 - name: imgt.genekg
   dataset_kind: instance
   endpoint: https://www.imgt.org/fuseki/GENEKG/sparql
@@ -9108,6 +9433,70 @@
   sparql_strategy: get+json
   supports_graph: false
   science_area: other
+  graph_uris:
+  - https://purl.org/okn/frink/kg/securechainkg
+  graph_sources:
+    https://purl.org/okn/frink/kg/securechainkg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0025.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0028.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0029.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0030.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0031.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0032.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0033.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0034.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0035.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0036.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0037.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0038.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0039.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0040.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0041.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0042.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0043.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0044.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0045.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0046.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0047.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0048.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/g0001.p0049.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/securechainkg/sparql
+    finished: '2026-10-06T18:09:01+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/securechainkg/20261006/manifest.json
+    manifest_sha256: 9990a4f0a65170d55badfeb07344e18ff26f143dc714d498430f79add9578689
+    graphs: 2
+    triples: 75266744
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: semopenalex
   dataset_kind: instance
   endpoint: https://apps.okn.us/semopenalex/sparql
@@ -9136,6 +9525,22 @@
   sparql_strategy: get+json
   supports_graph: false
   science_area: other
+  graph_uris:
+  - https://purl.org/okn/frink/kg/sockg
+  graph_sources:
+    https://purl.org/okn/frink/kg/sockg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sockg/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/sockg/sparql
+    finished: '2026-10-06T17:06:16+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/sockg/20261006/manifest.json
+    manifest_sha256: a0c93fdb61443de199a1ffbdc57724cc58de48aa16ec9cb2b421e3c2c212d20c
+    graphs: 2
+    triples: 27147863
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: spatialkg
   dataset_kind: instance
   endpoint: https://apps.okn.us/spatialkg/sparql
@@ -9160,6 +9565,22 @@
   sparql_strategy: get+json
   supports_graph: false
   science_area: life sciences
+  graph_uris:
+  - https://purl.org/okn/frink/kg/spoke-okn
+  graph_sources:
+    https://purl.org/okn/frink/kg/spoke-okn:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/spoke/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/spoke-okn/sparql
+    finished: '2026-10-06T17:37:24+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/spoke/20261006/manifest.json
+    manifest_sha256: 06684164cf40f1d886fc72288887ada85e96c511ed13cf473979b8d014657467
+    graphs: 2
+    triples: 42862373
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: spoke-genelab
   dataset_kind: instance
   endpoint: https://apps.okn.us/spoke-genelab/sparql
@@ -9185,6 +9606,22 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: other
+  graph_uris:
+  - https://purl.org/okn/frink/kg/sudokn
+  graph_sources:
+    https://purl.org/okn/frink/kg/sudokn:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sudokn/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/sudokn/sparql
+    finished: '2026-10-06T16:52:54+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/sudokn/20261006/manifest.json
+    manifest_sha256: d9d0b439c8fbf4c6af7cb79eae2b52030551e212f566500bd0ea9378340fce5f
+    graphs: 2
+    triples: 8749326
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: tera
   dataset_kind: instance
   download_nt:
@@ -10056,6 +10493,24 @@
   science_area: life sciences
   notes: 'KG Registry: BiomarkerKB'
   endpoint: https://apps.okn.us/biomarkerkg/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/biomarkerkg
+  - https://purl.org/okn/frink/kg/biomarkerkg#void
+  graph_sources:
+    https://purl.org/okn/frink/kg/biomarkerkg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/biomarker/20261006/g0001.whole.nt.gz
+    https://purl.org/okn/frink/kg/biomarkerkg#void:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/biomarker/20261006/g0002.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/biomarkerkg/sparql
+    finished: '2026-10-06T16:37:05+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/biomarker/20261006/manifest.json
+    manifest_sha256: 47c2fec25d075c7872c1db55df27c4e8dd538d921a02d6071299fbd311d18282
+    graphs: 2
+    triples: 1215644
+    verified: true
 - name: culture-knowledge-graph
   dataset_kind: instance
   kg_registry_id: culture-knowledge-graph
@@ -10321,12 +10776,75 @@
   science_area: life sciences
   notes: 'KG Registry: EvoWeb'
   endpoint: https://apps.okn.us/evoweb/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/evoweb
+  graph_sources:
+    https://purl.org/okn/frink/kg/evoweb:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/g0001.p0005.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/evoweb/sparql
+    finished: '2026-10-06T16:50:55+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/evoweb/20261006/manifest.json
+    manifest_sha256: 790fd49be986d492ef2ed67aad2ce540e204fd788b07ddda64d463065378ac11
+    graphs: 2
+    triples: 3436253
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: gene-expression-atlas-okn
   dataset_kind: instance
   kg_registry_id: gene-expression-atlas-okn
   science_area: life sciences
   notes: 'KG Registry: Gene Expression Atlas'
   endpoint: https://apps.okn.us/gene-expression-atlas-okn/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/gene-expression-atlas-okn
+  graph_sources:
+    https://purl.org/okn/frink/kg/gene-expression-atlas-okn:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0025.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/g0001.p0028.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/gene-expression-atlas-okn/sparql
+    finished: '2026-10-06T17:58:43+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/gene-expression-atlas-okn/20261006/manifest.json
+    manifest_sha256: 2e0ec292a5e08b858c73cb49c5b6d8c404ea50bb29adc6dd1c3b71ffb2777d0a
+    graphs: 2
+    triples: 66624684
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: go
   dataset_kind: ontology
   kg_registry_id: go
@@ -10346,6 +10864,22 @@
   science_area: other
   notes: 'KG Registry: ID Mappings'
   endpoint: https://apps.okn.us/identifier-mappings/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/identifier-mappings
+  graph_sources:
+    https://purl.org/okn/frink/kg/identifier-mappings:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/identifier-mappings/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/identifier-mappings/sparql
+    finished: '2026-10-06T16:58:40+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/identifier-mappings/20261006/manifest.json
+    manifest_sha256: 6d4add61b7fb155e87a740eb5ed8b6f2f20866f5f9d2af53c3435f887d706d63
+    graphs: 2
+    triples: 25966925
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: kg-enp
   dataset_kind: instance
   kg_registry_id: kg-enp
@@ -10368,6 +10902,24 @@
   science_area: life sciences
   notes: 'KG Registry: NCI-PID 2.0 KG'
   endpoint: https://apps.okn.us/ncipidkg/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/ncipidkg
+  - https://purl.org/okn/frink/kg/ncipidkg#void
+  graph_sources:
+    https://purl.org/okn/frink/kg/ncipidkg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ncipidkg/20261006/g0001.whole.nt.gz
+    https://purl.org/okn/frink/kg/ncipidkg#void:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ncipidkg/20261006/g0002.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/ncipidkg/sparql
+    finished: '2026-10-06T16:36:23+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/ncipidkg/20261006/manifest.json
+    manifest_sha256: 90517673e2c79d37fd462480de62eabf47cbc0b18b1f99fdc4e56b872030a2d2
+    graphs: 2
+    triples: 775360
+    verified: true
 - name: nextprot
   dataset_kind: instance
   kg_registry_id: nextprot
@@ -10381,12 +10933,60 @@
   science_area: other
   notes: 'KG Registry: Neighborhood Information KG'
   endpoint: https://apps.okn.us/nikg/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/nikg
+  graph_sources:
+    https://purl.org/okn/frink/kg/nikg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/nikg/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/nikg/sparql
+    finished: '2026-10-06T16:37:51+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/nikg/20261006/manifest.json
+    manifest_sha256: 4df05c309ba28bf1635965a537fedd81179b1920446bd5a86a46cfdac5940e15
+    graphs: 2
+    triples: 1338831
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: oard-kg
   dataset_kind: instance
   kg_registry_id: oard-kg
   science_area: life sciences
   notes: 'KG Registry: Open Annotations for Rare Diseases (OARD) Knowledge Graph'
   endpoint: https://apps.okn.us/oard-kg/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/oard-kg
+  graph_sources:
+    https://purl.org/okn/frink/kg/oard-kg:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/g0001.p0017.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/oard-kg/sparql
+    finished: '2026-10-06T17:48:35+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/oard-kg/20261006/manifest.json
+    manifest_sha256: 3adce2dee748e7294d61178632a6aec14dc857a4501bdd1cd8bd470ae60d54bd
+    graphs: 2
+    triples: 58394883
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: okn-void
   dataset_kind: instance
   kg_registry_id: okn-void
@@ -10418,6 +11018,22 @@
   science_area: life sciences
   notes: 'KG Registry: PanKgraph'
   endpoint: https://apps.okn.us/pankgraph/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/pankgraph
+  graph_sources:
+    https://purl.org/okn/frink/kg/pankgraph:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/pankgraph/20261006/g0001.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/pankgraph/sparql
+    finished: '2026-10-06T17:02:56+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/pankgraph/20261006/manifest.json
+    manifest_sha256: 7863d18bdf2cae00675320993a208a23e42d1ac42bb4f953b36ccda6accd2721
+    graphs: 2
+    triples: 27117861
+    verified: true
+    left_out_relative_graphs:
+    - void
 - name: phaseskg
   dataset_kind: instance
   kg_registry_id: phaseskg
@@ -10446,6 +11062,241 @@
   science_area: life sciences
   notes: 'KG Registry: Protein Knowledge Network'
   endpoint: https://apps.okn.us/prokn/sparql
+  graph_uris:
+  - https://purl.org/okn/frink/kg/prokn
+  - https://purl.org/okn/frink/kg/prokn#void
+  graph_sources:
+    https://purl.org/okn/frink/kg/prokn:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0007.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0008.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0009.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0010.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0011.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0012.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0013.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0016.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0018.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0019.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0020.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0021.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0022.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0023.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0024.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0025.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0026.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0027.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0028.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0029.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0030.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0031.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0032.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0033.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0034.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0035.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0036.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0037.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0038.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0039.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0040.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0041.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0042.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0043.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0044.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0045.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0046.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0047.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0048.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0049.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0050.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0051.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0052.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0053.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0054.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0055.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0056.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0057.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0058.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0059.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0060.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0061.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0062.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0063.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0064.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0065.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0066.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0067.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0068.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0069.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0070.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0071.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0072.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0073.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0074.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0075.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0076.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0077.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0078.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0079.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0080.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0081.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0082.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0083.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0084.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0085.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0086.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0087.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0088.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0089.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0090.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0091.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0092.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0093.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0094.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0095.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0096.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0097.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0098.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0099.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0100.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0101.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0102.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0103.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0104.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0105.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0106.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0107.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0108.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0109.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0110.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0111.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0112.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0113.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0114.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0115.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0116.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0117.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0118.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0119.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0120.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0121.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0122.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0123.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0124.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0125.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0126.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0127.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0128.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0129.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0130.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0131.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0132.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0133.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0134.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0135.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0136.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0137.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0138.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0139.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0140.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0141.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0142.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0143.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0144.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0145.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0146.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0147.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0148.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0149.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0150.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0151.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0152.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0153.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0154.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0155.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0156.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0157.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0158.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0159.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0160.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0161.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0162.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0163.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0164.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0165.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0166.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0167.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0168.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0169.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0170.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0171.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0172.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0173.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0174.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0175.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0176.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0177.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0178.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0179.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0180.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0181.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0182.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0183.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0184.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0185.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0186.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0187.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0188.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0189.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0190.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0191.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0192.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0193.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0194.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0195.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0196.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0197.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0198.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0199.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0200.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0201.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0202.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0203.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0204.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0205.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0206.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0207.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0208.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0209.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0210.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0211.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0212.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0213.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0214.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0215.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0216.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0217.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0218.nt.gz
+    https://purl.org/okn/frink/kg/prokn#void:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0002.whole.nt.gz
+  endpoint_export:
+    endpoint: https://apps.okn.us/prokn/sparql
+    finished: '2026-10-06T18:35:31+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/manifest.json
+    manifest_sha256: a663a4cdfa4e18f017f5481bce07f429b25f8e72640a15864711ff7bd1f33295
+    graphs: 2
+    triples: 99309452
+    verified: true
 - name: uf-okn
   dataset_kind: instance
   kg_registry_id: uf-okn
