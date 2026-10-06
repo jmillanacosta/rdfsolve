@@ -444,8 +444,95 @@ def _property_discovery(
         try:
             rows += _select(context, query, "structural/discovery")
         except (SparqlHelperError, ValueError) as error:
-            _refused(context, n, predicate, error)
+            logger.info("Discovery: %s refused; discovering it in batches of subjects", predicate)
+            found, missing = _discover_by_subjects(context, graph, named, residual)
+            rows += found
+            if missing is None or missing:
+                _refused(context, n, predicate, error, missing)
     return rows, untyped
+
+
+# Subjects of one discovery query when the discovery of a property is refused as a whole. The
+# cost grows faster than the batch (WikiPathways dc:creator: 50 subjects 6.4 s, 100 23.6 s, 200
+# refused at the ANYTIME limit).
+DISCOVERY_SUBJECT_BATCH = 50
+
+
+def _discover_by_subjects(
+    context: MiningContext, graph: str | None, named: list[str], residual: str
+) -> tuple[list[dict[str, Any]], int | None]:
+    """Discover the patterns of the uncovered edges of one property in batches of subjects.
+
+    The discovery query groups with GROUP_CONCAT, which the helper does not read in pages
+    (the order of a group's values is not stable between requests). Its rows are distinct
+    patterns, so the rows of disjoint sets of subjects together are the rows of the property:
+    the uncovered subjects are listed with a query that can be paged, and the discovery runs for
+    each batch of them, FILTER(?s IN ...) inside each of its subqueries, then for the blank-node
+    subjects together. A refused batch is split in two. Return the rows and the uncovered
+    triples of the subjects that were still refused; None when the subjects cannot be listed or
+    those triples cannot be counted, and the whole property stays undiscovered (WikiPathways
+    dc:creator, 8,095 edges: "estimated execution time 1115 s exceeds the limit of 400 s").
+    """
+    dataset = _dataset(graph, named)
+    try:
+        listed = _select(
+            context,
+            f"SELECT DISTINCT ?s {dataset} WHERE {{ ?s ?p ?o . {residual} }}",
+            "structural/discovery-subjects",
+        )
+    except (SparqlHelperError, ValueError) as error:
+        logger.warning("Discovery: subjects not listed: %s", str(error)[:200])
+        return [], None
+    subjects = sorted({_object_term(r["s"]) for r in listed if r["s"]["type"] == "uri"})
+    blank = any(r["s"]["type"] == "bnode" for r in listed)
+    pending: list[list[str]] = [
+        subjects[i : i + DISCOVERY_SUBJECT_BATCH]
+        for i in range(0, len(subjects), DISCOVERY_SUBJECT_BATCH)
+    ]
+    rows: dict[str, dict[str, Any]] = {}
+    refused: list[str] = []
+
+    def discover(restriction: str) -> list[dict[str, Any]]:
+        """Read the property sets of the subjects that match one restriction."""
+        query = _discovery_query(graph, named, f"{residual} {restriction}")
+        return _select(context, query, "structural/discovery", paged=False)
+
+    while pending:
+        batch = pending.pop()
+        try:
+            found = discover(f"FILTER(?s IN ({', '.join(batch)}))")
+        except (SparqlHelperError, ValueError):
+            if len(batch) == 1:
+                refused.append(f"FILTER(?s IN ({batch[0]}))")
+                continue
+            pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
+            continue
+        rows.update((json.dumps(row, sort_keys=True), row) for row in found)
+    if blank:
+        try:
+            found = discover("FILTER(isBlank(?s))")
+            rows.update((json.dumps(row, sort_keys=True), row) for row in found)
+        except (SparqlHelperError, ValueError):
+            refused.append("FILTER(isBlank(?s))")
+    missing = 0
+    for restriction in refused:
+        try:
+            (row,) = _select(
+                context,
+                f"SELECT (COUNT(*) AS ?n) {dataset} WHERE {{ ?s ?p ?o . {residual} {restriction} }}",
+                "structural/discovery-subjects",
+                paged=False,
+            )
+            missing += int(row["n"]["value"])
+        except (SparqlHelperError, ValueError):
+            return list(rows.values()), None
+    logger.info(
+        "Discovery: %d subjects in batches, %d patterns, %d triples of refused subjects",
+        len(subjects),
+        len(rows),
+        missing,
+    )
+    return list(rows.values()), missing
 
 
 def _undiscovered_triples(entry: dict[str, Any]) -> int:
@@ -977,6 +1064,7 @@ class StructuralStrategy(MiningStrategy):
         inconsistent: list[dict[str, Any]] = []
         for key in sorted(candidates):
             pattern = candidates[key]
+            refused_check: str | None = None
             pattern.witness_query, pattern.recount_query = structural_queries(pattern)
             if bulk and "n" in bindings[key][0]:
                 # Rows of patterns (_patterns_discovery). Rows of one pattern with two spellings of
@@ -1007,14 +1095,20 @@ class StructuralStrategy(MiningStrategy):
                 pattern.distinct_objects = len({obj for _, obj in pairs})
                 pattern.examples = [{name: bindings[key][0][name] for name in ("s", "o")}]
             else:
-                counts = _select(context, pattern.recount_query, "structural/count")
-                if len(counts) != 1:
-                    raise ValueError("Expected one structural count row")
-                pattern.count = int(counts[0]["n"]["value"])
-                pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
-                pattern.distinct_objects = int(counts[0]["objects"]["value"])
-                pattern.examples = _select(context, pattern.witness_query, "structural/witness")
-            if pattern.count < 1 or len(pattern.examples) != 1:
+                try:
+                    counts = _select(context, pattern.recount_query, "structural/count")
+                    if len(counts) != 1:
+                        raise ValueError("Expected one structural count row")
+                    pattern.count = int(counts[0]["n"]["value"])
+                    pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
+                    pattern.distinct_objects = int(counts[0]["objects"]["value"])
+                    pattern.examples = _select(context, pattern.witness_query, "structural/witness")
+                except (SparqlHelperError, ValueError) as error:
+                    # A refused recount leaves the pattern unconfirmed, as a recount of 0 does.
+                    refused_check = str(error)[:300]
+                else:
+                    refused_check = None
+            if refused_check or pattern.count < 1 or len(pattern.examples) != 1:
                 # The discovered property sets are not confirmed by the recount or the witness
                 # (Virtuoso: one subject in two groups of a GROUP BY). The pattern is left out
                 # and recorded; the other patterns and the typed schema stand.
@@ -1029,6 +1123,7 @@ class StructuralStrategy(MiningStrategy):
                         "language": pattern.language,
                         "recount": pattern.count,
                         "witnesses": len(pattern.examples),
+                        **({"refused": refused_check} if refused_check else {}),
                     }
                 )
                 continue

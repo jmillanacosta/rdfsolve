@@ -306,3 +306,50 @@ def test_a_pattern_that_its_recount_does_not_confirm_is_a_gap_not_a_failure(monk
     assert any("urn:p" in m for m in messages)
     assert any("account for 2 of 3 uncovered triples" in m for m in messages)
     assert result.patterns, "The typed schema stands"
+
+
+def _mine_refusing(monkeypatch, refuse):
+    """Mine DATA through a fake remote endpoint that refuses the discovery queries *refuse*
+    selects, as Virtuoso refuses one over its estimated-time limit."""
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    sent = []
+    with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
+        select = miner.helper.select
+
+        def call(query, *args, purpose="", **kwargs):
+            sent.append((purpose, query))
+            if purpose == "structural/discovery" and refuse(query):
+                raise QueryError(
+                    "Virtuoso 42000 Error The estimated execution time 1115 (sec) exceeds the "
+                    "limit of 400 (sec)."
+                )
+            return select(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", call)
+        result = miner.mine("refused")
+        (entry,) = miner.last_report.config["structural_coverage"]
+        return result, entry, miner.last_report, sent
+
+
+def test_a_refused_discovery_is_read_in_batches_of_subjects(monkeypatch):
+    """The discovery query groups with GROUP_CONCAT and is not paged ("Cannot paginate volatile
+    expressions"); a refused property is discovered for batches of its uncovered subjects, with
+    the same patterns (WikiPathways dc:creator)."""
+    result, entry, report, sent = _mine_refusing(monkeypatch, lambda q: "FILTER(?s IN" not in q)
+    assert entry["state"] == "complete" and entry["undiscovered_triples"] == 0
+    found = sorted((p.property_uri, p.count) for p in result.structural_patterns)
+    assert found == [("urn:p", 1), ("urn:q", 1), ("urn:q", 1)]
+    assert any(p == "structural/discovery-subjects" for p, _ in sent)
+    assert not report.query_failures
+
+
+def test_subjects_still_refused_are_counted_as_not_discovered(monkeypatch):
+    result, entry, report, _ = _mine_refusing(
+        monkeypatch, lambda q: "FILTER(?s IN" not in q or "<urn:w>" in q
+    )
+    q = entry["census_properties"]["urn:q"]
+    assert q["undiscoveredTriples"] == 1 and "discovery_refused" in q
+    assert entry["state"] == "partial" and entry["undiscovered_triples"] == 1
+    found = sorted((p.property_uri, p.count) for p in result.structural_patterns)
+    assert found == [("urn:p", 1), ("urn:q", 1)], "urn:u keeps its patterns"
+    assert report.query_failures, "The refused part is recorded"
