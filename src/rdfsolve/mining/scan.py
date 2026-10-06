@@ -374,11 +374,27 @@ def _bare(expr: pl.Expr) -> pl.Expr:
 
 
 def _post(endpoint: str, query: str, accept: str) -> Any:
-    """Send *query* to a local endpoint; return the open response (no proxy, no time limit)."""
+    """Send *query* to a local endpoint; return the open response (no proxy, no time limit).
+
+    A server whose query slots are all taken answers 429; the query is sent again after a wait
+    (1, 2, 4 … 60 s, for at most about ten minutes).
+    """
+    import urllib.error
+
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     data = urllib.parse.urlencode({"query": query}).encode()
-    request = urllib.request.Request(endpoint, data, {"Accept": accept})  # noqa: S310 (local)
-    return opener.open(request, timeout=None)
+    wait = 1.0
+    deadline = time.monotonic() + 600
+    while True:
+        request = urllib.request.Request(endpoint, data, {"Accept": accept})  # noqa: S310 (local)
+        try:
+            return opener.open(request, timeout=None)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or time.monotonic() > deadline:
+                raise
+            logger.info("Scan: the server is busy (429); sending the query again in %.0f s", wait)
+            time.sleep(wait)
+            wait = min(wait * 2, 60.0)
 
 
 def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:

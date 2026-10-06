@@ -16,6 +16,15 @@ from pathlib import Path
 SIMULTANEOUS_QUERIES = 4
 
 
+def simultaneous_queries() -> int:
+    """Return the queries a local server answers at once: at least SIMULTANEOUS_QUERIES, and
+    enough for a scan export, whose every stream sends two queries (terms and ids) at once.
+    """
+    from rdfsolve.mining.scan import export_workers
+
+    return max(SIMULTANEOUS_QUERIES, 2 * export_workers() + 2)
+
+
 def read_qleverfile(workdir: Path) -> configparser.ConfigParser:
     """Read settings without expanding shell variables or percent escapes."""
     config = configparser.ConfigParser(interpolation=None)
@@ -178,7 +187,7 @@ def start_server(
         "-p",
         str(port),
         "-j",
-        str(SIMULTANEOUS_QUERIES),
+        str(simultaneous_queries()),
         "-m",
         memory,
         "-c",
