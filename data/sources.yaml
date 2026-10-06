@@ -13,10 +13,6 @@
     The recipe uses http://rdf.ncbi.nlm.nih.gov/pubchem/ subdomain graph IRIs
     and adds the external ontologies in http://rdf.ncbi.nlm.nih.gov/pubchem/ruleset.
     Data edge scope, linked-object type context and ontology context must remain
-    separate in extraction reports. Verify context in each remote observation;
-    configured downloads do not prove that an endpoint holds those ontologies.
-    Pin input hashes and ontology versions for local runs. Recipe equivalence
-    does not establish equality with the live endpoint snapshot.
   science_area: life sciences
 - name: pubchem.ftp.schema
   catalogs: ["pubchem_ftp"]
@@ -3414,7 +3410,7 @@
   skip_remote: true
   skip_mining: true
   notes: >-
-    Not mined: dropped from the corpus (owner, 2026-10-05: "drop rdfportal uniprot"). Its local
+    Not mined: dropped from the corpus (2026-10-05: "drop rdfportal uniprot"). Its local
     file is the UniProt core ontology only (core.nt.gz); UniProt is mined as uniprot.
   science_area: life sciences
 - name: uniprot
@@ -3610,7 +3606,7 @@
   kg_registry_id: uniprot
   notes: >-
     Every named graph that the service description of sparql.uniprot.org names, except its service
-    graph .well-known/sparql-examples, indexed and mined as one source (owner, 2026-10-05). UniProt
+    graph .well-known/sparql-examples, indexed and mined as one source (2026-10-05). UniProt
     release 2026_03 (FTP current_release of 2026-09-03; the endpoint answers X-Release 2026_03). The
     large graphs are sampled (sampled_graphs): uniprot (Swiss-Prot), uniparc and uniref; every other
     graph is complete, obsolete included (all 34 uniprotkb_obsolete_entries files). Their full
@@ -3647,7 +3643,7 @@
   skip_mining: true
   notes: >-
     Ontology graph of uniprot (its ontology_graph_uris, from Rhea's chebi.owl.gz on Expasy's FTP,
-    whose sampled triples equal this graph); ontologies are not mined (owner, 2026-10-02 and
+    whose sampled triples equal this graph); ontologies are not mined (2026-10-02 and
     2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/chebi
@@ -3668,7 +3664,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
-    its own (owner, 2026-10-05)
+    its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citationmapping
   graph_uris:
@@ -3687,7 +3683,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
-    its own (owner, 2026-10-05)
+    its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/citations
   graph_uris:
@@ -3706,7 +3702,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
-    its own (owner, 2026-10-05)
+    its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/database
   graph_uris:
@@ -3724,7 +3720,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
-    its own (owner, 2026-10-05)
+    its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/diseases
   graph_uris:
@@ -3744,7 +3740,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes and mines it with the other UniProt graphs; not mined on
-    its own (owner, 2026-10-05)
+    its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/enzymes
   graph_uris:
@@ -3764,7 +3760,7 @@
   skip_mining: true
   notes: >-
     Ontology graph of uniprot (its ontology_graph_uris, from go.owl.xz and go-hierarchy.owl.xz);
-    ontologies are not mined (owner, 2026-10-02 and 2026-10-05)
+    ontologies are not mined (2026-10-02 and 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/go
   graph_uris:
@@ -3783,7 +3779,7 @@
   dataset_kind: ontology
   skip_mining: true
   notes: >-
-    The UniProt core ontology, an ontology graph of uniprot (from core.owl); not mined (owner,
+    The UniProt core ontology, an ontology graph of uniprot (from core.owl); not mined (
     2026-10-05). The endpoint holds it in http://purl.uniprot.org/core/; its service description
     names http://purl.uniprot.org/core, which is empty (checked 2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
@@ -3803,7 +3799,7 @@
   skip_mining: true
   notes: >-
     Graph scope of uniprot, which indexes a sample of it (uniparc_p1.rdf.xz, 1 of 201 parts) and
-    mines it with the other UniProt graphs; not mined on its own (owner, 2026-10-05)
+    mines it with the other UniProt graphs; not mined on its own (2026-10-05)
   endpoint: https://sparql.uniprot.org/sparql/
   void_iri: http://sparql.uniprot.org/uniparc
   graph_uris:
@@ -3833,7 +3829,7 @@
   supports_graph: true
   skip_remote: true
   notes: >-
-    Remote channel given up (owner, 2026-10-05: "give up on remote bgee, we have it local"):
+    Remote channel given up (2026-10-05: "give up on remote bgee, we have it local"):
     Cloudflare in front of www.bgee.org cuts responses at 120 s, and the local index holds Bgee.
   kg_registry_id: bgee
   science_area: life sciences
@@ -3871,7 +3867,7 @@
   - https://rdfportal.org/ntriples/pdb/latest/cc/
   - https://rdfportal.org/ntriples/pdb/latest/prd/
   - https://rdfportal.org/ntriples/pdb/latest/family/
-  notes: RDF Portal's PDB data, one file per entry, with chemical components, PRD and families; the validation reports (vrpt/) are another dataset and pdbx-v50.nt.gz is the PDBx ontology (owner, 2026-10-05).
+  notes: RDF Portal's PDB data, one file per entry, with chemical components, PRD and families; the validation reports (vrpt/) are another dataset and pdbx-v50.nt.gz is the PDBx ontology (2026-10-05).
   bioregistry_prefix: pdb
   keywords:
   - Drug/Chemical
@@ -4516,7 +4512,7 @@
 - name: taxonomy
   dataset_kind: instance
   skip_mining: true
-  notes: Bio2RDF Taxonomy; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
+  notes: Bio2RDF Taxonomy; Bio2RDF's endpoints and downloads are gone, and no index was built (2026-10-05)
   catalogs: ["bio2rdf"]
   endpoint: https://bio2rdf.org/sparql
   void_iri: http://bio2rdf.org/taxonomy_resource:bio2rdf.dataset.taxonomy.R3
@@ -4649,7 +4645,7 @@
   catalogs: ["bio2rdf"]
   catalog_local_name: bioportal
   endpoint: http://cu.bioportal.bio2rdf.org/sparql
-  notes: Bio2RDF mirror - BioPortal; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
+  notes: Bio2RDF mirror - BioPortal; Bio2RDF's endpoints and downloads are gone, and no index was built (2026-10-05)
   download_nq:
   - https://download.bio2rdf.org/files/release/3/bioportal/aao.nq.gz
   - https://download.bio2rdf.org/files/release/3/bioportal/aba-amb.nq.gz
@@ -5155,7 +5151,7 @@
   catalogs: ["bio2rdf"]
   catalog_local_name: linkedspl
   endpoint: http://cu.linkedspl.bio2rdf.org/sparql
-  notes: Bio2RDF mirror - LinkedSPL; Bio2RDF's endpoints and downloads are gone, and no index was built (owner, 2026-10-05)
+  notes: Bio2RDF mirror - LinkedSPL; Bio2RDF's endpoints and downloads are gone, and no index was built (2026-10-05)
   download_owl: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.schema.owl
   download_nq: https://download.bio2rdf.org/files/release/3/linkedspl/linkedspl.nt.gz
   download_nt: https://download.bio2rdf.org/files/release/3/linkedspllinkedspl.nt.gz
@@ -6054,7 +6050,7 @@
 - name: rdfportal.wikidata
   dataset_kind: instance
   skip_mining: true
-  notes: Left out of the corpus (owner, 2026-10-05); its IDSM subset is wikidata.idsm.entity.
+  notes: Left out of the corpus (2026-10-05); its IDSM subset is wikidata.idsm.entity.
   catalogs: ["rdfportal"]
   catalog_local_name: wikidata
   endpoint: https://rdfportal.org/wikidata/sparql
@@ -7075,7 +7071,7 @@
   endpoint: https://apps.okn.us/semopenalex/sparql
   skip_mining: true
   notes: >-
-    KG Registry: SemOpenAlex. Left out of the paper-1 corpus (owner, 2026-10-06): about 26 B
+    KG Registry: SemOpenAlex. Left out of the paper-1 corpus (2026-10-06): about 26 B
     triples of scholarly metadata, outside the corpus's life-science focus; its official dump is
     s3://semopenalex (TriG.gz, about 232 GB).
   kg_registry_id: semopenalex
