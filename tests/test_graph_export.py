@@ -318,3 +318,14 @@ def test_refused_ntriples_accept_falls_back(endpoint: type[_Endpoint], tmp_path:
     manifest = _export(endpoint, tmp_path)
     assert source_complete(manifest)
     assert isinstance(manifest["source_versions"], list)
+
+
+def test_error_trailer_rejects_the_body(endpoint: type[_Endpoint], tmp_path: Path) -> None:
+    """A 200 body that QLever ends with its error trailer is not a retrieved graph."""
+    endpoint.garbage = (
+        b"<http://example.org/x> <http://ex\n!!!!>># An error has occurred while exporting\n"
+    )
+    manifest = _export(endpoint, tmp_path, retry_rounds=0)
+    g1 = _by_graph(manifest)[EX + "g1"]
+    assert g1["outcome"] == "failed"
+    assert any("error trailer" in (p["error"] or "") for p in g1["pieces"])

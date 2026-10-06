@@ -87,6 +87,11 @@ _FORMATS: dict[str, tuple[str, str]] = {
 # the OWL vocabulary into <http://www.w3.org/2002/07/owl#> (160 triples; ATTED-II's endpoint
 # holds nothing else, 2026-10-06).
 VOCABULARY_GRAPHS = ("http://www.w3.org/2002/07/owl#",)
+# Texts with which a server ends an HTTP 200 body that it could not finish: QLever writes
+# "!!!!>># An error has occurred while exporting the query result. ... Operation timed out."
+# after a half-written triple (apps.okn.us/federation: 426,389 of 774,743 triples, 2026-10-06).
+ERROR_TRAILERS = (b"!!!!>># An error has occurred",)
+_TAIL_BYTES = 8192
 # Engines whose default graph, without a dataset clause, is the union of the named graphs: an
 # endpoint that does not answer whether its default graph holds other triples is taken to hold
 # none there (Virtuoso, Blazegraph in quad mode).
@@ -541,10 +546,14 @@ class GraphExporter:
             if answer.get("X-SQL-State") == "S1TAT":
                 raise _FetchError("Virtuoso ANYTIME partial result (X-SQL-State S1TAT)")
             size = 0
+            tail = b""
             with gzip.open(partial, "wb", compresslevel=3) as sink:
                 for chunk in _chain(first, chunks):
                     sink.write(chunk)
                     size += len(chunk)
+                    tail = (tail + chunk)[-_TAIL_BYTES:]
+                    if any(marker in tail for marker in ERROR_TRAILERS):
+                        raise _FetchError("the server ended the body with an error trailer")
                     if size // 4 > self.max_bytes - self.bytes:
                         raise ExportBudgetError("source would exceed its byte budget")
             piece.uncompressed_bytes = size
@@ -1225,6 +1234,9 @@ def prepare_workdir(export_dir: Path, workdir: Path) -> dict[str, Any]:
 
     fields = exported_entry(export_dir)
     workdir = Path(workdir)
+    if any(workdir.glob("*.index.pso")):
+        # Built already: its inputs.json pins what it was built from; the folder is kept.
+        return fields
     placed: dict[str, Path] = {}
     if "graph_sources" in fields:
         for graph, mapping in fields["graph_sources"].items():
