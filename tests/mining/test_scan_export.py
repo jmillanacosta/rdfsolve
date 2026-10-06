@@ -34,6 +34,9 @@ class Endpoint:
         self.store.load(DATA, format=ox.RdfFormat.N_TRIPLES)
         self.fail_after: int | None = None
         self.row_queries = 0
+        # The predicates whose row queries the server refuses (400, as a query it cannot parse).
+        self.refuse: set[str] = set()
+        self.queries: list[str] = []
         endpoint = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -43,6 +46,12 @@ class Endpoint:
             def do_POST(self):
                 body = self.rfile.read(int(self.headers["Content-Length"])).decode()
                 query = urllib.parse.parse_qs(body)["query"][0]
+                endpoint.queries.append(query)
+                if any(f"<{p}>" in query and "COUNT" not in query for p in endpoint.refuse):
+                    self.send_response(400)
+                    self.end_headers()
+                    self.wfile.write(b"Invalid SPARQL query")
+                    return
                 if "DATATYPE" in query:
                     endpoint.row_queries += 1
                     if (
@@ -123,3 +132,18 @@ def test_a_predicate_counted_in_parts_gives_the_counts_of_one_pass(endpoint, tmp
     monkeypatch.setattr(scan, "BATCH_ROWS", 1)
     assert counts() == whole
     assert whole[("urn:A", "urn:link", "urn:B", None)] == (2, 2, 1)
+
+
+def test_a_predicate_the_server_refuses_is_a_gap(endpoint, tmp_path):
+    endpoint.refuse = {"urn:note"}
+    store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=2)
+    assert "urn:note" not in store.predicates and "urn:link" in store.predicates
+    assert list(store.manifest["gaps"]) == ["urn:note"]
+    assert store.rows("urn:link").collect().height == 3
+
+
+def test_a_term_that_is_not_an_rdf_iri_is_sent_with_iri(endpoint):
+    with scan._post(endpoint.url, "SELECT ?s ?o WHERE { ?s <urn:statistic  n> ?o }", "text/plain"):
+        pass
+    assert 'IRI("urn:statistic  n")' in endpoint.queries[-1]
+    assert "<urn:statistic  n>" not in endpoint.queries[-1]

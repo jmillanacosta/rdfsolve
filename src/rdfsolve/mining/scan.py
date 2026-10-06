@@ -381,8 +381,11 @@ def _post(endpoint: str, query: str, accept: str) -> Any:
     """
     import urllib.error
 
+    from rdfsolve.sparql_terms import writable_query
+
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    data = urllib.parse.urlencode({"query": query}).encode()
+    # A term that is not an RDF IRI (Bio2RDF: <...statistic  n>) is written with IRI("...").
+    data = urllib.parse.urlencode({"query": writable_query(query)}).encode()
     wait = 1.0
     deadline = time.monotonic() + 600
     while True:
@@ -863,8 +866,27 @@ def export_index(
     text = _text_predicates()
     lock = threading.Lock()
 
-    def read(job: tuple[int, str, int]) -> tuple[str, str, tuple[str, int, int] | None]:
-        """Write the rows of one predicate; return it, its file and any count mismatch."""
+    def read(job: tuple[int, str, int]) -> tuple[str, str | None, tuple[str, int, int] | None]:
+        """Write the rows of one predicate; return it, its file (None for a gap: a predicate
+        whose query the server refused, 400) and any count mismatch.
+        """
+        import urllib.error
+
+        try:
+            return read_predicate(job)
+        except urllib.error.HTTPError as error:
+            if error.code != 400:
+                raise
+            body = error.read(1000).decode(errors="replace")
+            logger.warning("Scan: the server refused the rows of <%s> (400): %s", job[1], body)
+            with lock:
+                gaps[job[1]] = f"HTTP 400: {body[:500]}"
+            return job[1], None, None
+
+    def read_predicate(
+        job: tuple[int, str, int],
+    ) -> tuple[str, str | None, tuple[str, int, int] | None]:
+        """Write the rows of one predicate (read)."""
         number, predicate, size = job
         if predicate in done:
             name, rows = done[predicate]
@@ -919,6 +941,7 @@ def export_index(
             log.write(json.dumps({"predicate": predicate, "file": file.name, "rows": rows}) + "\n")
         return predicate, file.name, (predicate, size, rows) if rows != size else None
 
+    gaps: dict[str, str] = {}
     order = sorted(sizes.items(), key=lambda x: (-x[1], x[0]))
     jobs = [(n, p, expected[p]) for n, (p, _) in enumerate(order)]
     # The predicates are read at once in their own threads, which wait for their queries in
@@ -937,7 +960,7 @@ def export_index(
         streams.shutdown(cancel_futures=True)
     for stale in (path / "rows").glob("*.slice-*"):
         stale.unlink()
-    files = {predicate: name for predicate, name, _ in finished}
+    files = {predicate: name for predicate, name, _ in finished if name is not None}
     mismatches = [m for _, _, m in finished if m]
     if mismatches:
         raise RuntimeError(f"Rows read differ from the predicate counts: {mismatches[:5]}")
@@ -952,6 +975,9 @@ def export_index(
         "seconds": round(time.monotonic() - t0, 1),
         "resumed_predicates": len(done),
         "literal_chars": LITERAL_CHARS,
+        # The predicates whose rows the server refused: left out of the store (counted in
+        # triples and rows, not in predicates).
+        "gaps": dict(sorted(gaps.items())),
     }
     manifest.write_text(json.dumps(record, indent=1) + "\n")
     return RowStore(path)
@@ -1536,6 +1562,7 @@ class ScanStrategy(MiningStrategy):
                 "predicates": len(self.row_store.predicates),
                 "graphs": len(self.row_store.graphs or {}),
                 "seconds": self.row_store.manifest.get("seconds"),
+                "gaps": self.row_store.manifest.get("gaps") or {},
             }
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
