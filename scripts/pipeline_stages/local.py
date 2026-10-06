@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.qlever import QleverConfig, build_qleverfile
+from rdfsolve.qlever.converters import PYTHON_VARIABLE
 from rdfsolve.qlever.downloads import (
     MARKER,
     find_metalinks,
@@ -58,6 +61,36 @@ def local_graph_scope(
     return graph_uris
 
 
+# External programs that a Qleverfile's GET_DATA_CMD may call, besides the shell's own: a
+# Qleverfile written before the RDF/XML converter was pyoxigraph still calls rapper.
+_EXTERNAL_TOOLS = ("rapper", "java", "wget", "xz", "gunzip", "unzip", "tar")
+
+
+def _check_tools(get_data_cmd: str, qleverfile: Path) -> None:
+    """Refuse a download command that calls a program this job does not have, before it runs.
+
+    Without the check the command fails half-way with exit 127 (index-uniprot 115047: rapper).
+    """
+    import re
+    import shutil
+
+    missing = [
+        tool
+        for tool in _EXTERNAL_TOOLS
+        if re.search(rf"(^|[\s;&|(]){tool}\s", get_data_cmd) and shutil.which(tool) is None
+    ]
+    if missing:
+        hint = (
+            "; rapper is called by a Qleverfile written before the RDF/XML converter was "
+            "pyoxigraph: delete the Qleverfile so that it is written again"
+            if "rapper" in missing
+            else ""
+        )
+        raise RuntimeError(
+            f"{qleverfile} calls {', '.join(missing)}, not found on this job's PATH{hint}"
+        )
+
+
 class LocalMiningStage(Stage):
     """Mine schemas from local RDF dumps using QLever."""
 
@@ -70,6 +103,7 @@ class LocalMiningStage(Stage):
         results = {"indexed": [], "mined": [], "partial": [], "failed": [], "skipped": []}
 
         self._ensure_qlever_image()
+        self._check_converters()
 
         qlever_workdir = self.config.data_dir / "qlever_workdirs"
         qlever_workdir.mkdir(parents=True, exist_ok=True)
@@ -148,6 +182,18 @@ class LocalMiningStage(Stage):
                 results[state].append({"name": source.name, "error": str(e)})
 
         return results
+
+    def _check_converters(self) -> None:
+        """Name the RDF/XML converter of this run and stop before any source when it fails.
+
+        RDF/XML (.rdf, .owl, .xml) is converted to N-Triples before indexing; the converter is
+        pyoxigraph, a dependency of rdfsolve, run by this interpreter (rdfsolve.qlever.rdfxml).
+        """
+        from rdfsolve.qlever.converters import preflight
+
+        if self.config.no_download or self.config.no_index:
+            return
+        log.info("RDF/XML converter: %s", preflight())
 
     def _mine_with_restarts(
         self, source: Source, workdir: Path, port: int, server_pid: int
@@ -387,8 +433,16 @@ class LocalMiningStage(Stage):
                     get_data_cmd = config.get("data", "GET_DATA_CMD")
                     # The marker stays when the download does not end, so the next run
                     # downloads again and does not index a part of the files.
+                    _check_tools(get_data_cmd, qleverfile_path)
                     (workdir / MARKER).touch()
-                    subprocess.run(["bash"], input=get_data_cmd, text=True, check=True, cwd=workdir)
+                    subprocess.run(
+                        ["bash"],
+                        input=get_data_cmd,
+                        text=True,
+                        check=True,
+                        cwd=workdir,
+                        env={**os.environ, PYTHON_VARIABLE: sys.executable},
+                    )
                     # What the server says of each file, and the release its metalink names,
                     # pin the download (one request per file, and one per folder).
                     write_record(workdir, urls, server_state, find_metalinks)
@@ -445,7 +499,6 @@ class LocalMiningStage(Stage):
         # QLever returns every integer type as xsd:int and a decimal as xsd:double; the numeric
         # datatypes of the source are counted from the input files, beside the index, while
         # it is built (rdfsolve.qlever.datatypes).
-        import os
         from concurrent.futures import ProcessPoolExecutor, wait
 
         from rdfsolve.qlever.datatypes import (

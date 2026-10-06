@@ -37,7 +37,8 @@ extraction. Its edges enter empirical patterns only when that graph is also expl
 selected as data.
 
 Mapped inputs accept Turtle, N-Triples and RDF/XML (``download_rdf``,
-``download_rdfxml``, ``download_owl``). XML conversion requires ``rapper``. Files use
+``download_rdfxml``, ``download_owl``). RDF/XML is converted by pyoxigraph
+(``python -m rdfsolve.qlever.rdfxml``), so no external converter is needed. Files use
 SHA-256 names derived from their URLs inside graph-specific directories. This keeps
 downloads with equal basenames separate. RDF/XML conversion writes N-Triples. A failed
 download or conversion stops preparation. The pipeline checks that each graph has the

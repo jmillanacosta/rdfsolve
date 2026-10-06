@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.qlever.converters import CONVERTER, converter_command
+
 __all__ = [
     "FORMAT_REGISTRY",
     "QLEVERFILE_TEMPLATE",
@@ -628,8 +630,9 @@ def _decompress_gz_steps(*, include_data_formats: bool = False) -> list[str]:
 
 
 def _convert_rdfxml_steps() -> list[str]:
+    convert = converter_command('"$f"', '"$nq"')
     return [
-        "echo 'Converting RDF/XML -> N-Quads ...'",
+        f"echo 'Converting RDF/XML -> N-Quads ({CONVERTER}) ...'",
         (
             # An empty file (UniProt publishes enzyme-hierarchy.rdf empty) has no statements.
             'for f in *.rdf *.owl *.xml; do [ -s "$f" ] || continue; '
@@ -638,7 +641,7 @@ def _convert_rdfxml_steps() -> list[str]:
             # A file that starts as Turtle is Turtle under an RDF/XML name: it is named .ttl.
             'if head -c 4096 "$f" | grep -q -E "^[[:space:]]*(@prefix|@base|PREFIX|BASE)[[:space:]]"; '
             'then mv "$f" "$(echo "$f" | sed "s/\\.[^.]*$/.ttl/")"; continue; fi; '
-            'rapper -q -i rdfxml -o nquads "$f" > "$nq" || '
+            f"{convert} || "
             '{ rm -f "$nq"; echo "Conversion failed: $f" >&2; exit 1; }; done'
         ),
     ]
@@ -889,8 +892,7 @@ def build_qleverfile(
                         marker = f"{target}{EMPTY}"
                         commands.append(
                             f"if [ -s {filename} ]; then rm -f {marker} && "
-                            f"rapper -q -i rdfxml -o ntriples {filename} > {target}.part && "
-                            f"mv {target}.part {target}; "
+                            f"{converter_command(filename, target)}; "
                             f"else rm -f {target} && touch {marker}; fi"
                         )
                         filename = target

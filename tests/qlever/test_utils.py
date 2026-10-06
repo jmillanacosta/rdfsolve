@@ -282,6 +282,13 @@ def test_a_failed_download_is_not_hidden_by_the_decompression_step(tmp_path):
     assert "download failed" in done.stderr
 
 
+# One statement in RDF/XML: <urn:s> <urn:p> <urn:o> .
+RDFXML = (
+    '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:u="urn:">'
+    '<rdf:Description rdf:about="urn:s"><u:p rdf:resource="urn:o"/></rdf:Description></rdf:RDF>'
+)
+
+
 def _run(steps, tmp_path):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -313,23 +320,18 @@ def test_turtle_in_an_owl_file_is_indexed_as_turtle(tmp_path):
     """A .owl file that holds Turtle is named .ttl, not given to the RDF/XML converter, which
     refuses it and would stop the build."""
     (tmp_path / "ontology.owl").write_text("@prefix : <urn:x#> .\n:a a :B .\n")
-    (tmp_path / "model.owl").write_text('<?xml version="1.0"?>\n<rdf:RDF/>\n')
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    (bin_dir / "rapper").write_text('#!/bin/sh\necho "<urn:s> <urn:p> <urn:o> <urn:g> ."\n')
-    (bin_dir / "rapper").chmod(0o755)
-    env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"}
+    (tmp_path / "model.owl").write_text(f'<?xml version="1.0"?>\n{RDFXML}\n')
     done = subprocess.run(
         ["bash"],
         input=" && ".join(_convert_rdfxml_steps()),
         text=True,
         cwd=tmp_path,
-        env=env,
         capture_output=True,
     )
     assert done.returncode == 0, done.stderr
     assert (tmp_path / "ontology.ttl").read_text().startswith("@prefix")
-    assert not (tmp_path / "ontology.nq").exists() and (tmp_path / "model.nq").exists()
+    assert not (tmp_path / "ontology.nq").exists()
+    assert (tmp_path / "model.nq").read_text() == "<urn:s> <urn:p> <urn:o> .\n"
 
 
 def test_an_empty_file_is_skipped(tmp_path):
@@ -364,9 +366,9 @@ def test_rdfxml_mapped_to_a_graph_is_converted_and_an_empty_file_is_accounted_fo
 
     site = tmp_path / "site"
     site.mkdir()
-    (site / "enzyme.rdf.xz").write_bytes(lzma.compress(b'<?xml version="1.0"?><rdf:RDF/>'))
+    (site / "enzyme.rdf.xz").write_bytes(lzma.compress(RDFXML.encode()))
     (site / "enzyme-hierarchy.rdf.xz").write_bytes(lzma.compress(b""))
-    (site / "core.owl").write_text('<?xml version="1.0"?><rdf:RDF/>')
+    (site / "core.owl").write_text(RDFXML)
     (site / "go.owl.xz").write_bytes(lzma.compress(b""))
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
@@ -386,17 +388,8 @@ def test_rdfxml_mapped_to_a_graph_is_converted_and_an_empty_file_is_accounted_fo
     workdir = tmp_path / "work"
     parsed = configparser.ConfigParser(interpolation=None)
     parsed.read_string(build_qleverfile(entry, tmp_path, 7000, "docker", workdir=workdir))
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    # As rapper -o ntriples: one statement without a graph, whatever the input.
-    (bin_dir / "rapper").write_text(
-        '#!/bin/sh\n[ "$5" = ntriples ] || exit 1\n[ -s "$6" ] || exit 1\n'
-        'echo "<urn:s> <urn:p> <urn:o> ."\n'
-    )
-    (bin_dir / "rapper").chmod(0o755)
     env = {
         **os.environ,
-        "PATH": f"{bin_dir}:{os.environ['PATH']}",
         "no_proxy": "127.0.0.1",
         "NO_PROXY": "127.0.0.1",
     }
