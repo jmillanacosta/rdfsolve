@@ -22,14 +22,18 @@ from rdfsolve.mining.query_builders import (
     _build_class_discovery_query_plain,
     _build_class_weight_query,
     _build_same_members_query,
+    membership_path,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.mining.sampling import mark_sampled
-from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.mining.strategy import ClassListingLimitError, MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper, SparqlHelperError
 
 logger = logging.getLogger(__name__)
+
+# Listed classes mined when class discovery stops at its limit (see TwoPhaseStrategy._per_record).
+CLASS_SAMPLE = 1000
 
 __all__ = ["TwoPhaseStrategy", "plan_class_batches"]
 
@@ -107,7 +111,11 @@ class TwoPhaseStrategy(MiningStrategy):
         # Phase 1 - discover classes
         p1 = context.report.start_phase("class-discovery")
         classes = self._discover_classes(context)
-        if not classes and not context.graph_uris:
+        if (
+            not classes
+            and not context.graph_uris
+            and not getattr(context, "class_listing_stopped", False)
+        ):
             classes = self._discover_classes_in_named_graphs(context)
         if not classes:
             context.report.finish_phase(p1, items=0)
@@ -194,8 +202,10 @@ class TwoPhaseStrategy(MiningStrategy):
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
             fetch_shapes,
+            group_by_namespace,
             group_by_shape,
             parentless_candidates,
+            spread,
         )
         from rdfsolve.mining.query_builders import Representative
         from rdfsolve.ontology.hierarchy import fetch_superclasses, fill_parents, read_hierarchy
@@ -215,21 +225,59 @@ class TwoPhaseStrategy(MiningStrategy):
         with_loaded = fill_parents(parents, list(files.values()), classes)
         chosen = choose_representatives(classes, parents, budget)
         # Terms that no ancestor can take are grouped by the shape of their instances (the owner
-        # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later.
-        shapes, unreadable = fetch_shapes(
-            context.helper, parentless_candidates(chosen, parents), graph_uris=context.graph_uris
-        )
-        shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
+        # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later. When
+        # they are too many to read their shapes through the endpoint, they are grouped by
+        # namespace (owner decision of 2026-10-06, GO-CAM).
+        candidates = parentless_candidates(chosen, parents)
+        namespace_groups: dict[str, dict[str, Any]] = {}
+        shapes: dict[str, Any] = {}
+        unreadable: list[str] = []
+        if len(candidates) > ontology_as_data.SHAPE_READ_MAX_TERMS:
+            logger.info(
+                "%d terms without a parent: grouped by namespace, not by shape", len(candidates)
+            )
+            namespace_groups = group_by_namespace(chosen, parents)
+            shape_groups: dict[str, frozenset[str]] = {}
+        else:
+            shapes, unreadable = fetch_shapes(
+                context.helper, candidates, graph_uris=context.graph_uris
+            )
+            shape_groups = group_by_shape(
+                chosen, parents, {t: s.properties for t, s in shapes.items()}
+            )
         members = chosen.members()
         without_parent = Counter(namespace(c) for c in classes if not parents.get(c))
         present = set(classes)
         grouped: list[str] = []
+        sampled: dict[str, int] = {}
+        cap = ontology_as_data.NAMESPACE_GROUP_MINED_MEMBERS
         for rep in sorted(set(chosen.representative.values())):
             terms = members.get(rep, [])
-            if terms:
+            if rep in namespace_groups and len(terms) > cap:
+                # Every member stays on record (representative_members); the queries name a
+                # spread of them, and the rows of the group are marked sampled.
+                sampled[rep] = len(terms)
+                namespace_groups[rep]["mined_members"] = cap
+                grouped.append(Representative(rep, spread(terms, cap)))
+            elif terms:
                 grouped.append(Representative(rep, [*terms, *([rep] if rep in present else [])]))
             else:
                 grouped.append(rep)
+        if sampled:
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="partial",
+                    failures=[
+                        QueryFailure(
+                            "sampled",
+                            f"namespace group mined over {cap} of its {n} member terms",
+                            "ontology-terms/group-before-mining",
+                            classes=[rep],
+                        )
+                        for rep, n in sorted(sampled.items())
+                    ],
+                )
+            )
         context.grouped_members = members
         context.report.report.config["ontology_term_grouping"] = {
             "before_mining": True,
@@ -248,7 +296,12 @@ class TwoPhaseStrategy(MiningStrategy):
             "terms_with_loaded_parent_by_namespace": dict(
                 Counter(namespace(c) for c in with_loaded).most_common()
             ),
-            "grouping_of_terms_without_parent": "shape",
+            "grouping_of_terms_without_parent": "namespace" if namespace_groups else "shape",
+            "terms_without_parent_candidates": len(candidates),
+            "shape_read_max_terms": ontology_as_data.SHAPE_READ_MAX_TERMS,
+            # Only when the terms without a parent were grouped by namespace (the shape groups,
+            # the owner decision of 2026-09-30, replaced the earlier namespace groups).
+            **({"namespace_groups": namespace_groups} if namespace_groups else {}),
             "namespace_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
             "shape_groups": {
                 group: {
@@ -367,6 +420,15 @@ class TwoPhaseStrategy(MiningStrategy):
         which can make it much slower (forum, 2026-10-06: 175 s without it, a 502 after 315 s
         with it), and those classes are dropped from it: the same classes.
         """
+        try:
+            return self._discover_classes_within_limit(context)
+        except ClassListingLimitError as stopped:
+            return self._per_record(context, stopped)
+
+    def _discover_classes_within_limit(self, context: MiningContext) -> list[str]:
+        """Discover the classes (see _discover_classes); raise ClassListingLimitError when the
+        listing passes context.class_listing_limit.
+        """
         engine_only = _engine_only_classes(context)
         if engine_only is None:
             return self._list_discovered_classes(context)
@@ -377,6 +439,78 @@ class TwoPhaseStrategy(MiningStrategy):
             logger.info("  -> %d classes of the engine graphs left out", len(classes) - len(kept))
         context.discovered_classes = list(kept)
         return kept
+
+    def _per_record(self, context: MiningContext, stopped: ClassListingLimitError) -> list[str]:
+        """Record why class discovery stopped, and return a sample of the listed classes.
+
+        Two small queries describe a spread of 200 listed classes: their instances, and their
+        named parents. Classes with about one instance each, under a few parents, are records
+        or per-record types (BioGateway: SO_0000727 cis-regulatory modules, one evidence
+        individual each). The run goes on with a spread of CLASS_SAMPLE listed classes, grouped
+        before mining as any other list of classes when ontology terms are grouped; the rows are
+        marked sampled (a "sampled" failure), and the listing is the sorted start of all
+        classes, so classes after it are not in the sample.
+        """
+        from statistics import median
+
+        from rdfsolve.mining.ontology_as_data import spread
+        from rdfsolve.ontology.hierarchy import RDFS_SUBCLASS_OF
+
+        context.class_listing_stopped = True
+        listed = [
+            b["class"]["value"] for b in stopped.rows if b.get("class", {}).get("type") == "uri"
+        ]
+        sample = spread(listed, 200)
+        values = " ".join(f"<{c}>" for c in sample)
+        evidence: dict[str, Any] = {
+            "state": "stopped",
+            "limit": stopped.limit,
+            "listed": len(stopped.rows),
+            "sample": len(sample),
+        }
+        budget = getattr(context.helper, "budget", None)
+        try:
+            with budget(60) if budget is not None else nullcontext():
+                counts = context.helper.select(
+                    f"SELECT ?c (COUNT(?s) AS ?n) WHERE {{ VALUES ?c {{ {values} }} "
+                    f"?s {membership_path()} ?c }} GROUP BY ?c",
+                    purpose="two-phase/class-sample",
+                )["results"]["bindings"]
+                parents = context.helper.select(
+                    f"SELECT ?k (COUNT(DISTINCT ?c) AS ?n) WHERE {{ VALUES ?c {{ {values} }} "
+                    f"?c <{RDFS_SUBCLASS_OF}> ?k FILTER(isIRI(?k)) }} GROUP BY ?k",
+                    purpose="two-phase/class-sample",
+                )["results"]["bindings"]
+            instances = [int(row["n"]["value"]) for row in counts]
+            evidence.update(
+                median_instances=median(instances) if instances else None,
+                classes_with_one_instance=sum(1 for n in instances if n == 1),
+                parents=dict(
+                    sorted(
+                        ((row["k"]["value"], int(row["n"]["value"])) for row in parents),
+                        key=lambda item: -item[1],
+                    )[:10]
+                ),
+            )
+        except (SparqlHelperError, KeyError, ValueError) as error:
+            evidence["sample_error"] = str(error)[:300]
+        mined = spread(listed, CLASS_SAMPLE)
+        evidence["mined_classes"] = len(mined)
+        context.report.report.config["class_discovery"] = evidence
+        message = (
+            f"class discovery stopped after {len(stopped.rows)} type values (limit "
+            f"{stopped.limit}); {len(mined)} of the listed classes are mined"
+        )
+        logger.warning("%s: %s", message, {k: v for k, v in evidence.items() if k != "parents"})
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure("sampled", message, "two-phase/classes")],
+            )
+        )
+        # Not every class was discovered: the census tests each edge (_typed_edges_covered).
+        context.discovered_classes = None
+        return mined
 
     def _list_discovered_classes(self, context: MiningContext) -> list[str]:
         """Discover named classes in the current scope.
@@ -438,6 +572,9 @@ class TwoPhaseStrategy(MiningStrategy):
         try:
             result = context.helper.select(q, purpose="two-phase/classes")
             class_bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
+            limit = getattr(context, "class_listing_limit", None)
+            if limit is not None and len(class_bindings) > limit:
+                raise ClassListingLimitError(class_bindings, limit)
             if SparqlHelper.row_cap_suspected(len(class_bindings)):
                 # A server cap cuts a listing silently: read it in pages of the cap.
                 logger.warning(
@@ -481,8 +618,13 @@ class TwoPhaseStrategy(MiningStrategy):
         """
         from rdfsolve.sparql_helper import PaginationTruncatedError
 
+        limit = getattr(context, "class_listing_limit", None)
         try:
-            return context.collect_bindings(query, "two-phase/classes", size)
+            if limit is None:
+                return context.collect_bindings(query, "two-phase/classes", size)
+            return context.collect_bindings(  # type: ignore[call-arg]
+                query, "two-phase/classes", size, max_rows=limit
+            )
         except PaginationTruncatedError as error:
             failure = error
             rows = list(error.partial_rows)
@@ -506,6 +648,8 @@ class TwoPhaseStrategy(MiningStrategy):
                     delay_between_chunks=0.0,
                 ):
                     keyed.extend(page)
+                    if limit is not None and len(keyed) > limit:
+                        raise ClassListingLimitError(keyed, limit)
             except PaginationTruncatedError as error:
                 # The OFFSET failure stays the one recorded: it says how far the listing got.
                 keyset = {"state": "truncated", "rows_read": len(keyed), "error": str(error)[:500]}

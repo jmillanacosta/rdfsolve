@@ -712,6 +712,88 @@ def group_by_shape(
     return dict(sorted(groups.items()))
 
 
+# Most terms without a parent whose shapes are read through an endpoint (fetch_shapes: two
+# queries for every 100 terms). Above it the terms are grouped by namespace, which needs no
+# query: GO-CAM types its individuals with 1.7 M gene-product IRIs, about 34,000 queries.
+SHAPE_READ_MAX_TERMS = 20_000
+# Member terms of a namespace group named in the queries that mine it: the queries name every
+# member (VALUES (?_member ?class)), and a GO-CAM namespace holds up to some 10^5 terms. A larger
+# group is mined over evenly spaced members and its rows are marked sampled.
+NAMESPACE_GROUP_MINED_MEMBERS = 1000
+
+
+def namespace_group_iri(key: str) -> str:
+    """Return the rdfsolve IRI of the group of the terms of one namespace."""
+    from rdfsolve.config import mint
+
+    return mint("term-namespace", hashlib.sha256(key.encode("utf-8")).hexdigest()[:16])
+
+
+def _bioregistry_prefix(iri: str) -> str | None:
+    """Return the Bioregistry prefix of a term IRI, or None when Bioregistry does not know it."""
+    try:
+        import bioregistry
+
+        parsed = bioregistry.parse_iri(iri)
+    except Exception:  # Bioregistry unavailable or the IRI not parsed
+        return None
+    return parsed[0] if parsed and parsed[0] else None
+
+
+def group_by_namespace(
+    chosen: Subsumption,
+    parents: Mapping[str, set[str]],
+    *,
+    min_terms: int | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Group the terms that no ancestor can take by their namespace; return the groups.
+
+    Used before mining instead of group_by_shape when the candidates are too many to read
+    their shapes through an endpoint (SHAPE_READ_MAX_TERMS). The terms of one namespace
+    (ontology.terms.namespace) form a group, and namespaces that Bioregistry gives the same
+    prefix are one group (identifiers.org/uniprot/ and UniProtKB: are both uniprot). A group is
+    named by its key, not by its members, so it is the same group in every run; a namespace
+    with one term keeps it as its own class. Each group lists its namespaces and its prefix;
+    the members are recorded by the caller. *chosen* is changed in place.
+    """
+    by_namespace: dict[str, list[str]] = defaultdict(list)
+    for term in parentless_candidates(chosen, parents, min_terms=min_terms):
+        by_namespace[namespace(term)].append(term)
+    by_key: dict[str, list[str]] = defaultdict(list)
+    prefixes: dict[str, str | None] = {}
+    spaces: dict[str, list[str]] = defaultdict(list)
+    for space, terms in sorted(by_namespace.items()):
+        prefix = _bioregistry_prefix(terms[0])
+        key = f"bioregistry:{prefix}" if prefix else space
+        prefixes[key] = prefix
+        spaces[key].append(space)
+        by_key[key].extend(terms)
+    groups: dict[str, dict[str, Any]] = {}
+    for key, terms in sorted(by_key.items()):
+        if len(terms) < 2:
+            continue
+        group = namespace_group_iri(key)
+        groups[group] = {
+            "key": key,
+            "bioregistry_prefix": prefixes[key],
+            "namespaces": spaces[key],
+            "terms": len(terms),
+        }
+        for term in terms:
+            chosen.representative[term] = group
+    chosen.classes_after = len(set(chosen.representative.values()))
+    return groups
+
+
+def spread(terms: list[str], size: int) -> list[str]:
+    """Return *size* evenly spaced terms of the sorted *terms* (all of them when fewer)."""
+    ordered = sorted(terms)
+    if len(ordered) <= size:
+        return ordered
+    step = len(ordered) / size
+    return [ordered[int(i * step)] for i in range(size)]
+
+
 def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
     """Merge patterns that map to the same subsumed pattern."""
     first = group[0]
@@ -801,7 +883,10 @@ __all__ = [
     "build_term_object_query",
     "build_term_subject_query",
     "choose_representatives",
+    "group_by_namespace",
+    "namespace_group_iri",
     "pattern_classes",
     "probe_term_patterns",
+    "spread",
     "subsume_patterns",
 ]

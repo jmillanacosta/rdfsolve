@@ -6,7 +6,7 @@ import logging
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self
@@ -192,6 +192,13 @@ class SchemaMiner:
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
         self._group_before_mining: int | None = None
+        # Seconds for each query of the ontology-term probe of a VoID-first source, which then
+        # gives up at the first query that does not answer in time (no page recovery): UniProt
+        # spent 1337 s in four paged attempts of ontology-terms/object, each at the 330 s
+        # deadline, and the probe found nothing (job 115330). None: the probe is not limited.
+        self.light_probe_seconds: float | None = None
+        # Most type values that class discovery lists (None: all); the remote stage sets it.
+        self.class_listing_limit: int | None = None
         self._hierarchy_files: list[str] = []
         self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
@@ -433,6 +440,7 @@ class SchemaMiner:
             pagination=self.pagination,
         )
 
+        context.class_listing_limit = self.class_listing_limit
         if self._resume is not None:
             context.resumed = self._resumed_batches(*self._resume)
         self._resumed: dict[tuple[str, ...], list[dict[str, Any]]] = context.resumed
@@ -655,24 +663,32 @@ class SchemaMiner:
             # med2rdf: the subject counts are cut at 120 s by its gateway).
             probed: list[SchemaPattern] | None
             probe = QueryOutcome()
+            budget_of = getattr(self._helper, "budget", None)
+            light = (
+                budget_of(self.light_probe_seconds)
+                if self.light_probe_seconds is not None and budget_of is not None
+                else nullcontext()
+            )
             try:
-                probed = probe_term_patterns(
-                    self._helper,
-                    self.graph_uris,
-                    self._collect_bindings,
-                    self.chunk_size,
-                    ontology_graph_uris=self._ontology_graph_uris,
-                    type_context_graph_uris=self.type_context_graph_uris,
-                    typed=patterns,
-                    classes={str(c): c for batch in self._class_batches or [] for c in batch},
-                    outcome=probe,
-                )
+                with light:
+                    probed = probe_term_patterns(
+                        self._helper,
+                        self.graph_uris,
+                        self._collect_bindings,
+                        self.chunk_size,
+                        ontology_graph_uris=self._ontology_graph_uris,
+                        type_context_graph_uris=self.type_context_graph_uris,
+                        typed=patterns,
+                        classes={str(c): c for batch in self._class_batches or [] for c in batch},
+                        outcome=probe,
+                    )
             except EndpointError as error:
                 failure = QueryFailure("timeout", str(error)[:500], "ontology-terms")
                 self._report.record_outcome(QueryOutcome(gaps=[failure]))
                 self._report.report.config["ontology_term_probe"] = {
                     "state": "not_probed",
                     "reason": str(error)[:500],
+                    "seconds_per_query": self.light_probe_seconds,
                 }
                 probed = None
             else:
@@ -1631,8 +1647,14 @@ class SchemaMiner:
         query_template: str,
         purpose: str = "",
         chunk_size: int | None = None,
+        *,
+        max_rows: int | None = None,
     ) -> list[dict[str, Any]]:
-        """Paginate through a SELECT query and collect all bindings."""
+        """Paginate through a SELECT query and collect all bindings.
+
+        With *max_rows*, raise ClassListingLimitError (with the rows so far) once more rows
+        than that are read.
+        """
         effective = chunk_size if chunk_size is not None else self.chunk_size
         all_bindings: list[dict[str, Any]] = []
         has_rc = self._rc is not None
@@ -1654,6 +1676,10 @@ class SchemaMiner:
             ):
                 page += 1
                 all_bindings.extend(chunk)
+                if max_rows is not None and len(all_bindings) > max_rows:
+                    from rdfsolve.mining.strategy import ClassListingLimitError
+
+                    raise ClassListingLimitError(all_bindings, max_rows)
                 if has_rc:
                     self._report.record_query(purpose, 0.0)
                 logger.info(

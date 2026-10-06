@@ -390,6 +390,12 @@ class RemoteMiningStage(Stage):
                 report_path=report_path,
                 resume_checkpoint=previous if previous and previous.is_file() else None,
             )
+            # Remotely, class discovery stops after this many type values (records that are
+            # classes: BioGateway's 10.8 M); the source then ends partial, with a sample.
+            miner.class_listing_limit = self.config.class_listing_limit
+            if strategy is not None:
+                # A VoID-first source: the ontology-term probe is a light step too.
+                miner.light_probe_seconds = self.config.void_first_probe_seconds
             if self._matches_local(source, miner, empirical_graphs, source_output_dir, suffix):
                 miner.close()
                 return {"status": "matched_local", "data": source.name}

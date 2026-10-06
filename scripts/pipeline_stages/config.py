@@ -152,6 +152,9 @@ class PipelineConfig:
     ontology_as_data: bool = False
     ontology_term_budget: int = 300
     ontology_group_before_mining: int | None = 5000
+    # Most type values that class discovery lists through an endpoint; None lists all. GO-CAM
+    # (1.72 M type values) stays within it; BioGateway (10.8 M, one instance each) does not.
+    class_listing_limit: int | None = 2_000_000
     # Tab-separated (child, parent) IRI files for terms whose hierarchy is not in the data
     ontology_hierarchy_files: list[Path] = field(default_factory=list)
     resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.structural import StructuralPattern
     from rdfsolve.sparql_helper import SparqlHelper
 
-__all__ = ["MiningContext", "MiningStrategy"]
+__all__ = ["ClassListingLimitError", "MiningContext", "MiningStrategy"]
 
 
 class MiningContext:
@@ -92,6 +92,26 @@ class MiningContext:
         # sets were verified identical to an already mined class (copy -> source).
         self.class_weights: dict[str, int] = {}
         self.shared_extensions: dict[str, str] = {}
+        # Most type values that class discovery lists through an endpoint (None: no limit);
+        # see ClassListingLimitError.
+        self.class_listing_limit: int | None = None
+        self.class_listing_stopped = False
+
+
+class ClassListingLimitError(Exception):
+    """Class discovery listed more type values than the run's limit, and stopped listing.
+
+    A source whose records are classes, or whose individuals are typed by per-record IRIs,
+    has millions of type values (BioGateway: 10.8 M, about one instance each; GO-CAM: 1.7 M
+    gene products). Listing them all took hours (BioGateway, job 115328: 1,084 pages of about
+    5 s and still listing), and per-class mining of such a list is not feasible remotely.
+    """
+
+    def __init__(self, rows: list[dict[str, Any]], limit: int) -> None:
+        """Keep the rows listed so far and the limit."""
+        super().__init__(f"more than {limit} type values listed")
+        self.rows = rows
+        self.limit = limit
 
 
 class MiningStrategy(ABC):
