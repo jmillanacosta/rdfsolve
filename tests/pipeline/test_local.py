@@ -331,3 +331,36 @@ def test_the_inputs_of_an_index_are_carried_into_the_run_and_held_to_their_pins(
     stage.config.pinned_inputs = tmp_path / "elsewhere"
     with pytest.raises(ValueError, match="no pinned inputs"):
         stage._carry_inputs(workdir, source)
+
+
+def test_a_folder_of_other_downloads_is_set_aside_without_the_update_option(tmp_path):
+    """L19: an index built from earlier downloads was mined after the registry entry changed."""
+    stage, workdir, source = _stage(tmp_path, update=False)
+    downloads.write_record(workdir, ["https://example.org/old.ttl.gz"], lambda url: None)
+    stage._set_aside_when_differs(workdir, source)
+    assert sorted(
+        p.name.split("-2")[0] for p in tmp_path.iterdir() if p.is_dir() and p.name != "run"
+    ) == [
+        "fixture",
+        "fixture.set-aside",
+    ]
+    assert not any(workdir.iterdir()), "The source is downloaded and indexed again"
+    kept = next(p for p in tmp_path.iterdir() if ".set-aside-" in p.name)
+    assert "other downloads" in (kept / "SET-ASIDE.txt").read_text()
+
+
+def test_a_folder_of_other_downloads_is_refused_when_the_run_cannot_rebuild_it(tmp_path):
+    stage, workdir, source = _stage(tmp_path, update=False)
+    (workdir / "rdf" / "dropped.ttl").write_text("<urn:a> <urn:p> <urn:c> .")
+    downloads.write_record(workdir, [URL], lambda url: None)
+    stage.config.no_download = True
+    with pytest.raises(ValueError, match="1 index inputs come from no download"):
+        stage._set_aside_when_differs(workdir, source)
+    assert _folders(tmp_path) == ["fixture"], "Nothing is moved"
+
+
+def test_a_folder_of_the_listed_downloads_is_kept(tmp_path):
+    stage, workdir, source = _stage(tmp_path, update=False)
+    downloads.write_record(workdir, [URL], lambda url: None)
+    stage._set_aside_when_differs(workdir, source)
+    assert _folders(tmp_path) == ["fixture"] and (workdir / "rdf" / "data.ttl").exists()

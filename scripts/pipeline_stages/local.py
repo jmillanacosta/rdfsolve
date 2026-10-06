@@ -91,6 +91,7 @@ class LocalMiningStage(Stage):
                 continue
 
             try:
+                self._set_aside_when_differs(workdir, source)
                 self._set_aside_when_updated(workdir, source)
                 has_index = self._has_qlever_index(workdir, source.name)
                 if not has_index and source.download_error and not self.config.no_download:
@@ -195,6 +196,46 @@ class LocalMiningStage(Stage):
         finally:
             self._qlever_stop(server_pid)
 
+    def _set_aside_when_differs(self, workdir: Path, source: Source) -> None:
+        """Set aside a work folder whose files are not the downloads of the registry entry.
+
+        An index built from other downloads was reused, and files that the entry no longer
+        lists were indexed with the others (rdfsolve.qlever.downloads.downloads_differ reads
+        what the pin of the index and the download record hold). Such a folder is renamed
+        (kept) and an empty one made, so that the source is downloaded and indexed again; a run
+        that neither downloads nor indexes refuses the source instead of mining such an index.
+        """
+        from rdfsolve.qlever.downloads import downloads_differ
+
+        if not (source.download_urls or source.graph_sources) or not any(workdir.iterdir()):
+            return
+        try:
+            if source.graph_sources:
+                inputs = [p for p, _ in mapped_input_files(workdir, list(source.graph_sources))]
+            else:
+                inputs = index_inputs(workdir)
+        except ValueError:
+            inputs = []
+        reason = downloads_differ(
+            workdir, list(source.download_urls), source.qlever_entry(), inputs
+        )
+        if reason is None:
+            return
+        if self.config.no_download or self.config.no_index:
+            raise ValueError(
+                f"{reason}; this run does not download or index, so {workdir} is not used"
+            )
+        self._set_aside(workdir, source, reason, "set-aside")
+
+    def _set_aside(self, workdir: Path, source: Source, reason: str, label: str) -> None:
+        """Rename the work folder of a source (kept, with the reason) and make an empty one."""
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        kept = workdir.with_name(f"{workdir.name}.{label}-{stamp}")
+        workdir.rename(kept)
+        (kept / "SET-ASIDE.txt").write_text(f"{reason}\n", encoding="utf-8")
+        workdir.mkdir()
+        log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
+
     def _set_aside_when_updated(self, workdir: Path, source: Source) -> None:
         """With --update-downloads, keep the folder of a source only when it has no update.
 
@@ -211,7 +252,7 @@ class LocalMiningStage(Stage):
             return
         record = read_record(workdir)
         built = max((p.stat().st_mtime for p in workdir.glob("*.meta-data.json")), default=0.0)
-        if record is not None and list(record.get("urls", [])) != urls:
+        if record is not None and set(record.get("urls", [])) != set(urls):
             reason = "the registry entry has other URLs than were downloaded"
         else:
             changed = updated_urls(urls, record, built_at=built)
@@ -219,11 +260,7 @@ class LocalMiningStage(Stage):
                 log.info("  No update on the server for %s", source.name)
                 return
             reason = f"{len(changed)} of {len(urls)} files changed on the server"
-        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        kept = workdir.with_name(f"{workdir.name}.before-update-{stamp}")
-        workdir.rename(kept)
-        workdir.mkdir()
-        log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
+        self._set_aside(workdir, source, reason, "before-update")
 
     def _pin_inputs(
         self, workdir: Path, source: Source, index_files: list[Path], *, stage: str
@@ -370,6 +407,17 @@ class LocalMiningStage(Stage):
                 mapped = [(path, "") for path in index_inputs(workdir)]
             if not mapped:
                 raise ValueError(f"No prepared RDF inputs in {workdir}")
+            from rdfsolve.qlever.downloads import download_names, unlisted_inputs
+
+            unlisted = unlisted_inputs(
+                download_names(source.qlever_entry()), [path for path, _ in mapped]
+            )
+            if unlisted:
+                names = ", ".join(path.name for path in unlisted[:5])
+                raise ValueError(
+                    f"{len(unlisted)} files in {workdir} come from no download of the registry "
+                    f"entry and are not indexed with it ({names}); set them aside"
+                )
             # The files are pinned as published, before the index (or a repair) reads them.
             self._pin_inputs(workdir, source, [path for path, _ in mapped], stage="before_index")
         except BaseException:

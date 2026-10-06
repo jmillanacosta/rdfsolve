@@ -211,3 +211,63 @@ def test_the_local_file_of_each_download_is_found(tmp_path):
     assert download_paths(tmp_path, mapped) == {
         url: graph / graph_download_name(url, "download_rdf")
     }
+
+
+def _folder(tmp_path, *names):
+    (tmp_path / "rdf").mkdir(exist_ok=True)
+    for name in names:
+        (tmp_path / "rdf" / name).write_text("<urn:a> <urn:p> <urn:b> .\n")
+    return [tmp_path / "rdf" / name for name in names]
+
+
+def test_an_index_of_other_downloads_differs_from_the_registry_entry(tmp_path):
+    """L19: the URLs recorded with the index (pin, else download record) must be the entry's."""
+    from rdfsolve.qlever.downloads import downloads_differ
+
+    entry = {"name": "demo", "download_ttl": URLS}
+    inputs = _folder(tmp_path, "a.ttl.gz", "b.ttl.gz")
+    write_record(tmp_path, URLS, lambda url: STATE)
+    assert downloads_differ(tmp_path, URLS, entry, inputs) is None
+    assert downloads_differ(tmp_path, URLS[::-1], entry, inputs) is None, "Order is no change"
+    changed = [URLS[0], "https://example.org/c.ttl.gz"]
+    reason = downloads_differ(tmp_path, changed, {"name": "demo", "download_ttl": changed}, inputs)
+    assert reason and "1 URLs no longer listed, 1 not downloaded" in reason
+    # The pin of the index holds the URLs of its download record; it is read first.
+    record_inputs(tmp_path, download_paths(tmp_path, entry), inputs)
+    (tmp_path / "downloads.json").unlink()
+    reason = downloads_differ(tmp_path, URLS[:1], {"name": "demo", "download_ttl": URLS[:1]}, [])
+    assert reason and "other downloads" in reason
+
+
+def test_files_that_the_entry_does_not_list_are_found_among_the_index_inputs(tmp_path):
+    """L19 (ALLIE): a work folder held every file of the provider; the entry lists one."""
+    from rdfsolve.qlever.downloads import downloads_differ, unlisted_inputs
+
+    url = "https://example.org/data/allie_rdf_nt_latest.gz"
+    entry = {"name": "demo", "download_nt": [url]}
+    inputs = _folder(tmp_path, "allie_rdf_nt_latest.nt.gz", "mesh_rdf_nt_latest.nt", "pubmed.nt")
+    write_record(tmp_path, [url], lambda u: STATE)
+    reason = downloads_differ(tmp_path, [url], entry, inputs)
+    assert reason and reason.startswith("2 index inputs come from no download")
+    names = {url: "allie_rdf_nt_latest.nt.gz"}
+    assert unlisted_inputs(names, inputs[:1]) == []
+    # Decompressed, converted, or set apart by N__: the same download.
+    derived = [tmp_path / n for n in ("allie_rdf_nt_latest.nt", "1__allie_rdf_nt_latest.nq")]
+    assert unlisted_inputs(names, derived) == []
+    # Members of an archive, or a download named by the server, cannot be told apart.
+    assert unlisted_inputs({"https://example.org/all.zip": "all.zip"}, inputs) is None
+    assert unlisted_inputs({"https://example.org/folder/": None}, inputs) is None
+
+
+def test_a_folder_without_a_record_that_lacks_a_listed_download_differs(tmp_path):
+    """L19 (OpenBioDiv, HPA): an index from before download records, of other files."""
+    from rdfsolve.qlever.downloads import downloads_differ
+
+    urls = ["https://example.org/onto.ttl", "https://example.org/data.nq.gz"]
+    entry = {"name": "demo", "download_ttl": urls[:1], "download_nq": urls[1:]}
+    inputs = _folder(tmp_path, "onto.ttl")
+    reason = downloads_differ(tmp_path, urls, entry, inputs)
+    assert reason and "no download record and lacks 1" in reason
+    assert downloads_differ(tmp_path, urls, entry, []) is None, "Inputs deleted: no evidence"
+    inputs += _folder(tmp_path, "data.nq")
+    assert downloads_differ(tmp_path, urls, entry, inputs) is None

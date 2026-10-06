@@ -116,13 +116,13 @@ def needs_download(workdir: Path, urls: list[str], *, has_inputs: bool) -> bool:
     """Tell whether the files of a source are to be downloaded.
 
     They are when there is no input file, when an earlier download did not end, and when the
-    record lists other URLs than the registry entry. A folder with input files and without a
+    record lists other URLs than the registry entry (in any order). A folder with input files and without a
     record (made before the record existed) is taken as downloaded.
     """
     if not has_inputs or (workdir / MARKER).exists():
         return True
     record = read_record(workdir)
-    return record is not None and list(record.get("urls", [])) != list(urls)
+    return record is not None and set(record.get("urls", [])) != set(urls)
 
 
 def updated_urls(
@@ -463,3 +463,121 @@ def unpinned_inputs(current: dict[str, Any], pinned: dict[str, Any]) -> list[str
         if path not in before and item.get("index_input"):
             problems.append(f"{path}: an index input that the pinned run did not have")
     return problems
+
+
+# What an index was built from, against the registry
+
+# Suffixes that the download, decompression and conversion steps add to or take from a name:
+# X.rdf.xz is decompressed to X.rdf and converted to X.nq, X.trig to X.trig.nq.
+_DERIVED_SUFFIXES = frozenset(
+    {
+        ".gz", ".xz", ".bz2", ".nt", ".nq", ".ttl", ".rdf", ".owl", ".xml", ".trig", ".n3",
+        ".jsonld", ".obo", ".part",
+    }
+)  # fmt: skip
+_ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tgz", ".tar.xz", ".tar.bz2", ".zip")
+
+
+def _stem(name: str) -> str:
+    """Return a file name without the suffixes that downloading and converting change, and
+    without the N__ prefix that sets apart downloads with one name (an older download has none).
+    """
+    name = re.sub(r"^\d+__", "", name)
+    while True:
+        base, dot, suffix = name.rpartition(".")
+        if not dot or not base or f".{suffix.lower()}" not in _DERIVED_SUFFIXES:
+            return name
+        name = base
+
+
+def unlisted_inputs(names: dict[str, str | None], inputs: list[Path]) -> list[Path] | None:
+    """Return the index inputs that come from none of the downloads named in *names*.
+
+    *names* maps each download URL of a registry entry to the name it is saved under
+    (download_names). An input comes from a download when it is that file, or the file
+    decompressed or converted (the same name without RDF and compression suffixes). None when
+    it cannot be told: no download (a provider, a tar of the whole source), a download without
+    a known name (a published folder, a name given by the server) or an archive, whose members
+    have other names.
+    """
+    if not names or any(
+        name is None or url.lower().endswith(_ARCHIVE_SUFFIXES) or name.endswith(_ARCHIVE_SUFFIXES)
+        for url, name in names.items()
+    ):
+        return None
+    stems = {_stem(name) for name in names.values() if name}
+    return sorted(path for path in inputs if _stem(path.name) not in stems)
+
+
+def download_names(entry: dict[str, Any]) -> dict[str, str | None]:
+    """Return the name each download of a registry entry is saved under (None when unknown)."""
+    from rdfsolve.qlever.utils import download_file_names, graph_download_name
+
+    graph_sources = entry.get("graph_sources") or {}
+    if graph_sources:
+        return {
+            url: graph_download_name(url, key)
+            for fields in graph_sources.values()
+            for key, urls in fields.items()
+            for url in urls
+        }
+    return download_file_names(entry)
+
+
+def downloads_differ(
+    workdir: Path, urls: list[str], entry: dict[str, Any], inputs: list[Path]
+) -> str | None:
+    """Tell why the files of a work folder are not the downloads of its registry entry.
+
+    The URLs that were downloaded are read from the pin of the index (inputs.json; its "urls"
+    are those of the download record when it has a download time) or from the download record
+    (downloads.json); they must be the entry's *urls* (in any order: the order does not change
+    the index). Then an index input that comes from none of the entry's downloads
+    (unlisted_inputs) is a file the registry does not list: ALLIE's folder held every ALLIE
+    file, HPA's held a v19 TriG without a download record where the entry names v24. *inputs*
+    are the files the index would be built from; the pinned index inputs are used instead when
+    the pin lists them. Return None when nothing differs, or when it cannot be told.
+    """
+    pin = read_inputs(workdir)
+    record = read_record(workdir)
+    recorded: list[str] | None = None
+    if pin is not None and pin.get("downloaded_at"):
+        recorded = list(pin.get("urls") or [])
+    elif record is not None:
+        recorded = list(record.get("urls") or [])
+    if recorded is not None and set(recorded) != set(urls):
+        gone = len(set(recorded) - set(urls))
+        new = len(set(urls) - set(recorded))
+        return (
+            "the work folder holds other downloads than the registry entry lists "
+            f"({gone} URLs no longer listed, {new} not downloaded)"
+        )
+    if pin is not None and pin.get("files"):
+        inputs = [workdir / item["path"] for item in pin["files"] if item.get("index_input")]
+    names = download_names(entry)
+    if recorded is None and inputs:
+        # Without a record, a folder that keeps its inputs but lacks one of the entry's
+        # downloads, as published, decompressed or converted, was made from other downloads
+        # (OpenBioDiv's index of the ontology alone). A folder whose inputs were deleted after
+        # indexing tells nothing.
+        stems = {_stem(path.name) for path in inputs}
+        found = download_paths(workdir, entry)
+        absent = [
+            url
+            for url, name in names.items()
+            if name and found.get(url) is None and _stem(name) not in stems
+        ]
+        if absent:
+            return (
+                f"the work folder has no download record and lacks {len(absent)} of the "
+                f"registry entry's {len(names)} downloads (first: {absent[0]})"
+            )
+    unlisted = unlisted_inputs(names, inputs)
+    if unlisted:
+        shown = ", ".join(path.name for path in unlisted[:5])
+        more = f" and {len(unlisted) - 5} more" if len(unlisted) > 5 else ""
+        return (
+            f"{len(unlisted)} index inputs come from no download of the registry entry "
+            f"({shown}{more})"
+        )
+    return None
