@@ -255,11 +255,14 @@ def test_unlisted_named_graphs_leave_the_source_partial_not_failed():
     [
         b"Virtuoso S1T00 Error SR171: Transaction timed out",
         b"Virtuoso 22026 Error SR319: Max row length is exceeded when trying to store a string",
+        b"Virtuoso 42000 Error D1CTX: Hash dictionary is full, exceeded 2000000 entries",
+        b"Virtuoso 42000 Error SQ200: Stack Overflow in cost model",
     ],
 )
 def test_a_virtuoso_refusal_that_repeats_is_not_retried(monkeypatch, body):
-    """IDEAL (SR171) and GlyTouCan (SR319) refuse the same query every time: the caller gets
-    EndpointTimeoutError at once and sends a smaller query."""
+    """IDEAL (SR171), GlyTouCan (SR319), RIKEN BRC (D1CTX on a CONSTRUCT of its VoID graph, job
+    115326) and SIBiLS (SQ200) refuse the same query every time: the caller gets
+    EndpointTimeoutError at once and runs its fallback."""
     response = requests.Response()
     response.status_code = 500
     response.headers["Content-Type"] = "text/plain"
@@ -272,3 +275,152 @@ def test_a_virtuoso_refusal_that_repeats_is_not_retried(monkeypatch, body):
         with pytest.raises(EndpointTimeoutError):
             helper.select("SELECT * WHERE { ?s ?p ?o }")
     assert request.call_count == 1
+
+
+# A gateway in front of the server: each path answers with its scripted errors first, then
+# with the graphs (STRING: HTTP 502 at 62 s for the graph listing, job 115325).
+SQUID = (
+    b"<html><title>ERROR: The requested URL could not be retrieved</title>"
+    b"Unable to determine IP address from host name ERR_DNS_FAIL</html>"
+)
+GATEWAY_SCRIPTS: dict[str, list[tuple[int, bytes, dict[str, str]]]] = {
+    "/busy-502": [(502, b"<html>Upstream server overloaded, try again later</html>", {})],
+    "/retry-504": [(504, b"<html>Gateway Timeout</html>", {"Retry-After": "7"})],
+    "/bare-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 9,
+    "/listing-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 2,
+    "/squid": [(502, SQUID, {})] * 9,
+    "/always-502": [(502, b"<html>502 Bad Gateway</html>", {})] * 99,
+}
+
+
+class _Gateway(BaseHTTPRequestHandler):
+    def log_message(self, *args):  # silence the test server
+        pass
+
+    def _send(self, status: int, body: bytes, headers: dict[str, str]) -> None:
+        self.send_response(status)
+        for name, value in headers.items():
+            self.send_header(name, value)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        query = parse_qs(urlsplit(self.path).query).get("query", [""])[0]
+        self.server.requests.append((path, query))
+        script = self.server.scripts.setdefault(path, list(GATEWAY_SCRIPTS.get(path, [])))
+        if script:
+            self._send(*script.pop(0))
+            return
+        graphs = [] if "service-description" in query else ["urn:g1", "urn:g2"]
+        rows = [{"g": {"type": "uri", "value": g}} for g in graphs]
+        if "OFFSET 0" not in query and "service-description" not in query:
+            rows = []  # one page of graphs
+        body = json.dumps({"head": {"vars": ["g"]}, "results": {"bindings": rows}}).encode()
+        self._send(200, body, {"Content-Type": "application/sparql-results+json"})
+
+
+@contextmanager
+def _gateway(monkeypatch) -> Iterator[tuple[str, ThreadingHTTPServer, Mock]]:
+    defer = Mock()
+    monkeypatch.setattr("rdfsolve._http_policy.defer_host", defer)
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _Gateway)
+    server.requests, server.scripts = [], {}
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}", server, defer
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def _waits(defer: Mock) -> list[float]:
+    return [call.args[1] for call in defer.call_args_list]
+
+
+def test_a_gateway_that_says_the_host_is_busy_is_waited_out(monkeypatch):
+    """A 502 whose body says the server is overloaded, or a 504 with Retry-After, is waited
+    out like a busy 503, whatever the retries of the step."""
+    with _gateway(monkeypatch) as (base, server, defer):
+        with SparqlHelper(f"{base}/busy-502", max_retries=1) as helper:
+            helper.select("SELECT ?g WHERE { GRAPH ?g {} } OFFSET 0")
+        assert _waits(defer) == [SparqlHelper.OVERLOAD_BACKOFF_S]
+        defer.reset_mock()
+        with SparqlHelper(f"{base}/retry-504", max_retries=1) as helper:
+            helper.select("SELECT ?g WHERE { GRAPH ?g {} } OFFSET 0")
+        assert _waits(defer) == [7.0]
+    assert [p for p, _ in server.requests].count("/busy-502") == 2
+
+
+def test_a_bare_gateway_error_is_marked_and_a_proxy_dns_failure_is_not(monkeypatch):
+    """A bare 502 still goes to the caller at once (it makes the query smaller), marked as a
+    possible overload; bio2rdf's squid page, a proxy that cannot reach the host, is neither
+    waited for nor marked."""
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    with _gateway(monkeypatch) as (base, server, defer):
+        with (
+            SparqlHelper(f"{base}/bare-502", max_retries=3) as helper,
+            pytest.raises(EndpointTimeoutError) as bare,
+        ):
+            helper.select("SELECT * WHERE { ?s ?p ?o }")
+        assert bare.value.gateway_overload and bare.value.status_code == 502
+        with (
+            SparqlHelper(f"{base}/squid", max_retries=3) as helper,
+            pytest.raises(SparqlHelperError) as squid,
+        ):
+            helper.select("SELECT * WHERE { ?s ?p ?o }")
+        assert not squid.value.gateway_overload
+        assert defer.call_count == 0
+    paths = [p for p, _ in server.requests]
+    assert paths.count("/bare-502") == 1 and paths.count("/squid") == 1
+    helper = SparqlHelper("https://example.org/sparql")
+    assert not helper._overloaded(502, SQUID.decode().lower() + " overloaded")
+    assert not helper._gateway_overload(504, "estimated execution time exceeds the limit")
+
+
+def test_graph_discovery_waits_out_an_overloaded_gateway(monkeypatch):
+    """STRING: the graph listing got HTTP 502 and the source, whose data is only in named
+    graphs, mined 0 classes. The host is now waited out (30 s, then 60 s, shared by the host)
+    and the listing is sent again."""
+    from rdfsolve.mining.graph_selection import discover_data_graphs
+
+    with (
+        _gateway(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/listing-502", max_retries=3) as helper,
+    ):
+        assert discover_data_graphs(helper) == ["urn:g1", "urn:g2"]
+    assert _waits(defer) == [30.0, 60.0]
+    assert [call.args[0] for call in defer.call_args_list] == ["127.0.0.1"] * 2
+
+
+def test_graph_discovery_does_not_wait_for_a_proxy_that_cannot_reach_the_host(monkeypatch):
+    """A proxy DNS failure is raised at once (after the service-description fallback)."""
+    from rdfsolve.mining.graph_selection import discover_data_graphs
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    with (
+        _gateway(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/squid", max_retries=1) as helper,
+        pytest.raises(SparqlHelperError),
+    ):
+        discover_data_graphs(helper)
+    assert defer.call_count == 0
+
+
+def test_graph_discovery_gives_up_after_the_busy_host_waits(monkeypatch):
+    """A gateway that stays overloaded is waited out OVERLOAD_RETRIES times, then the source
+    ends as before (service description, else the refusal)."""
+    from rdfsolve.mining.graph_selection import discover_data_graphs
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    with (
+        _gateway(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/always-502", max_retries=1) as helper,
+        pytest.raises(SparqlHelperError),
+    ):
+        discover_data_graphs(helper)
+    assert _waits(defer) == [30.0, 60.0, 120.0, 240.0]

@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from rdfsolve.sparql_helper import SparqlHelper
 
@@ -64,16 +64,23 @@ def discover_data_graphs(
 ) -> list[str]:
     """List the endpoint's named graphs without the excluded prefixes.
 
-    The listing reads every quad. When it is refused or cut (STRING: HTTP 502 after 62 s,
-    rehearsal 2026-10-06), the graphs that the endpoint's service description names
-    (sd:name) are taken instead, read from the predicate's index; when it names none, the
-    refusal is raised and the source fails, rather than being mined as empty.
+    The listing reads every quad. When a gateway answers for an overloaded host (STRING:
+    HTTP 502 at 62 s, job 115325, while the same listing answers in 18 s when the host is
+    quiet), the host is waited out with the busy-host backoff (30, 60, 120, 240 s, shared by
+    every request to the host) and the listing is sent again: for a source whose data is only
+    in named graphs, this listing decides everything. When it is still refused or cut, the
+    graphs that the endpoint's service description names (sd:name) are taken instead, read
+    from the predicate's index; when it names none, the refusal is raised and the source
+    fails, rather than being mined as empty.
     """
     from rdfsolve.sparql_helper import SparqlHelperError
     from rdfsolve.void_retrieval import discover_graph_names
 
     try:
-        discovered = discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages)
+        discovered = _wait_out_gateway(
+            helper,
+            lambda: discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages),
+        )
     except SparqlHelperError as error:
         discovered = described_graph_names(helper)
         if not discovered:
@@ -92,3 +99,54 @@ def discover_data_graphs(
         len(prefixes),
     )
     return selected
+
+
+def _gateway_overloaded(error: BaseException) -> bool:
+    """Return whether *error*, or an error it was raised from, is a gateway overload."""
+    seen: BaseException | None = error
+    while seen is not None:
+        if getattr(seen, "gateway_overload", False):
+            return True
+        seen = seen.__cause__
+    return False
+
+
+def _wait_out_gateway[T](helper: SparqlHelper, call: Callable[[], T]) -> T:
+    """Run *call*; after a gateway overload, defer the host and run it again.
+
+    The waits are SparqlHelper.overload_backoff (30, 60, 120, 240 s), up to
+    SparqlHelper.OVERLOAD_RETRIES times, applied to the host (defer_host) so that every
+    request to it waits. A wait beyond the helper's rate_limit_wait is not taken. A proxy that
+    could not reach the server is not an overload and is raised at once.
+    """
+    from urllib.parse import urlsplit
+
+    from rdfsolve._http_policy import defer_host
+    from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
+
+    url = str(getattr(helper, "endpoint_url", "") or "")
+    host = urlsplit(url).hostname or url
+    longest = float(getattr(helper, "rate_limit_wait", 600.0))
+    tries = 0
+    while True:
+        try:
+            return call()
+        except SparqlHelperError as error:
+            tries += 1
+            wait = SparqlHelper.overload_backoff(tries)
+            if (
+                not _gateway_overloaded(error)
+                or tries > SparqlHelper.OVERLOAD_RETRIES
+                or wait > longest
+            ):
+                raise
+            logger.warning(
+                "Graph listing: a gateway answered for %s (%s); the host is waited out for "
+                "%.0f s (try %d of %d)",
+                host,
+                str(error)[:160],
+                wait,
+                tries + 1,
+                SparqlHelper.OVERLOAD_RETRIES + 1,
+            )
+            defer_host(host, wait)

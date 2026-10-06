@@ -397,6 +397,11 @@ class SparqlHelperError(Exception):
 
     # How the endpoint, or a proxy or gateway before it, cut the query (QueryCuts).
     cut: QueryCut | None = None
+    # Whether a gateway answered for the server (HTTP 502, 503, 504, 522 or 524) without
+    # saying that it could not reach it (PROXY_CONNECT_FAILURE_PATTERNS) and without a cost
+    # limit of the engine: an overloaded host, worth waiting for when one query decides a
+    # whole step (graph discovery). A busy answer already waited out is not one.
+    gateway_overload: bool = False
 
 
 class EndpointError(SparqlHelperError):
@@ -493,8 +498,8 @@ class SparqlHelper:
         deadline: Longest wall-clock time of one request, from sending it to the end of its
             response, however the server sends it; past it the request raises
             EndpointTimeoutError. None (the default) is timeout plus DEADLINE_GRACE_S.
-        rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429 or 503
-            with Retry-After). A longer cooldown raises EndpointRateLimitError.
+        rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429, 502, 503
+            or 504 with Retry-After). A longer cooldown raises EndpointRateLimitError.
 
     Example:
         >>> helper = SparqlHelper("https://sparql.swisslipids.org/")
@@ -540,6 +545,14 @@ class SparqlHelper:
         "sr319",
         "max row length is exceeded",
         "sorted top clause",
+        # Virtuoso refuses these for the query, not for the moment: "42000 Error D1CTX: Hash
+        # dictionary is full, exceeded 2000000 entries" (a CONSTRUCT of RIKEN BRC's VoID graph:
+        # 3 tries for each of 2 fallbacks, job 115326) and "SQ200 Stack Overflow in cost model"
+        # (SIBiLS). The caller's fallback runs at once.
+        "d1ctx",
+        "hash dictionary is full",
+        "sq200",
+        "stack overflow in cost model",
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
@@ -548,7 +561,8 @@ class SparqlHelper:
 
     # A 503 (or a remote 429) whose body says that the server is busy, not that the query is
     # too costly: SwissLipids answers "Too many concurrent queries. Please try again later."
-    # (rehearsal 2026-10-06, job 115300). The request is repeated after OVERLOAD_BACKOFF_S,
+    # (rehearsal 2026-10-06, job 115300). A 502 or 504 from a proxy or gateway that says so, or
+    # sends Retry-After, is the same. The request is repeated after OVERLOAD_BACKOFF_S,
     # doubled at each try, or after the Retry-After that the server sends, up to
     # OVERLOAD_RETRIES times, whatever the retries of the step: one busy moment must not lose a
     # source. A 503 that does not say so (a proxy that cannot resolve the host) is not waited for.
@@ -575,6 +589,24 @@ class SparqlHelper:
 
     OVERLOAD_BACKOFF_S: ClassVar[float] = 30.0
     OVERLOAD_RETRIES: ClassVar[int] = 4
+
+    # Statuses with which a proxy or gateway answers for the server. A busy one (Retry-After or
+    # OVERLOAD_PATTERNS) is waited out; any one is marked gateway_overload unless its body says
+    # that the proxy could not reach the server at all (bio2rdf's squid: "The requested URL
+    # could not be retrieved", ERR_DNS_FAIL), which no wait mends.
+    GATEWAY_ERROR_STATUS: ClassVar[tuple[int, ...]] = (502, 503, 504, 522, 524)
+    PROXY_CONNECT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "could not be retrieved",
+        "err_dns_fail",
+        "err_connect_fail",
+        "unable to determine ip address",
+        "could not resolve",
+        "name or service not known",
+        "name resolution",
+        "connection refused",
+        "no route to host",
+        "origin dns error",
+    )
 
     # HTTP statuses with which a gateway says that it stopped waiting for the server.
     GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
@@ -1048,6 +1080,7 @@ class SparqlHelper:
                 failure = EndpointError(
                     f"HTTP {status_code}: {detail or 'Endpoint request failed'}"
                 )
+                failure.gateway_overload = self._gateway_overload(status_code, body)
                 if any(
                     marker in body
                     for marker in (
@@ -1139,10 +1172,12 @@ class SparqlHelper:
                             self.endpoint_url,
                         )
                         # Treat as timeout to trigger batch size reduction
-                        raise EndpointTimeoutError(
+                        cut = EndpointTimeoutError(
                             f"HTTP 502 Bad Gateway (overload): {e}",
                             status_code=502,
-                        ) from e
+                        )
+                        cut.gateway_overload = failure.gateway_overload
+                        raise cut from e
                     # Cost and time limits require smaller queries from the caller.
                     if status_code in (429, 500, 504):
                         body = self._last_error_body.lower()
@@ -1156,10 +1191,12 @@ class SparqlHelper:
                                 tag,
                                 self.endpoint_url,
                             )
-                            raise EndpointTimeoutError(
+                            cut = EndpointTimeoutError(
                                 f"Query cost/time limit: {detail or status_code}",
                                 status_code=status_code,
-                            ) from e
+                            )
+                            cut.gateway_overload = failure.gateway_overload
+                            raise cut from e
                     # Let adaptive callers reduce work after local capacity errors.
                     if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
                         "localhost",
@@ -1186,12 +1223,11 @@ class SparqlHelper:
                             "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
                         )
                         continue
-                    self._handle_retry(
-                        attempt,
-                        query_type,
-                        failure,
-                        purpose,
-                    )
+                    try:
+                        self._handle_retry(attempt, query_type, failure, purpose)
+                    except EndpointError as exhausted:
+                        exhausted.gateway_overload = failure.gateway_overload
+                        raise
                     continue
 
                 # Non-retryable HTTP error
@@ -1492,6 +1528,9 @@ class SparqlHelper:
             cooldown = retry_after_seconds(response.headers.get("Retry-After"))
             self._last_retry_after = cooldown
             defer_host(host, cooldown if cooldown is not None else max(1.0, self.initial_backoff))
+        elif response.status_code in (502, 504):
+            # A gateway's Retry-After marks it busy (_overloaded); without one it is not deferred.
+            self._last_retry_after = retry_after_seconds(response.headers.get("Retry-After"))
         response.raise_for_status()
         state = response.headers.get("X-SQL-State", "")
         if response.status_code == 206 or state == "S1TAT":
@@ -1510,10 +1549,13 @@ class SparqlHelper:
     def _overloaded(self, status_code: int, body: str) -> bool:
         """Return whether a response says that the server is busy (OVERLOAD_PATTERNS).
 
-        A 503 or a remote 429 that says so, or that sends Retry-After, is one; a local QLever's
-        429 is its capacity limit (the caller makes the query smaller).
+        A 502, 503, 504 or remote 429 that says so, or that sends Retry-After, is one; a local
+        QLever's 429 is its capacity limit (the caller makes the query smaller), and a proxy
+        that could not reach the server (PROXY_CONNECT_FAILURE_PATTERNS) is not busy.
         """
-        if status_code not in (429, 503):
+        if status_code not in (429, 502, 503, 504):
+            return False
+        if any(pattern in body for pattern in self.PROXY_CONNECT_FAILURE_PATTERNS):
             return False
         if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
             "localhost",
@@ -1527,11 +1569,28 @@ class SparqlHelper:
             pattern in body for pattern in self.OVERLOAD_PATTERNS
         )
 
+    def _gateway_overload(self, status_code: int, body: str) -> bool:
+        """Return whether a gateway error may be an overloaded host (gateway_overload).
+
+        Not when the proxy says that it could not reach the server, nor when the engine behind
+        it states a cost limit of the query.
+        """
+        return (
+            status_code in self.GATEWAY_ERROR_STATUS
+            and not any(pattern in body for pattern in self.PROXY_CONNECT_FAILURE_PATTERNS)
+            and not any(pattern in body for pattern in self.COST_LIMIT_PATTERNS)
+        )
+
+    @classmethod
+    def overload_backoff(cls, tries: int) -> float:
+        """Return the busy-host wait before the *tries*-th repeat (30, 60, 120, 240 s)."""
+        return float(cls.OVERLOAD_BACKOFF_S * 2 ** (tries - 1))
+
     def _overload_wait(self, tries: int) -> float:
         """Return the seconds to wait after the *tries*-th busy answer in a row."""
         if self._last_retry_after is not None:
             return max(1.0, self._last_retry_after)
-        return float(self.OVERLOAD_BACKOFF_S * 2 ** (tries - 1))
+        return self.overload_backoff(tries)
 
     def _cut(self, error: BaseException, seconds: float) -> QueryCut | None:
         """Return how a request was cut, when a limit on the way to the data ended it.
