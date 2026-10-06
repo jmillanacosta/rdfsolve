@@ -392,3 +392,37 @@ def test_null_context_becomes_the_endpoint_default_graph(
     fields = exported_entry(tmp_path / "toy")
     graph = endpoint.url.rstrip("/") + "#default"  # type: ignore[attr-defined]
     assert fields["graph_uris"] == [EX + "g1", graph]
+
+
+def test_statement_over_the_parser_buffer_does_not_parse(tmp_path: Path, monkeypatch) -> None:
+    """pyoxigraph raises MemoryError past its 16 MiB buffer (era-kg); the line is counted as a
+    statement that does not parse, not raised."""
+    path = tmp_path / "x.nt.gz"
+    with gzip.open(path, "wt") as stream:
+        stream.write('<http://e/a> <http://e/p> "ok" .\n<http://e/a> <http://e/p> "HUGE" .\n')
+    real = pyoxigraph.parse
+
+    def parse(source: Any, *args: Any, **kwargs: Any) -> Any:
+        if not isinstance(source, bytes) or b"HUGE" in source:
+            raise MemoryError("Reached the buffer maximal size of 16777216")
+        return real(source, *args, **kwargs)
+
+    monkeypatch.setattr(pyoxigraph, "parse", parse)
+    triples, _, error, unparsed = count_file_triples(path, "N_TRIPLES")
+    assert (triples, unparsed) == (1, 1) and error.startswith("MemoryError")
+
+
+def test_complete_export_is_not_rewritten(endpoint: type[_Endpoint], tmp_path: Path) -> None:
+    """A complete export may be pinned by its manifest's SHA-256: a later run keeps it as is."""
+    import hashlib
+
+    from rdfsolve.graph_export import export_source
+
+    entry = {"name": "toy", "endpoint": endpoint.url}  # type: ignore[attr-defined]
+    export_source(entry, tmp_path, "s", delay=0.0, min_free_bytes=0)
+    path = tmp_path / "toy" / "s" / "manifest.json"
+    before = hashlib.sha256(path.read_bytes()).hexdigest()
+    endpoint.queries.clear()
+    export_source(entry, tmp_path, "s", delay=0.0, min_free_bytes=0)
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == before
+    assert not endpoint.queries

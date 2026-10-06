@@ -206,15 +206,16 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
                 blanks += blank(quad)
         return triples, blanks
 
+    # pyoxigraph raises MemoryError for a statement longer than its 16 MiB buffer (era-kg).
     try:
         triples, blanks = scan(False)
         return triples, blanks, None, 0
-    except SyntaxError as error:
-        message = str(error)[:500]
+    except (SyntaxError, MemoryError) as error:
+        message = f"{type(error).__name__}: {error}"[:500]
     try:
         triples, blanks = scan(True)
         return triples, blanks, message, 0
-    except SyntaxError:
+    except (SyntaxError, MemoryError):
         pass
     if fmt != "N_TRIPLES":
         return 0, 0, message, -1
@@ -225,7 +226,7 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
                 continue
             try:
                 quads = list(pyoxigraph.parse(line, rdf_format, lenient=True))
-            except SyntaxError:
+            except (SyntaxError, MemoryError):
                 invalid += 1
                 continue
             triples += len(quads)
@@ -245,7 +246,7 @@ def strict_failures(path: Path, samples: int = 20) -> tuple[int, list[str]]:
                 continue
             try:
                 list(pyoxigraph.parse(line, pyoxigraph.RdfFormat.N_TRIPLES))
-            except SyntaxError:
+            except (SyntaxError, MemoryError):
                 count += 1
                 if len(found) < samples:
                     found.append(line.decode("utf-8", "replace").rstrip()[:300])
@@ -1270,6 +1271,14 @@ def source_complete(manifest: dict[str, Any]) -> bool:
 def export_source(entry: dict[str, Any], root: Path, stamp: str, **options: Any) -> dict[str, Any]:
     """Export one entry into ROOT/<name>/<stamp>/ and return its manifest."""
     output = Path(root) / str(entry["name"]) / stamp
+    done = output / MANIFEST
+    if done.is_file() and not options.pop("force", False):
+        manifest: dict[str, Any] = json.loads(done.read_text(encoding="utf-8"))
+        if source_complete(manifest):
+            # A complete export may be pinned by the registry (manifest_sha256): not rewritten.
+            logger.info("%s: export complete at %s, kept", entry["name"], output)
+            return manifest
+    options.pop("force", None)
     Path(root).mkdir(parents=True, exist_ok=True)
     free = shutil.disk_usage(root).free
     floor = int(options.pop("min_free_bytes", 500 * 10**9))
