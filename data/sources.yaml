@@ -7031,7 +7031,11 @@
 - name: semopenalex
   dataset_kind: instance
   endpoint: https://apps.okn.us/semopenalex/sparql
-  notes: 'KG Registry: SemOpenAlex'
+  skip_mining: true
+  notes: >-
+    KG Registry: SemOpenAlex. Left out of the paper-1 corpus (owner, 2026-10-06): about 26 B
+    triples of scholarly metadata, outside the corpus's life-science focus; its official dump is
+    s3://semopenalex (TriG.gz, about 232 GB).
   kg_registry_id: semopenalex
   keywords:
   - bibliography/documents
