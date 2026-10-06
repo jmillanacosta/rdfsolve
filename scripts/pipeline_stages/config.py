@@ -389,14 +389,18 @@ class PipelineConfig:
 
     def get_local_sources(self) -> list[Source]:
         """Select eligible sources with local inputs or a cached index."""
-        from rdfsolve.qlever.index_check import has_cached_index
+        from rdfsolve.qlever.index_check import TruncatedIndexError, has_cached_index
+
+        def cached(source: Source) -> bool:
+            # A truncated index of a remote source does not make it a local one.
+            try:
+                return has_cached_index(self.data_dir / "qlever_workdirs" / source.name, source.name)
+            except TruncatedIndexError:
+                return False
 
         return [
             s
             for s in self.sources
             if s.mining_enabled
-            and (
-                s.mode in (SourceMode.LOCAL, SourceMode.BOTH)
-                or has_cached_index(self.data_dir / "qlever_workdirs" / s.name, s.name)
-            )
+            and (s.mode in (SourceMode.LOCAL, SourceMode.BOTH) or cached(s))
         ]

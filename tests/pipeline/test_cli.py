@@ -325,3 +325,48 @@ def test_index_only_does_not_mine(tmp_path, monkeypatch):
     monkeypatch.setattr(LocalMiningStage, "_qlever_start", no_server)
     result = Pipeline(config).add_stage(LocalMiningStage).run()[LocalMiningStage.name]
     assert not result["mined"] and not result["failed"]
+
+
+def test_preflight_lets_a_run_that_indexes_rebuild_a_truncated_index(tmp_path, monkeypatch):
+    import shutil
+
+    from scripts.pipeline_stages import cli
+
+    registry = tmp_path / "sources.yaml"
+    registry.write_text(
+        yaml.safe_dump([{"name": "fixture", "download_nt": ["https://example.org/d.nt.gz"]}])
+    )
+    workdir = tmp_path / "data" / "qlever_workdirs" / "fixture"
+    (workdir / "rdf").mkdir(parents=True)
+    import gzip
+
+    (workdir / "rdf" / "d.nt.gz").write_bytes(gzip.compress(b"<urn:a> <urn:p> <urn:o> .\n"))
+    for permutation in ("pso", "pos"):
+        for suffix in ("", ".meta"):
+            (workdir / f"fixture.index.{permutation}{suffix}").write_text("x")
+    counts = '{"normal": 1, "internal": 0}'
+    (workdir / "fixture.meta-data.json").write_text(
+        f'{{"num-subjects": {counts}, "num-predicates": {counts}, "num-objects": {counts}, '
+        f'"num-triples": {counts}, "has-all-permutations": false, "index-format-version": {{}}, '
+        '"vocabulary-type": "x"}'
+    )
+    (workdir / "fixture.index-log.txt").write_text(
+        "INFO: Parsing of line has Failed, but parseInput is not yet exhausted. "
+        "Remaining bytes: 936,951,434\n"
+    )
+    monkeypatch.setattr(LocalMiningStage, "_ensure_qlever_image", lambda self: None)
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/" + name)
+
+    def config(**options):
+        made = PipelineConfig(
+            base_dir=tmp_path, data_dir=tmp_path / "data", sources_file=registry, **options
+        )
+        made.load_sources()
+        return made
+
+    cli.preflight(config(index_only=True), grouped=False, remote=False)
+    with pytest.raises(FileNotFoundError, match="1 unusable indices"):
+        cli.preflight(config(no_index=True), grouped=False, remote=False)
+    with pytest.raises(FileNotFoundError, match="1 unusable indices"):
+        cli.preflight(config(), grouped=True, remote=False)
+    assert (workdir / "fixture.index-log.txt").is_file(), "Preflight moves nothing"

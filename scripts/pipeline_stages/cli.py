@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.qlever.index_check import TruncatedIndexError
 from rdfsolve.qlever.inputs import unusable_inputs
 
 from .analysis import AnalysisStage, SSSOMSeedingStage
@@ -116,12 +117,22 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
                 log.info("Cached group %s: %s", name, workdir)
     missing: list[str] = []
     unusable: list[str] = []
+    rebuilt: list[str] = []
     for source in sources:
         if source.name in covered:
             continue
         workdir = config.data_dir / "qlever_workdirs" / source.name
         try:
             cached = stage._has_qlever_index(workdir, source.name)
+        except TruncatedIndexError as error:
+            # The local stage sets a truncated index aside and builds it again from its inputs
+            # (LocalMiningStage._has_usable_index); a run that does not index, or the grouped
+            # stage, cannot.
+            if config.no_index or grouped:
+                rejected.append(f"{source.name}: {error}")
+            else:
+                rebuilt.append(f"{source.name}: {error}")
+            cached = False
         except ValueError as error:
             rejected.append(f"{source.name}: {error}")
             cached = False
@@ -138,6 +149,8 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
         log.error("Unusable index: %s", entry)
     for entry in unusable:
         log.error("Unusable input: %s", entry)
+    for entry in rebuilt:
+        log.warning("Index to set aside and build again: %s", entry)
     if missing:
         log.warning("No cached index for %d sources: %s", len(missing), missing)
     problems = []
