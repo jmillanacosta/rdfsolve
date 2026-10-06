@@ -879,6 +879,56 @@ class SchemaMiner:
         context["state"] = "nonempty"
         self._report.flush()
 
+    # Seconds for listing the endpoint's graphs before the system graphs are left out.
+    GRAPH_LISTING_BUDGET_S = 120.0
+
+    def _exclude_engine_graphs(self) -> None:
+        """Leave the engine's own graphs out of every query of a source mined without graphs.
+
+        Without FROM, Virtuoso reads every graph, its system graphs included (virtrdf#, the
+        WebDAV graph, ...): their predicates and edges entered the census and the structural
+        patterns (WikiPathways: virtrdf# properties counted as properties 208/348 of the census).
+        The graphs whose IRIs start with *excluded_graph_prefixes* (the prefixes that graph
+        discovery already leaves out) are excluded from each query without a dataset clause
+        with Virtuoso's input:default-graph-exclude and input:named-graph-exclude, which keeps
+        the default graph of the endpoint otherwise unchanged. An engine that refuses the
+        pragmas, or a graph listing that is refused, is recorded and nothing is excluded.
+        """
+        from rdfsolve.mining.local_graph import LocalGraphHelper
+        from rdfsolve.sparql_helper import SparqlHelperError, graph_exclusion_prologue
+        from rdfsolve.void_retrieval import discover_graph_names
+
+        helper = self._helper
+        if self.graph_uris or not self.excluded_graph_prefixes:
+            return
+        if isinstance(helper, LocalGraphHelper):
+            return
+        record: dict[str, Any] = {"prefixes": list(self.excluded_graph_prefixes)}
+        self._report.report.config["excluded_graphs"] = record
+        try:
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                graphs = discover_graph_names(helper, batch_size=1000, max_pages=100)
+        except (SparqlHelperError, ValueError) as error:
+            logger.warning("Graph exclusion: graphs not listed: %s", str(error)[:200])
+            record.update(state="graph_listing_refused", error=str(error)[:500])
+            return
+        excluded = sorted(g for g in graphs if g.startswith(self.excluded_graph_prefixes))
+        record["listed_graphs"] = len(graphs)
+        if not excluded:
+            record["state"] = "none_found"
+            return
+        try:
+            probe = graph_exclusion_prologue(excluded) + "ASK { ?s ?p ?o }"
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                helper.ask(probe)
+        except SparqlHelperError as error:
+            logger.warning("Graph exclusion: the endpoint refuses it: %s", str(error)[:200])
+            record.update(state="not_supported", graph_uris=excluded, error=str(error)[:500])
+            return
+        helper.excluded_graphs = excluded
+        record.update(state="excluded", method="virtuoso_define_graph_exclude", graph_uris=excluded)
+        logger.info("Graph exclusion: %d engine graphs left out: %s", len(excluded), excluded)
+
     @contextmanager
     def _session(
         self, dataset_name: str | None, ontology_graph_uris: list[str] | None = None
@@ -935,6 +985,7 @@ class SchemaMiner:
                 self._report.report.config["local_backend"] = self._helper.local.metadata()
                 self._report.report.config["sparql_engine"] = self._helper.sparql_engine
             self._verify_context_graphs("type_context", self.type_context_graph_uris)
+            self._exclude_engine_graphs()
             yield
         except BaseException as exc:
             reason = f"{type(exc).__name__}: {exc}"
@@ -952,6 +1003,7 @@ class SchemaMiner:
             raise
         finally:
             MEMBERSHIP.reset(member)
+            remote_helper.excluded_graphs = []
             if self._helper is not remote_helper:
                 self._helper.close()
                 self._helper = remote_helper

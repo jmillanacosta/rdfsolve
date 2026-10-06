@@ -207,3 +207,109 @@ def test_classifications_with_companion_subject_types():
                 }
             )
     assert results[0] == results[1] == results[2], "Strategies must agree on measured evidence"
+
+
+def _fake_endpoint(monkeypatch, helper, refuse_define=False):
+    """Answer every request of *helper* without a network and keep the queries sent."""
+    from rdfsolve.sparql_helper import QueryError
+
+    sent = []
+
+    def execute(query, accept, query_type="SELECT", *args, **kwargs):
+        sent.append(query)
+        if refuse_define and query.lstrip().startswith("DEFINE"):
+            raise QueryError("HTTP 400: Invalid SPARQL query: Token DEFINE")
+        if query_type == "ASK":
+            return {"boolean": True}
+        return {"head": {"vars": []}, "results": {"bindings": []}}
+
+    monkeypatch.setattr(helper, "_execute_request", execute)
+    return sent
+
+
+ENGINE_GRAPHS = [
+    "http://data.example/",
+    "http://www.openlinksw.com/schemas/virtrdf#",
+    "http://localhost:8890/DAV/",
+    "servicedescription",
+]
+
+
+def test_engine_graphs_are_left_out_of_every_query_without_a_dataset(monkeypatch):
+    """Virtuoso reads its system graphs in a query without FROM (WikiPathways: virtrdf#
+    properties in the census). They are excluded with its pragmas in every query that has no
+    dataset clause, and only there: Virtuoso drops a FROM that names an excluded graph."""
+    from rdfsolve import void_retrieval
+    from rdfsolve.mining.miner import SchemaMiner
+    from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_GRAPHS
+
+    monkeypatch.setattr(void_retrieval, "discover_graph_names", lambda *a, **k: ENGINE_GRAPHS)
+    miner = SchemaMiner(
+        endpoint_url="https://endpoint.example/sparql",
+        excluded_graph_prefixes=SUGGESTED_SERVICE_GRAPHS,
+        delay=0,
+    )
+    sent = _fake_endpoint(monkeypatch, miner.helper)
+    with miner._session("engine"):
+        excluded = sorted(ENGINE_GRAPHS[1:])
+        assert miner.helper.excluded_graphs == excluded
+        record = miner.last_report.config["excluded_graphs"]
+        assert record["state"] == "excluded" and record["graph_uris"] == excluded
+        miner.helper.select("SELECT DISTINCT ?p WHERE { ?s ?p ?o }")
+        miner.helper.select("SELECT ?p FROM <http://data.example/> WHERE { ?s ?p ?o }")
+        miner.helper.ask("ASK FROM NAMED <http://data.example/> { GRAPH ?g { ?s ?p ?o } }")
+    unscoped, scoped, named = sent[-3:]
+    for graph in excluded:
+        assert f"DEFINE input:default-graph-exclude <{graph}>" in unscoped
+        assert f"DEFINE input:named-graph-exclude <{graph}>" in unscoped
+    assert "DEFINE" not in scoped and "DEFINE" not in named
+    assert miner.helper.excluded_graphs == [], "The exclusion ends with the session"
+
+
+def test_an_engine_without_the_pragmas_is_recorded_and_nothing_is_excluded(monkeypatch):
+    from rdfsolve import void_retrieval
+    from rdfsolve.mining.miner import SchemaMiner
+    from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_GRAPHS
+
+    monkeypatch.setattr(void_retrieval, "discover_graph_names", lambda *a, **k: ENGINE_GRAPHS)
+    miner = SchemaMiner(
+        endpoint_url="https://endpoint.example/sparql",
+        excluded_graph_prefixes=SUGGESTED_SERVICE_GRAPHS,
+        delay=0,
+    )
+    sent = _fake_endpoint(monkeypatch, miner.helper, refuse_define=True)
+    with miner._session("engine"):
+        assert miner.helper.excluded_graphs == []
+        record = miner.last_report.config["excluded_graphs"]
+        assert record["state"] == "not_supported" and "DEFINE" in record["error"]
+        miner.helper.select("SELECT DISTINCT ?p WHERE { ?s ?p ?o }")
+    assert not sent[-1].startswith("DEFINE")
+
+
+def test_no_engine_graph_and_a_scoped_source_send_no_pragma(monkeypatch):
+    from rdfsolve import void_retrieval
+    from rdfsolve.mining.miner import SchemaMiner
+    from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_GRAPHS
+
+    monkeypatch.setattr(
+        void_retrieval, "discover_graph_names", lambda *a, **k: ["http://data.example/"]
+    )
+    miner = SchemaMiner(
+        endpoint_url="https://endpoint.example/sparql",
+        excluded_graph_prefixes=SUGGESTED_SERVICE_GRAPHS,
+        delay=0,
+    )
+    _fake_endpoint(monkeypatch, miner.helper)
+    with miner._session("data only"):
+        assert miner.helper.excluded_graphs == []
+        assert miner.last_report.config["excluded_graphs"]["state"] == "none_found"
+    scoped = SchemaMiner(
+        endpoint_url="https://endpoint.example/sparql",
+        graph_uris=["http://data.example/"],
+        excluded_graph_prefixes=SUGGESTED_SERVICE_GRAPHS,
+        delay=0,
+    )
+    sent = _fake_endpoint(monkeypatch, scoped.helper)
+    with scoped._session("scoped"):
+        assert "excluded_graphs" not in scoped.last_report.config
+    assert not any("DEFINE" in q for q in sent)

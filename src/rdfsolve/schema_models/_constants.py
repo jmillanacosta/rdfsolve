@@ -39,6 +39,8 @@ SUGGESTED_SERVICE_GRAPHS: tuple[str, ...] = (
     "http://localhost:8890/",
     "urn:core:services:sparql",
     "urn:activitystreams-owl:",
+    # Virtuoso's service description graph, named with a relative IRI (AOP-Wiki, WikiPathways).
+    "servicedescription",
 )
 """Graph IRI prefixes that hold engine metadata rather than source data.
 

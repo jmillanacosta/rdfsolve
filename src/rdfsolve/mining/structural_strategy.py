@@ -541,7 +541,10 @@ def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
     """
     import hashlib
 
-    key = ("census|" + hashlib.sha256("\n".join(queries).encode()).hexdigest(),)
+    # The graphs that the helper leaves out are part of the queries that it sends.
+    excluded = list(getattr(getattr(context, "helper", None), "excluded_graphs", None) or [])
+    sent = [*(["exclude " + " ".join(excluded)] if excluded else []), *queries]
+    key = ("census|" + hashlib.sha256("\n".join(sent).encode()).hexdigest(),)
     resumed = getattr(context, "resumed", None) or {}
     if key in resumed:
         counts: Counter[str] = Counter(resumed[key][0])

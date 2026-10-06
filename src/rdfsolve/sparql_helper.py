@@ -658,6 +658,9 @@ class SparqlHelper:
         self.rate_limit_wait = rate_limit_wait
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
+        # Graphs left out of the default and named graphs of a query without a dataset clause
+        # (graph_exclusion_prologue); set only after the endpoint accepted the exclusion.
+        self.excluded_graphs: list[str] = []
         self.inter_request_delay = inter_request_delay
         if (
             type(select_page_size) is not int
@@ -859,6 +862,8 @@ class SparqlHelper:
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
         query = writable_query(query)
+        if self.excluded_graphs and not has_dataset_clause(query):
+            query = graph_exclusion_prologue(self.excluded_graphs) + query
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         started = time.monotonic()
         token = _active_record.set(record)
@@ -2051,6 +2056,30 @@ class SparqlHelper:
     def __repr__(self) -> str:
         url = self.endpoint_url
         return f"SparqlHelper({url!r}, use_post={self._requires_post})"
+
+
+_DATASET_CLAUSE = re.compile(r"(?i)\bFROM\s+(?:NAMED\s+)?(?:<|[A-Za-z_][\w.-]*:)")
+
+
+def has_dataset_clause(query: str) -> bool:
+    """Return whether *query* names its graphs with FROM or FROM NAMED."""
+    return bool(_DATASET_CLAUSE.search(query))
+
+
+def graph_exclusion_prologue(graphs: list[str]) -> str:
+    """Return the Virtuoso pragmas that leave *graphs* out of the default and named graphs.
+
+    Without a dataset clause, Virtuoso's default graph is the union of every graph, its system
+    graphs included (virtrdf#, the WebDAV graph): the census of AOP-Wiki counted 340,949 triples
+    of which 2,479 are virtrdf# and 23 the service description. The pragmas are sent only with a
+    query that has no FROM or FROM NAMED: Virtuoso drops a FROM that names an excluded graph and
+    reads every other graph instead.
+    """
+    return "".join(
+        f"DEFINE input:default-graph-exclude {URIRef(g).n3()}\n"
+        f"DEFINE input:named-graph-exclude {URIRef(g).n3()}\n"
+        for g in graphs
+    )
 
 
 # Convenience function for one-off queries
