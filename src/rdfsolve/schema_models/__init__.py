@@ -11,6 +11,7 @@ from rdfsolve.schema_models._constants import (
     _URI_SCHEMES,
     SERVICE_NAMESPACE_PREFIXES,
     UNTYPED_SUBJECT,
+    UNTYPED_SUBJECTS_LABEL,
 )
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema, MiningResult
@@ -80,6 +81,7 @@ __all__ = [
     # constants
     "SERVICE_NAMESPACE_PREFIXES",
     "UNTYPED_SUBJECT",
+    "UNTYPED_SUBJECTS_LABEL",
     "_BLANK_NODE_URIS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",

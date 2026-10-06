@@ -9,7 +9,7 @@ from typing import Any
 from typing import Literal as Kind
 
 import pyoxigraph as ox
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_serializer, model_validator
 from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier, Node
 
@@ -151,19 +151,43 @@ class TermAnnotation(BaseModel):
 
 
 class PatternExample(BaseModel):
-    """One observed triple and the class used to select its subject."""
+    """One observed triple and the class used to select its subject.
+
+    An example of an untyped pattern (subject_binding "untyped") has a subject without a type:
+    its subject_class is rdfs:Resource (UNTYPED_SUBJECT), which it is not a member of by
+    assertion. The binding is written only when it is "untyped", so the examples of typed
+    patterns keep their form.
+    """
 
     subject_class: str
     property_uri: str
     subject: RdfTerm
     value: RdfTerm
+    subject_binding: Kind["type", "untyped"] = "type"
 
     @model_validator(mode="after")
     def check_subject(self) -> PatternExample:
-        """Reject literal subjects, which RDF does not allow."""
+        """Reject literal subjects, which RDF does not allow; untyped ones keep rdfs:Resource."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
+
         if self.subject.kind == "literal":
             raise ValueError("An example subject must be an IRI or blank node")
+        if self.subject_binding == "untyped" and self.subject_class != UNTYPED_SUBJECT:
+            raise ValueError(f"An untyped example requires the class {UNTYPED_SUBJECT}")
         return self
+
+    @property
+    def untyped_subject(self) -> bool:
+        """Return whether the example's subject has no type (an untyped pattern's example)."""
+        return self.subject_binding == "untyped"
+
+    @model_serializer(mode="wrap")
+    def _write_binding_when_untyped(self, handler: Any) -> Any:
+        """Leave out the default binding, so typed examples are written as before."""
+        data = handler(self)
+        if isinstance(data, dict) and data.get("subject_binding") == "type":
+            data.pop("subject_binding")
+        return data
 
 
 class SchemaEnrichment(BaseModel):
@@ -221,8 +245,10 @@ class SchemaEnrichment(BaseModel):
                 add(term, str(RDF.type), iri)
                 add(iri, str(RDFS.seeAlso), term)
         for example in self.examples:
-            add(example.subject_class, str(RDFS.seeAlso), example.subject)
-            add(example.subject, str(RDF.type), example.subject_class)
+            # The subject of an untyped example has no class: no class link, no type triple.
+            if not example.untyped_subject:
+                add(example.subject_class, str(RDFS.seeAlso), example.subject)
+                add(example.subject, str(RDF.type), example.subject_class)
             add(example.subject, example.property_uri, example.value)
         return graph
 

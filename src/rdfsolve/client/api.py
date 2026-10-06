@@ -20,7 +20,7 @@ from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from rdfsolve._uri import curie_from_prefixes, prefix_map, uri_to_curie
 from rdfsolve.client.exploration import DatasetClient
-from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
+from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata, is_untyped
 from rdfsolve.client.model_rdf import model_to_graph
 from rdfsolve.client.query_log import QueryLog
 from rdfsolve.client.registry import Registry
@@ -350,7 +350,7 @@ class Client(DatasetClient):
                 body = self._scope(
                     f"{{ VALUES ?named {{ {values} }} ?record {path} ?named . }} UNION "
                     f"{{ VALUES ?named {{ {values} }} BIND(?named AS ?record) }} "
-                    + self._type_pattern("?record", _iri(class_iri(model)))
+                    + self._model_pattern("?record", model)
                 )
                 rows = self._select(f"SELECT DISTINCT ?record ?named WHERE {{ {body} }}")
                 pairs |= {(r["record"]["value"], forms[r["named"]["value"]]) for r in rows}
@@ -362,6 +362,14 @@ class Client(DatasetClient):
             records,
             evidence=[{"source": given, "target": r, "via": via} for r, given in sorted(pairs)],
         )
+
+    def _model_pattern(self, node: str, model: type[BaseModel]) -> str:
+        """Match the subjects of a view: the members of its class, or, for the view of subjects
+        without a type, the subjects of its properties that have no type.
+        """
+        if is_untyped(model):
+            return self._untyped_subjects(node, model)
+        return self._type_pattern(node, _iri(class_iri(model)))
 
     def record_fields(self, kind: str) -> list[str]:
         """Return the fields of a class that hold its values: literals and cross-references."""
@@ -814,8 +822,7 @@ class Client(DatasetClient):
         name = self.field_name(model, field)
         path = _path(model, name)
         pattern = (
-            self._type_pattern("?subject", _iri(class_iri(model)))
-            + f" ?subject {path_to_sparql(path)} ?value ."
+            self._model_pattern("?subject", model) + f" ?subject {path_to_sparql(path)} ?value ."
         )
         if text:
             pattern += f" FILTER(!isBlank(?value) && CONTAINS(LCASE(STR(?value)), LCASE({Literal(text).n3()})))"
@@ -995,7 +1002,8 @@ class Client(DatasetClient):
                 return False
             found = False
             for pattern in self.schema.patterns:
-                if pattern.property_uri != prop:
+                # Untyped subjects are no class: they neither own nor reach a class's link.
+                if pattern.property_uri != prop or pattern.untyped_subject:
                     continue
                 own, other = (
                     (pattern.object_class, pattern.subject_class)
@@ -1042,6 +1050,9 @@ class Client(DatasetClient):
         subject, or as object for "^name"), towards the class *to* when given.
         """
         name_or_iri = str(name_or_iri)
+        untyped = self._untyped_named(name_or_iri)
+        if untyped is not None:
+            return untyped
         prefix, sep, local = name_or_iri.partition(":")
         if sep and not local.startswith("//") and prefix in self.schema.get_prefixes():
             name_or_iri = self.schema.get_prefixes()[prefix] + local
@@ -1107,7 +1118,11 @@ class Client(DatasetClient):
 
     def type_name(self, model: type[BaseModel] | str) -> str:
         """Display a source label without changing the generated type."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+
         model = self.model(model) if isinstance(model, str) else model
+        if is_untyped(model):
+            return UNTYPED_SUBJECTS_LABEL
         iri = getattr(model, "rdf_class_iri", "")
         labels = [
             item.text.value
@@ -1219,7 +1234,8 @@ class Client(DatasetClient):
         if len(exact) == 1:
             return exact[0]  # An IRI or a CURIE identifies one property.
         local = [name for name, iri in iris.items() if re.split(r"[/#:]", iri)[-1] == text]
-        own = [name for name in local if iris[name].startswith(_namespace(class_iri(model)))]
+        namespace = "\0" if is_untyped(model) else _namespace(class_iri(model))
+        own = [name for name in local if iris[name].startswith(namespace)]
         for found in (own, local):
             if len(found) == 1:
                 return found[
@@ -1355,10 +1371,15 @@ class Client(DatasetClient):
         return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
     def types(self) -> pd.DataFrame:
-        """List available record types without sending a query."""
-        return pd.DataFrame(
-            {"Class": sorted(self.type_name(model) for model in self.models.values())}
-        )
+        """List available record types without sending a query.
+
+        The view of subjects without a type, when the schema has one, is the last row:
+        "untyped subjects" (it is not a class).
+        """
+        names = sorted(self.type_name(model) for model in self.models.values())
+        if self.untyped_model is not None:
+            names.append(self.type_name(self.untyped_model))
+        return pd.DataFrame({"Class": names})
 
     @classmethod
     def from_session(
@@ -1393,7 +1414,10 @@ class Client(DatasetClient):
 
         from rdfsolve.identifiers import curie, parse
 
-        registered = parse(class_iri(self.model(kind))) if kind else None
+        chosen = self.model(kind) if kind else None
+        registered = (
+            parse(class_iri(chosen)) if chosen is not None and not is_untyped(chosen) else None
+        )
         prefix = registered.prefix if registered else None
         ontology = bioregistry.get_ols_prefix(prefix) if prefix else None
         looked_up = [
@@ -1447,7 +1471,9 @@ class Client(DatasetClient):
     def to_graph(self, *groups: Results | BaseModel) -> Graph:
         """Return records or result sets and their retained direct links as an RDF graph."""
         records: list[BaseModel] = []
-        model_types = tuple(self.models.values())
+        model_types = tuple(self.models.values()) + (
+            (self.untyped_model,) if self.untyped_model is not None else ()
+        )
         for group in groups:
             if isinstance(group, Results):
                 if group.client is not self:
@@ -1657,7 +1683,8 @@ class Results:
         loaded: dict[Any, BaseModel] = {}
         for model in {type(r) for r in self.records}:
             part = Results(self.client, [r for r in self.records if type(r) is model])
-            part._load(*self.client.record_fields(str(getattr(model, "rdf_class_iri", ""))))
+            kind = model.__name__ if is_untyped(model) else str(getattr(model, "rdf_class_iri", ""))
+            part._load(*self.client.record_fields(kind))
             loaded.update((vars(r)["uri"], r) for r in part.records)  # _load gives new records
         self.records = [loaded.get(vars(r)["uri"], r) for r in self.records]
         return self

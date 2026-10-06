@@ -26,7 +26,7 @@ from rdfsolve.local_rdf import LocalBackend, LocalRdf
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
-from rdfsolve.schema_models.exporters.pydantic import build_pydantic_classes
+from rdfsolve.schema_models.exporters.pydantic import generated_models
 from rdfsolve.schema_models.paths import PropertyPath, absolute_iri
 from rdfsolve.sparql_helper import EndpointError, QueryRecord, SparqlHelper
 
@@ -40,11 +40,30 @@ class HydrationLimitError(ValueError):
 
 
 def class_iri(model: type[BaseModel] | BaseModel) -> str:
-    """Return the RDF class IRI of a generated model or of one of its records."""
+    """Return the RDF class IRI of a generated model or of one of its records.
+
+    The model of the subjects without a type (is_untyped) has no class: TypeError.
+    """
     value = getattr(model, "rdf_class_iri", None)
     if not isinstance(value, str):
+        if is_untyped(model):
+            raise TypeError(f"{model!r} is the view of subjects without a type: it has no class")
         raise TypeError(f"{model!r} is not a generated RDF model")
     return value
+
+
+def record_kind(model: type[BaseModel] | BaseModel) -> str:
+    """Return the class IRI of a view or record, or "untyped subjects" for the view of subjects
+    without a type (a name, not a class).
+    """
+    from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+
+    return UNTYPED_SUBJECTS_LABEL if is_untyped(model) else class_iri(model)
+
+
+def is_untyped(model: type[BaseModel] | BaseModel) -> bool:
+    """Return whether a generated model (or record) is the view of subjects without a type."""
+    return getattr(model, "rdf_untyped_subjects", False) is True
 
 
 def field_metadata(info: FieldInfo | None) -> dict[str, Any]:
@@ -136,7 +155,8 @@ class Hydrator:
             if isinstance(self.source, (Graph, ox.Dataset, ox.Store))
             else None
         )
-        self.models = build_pydantic_classes(schema, contract=contract)
+        # The class views; the view of subjects without a type is apart (it has no class).
+        self.models, self.untyped_model = generated_models(schema, contract=contract)
         self.batch_size = batch_size
         self.max_rows = max_rows
         self.max_subjects = max_subjects
@@ -273,13 +293,34 @@ class Hydrator:
         temporary.replace(path)
 
     def model(self, name_or_iri: str) -> type[BaseModel]:
-        """Find a generated class by its Python name or full RDF class IRI."""
+        """Find a generated class by its Python name or full RDF class IRI.
+
+        The view of subjects without a type is found by its name or as "untyped subjects".
+        """
+        untyped = self._untyped_named(name_or_iri)
+        if untyped is not None:
+            return untyped
         if name_or_iri in self.models:
             return self.models[name_or_iri]
         for model in self.models.values():
             if getattr(model, "rdf_class_iri", None) == name_or_iri:
                 return model
         raise KeyError(name_or_iri)
+
+    def _untyped_named(self, name: str) -> type[BaseModel] | None:
+        """Return the view of subjects without a type when *name* names it, else None."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+
+        model: type[BaseModel] | None = getattr(self, "untyped_model", None)
+        if model is None:
+            return None
+        key = "".join(name.split()).casefold()
+        if name == model.__name__ or key in {
+            "".join(UNTYPED_SUBJECTS_LABEL.split()).casefold(),
+            "untypedsubject",
+        }:
+            return model
+        return None
 
     def _check_model_scope(self, model: type[BaseModel]) -> None:
         """Require the model's declared data and typing scope to match this schema."""
@@ -353,6 +394,26 @@ class Hydrator:
         if self._schema.about.type_graph_uris or self._schema.about.type_context_graph_uris:
             pattern += f" FILTER EXISTS {{ {node} ?_dataP ?_dataO }}"
         return pattern
+
+    def _untyped_subjects(self, node: str, model: type[BaseModel]) -> str:
+        """Bind *node* to the subjects of the view's properties that have no type.
+
+        The subject is bound through its properties (no type triple to match), and kept only
+        when it is an IRI without any type in the data or type context graphs.
+        """
+        from rdfsolve.mining.query_builders import UntypedSubjects
+
+        properties = sorted(
+            {
+                str(meta["rdf_property_iri"])
+                for info in model.model_fields.values()
+                if (meta := field_metadata(info)).get("rdf_property_iri")
+            }
+        )
+        if not properties:
+            raise ValueError(f"{model.__name__} has no property to bind its subjects")
+        edges = " UNION ".join(f"{{ {node} {_iri(p)} ?_untypedValue }}" for p in properties)
+        return f"{edges} " + self._type_pattern(node, UntypedSubjects())
 
     def _scope(self, body: str) -> str:
         """Scope one graph directly; multiple data graphs use a query dataset."""
@@ -450,12 +511,19 @@ class Hydrator:
     def sample(
         self, model: type[Model], *, limit: int = 3, fields: list[str] | None = None
     ) -> list[Model]:
-        """Retrieve a small ordered sample of IRI subjects with the requested type."""
+        """Retrieve a small ordered sample of IRI subjects with the requested type.
+
+        For the view of subjects without a type, the subjects of its properties that have no
+        type (FILTER NOT EXISTS on the type triple: a typed subject belongs to a class view).
+        """
         self._check_model_scope(model)
         if type(limit) is not int or not 1 <= limit <= self.max_subjects:
             raise ValueError(f"Use a sample limit between 1 and {self.max_subjects}")
-        class_iri = _iri(getattr(model, "rdf_class_iri", ""))
-        body = self._scope(self._subject_type("?s", class_iri) + " FILTER(isIRI(?s))")
+        if is_untyped(model):
+            body = self._scope(self._untyped_subjects("?s", model))
+        else:
+            class_iri = _iri(getattr(model, "rdf_class_iri", ""))
+            body = self._scope(self._subject_type("?s", class_iri) + " FILTER(isIRI(?s))")
         rows = self._select(f"SELECT DISTINCT ?s WHERE {{ {body} }} ORDER BY ?s LIMIT {limit}")
         iris = []
         for row in rows:

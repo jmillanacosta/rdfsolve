@@ -7,7 +7,7 @@ import unicodedata
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.client.hydration import class_iri
+from rdfsolve.client.hydration import record_kind
 from rdfsolve.client.query_fragments import Fragment, identifier
 from rdfsolve.schema_models.enrichment import NAME_PREDICATES, SYNONYM_PREDICATES, RdfTerm
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
@@ -403,7 +403,7 @@ class Catalogue:
             raise ValueError(
                 f"{value} already describes a path. Use its insert, or select a class endpoint for further search: {choices}."
             )
-        return class_iri(self.client.model(value))
+        return record_kind(self.client.model(value))
 
     def _field_names(self, owner: str, fields: Iterable[str]) -> list[str]:
         """Resolve references, names and unique exact labels within one owner."""
@@ -447,9 +447,9 @@ class Catalogue:
             )
             ref = self._put(
                 Fragment("term", self.client.title(record), term=term, basis=basis),
-                [class_iri(record), term.value]
+                [record_kind(record), term.value]
                 if term.kind == "uri"
-                else [class_iri(record), term.kind, term.value],
+                else [record_kind(record), term.kind, term.value],
             )
             self.records[ref] = record
             lookups = result.coverage.get("terms", [result.coverage.get("text", "")])

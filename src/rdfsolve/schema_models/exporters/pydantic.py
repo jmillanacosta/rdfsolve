@@ -13,12 +13,18 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
 
 from rdfsolve._uri import curie_from_prefixes, uri_to_curie
-from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, UNTYPED_SUBJECT
 from rdfsolve.schema_models.exporters.text import clip_description
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
     from rdfsolve.schema_models.pattern import SchemaPattern
+
+
+# The key of the untyped subjects in the class tables of the exporter: no class IRI is empty.
+_UNTYPED = ""
+UNTYPED_MODEL = "UntypedSubject"
+"""The base name of the model of the subjects without a type (subject_binding "untyped")."""
 
 
 def _identifier(text: str, *, class_name: bool = False, label: bool = False) -> str:
@@ -114,10 +120,20 @@ def to_pydantic(
     trim_descriptions: int | None = None,
     contract: bool = False,
 ) -> str:
-    """Use labels for names and retain IRIs in schema metadata."""
+    """Use labels for names and retain IRIs in schema metadata.
+
+    The patterns of subjects without a type (subject_binding "untyped") give one model of their
+    own, UntypedSubject: it has no rdf_class_iri (rdf_untyped_subjects is True), so it is not a
+    class view and claims no rdf:type; its fields are the properties of those subjects.
+    """
     labels: dict[str, set[str]] = defaultdict(set)
     grouped: dict[str, dict[str, list[SchemaPattern]]] = defaultdict(lambda: defaultdict(list))
     for pattern in schema.patterns:
+        if pattern.untyped_subject:
+            grouped[_UNTYPED][pattern.property_uri].append(pattern)
+            if pattern.object_class not in _SENTINEL_OBJECTS and pattern.object_label:
+                labels[pattern.object_class].add(pattern.object_label)
+            continue
         grouped[pattern.subject_class][pattern.property_uri].append(pattern)
         for iri, label in (
             (pattern.subject_class, pattern.subject_label),
@@ -173,6 +189,8 @@ def to_pydantic(
         base = _identifier(meaningful[0] if meaningful else curie_text, class_name=True)
         prefixed = _identifier(f"{prefix} {base}", class_name=True) if prefix else None
         names[iri] = _unique_name(base, iri, used, prefixed)
+    if _UNTYPED in grouped:
+        names[_UNTYPED] = _unique_name(UNTYPED_MODEL, UNTYPED_SUBJECT + "#untyped", used)
 
     collections: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for collection_profile in schema.collections or []:
@@ -254,7 +272,8 @@ def to_pydantic(
         ordered.extend(ready)
     examples_by_field: dict[tuple[str, str], list[Any]] = defaultdict(list)
     for example in schema.enrichment.examples:
-        examples_by_field[example.subject_class, example.property_uri].append(example)
+        owner = _UNTYPED if example.untyped_subject else example.subject_class
+        examples_by_field[owner, example.property_uri].append(example)
     # Per class: property -> (field name, value signature) of every field, own or inherited.
     available: dict[str, dict[str, tuple[str, str]]] = {}
     for iri in ordered:
@@ -270,16 +289,37 @@ def to_pydantic(
         class_examples = [
             {"@id": term.json_value()} for term in schema.enrichment.class_examples.get(iri, [])
         ]
-        lines.extend(
-            [
-                f"class {name}({bases}):",
-                f"    {clip_description(schema.enrichment.description(iri) or ('Observed type ' + iri), trim_descriptions)!r}",
-                f"    rdf_class_iri: ClassVar[str] = {iri!r}",
-                f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",
-                f"    rdf_shapes: ClassVar[list[dict[str, Any]]] = SHACL_PROFILES.get({iri!r}, [])",
-                f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, 'rdf_navigation': RDF_NAVIGATION.get({iri!r}, []), 'rdf_shapes': SHACL_PROFILES.get({iri!r}, []), **DATASET_METADATA}})",
-            ]
-        )
+        if iri == _UNTYPED:
+            untyped_text = (
+                "IRI subjects without a type in the data (rdfsolve patterns with "
+                "subject_binding 'untyped'). Not a class: a record of this view claims no "
+                "rdf:type, and a query binds its subjects through their properties."
+            )
+            lines.extend(
+                [
+                    f"class {name}({bases}):",
+                    f"    {untyped_text!r}",
+                    "    rdf_untyped_subjects: ClassVar[bool] = True",
+                    "    rdf_navigation: ClassVar[list[dict[str, Any]]] = []",
+                    "    rdf_shapes: ClassVar[list[dict[str, Any]]] = []",
+                    (
+                        "    model_config = ConfigDict(json_schema_extra={'rdf_class_iri': None, "
+                        "'rdf_subject_binding': 'untyped', 'examples': [], 'rdf_navigation': [], "
+                        "'rdf_shapes': [], **DATASET_METADATA})"
+                    ),
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    f"class {name}({bases}):",
+                    f"    {clip_description(schema.enrichment.description(iri) or ('Observed type ' + iri), trim_descriptions)!r}",
+                    f"    rdf_class_iri: ClassVar[str] = {iri!r}",
+                    f"    rdf_navigation: ClassVar[list[dict[str, Any]]] = RDF_NAVIGATION.get({iri!r}, [])",
+                    f"    rdf_shapes: ClassVar[list[dict[str, Any]]] = SHACL_PROFILES.get({iri!r}, [])",
+                    f"    model_config = ConfigDict(json_schema_extra={{'rdf_class_iri': {iri!r}, 'examples': {class_examples!r}, 'rdf_navigation': RDF_NAVIGATION.get({iri!r}, []), 'rdf_shapes': SHACL_PROFILES.get({iri!r}, []), **DATASET_METADATA}})",
+                ]
+            )
         fields = (
             set(dir(BaseModel))
             | used
@@ -288,6 +328,7 @@ def to_pydantic(
                 "rdf_type",
                 "rdf_prefixes",
                 "rdf_class_iri",
+                "rdf_untyped_subjects",
                 "rdf_navigation",
                 "rdf_shapes",
                 "rdf_terms",
@@ -300,7 +341,7 @@ def to_pydantic(
                 "to_graph",
             }
         )
-        namespace = curie(iri)[2]
+        namespace = curie(iri)[2] if iri != _UNTYPED else "\0"
         # Properties of the vocabulary of the class keep plain names. Others get a prefix.
         for prop, patterns in sorted(
             grouped[iri].items(), key=lambda item: (not item[0].startswith(namespace), item[0])
@@ -413,6 +454,42 @@ def build_pydantic_classes(
     their validators on first use, resolving names in that module, so a large vocabulary
     loads quickly and clients of one schema share its classes.
     """
+    return generated_models(schema, contract=contract)[0]
+
+
+def generated_models(
+    schema: MinedSchema, *, contract: bool = False
+) -> tuple[dict[str, type[BaseModel]], type[BaseModel] | None]:
+    """Return the class models and the model of the subjects without a type (None when the
+    schema has no untyped patterns), from one generated module.
+
+    The untyped model is not one of the class models: it has no class.
+    """
+    module = _generated_module(schema, contract)
+    classes = {
+        name: value
+        for name, value in vars(module).items()
+        if isinstance(value, type)
+        and issubclass(value, BaseModel)
+        and hasattr(value, "rdf_class_iri")
+    }
+    return classes, _untyped_of(module)
+
+
+def _untyped_of(module: ModuleType) -> type[BaseModel] | None:
+    """Return the untyped-subject model of a generated module, if any."""
+    for value in vars(module).values():
+        if (
+            isinstance(value, type)
+            and issubclass(value, BaseModel)
+            and value.__dict__.get("rdf_untyped_subjects") is True
+        ):
+            return value
+    return None
+
+
+def _generated_module(schema: MinedSchema, contract: bool) -> ModuleType:
+    """Run the generated code of *schema* once per distinct code, and return its module."""
     code = to_pydantic(schema, contract=contract)
     module_name = "rdfsolve.generated_" + sha256(code.encode()).hexdigest()[:16]
     module = sys.modules.get(module_name)
@@ -420,10 +497,4 @@ def build_pydantic_classes(
         module = ModuleType(module_name)
         exec(compile(code, "<rdfsolve generated models>", "exec"), module.__dict__)  # noqa: S102
         sys.modules[module_name] = module
-    return {
-        name: value
-        for name, value in vars(module).items()
-        if isinstance(value, type)
-        and issubclass(value, BaseModel)
-        and hasattr(value, "rdf_class_iri")
-    }
+    return module

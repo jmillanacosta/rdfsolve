@@ -114,7 +114,7 @@ def to_linkml(
     labels: dict[str, str] = {}
     for pattern in schema.patterns:
         for iri, label in (
-            (pattern.subject_class, pattern.subject_label),
+            (pattern.subject_class, None if pattern.untyped_subject else pattern.subject_label),
             (pattern.property_uri, pattern.property_label),
             (pattern.object_class, pattern.object_label),
         ):
@@ -146,6 +146,7 @@ def to_linkml(
     }
     ranges: dict[str, set[str]] = {}
     class_ranges: dict[tuple[str, str], set[str]] = {}
+    untyped_ranges: dict[str, set[str]] = {}
 
     def value_range(pattern: SchemaPattern) -> str:
         """Choose a LinkML range for one observed pattern."""
@@ -163,8 +164,10 @@ def to_linkml(
     for pattern in schema.patterns:
         value = value_range(pattern)
         ranges.setdefault(pattern.property_uri, set()).add(value)
-        # Untyped subjects have no class: their property is a slot of the schema alone.
-        if not pattern.untyped_subject:
+        # Untyped subjects have no class: their properties are slots of the UntypedSubject mixin.
+        if pattern.untyped_subject:
+            untyped_ranges.setdefault(pattern.property_uri, set()).add(value)
+        else:
             class_ranges.setdefault((pattern.subject_class, pattern.property_uri), set()).add(value)
 
     def constraints(values: set[str]) -> dict[str, Any]:
@@ -198,6 +201,29 @@ def to_linkml(
         classes[class_iri].slot_usage[slot_name] = SlotDefinition(
             name=slot_name, **constraints(values)
         )
+    if untyped_ranges:
+        # A mixin, not a class: it is never instantiated, so it states no rdf:type (no
+        # class_uri, never rdfs:Resource); its slots are the properties of the IRI subjects
+        # without a type, with their observed ranges.
+        taken = {c.name for c in classes.values()} | set(slots) | builtin_types
+        untyped_name = "UntypedSubject"
+        while untyped_name in taken:
+            untyped_name += "_"
+        untyped = ClassDefinition(
+            name=untyped_name,
+            mixin=True,
+            description=(
+                "IRI subjects without a type in the data (rdfsolve patterns with "
+                "subject_binding 'untyped'). Not a class of the data: it has no class_uri."
+            ),
+            annotations={"rdfsolve_subject_binding": "untyped"},
+            slots=[],
+        )
+        for property_iri, values in sorted(untyped_ranges.items()):
+            slot_name = slot_names[property_iri]
+            untyped.slots.append(slot_name)
+            untyped.slot_usage[slot_name] = SlotDefinition(name=slot_name, **constraints(values))
+        classes[untyped_name] = untyped
 
     about = schema.about
     annotations = (

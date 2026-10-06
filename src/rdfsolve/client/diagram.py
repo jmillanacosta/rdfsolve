@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve._uri import curie_from_prefixes
 from rdfsolve.client.hydration import class_iri
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -179,12 +180,12 @@ def link_diagram(
         prop = _link(client, link.lstrip("^"), focus)
         counts: dict[str, int] = defaultdict(int)
         for pattern in client.schema.patterns:
-            if pattern.property_uri != prop:
+            if pattern.property_uri != prop or (pattern.untyped_subject and not inverse):
                 continue
+            # A link to the focus from subjects without a type comes from "untyped subjects".
+            subject = UNTYPED_SUBJECTS_LABEL if pattern.untyped_subject else pattern.subject_class
             here, there = (
-                (pattern.object_class, pattern.subject_class)
-                if inverse
-                else (pattern.subject_class, pattern.object_class)
+                (pattern.object_class, subject) if inverse else (subject, pattern.object_class)
             )
             if here != focus or (there.startswith("http") and not there.startswith(namespace)):
                 continue

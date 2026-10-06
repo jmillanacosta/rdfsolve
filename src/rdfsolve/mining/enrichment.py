@@ -303,6 +303,7 @@ def query_enrichment(
                 result.examples.append(
                     PatternExample(
                         subject_class=pattern.subject_class,
+                        subject_binding="untyped" if pattern.untyped_subject else "type",
                         property_uri=pattern.property_uri,
                         subject=_term(row["subject"], result.query_count),
                         value=_term(row["value"], result.query_count),

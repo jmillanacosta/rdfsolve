@@ -473,6 +473,7 @@ class VoidStrategy(MiningStrategy):
             self.examples.append(
                 PatternExample(
                     subject_class=pattern.subject_class,
+                    subject_binding="untyped" if pattern.untyped_subject else "type",
                     property_uri=pattern.property_uri,
                     subject=_term(rows[0]["s"]),
                     value=_term(obj),
@@ -650,6 +651,7 @@ class VoidStrategy(MiningStrategy):
                 self.examples.append(
                     PatternExample(
                         subject_class=p.subject_class,
+                        subject_binding="untyped" if p.untyped_subject else "type",
                         property_uri=p.property_uri,
                         subject=_term(rows[0]["s"]),
                         value=_term(rows[0]["o"]),

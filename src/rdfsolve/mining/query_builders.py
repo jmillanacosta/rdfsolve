@@ -141,13 +141,18 @@ class UntypedSubjects(str):
 
 
 def _untyped_subject_test(
-    node: str, marker: UntypedSubjects, context_graph_uris: list[str] | None
+    node: str,
+    marker: UntypedSubjects,
+    context_graph_uris: list[str] | None,
+    membership: str | Sequence[str] | None = None,
 ) -> str:
-    """Keep the IRI subjects without a type (see UntypedSubjects)."""
+    """Keep the IRI subjects without a type (see UntypedSubjects); *membership* as in
+    _type_pattern.
+    """
     test = f"FILTER(isIRI({node}))"
     if marker.every:
         return test
-    types = _type_pattern(node, "?_subjectType", context_graph_uris)
+    types = _type_pattern(node, "?_subjectType", context_graph_uris, membership)
     return f"{test} FILTER NOT EXISTS {{ {marker.edge} {types} }}"
 
 
@@ -164,7 +169,7 @@ def _type_pattern(
     UntypedSubjects in place of the class keeps the nodes without a type instead.
     """
     if isinstance(cls, UntypedSubjects):
-        return _untyped_subject_test(node, cls, context_graph_uris)
+        return _untyped_subject_test(node, cls, context_graph_uris, membership)
     triple = f"{node} {membership_path(membership)} {cls} ."
     if not context_graph_uris:
         return triple

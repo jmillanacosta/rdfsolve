@@ -20,15 +20,21 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 from rdfsolve.schema_models.pattern import SchemaPattern
 
 _KINDS = ("Literal", "Resource", "BlankNode")
 
 
+def _subject(p: SchemaPattern) -> str:
+    """Return a pattern's subject class, or "untyped subjects" for subjects without a type."""
+    return UNTYPED_SUBJECTS_LABEL if p.untyped_subject else p.subject_class
+
+
 def _key(p: SchemaPattern) -> tuple[str, str, str]:
     """Return a pattern's subject class, property, and object class or datatype."""
     obj = f"Literal^^{p.datatype or ''}" if p.object_class == "Literal" else p.object_class
-    return p.subject_class, p.property_uri, obj
+    return _subject(p), p.property_uri, obj
 
 
 class SetComparison(BaseModel):
@@ -106,8 +112,8 @@ def compare_void_with_mined(
         return bool(sampled) and (p.graphs is None or any(g in sampled for g in p.graphs))
 
     def classes(ps: list[SchemaPattern]) -> set[str]:
-        """Return the subject and object classes of patterns."""
-        return {p.subject_class for p in ps} | {
+        """Return the subject and object classes of patterns (subjects without a type: none)."""
+        return {p.subject_class for p in ps if not p.untyped_subject} | {
             p.object_class for p in ps if p.object_class not in _KINDS
         }
 
@@ -142,8 +148,8 @@ def compare_void_with_mined(
             {p.property_uri for p in void_patterns}, {p.property_uri for p in mined_patterns}
         ),
         class_properties=SetComparison.of(
-            {(p.subject_class, p.property_uri) for p in void_patterns},
-            {(p.subject_class, p.property_uri) for p in mined_patterns},
+            {(_subject(p), p.property_uri) for p in void_patterns},
+            {(_subject(p), p.property_uri) for p in mined_patterns},
         ),
         patterns=SetComparison.of(set(void_by_key), set(mined_by_key)),
         counts=CountAgreement(

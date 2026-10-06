@@ -203,7 +203,7 @@ class Rule:
         *subject*) to the record type they must reach (or None): the rule holds only for focus
         nodes that have them.
         """
-        from rdfsolve.client.hydration import class_iri
+        from rdfsolve.client.hydration import class_iri, is_untyped
 
         def kind(name: str | None, links: Sequence[str] = (), to: str | None = None) -> str | None:
             """Return the class IRI of a record type; a shared name is decided by the links the
@@ -213,7 +213,14 @@ class Rule:
                 return None
             if ":" in name and not name.startswith(("http://", "https://")):
                 name = _expand(name, client)
-            return class_iri(client.model(name, links=links, to=to))
+            model = client.model(name, links=links, to=to)
+            if is_untyped(model):
+                raise ValueError(
+                    f"{name!r} names the subjects without a type: a rule hangs from a class. "
+                    "Write the conversion as a query that binds them through a property "
+                    "(?x <p> ?v . FILTER NOT EXISTS { ?x a ?type }); it is run whole."
+                )
+            return class_iri(model)
 
         def end(path_text: str | None) -> list[str]:
             """Return the link that reaches an end, seen from the end (to the focus)."""
@@ -900,14 +907,22 @@ class Query:
         """
         from rdflib import URIRef
 
-        from rdfsolve.schema_models.exporters.shacl import shape_iri
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+        from rdfsolve.schema_models.exporters.shacl import shape_iri, untyped_shape_iri
 
         triples, _, _ = self._pattern()
         types = {s: str(o) for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
         counted: dict[tuple[str, str], int] = defaultdict(int)
+        # The patterns of subjects without a type: the statements of a variable with no class.
+        untyped: dict[str, int] = defaultdict(int)
         for pattern in schema.patterns:
+            if pattern.untyped_subject:
+                untyped[pattern.property_uri] += pattern.count or 0
+                continue
             counted[(pattern.subject_class, pattern.property_uri)] += pattern.count or 0
-        classes = {pattern.subject_class for pattern in schema.patterns}
+        classes = {
+            pattern.subject_class for pattern in schema.patterns if not pattern.untyped_subject
+        }
         dataset = schema.about.dataset_name or "local"
         rows: list[dict[str, Any]] = []
         for s, p, o in triples:
@@ -929,6 +944,17 @@ class Query:
             ):
                 s, p, o = o, p.arg, s
             cls = types.get(s)
+            if cls is None and isinstance(p, URIRef) and str(p) in untyped:
+                rows.append(
+                    {
+                        "pattern": f"?{s} <{p}> ?{o}",
+                        "shape": untyped_shape_iri(dataset, str(p)),
+                        "statements": untyped[str(p)],
+                        "found": True,
+                        "subject": UNTYPED_SUBJECTS_LABEL,
+                    }
+                )
+                continue
             if cls is None or not isinstance(p, URIRef):
                 rows.append(
                     {

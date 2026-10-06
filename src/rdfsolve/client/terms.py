@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 SENTINELS = ("Literal", "Resource", "BlankNode")
 SHAPE_GROUP_PREFIX = "https://w3id.org/rdfsolve/term-shape/"
-KEY = ["subject_class", "property", "object_class", "datatype", "graph"]
+KEY = ["subject_class", "property", "object_class", "datatype", "graph", "subject_binding"]
 
 __all__ = [
     "TermRelease",
@@ -202,14 +202,18 @@ def representatives_under(
 def regroup(release: TermRelease, representative: Mapping[str, str]) -> pl.DataFrame:
     """Sum the per-term rows into the groups of *representative*, with flags of exactness.
 
-    Columns: subject_class, property, object_class, datatype, graph, triples,
+    Columns: subject_class, property, object_class, datatype, graph, subject_binding, triples,
     distinct_subjects, distinct_objects (sums), member_rows, triples_exact, subjects_exact,
-    objects_exact. A sum that is not exact is an upper bound.
+    objects_exact. A sum that is not exact is an upper bound. The rows of subjects without a
+    type (subject_binding "untyped"; a release without the column has none) keep their
+    subject: they have no class to group; their objects are grouped.
     """
     import polars as pl
 
     mapping = dict(representative)
     terms = release.terms
+    if "subject_binding" not in terms.columns:
+        terms = terms.with_columns(subject_binding=pl.lit("type"))
     # A representative whose members include two classes that share records counts them twice.
     pairs = (
         release.classes.select("class", "overlaps")
@@ -225,7 +229,9 @@ def regroup(release: TermRelease, representative: Mapping[str, str]) -> pl.DataF
     frame = terms.with_columns(
         term_subject=pl.col("subject_class"),
         term_object=pl.col("object_class"),
-        subject_class=pl.col("subject_class").replace(mapping),
+        subject_class=pl.when(pl.col("subject_binding") == "untyped")
+        .then(pl.col("subject_class"))
+        .otherwise(pl.col("subject_class").replace(mapping)),
         object_class=pl.when(pl.col("object_class").is_in(list(SENTINELS)))
         .then(pl.col("object_class"))
         .otherwise(pl.col("object_class").replace(mapping)),
@@ -268,16 +274,23 @@ def to_patterns(table: pl.DataFrame) -> list[SchemaPattern]:
     merged: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
     for row in table.iter_rows(named=True):
         merged[
-            (row["subject_class"], row["property"], row["object_class"], row["datatype"])
+            (
+                row["subject_class"],
+                row["property"],
+                row["object_class"],
+                row["datatype"],
+                row.get("subject_binding") or "type",
+            )
         ].append(row)
     out = []
-    for (subject, prop, obj, datatype), rows in merged.items():
+    for (subject, prop, obj, datatype, binding), rows in merged.items():
         scoped = rows[0]["graph"] is not None
         exact = all(r["triples_exact"] for r in rows)
         one = len(rows) == 1
         out.append(
             SchemaPattern(
                 subject_class=subject,
+                subject_binding=binding,
                 property_uri=prop,
                 object_class=obj,
                 datatype=datatype,

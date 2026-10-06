@@ -32,6 +32,8 @@ COMMON_PREFIXES = {
     "dcat": "http://www.w3.org/ns/dcat#",
 }
 _LOCAL = re.compile(r"[\w-](?:[\w.-]*[\w-])?")
+# The group of the patterns of subjects without a type: listed apart, never as a class.
+UNTYPED = "untyped subjects"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 # A route is a list of steps: (from class, property, to class, forward, count).
 Step = tuple[str, str, str, bool, int]
@@ -93,15 +95,20 @@ class SchemaView:
         self.outgoing: dict[str, list[SchemaPattern]] = defaultdict(list)
         self.incoming: dict[str, list[SchemaPattern]] = defaultdict(list)
         self.uses: dict[str, list[SchemaPattern]] = defaultdict(list)
+        # The patterns of IRI subjects without a type (subject_binding "untyped").
+        self.untyped: list[SchemaPattern] = []
         for pattern in schema.patterns:
             for iri, label in (
-                (pattern.subject_class, pattern.subject_label),
+                (pattern.subject_class, None if pattern.untyped_subject else pattern.subject_label),
                 (pattern.property_uri, pattern.property_label),
                 (pattern.object_class, pattern.object_label),
             ):
                 if label and "://" in iri and _key(label) != _key(_local(iri)):
                     self.labels.setdefault(iri, label)
-            self.outgoing[pattern.subject_class].append(pattern)
+            if pattern.untyped_subject:
+                self.untyped.append(pattern)
+            else:
+                self.outgoing[pattern.subject_class].append(pattern)
             self.uses[pattern.property_uri].append(pattern)
             if pattern.object_class in self.classes:
                 self.incoming[pattern.object_class].append(pattern)
@@ -111,8 +118,19 @@ class SchemaView:
                 if _key(note.text.value) != _key(_local(note.term_iri)):
                     self.labels[note.term_iri] = note.text.value
             for example in schema.enrichment.examples:
-                key = (example.subject_class, example.property_uri)
-                self.examples.setdefault(key, example.value)
+                owner = UNTYPED if example.untyped_subject else example.subject_class
+                self.examples.setdefault((owner, example.property_uri), example.value)
+
+    def subject(self, pattern: SchemaPattern) -> str:
+        """Write the subject of a pattern: its class as a CURIE, or the untyped group."""
+        if pattern.untyped_subject:
+            return f"({UNTYPED})"
+        return self.curie(self.canonical(pattern.subject_class))
+
+    @staticmethod
+    def names_untyped(text: str) -> bool:
+        """Return whether a name asks for the subjects without a type ("untyped subjects")."""
+        return _key(text) in {_key(UNTYPED), "untyped", "untypedsubject"}
 
     def canonical(self, iri: str) -> str:
         """Return the class shown for a class with the same members as others."""
@@ -216,6 +234,12 @@ class SchemaView:
         ]
         if len(classes) > limit:
             lines.append(f"  … {len(classes) - limit} more. Use schema with search words.")
+        if self.untyped:
+            properties = {p.property_uri for p in self.untyped}
+            lines.append(
+                f"Subjects without a type (no rdf:type; not a class): {len(properties)} "
+                f"properties. Ask schema for {UNTYPED!r}."
+            )
         own = self.schema.get_prefixes()
         lines.append("Prefixes: " + " ".join(f"{p}: <{ns}>" for p, ns in sorted(own.items())))
         return "\n".join(lines)
@@ -231,6 +255,34 @@ class SchemaView:
         else:
             kind = pattern.object_class.lower()
         return kind + (f" [{pattern.count}]" if pattern.count is not None else "")
+
+    def untyped_card(self, limit: int = 30) -> str:
+        """Describe the subjects without a type: their properties, value types and counts."""
+        if not self.untyped:
+            return "Every subject of the source has a type: no untyped subjects."
+        lines = [
+            (
+                f"{UNTYPED.capitalize()}: IRI subjects with no rdf:type. Not a class: bind them "
+                "through a property, and keep only those without a type when the question needs "
+                "it (FILTER NOT EXISTS { ?x a ?type })."
+            )
+        ]
+        groups: dict[str, list[SchemaPattern]] = defaultdict(list)
+        for pattern in self.untyped:
+            groups[pattern.property_uri].append(pattern)
+        ranked = sorted(groups.items(), key=lambda item: -max(p.count or 0 for p in item[1]))
+        lines.append("  Properties (?x property value):")
+        for prop, patterns in ranked[:limit]:
+            patterns.sort(key=lambda p: -(p.count or 0))
+            example = self.examples.get((UNTYPED, prop))
+            lines.append(
+                f"    {self.named(prop)} → "
+                + ", ".join(self._value(p) for p in patterns[:4])
+                + (f"  e.g. {self.term(example)}" if example else "")
+            )
+        if len(ranked) > limit:
+            lines.append(f"    … {len(ranked) - limit} more properties.")
+        return "\n".join(lines)
 
     def card(self, iri: str, limit: int = 30) -> str:
         """Describe one class: its properties, value types, counts and links to it."""
@@ -283,13 +335,13 @@ class SchemaView:
             (p for member in group for p in self.incoming.get(member, [])),
             key=lambda p: -(p.count or 0),
         ):
-            if (self.canonical(p.subject_class), p.property_uri) not in seen:
-                seen.add((self.canonical(p.subject_class), p.property_uri))
+            if (self.subject(p), p.property_uri) not in seen:
+                seen.add((self.subject(p), p.property_uri))
                 links.append(p)
         if links:
             lines.append(f"  Links to it (?y property ?x, with ?x a {self.curie(iri)}):")
         lines += [
-            f"    {self.curie(self.canonical(p.subject_class))} {self.curie(p.property_uri)}"
+            f"    {self.subject(p)} {self.curie(p.property_uri)}"
             + (f" [{p.count}]" if p.count is not None else "")
             for p in links[:limit]
         ]
@@ -322,7 +374,7 @@ class SchemaView:
             uses = sorted(self.uses[prop], key=lambda p: -(p.count or 0))[:3]
             lines.append(
                 f"  {self.named(prop)}: "
-                + "; ".join(f"{self.curie(p.subject_class)} → {self._value(p)}" for p in uses)
+                + "; ".join(f"{self.subject(p)} → {self._value(p)}" for p in uses)
             )
         if not properties:
             lines.append("No property name matches.")
@@ -340,6 +392,9 @@ class SchemaView:
         edges: dict[str, list[Step]] = defaultdict(list)
         seen_steps: set[tuple[str, str, str, bool]] = set()
         for pattern in self.schema.patterns:
+            # Routes join classes: subjects without a type are no node (rdfs:Resource no hub).
+            if pattern.untyped_subject:
+                continue
             if pattern.object_class in self.classes and pattern.property_uri != RDF_TYPE:
                 a, b = self.canonical(pattern.subject_class), self.canonical(pattern.object_class)
                 count = pattern.count or 0

@@ -744,6 +744,9 @@ class PropertyGraph:
         _attached_to_nodes(nodes, edges)
         for each in schemas:
             for pattern in each.patterns:
+                # Keyed by class (fold places); subjects without a type have no class.
+                if pattern.untyped_subject:
+                    continue
                 key = (pattern.subject_class, pattern.property_uri, pattern.object_class)
                 built.patterns[key] += pattern.count or 0
         return built
@@ -783,7 +786,10 @@ class PropertyGraph:
         def source_of(fold: Fold) -> str | None:
             """Return the dataset name of the client whose schema has the fold's class."""
             for client in clients:
-                if any(p.subject_class == fold.cls for p in client.schema.patterns):
+                if any(
+                    p.subject_class == fold.cls and not p.untyped_subject
+                    for p in client.schema.patterns
+                ):
                     return str(client.schema.about.dataset_name or "") or None
             return None
 
@@ -2261,7 +2267,7 @@ def _schema_labels(schema: MinedSchema) -> dict[str, str]:
     labels: dict[str, str] = {}
     for p in schema.patterns:
         for iri, label in (
-            (p.subject_class, p.subject_label),
+            (p.subject_class, None if p.untyped_subject else p.subject_label),
             (p.property_uri, p.property_label),
             (p.object_class, p.object_label),
         ):
@@ -2276,12 +2282,13 @@ def suggest_folds(schema: MinedSchema) -> list[Fold]:
     A link qualifies when, for its class, every pattern counts one value per subject, every
     instance has it (when the class size is known), and it does not point to a container (many
     instances sharing few objects, such as a pathway). Each pair of qualifying links is proposed,
-    with what was measured as evidence; a person or a model chooses.
+    with what was measured as evidence; a person or a model chooses. Subjects without a type
+    are not folded: a fold is of a class (``?instance a <class>``).
     """
     sizes = schema.about.class_entity_counts or {}
     links: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
     for p in schema.patterns:
-        if p.object_class in _SENTINEL_OBJECTS or p.property_uri == _TYPE:
+        if p.object_class in _SENTINEL_OBJECTS or p.property_uri == _TYPE or p.untyped_subject:
             continue
         entry = links[p.subject_class].setdefault(
             p.property_uri, {"functional": True, "subjects": 0, "objects": 0, "classes": []}

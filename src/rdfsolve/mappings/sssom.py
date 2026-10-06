@@ -203,8 +203,18 @@ def links_to_sssom(
 
     from rdfsolve._uri import prefix_map
     from rdfsolve.config import mint
+    from rdfsolve.mappings.signatures import is_untyped
 
-    kept = [e for e in links if e.share is not None and e.share >= min_share]
+    # A mapping set relates classes: a link from or to the subjects without a type has no
+    # class at that end and is left out (it stays in the link table, with its evidence).
+    kept = [
+        e
+        for e in links
+        if e.share is not None
+        and e.share >= min_share
+        and not is_untyped(e.link.source_class)
+        and not is_untyped(e.link.target_class)
+    ]
     retained: dict[str, str] = {"rdfsolve": get_base_uri()}
     for schema in schemas.values():
         for prefix, namespace in schema.get_prefixes().items():

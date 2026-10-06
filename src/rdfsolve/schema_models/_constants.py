@@ -89,3 +89,8 @@ the pattern says nothing of the subject beyond its property. ABSTAT gives untype
 owl:Thing for the same purpose. The binding, not the IRI, marks the pattern: a source may type
 records with rdfs:Resource, and those are typed patterns of that class.
 """
+UNTYPED_SUBJECTS_LABEL = "untyped subjects"
+"""The name under which class-centric views list the patterns of subjects without a type.
+
+Not a class: views show these rows apart from every class, never as rdfs:Resource.
+"""

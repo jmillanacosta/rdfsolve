@@ -7,8 +7,10 @@ client group the terms again at any budget or under chosen ancestors without the
 
 ``<stem>_terms.parquet``
     one row per (subject term, property, object term or Literal/Resource/BlankNode, datatype,
-    graph): triples, distinct_subjects, distinct_objects, counted from the per-term type table
-    (minimal types when the grouping used them). The file's metadata (key ``rdfsolve``) holds
+    graph, subject_binding): triples, distinct_subjects, distinct_objects, counted from the
+    per-term type table
+    (minimal types when the grouping used them). subject_binding is "untyped" for the rows of
+    IRI subjects without a type (subject rdfs:Resource, no class), else "type". The file's metadata (key ``rdfsolve``) holds
     the manifest: the grouping settings, the type table used, and the condition under which
     sums of rows are exact.
 ``<stem>_term_classes.parquet``
@@ -66,7 +68,7 @@ def term_rows(patterns: Sequence[SchemaPattern]) -> pl.DataFrame:
     import polars as pl
 
     rows: list[
-        tuple[str, str, str, str | None, str | None, int | None, int | None, int | None]
+        tuple[str, str, str, str | None, str | None, int | None, int | None, int | None, str]
     ] = []
     for p in patterns:
         key = (p.subject_class, p.property_uri, p.object_class, p.datatype)
@@ -79,10 +81,13 @@ def term_rows(patterns: Sequence[SchemaPattern]) -> pl.DataFrame:
                         n,
                         (p.graph_distinct_subjects or {}).get(graph),
                         (p.graph_distinct_objects or {}).get(graph),
+                        p.subject_binding,
                     )
                 )
         else:
-            rows.append((*key, None, p.count, p.distinct_subjects, p.distinct_objects))
+            rows.append(
+                (*key, None, p.count, p.distinct_subjects, p.distinct_objects, p.subject_binding)
+            )
     return pl.DataFrame(
         rows,
         schema={
@@ -94,9 +99,18 @@ def term_rows(patterns: Sequence[SchemaPattern]) -> pl.DataFrame:
             "triples": pl.UInt64,
             "distinct_subjects": pl.UInt64,
             "distinct_objects": pl.UInt64,
+            "subject_binding": pl.String,
         },
         orient="row",
-    ).sort("subject_class", "property", "object_class", "datatype", "graph", nulls_last=True)
+    ).sort(
+        "subject_class",
+        "property",
+        "object_class",
+        "datatype",
+        "graph",
+        "subject_binding",
+        nulls_last=True,
+    )
 
 
 def _write(frame: pl.DataFrame, path: Path, metadata: dict[str, Any] | None = None) -> None:
@@ -172,7 +186,11 @@ def write_term_release(
         | set(grouping.representative.values())
         | {
             c
-            for c in (*terms["subject_class"], *terms["object_class"])
+            for c in (
+                # Untyped subjects have no class: rdfs:Resource is not listed for them.
+                *terms.filter(pl.col("subject_binding") != "untyped")["subject_class"],
+                *terms["object_class"],
+            )
             if c not in _SENTINEL_OBJECTS
         }
     )

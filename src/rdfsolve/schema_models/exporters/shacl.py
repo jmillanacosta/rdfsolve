@@ -33,6 +33,18 @@ def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
     return f"{base}ns-{short(cls)}" if prop is None else f"{base}ps-{short(cls)}-{short(prop)}"
 
 
+def untyped_shape_iri(dataset: str, prop: str) -> str:
+    """Return the IRI of the node shape of the subjects of *prop* without a type in *dataset*
+    (with the default base IRI of minedschema_to_shacl).
+    """
+    from hashlib import md5
+
+    from rdfsolve.config import mint
+
+    short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+    return mint("dataset", dataset or "unnamed") + f"/shapes/ns-untyped-{short}"
+
+
 def minedschema_to_shacl(
     schema: MinedSchema,
     base_uri: str | None = None,
