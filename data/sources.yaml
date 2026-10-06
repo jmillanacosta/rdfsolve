@@ -2396,7 +2396,7 @@
       - https://ftp.ncbi.nlm.nih.gov/pubchem/RDF/taxonomy/pc_taxonomy.ttl.gz
     http://rdf.ncbi.nlm.nih.gov/pubchem/ruleset:
       download_owl:
-      - https://data.bioontology.org/ontologies/BAO/submissions/56/download
+      - http://www.bioassayontology.org/bao/bao_complete.owl  # open copy (BioPortal needs a key; EBI OLS loads BAO from here)
       - http://purl.obolibrary.org/obo/bfo.owl
       - http://www.biopax.org/release/biopax-level3.owl
       - http://purl.obolibrary.org/obo/cheminf.owl
@@ -6866,7 +6866,8 @@
   - https://omabrowser.org/All/oma-rdf-turtle.tgz
 - name: openbiodiv
   dataset_kind: instance
-  endpoint: http://graph.openbiodiv.net/
+  endpoint: http://graph.openbiodiv.net/  # an expired GraphQL page, not a SPARQL endpoint (2026-10-06)
+  skip_remote: true
   download_nq: https://zenodo.org/api/records/5283207/files/openbiodiv_v3.nq.gz/content  # OpenBiodiv Archive 0.0.3, the graph on 2021-08-23 (doi:10.5281/zenodo.5283207)
   download_ttl: https://raw.githubusercontent.com/pensoft/OpenBiodiv/refs/heads/master/ontology/openbiodiv-ontology-latest.ttl
   notes: 'KG Registry: OpenBiodiv'
@@ -6910,8 +6911,6 @@
   - biomedical science
   kg_registry_id: kg-monarch
   science_area: life sciences
-  download_rdf:
-  - https://data.monarchinitiative.org/monarch-kg/latest/monarch-kg.nt.gz
 - name: pathophenodb
   dataset_kind: instance
   download_nt: http://patho.phenomebrowser.net/media/downloads/patho_pheno_withsymbols.nt
