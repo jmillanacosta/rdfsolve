@@ -24,6 +24,7 @@ from rdfsolve.mining.query_builders import (
     _build_same_members_query,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
+from rdfsolve.mining.sampling import mark_sampled
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper, SparqlHelperError
@@ -680,6 +681,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 continue
 
             # 2a. Typed-object patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             typed_bindings = query_bisect(
                 batch, _build_batched_typed_object_query, "two-phase/typed-object"
@@ -714,8 +716,10 @@ class TwoPhaseStrategy(MiningStrategy):
                     except (ValueError, ValidationError):
                         context.report.record_dropped_uri(f"{cls} {p} {oc}", b)
             patterns.extend(blank_node_patterns(anonymous_typed, context, "class"))
+            mark_sampled(patterns[kind_start:], typed_bindings.rows)
 
             # 2b. Literal patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             literal_bindings = query_bisect(
                 batch, _build_batched_literal_query, "two-phase/literal"
@@ -742,7 +746,10 @@ class TwoPhaseStrategy(MiningStrategy):
                     except (ValueError, ValidationError):
                         context.report.record_dropped_uri(f"{cls} {p} Literal", b)
 
+            mark_sampled(patterns[kind_start:], literal_bindings.rows)
+
             # 2c. Untyped-URI patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             untyped_bindings = query_bisect(
                 batch, _build_batched_untyped_uri_query, "two-phase/untyped-uri"
@@ -770,7 +777,10 @@ class TwoPhaseStrategy(MiningStrategy):
                     except (ValueError, ValidationError):
                         context.report.record_dropped_uri(f"{cls} {p} {untyped_oc}", b)
 
+            mark_sampled(patterns[kind_start:], untyped_bindings.rows)
+
             # 2d. Blank node patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             blank_bindings = query_bisect(
                 batch, _build_batched_blank_node_query, "two-phase/blank-node"
@@ -781,6 +791,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 success=blank_bindings.state == "complete",
             )
             patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
+            mark_sampled(patterns[kind_start:], blank_bindings.rows)
             # A batch with an unresolved failure is partial: a resumed run mines it again.
             state = (
                 "complete" if len(context.report.report.query_failures) == failures else "partial"

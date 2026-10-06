@@ -72,6 +72,9 @@ class ExtractionReleaseRecord(BaseModel):
 
     mode: str
     completion_state: CompletionState = "unknown"
+    # Refused queries answered over a bounded sample (report sampled_queries): not failures;
+    # their rows are flagged sampled in the schema, with lower-bound counts.
+    sampled_queries: int = Field(0, ge=0)
     report_path: str | None = None
     snapshot_id: str | None = None
     schema_path: str | None = None

@@ -16,8 +16,10 @@ property with none is skipped, and a property whose triples are all of untyped s
 counted without the test of each subject (only FILTER(isIRI(?s))). Otherwise the properties
 are listed and each is probed for one untyped subject under a short time limit; the probes of
 an endpoint that runs past the limit five times in a row stop (QueryCuts), and each property
-not probed is a measurement gap. A count refused for a property that has untyped subjects is a
-failure: the schema then misses rows that exist.
+not probed is a measurement gap. A count refused for a property that has untyped subjects is
+asked over a sample of its edges (rdfsolve.mining.sampling): the rows of the sample are kept,
+flagged sampled, with counts that are lower bounds. Only a count whose samples are refused too
+is a failure: the schema then misses rows that exist.
 """
 
 from __future__ import annotations
@@ -64,20 +66,33 @@ PROBE_SECONDS = 30.0
 def untyped_census(context: MiningContext) -> dict[str, dict[str, int] | None]:
     """Return what the structural census counted for each property: its triples and the
     triples of its untyped subjects, summed over the graphs; None for a property whose
-    untyped triples were not counted (a refused census). Empty without a census.
+    untyped triples were not counted (a refused census). A property whose census was refused
+    but whose sample showed untyped subjects is marked "sampled" (it has some, not every
+    subject is known to be untyped). Empty without a census.
     """
     coverage = context.report.report.config.get("structural_coverage") or []
     found: dict[str, dict[str, int]] = {}
     refused: set[str] = set()
+    sampled: set[str] = set()
     for entry in coverage:
         for predicate, counts in (entry.get("census_properties") or {}).items():
+            if "untypedTriples" not in counts and (counts.get("sampled") or {}).get(
+                "untypedTriples"
+            ):
+                # Untyped subjects seen in a sample of a refused census: they exist.
+                sampled.add(predicate)
+                continue
             if "untypedTriples" not in counts:
                 refused.add(predicate)
                 continue
             total = found.setdefault(predicate, {"triples": 0, "untyped": 0})
             total["triples"] += int(counts.get("triples") or 0)
             total["untyped"] += int(counts["untypedTriples"])
-    return {p: None if p in refused else found.get(p) for p in found.keys() | refused}
+    seen = {"triples": 0, "untyped": 0, "sampled": 1}
+    return {
+        p: None if p in refused else seen if p in sampled - found.keys() else found.get(p)
+        for p in found.keys() | refused | sampled
+    }
 
 
 def _listed_properties(context: MiningContext) -> list[str] | None:
@@ -167,6 +182,9 @@ def _candidates(
         if predicate in membership:
             continue
         counted = census.get(predicate)
+        if counted is not None and counted.get("sampled"):
+            chosen.append((predicate, UntypedSubjects()))
+            continue
         if counted is not None:
             if counted["untyped"]:
                 every = counted["untyped"] == counted["triples"]
@@ -187,22 +205,17 @@ def _candidates(
     return chosen
 
 
-def _metric(row: dict[str, Any]) -> tuple[int, int | None, int | None] | None:
-    """Return the triples, distinct subjects and distinct objects of a count row."""
-    from rdfsolve.mining.pattern_enrichment import _count_from_binding
-
-    found = _count_from_binding(row)
-    if found is None:
-        return None
-    return found.triples, found.distinct_subjects, found.distinct_objects
-
-
 def _count_property(
     context: MiningContext, predicate: str, marker: UntypedSubjects
 ) -> tuple[list[SchemaPattern], QueryOutcome]:
     """Count the patterns of the untyped subjects of one property."""
-    from rdfsolve.mining.pattern_enrichment import _PatternCount, apply_counts
+    from rdfsolve.mining.pattern_enrichment import (
+        _count_from_binding,
+        _PatternCount,
+        apply_counts,
+    )
     from rdfsolve.mining.property_queries import query_by_property
+    from rdfsolve.mining.sampling import flag, sample_of, sampled_select
 
     graphs, ctx = context.graph_uris, context.type_context_graph_uris
     counts: dict[tuple[str, str | None], dict[str, _PatternCount]] = defaultdict(dict)
@@ -234,9 +247,9 @@ def _count_property(
     def keep(rows: list[dict[str, Any]], kind: str | None) -> None:
         """Keep the counts of rows of one object kind (None: the object class of each row)."""
         for row in rows:
-            metric = _metric(row)
+            metric = _count_from_binding(row)
             # A grouped count without solutions can answer one row of zeros (RDFLib).
-            if metric is None or not metric[0]:
+            if metric is None or not metric.triples:
                 continue
             if kind is None:
                 obj = row.get("oc", {})
@@ -247,7 +260,7 @@ def _count_property(
                 key = ("Literal", row.get("dt", {}).get("value"))
             else:
                 key = (kind, None)
-            counts[key][row.get("_g", {}).get("value", "")] = _PatternCount(*metric)
+            counts[key][row.get("_g", {}).get("value", "")] = metric
 
     keep(run(_build_batched_typed_count_query, "typed-object"), None)
     keep(run(_build_batched_literal_count_query, "literal"), "Literal")
@@ -259,7 +272,8 @@ def _count_property(
             graph = row.get("_g", {}).get("value", "")
             value = row.get("objects", {}).get("value")
             metric = counts.get(key, {}).get(graph)
-            if metric is not None and value is not None:
+            # Distinct objects of a sample are not given to a count of all edges.
+            if metric is not None and value is not None and (metric.sample or not sample_of(row)):
                 counts[key][graph] = replace(metric, distinct_objects=int(value))
     blank: list[str] | None = None
     if any(obj == "BlankNode" for obj, _ in counts):
@@ -270,6 +284,18 @@ def _count_property(
 
         found = select_outcome(
             query, "untyped-subjects/blank-node-predicates", context.helper, [marker], graphs
+        )
+        found = sampled_select(
+            lambda size: _build_batched_blank_node_query(
+                [marker], graphs, type_context_graph_uris=ctx, property_uri=predicate, sample=size
+            ),
+            "untyped-subjects/blank-node-predicates",
+            context.helper,
+            found,
+            unit="edges",
+            classes=[marker],
+            graph_uris=graphs,
+            property_uri=predicate,
         )
         outcome = outcome.merge(found)
         blank = sorted({r["bnPred"]["value"] for r in found.rows if "bnPred" in r}) or None
@@ -289,7 +315,12 @@ def _count_property(
                 "BlankNode": PatternType.BLANK_NODE_PROPERTY,
             }.get(obj, PatternType.OBJECT_PROPERTY),
         )
-        patterns.append(apply_counts(seed, per_graph, graphs))
+        pattern = apply_counts(seed, per_graph, graphs)
+        if pattern.sampled is not None:
+            # The count queries of untyped subjects are their discovery too: the sample decided
+            # the rows of the property as well as their counts.
+            flag(pattern, pattern.sampled.model_dump(), ["patterns", "counts"])
+        patterns.append(pattern)
     return patterns, outcome
 
 
@@ -312,6 +343,8 @@ def mine_untyped_subjects(
             found, outcome = _count_property(context, predicate, marker)
             if outcome.state != "complete":
                 record["state"] = "partial"
+            if outcome.samples:
+                record.setdefault("sampled", []).append(predicate)
             if not found and outcome.state == "complete":
                 # Untyped subjects that are all blank nodes, which these patterns leave out.
                 record.setdefault("blank_subjects_only", []).append(predicate)

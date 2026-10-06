@@ -130,6 +130,8 @@ def test_release_summary_reads_only_frozen_evidence_artifacts(tmp_path: Path):
         "patterns_with_counts": 1,
         "patterns_with_distinct_subjects": 1,
         "patterns_with_distinct_objects": 1,
+        "sampled_patterns": 0,
+        "patterns_with_lower_bound_counts": 0,
     }
     assert summary["property_usage_evidence"]["datasets"] == 1
     assert summary["property_usage_evidence"]["records"] == 1

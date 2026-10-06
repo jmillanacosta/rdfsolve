@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_builders import (
     MEMBERSHIP,
     _bound,
@@ -128,23 +129,28 @@ def build_term_subject_query(
     type_context_graph_uris: list[str] | None = None,
     *,
     terms_first: bool = False,
+    terms: list[str] | None = None,
 ) -> str:
     """Ontology terms described with data properties, grouped per term and value kind.
 
     With *terms_first* (QLever) the set of terms is read before their edges; the filter form
-    reads every triple of the graph.
+    reads every triple of the graph. With *terms*, only these terms (a batch of the declared
+    terms, when the query of all of them is refused).
     """
     dataset, g_open, g_close = _graph_scope(
         graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
     )
     graph_var = " ?_g" if g_open else ""
-    terms = f"{{ {{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }} }}"
+    declared = f"{{ {{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }} }}"
     edge = (
-        f"{{ SELECT DISTINCT ?t WHERE {{ {_context_pattern(terms, ontology_graph_uris)} }} }}\n"
+        f"{{ SELECT DISTINCT ?t WHERE {{ {_context_pattern(declared, ontology_graph_uris)} }} }}\n"
         f"  {g_open} ?t ?p ?o . {g_close}"
         if terms_first
         else f"{g_open} ?t ?p ?o . {g_close}\n  {_term_filter('?t', ontology_graph_uris)}"
     )
+    if terms is not None:
+        listed = " ".join(f"<{term}>" for term in terms)
+        edge = f"VALUES ?t {{ {listed} }}\n  {g_open} ?t ?p ?o . {g_close}"
     return f"""\
 SELECT ?t ?p ?kind ?oc ?dt ?object_binding{graph_var} (COUNT(*) AS ?n)
 {dataset}
@@ -180,6 +186,137 @@ def _row_count(row: Mapping[str, Any]) -> int | None:
         return None
 
 
+# Declared terms per subject-count query when the query of every term is refused.
+TERM_BATCH = 500
+# More batches than this are not sent: the subject counts are read over a sample instead.
+MAX_TERM_BATCHES = 200
+
+
+def _read(
+    query: str,
+    purpose: str,
+    helper: SparqlHelper,
+    collect: Collect,
+    chunk_size: int,
+    outcome: QueryOutcome,
+    *,
+    unit: str,
+    rows_of: Callable[[], list[dict[str, Any]] | None] | None = None,
+) -> list[dict[str, Any]]:
+    """Read a grouped term count in pages; a refused one over a sample, else a gap.
+
+    *rows_of* is a fallback tried between the two (term batches). The counts of ontology terms
+    are enrichment: a refusal that no sample answers is recorded as a measurement gap of
+    *outcome*, never as a failure of the source.
+    """
+    from rdfsolve.mining.query_fallbacks import collect_outcome
+    from rdfsolve.mining.sampling import refusal, sample_query, sampled_select
+
+    found = collect_outcome(
+        SparqlHelper.prepare_paginated_query(query), purpose, collect, chunk_size
+    )
+    if found.state == "complete":
+        return found.rows
+    if refusal(found) is not None and rows_of is not None:
+        batched = rows_of()
+        if batched is not None:
+            return batched
+    found = sampled_select(
+        lambda size: sample_query(query, size), purpose, helper, found, unit=unit
+    )
+    outcome.samples.extend(found.samples)
+    if found.state != "complete":
+        outcome.gaps.extend(found.failures)
+    return found.rows
+
+
+def _declared_terms(
+    helper: SparqlHelper,
+    graph_uris: list[str] | None,
+    ontology_graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None,
+    collect: Collect,
+    chunk_size: int,
+) -> list[str] | None:
+    """List the declared terms (owl:Class, rdfs:Class) in scope; None when refused."""
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    dataset, _, _ = _graph_scope(
+        graph_uris, (ontology_graph_uris or []) + (type_context_graph_uris or [])
+    )
+    declared = f"{{ ?t a <{OWL_CLASS}> }} UNION {{ ?t a <{RDFS_CLASS}> }}"
+    query = (
+        f"SELECT DISTINCT ?t {dataset} WHERE {{ "
+        f"{_context_pattern(declared, ontology_graph_uris)} FILTER(isIRI(?t)) }}"
+    )
+    try:
+        rows = collect(
+            SparqlHelper.prepare_paginated_query(query), "ontology-terms/declared", chunk_size
+        )
+    except SparqlHelperError as error:
+        logger.warning("Declared ontology terms not listed: %s", str(error)[:200])
+        return None
+    return sorted({r["t"]["value"] for r in rows if r.get("t", {}).get("type") == "uri"})
+
+
+def _subject_rows_in_batches(
+    helper: SparqlHelper,
+    graph_uris: list[str] | None,
+    ontology_graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None,
+    collect: Collect,
+    chunk_size: int,
+    outcome: QueryOutcome,
+) -> list[dict[str, Any]] | None:
+    """Count the subject rows of the declared terms in batches; None when not listed.
+
+    A refused batch is split in two; a term refused alone is counted over a sample of its edges
+    (rdfsolve.mining.sampling), and one whose samples are refused is a measurement gap.
+    """
+    from rdfsolve.mining.query_fallbacks import collect_outcome
+    from rdfsolve.mining.sampling import refusal, sample_query, sampled_select
+
+    terms = _declared_terms(
+        helper, graph_uris, ontology_graph_uris, type_context_graph_uris, collect, chunk_size
+    )
+    if terms is None or len(terms) > TERM_BATCH * MAX_TERM_BATCHES:
+        return None
+    logger.info("Ontology terms: subject counts of %d declared terms in batches", len(terms))
+    pending = [terms[i : i + TERM_BATCH] for i in range(0, len(terms), TERM_BATCH)]
+    rows: list[dict[str, Any]] = []
+    while pending:
+        batch = pending.pop()
+        query = build_term_subject_query(
+            graph_uris, ontology_graph_uris, type_context_graph_uris, terms=batch
+        )
+        purpose = "ontology-terms/subject/batch"
+        found = collect_outcome(
+            SparqlHelper.prepare_paginated_query(query), purpose, collect, chunk_size
+        )
+        if found.state != "complete" and refusal(found) is not None and len(batch) > 1:
+            pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
+            continue
+        if found.state != "complete":
+
+            def bounded(size: int, query: str = query) -> str:
+                """Bound the batch's query to its first *size* solutions."""
+                return sample_query(query, size)
+
+            found = sampled_select(
+                bounded,
+                purpose,
+                helper,
+                found,
+                unit="edges",
+                classes=batch,
+            )
+            outcome.samples.extend(found.samples)
+            if found.state != "complete":
+                outcome.gaps.extend(found.failures)
+        rows.extend(found.rows)
+    return rows
+
+
 def probe_term_patterns(
     helper: SparqlHelper,
     graph_uris: list[str] | None,
@@ -189,6 +326,7 @@ def probe_term_patterns(
     type_context_graph_uris: list[str] | None = None,
     typed: Iterable[SchemaPattern] | None = None,
     classes: Mapping[str, str] | None = None,
+    outcome: QueryOutcome | None = None,
 ) -> list[SchemaPattern]:
     """Return every observed pattern that uses an ontology term as value or subject.
 
@@ -197,7 +335,16 @@ def probe_term_patterns(
     object class is owl:Class or rdfs:Class (Bgee: none; the filter over every triple asked for
     54 GB); *classes* gives the class objects (groups of ontology terms) by name. Results are
     paged to completion.
+
+    The counts are enrichment of the typed schema, so a refusal never fails the source: the
+    subject counts of every term, when refused (med2rdf's gateway cuts them at 120 s, DGIdb),
+    are read for batches of the declared terms; a refused query is read over a sample, whose
+    rows are flagged sampled with lower-bound counts (rdfsolve.mining.sampling); what no sample
+    answers is a measurement gap. Samples and gaps are added to *outcome*.
     """
+    from rdfsolve.mining.sampling import flag, sample_of
+
+    outcome = outcome if outcome is not None else QueryOutcome()
     patterns: dict[tuple[str, str, str, str | None, str, str], SchemaPattern] = {}
 
     def add(pattern: SchemaPattern, row: Mapping[str, Any]) -> None:
@@ -213,6 +360,9 @@ def probe_term_patterns(
         )
         if graph and pattern.count is not None:
             pattern.graphs = {graph: pattern.count}
+        provenance = sample_of(dict(row))
+        if provenance is not None:
+            flag(pattern, provenance, ["patterns", "counts"])
         key = (
             pattern.subject_class,
             pattern.property_uri,
@@ -231,6 +381,8 @@ def probe_term_patterns(
             else None
         )
         previous.graphs = {**(previous.graphs or {}), **(pattern.graphs or {})} or None
+        if provenance is not None:
+            flag(previous, provenance, ["patterns", "counts"])
 
     if typed is not None and not ontology_graph_uris:
         pairs = sorted(
@@ -244,8 +396,8 @@ def probe_term_patterns(
             query = build_term_object_pair_query(
                 (classes or {}).get(sc, sc), p, graph_uris, type_context_graph_uris
             )
-            for row in collect(
-                SparqlHelper.prepare_paginated_query(query), "ontology-terms/object", chunk_size
+            for row in _read(
+                query, "ontology-terms/object", helper, collect, chunk_size, outcome, unit="edges"
             ):
                 t = row.get("t", {}).get("value")
                 if t:
@@ -256,12 +408,14 @@ def probe_term_patterns(
                         row,
                     )
     else:
-        rows = collect(
-            SparqlHelper.prepare_paginated_query(
-                build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris)
-            ),
+        rows = _read(
+            build_term_object_query(graph_uris, ontology_graph_uris, type_context_graph_uris),
             "ontology-terms/object",
+            helper,
+            collect,
             chunk_size,
+            outcome,
+            unit="edges",
         )
         for row in rows:
             sc = row.get("sc", {}).get("value")
@@ -275,14 +429,25 @@ def probe_term_patterns(
                     row,
                 )
     terms_first = str(getattr(helper, "sparql_engine", "")).lower() == "qlever"
-    rows = collect(
-        SparqlHelper.prepare_paginated_query(
-            build_term_subject_query(
-                graph_uris, ontology_graph_uris, type_context_graph_uris, terms_first=terms_first
-            )
+    rows = _read(
+        build_term_subject_query(
+            graph_uris, ontology_graph_uris, type_context_graph_uris, terms_first=terms_first
         ),
         "ontology-terms/subject",
+        helper,
+        collect,
         chunk_size,
+        outcome,
+        unit="edges",
+        rows_of=lambda: _subject_rows_in_batches(
+            helper,
+            graph_uris,
+            ontology_graph_uris,
+            type_context_graph_uris,
+            collect,
+            chunk_size,
+            outcome,
+        ),
     )
     for row in rows:
         t = row.get("t", {}).get("value")
@@ -555,8 +720,18 @@ def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
     for pattern in group:
         for graph, count in (pattern.graphs or {}).items():
             graphs[graph] += count
+    # A member counted in a sample (a lower bound) makes the sum no bound at all: no count.
+    lower = any(p.count_bound == "lower_bound" for p in group)
+    if lower:
+        counts, graphs = [None], defaultdict(int)
+    sampled = next((p.sampled for p in group if p.sampled is not None), None)
+    if sampled is not None:
+        covers = sorted({c for p in group if p.sampled is not None for c in p.sampled.covers})
+        sampled = sampled.model_copy(update={"covers": covers})
     return first.model_copy(
         update={
+            "sampled": sampled,
+            "count_bound": None,
             "subject_class": subject,
             "object_class": obj,
             # Sum over member terms; an instance typed with two members of one

@@ -109,6 +109,7 @@ def minedschema_to_shacl(
             shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
             shape.name = patterns[0].property_label
             shape.description = schema.enrichment.description(prop)
+            _mark_sampled(shape, patterns)
             property_shapes.append(shape)
         node_shapes.append(
             ShaclNodeShape(
@@ -166,6 +167,26 @@ def _value_shape(
     )
 
 
+def _mark_sampled(shape: ShaclPropertyShape, patterns: list[SchemaPattern]) -> bool:
+    """Deactivate a value shape whose kinds come in part from a sample of a refused query.
+
+    The sample shows kinds that occur, not every kind: an active shape would flag values of a
+    kind the sample missed. Counts of samples are never sh:minCount or sh:maxCount (no observed
+    shape states them). Return whether the shape was deactivated.
+    """
+    samples = [p.sampled for p in patterns if p.sampled and "patterns" in p.sampled.covers]
+    if not samples:
+        return False
+    first = samples[0]
+    shape.deactivated = True
+    note = (
+        f"Value kinds observed in a sample of {first.size} {first.unit} of a query that the "
+        "endpoint refused; other kinds may occur, so the shape is deactivated."
+    )
+    shape.description = f"{shape.description} {note}" if shape.description else note
+    return True
+
+
 def _membership_path(schema: MinedSchema) -> str | PropertyPath:
     """Return the path of class membership: rdf:type, or the membership properties."""
     membership = schema.about.membership_property
@@ -206,12 +227,13 @@ def _untyped_shapes(
         values.name = patterns[0].property_label
         values.description = schema.enrichment.description(prop)
         label = patterns[0].property_label or prop
+        incomplete = _mark_sampled(values, patterns)
         shapes.append(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-untyped-{short}",
                 target_subjects_of=[prop],
                 alternatives=[typed.model_copy(deep=True), values],
-                deactivated=not activate_observed,
+                deactivated=not activate_observed or incomplete,
                 name=f"Subjects of {label} without a type",
                 description=(
                     "Observed values of the IRI subjects of this property that have no type "

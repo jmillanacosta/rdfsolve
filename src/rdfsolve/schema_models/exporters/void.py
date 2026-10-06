@@ -438,9 +438,11 @@ def _add_property_partition(
     """Add the partition of *prop_uri* to *parent*, with its object and datatype partitions.
 
     Object classes can overlap; their triple counts are not summed. The totals of the
-    partition are written only where the patterns give them exactly (_exact_totals).
+    partition are written only where the patterns give them exactly (_exact_totals). Counts
+    of a row observed in a sample of a refused query are lower bounds and are not written; the
+    partition says so in rdfs:comment.
     """
-    from rdflib import RDF, URIRef
+    from rdflib import RDF, RDFS, URIRef
     from rdflib import Literal as RdfLiteral
     from rdflib.namespace import XSD
 
@@ -470,10 +472,34 @@ def _add_property_partition(
             g.add((node, URIRef(VOID + "class"), URIRef(object_class)))
         else:
             continue
-        if count is not None:
+        if pattern.sampled is not None:
+            g.add((node, RDFS.comment, RdfLiteral(_sampled_note(pattern))))
+        # A count of a sample is a lower bound: VoID states exact counts only.
+        if count is not None and pattern.count_bound != "lower_bound":
             g.add((node, URIRef(VOID + "triples"), RdfLiteral(count, datatype=XSD.integer)))
         _add_distinct(g, node, patterns, object_class, datatype)
+    if any(p.sampled is not None and "patterns" in p.sampled.covers for p in patterns):
+        g.add((partition, RDFS.comment, RdfLiteral(_sampled_note(patterns[0], partition=True))))
     return partition
+
+
+def _sampled_note(pattern: Any, *, partition: bool = False) -> str:
+    """Describe a partition observed in a sample of a refused query."""
+    sample = pattern.sampled
+    if partition:
+        return (
+            "Some of these object partitions were observed in a bounded sample of a query that "
+            "the endpoint refused; other partitions of this property may exist."
+        )
+    counted = (
+        " Its counts are lower bounds and are not stated."
+        if pattern.count_bound == "lower_bound"
+        else ""
+    )
+    return (
+        f"Observed in a sample of {sample.size} {sample.unit} of a query that the endpoint "
+        f"refused ({sample.reason[:120]}).{counted}"
+    )
 
 
 def _exact_totals(patterns: list[Any]) -> list[tuple[Any, int]]:
@@ -490,6 +516,9 @@ def _exact_totals(patterns: list[Any]) -> list[tuple[Any, int]]:
     """
     from rdflib import URIRef
 
+    if any(p.count_bound == "lower_bound" for p in patterns):
+        # A row counted in a sample: no total of the partition is exact.
+        return []
     literal = [p for p in patterns if p.object_class == "Literal"]
     resource = [p for p in patterns if p.object_class == "Resource"]
     blank = [p for p in patterns if p.object_class == "BlankNode"]
@@ -521,6 +550,8 @@ def _add_distinct(
 
     for p in patterns:
         if p.object_class == object_class and (object_class != "Literal" or p.datatype == datatype):
+            if p.count_bound == "lower_bound":
+                return
             for name, value in (
                 ("distinctSubjects", p.distinct_subjects),
                 ("distinctObjects", p.distinct_objects),

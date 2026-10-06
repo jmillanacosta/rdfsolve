@@ -86,6 +86,10 @@ def test_bisection_preserves_success_and_failure():
     assert {r["p"]["value"] for r in result.rows} == {"urn:p", "urn:q"}, (
         "Windows still observe rows"
     )
-    assert result.state == "partial" and result.failures[-1].category == "sampled", "Never complete"
-    assert "windows" in result.failures[-1].message
+    # A sample, not a failure: the rows stand, each flagged with the sample of members.
+    assert result.state == "complete" and not result.failures, "A sample is not a failure"
+    (sample,) = result.samples
+    assert sample.unit == "members" and sample.reason == "timeout"
+    assert "windows" in sample.message
+    assert all(r["_sampled"]["unit"] == "members" for r in result.rows)
     assert not pages.called, "Smaller pages cannot shorten a timed-out discovery join"

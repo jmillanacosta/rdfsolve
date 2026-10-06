@@ -1,6 +1,7 @@
 """rdfsolve.mining.ontology_as_data term probes: edges to ontology terms are read only for the
 (class, property) pairs whose typed patterns have term objects, from the terms first on QLever; a
-refused probe leaves the source partial; term and type bindings keep separate witnesses."""
+refused probe is a measurement gap (term counts are enrichment), read in batches of terms or over
+a sample first; term and type bindings keep separate witnesses."""
 
 import json
 
@@ -70,11 +71,17 @@ def test_term_edges_are_read_from_the_terms_first_on_qlever(monkeypatch):
     )
 
 
-def test_a_refused_term_probe_leaves_the_source_partial(monkeypatch):
+def test_a_refused_term_probe_is_a_gap_not_a_failure(monkeypatch):
     schema, report, _ = mine(monkeypatch, "qlever", refuse=True)
-    assert schema.term_patterns is None and schema.patterns, "Typed patterns are kept"
-    assert report.completion_state == "partial"
-    assert any(f.purpose == "ontology-terms" for f in report.query_failures)
+    assert schema.patterns, "Typed patterns are kept"
+    # Term counts are enrichment: the refused object counts are a gap; the subject rows stand.
+    assert [(p.subject_class, p.property_uri) for p in schema.term_patterns] == [
+        ("urn:term:ethanol", "urn:ex:smiles")
+    ]
+    assert report.completion_state == "complete"
+    assert not report.query_failures
+    assert any(g.purpose == "ontology-terms/object" for g in report.measurement_gaps)
+    assert report.config["ontology_term_probe"]["state"] == "gaps"
 
 
 def test_term_records_and_instances_keep_separate_witnesses(tmp_path):

@@ -26,6 +26,7 @@ from rdfsolve.mining.query_builders import (
     _build_declared_classes_query,
 )
 from rdfsolve.mining.report_tracking import ReportCollector
+from rdfsolve.mining.sampling import DEFAULT_SAMPLE_SIZE, SAMPLE_SIZE
 from rdfsolve.mining.single_pass_strategy import SinglePassStrategy
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.structural_strategy import StructuralStrategy
@@ -112,6 +113,7 @@ class SchemaMiner:
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
         untyped_subjects: bool = True,
+        sample_size: int = DEFAULT_SAMPLE_SIZE,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -123,9 +125,13 @@ class SchemaMiner:
         With *untyped_subjects*, the IRI subjects that have no type get property-level
         patterns (subject_binding "untyped"; rdfsolve.mining.untyped_subjects), so that data
         without classes has a schema; a scan run counts them from its rows.
+        *sample_size* is the first sample (edges or members) of a query that the endpoint
+        refuses after every other fallback: its rows are kept, flagged sampled, with counts
+        that are lower bounds (rdfsolve.mining.sampling); 0 turns sampling off.
         """
         self.endpoint_url = endpoint_url
         self.untyped_subjects = untyped_subjects
+        self.sample_size = sample_size
         self.classes_as_data = classes_as_data
         self.membership_properties = list(membership_properties or [])
         self.local_backend = local_backend
@@ -387,6 +393,7 @@ class SchemaMiner:
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
                 "untyped_subject_patterns": self.untyped_subjects,
+                "sample_size": self.sample_size,
                 "unsafe_paging": self.unsafe_paging,
                 "filter_service_namespaces": self.filter_service_namespaces,
                 "enrich": self.enrich,
@@ -643,8 +650,11 @@ class SchemaMiner:
 
         phase = self._report.start_phase("ontology-terms")
         try:
-            # A refused probe leaves the term patterns not probed; the typed patterns stay.
+            # Term counts are enrichment: a refused query is read in batches of terms or over
+            # a sample, and what stays refused is a measurement gap, never a failure (DGIdb on
+            # med2rdf: the subject counts are cut at 120 s by its gateway).
             probed: list[SchemaPattern] | None
+            probe = QueryOutcome()
             try:
                 probed = probe_term_patterns(
                     self._helper,
@@ -655,15 +665,23 @@ class SchemaMiner:
                     type_context_graph_uris=self.type_context_graph_uris,
                     typed=patterns,
                     classes={str(c): c for batch in self._class_batches or [] for c in batch},
+                    outcome=probe,
                 )
             except EndpointError as error:
                 failure = QueryFailure("timeout", str(error)[:500], "ontology-terms")
-                self._report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+                self._report.record_outcome(QueryOutcome(gaps=[failure]))
                 self._report.report.config["ontology_term_probe"] = {
                     "state": "not_probed",
                     "reason": str(error)[:500],
                 }
                 probed = None
+            else:
+                self._report.record_outcome(probe)
+                self._report.report.config["ontology_term_probe"] = {
+                    "state": "gaps" if probe.gaps else "sampled" if probe.samples else "complete",
+                    "sampled_queries": len(probe.samples),
+                    "gaps": len(probe.gaps),
+                }
             if self.classes_as_data and probed:
                 covered = {(p.subject_class, p.property_uri) for p in probed}
                 patterns = [
@@ -1231,6 +1249,7 @@ class SchemaMiner:
         self.last_report = self._report.report
         remote_helper = self._helper
         member = MEMBERSHIP.set(tuple(self.membership_properties or [RDF_TYPE]))
+        sampling = SAMPLE_SIZE.set(self.sample_size)
         try:
             if self.get_graphs_from_store:
                 from dataclasses import asdict
@@ -1282,6 +1301,7 @@ class SchemaMiner:
             raise
         finally:
             MEMBERSHIP.reset(member)
+            SAMPLE_SIZE.reset(sampling)
             remote_helper.excluded_graphs = []
             remote_helper.engine_only_classes = None
             if self._helper is not remote_helper:
@@ -1438,7 +1458,18 @@ class SchemaMiner:
                 getattr(p, "distinct_objects", None) is not None for p in rows
             ),
             "measurement_gaps": len(report.measurement_gaps),
+            "sampled_queries": len(report.sampled_queries),
+            "sampled_patterns": sum(getattr(p, "sampled", None) is not None for p in rows),
+            "lower_bound_counts": sum(
+                getattr(p, "count_bound", None) == "lower_bound" for p in rows
+            ),
         }
+        if report.sampled_queries:
+            logger.warning(
+                "%d refused queries answered over a sample: their rows are flagged sampled, with "
+                "lower-bound counts (report: sampled_queries)",
+                len(report.sampled_queries),
+            )
         if report.measurement_gaps:
             logger.warning(
                 "%d measures refused for rows that stand (report: measurement_gaps)",

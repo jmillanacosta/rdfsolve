@@ -18,7 +18,7 @@ from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import MetadataDocument
-from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.pattern import PatternSample, PatternType, SchemaPattern
 from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 from rdfsolve.schema_models.readers.void import void_to_minedschema
 from rdfsolve.schema_models.report import (
@@ -100,6 +100,7 @@ __all__ = [
     "MiningResult",
     "OneShotQueryResult",
     "OntologyStructure",
+    "PatternSample",
     "PatternType",
     "PhaseReport",
     "PropertyCharacteristic",

@@ -646,6 +646,7 @@ def build_release_manifest(
                 ExtractionReleaseRecord(
                     mode=_report_mode(extraction_report),
                     completion_state=_completion(raw),
+                    sampled_queries=len(raw.get("sampled_queries") or []),
                     report_path=extraction_report.relative_to(run_root).as_posix()
                     if extraction_report.exists()
                     else None,

@@ -257,8 +257,14 @@ def query_by_property(
     context_graphs: list[str] | None,
     properties: list[str] | None = None,
 ) -> QueryOutcome:
-    """Query the given or enumerated properties whose objects can match the builder."""
+    """Query the given or enumerated properties whose objects can match the builder.
+
+    A property whose query is refused, and whose lighter retry gives no row, is asked over a
+    sample of its edges when the builder takes one (rdfsolve.mining.sampling): its rows then
+    carry the provenance of the sample and their counts are lower bounds.
+    """
     from rdfsolve.mining.query_fallbacks import enumerate_properties_for_class, select_outcome
+    from rdfsolve.mining.sampling import accepts_sample, sampled_select
 
     result = QueryOutcome()
     if properties is None:
@@ -306,5 +312,28 @@ def query_by_property(
             )
             if retry.rows:
                 found = QueryOutcome(retry.rows, "partial", found.failures + retry.failures)
+        if not found.rows and accepts_sample(builder):
+            # Refused for the whole property: ask over a sample of its edges (lower bounds).
+
+            def edges(size: int, prop: str = prop) -> str:
+                """Ask the query of the property over its first *size* edges."""
+                return builder(
+                    [class_uri],
+                    graphs,
+                    property_uri=prop,
+                    type_context_graph_uris=context_graphs,
+                    sample=size,
+                )
+
+            found = sampled_select(
+                edges,
+                f"{purpose}/property/{prop}",
+                helper,
+                found,
+                unit="edges",
+                classes=[class_uri],
+                graph_uris=graphs,
+                property_uri=prop,
+            )
         result = result.merge(found)
     return result

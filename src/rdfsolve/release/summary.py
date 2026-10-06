@@ -40,6 +40,8 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     with_counts = 0
     with_distinct_subjects = 0
     with_distinct_objects = 0
+    sampled = 0
+    lower_bound = 0
     for rel in _artifact_paths(manifest, "canonical_schema"):
         raw = _load_json(root / rel)
         schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
@@ -78,6 +80,10 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
                 with_distinct_subjects += 1
             if row.get("distinct_objects") is not None:
                 with_distinct_objects += 1
+            if row.get("sampled"):
+                sampled += 1
+            if row.get("count_bound") == "lower_bound":
+                lower_bound += 1
     return {
         "datasets": len(datasets),
         "schema_artifacts": schema_artifacts,
@@ -95,6 +101,9 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
         "patterns_with_counts": with_counts,
         "patterns_with_distinct_subjects": with_distinct_subjects,
         "patterns_with_distinct_objects": with_distinct_objects,
+        # Rows observed or counted in a sample of a refused query; their counts are lower bounds.
+        "sampled_patterns": sampled,
+        "patterns_with_lower_bound_counts": lower_bound,
     }
 
 
@@ -284,6 +293,10 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
         "access_file_fields": dict(sorted(access_fields.items())),
         "completion": dict(sorted(completion.items())),
         "extraction_attempts_by_mode": dict(sorted(modes.items())),
+        # Datasets with a refused query answered over a sample (rows flagged sampled).
+        "datasets_with_sampled_queries": sum(
+            any(e.sampled_queries for e in item.extractions) for item in manifest.datasets
+        ),
         "artifacts": len(manifest.artifacts),
         "artifact_roles": dict(sorted(artifact_roles.items())),
         "ontology_usage_candidates": ontology_candidates,

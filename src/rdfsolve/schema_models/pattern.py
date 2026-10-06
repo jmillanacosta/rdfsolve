@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum, StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES, UNTYPED_SUBJECT
 
@@ -32,6 +32,31 @@ class PatternType(StrEnum):
 
     UNKNOWN = "unknown"
     """Could not determine the pattern type."""
+
+
+def _both() -> list[Literal["patterns", "counts"]]:
+    """Return what a sample decides by default: the rows and their counts."""
+    return ["patterns", "counts"]
+
+
+class PatternSample(BaseModel):
+    """Provenance of a pattern row observed in a bounded sample of a refused query.
+
+    The endpoint refused the whole query (time or cost limit, gateway cut, row cap) and
+    answered it over a sample of *size* *unit* (edges, members, subjects or terms). *covers*
+    says what the sample decided: "patterns" (the row exists, and other rows of its subject
+    class and property may be missing) and "counts" (its counts are lower bounds).
+    """
+
+    size: int = Field(..., ge=1, description="Size of the sample, in its unit")
+    unit: str = Field(..., description="What the sample holds: edges, members, subjects, terms")
+    reason: str = Field(..., description="The refusal of the whole query: category and text")
+    covers: list[Literal["patterns", "counts"]] = Field(
+        default_factory=_both,
+        description="patterns: the rows of the item may be incomplete; counts: lower bounds",
+    )
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class SchemaPattern(BaseModel):
@@ -94,6 +119,17 @@ class SchemaPattern(BaseModel):
             raise ValueError(f"An untyped subject binding requires the class {UNTYPED_SUBJECT}")
         return self
 
+    @model_validator(mode="after")
+    def check_sampled_counts(self) -> SchemaPattern:
+        """Mark the counts of a row counted in a sample as lower bounds."""
+        if (
+            self.sampled is not None
+            and "counts" in self.sampled.covers
+            and self.count_bound is None
+        ):
+            self.count_bound = "lower_bound"
+        return self
+
     @property
     def untyped_subject(self) -> bool:
         """Return whether the pattern describes subjects without a type."""
@@ -107,6 +143,21 @@ class SchemaPattern(BaseModel):
     count_semantics: Literal[
         "triples_in_graph", "quad_occurrences", "endpoint_default", "upper_bound", "unknown"
     ] = "unknown"
+    count_bound: Literal["exact", "lower_bound"] | None = Field(
+        None,
+        description=(
+            "lower_bound when the counts of the row (count, graphs, distinct subjects and "
+            "objects) come from a sample of a refused query (see sampled), so that the true "
+            "values are at least these; None when the counts are as count_semantics says."
+        ),
+    )
+    sampled: PatternSample | None = Field(
+        None,
+        description=(
+            "Set when the row was observed, or counted, in a bounded sample because the "
+            "endpoint refused the whole query; the sample's size, unit and the refusal."
+        ),
+    )
     graphs: dict[str, int] | None = Field(
         None,
         description=(

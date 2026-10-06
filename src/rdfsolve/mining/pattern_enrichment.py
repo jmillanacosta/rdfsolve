@@ -21,6 +21,7 @@ from rdfsolve.mining.query_builders import (
     _subject_type_pattern,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
+from rdfsolve.mining.sampling import refusal, sample_of, sampled_select
 from rdfsolve.models import SchemaPattern
 from rdfsolve.sparql_helper import EndpointRateLimitError
 
@@ -40,6 +41,8 @@ class _PatternCount:
     triples: int
     distinct_subjects: int | None
     distinct_objects: int | None
+    # The provenance of the sample that gave the counts (lower bounds), or None.
+    sample: dict[str, Any] | None = None
 
 
 def _count_from_binding(binding: dict[str, Any]) -> _PatternCount | None:
@@ -63,6 +66,7 @@ def _count_from_binding(binding: dict[str, Any]) -> _PatternCount | None:
         triples=triples,
         distinct_subjects=optional_int("subjects"),
         distinct_objects=optional_int("objects"),
+        sample=sample_of(binding),
     )
 
 
@@ -100,6 +104,8 @@ def query_class_entity_counts(
         query = f"SELECT ?class ?count {dataset} WHERE {{ " + " UNION ".join(branches) + " }"
         started = time.monotonic()
         outcome = select_outcome(query, "class-entity-counts", helper, batch, graph_uris)
+        if refusal(outcome) is not None:
+            outcome = _entity_counts_alone(batch, helper, graph_uris, type_context_graph_uris)
         report.record_query(
             "class-entity-counts", time.monotonic() - started, success=outcome.state == "complete"
         )
@@ -131,9 +137,11 @@ def query_class_entity_counts(
                     graph_uris,
                 )
             )
+        sampled = {row["class"]["value"] for row in outcome.rows if sample_of(row)}
         if states_out is not None:
             for iri in batch_found:
-                states_out[iri] = outcome.state
+                # A count of a sample is a lower bound (state partial), not a failure.
+                states_out[iri] = "partial" if iri in sampled else outcome.state
             for iri in missing:
                 states_out[iri] = "failed" if not outcome.rows else "partial"
         report.record_outcome(outcome)
@@ -141,6 +149,45 @@ def query_class_entity_counts(
             time.sleep(delay)
     report.finish_phase(phase, items=len(counts))
     return counts
+
+
+def _entity_counts_alone(
+    batch: list[str],
+    helper: SparqlHelper,
+    graph_uris: list[str] | None,
+    type_context_graph_uris: list[str] | None,
+) -> QueryOutcome:
+    """Count the members of each class of a refused batch alone, then over a sample.
+
+    A class whose count is refused alone is counted over its first members (a sub-select with
+    LIMIT, rdfsolve.mining.sampling): the count is a lower bound. A class whose samples are
+    refused too keeps the refusal.
+    """
+    dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
+    combined = QueryOutcome()
+    for iri in batch:
+        members = _subject_type_pattern("?entity", f"<{iri}>", type_context_graph_uris)
+
+        def query(limit: int | None, members: str = members, iri: str = iri) -> str:
+            """Count the members of the class, or of its first *limit* members."""
+            bound = f" LIMIT {limit}" if limit else ""
+            return (
+                f"SELECT (<{iri}> AS ?class) (COUNT(*) AS ?count) {dataset} WHERE {{ "
+                f"{{ SELECT DISTINCT ?entity WHERE {{ {members} }}{bound} }} }}"
+            )
+
+        alone = select_outcome(query(None), "class-entity-counts", helper, [iri], graph_uris)
+        alone = sampled_select(
+            query,
+            "class-entity-counts",
+            helper,
+            alone,
+            unit="members",
+            classes=[iri],
+            graph_uris=graph_uris,
+        )
+        combined = combined.merge(alone)
+    return combined
 
 
 def enrich_patterns_with_counts(
@@ -217,7 +264,10 @@ def enrich_patterns_with_counts(
             logger.info("Counting %s: %d classes reused from the checkpoint", label, len(batch))
             for row in resumed[key]:
                 counts.setdefault(tuple(row["key"]), {})[row["graph"]] = _PatternCount(
-                    row["triples"], row["distinct_subjects"], row["distinct_objects"]
+                    row["triples"],
+                    row["distinct_subjects"],
+                    row["distinct_objects"],
+                    row.get("sample"),
                 )
             continue
         logger.info("Counting %s: %d classes", label, len(batch))
@@ -331,11 +381,14 @@ def apply_counts(
 ) -> SchemaPattern:
     """Return *pattern* with the counts of its rows in each edge graph ("" without graphs).
 
-    Distinct counts are only safe to expose directly when the selected scope has at most one
-    named graph (or the endpoint default graph). Summing per-graph distinct counts across
+    A count from a sample of a refused query flags the pattern sampled, with count_bound
+    lower_bound. Distinct counts are only safe to expose directly when the selected scope has at
+    most one named graph (or the endpoint default graph). Summing per-graph distinct counts across
     several graphs would double count subjects/objects repeated in multiple graphs.
     Dataset-scope support is represented separately by PropertyUsageEvidence.
     """
+    from rdfsolve.mining.sampling import flag
+
     attributed = {graph: metric.triples for graph, metric in per_graph.items() if graph}
     distinct_subjects = None
     distinct_objects = None
@@ -344,7 +397,7 @@ def apply_counts(
         if len(metrics) == 1:
             distinct_subjects = metrics[0].distinct_subjects
             distinct_objects = metrics[0].distinct_objects
-    return pattern.model_copy(
+    counted = pattern.model_copy(
         update={
             "count": sum(metric.triples for metric in per_graph.values()),
             "count_semantics": (
@@ -359,6 +412,11 @@ def apply_counts(
             "distinct_objects": distinct_objects,
         }
     )
+    # Counts from a sample of a refused query are lower bounds (rdfsolve.mining.sampling).
+    sample = next((m.sample for m in per_graph.values() if m.sample is not None), None)
+    if sample is not None:
+        flag(counted, sample, ["counts"])
+    return counted
 
 
 def _fetch_typed_count_batch(
@@ -491,7 +549,8 @@ def _fetch_literal_count_batch(
             key, graph = _literal_key(b), b.get("_g", {}).get("value", "")
             metric = counts.get(key, {}).get(graph)
             value = b.get("objects", {}).get("value")
-            if metric is not None and value is not None:
+            # Distinct objects of a sample are not given to a count of all edges.
+            if metric is not None and value is not None and (metric.sample or not sample_of(b)):
                 counts[key][graph] = replace(metric, distinct_objects=int(value))
     except (ValueError, TypeError) as e:
         report.record_outcome(
