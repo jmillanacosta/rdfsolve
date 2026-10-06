@@ -196,3 +196,22 @@ def test_a_dataset_clause_in_a_literal_or_comment_is_not_one():
 
 def test_the_prologue_never_names_the_named_graphs():
     assert graph_exclusion_prologue([SYSTEM]) == f"DEFINE input:default-graph-exclude <{SYSTEM}>\n"
+
+
+def test_the_owl_vocabulary_graph_is_left_out(monkeypatch):
+    """Virtuoso keeps the OWL vocabulary in a graph of its own (ATTED-II, 2026-10-06); its
+    classes are not the source's."""
+    owl = "http://www.w3.org/2002/07/owl#"
+    monkeypatch.setitem(
+        GRAPHS,
+        owl,
+        "<http://www.w3.org/2002/07/owl#Thing> a <http://www.w3.org/2002/07/owl#Class> .",
+    )
+    with _endpoint("virtuoso") as (url, _server):
+        miner = _miner(url)
+        schema = miner.mine("engine")
+        record = miner.last_report.config["excluded_graphs"]
+        assert owl in record["graph_uris"]
+        classes = {p.subject_class for p in schema.patterns}
+        assert "http://www.w3.org/2002/07/owl#Class" not in classes
+        assert "urn:Gene" in classes
