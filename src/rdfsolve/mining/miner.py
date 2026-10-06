@@ -131,6 +131,10 @@ class SchemaMiner:
         """
         self.endpoint_url = endpoint_url
         self.untyped_subjects = untyped_subjects
+        # How a caller scoped a local index other than the source's endpoint settings, recorded
+        # in the report (config local_graph_scope): an index of files without named graphs is
+        # mined whole, without the endpoint's data, type context and ontology graphs.
+        self.local_graph_scope: dict[str, Any] | None = None
         self.sample_size = sample_size
         self.classes_as_data = classes_as_data
         self.membership_properties = list(membership_properties or [])
@@ -407,6 +411,8 @@ class SchemaMiner:
                 "examples_per_pattern": self.examples_per_pattern,
             },
         )
+        if self.local_graph_scope:
+            report.config["local_graph_scope"] = dict(self.local_graph_scope)
         from rdfsolve.mining.local_graph import LocalGraphHelper
 
         if isinstance(self._helper, LocalGraphHelper):

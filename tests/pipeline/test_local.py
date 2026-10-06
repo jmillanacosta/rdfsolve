@@ -1,6 +1,7 @@
 """scripts.pipeline_stages.local: the local stage mines a source's index with its graph scope and
 settings, sets aside a source whose downloads were updated, and starts local servers without delay."""
 
+import json
 import sys
 from pathlib import Path
 from unittest.mock import Mock
@@ -479,3 +480,69 @@ def test_an_index_that_stays_truncated_fails_and_is_set_aside_on_the_next_run(
     ]
     assert data.is_file() and (workdir / "fixture.settings.json").is_file(), "Inputs are kept"
     assert has_cached_index(workdir, "fixture") is False
+
+
+def test_a_graphless_index_is_mined_without_the_graph_settings_of_its_endpoint(
+    tmp_path, monkeypatch, caplog
+):
+    """rdfportal.mbgd (job 115609): its dump has no named graphs, so the data-graph scope of
+    its endpoint was dropped, but the type context graph (a taxonomy graph, not even in the
+    dump) was still passed and failed the source as missing. The type context and ontology
+    graphs are dropped too, logged once and recorded in the report."""
+    from rdflib import Graph
+
+    from rdfsolve.mining.miner import SchemaMiner
+
+    data = Graph().parse(
+        data='<urn:g1> a <urn:Gene> ; <urn:organism> <urn:t1> ; <urn:name> "g" .',
+        format="turtle",
+    )
+    source = Source.from_dict(
+        {
+            "name": "graphless",
+            "endpoint": "https://fixture.invalid/sparql",
+            "graph_uris": ["http://example.org/graph/genes"],
+            "type_context_graph_uris": ["http://example.org/graph/taxonomy"],
+            "ontology_graph_uris": ["http://example.org/graph/ontology"],
+            "download_ttl": ["https://example.org/genes.ttl.gz"],
+        }
+    )
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path,
+        repo_dir=tmp_path,
+        sources_file=registry,
+        output_dir=tmp_path / "run",
+        enrich=False,
+        navigation_hops=0,
+        output_formats=["json"],
+    )
+    stage = LocalMiningStage(config)
+    seen = {}
+
+    def local_miner(port, graphs, report_path, *, type_context_graph_uris=None, **options):
+        seen.update(graphs=graphs, type_context=type_context_graph_uris)
+        return SchemaMiner.from_graph(
+            data,
+            graph_uris=graphs,
+            type_context_graph_uris=type_context_graph_uris,
+            report_path=report_path,
+            delay=0,
+            enrich=False,
+        )
+
+    monkeypatch.setattr(stage, "_local_miner", local_miner)
+    with caplog.at_level("INFO"):
+        stage._mine_local(source, 7000)
+    assert seen == {"graphs": None, "type_context": []}
+    report = json.loads((tmp_path / "run" / "graphless" / "graphless_report.json").read_text())
+    scope = report["config"]["local_graph_scope"]
+    assert scope["state"] == "whole_index"
+    assert scope["endpoint_graphs_not_applied"] == {
+        "graph_uris": ["http://example.org/graph/genes"],
+        "type_context_graph_uris": ["http://example.org/graph/taxonomy"],
+        "ontology_graph_uris": ["http://example.org/graph/ontology"],
+    }
+    assert report["config"]["type_context_graph_uris"] in (None, [])
+    assert sum("have no graphs" in r.message for r in caplog.records) == 1

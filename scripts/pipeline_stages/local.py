@@ -55,11 +55,20 @@ def local_graph_scope(
     files that can hold graphs (N-Quads, archives), for files mapped to graphs, and when no
     file is known; the miner then reports a graph that the index does not hold.
     """
-    if not graph_uris:
-        return None
-    if download_fields and not graph_sources and set(download_fields) <= FILES_WITHOUT_GRAPHS:
+    if not graph_uris or files_without_graphs(download_fields, graph_sources):
         return None
     return graph_uris
+
+
+def files_without_graphs(download_fields: dict, graph_sources: dict) -> bool:
+    """Return whether the local index of a source is built only from files without graphs.
+
+    Such an index holds no named graph: no graph that the registry names for the endpoint
+    (data, type context or ontology graphs) is in it.
+    """
+    return bool(
+        download_fields and not graph_sources and set(download_fields) <= FILES_WITHOUT_GRAPHS
+    )
 
 
 # External programs that a Qleverfile's GET_DATA_CMD may call, besides the shell's own: a
@@ -653,14 +662,34 @@ class LocalMiningStage(Stage):
         if previous and not previous.is_file():
             log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
         scope = graph_uris if graph_uris is not None else source.graph_uris or None
-        if graph_uris is None and scope:
-            applied = local_graph_scope(scope, source.download_fields, source.graph_sources)
-            if applied is None:
+        type_context = source.type_context_graph_uris
+        ontology_graphs = source.ontology_graph_uris or None
+        # What the endpoint's graph settings name and a graphless index cannot hold.
+        whole_index: dict[str, Any] | None = None
+        if graph_uris is None and files_without_graphs(
+            source.download_fields, source.graph_sources
+        ):
+            dropped = {
+                "graph_uris": scope or [],
+                "type_context_graph_uris": list(type_context or []),
+                "ontology_graph_uris": list(ontology_graphs or []),
+            }
+            if any(dropped.values()):
+                # rdfportal.mbgd (job 115609): its dump has no graphs, and the type context
+                # graph of its endpoint (a taxonomy graph) failed the source as missing.
                 log.info(
                     "  The files of %s have no graphs; the graph scope of its endpoint is not "
-                    "applied and the whole index is mined", source.name,
+                    "applied and the whole index is mined, its type context and ontology terms "
+                    "included (%s)",
+                    source.name,
+                    ", ".join(f"{len(v)} {k}" for k, v in dropped.items() if v),
                 )
-            scope = applied
+                whole_index = {
+                    "state": "whole_index",
+                    "reason": "the files of the source hold no named graphs",
+                    "endpoint_graphs_not_applied": {k: v for k, v in dropped.items() if v},
+                }
+            scope, type_context, ontology_graphs = None, [], None
         strategy = None
         # Scan mining follows the graph scope of the run (data graphs, type context graphs) and
         # gives per-graph counts, so graph-scoped sources and sources with per-graph schemas
@@ -676,14 +705,16 @@ class LocalMiningStage(Stage):
             )
         miner = self._local_miner(
             port, scope,
-            report_path, type_context_graph_uris=source.type_context_graph_uris,
+            report_path, type_context_graph_uris=type_context,
             resume_checkpoint=previous if previous and previous.is_file() else None,
             **({"strategy": strategy} if strategy is not None else {}),
         )
         miner.classes_as_data = source.classes_as_data
         miner.membership_properties = list(source.membership_properties)
+        if whole_index is not None:
+            miner.local_graph_scope = whole_index
         schema = self._mine_schema(miner, source.name, output_dir,
-                                   ontology_graph_uris=source.ontology_graph_uris or None)
+                                   ontology_graph_uris=ontology_graphs)
         # Paths are tested on the rows that scan mining read, not by probes.
         self._scan_store = getattr(strategy, "store", None)
         self._scan_grouping = getattr(miner, "_scan_grouping", None)
