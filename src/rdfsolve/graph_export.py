@@ -124,6 +124,9 @@ class Piece:
     blank_nodes: int = 0
     parse_error: str | None = None
     unparsed: int = 0
+    # Statements that a strict parser refuses but a lenient one reads (N-Triples only).
+    invalid_count: int | None = None
+    invalid_samples: list[str] = field(default_factory=list)
     seconds: float = 0.0
     error: str | None = None
     pages: int = 1
@@ -137,6 +140,7 @@ class GraphOutcome:
     role: str
     count: int | None = None
     count_error: str | None = None
+    count_method: str = "COUNT"
     method: str = ""
     triples: int = 0
     pieces: list[Piece] = field(default_factory=list)
@@ -229,6 +233,25 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
     return triples, blanks, message, invalid
 
 
+def strict_failures(path: Path, samples: int = 20) -> tuple[int, list[str]]:
+    """Return how many lines of a gzip N-Triples file a strict parser refuses, and samples."""
+    import pyoxigraph
+
+    count = 0
+    found: list[str] = []
+    with gzip.open(path, "rb") as stream:
+        for line in stream:
+            if not line.strip() or line.lstrip().startswith(b"#"):
+                continue
+            try:
+                list(pyoxigraph.parse(line, pyoxigraph.RdfFormat.N_TRIPLES))
+            except SyntaxError:
+                count += 1
+                if len(found) < samples:
+                    found.append(line.decode("utf-8", "replace").rstrip()[:300])
+    return count, found
+
+
 class _UnparsableError(Exception):
     """A response with statements that do not parse: the graph cannot be verified."""
 
@@ -296,6 +319,8 @@ class GraphExporter:
         # the server was seen to cut a CONSTRUCT (the page size of a paged predicate).
         self._engine_graphs: list[str] = []
         self._observed_cap: int | None = None
+        # The COUNT of each named graph, for counting a default-graph remainder by difference.
+        self._named_counts: dict[str, int | None] = {}
 
     # Small queries go through SparqlHelper: host gate, spacing, busy-host waits.
 
@@ -496,6 +521,8 @@ class GraphExporter:
         if piece.unparsed:
             # The file is kept, but its triples cannot be checked against the count.
             raise _UnparsableError(piece)
+        if piece.parse_error and fmt == "N_TRIPLES":
+            piece.invalid_count, piece.invalid_samples = strict_failures(final)
         logger.info(
             "%s: %s triples, %s bytes in %.0f s", label, piece.triples, piece.bytes, piece.seconds
         )
@@ -614,6 +641,41 @@ class GraphExporter:
             outcome.finished = _now()
             outcome.seconds = round(time.monotonic() - began, 1)
             outcome.triples = sum(p.triples or 0 for p in outcome.pieces if p.error is None)
+        if outcome.outcome == "retrieved/unverified" and outcome.role == "default-extra":
+            self._verify_remainder(outcome)
+
+    def _verify_remainder(self, outcome: GraphOutcome) -> None:
+        """Verify a default-graph remainder whose COUNT was refused by counting it another way."""
+        count, method = self._remainder_count()
+        if count is not None and count == outcome.triples:
+            outcome.count, outcome.count_method = count, method
+            outcome.outcome = "retrieved/verified"
+        else:
+            outcome.count_method = f"not verified: {method} gives {count}"
+
+    # RDF4J and GraphDB keep the triples loaded without a graph in this context; GRAPH ?g does
+    # not match it, but it can be named.
+    NULL_CONTEXT = "http://www.openrdf.org/schema/sesame#nil"
+
+    def _remainder_count(self) -> tuple[int | None, str]:
+        """Count the default-graph triples that no named graph holds, another way.
+
+        When the endpoint refuses COUNT over FILTER NOT EXISTS (ENPKG's GraphDB), the null
+        context of RDF4J/GraphDB is counted by name; else, when the endpoint counts its default
+        graph and every named graph, the remainder is their difference, which is exact only when
+        the default graph is their union and the named graphs share no triple. The caller
+        accepts a count only when the exported triples equal it, and records the method.
+        """
+        count, _ = self._count(f"GRAPH <{self.NULL_CONTEXT}> {{ ?s ?p ?o }}")
+        if count:
+            return count, f"COUNT of the null context <{self.NULL_CONTEXT}>"
+        total, _ = self._count("?s ?p ?o", self._prologue())
+        named = self._named_counts
+        if total is not None and named and all(c is not None for c in named.values()):
+            return total - sum(c for c in named.values() if c is not None), (
+                "COUNT of the default graph minus the COUNTs of the named graphs"
+            )
+        return None, "not counted: the endpoint refused every count of the remainder"
 
     def _unreadable(self, outcome: GraphOutcome, where: str, prologue: str) -> bool:
         """Mark a graph that the endpoint counts but whose triples no query reads.
@@ -931,6 +993,16 @@ class GraphExporter:
                 return None, f"the default graph counts {count}, as many as the named graphs"
             return "undetermined", f"not answered: {str(error)[:200]}; default count {count}"
         if extra:
+            # RDF4J and GraphDB keep the triples loaded without a graph in a null context that
+            # GRAPH ?g does not match but that can be named: exported whole, it is countable
+            # (ENPKG: COUNT over FILTER NOT EXISTS refused; 510,353 of the 15,359,405 null-context
+            # triples are also in named graphs, 2026-10-06).
+            null, _ = self._count(f"GRAPH <{self.NULL_CONTEXT}> {{ ?s ?p ?o }}")
+            if null:
+                return (
+                    "null-context",
+                    f"the null context <{self.NULL_CONTEXT}> holds {null} triples",
+                )
             return "default-extra", "the default graph holds triples that no named graph holds"
         return None, "every default-graph triple is in a named graph"
 
@@ -950,10 +1022,34 @@ class GraphExporter:
             if not str(item.get("outcome", "")).startswith("retrieved"):
                 return None
             pieces = [Piece(**p) for p in item.get("pieces", [])]
-            if all(not p.file or (self.output / p.file).is_file() for p in pieces):
-                data = {k: v for k, v in item.items() if k != "pieces"}
-                return GraphOutcome(pieces=pieces, **data)
+            if not all(not p.file or (self.output / p.file).is_file() for p in pieces):
+                return None
+            data = {k: v for k, v in item.items() if k != "pieces"}
+            outcome = GraphOutcome(pieces=pieces, **data)
+            if outcome.outcome == "retrieved/unverified":
+                self._recount(outcome)
+            return outcome
         return None
+
+    def _recount(self, outcome: GraphOutcome) -> None:
+        """Ask again for the count of a graph retrieved unverified; verify it if it equals.
+
+        A count that differs sends the graph to be exported again.
+        """
+        where, prologue = self._graph_terms(outcome.graph, outcome.role)
+        count, error = self._count(where, prologue)
+        if count is None and outcome.role == "default-extra":
+            self._verify_remainder(outcome)
+            return
+        if count is None:
+            outcome.count_error = error
+            return
+        outcome.count = count
+        if count == outcome.triples:
+            outcome.outcome = "retrieved/verified"
+        else:
+            outcome.outcome = "failed"
+            outcome.reason = f"recounted {count}, the files hold {outcome.triples}"
 
     def run(self) -> dict[str, Any]:
         """Export every graph of the source; return the manifest (also written to disk)."""
@@ -1029,6 +1125,7 @@ class GraphExporter:
     def _run(self) -> None:
         self.manifest["source_versions"] = self.source_versions()
         graphs, counts, listing = self.list_graphs()
+        self._named_counts = {g: counts.get(g) for g in graphs}
         self._engine_graphs = list(listing.get("excluded", []))
         self.manifest["listing"] = listing
         role, why = self._default_graph_role(graphs, counts)
@@ -1038,11 +1135,18 @@ class GraphExporter:
             self.manifest["graphs"].append(
                 asdict(GraphOutcome(None, "default", outcome="failed", reason=why))
             )
+        elif role == "null-context":
+            todo.append((self.NULL_CONTEXT, "named"))
         elif role is not None:
             todo.append((None, role))
         self._write_manifest()
         for index, (graph, kind) in enumerate(todo, 1):
             outcome = self._resumable(graph, kind)
+            if outcome is not None and outcome.outcome == "failed":
+                for piece in outcome.pieces:
+                    if piece.file:
+                        (self.output / piece.file).unlink(missing_ok=True)
+                outcome = None
             if outcome is None:
                 outcome = GraphOutcome(graph, kind, count=counts.get(graph or ""))
                 try:
@@ -1054,7 +1158,34 @@ class GraphExporter:
                 self.bytes += sum(p.bytes for p in outcome.pieces if p.file)
                 self.manifest["graphs"].append(asdict(outcome))
                 self._write_manifest()
+            if graph is not None:
+                self._named_counts[graph] = outcome.count
         self._retry_transient(todo)
+        self._record_quality()
+
+    def _record_quality(self) -> None:
+        """List in the manifest the graphs the endpoint counts but never serves, and the files
+        that parse only leniently (invalid IRIs and the like), with samples.
+        """
+        graphs = self.manifest["graphs"]
+        self.manifest["unreadable_graphs"] = [
+            {"graph": g["graph"], "count": g["count"]}
+            for g in graphs
+            if g["outcome"] == "unreadable"
+        ]
+        self.manifest["lenient_parses"] = [
+            {
+                "graph": g["graph"],
+                "file": p["file"],
+                "first_error": p["parse_error"],
+                "invalid_statements": p.get("invalid_count"),
+                "samples": p.get("invalid_samples") or [],
+            }
+            for g in graphs
+            for p in g["pieces"]
+            if p.get("file") and p.get("parse_error") and not p.get("error")
+        ]
+        self._write_manifest()
 
     def _retry_transient(self, todo: list[tuple[str | None, str]]) -> None:
         """Export again, after a wait, the graphs that failed on a busy or cut connection.
@@ -1189,8 +1320,19 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
     left_out = [g["graph"] for g in named if not _ABSOLUTE.match(g["graph"])]
     named = [g for g in named if _ABSOLUTE.match(g["graph"])]
     default = [g for g in graphs if g["graph"] is None and _kept_files(g)]
+    remainder: str | None = None
+    null = [g for g in named if g["graph"] == GraphExporter.NULL_CONTEXT]
+    if null:
+        remainder = str(manifest["endpoint"]).rstrip("/") + "#default"
+        named = [g for g in named if g["graph"] != GraphExporter.NULL_CONTEXT]
+        named.append({**null[0], "graph": remainder})
     if named and default:
-        raise ValueError("A default-graph remainder beside named graphs cannot be mapped")
+        # The default-graph triples that no named graph holds get a graph of their own, named
+        # after the endpoint (owner, 2026-10-06: kg-enp).
+        remainder = str(manifest["endpoint"]).rstrip("/") + "#default"
+        default[0] = {**default[0], "graph": remainder}
+        named = [*named, default[0]]
+        default = []
     if not named and not default:
         raise ValueError("No graph with triples that a registry entry can name")
     fields: dict[str, Any] = {}
@@ -1217,6 +1359,8 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
     }
     if left_out:
         fields["endpoint_export"]["left_out_relative_graphs"] = left_out
+    if remainder:
+        fields["endpoint_export"]["default_graph_remainder_as"] = remainder
     return fields
 
 

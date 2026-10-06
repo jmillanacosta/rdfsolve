@@ -329,3 +329,66 @@ def test_error_trailer_rejects_the_body(endpoint: type[_Endpoint], tmp_path: Pat
     g1 = _by_graph(manifest)[EX + "g1"]
     assert g1["outcome"] == "failed"
     assert any("error trailer" in (p["error"] or "") for p in g1["pieces"])
+
+
+def test_default_remainder_beside_named_graphs_is_mapped(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """The default-graph remainder becomes a graph named after the endpoint; a refused COUNT
+    of it is tried another way, and the method is recorded."""
+    from rdfsolve.graph_export import exported_entry
+
+    endpoint.refuse = ("(COUNT(*) AS ?n) WHERE { ?s ?p ?o FILTER NOT EXISTS",)
+    manifest = _export(endpoint, tmp_path)
+    remainder = _by_graph(manifest)[None]
+    # Oxigraph's default graph is not the union, so neither other count fits: not verified.
+    assert remainder["outcome"] == "retrieved/unverified"
+    assert remainder["count_method"].startswith("not verified")
+    fields = exported_entry(tmp_path / "toy")
+    graph = endpoint.url.rstrip("/") + "#default"  # type: ignore[attr-defined]
+    assert graph in fields["graph_sources"] and graph in fields["graph_uris"]
+    assert fields["endpoint_export"]["default_graph_remainder_as"] == graph
+
+
+def test_unreadable_graphs_are_listed(endpoint: type[_Endpoint], tmp_path: Path) -> None:
+    """A graph the endpoint counts but never serves is listed in the manifest."""
+    endpoint.hide = f"<{EX}g2>"
+    manifest = _export(endpoint, tmp_path)
+    assert manifest["unreadable_graphs"] == [{"graph": EX + "g2", "count": 4}]
+    assert manifest["lenient_parses"] == []
+
+
+def test_strict_failures_counts_and_samples_invalid_lines(tmp_path: Path) -> None:
+    """Lines a strict N-Triples parser refuses (an IRI with a space) are counted and sampled."""
+    from rdfsolve.graph_export import strict_failures
+
+    path = tmp_path / "x.nt.gz"
+    with gzip.open(path, "wt") as stream:
+        stream.write("<http://e/a> <http://e/p> <http://e/o> .\n")
+        stream.write("<http://e/a b> <http://e/p> <http://e/o> .\n")
+    assert count_file_triples(path, "N_TRIPLES")[0] == 2
+    count, samples = strict_failures(path)
+    assert count == 1 and "a b" in samples[0]
+
+
+def test_null_context_becomes_the_endpoint_default_graph(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """RDF4J's null context, exported as a graph, is named after the endpoint in the registry."""
+    from rdfsolve.graph_export import exported_entry
+
+    nil = pyoxigraph.NamedNode("http://www.openrdf.org/schema/sesame#nil")
+    endpoint.store.add(
+        pyoxigraph.Quad(
+            pyoxigraph.NamedNode(EX + "n"),
+            pyoxigraph.NamedNode(EX + "p"),
+            pyoxigraph.Literal("null"),
+            nil,
+        )
+    )
+    entry = {"name": "toy", "endpoint": endpoint.url, "graph_uris": [EX + "g1", nil.value]}  # type: ignore[attr-defined]
+    manifest = GraphExporter(entry, tmp_path / "toy", delay=0.0).run()
+    assert source_complete(manifest)
+    fields = exported_entry(tmp_path / "toy")
+    graph = endpoint.url.rstrip("/") + "#default"  # type: ignore[attr-defined]
+    assert fields["graph_uris"] == [EX + "g1", graph]
