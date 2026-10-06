@@ -1086,6 +1086,9 @@ class SchemaMiner:
                 len(report.measurement_gaps),
             )
         found = findings(schema, report.config.get("dataset_statistics"))
+        graphs = (report.config.get("iri_findings") or {}).get("graphs")
+        if graphs:  # recorded while mining (the published VoID)
+            found["graphs"] = graphs
         report.config["iri_findings"] = found
         self._report.flush()
         if found["terms"]:

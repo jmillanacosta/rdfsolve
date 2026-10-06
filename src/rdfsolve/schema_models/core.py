@@ -806,16 +806,39 @@ class MiningResult(BaseModel):
     metadata: Any | None = None
     """Infrastructure descriptions (DCAT/VoID)."""
 
-    def export(self, output_dir: Path) -> None:
-        """Export three separate files."""
+    def export(self, output_dir: Path) -> dict[str, Any]:
+        """Export three separate files and return what they leave out.
+
+        A triple of the ontology or metadata graph whose term is not an RDF IRI cannot be
+        written: it is left out, and the terms are returned per file ({"ontology": ...,
+        "metadata": ...}, the form of a report's iri_findings graphs) and written to
+        iri_findings.json beside the files. The schema's VoID already leaves such rows out.
+        """
+        import logging
+
+        from rdfsolve.schema_models.iri_quality import writable_graph
+
         output_dir.mkdir(parents=True, exist_ok=True)
 
         (output_dir / "schema.ttl").write_text(
             self.data_schema.to_void_graph().serialize(format="turtle")
         )
 
-        if self.ontology is not None:
-            (output_dir / "ontology.ttl").write_text(self.ontology.to_turtle())
-
-        if self.metadata is not None:
-            (output_dir / "metadata.ttl").write_text(self.metadata.to_turtle())
+        left_out: dict[str, Any] = {}
+        for name, part in (("ontology", self.ontology), ("metadata", self.metadata)):
+            if part is None:
+                continue
+            graph, found = writable_graph(part.to_rdf_graph())
+            (output_dir / f"{name}.ttl").write_text(graph.serialize(format="turtle"))
+            if found:
+                logging.getLogger(__name__).warning(
+                    "%s: %d triples with %d terms that are not RDF IRIs left out "
+                    "(iri_findings.json)",
+                    name,
+                    found["triples_left_out"],
+                    len(found["terms"]),
+                )
+                left_out[name] = found
+        if left_out:
+            (output_dir / "iri_findings.json").write_text(_json.dumps(left_out, indent=2))
+        return left_out

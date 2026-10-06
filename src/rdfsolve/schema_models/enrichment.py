@@ -230,10 +230,20 @@ class SchemaEnrichment(BaseModel):
     def from_rdf_graph(
         cls, graph: Graph, classes: list[str], properties: list[str]
     ) -> SchemaEnrichment:
-        """Read annotations and linked examples from an RDFLib graph."""
-        from rdfsolve.local_rdf import to_oxigraph
+        """Read annotations and linked examples from an RDFLib graph.
 
-        return cls.from_oxigraph(to_oxigraph(graph), classes, properties)
+        Triples whose terms are not RDF IRIs are not read: Oxigraph refuses such terms
+        (rdfsolve.schema_models.iri_quality; the reader that retains the graph records them).
+        """
+        from rdflib import Dataset
+
+        from rdfsolve.local_rdf import to_oxigraph
+        from rdfsolve.schema_models.iri_quality import writable_dataset, writable_graph
+
+        readable = (
+            writable_dataset(graph)[0] if isinstance(graph, Dataset) else writable_graph(graph)[0]
+        )
+        return cls.from_oxigraph(to_oxigraph(readable), classes, properties)
 
     @classmethod
     def from_oxigraph(

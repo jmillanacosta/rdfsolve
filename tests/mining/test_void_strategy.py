@@ -133,3 +133,24 @@ def test_a_purpose_whose_queries_the_endpoint_cuts_is_stopped_and_recorded(monke
     gaps = [g for g in miner.last_report.measurement_gaps if g.purpose == "void/drift"]
     assert any("1 not sent" in g.message for g in gaps)
     assert len(schema.patterns) == 3 and not miner.last_report.query_failures
+
+
+def test_a_void_term_that_is_not_an_rdf_iri_is_left_out_and_recorded():
+    import logging
+
+    logging.getLogger("rdflib.term").setLevel(logging.ERROR)
+    strategy = _strategy()
+    space = " http://identifiers.org/obo.aeo/"  # lsr's namespace (L21)
+    strategy.void.add(
+        (URIRef("urn:void:g1"), URIRef("http://rdfs.org/ns/void#vocabulary"), URIRef(space))
+    )
+    miner = SchemaMiner.from_graph(_data(), graph_uris=[G1], strategy=strategy, delay=0)
+    try:
+        schema = miner.mine(dataset_name="fixture")
+    finally:
+        miner.close()
+    assert miner.last_report.config["iri_findings"]["graphs"]["void"] == {
+        "triples_left_out": 1,
+        "terms": [{"iri": space, "triples": 1}],
+    }
+    assert {p.evidence_source for p in schema.patterns} == {"void", "mined"}

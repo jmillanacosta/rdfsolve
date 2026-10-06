@@ -12,14 +12,22 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from typing import TYPE_CHECKING, Any
 
-from rdflib import Graph, URIRef
+from rdflib import Dataset, Graph, URIRef
 
 from rdfsolve.schema_models.paths import is_rdf_iri
 
 if TYPE_CHECKING:
     from rdfsolve.schema_models.core import MinedSchema
 
-__all__ = ["findings", "graph_findings", "rdf_terms_only", "rdf_writable"]
+__all__ = [
+    "findings",
+    "graph_findings",
+    "left_out",
+    "rdf_terms_only",
+    "rdf_writable",
+    "writable_dataset",
+    "writable_graph",
+]
 
 SENTINELS = frozenset({"Literal", "Resource", "BlankNode"})
 _TEST = '!REGEX(STR(?term), "^[^\\\\s<>\\"{}|^`\\\\\\\\]*$")'
@@ -131,3 +139,53 @@ def rdf_terms_only(graph: Graph) -> Graph:
         if any(isinstance(t, URIRef) and not is_rdf_iri(t) for t in triple):
             graph.remove(triple)
     return graph
+
+
+def left_out(terms: dict[str, int], triples: int) -> dict[str, Any] | None:
+    """Return the finding for *triples* left out for *terms*, as the reports record it.
+
+    The form is that of the report's iri_findings graphs: triples_left_out and each term with
+    the number of triples that hold it. None when nothing was left out.
+    """
+    if not triples:
+        return None
+    return {
+        "triples_left_out": triples,
+        "terms": [{"iri": iri, "triples": n} for iri, n in sorted(terms.items())],
+    }
+
+
+def writable_graph(graph: Graph) -> tuple[Graph, dict[str, Any] | None]:
+    """Return a copy of *graph* that RDF syntaxes can write, and what it leaves out.
+
+    *graph* is not changed. The second value is the finding (left_out) or None.
+    """
+    terms = graph_findings(graph)
+    copy = Graph(namespace_manager=graph.namespace_manager)
+    for triple in graph:
+        if not any(isinstance(t, URIRef) and not is_rdf_iri(t) for t in triple):
+            copy.add(triple)
+    return copy, left_out(terms, len(graph) - len(copy))
+
+
+def writable_dataset(dataset: Dataset) -> tuple[Dataset, dict[str, Any] | None]:
+    """Return a copy of *dataset* that TriG can write, and what it leaves out.
+
+    A quad is left out when one of its terms or its graph name is not an RDF IRI. *dataset* is
+    not changed.
+    """
+    terms: Counter[str] = Counter()
+    copy = Dataset()
+    for prefix, namespace in dataset.namespaces():
+        copy.bind(prefix, namespace, override=False)
+    dropped = 0
+    for s, p, o, g in dataset.quads():
+        name = g.identifier if isinstance(g, Graph) else g
+        bad = {t for t in (s, p, o, name) if isinstance(t, URIRef) and not is_rdf_iri(t)}
+        if bad:
+            dropped += 1
+            for term in bad:
+                terms[str(term)] += 1
+            continue
+        copy.graph(name).add((s, p, o))
+    return copy, left_out(dict(terms), dropped)

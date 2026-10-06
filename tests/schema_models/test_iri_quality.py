@@ -76,3 +76,74 @@ def test_graph_findings_count_the_triples_that_rdf_terms_only_leaves_out():
     assert found == {" http://example.org/ns/": 2, BAD_O: 1, BAD_P: 1}
     assert len(rdf_terms_only(graph)) == 1
     assert graph_findings(graph) == {}
+
+
+LSR_NS = " http://identifiers.org/obo.aeo/"  # lsr's namespace with a leading space (L21)
+
+
+def metadata_with_bad_term():
+    from rdfsolve.schema_models.metadata import MetadataDocument
+
+    logging.getLogger("rdflib.term").setLevel(logging.ERROR)
+    graph = Graph()
+    graph.add((URIRef("urn:d"), RDF.type, URIRef("http://rdfs.org/ns/void#Dataset")))
+    graph.add((URIRef("urn:d"), URIRef("http://rdfs.org/ns/void#vocabulary"), URIRef(LSR_NS)))
+    return MetadataDocument(graph=graph, scope="retained VoID RDF")
+
+
+def test_retained_metadata_leaves_out_and_records_terms_that_are_not_rdf_iris():
+    from rdfsolve.schema_models.metadata import RetainedMetadata
+
+    document = metadata_with_bad_term()
+    retained = RetainedMetadata.from_document(document)  # raised before
+    assert retained.iri_findings == {
+        "triples_left_out": 1,
+        "terms": [{"iri": LSR_NS, "triples": 1}],
+    }
+    assert len(retained.to_document().graph) == 1
+    assert len(document.graph) == 2  # the evidence in memory is not changed
+    again = RetainedMetadata.model_validate_json(retained.model_dump_json())
+    assert again.iri_findings == retained.iri_findings
+    good = RetainedMetadata.from_document(
+        type(document)(graph=Graph().add((URIRef("urn:a"), RDF.type, URIRef("urn:A"))), scope="x")
+    )
+    assert good.iri_findings is None
+
+
+def test_metadata_trig_leaves_out_quads_whose_terms_or_graph_names_are_not_rdf_iris():
+    from rdfsolve.schema_models.metadata import MetadataDocument, RetainedMetadata
+
+    logging.getLogger("rdflib.term").setLevel(logging.ERROR)
+    data = Dataset()
+    data.add((URIRef("urn:a"), RDF.type, URIRef("urn:A"), URIRef("urn:g")))
+    data.add((URIRef("urn:a"), URIRef("urn:p"), URIRef(LSR_NS), URIRef("urn:g")))
+    data.add((URIRef("urn:b"), RDF.type, URIRef("urn:A"), URIRef("urn:g h")))
+    document = MetadataDocument(graph=Graph(), rdf_dataset=data, scope="x")
+    retained = RetainedMetadata.from_document(document)
+    assert retained.format == "trig"
+    assert retained.iri_findings == {
+        "triples_left_out": 2,
+        "terms": [{"iri": LSR_NS, "triples": 1}, {"iri": "urn:g h", "triples": 1}],
+    }
+    restored = retained.to_document()
+    assert {str(g) for g in restored.graph.subjects()} == {"urn:a"}
+    assert "urn:g" in {str(c.identifier) for c in restored.rdf_dataset.contexts()}
+
+
+def test_void_with_a_term_that_is_not_an_rdf_iri_is_read():
+    from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
+
+    schema = void_graph_to_minedschema(metadata_with_bad_term().graph)  # raised before
+    assert schema.source_metadata.iri_findings["terms"] == [{"iri": LSR_NS, "triples": 1}]
+
+
+def test_mining_result_export_leaves_out_and_records_terms_that_are_not_rdf_iris(tmp_path):
+    from rdfsolve.schema_models import MiningResult
+
+    schema, _ = mined()
+    result = MiningResult(data_schema=schema, metadata=metadata_with_bad_term())
+    found = result.export(tmp_path)  # raised before
+    assert found == {"metadata": {"triples_left_out": 1, "terms": [{"iri": LSR_NS, "triples": 1}]}}
+    assert json.loads((tmp_path / "iri_findings.json").read_text()) == found
+    assert len(Graph().parse(tmp_path / "metadata.ttl")) == 1
+    assert len(Graph().parse(tmp_path / "schema.ttl"))

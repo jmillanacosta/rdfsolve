@@ -187,6 +187,10 @@ class VoidStrategy(MiningStrategy):
 
         phase = context.report.start_phase("void")
         schema = void_graph_to_minedschema(self.void, report_untyped=False)
+        left_out = schema.source_metadata.iri_findings if schema.source_metadata else None
+        if left_out:
+            found = context.report.report.config.setdefault("iri_findings", {})
+            found.setdefault("graphs", {})["void"] = left_out
         patterns = list(schema.patterns)
         for pattern in patterns:
             pattern.count_semantics = "endpoint_default"
