@@ -435,6 +435,7 @@ def _stream_rows(
     *,
     keep_text: bool = True,
     extra: dict[str, Any] | None = None,
+    id_query: str | None = None,
 ) -> int:
     """Write the rows of *query* to *path* as Parquet, with QLever's ids of some columns.
 
@@ -443,6 +444,11 @@ def _stream_rows(
     bound by the block, not by the result, and nothing is written to disk but the Parquet file.
     *ids* names the id columns and the position of their variable; *extra* adds constant
     columns. Without *keep_text*, literal text in column o is cut (_trim_literals).
+
+    *id_query* is the query whose ids are read, when it is not *query*: the same scan without
+    the columns that need no id (``DATATYPE(?o)``, which QLever computes for every row, takes
+    most of the time of the octet-stream result). It must give the rows of *query* in the same
+    order, with the id columns at the same positions.
     """
     import io
 
@@ -455,11 +461,11 @@ def _stream_rows(
     writer = None
     with (
         _post(endpoint, query, "text/tab-separated-values") as text,
-        _post(endpoint, query, "application/octet-stream") as binary,
+        _post(endpoint, id_query or query, "application/octet-stream") as binary,
     ):
         header = text.readline().decode().rstrip("\n").split("\t")
         names = [h.lstrip("?") for h in header]
-        width = len(names)
+        width = _width(id_query) if id_query else len(names)
         rest = b""
         while True:
             block = text.read(BLOCK_BYTES)
@@ -513,6 +519,14 @@ def _stream_rows(
     return rows
 
 
+def _width(query: str) -> int:
+    """Return the columns of ``SELECT ?a ?b ... [FROM <g>] WHERE``, a query of variables only."""
+    head = query.split(" WHERE ", 1)[0].split(" FROM ", 1)[0]
+    if "(" in head:
+        raise ValueError(f"The query of the ids selects variables only: {query}")
+    return head.count("?")
+
+
 def _ids(
     endpoint: str, query: str, width: int, rows: int, columns: dict[str, int]
 ) -> list[pl.Series]:
@@ -529,20 +543,135 @@ def _ids(
     return [pl.Series(name, ids[c::width], dtype=pl.UInt64) for name, c in columns.items()]
 
 
-def _row_query(predicate: str) -> str:
-    return f"SELECT ?s ?o (DATATYPE(?o) AS ?d) WHERE {{ ?s <{predicate}> ?o }}"
+# The rows of a predicate; without *datatype*, the same scan without ?d (the query of the ids).
+def _row_query(predicate: str, *, datatype: bool = True) -> str:
+    d = " (DATATYPE(?o) AS ?d)" if datatype else ""
+    return f"SELECT ?s ?o{d} WHERE {{ ?s <{predicate}> ?o }}"
 
 
-def _graph_row_query(predicate: str) -> str:
-    return f"SELECT ?g ?s ?o (DATATYPE(?o) AS ?d) WHERE {{ GRAPH ?g {{ ?s <{predicate}> ?o }} }}"
+def _graph_row_query(predicate: str, *, datatype: bool = True) -> str:
+    d = " (DATATYPE(?o) AS ?d)" if datatype else ""
+    return f"SELECT ?g ?s ?o{d} WHERE {{ GRAPH ?g {{ ?s <{predicate}> ?o }} }}"
 
 
-def _unnamed_row_query(predicate: str) -> str:
+def _unnamed_row_query(predicate: str, *, datatype: bool = True) -> str:
     """Read the triples of *predicate* outside every named graph (QLever's own default graph)."""
+    d = " (DATATYPE(?o) AS ?d)" if datatype else ""
     return (
-        f"SELECT ?s ?o (DATATYPE(?o) AS ?d) FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
+        f"SELECT ?s ?o{d} FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
         f"WHERE {{ ?s <{predicate}> ?o }}"
     )
+
+
+# A query with more rows than SLICE_ROWS is read in slices (LIMIT and OFFSET), several at once:
+# QLever streams one query from one thread. On GOA rdf:type (11.8 M rows) the last 1 M rows came
+# as fast as the first, and 8 slices read it 6.4 times as fast as one query. Skipping rows is not
+# free in every index (PubChem, GRAPH ?g: about 13 s for 4.3 G rows), so a query has at most
+# MAX_SLICES slices, of SLICE_ROWS rows or more.
+SLICE_ROWS = 10_000_000
+MAX_SLICES = 64
+
+
+def export_workers() -> int:
+    """Return the queries an export reads at once: RDFSOLVE_SCAN_WORKERS, else the CPUs of
+    this process (at least 4). Each stream keeps about one core of the server busy.
+    """
+    import os
+
+    value = os.environ.get("RDFSOLVE_SCAN_WORKERS")
+    if value:
+        return max(1, int(value))
+    return max(4, len(os.sched_getaffinity(0)))
+
+
+def _slices(rows: int) -> list[tuple[int, int | None]]:
+    """Cut *rows* rows into (offset, limit) slices of SLICE_ROWS rows or more, at most
+    MAX_SLICES; the last one is open (no LIMIT), so that rows beyond the count are read too and
+    found by the row check.
+    """
+    size = max(SLICE_ROWS, -(-rows // MAX_SLICES))
+    starts = range(0, max(rows, 1), size)
+    return [(start, size if start + size < rows else None) for start in starts]
+
+
+def _sliced(query: str, offset: int, limit: int | None) -> str:
+    return query + (f" LIMIT {limit}" if limit is not None else "") + f" OFFSET {offset}"
+
+
+def _join_parts(parts: Sequence[Path], path: Path) -> None:
+    """Write the Parquet files *parts* to *path*, one after another, row group by row group."""
+    import pyarrow.parquet as pq
+
+    files = [pq.ParquetFile(part) for part in parts]
+    full = [f for f in files if f.metadata.num_rows]
+    if not full:
+        Path(parts[0]).replace(path)
+    else:
+        partial = path.with_name(path.name + ".partial")
+        writer = pq.ParquetWriter(partial, full[0].schema_arrow, compression="zstd")
+        for file in full:
+            for group in range(file.num_row_groups):
+                writer.write_table(file.read_row_group(group))
+        writer.close()
+        partial.replace(path)
+    for file in files:
+        file.close()
+    for part in parts:
+        Path(part).unlink(missing_ok=True)
+
+
+def _read_query(
+    pool: ThreadPoolExecutor,
+    endpoint: str,
+    query: str,
+    path: Path,
+    ids: dict[str, int],
+    rows: int,
+    *,
+    id_query: str | None = None,
+    keep_text: bool = True,
+    extra: dict[str, Any] | None = None,
+) -> int:
+    """Write the rows of *query* (about *rows* of them) to *path* with _stream_rows, in
+    slices read at once in *pool* when it has more than SLICE_ROWS rows; return the rows.
+
+    The slices are joined in order, so the file has the rows in the order of the query (QLever's
+    scan order). A slice already written (an export resumed) is not read again.
+    """
+    import pyarrow.parquet as pq
+
+    def stream(part: Path, offset: int | None = None, limit: int | None = None) -> int:
+        """Write the whole result, or one slice of it, to *part*; return its rows."""
+        if offset is None:
+            return _stream_rows(
+                endpoint, query, part, ids, keep_text=keep_text, extra=extra, id_query=id_query
+            )
+        if part.is_file():
+            return int(pq.ParquetFile(part).metadata.num_rows)
+        return _stream_rows(
+            endpoint,
+            _sliced(query, offset, limit),
+            part,
+            ids,
+            keep_text=keep_text,
+            extra=extra,
+            id_query=_sliced(id_query, offset, limit) if id_query else None,
+        )
+
+    if rows <= SLICE_ROWS:
+        return pool.submit(stream, path).result()
+    slices = _slices(rows)
+    parts = [
+        path.with_name(f"{path.name}.slice-{offset}-{limit if limit else 'end'}")
+        for offset, limit in slices
+    ]
+    futures = [
+        pool.submit(stream, part, offset, limit)
+        for part, (offset, limit) in zip(parts, slices, strict=True)
+    ]
+    count = sum(future.result() for future in futures)
+    _join_parts(parts, path)
+    return count
 
 
 def _count(value: str) -> int:
@@ -572,15 +701,17 @@ def _has_named_graphs(endpoint: str, path: Path) -> bool:
 
 
 def export_index(
-    endpoint: str, path: Path, *, index: dict[str, Any] | None = None, workers: int = 4
+    endpoint: str, path: Path, *, index: dict[str, Any] | None = None, workers: int | None = None
 ) -> RowStore:
     """Read every predicate of a local QLever endpoint into a row store at *path*.
 
     *index* describes the index (its metadata: build and triple count); a store of the same
     index, read with the same membership properties, is reused. An export that stopped is
     resumed: plan.json records what is being read, progress.jsonl each predicate written, and
-    only the predicates not written yet are read again. *workers* predicates are read at once
-    (the server answers qlever.lifecycle.SIMULTANEOUS_QUERIES queries at once).
+    only the predicates not written yet are read again (and the slices of a large predicate
+    already written are kept). *workers* queries are read at once (export_workers() by
+    default): a predicate with more than SLICE_ROWS rows is read in slices, joined in order.
+    The ids are read with the same scan without ``DATATYPE(?o)`` (_stream_rows).
 
     Each row has the terms (s, o, the datatype d) and QLever's ids of the subject and object
     (sid, oid); literal text is kept in full only for name and definition predicates.
@@ -655,17 +786,20 @@ def export_index(
         p: sum(g.get(p, 0) for g in graphs.values()) if graphs is not None else n
         for p, n in sizes.items()
     }
+    workers = workers or export_workers()
+    streams = ThreadPoolExecutor(max_workers=workers)
     if not (resumable and (path / "types.parquet").is_file()):
         types = []
         for number, prop in enumerate(membership):
             part = path / f"types-{number}.parquet"
             if not named:
                 query = f"SELECT ?s ?c WHERE {{ ?s <{prop}> ?c }}"
-                _stream_rows(endpoint, query, part, {"sid": 0})
+                _read_query(streams, endpoint, query, part, {"sid": 0}, sizes.get(prop, 0))
                 types.append(pl.scan_parquet(part))
                 continue
             query = f"SELECT ?g ?s ?c WHERE {{ GRAPH ?g {{ ?s <{prop}> ?c }} }}"
-            _stream_rows(endpoint, query, part, {"sid": 1})
+            in_graphs = expected.get(prop, 0) - unnamed.get(prop, 0)
+            _read_query(streams, endpoint, query, part, {"sid": 1}, in_graphs)
             types.append(pl.scan_parquet(part).select("s", "c", "g", "sid"))
             if unnamed.get(prop):
                 rest = path / f"types-{number}-unnamed.parquet"
@@ -673,8 +807,14 @@ def export_index(
                     f"SELECT ?s ?c FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
                     f"WHERE {{ ?s <{prop}> ?c }}"
                 )
-                _stream_rows(
-                    endpoint, query, rest, {"sid": 0}, extra={"g": f"<{QLEVER_DEFAULT_GRAPH}>"}
+                _read_query(
+                    streams,
+                    endpoint,
+                    query,
+                    rest,
+                    {"sid": 0},
+                    unnamed[prop],
+                    extra={"g": f"<{QLEVER_DEFAULT_GRAPH}>"},
                 )
                 types.append(pl.scan_parquet(rest).select("s", "c", "g", "sid"))
         # The rows of one query are distinct; parts can repeat a row only when there are
@@ -699,24 +839,37 @@ def export_index(
         file = path / "rows" / f"{number:05d}.parquet"
         keep = predicate in text
         if not named:
-            rows = _stream_rows(
-                endpoint, _row_query(predicate), file, {"sid": 0, "oid": 1}, keep_text=keep
+            rows = _read_query(
+                streams,
+                endpoint,
+                _row_query(predicate),
+                file,
+                {"sid": 0, "oid": 1},
+                size,
+                id_query=_row_query(predicate, datatype=False),
+                keep_text=keep,
             )
         else:
-            rows = _stream_rows(
+            rows = _read_query(
+                streams,
                 endpoint,
                 _graph_row_query(predicate),
                 file,
                 {"gid": 0, "sid": 1, "oid": 2},
+                size - unnamed.get(predicate, 0),
+                id_query=_graph_row_query(predicate, datatype=False),
                 keep_text=keep,
             )
             if unnamed.get(predicate):
                 rest = file.with_name(file.stem + "-unnamed.parquet")
-                rows += _stream_rows(
+                rows += _read_query(
+                    streams,
                     endpoint,
                     _unnamed_row_query(predicate),
                     rest,
                     {"sid": 0, "oid": 1},
+                    unnamed[predicate],
+                    id_query=_unnamed_row_query(predicate, datatype=False),
                     keep_text=keep,
                     extra={"g": f"<{QLEVER_DEFAULT_GRAPH}>"},
                 )
@@ -735,8 +888,22 @@ def export_index(
 
     order = sorted(sizes.items(), key=lambda x: (-x[1], x[0]))
     jobs = [(n, p, expected[p]) for n, (p, _) in enumerate(order)]
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        finished = list(pool.map(read, jobs))
+    # The predicates are read at once in their own threads, which wait for their queries in
+    # the pool of streams (largest first; a thread never waits for a query of its own pool).
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(read, job) for job in jobs]
+            try:
+                finished = [future.result() for future in futures]
+            except BaseException:
+                for future in futures:
+                    future.cancel()
+                streams.shutdown(cancel_futures=True)
+                raise
+    finally:
+        streams.shutdown(cancel_futures=True)
+    for stale in (path / "rows").glob("*.slice-*"):
+        stale.unlink()
     files = {predicate: name for predicate, name, _ in finished}
     mismatches = [m for _, _, m in finished if m]
     if mismatches:

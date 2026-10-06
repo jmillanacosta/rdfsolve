@@ -94,13 +94,13 @@ def test_rows_are_read_in_blocks_with_their_ids(endpoint, tmp_path, monkeypatch)
 
 
 def test_an_export_that_stopped_reads_only_the_predicates_not_yet_written(endpoint, tmp_path):
-    endpoint.fail_after = 4  # two of the five predicates (text and ids of each)
+    endpoint.fail_after = 2  # two of the five predicates (their text; the ids have no DATATYPE)
     with pytest.raises(Exception):
         scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
     assert (tmp_path / "store" / "progress.jsonl").read_text().count("\n") == 2
     endpoint.fail_after, endpoint.row_queries = None, 0
     store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
-    assert endpoint.row_queries == 6, "The three predicates left (text and ids of each)"
+    assert endpoint.row_queries == 3, "The three predicates left (the text query of each)"
     assert store.manifest["resumed_predicates"] == 2
     assert sum(store.manifest["rows"].values()) == 9
 
