@@ -6,6 +6,8 @@ import os
 import subprocess
 import zipfile
 
+import pytest
+
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.utils import (
     _build_get_data_steps,
@@ -413,3 +415,55 @@ def test_rdfxml_mapped_to_a_graph_is_converted_and_an_empty_file_is_accounted_fo
     ]
     assert sorted(o for o in outputs if o) == ["<urn:s> <urn:p> <urn:o> .\n"] * 2
     assert {s["format"] for s in streams} == {"nt"}
+
+
+def test_archive_members_that_are_not_data_are_left_out_of_the_index(tmp_path):
+    """Cellosaurus's RDF archive holds its query examples and a VoID description beside the
+    data: the entry names them, and they are kept in left_out/, where the index does not look."""
+    import functools
+    import http.server
+    import tarfile
+    import threading
+
+    from rdfsolve.qlever.inputs import index_inputs
+    from rdfsolve.qlever.utils import _build_get_data_steps, analyse_source
+
+    members = tmp_path / "members" / "rdf_data"
+    members.mkdir(parents=True)
+    for name in ("data_cell_lines.ttl", "ontology.ttl", "queries.ttl", "void-cello.ttl"):
+        (members / name).write_text(f"<urn:{name}> <urn:p> <urn:o> .\n")
+    site = tmp_path / "site"
+    site.mkdir()
+    with tarfile.open(site / "dump_ttl.tar.gz", "w:gz") as archive:
+        archive.add(members, arcname="rdf_data")
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    entry = {
+        "download_tgz": f"http://127.0.0.1:{server.server_port}/dump_ttl.tar.gz",
+        "archive_members_left_out": ["queries.ttl", "void-*.ttl"],
+    }
+    try:
+        steps = _build_get_data_steps(analyse_source(entry), str(tmp_path / "work" / "rdf"))
+        env = {**os.environ, "no_proxy": "127.0.0.1", "NO_PROXY": "127.0.0.1"}
+        done = subprocess.run(
+            ["bash"], input=" && ".join(steps), text=True, capture_output=True, env=env
+        )
+    finally:
+        server.shutdown()
+    assert done.returncode == 0, done.stderr
+    assert "left out of the index: queries.ttl" in done.stdout
+    assert [p.name for p in index_inputs(tmp_path / "work")] == [
+        "data_cell_lines.ttl",
+        "ontology.ttl",
+    ]
+    left_out = tmp_path / "work" / "rdf" / "left_out"
+    assert sorted(p.name for p in left_out.iterdir()) == ["queries.ttl", "void-cello.ttl"]
+
+
+@pytest.mark.parametrize("pattern", ["../queries.ttl", "rdf/queries.ttl", "*", "a b.ttl", "$(x)"])
+def test_left_out_patterns_are_file_names(pattern):
+    from rdfsolve.models.source_model import SourceModel
+
+    with pytest.raises(ValueError):
+        SourceModel.model_validate({"name": "x", "archive_members_left_out": [pattern]})

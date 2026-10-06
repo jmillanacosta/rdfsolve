@@ -364,3 +364,25 @@ def test_a_folder_of_the_listed_downloads_is_kept(tmp_path):
     downloads.write_record(workdir, [URL], lambda url: None)
     stage._set_aside_when_differs(workdir, source)
     assert _folders(tmp_path) == ["fixture"] and (workdir / "rdf" / "data.ttl").exists()
+
+
+def test_the_files_an_entry_leaves_out_reach_the_qleverfile(tmp_path):
+    """archive_members_left_out passes the pipeline's boundary to the Qleverfile."""
+    from rdfsolve.qlever import QleverConfig, build_qleverfile
+
+    source = Source.from_dict(
+        {
+            "name": "dump",
+            "download_tgz": "https://example.org/dump_ttl.tar.gz",
+            "archive_members_left_out": ["queries.ttl"],
+        }
+    )
+    qleverfile = build_qleverfile(
+        source.qlever_entry(),
+        tmp_path,
+        7019,
+        runtime="singularity",
+        cfg=QleverConfig(),
+        workdir=tmp_path / "dump",
+    )
+    assert "for f in queries.ttl;" in qleverfile and "left_out/" in qleverfile

@@ -155,6 +155,10 @@ class SourceModel(BaseModel):
         Optional Bioregistry provider code for prefix resolution.
     download_ttl:
         Optional list of TTL download URLs for local loading.
+    archive_members_left_out:
+        File name patterns (shell globs, no paths) of downloaded or extracted files that are not
+        the dataset's data, such as query examples or a VoID description in a provider's
+        archive. They are kept in the download folder's left_out/ and not indexed.
     bioregistry_prefix:
         Canonical Bioregistry prefix.
     bioregistry_name:
@@ -236,6 +240,7 @@ class SourceModel(BaseModel):
     notes: str = ""
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
+    archive_members_left_out: list[str] = Field(default_factory=list)
 
     # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str = ""
@@ -312,6 +317,14 @@ class SourceModel(BaseModel):
                     raise ValueError(f"Unsupported graph input format: {key}")
                 if not urls or any(not url.strip() for url in urls):
                     raise ValueError(f"Empty input locations for {graph}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_archive_members_left_out(self) -> Self:
+        """Require file name patterns, not paths, for the files left out of the index."""
+        from rdfsolve.qlever.utils import left_out_patterns
+
+        left_out_patterns({"archive_members_left_out": self.archive_members_left_out})
         return self
 
     @model_validator(mode="after")

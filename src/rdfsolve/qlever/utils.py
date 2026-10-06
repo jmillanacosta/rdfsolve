@@ -266,6 +266,10 @@ class SourceAnalysis:
     urls_by_suffix: dict[str, list[str]] = field(default_factory=dict)
     """Download URLs grouped by their ``download_*`` suffix."""
 
+    left_out: list[str] = field(default_factory=list)
+    """Name patterns of downloaded or extracted files that are not indexed
+    (``archive_members_left_out``)."""
+
     @property
     def needs_rdfxml_conversion(self) -> bool:
         """Check if source requires RDF/XML to NQuads conversion."""
@@ -341,7 +345,24 @@ def analyse_source(entry: dict[str, Any]) -> SourceAnalysis:
         needs_gz=needs_gz,
         needs_xz=needs_xz,
         needs_archive=needs_archive,
+        left_out=left_out_patterns(entry),
     )
+
+
+# A pattern names files in the download folder, never a path: letters, digits, '.', '_', '-'
+# and the glob characters '*' and '?'.
+_LEFT_OUT_PATTERN = re.compile(r"[A-Za-z0-9._*?-]+")
+LEFT_OUT_DIR = "left_out"
+
+
+def left_out_patterns(entry: dict[str, Any]) -> list[str]:
+    """Return the entry's ``archive_members_left_out`` patterns, refusing one that is a path."""
+    value = entry.get("archive_members_left_out") or []
+    patterns = [value] if isinstance(value, str) else list(value)
+    for pattern in patterns:
+        if not _LEFT_OUT_PATTERN.fullmatch(str(pattern)) or set(str(pattern)) <= {"*", "?", "."}:
+            raise ValueError(f"archive_members_left_out takes file name patterns: {pattern!r}")
+    return [str(p) for p in patterns]
 
 
 # Small helpers
@@ -605,6 +626,25 @@ def _extract_archives_steps() -> list[str]:
     ]
 
 
+def _leave_out_steps(patterns: list[str]) -> list[str]:
+    """Shell steps: move the files that the entry leaves out of the index to left_out/.
+
+    A provider can publish files that are not its data beside it: Cellosaurus's RDF archive
+    holds its SPARQL query examples (SHACL) and a VoID description of its endpoint. They are
+    kept, named in the log, and not indexed: the index reads the download folder only, not its
+    subfolders.
+    """
+    loop = " ".join(
+        f'for f in {pattern}; do [ -f "$f" ] || continue; '
+        f'echo "  left out of the index: $f"; mv -f -- "$f" {LEFT_OUT_DIR}/; done;'
+        for pattern in patterns
+    )
+    return [
+        "echo 'Leaving out files that are not data ...'",
+        f"{{ mkdir -p {LEFT_OUT_DIR} && {loop} true; }}",
+    ]
+
+
 def _decompress_xz_steps() -> list[str]:
     return [
         "echo 'Decompressing .xz files ...'",
@@ -755,6 +795,9 @@ def _build_get_data_steps(
 
     if analysis.needs_archive:
         steps.extend(_extract_archives_steps())
+
+    if analysis.left_out:
+        steps.extend(_leave_out_steps(analysis.left_out))
 
     if analysis.needs_xz:
         steps.extend(_decompress_xz_steps())

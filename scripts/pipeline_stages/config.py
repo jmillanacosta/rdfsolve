@@ -65,6 +65,7 @@ class Source(SourceModel):
             "local_tar_url": self.local_tar_url,
             "graph_uris": self.graph_uris,
             "graph_sources": self.graph_sources,
+            "archive_members_left_out": self.archive_members_left_out,
         }
 
 

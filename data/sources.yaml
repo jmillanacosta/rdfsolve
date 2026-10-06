@@ -5408,8 +5408,15 @@
 - name: cellosaurus
   dataset_kind: instance
   endpoint: https://sparql.cellosaurus.org/sparql
-  download_obo:
-  - https://ftp.expasy.org/databases/cellosaurus/cellosaurus.obo
+  download_tgz: https://api.cellosaurus.org/static/downloads/cellosaurus_ttl.tar.gz
+  archive_members_left_out:
+  - queries.ttl
+  - void-cello.ttl
+  notes: The local input is SIB's own RDF dump of Cellosaurus (cellosaurus_ttl.tar.gz, release
+    56.0, Last-Modified 2026-06-25; 18 Turtle files, 1.47 GB plain), not the OBO flat file. Two
+    files of the archive are not data and are left out of the index - queries.ttl (the SPARQL
+    query examples of the endpoint, as SHACL executables) and void-cello.ttl (a VoID
+    description of a localhost Virtuoso with its DAV and owl graphs).
   bioregistry_prefix: cellosaurus
   keywords:
   - bioresource
@@ -6692,8 +6699,12 @@
   dataset_kind: instance
   endpoint: https://qlever.earthmetabolome.org/metrin-kg
   download_tgz: https://zenodo.org/records/18652487/files/metrin-kg.tar.gz
+  archive_members_left_out:
+  - examples_METRINKG-*.ttl.gz
+  - void_METRINKG-*.ttl.gz
   notes: 'KG Registry: Earth Metabolome Initiative Ontology; shares QLever earthmetabolome endpoint. Zenodo archive contains emi.ttl.gz (ontology) plus KG files (enpkg-rdf-v4.tar.gz, examples_METRINKG-v0.1.ttl.gz,
-    globi_output_w3id_v0.ttl.gz, taxonomy_output_v0.ttl.gz, trydb_output_w3id_v0.ttl.gz, void_METRINKG-v0.1.ttl.gz). DOI: 10.5281/zenodo.18652487'
+    globi_output_w3id_v0.ttl.gz, taxonomy_output_v0.ttl.gz, trydb_output_w3id_v0.ttl.gz, void_METRINKG-v0.1.ttl.gz). DOI: 10.5281/zenodo.18652487.
+    The query examples (SHACL) and the VoID description of the endpoint are not data and are left out of the index.'
   kg_registry_id: emi
   bioregistry_prefix: emi
   keywords:
