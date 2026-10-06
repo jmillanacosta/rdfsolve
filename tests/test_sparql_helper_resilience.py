@@ -287,7 +287,8 @@ GATEWAY_SCRIPTS: dict[str, list[tuple[int, bytes, dict[str, str]]]] = {
     "/busy-502": [(502, b"<html>Upstream server overloaded, try again later</html>", {})],
     "/retry-504": [(504, b"<html>Gateway Timeout</html>", {"Retry-After": "7"})],
     "/bare-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 9,
-    "/listing-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 2,
+    # two listings and the trivial query between them get a gateway error, then all answer
+    "/listing-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 3,
     "/squid": [(502, SQUID, {})] * 9,
     "/always-502": [(502, b"<html>502 Bad Gateway</html>", {})] * 99,
 }
@@ -384,8 +385,8 @@ def test_a_bare_gateway_error_is_marked_and_a_proxy_dns_failure_is_not(monkeypat
 
 def test_graph_discovery_waits_out_an_overloaded_gateway(monkeypatch):
     """STRING: the graph listing got HTTP 502 and the source, whose data is only in named
-    graphs, mined 0 classes. The host is now waited out (30 s, then 60 s, shared by the host)
-    and the listing is sent again."""
+    graphs, mined 0 classes. The host is now waited out (30 s; then, as it does not
+    answer a trivial query either, 60 s; shared by the host) and the listing is sent again."""
     from rdfsolve.mining.graph_selection import discover_data_graphs
 
     with (
@@ -423,4 +424,133 @@ def test_graph_discovery_gives_up_after_the_busy_host_waits(monkeypatch):
         pytest.raises(SparqlHelperError),
     ):
         discover_data_graphs(helper)
+    assert _waits(defer) == [30.0, 60.0, 120.0, 240.0]
+
+
+# pdbj.bmrb (job 115329): Apache answers the class listing with "502 Proxy Error" at 121-126 s
+# on every try, while a trivial query answers in 1 s.
+PROXY_ERROR = (
+    b"<html><title>502 Proxy Error</title>The proxy server received an invalid response from "
+    b"an upstream server. Reason: Error reading from remote server</html>"
+)
+
+
+class _ClassGateway(BaseHTTPRequestHandler):
+    """/flaky: two gateway errors, then the classes; /cut: the listing is always cut, ASK
+    answers; /down: every query gets a gateway error."""
+
+    def log_message(self, *args):  # silence the test server
+        pass
+
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        query = parse_qs(urlsplit(self.path).query).get("query", [""])[0]
+        self.server.requests.append((path, query))
+        ask = query.lstrip().upper().startswith("ASK")
+        listing = [q for p, q in self.server.requests if p == path and "ASK" not in q.upper()]
+        if (
+            path == "/down"
+            or (path == "/cut" and not ask)
+            or (path == "/flaky" and len(listing) <= 2)
+        ):
+            self.send_response(502)
+            self.send_header("Content-Length", str(len(PROXY_ERROR)))
+            self.end_headers()
+            self.wfile.write(PROXY_ERROR)
+            return
+        if ask:
+            payload = {"head": {}, "boolean": True}
+        else:
+            rows = [{"class": {"type": "uri", "value": c}} for c in ("urn:A", "urn:B")]
+            if "OFFSET" in query and "OFFSET 0" not in query:
+                rows = []
+            payload = {"head": {"vars": ["class"]}, "results": {"bindings": rows}}
+        body = json.dumps(payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/sparql-results+json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+@contextmanager
+def _class_gateway(monkeypatch) -> Iterator[tuple[str, ThreadingHTTPServer, Mock]]:
+    defer = Mock()
+    monkeypatch.setattr("rdfsolve._http_policy.defer_host", defer)
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ClassGateway)
+    server.requests = []
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}", server, defer
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def _class_context(helper: SparqlHelper, class_chunk_size: int | None = None) -> SimpleNamespace:
+    def collect(query, purpose, size):
+        return [
+            row
+            for page in helper.select_chunked(
+                query, chunk_size=size or 10_000, purpose=purpose, max_page_retries=0
+            )
+            for row in page
+        ]
+
+    return SimpleNamespace(
+        helper=helper,
+        class_chunk_size=class_chunk_size,
+        graph_uris=None,
+        type_context_graph_uris=None,
+        chunk_size=10_000,
+        report=Mock(),
+        collect_bindings=collect,
+    )
+
+
+@pytest.mark.parametrize("class_chunk_size", [None, 1000])
+def test_class_discovery_waits_out_an_overloaded_gateway(monkeypatch, class_chunk_size):
+    """The plain listing and its paged fallback (or the paged listing) get a gateway error:
+    the host is waited out (30 s) and the listing is sent again, instead of losing the source."""
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+
+    with (
+        _class_gateway(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/flaky", max_retries=1) as helper,
+    ):
+        classes = TwoPhaseStrategy()._discover_classes(_class_context(helper, class_chunk_size))
+    assert classes == ["urn:A", "urn:B"]
+    assert _waits(defer)[0] == 30.0
+
+
+def test_class_discovery_stops_waiting_when_the_host_answers_a_trivial_query(monkeypatch):
+    """pdbj.bmrb: the listing is cut by the gateway's timer every time, while ASK answers at
+    once. One repeat is made; then the host is shown not to be overloaded and the error is
+    raised, without the remaining waits."""
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    with (
+        _class_gateway(monkeypatch) as (base, server, defer),
+        SparqlHelper(f"{base}/cut", max_retries=1) as helper,
+        pytest.raises(SparqlHelperError),
+    ):
+        TwoPhaseStrategy()._discover_classes(_class_context(helper))
+    assert _waits(defer) == [30.0]
+    assert sum("ASK" in q for _, q in server.requests) == 1
+
+
+def test_class_discovery_waits_while_the_host_answers_nothing(monkeypatch):
+    """A host whose gateway refuses every query, even ASK, is waited out 4 times."""
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    with (
+        _class_gateway(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/down", max_retries=1) as helper,
+        pytest.raises(SparqlHelperError),
+    ):
+        TwoPhaseStrategy()._discover_classes(_class_context(helper))
     assert _waits(defer) == [30.0, 60.0, 120.0, 240.0]

@@ -341,42 +341,21 @@ class TwoPhaseStrategy(MiningStrategy):
         return batches
 
     def _discover_classes(self, context: MiningContext) -> list[str]:
-        """Discover named classes in the current scope."""
+        """Discover named classes in the current scope.
+
+        Every later result depends on this listing, so a gateway that answers for an
+        overloaded host (pdbj.bmrb: Apache "Proxy Error" 502, job 115329) is waited out before
+        the listing is given up (graph_selection.wait_out_gateway).
+        """
+        from rdfsolve.mining.graph_selection import wait_out_gateway
+
         ccs = context.class_chunk_size
         if ccs is None:
-            logger.info("Phase 1: discovering classes (no pagination) …")
-            q = _build_class_discovery_query_plain(
-                context.graph_uris, context.type_context_graph_uris
-            )
             t0 = time.monotonic()
             try:
-                try:
-                    result = context.helper.select(q, purpose="two-phase/classes")
-                    class_bindings = result.get("results", {}).get("bindings", [])
-                    if SparqlHelper.row_cap_suspected(len(class_bindings)):
-                        # A server cap cuts a listing silently: read it in pages of the cap.
-                        logger.warning(
-                            "Class listing: exactly %d rows, a common server cap; paging it",
-                            len(class_bindings),
-                        )
-                        class_bindings = context.collect_bindings(
-                            _build_class_discovery_query(
-                                context.graph_uris, context.type_context_graph_uris
-                            ),
-                            "two-phase/classes",
-                            len(class_bindings),
-                        )
-                except EndpointTimeoutError as error:
-                    # A response limit, a time limit, or an answer cut off at the time limit of
-                    # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
-                    logger.warning("Class listing refused (%s); paging it", error)
-                    class_bindings = context.collect_bindings(
-                        _build_class_discovery_query(
-                            context.graph_uris, context.type_context_graph_uris
-                        ),
-                        "two-phase/classes",
-                        context.chunk_size,
-                    )
+                class_bindings = wait_out_gateway(
+                    context.helper, lambda: self._list_classes(context), "Class listing"
+                )
                 context.report.record_query(
                     "two-phase/classes",
                     time.monotonic() - t0,
@@ -391,7 +370,11 @@ class TwoPhaseStrategy(MiningStrategy):
         else:
             logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
             q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
-            class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
+            class_bindings = wait_out_gateway(
+                context.helper,
+                lambda: context.collect_bindings(q, "two-phase/classes", ccs),
+                "Class listing",
+            )
 
         classes = []
         non_iri_count = 0
@@ -409,6 +392,37 @@ class TwoPhaseStrategy(MiningStrategy):
         context.discovered_classes = list(classes)
         context.skipped_type_values = non_iri_count
         return classes
+
+    def _list_classes(self, context: MiningContext) -> list[dict[str, Any]]:
+        """List the classes in one query; page the listing when it is cut or capped."""
+        logger.info("Phase 1: discovering classes (no pagination) …")
+        q = _build_class_discovery_query_plain(context.graph_uris, context.type_context_graph_uris)
+        try:
+            result = context.helper.select(q, purpose="two-phase/classes")
+            class_bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
+            if SparqlHelper.row_cap_suspected(len(class_bindings)):
+                # A server cap cuts a listing silently: read it in pages of the cap.
+                logger.warning(
+                    "Class listing: exactly %d rows, a common server cap; paging it",
+                    len(class_bindings),
+                )
+                class_bindings = context.collect_bindings(
+                    _build_class_discovery_query(
+                        context.graph_uris, context.type_context_graph_uris
+                    ),
+                    "two-phase/classes",
+                    len(class_bindings),
+                )
+        except EndpointTimeoutError as error:
+            # A response limit, a time limit, or an answer cut off at the time limit of
+            # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
+            logger.warning("Class listing refused (%s); paging it", error)
+            class_bindings = context.collect_bindings(
+                _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris),
+                "two-phase/classes",
+                context.chunk_size,
+            )
+        return class_bindings
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
         """Retry Phase 1 in the named graphs when the default graph has no types.

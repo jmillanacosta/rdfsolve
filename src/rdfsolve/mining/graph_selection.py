@@ -12,7 +12,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["described_graph_names", "discover_data_graphs", "missing_graphs"]
+__all__ = [
+    "described_graph_names",
+    "discover_data_graphs",
+    "missing_graphs",
+    "wait_out_gateway",
+]
 
 
 def described_graph_names(helper: SparqlHelper, *, seconds: float = 60.0) -> list[str]:
@@ -77,9 +82,10 @@ def discover_data_graphs(
     from rdfsolve.void_retrieval import discover_graph_names
 
     try:
-        discovered = _wait_out_gateway(
+        discovered = wait_out_gateway(
             helper,
             lambda: discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages),
+            "Graph listing",
         )
     except SparqlHelperError as error:
         discovered = described_graph_names(helper)
@@ -111,13 +117,37 @@ def _gateway_overloaded(error: BaseException) -> bool:
     return False
 
 
-def _wait_out_gateway[T](helper: SparqlHelper, call: Callable[[], T]) -> T:
-    """Run *call*; after a gateway overload, defer the host and run it again.
+# The query with which a host shows that it answers at all, and how long it gets.
+HOST_PROBE = "ASK { ?s ?p ?o }"
+HOST_PROBE_SECONDS = 15.0
 
-    The waits are SparqlHelper.overload_backoff (30, 60, 120, 240 s), up to
-    SparqlHelper.OVERLOAD_RETRIES times, applied to the host (defer_host) so that every
-    request to it waits. A wait beyond the helper's rate_limit_wait is not taken. A proxy that
-    could not reach the server is not an overload and is raised at once.
+
+def host_answers(helper: SparqlHelper) -> bool:
+    """Return whether the host answers a trivial query (HOST_PROBE) within HOST_PROBE_SECONDS."""
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    try:
+        with helper.budget(HOST_PROBE_SECONDS):
+            helper.select(HOST_PROBE, purpose="gateway/host-probe")
+    except SparqlHelperError:
+        return False
+    return True
+
+
+def wait_out_gateway[T](helper: SparqlHelper, call: Callable[[], T], what: str) -> T:
+    """Run *call*, a listing that a step depends on; after a gateway overload, run it again.
+
+    Before each repeat the host is deferred (defer_host, so that every request to it waits)
+    by SparqlHelper.overload_backoff (30, 60, 120, 240 s), up to SparqlHelper.OVERLOAD_RETRIES
+    times; a wait beyond the helper's rate_limit_wait is not taken. A proxy that could not
+    reach the server is not an overload and is raised at once.
+
+    The first repeat is always made (STRING: the graph listing got HTTP 502 at 62 s and
+    answered in 18 s later). Before each later one the host is asked a trivial query
+    (host_answers): a host that answers it at once is not overloaded, and the listing is cut
+    by the gateway's own timer because it costs more than the timer allows (pdbj.bmrb: Apache
+    "Proxy Error" at 121-126 s on every try, while ASK answers in 1 s, job 115329), which no
+    wait mends; the error is then raised.
     """
     from urllib.parse import urlsplit
 
@@ -140,9 +170,19 @@ def _wait_out_gateway[T](helper: SparqlHelper, call: Callable[[], T]) -> T:
                 or wait > longest
             ):
                 raise
+            if tries > 1 and host_answers(helper):
+                logger.warning(
+                    "%s: a gateway cut it again (%s), but %s answers a trivial query: the "
+                    "listing costs more than the gateway's timer, not waited for",
+                    what,
+                    str(error)[:160],
+                    host,
+                )
+                raise
             logger.warning(
-                "Graph listing: a gateway answered for %s (%s); the host is waited out for "
-                "%.0f s (try %d of %d)",
+                "%s: a gateway answered for %s (%s); the host is waited out for %.0f s "
+                "(try %d of %d)",
+                what,
                 host,
                 str(error)[:160],
                 wait,
