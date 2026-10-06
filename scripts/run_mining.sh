@@ -13,6 +13,16 @@ repo="$PWD"
 python="${VENV_PATH:-$repo/.venv}/bin/python"
 # The download steps of generated Qleverfiles call python3 (for example rdflib to convert JSON-LD).
 export PATH="$(dirname -- "$python"):$PATH"
+# Environment modules some steps need on this cluster (for example Java for ROBOT, hdt-java and
+# blazegraph-runner): RDFSOLVE_MODULES="Java/17.0.6 …" is loaded when java is not on the PATH.
+if [ -n "${RDFSOLVE_MODULES:-}" ] && ! command -v java >/dev/null 2>&1; then
+    if type module >/dev/null 2>&1; then
+        # shellcheck disable=SC2086
+        module load $RDFSOLVE_MODULES
+    else
+        echo "RDFSOLVE_MODULES is set but the module command is not available" >&2
+    fi
+fi
 data="${DATA_DIR:-$(dirname -- "$repo")/data}"
 registry="${SOURCES_FILE:-$repo/data/sources.yaml}"
 output="${OUTPUT_DIR:-$(dirname -- "$repo")/runs/${mode}-${SLURM_JOB_ID:-manual}-$(date -u +%Y%m%dT%H%M%S)-$$}"
