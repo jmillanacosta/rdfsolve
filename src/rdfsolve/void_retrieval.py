@@ -25,7 +25,36 @@ def graph_scope(body: str, graphs: list[str] | None) -> str:
 
 
 def discover_graph_names(helper: SparqlHelper, *, batch_size: int, max_pages: int) -> list[str]:
-    """List graph names without counting their triples."""
+    """List graph names without counting their triples.
+
+    The unordered listing is sent first, in one query: on Virtuoso the ORDER BY of the paged
+    form reads every quad (STRING: 18 s when quiet and cut by its gateway at 60 s when busy,
+    job 115333, while the unordered DISTINCT answers in 0.25 s). The ordered pages are read
+    only when that answer may have been cut at a server cap (SparqlHelper.row_cap_suspected)
+    or was too large for one response. More than batch_size * max_pages graphs raise
+    PaginationTruncatedError, as the paged listing does at its page limit.
+    """
+    from rdfsolve.sparql_helper import PaginationTruncatedError, ResponseLimitError
+
+    limit = batch_size * max_pages
+    try:
+        result = helper.select(
+            "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }", purpose="void/graph-discovery"
+        )
+        rows = result.get("results", {}).get("bindings", [])
+        if not SparqlHelper.row_cap_suspected(len(rows)):
+            names = sorted({row["g"]["value"] for row in rows if "g" in row})
+            if len(names) > limit:
+                raise PaginationTruncatedError(
+                    f"Graph listing: {len(names)} graphs, more than the limit of {limit}",
+                    offset=limit,
+                )
+            return names
+        logger.warning(
+            "Graph listing: exactly %d graphs, a common server cap; reading it in pages", len(rows)
+        )
+    except ResponseLimitError as error:
+        logger.warning("Graph listing too large for one response (%s); paging it", error)
     query = "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } } ORDER BY ?g"
     return [
         row["g"]["value"]

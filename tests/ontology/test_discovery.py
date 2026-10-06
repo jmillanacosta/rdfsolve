@@ -106,17 +106,30 @@ def test_remote_discovery_records_where_the_graph_names_came_from():
     assert given.discovered_named_graphs == 1
 
 
-def test_graph_names_are_not_requested_again_with_a_smaller_page():
-    """DISTINCT and ORDER BY read every quad whatever the LIMIT; a timeout is not retried."""
+def test_graph_names_are_listed_unordered_and_paged_only_at_a_cap(monkeypatch):
+    """The unordered DISTINCT listing answers first (STRING: 0.25 s against 18 s for the
+    ordered form, job 115333); the ordered pages are read only when the answer has exactly a
+    common server cap of rows, and then a timeout is not retried with a smaller page."""
+    from rdfsolve.sparql_helper import SparqlHelper
     from rdfsolve.void_retrieval import discover_graph_names
 
     calls: list[dict] = []
+    selects: list[str] = []
 
     class Helper(DatasetHelper):
+        def select(self, query: str, **kwargs):
+            selects.append(query)
+            return super().select(query, **kwargs)
+
         def select_chunked(self, query: str, **kwargs):
             calls.append(kwargs)
             yield from super().select_chunked(query, **kwargs)
 
+    names = discover_graph_names(Helper(_dataset()), batch_size=100, max_pages=10)
+    assert len(names) == 3 and names == sorted(names)
+    assert calls == [] and "ORDER BY" not in selects[0]
+
+    monkeypatch.setattr(SparqlHelper, "SUSPECTED_ROW_CAPS", frozenset({3}))
     names = discover_graph_names(Helper(_dataset()), batch_size=100, max_pages=10)
     assert len(names) == 3
     assert calls[0]["max_page_retries"] == 0

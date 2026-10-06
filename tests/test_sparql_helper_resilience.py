@@ -213,6 +213,10 @@ class _NoListing:
         yield  # pragma: no cover
 
     def select(self, query, purpose=""):
+        from rdfsolve.sparql_helper import PaginationTruncatedError
+
+        if purpose == "void/graph-discovery":
+            raise PaginationTruncatedError("HTTP 502", offset=0)
         rows = [{"g": {"type": "uri", "value": g}} for g in self.described]
         return {"results": {"bindings": rows}}
 
@@ -316,7 +320,7 @@ class _Gateway(BaseHTTPRequestHandler):
             return
         graphs = [] if "service-description" in query else ["urn:g1", "urn:g2"]
         rows = [{"g": {"type": "uri", "value": g}} for g in graphs]
-        if "OFFSET 0" not in query and "service-description" not in query:
+        if "OFFSET" in query and "OFFSET 0" not in query:
             rows = []  # one page of graphs
         body = json.dumps({"head": {"vars": ["g"]}, "results": {"bindings": rows}}).encode()
         self._send(200, body, {"Content-Type": "application/sparql-results+json"})
@@ -554,3 +558,156 @@ def test_class_discovery_waits_while_the_host_answers_nothing(monkeypatch):
     ):
         TwoPhaseStrategy()._discover_classes(_class_context(helper))
     assert _waits(defer) == [30.0, 60.0, 120.0, 240.0]
+
+
+# STRING (job 115333): the ordered, paged graph listing reads every quad and is cut by the
+# gateway; the unordered DISTINCT answers at once. forum (job 115328): the paged class listing
+# read 89,375 classes, then a page got a 502 and every class read was thrown away.
+FORUM_CLASSES = [f"urn:class{i:03d}" for i in range(50)]
+
+
+class _Listings(BaseHTTPRequestHandler):
+    def log_message(self, *args):  # silence the test server
+        pass
+
+    def _json(self, payload: dict) -> None:
+        body = json.dumps(payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/sparql-results+json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _refuse(self) -> None:
+        self.send_response(502)
+        self.send_header("Content-Length", str(len(PROXY_ERROR)))
+        self.end_headers()
+        self.wfile.write(PROXY_ERROR)
+
+    def do_GET(self):
+        path = urlsplit(self.path).path
+        query = parse_qs(urlsplit(self.path).query).get("query", [""])[0]
+        self.server.requests.append((path, query))
+        offset = re.search(r"OFFSET\s+(\d+)", query)
+        limit = re.search(r"LIMIT\s+(\d+)", query)
+        if path == "/string":  # the ordered listing is cut; the unordered one answers
+            if "ORDER BY" in query:
+                self._refuse()
+                return
+            rows = [{"g": {"type": "uri", "value": g}} for g in ("urn:g2", "urn:g1")]
+            self._json({"head": {"vars": ["g"]}, "results": {"bindings": rows}})
+            return
+        if path == "/many-graphs":  # 1500 graphs behind a cap of 1000 rows
+            graphs = [f"urn:g{i:04d}" for i in range(1500)]
+            start = int(offset.group(1)) if offset else 0
+            end = start + int(limit.group(1)) if limit else len(graphs)
+            rows = [{"g": {"type": "uri", "value": g}} for g in graphs[start:end][:1000]]
+            self._json({"head": {"vars": ["g"]}, "results": {"bindings": rows}})
+            return
+        if path == "/forum":  # the plain listing is refused; pages from offset 20 are cut
+            if not offset or int(offset.group(1)) >= 20:
+                self._refuse()
+                return
+            start = int(offset.group(1))
+            page = FORUM_CLASSES[start : start + int(limit.group(1))]
+            rows = [{"class": {"type": "uri", "value": c}} for c in page]
+            self._json({"head": {"vars": ["class"]}, "results": {"bindings": rows}})
+            return
+        self._refuse()
+
+
+@contextmanager
+def _listings(monkeypatch) -> Iterator[tuple[str, ThreadingHTTPServer, Mock]]:
+    defer = Mock()
+    monkeypatch.setattr("rdfsolve._http_policy.defer_host", defer)
+    monkeypatch.setattr("rdfsolve._http_policy.wait_for_host", lambda *args: True)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _Listings)
+    server.requests = []
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}", server, defer
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_the_graph_listing_is_sent_unordered_first(monkeypatch):
+    """STRING: the unordered DISTINCT answers in one query, and the ordered form, which the
+    gateway cuts, is never sent."""
+    from rdfsolve.mining.graph_selection import discover_data_graphs
+
+    with (
+        _listings(monkeypatch) as (base, server, defer),
+        SparqlHelper(f"{base}/string", max_retries=1) as helper,
+    ):
+        assert discover_data_graphs(helper) == ["urn:g1", "urn:g2"]
+    assert len(server.requests) == 1 and "ORDER BY" not in server.requests[0][1]
+    assert defer.call_count == 0
+
+
+def test_a_graph_listing_at_a_server_cap_is_read_again_in_ordered_pages(monkeypatch):
+    """An unordered answer of exactly 1000 graphs may be cut at a cap: the ordered pages are
+    read, and every graph is listed."""
+    from rdfsolve.void_retrieval import discover_graph_names
+
+    with (
+        _listings(monkeypatch) as (base, server, _),
+        SparqlHelper(f"{base}/many-graphs", max_retries=1) as helper,
+    ):
+        names = discover_graph_names(helper, batch_size=500, max_pages=10)
+    assert len(names) == 1500
+    assert "ORDER BY" not in server.requests[0][1]
+    assert all("ORDER BY" in q for _, q in server.requests[1:])
+
+
+def _forum_context(helper: SparqlHelper, class_chunk_size: int | None) -> SimpleNamespace:
+    from rdfsolve.sparql_helper import PaginationTruncatedError
+
+    def collect(query, purpose, size):
+        """The miner's _collect_bindings: the pages read travel with the truncation."""
+        rows: list = []
+        try:
+            for page in helper.select_chunked(
+                query, chunk_size=10, purpose=purpose, max_page_retries=0
+            ):
+                rows.extend(page)
+        except PaginationTruncatedError as error:
+            error.partial_rows = rows + error.partial_rows
+            raise
+        return rows
+
+    report = Mock()
+    report.report.config = {}
+    return SimpleNamespace(
+        helper=helper,
+        class_chunk_size=class_chunk_size,
+        graph_uris=None,
+        type_context_graph_uris=None,
+        chunk_size=10,
+        report=report,
+        collect_bindings=collect,
+    )
+
+
+@pytest.mark.parametrize("class_chunk_size", [None, 10])
+def test_a_class_listing_cut_mid_way_keeps_the_classes_read(monkeypatch, class_chunk_size):
+    """forum: the pages read before the failing page are kept and mined; the listing is
+    recorded as truncated at its offset (the source ends PARTIAL), and the host is not waited
+    out, since the classes read are the answer."""
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+
+    with (
+        _listings(monkeypatch) as (base, _, defer),
+        SparqlHelper(f"{base}/forum", max_retries=1) as helper,
+    ):
+        context = _forum_context(helper, class_chunk_size)
+        classes = TwoPhaseStrategy()._discover_classes(context)
+    assert classes == FORUM_CLASSES[:20]
+    (outcome,) = context.report.record_outcome.call_args.args
+    assert outcome.state == "partial" and outcome.failures[0].category == "truncated"
+    assert "offset 20" in outcome.failures[0].message
+    listing = context.report.report.config["class_listing"]
+    assert listing["state"] == "truncated" and listing["offset"] == 20
+    assert listing["rows_read"] == 20 and listing["count_bound"] == "lower_bound"
+    assert defer.call_count == 0

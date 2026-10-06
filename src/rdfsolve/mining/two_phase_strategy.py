@@ -372,7 +372,7 @@ class TwoPhaseStrategy(MiningStrategy):
             q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
             class_bindings = wait_out_gateway(
                 context.helper,
-                lambda: context.collect_bindings(q, "two-phase/classes", ccs),
+                lambda: self._page_classes(context, q, ccs),
                 "Class listing",
             )
 
@@ -406,23 +406,67 @@ class TwoPhaseStrategy(MiningStrategy):
                     "Class listing: exactly %d rows, a common server cap; paging it",
                     len(class_bindings),
                 )
-                class_bindings = context.collect_bindings(
+                class_bindings = self._page_classes(
+                    context,
                     _build_class_discovery_query(
                         context.graph_uris, context.type_context_graph_uris
                     ),
-                    "two-phase/classes",
                     len(class_bindings),
                 )
         except EndpointTimeoutError as error:
             # A response limit, a time limit, or an answer cut off at the time limit of
             # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
             logger.warning("Class listing refused (%s); paging it", error)
-            class_bindings = context.collect_bindings(
+            class_bindings = self._page_classes(
+                context,
                 _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris),
-                "two-phase/classes",
                 context.chunk_size,
             )
         return class_bindings
+
+    def _page_classes(
+        self, context: MiningContext, query: str, size: int | None
+    ) -> list[dict[str, Any]]:
+        """Read the class listing in pages; keep the pages read when a later page fails.
+
+        forum (job 115328) paged 89,375 classes, then a 502 at that offset threw them all away
+        after 48 min and the source failed. The classes read are now kept and mined: the
+        listing is recorded as truncated at its offset (an unresolved failure, so the source
+        ends PARTIAL, and config.class_listing, whose class count is a lower bound). A failure
+        before any row is read is raised as before.
+        """
+        from rdfsolve.sparql_helper import PaginationTruncatedError
+
+        try:
+            return context.collect_bindings(query, "two-phase/classes", size)
+        except PaginationTruncatedError as error:
+            rows = list(error.partial_rows)
+            if not rows:
+                raise
+            logger.warning(
+                "Class listing truncated at offset %d after %d rows (%s); mining what was read",
+                error.offset,
+                len(rows),
+                str(error)[:200],
+            )
+            message = (
+                f"class listing truncated at offset {error.offset}: {len(rows)} rows read, "
+                f"the classes are a lower bound: {str(error)[:300]}"
+            )
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="partial",
+                    failures=[QueryFailure("truncated", message, "two-phase/classes")],
+                )
+            )
+            context.report.report.config["class_listing"] = {
+                "state": "truncated",
+                "offset": error.offset,
+                "rows_read": len(rows),
+                "count_bound": "lower_bound",
+                "error": str(error)[:500],
+            }
+            return rows
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
         """Retry Phase 1 in the named graphs when the default graph has no types.
