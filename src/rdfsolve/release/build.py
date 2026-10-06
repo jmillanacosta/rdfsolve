@@ -17,6 +17,8 @@ from rdfsolve.models.source_model import SourceModel
 from .model import (
     DatasetReleaseRecord,
     ExtractionReleaseRecord,
+    GraphPartExtraction,
+    GraphPartReleaseRecord,
     OntologyReleaseRef,
     OntologyUsageReleaseRecord,
     ReleaseArtifact,
@@ -73,6 +75,7 @@ def _role(path: Path) -> str | None:
     if name.endswith("scientific_check_results.json"):
         return "scientific_validation_results"
     for marker, role in (
+        ("_graph_parts.json", "graph_parts_index"),
         ("_schema.json", "canonical_schema"),
         ("_schema.jsonld", "schema_jsonld"),
         ("_report.json", "mining_report"),
@@ -127,6 +130,72 @@ def _dataset_for_path(
     return parent
 
 
+def _in_graph_part(rel: Path) -> bool:
+    """Return whether a run file is an output of a per-graph part of a source."""
+    from rdfsolve.graph_parts import GRAPHS_DIR
+
+    return len(rel.parts) > 3 and rel.parts[1] == GRAPHS_DIR
+
+
+def _graph_parts(
+    run_root: Path,
+    dataset_id: str,
+    artifacts: dict[str, ReleaseArtifact],
+    extractions: list[ExtractionReleaseRecord],
+) -> list[GraphPartReleaseRecord]:
+    """Read the per-graph parts of a source from its graph-part indexes, one per extraction."""
+    from rdfsolve.graph_parts import INDEX_SUFFIX
+
+    directory = run_root / dataset_id
+    if not directory.is_dir():
+        return []
+    completion = {item.mode: item.completion_state for item in extractions}
+    parts: dict[str, GraphPartReleaseRecord] = {}
+    for index in sorted(directory.glob(f"*{INDEX_SUFFIX}")):
+        raw = _load_json(index)
+        mode = str(raw.get("mode") or "unknown")
+        for row in raw.get("parts") or []:
+            if not isinstance(row, dict) or not row.get("name") or not row.get("graph"):
+                continue
+            name = str(row["name"])
+            part = parts.setdefault(
+                name,
+                GraphPartReleaseRecord(
+                    graph_uri=str(row["graph"]),
+                    name=name,
+                    registry_entry=row.get("registry_entry"),
+                    classes_as_data=bool(row.get("classes_as_data")),
+                    membership_properties=list(row.get("membership_properties") or []),
+                    own_settings=bool(row.get("own_settings")),
+                ),
+            )
+            schema = directory / str(row["schema"]) if row.get("schema") else None
+            relative = schema.relative_to(run_root).as_posix() if schema else None
+            artifact = artifacts.get(relative) if relative else None
+            about = _schema_metadata(schema) if artifact is not None and schema else {}
+            report = (
+                schema.with_name(schema.name.replace("_schema.json", "_report.json"))
+                if schema
+                else None
+            )
+            state = (
+                _completion(_load_json(report))
+                if report is not None and report.is_file()
+                else completion.get(mode, "unknown")
+            )
+            part.extractions.append(
+                GraphPartExtraction(
+                    mode=mode,
+                    derivation=str(row.get("derivation") or "unknown"),
+                    completion_state=state,
+                    schema_path=relative if artifact is not None else None,
+                    schema_artifact_id=artifact.artifact_id if artifact is not None else None,
+                    snapshot_id=about.get("snapshot_id") or None,
+                )
+            )
+    return [parts[name] for name in sorted(parts)]
+
+
 def _identity_check(path: Path, role: str | None) -> tuple[str | None, str | None]:
     """Return the result of the checks of declared identities and its reason, from their summary."""
     if role not in {"declared_identities", "declared_identities_summary"}:
@@ -153,6 +222,9 @@ def inventory_artifacts(
         rel = path.relative_to(run_root)
         digest = sha256_file(path)
         role = _role(path)
+        if role is not None and _in_graph_part(rel):
+            # The schema of one graph of a source is not another schema of the source.
+            role = f"graph_part_{role}"
         identity_check, identity_check_note = _identity_check(path, role)
         rows.append(
             ReleaseArtifact(
@@ -449,6 +521,7 @@ def build_release_manifest(
     artifacts = inventory_artifacts(run_root, dataset_ids=set(dataset_ids))
     artifact_ids = _artifact_refs_by_dataset(artifacts)
 
+    by_path = {artifact.path: artifact for artifact in artifacts}
     datasets: list[DatasetReleaseRecord] = []
     for dataset_id in dataset_ids:
         source = sources.get(dataset_id, {})
@@ -525,8 +598,18 @@ def build_release_manifest(
                 ontology_evidence_context=ontology_context,
                 local_ontology_file_candidate_count=local_ontology_file_count,
                 ontology_usages=_ontology_usages(run_root, dataset_id),
+                graph_parts=_graph_parts(run_root, dataset_id, by_path, extractions),
             )
         )
+    # An entry that is one graph of a source mined across its graphs points to that source.
+    part_of = {
+        part.registry_entry: dataset.dataset_id
+        for dataset in datasets
+        for part in dataset.graph_parts
+        if part.registry_entry
+    }
+    for dataset in datasets:
+        dataset.graph_part_of = part_of.get(dataset.dataset_id)
 
     code_commit = None
     commit_path = run_root / "code_commit.txt"

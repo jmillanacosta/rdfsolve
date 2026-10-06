@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .base import PartialMiningError, Stage, rdf_only
@@ -124,6 +125,8 @@ class RemoteMiningStage(Stage):
         if source.classes_as_data or source.membership_properties:
             # VoID partitions by rdf:type: records that are classes (Rhea, SwissLipids) or that a
             # category property places (Monarch) are described by the miner, not by the VoID.
+            # Such settings of single graphs (graph_settings) keep the VoID for the source; those
+            # graphs are mined for their own schemas (_save_graph_parts).
             log.info("[%s] Its classes are not read from rdf:type alone; mined", source.name)
             return None
         from rdfsolve.mining.void_strategy import VoidStrategy, find_published_void, void_for_source
@@ -153,11 +156,160 @@ class RemoteMiningStage(Stage):
         )
         return VoidStrategy(scoped, void_graph=published.graph, issued=published.issued)
 
+    def _remote_miner(
+        self,
+        source: Source,
+        *,
+        strategy: Any,
+        use_graph_store: bool,
+        graph_store_dir: Path,
+        graph_uris: list[str] | None,
+        type_context_graph_uris: list[str],
+        delay: float,
+        classes_as_data: bool,
+        membership_properties: list[str],
+        report_path: Path,
+        resume_checkpoint: Path | None = None,
+    ) -> Any:
+        """Create the miner of a source's endpoint with the run's settings."""
+        from rdfsolve import SchemaMiner
+
+        return SchemaMiner(
+            strategy=strategy,
+            endpoint_url=source.endpoint,
+            get_graphs_from_store=use_graph_store,
+            graph_store_url=self.config.graph_store_urls.get(source.name),
+            graph_store_dir=graph_store_dir,
+            graph_store_max_bytes=self.config.max_response_bytes,
+            graph_uris=graph_uris,
+            type_context_graph_uris=type_context_graph_uris,
+            timeout=(
+                self.config.timeout
+                if self.config.timeout is not None
+                else source.timeout
+                if source.timeout is not None
+                else 300.0
+            ),
+            delay=delay,
+            sparql_engine=source.sparql_engine,
+            sparql_strategy=source.sparql_strategy,
+            chunk_size=self.config.chunk_size,
+            class_batch_size=self.config.class_batch_size,
+            class_chunk_size=self.config.class_chunk_size,
+            enrich=self.config.enrich,
+            examples_per_pattern=self.config.examples_per_pattern,
+            max_response_bytes=self.config.max_response_bytes,
+            excluded_graph_prefixes=self.config.exclude_graph_prefixes,
+            classes_as_data=classes_as_data,
+            membership_properties=membership_properties,
+            report_path=str(report_path),
+            resume_checkpoint=resume_checkpoint,
+        )
+
+    def _save_graph_parts(
+        self, source: Source, schema: Any, miner: Any, strategy: Any, delay: float
+    ) -> None:
+        """Write one schema per data graph of a source, the remote view of each graph.
+
+        A graph whose settings differ from the source's (graph_settings) is mined on its own
+        with them. With the schema read from the endpoint's VoID, every other graph's part is
+        the VoID scoped to that graph (no query); the links whose other end another graph
+        describes keep the class of that end. A graph that the VoID does not describe has no
+        part. Without VoID, the mined schema is cut by the graph of each edge, as in the local
+        channel (entities are not counted per graph on the endpoint).
+        """
+        from rdfsolve.graph_parts import (
+            GRAPHS_DIR,
+            graph_part_dir,
+            graph_parts,
+            write_graph_parts_index,
+        )
+        from rdfsolve.mining.edge_graph_split import split_by_edge_graph, unattributed_patterns
+        from rdfsolve.mining.void_strategy import VoidStrategy, void_for_source
+
+        suffix = self.config.output_suffix
+        published = self.__dict__.get("_published_void", {}).get(source.endpoint)
+        from_void = isinstance(strategy, VoidStrategy) and published is not None
+        missing = [] if from_void else unattributed_patterns(schema)
+        rows: list[dict[str, Any]] = []
+        incomplete: list[str] = []
+        for part in graph_parts(source, self.config.registry):
+            part_dir = graph_part_dir(self.config.output_dir, source.name, part.name)
+            piece = None
+            if part.own_settings:
+                log.info("[%s] %s: mined on its own with its graph settings", part.name, part.graph)
+                part_dir.mkdir(parents=True, exist_ok=True)
+                piece, part_miner = self._mine_graph_part(source, part, part_dir, delay)
+                derivation = "mined_with_graph_settings"
+                report = part_miner.last_report
+                if report is None or report.completion_state != "complete":
+                    incomplete.append(part.name)
+            elif from_void:
+                scoped = void_for_source(published, [part.graph])
+                derivation = "void_scoped_to_graph" if scoped is not None else "not_in_void"
+                if scoped is not None:
+                    piece = _void_part(scoped, schema, part.graph, part.name, source.endpoint)
+            else:
+                piece = split_by_edge_graph(
+                    schema, part.graph, part.name, declared_classes=miner.declared_classes
+                )
+                derivation = "edge_graph_split"
+            row = {**part.record(), "derivation": derivation}
+            if piece is not None:
+                part_dir.mkdir(parents=True, exist_ok=True)
+                self._save_schema_outputs(piece, part_dir, part.name, suffix)
+                row["patterns"] = len(piece.patterns)
+                row["schema"] = f"{GRAPHS_DIR}/{part.name}/{part.name}{suffix}_schema.json"
+            rows.append(row)
+        write_graph_parts_index(
+            self.config.output_dir, source.name, suffix, "remote", rows,
+            unattributed_patterns=len(missing),
+        )
+        if miner.last_report is not None:
+            miner.last_report.config["graph_parts"] = {
+                "parts": [row["name"] for row in rows if "schema" in row],
+                "unattributed_patterns": len(missing),
+            }
+        if incomplete:
+            raise RuntimeError(f"Per-graph mining incomplete: {incomplete}")
+
+    def _mine_graph_part(self, source: Source, part: Any, part_dir: Path, delay: float) -> Any:
+        """Mine one graph of a source's endpoint on its own, with the settings of that graph."""
+        suffix = self.config.output_suffix
+        context = [g for g in source.graph_uris if g != part.graph] + source.type_context_graph_uris
+        miner = self._remote_miner(
+            source,
+            strategy=None,
+            use_graph_store=False,
+            graph_store_dir=part_dir / "downloads",
+            graph_uris=[part.graph],
+            type_context_graph_uris=list(dict.fromkeys(context)),
+            delay=delay,
+            classes_as_data=part.classes_as_data,
+            membership_properties=list(part.membership_properties),
+            report_path=part_dir / f"{part.name}{suffix}_report.json",
+        )
+        if self.config.ontology_as_data:
+            from rdfsolve.mining import mine_with_ontology
+
+            schema = mine_with_ontology(
+                miner,
+                ontology_scope=self.config.ontology_scope,
+                ontology_graph_uris=source.ontology_graph_uris or None,
+                ontology_as_data=True,
+                ontology_term_budget=self.config.ontology_term_budget,
+                ontology_group_before_mining=self.config.ontology_group_before_mining,
+                ontology_hierarchy_files=self.config.ontology_hierarchy_files,
+                dataset_name=part.name,
+            ).data_schema
+        else:
+            schema = miner.mine(dataset_name=part.name)
+        return self._without_service_data(schema), miner
+
     def _mine_single_source(self, source: Source) -> dict[str, Any]:
         """Mine a single source. Returns dict with status and data."""
         from datetime import timezone
 
-        from rdfsolve import SchemaMiner
         from rdfsolve.endpoint_health import (
             check_endpoint_health,
             get_polite_delay,
@@ -219,35 +371,17 @@ class RemoteMiningStage(Stage):
             if previous and not previous.is_file():
                 log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
             strategy = None if use_graph_store else self._void_strategy(source, empirical_graphs)
-            miner = SchemaMiner(
+            miner = self._remote_miner(
+                source,
                 strategy=strategy,
-                endpoint_url=source.endpoint,
-                get_graphs_from_store=use_graph_store,
-                graph_store_url=self.config.graph_store_urls.get(source.name),
+                use_graph_store=use_graph_store,
                 graph_store_dir=source_output_dir / "downloads",
-                graph_store_max_bytes=self.config.max_response_bytes,
                 graph_uris=empirical_graphs or None,
                 type_context_graph_uris=source.type_context_graph_uris,
-                timeout=(
-                    self.config.timeout
-                    if self.config.timeout is not None
-                    else source.timeout
-                    if source.timeout is not None
-                    else 300.0
-                ),
                 delay=polite_delay,
-                sparql_engine=source.sparql_engine,
-                sparql_strategy=source.sparql_strategy,
-                chunk_size=self.config.chunk_size,
-                class_batch_size=self.config.class_batch_size,
-                class_chunk_size=self.config.class_chunk_size,
-                enrich=self.config.enrich,
-                examples_per_pattern=self.config.examples_per_pattern,
-                max_response_bytes=self.config.max_response_bytes,
-                excluded_graph_prefixes=self.config.exclude_graph_prefixes,
                 classes_as_data=source.classes_as_data,
                 membership_properties=source.membership_properties,
-                report_path=str(report_path),
+                report_path=report_path,
                 resume_checkpoint=previous if previous and previous.is_file() else None,
             )
             if self._matches_local(source, miner, empirical_graphs, source_output_dir, suffix):
@@ -343,6 +477,8 @@ class RemoteMiningStage(Stage):
                 self._save_property_usage_evidence(
                     schema, source_output_dir, source.name, suffix, helper=miner.helper
                 )
+                if has_graph_parts(source) and not use_graph_store:
+                    self._save_graph_parts(source, schema, miner, strategy, polite_delay)
             self._require_complete(miner)
 
             if miner.last_report:
@@ -378,3 +514,46 @@ class RemoteMiningStage(Stage):
 
             log.error(f"[{source.name}] -> FAILED: {e}")
             return {"status": "failed", "data": {"name": source.name, "error": str(e)}}
+
+
+def _void_part(void: Any, schema: Any, graph: str, name: str, endpoint: str) -> Any:
+    """Return the part of a VoID-first schema that the VoID scoped to one graph describes.
+
+    The counts of a graph's partitions and linksets are triples in that graph.
+    """
+    from rdfsolve.mining.edge_graph_split import graph_part_about
+    from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
+
+    read = void_graph_to_minedschema(void, endpoint=endpoint, report_untyped=False)
+    patterns = [
+        p.model_copy(
+            update={
+                "count_semantics": "triples_in_graph",
+                "graphs": {graph: p.count} if p.count else None,
+            }
+        )
+        for p in read.patterns
+    ]
+    about = graph_part_about(
+        schema.about,
+        name,
+        [graph],
+        patterns,
+        class_entity_counts=read.about.class_entity_counts,
+    )
+    return schema.model_copy(
+        update={
+            "patterns": patterns,
+            "raw_patterns": None,
+            "term_patterns": None,
+            "structural_patterns": None,
+            "collections": None,
+            "about": about,
+            "navigation": None,
+            "enrichment": read.enrichment,
+            "source_metadata": read.source_metadata,
+            "class_extensions": None,
+            "restriction_patterns": None,
+            "shapes": None,
+        }
+    )

@@ -8,7 +8,14 @@ from typing import Any, Literal, Self
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-__all__ = ["DatasetKind", "PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
+__all__ = [
+    "DatasetKind",
+    "GraphSettings",
+    "PublicationRef",
+    "SourceModel",
+    "SourcesRegistry",
+    "SparqlExamples",
+]
 
 DatasetKind = Literal["instance", "ontology", "unknown"]
 
@@ -32,6 +39,23 @@ class PublicationRef(BaseModel):
     doi: str | None = None
     pmc: str | None = None
     title: str | None = None
+
+
+class GraphSettings(BaseModel):
+    """Settings of one data graph of a source that differ from the source's own.
+
+    A source whose graphs hold different kinds of data (UniProt's endpoint holds Rhea, whose
+    reactions are classes) states the settings of such a graph here. The graph is then mined on
+    its own with these settings for its per-graph schema; the other graphs keep the source's
+    settings. ``name`` sets the name of the graph's per-graph schema when the derived name does
+    not fit (rdfsolve.graph_parts).
+    """
+
+    model_config = {"extra": "forbid"}
+
+    name: str = ""
+    classes_as_data: bool | None = None
+    membership_properties: list[str] | None = None
 
 
 class SparqlExamples(BaseModel):
@@ -97,6 +121,9 @@ class SourceModel(BaseModel):
         Graphs of graph_sources whose inputs are a sample of the graph that the endpoint
         holds, each with how it was sampled. Counts of these graphs in the local index
         are counts of the sample, not of the dataset.
+    graph_settings:
+        Settings of single data graphs that differ from the entry's (classes_as_data,
+        membership_properties) and the name of a graph's per-graph schema, keyed by graph.
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -194,6 +221,7 @@ class SourceModel(BaseModel):
     ontology_graph_uris: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     sampled_graphs: dict[str, str] = Field(default_factory=dict)
+    graph_settings: dict[str, GraphSettings] = Field(default_factory=dict)
     skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
@@ -295,6 +323,23 @@ class SourceModel(BaseModel):
         for graph, how in self.sampled_graphs.items():
             if not how.strip():
                 raise ValueError(f"sampled_graphs does not say how {graph} was sampled")
+        return self
+
+    @model_validator(mode="after")
+    def validate_graph_settings(self) -> Self:
+        """Require that each graph with settings is a data graph and that it sets something."""
+        unknown = sorted(set(self.graph_settings) - set(self.graph_uris))
+        if unknown:
+            raise ValueError(f"graph_settings names graphs that are not data graphs: {unknown}")
+        for graph, settings in self.graph_settings.items():
+            if (
+                not settings.name
+                and settings.classes_as_data is None
+                and settings.membership_properties is None
+            ):
+                raise ValueError(f"graph_settings states nothing for {graph}")
+            if settings.name != settings.name.strip() or "/" in settings.name:
+                raise ValueError(f"graph_settings gives {graph} an unusable name")
         return self
 
     @property

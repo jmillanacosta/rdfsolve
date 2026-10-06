@@ -3597,6 +3597,11 @@
       Sample: uniref50_0, uniref90_0 and uniref100_0.rdf.xz, the first of the 9, 12 and 15 files
       of UniRef50, UniRef90 and UniRef100 of release 2026_03. The endpoint's VoID states the whole
       graph.
+  graph_settings:
+    https://sparql.rhea-db.org/rhea:
+      # Rhea's reactions are classes, as in the rhea entry; the graph is mined on its own with
+      # this setting for its per-graph schema, and the other graphs keep the VoID-first reading.
+      classes_as_data: true
   keywords:
   - biology
   - protein

@@ -84,6 +84,9 @@ class PipelineConfig:
     creator_id: str | None = None  # Written as the SSSOM creator; never assumed.
     creator_label: str | None = None
     sources: list[Source] = field(default_factory=list)
+    # Every entry of the registry, also those not mined: the per-graph schemas of a source are
+    # named after the entries that are its graph scopes (rdfsolve.graph_parts).
+    registry: list[Source] = field(default_factory=list)
 
     get_graphs_from_store: bool = False
     graph_store_urls: dict[str, str] = field(default_factory=dict)
@@ -196,6 +199,7 @@ class PipelineConfig:
             raw = yaml.safe_load(f) or []
 
         sources = [Source.from_dict(d) for d in raw]
+        self.registry = list(sources)
 
         if names:
             missing = sorted(set(names) - {s.name for s in sources})
@@ -278,7 +282,7 @@ class PipelineConfig:
 
         result: dict[str, Any] = {}
         for item in fields(self):
-            if item.name == "sources":
+            if item.name in {"sources", "registry"}:
                 continue
             result[item.name] = clean(getattr(self, item.name))
         result["selected_sources"] = [source.name for source in self.sources]

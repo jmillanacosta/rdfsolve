@@ -83,6 +83,34 @@ class ExtractionReleaseRecord(BaseModel):
     retrieved_at: str | None = None
 
 
+class GraphPartExtraction(BaseModel):
+    """The schema of one data graph of a source from one extraction of the source."""
+
+    mode: str
+    # edge_graph_split, mined_with_graph_settings, void_scoped_to_graph or not_in_void
+    derivation: str
+    completion_state: CompletionState = "unknown"
+    schema_path: str | None = None
+    schema_artifact_id: str | None = None
+    snapshot_id: str | None = None
+
+
+class GraphPartReleaseRecord(BaseModel):
+    """One data graph of a source mined across several graphs, with its own schemas.
+
+    ``registry_entry`` names the registry entry that is this graph of the source (a graph
+    scope), whose own record points back with ``graph_part_of``.
+    """
+
+    graph_uri: str
+    name: str
+    registry_entry: str | None = None
+    classes_as_data: bool = False
+    membership_properties: list[str] = Field(default_factory=list)
+    own_settings: bool = False
+    extractions: list[GraphPartExtraction] = Field(default_factory=list)
+
+
 class DatasetReleaseRecord(BaseModel):
     """One dataset snapshot of a release and its artifacts."""
 
@@ -107,6 +135,10 @@ class DatasetReleaseRecord(BaseModel):
     ontology_evidence_context: str | None = None
     local_ontology_file_candidate_count: int = 0
     ontology_usages: list[OntologyUsageReleaseRecord] = Field(default_factory=list)
+    # The schemas of each data graph of a source mined across several graphs (rdfsolve.graph_parts)
+    graph_parts: list[GraphPartReleaseRecord] = Field(default_factory=list)
+    # The source whose per-graph schema of this entry's graph is this entry's schema
+    graph_part_of: str | None = None
 
 
 class ReleaseManifest(BaseModel):

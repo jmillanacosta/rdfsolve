@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
 from rdfsolve.qlever.inputs import (
@@ -430,7 +431,95 @@ class LocalMiningStage(Stage):
                 source, schema, output_dir, miner.helper, mining_context,
                 members=self._group_members(miner),
             )
+            if graph_uris is None and has_graph_parts(source):
+                self._save_graph_parts(source, schema, miner, port)
         self._require_complete(miner)
+
+    def _save_graph_parts(self, source: Source, schema, miner, port: int) -> None:
+        """Write one schema per data graph of a source mined across its graphs.
+
+        The schema of the source is cut by the graph of each edge (split_by_edge_graph): the
+        classes at both ends stay as resolved over all graphs, so links between graphs stay in
+        the part of the graph that holds the edge. Entities are counted in each graph. A graph
+        whose settings differ from the source's (graph_settings) is mined on its own with them,
+        its types resolved over the other graphs too. Each part is named after the registry
+        entry that is that graph of the source, if any (rdfsolve.graph_parts).
+        """
+        from rdfsolve.graph_parts import (
+            GRAPHS_DIR,
+            graph_part_dir,
+            graph_parts,
+            write_graph_parts_index,
+        )
+        from rdfsolve.mining.edge_graph_split import split_by_edge_graph, unattributed_patterns
+        from rdfsolve.mining.ontology_as_data import pattern_classes
+
+        suffix = self.config.output_suffix
+        schema = self._without_service_data(schema)
+        missing = unattributed_patterns(schema)
+        if missing:
+            log.warning(
+                "  %d patterns have no per-graph count and are in no per-graph schema", len(missing)
+            )
+        rows: list[dict[str, Any]] = []
+        incomplete: list[str] = []
+        for part in graph_parts(source, self.config.registry):
+            part_dir = graph_part_dir(self.config.output_dir, source.name, part.name)
+            part_dir.mkdir(parents=True, exist_ok=True)
+            if part.own_settings:
+                log.info("  [%s] %s: mined alone with its graph settings", part.name, part.graph)
+                piece, part_miner = self._mine_graph_part(source, part, port, part_dir)
+                derivation = "mined_with_graph_settings"
+                report = part_miner.last_report
+                if report is None or report.completion_state != "complete":
+                    incomplete.append(part.name)
+            else:
+                piece = split_by_edge_graph(
+                    schema, part.graph, part.name, declared_classes=miner.declared_classes
+                )
+                classes = sorted(pattern_classes(piece.patterns) - miner.subsumed_classes)
+                counts, states = miner.count_class_entities(classes, [part.graph])
+                piece.about.class_entity_counts = counts
+                piece.about.class_entity_count_states = states
+                derivation = "edge_graph_split"
+            log.info("  [%s] %d patterns in %s", part.name, len(piece.patterns), part.graph)
+            self._save_schema_outputs(piece, part_dir, part.name, suffix)
+            rows.append(
+                {
+                    **part.record(),
+                    "derivation": derivation,
+                    "patterns": len(piece.patterns),
+                    "schema": f"{GRAPHS_DIR}/{part.name}/{part.name}{suffix}_schema.json",
+                }
+            )
+        write_graph_parts_index(
+            self.config.output_dir, source.name, suffix, "local", rows,
+            unattributed_patterns=len(missing),
+        )
+        if miner.last_report is not None:
+            miner.last_report.config["graph_parts"] = {
+                "parts": [row["name"] for row in rows],
+                "unattributed_patterns": len(missing),
+            }
+        if incomplete:
+            raise RuntimeError(f"Per-graph mining incomplete: {incomplete}")
+
+    def _mine_graph_part(self, source: Source, part, port: int, part_dir: Path):
+        """Mine one data graph of a source on its own, with the settings of that graph."""
+        suffix = self.config.output_suffix
+        report_path = part_dir / f"{part.name}{suffix}_report.json"
+        context = [g for g in source.graph_uris if g != part.graph] + source.type_context_graph_uris
+        miner = self._local_miner(
+            port, [part.graph], report_path,
+            type_context_graph_uris=list(dict.fromkeys(context)),
+        )
+        miner.classes_as_data = part.classes_as_data
+        miner.membership_properties = list(part.membership_properties)
+        schema = self._mine_schema(
+            miner, part.name, part_dir,
+            ontology_graph_uris=source.ontology_graph_uris or None, index_name=source.name,
+        )
+        return self._without_service_data(schema), miner
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
                      *, type_context_graph_uris: list[str] | None = None,
@@ -461,8 +550,13 @@ class LocalMiningStage(Stage):
         return miner
 
     def _mine_schema(self, miner, name: str, output_dir: Path,
-                     *, ontology_graph_uris: list[str] | None = None):
-        """Mine *name* with the configured optional phases and write their RDF files."""
+                     *, ontology_graph_uris: list[str] | None = None,
+                     index_name: str | None = None):
+        """Mine *name* with the configured optional phases and write their RDF files.
+
+        *index_name* is the source whose index is mined, when it is not *name* (a graph of a
+        source mined on its own): the numeric datatypes are restored from its census.
+        """
         suffix = self.config.output_suffix
         if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
             from rdfsolve.mining import mine_with_ontology
@@ -480,7 +574,7 @@ class LocalMiningStage(Stage):
                 dataset_name=name,
             )
             schema = result.data_schema
-            self._restore_literal_datatypes(miner, schema, name)
+            self._restore_literal_datatypes(miner, schema, index_name or name)
             report_path = output_dir / f"{name}{suffix}_report.json"
             with self._output_phase(miner, report_path):
                 schema_path = output_dir / f"{name}{suffix}_schema.json"
@@ -516,7 +610,7 @@ class LocalMiningStage(Stage):
                         raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=name)
-            self._restore_literal_datatypes(miner, schema, name)
+            self._restore_literal_datatypes(miner, schema, index_name or name)
 
         return schema
 
