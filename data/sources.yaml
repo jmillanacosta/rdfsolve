@@ -5430,7 +5430,11 @@
   dataset_kind: instance
   catalogs: ["rdfportal"]
   catalog_local_name: cellosaurus
-  download_nt:
+  notes: RDF Portal's dump folder (ntriples/cellosaurus/latest, 2026-10-06) holds only three
+    materialized transitive closures of Cellosaurus' class and property hierarchies (268 k
+    triples), declared as download_owl; the endpoint graph holds 19.5 M triples, so the local
+    index does not cover it.
+  download_owl:
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_more_specific_than.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subclasses.nt.gz
   - https://rdfportal.org/ntriples/cellosaurus/latest/materialized_transitive_subproperties.nt.gz
@@ -5448,7 +5452,9 @@
 - name: sibils
   dataset_kind: instance
   endpoint: https://sparql.sibils.org/sparql
-  download_ttl: https://sparql.sibils.org/ontology.ttl
+  download_owl: https://sparql.sibils.org/ontology.ttl
+  notes: The only declared file is the SIBiLS ontology (about 1,000 triples); the data is on
+    the endpoint, so a local index of it does not cover the remote dataset.
   keywords:
   - bibliography/documents
   - life science
