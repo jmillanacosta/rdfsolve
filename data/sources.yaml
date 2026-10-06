@@ -3837,8 +3837,6 @@
     Cloudflare in front of www.bgee.org cuts responses at 120 s, and the local index holds Bgee.
   kg_registry_id: bgee
   science_area: life sciences
-  download_ttl:
-  - https://www.bgee.org/ftp/current/rdf_easybgee.zip
 - name: rhea
   dataset_kind: instance
   uri_formats:  # IRI formats the RDF writes that Bioregistry does not list
