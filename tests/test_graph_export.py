@@ -224,7 +224,12 @@ def test_complete_export_becomes_local_inputs(endpoint: type[_Endpoint], tmp_pat
     """A complete export gives registry fields that validate, and a work folder with its files."""
     from rdfsolve.graph_export import prepare_workdir
     from rdfsolve.models.source_model import SourceModel
-    from rdfsolve.qlever.downloads import download_paths, needs_download, read_record
+    from rdfsolve.qlever.downloads import (
+        download_paths,
+        entry_download_urls,
+        needs_download,
+        read_record,
+    )
 
     entry = {"name": "toy", "endpoint": endpoint.url, "graph_uris": [EX + "g1", EX + "g2"]}  # type: ignore[attr-defined]
     GraphExporter(entry, tmp_path / "toy", delay=0.0).run()
@@ -237,8 +242,10 @@ def test_complete_export_becomes_local_inputs(endpoint: type[_Endpoint], tmp_pat
     found = download_paths(workdir, {**entry, **fields})
     assert found and all(path is not None and path.is_file() for path in found.values())
     record = read_record(workdir)
-    # The pipeline compares the record with the entry's top-level URLs: none with graph_sources.
-    assert record is not None and not needs_download(workdir, [], has_inputs=True)
+    # The record lists the graphs' URLs, the list the pipeline compares it with.
+    urls = entry_download_urls({**entry, **fields})
+    assert record is not None and set(record["urls"]) == set(urls) == set(found)
+    assert not needs_download(workdir, urls, has_inputs=True)
     assert len(json.loads((workdir / "export_inputs.json").read_text())["files"]) == 2
 
 

@@ -14,6 +14,7 @@ from scripts.pipeline_stages.config import PipelineConfig, Source
 from scripts.pipeline_stages.local import LocalMiningStage, local_graph_scope
 
 URL = "https://example.org/data.ttl.gz"
+STATE = {"last_modified": "Mon, 01 Sep 2026 10:00:00 GMT", "content_length": "10"}
 
 
 def _stage(tmp_path, update):
@@ -546,3 +547,50 @@ def test_a_graphless_index_is_mined_without_the_graph_settings_of_its_endpoint(
     }
     assert report["config"]["type_context_graph_uris"] in (None, [])
     assert sum("have no graphs" in r.message for r in caplog.records) == 1
+
+
+def _graph_mapped_stage(tmp_path):
+    """A source whose downloads are mapped to two graphs (3 files), downloaded and indexed."""
+    from rdfsolve.qlever.inputs import graph_input_directory
+    from rdfsolve.qlever.utils import graph_download_name
+
+    stage, workdir, _ = _stage(tmp_path, update=False)
+    (workdir / "rdf" / "data.ttl").unlink()
+    mapped = {
+        "urn:graph:a": {
+            "download_ttl": ["https://example.org/a1.ttl", "https://example.org/a2.ttl"]
+        },
+        "urn:graph:b": {"download_ttl": ["https://example.org/b.ttl"]},
+    }
+    for graph, fields in mapped.items():
+        folder = graph_input_directory(workdir, graph) / "rdf"
+        folder.mkdir(parents=True)
+        for url in fields["download_ttl"]:
+            name = graph_download_name(url, "download_ttl")
+            (folder / name).write_text(f"<urn:{name[:8]}> <urn:p> <urn:o> .")
+    source = Source.from_dict(
+        {"name": "fixture", "graph_uris": list(mapped), "graph_sources": mapped}
+    )
+    return stage, workdir, source
+
+
+def test_a_graph_mapped_folder_is_reused_on_a_rerun(tmp_path):
+    """L96: for an entry with graph_sources the pipeline wrote downloads.json with no URL, then
+    pinned the graphs' URLs, and the next run set the unchanged folder aside. downloads.json,
+    the pin and the check now use one list, the graphs' URLs; a folder pinned before the fix
+    (a record with no URL) is kept too, and a folder of another download is still set aside."""
+    from rdfsolve.qlever.inputs import mapped_input_files
+
+    stage, workdir, source = _graph_mapped_stage(tmp_path)
+    urls = [url for fields in source.graph_sources.values() for url in fields["download_ttl"]]
+    inputs = [path for path, _ in mapped_input_files(workdir, list(source.graph_sources))]
+    for listed in ([], urls):  # a record written before the fix, and one written now
+        downloads.write_record(workdir, listed, lambda url: STATE)
+        manifest = stage._pin_inputs(workdir, source, inputs, stage="before_index")
+        assert set(manifest["urls"]) == set(urls)
+        stage._set_aside_when_differs(workdir, source)
+        assert _folders(tmp_path) == ["fixture"], "The unchanged folder is reused"
+        assert not downloads.needs_download(workdir, urls, has_inputs=True)
+    downloads.write_record(workdir, [*urls[:2], "https://example.org/old.ttl"], lambda url: None)
+    stage._set_aside_when_differs(workdir, source)
+    assert any(".set-aside-" in p.name for p in tmp_path.iterdir()), "Other downloads differ"

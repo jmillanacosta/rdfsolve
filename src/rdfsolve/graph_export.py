@@ -1418,11 +1418,10 @@ def prepare_workdir(export_dir: Path, workdir: Path) -> dict[str, Any]:
             "content_length": str(source.stat().st_size),
             "sha256": digests.get(source.name),
         }
-    # The local pipeline compares downloads.json with the entry's top-level download URLs,
-    # which an entry with graph_sources does not have (they are per graph): the record then
-    # lists none. The files of the export are pinned in export_inputs.json beside it.
-    listed = [] if "graph_sources" in fields else list(placed)
-    write_record(workdir, listed, head=lambda url: sizes[url])
+    # The record lists the URLs that the local pipeline downloads for the entry, those of its
+    # graphs for an entry with graph_sources (downloads.entry_download_urls). The files of the
+    # export are pinned in export_inputs.json beside it.
+    write_record(workdir, list(placed), head=lambda url: sizes[url])
     pins = {
         "endpoint_export": fields["endpoint_export"],
         "files": {url: {"path": str(target), **sizes[url]} for url, target in placed.items()},

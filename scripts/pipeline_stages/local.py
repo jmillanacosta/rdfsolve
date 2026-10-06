@@ -17,6 +17,7 @@ from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.converters import PYTHON_VARIABLE
 from rdfsolve.qlever.downloads import (
     MARKER,
+    entry_download_urls,
     find_metalinks,
     needs_download,
     server_state,
@@ -273,7 +274,7 @@ class LocalMiningStage(Stage):
         except ValueError:
             inputs = []
         reason = downloads_differ(
-            workdir, list(source.download_urls), source.qlever_entry(), inputs
+            workdir, entry_download_urls(source.qlever_entry()), source.qlever_entry(), inputs
         )
         if reason is None:
             return
@@ -299,16 +300,17 @@ class LocalMiningStage(Stage):
         registry entry than were downloaded, is renamed (kept), and an empty folder is made, so
         that the source is downloaded and indexed again.
         """
-        from rdfsolve.qlever.downloads import read_record, updated_urls
+        from rdfsolve.qlever.downloads import read_record, recorded_urls, updated_urls
 
-        urls = list(source.download_urls)
+        urls = entry_download_urls(source.qlever_entry())
         if not self.config.update_downloads or self.config.no_download or not urls:
             return
         if not any(workdir.iterdir()):
             return
         record = read_record(workdir)
         built = max((p.stat().st_mtime for p in workdir.glob("*.meta-data.json")), default=0.0)
-        if record is not None and set(record.get("urls", [])) != set(urls):
+        listed = recorded_urls(record)
+        if listed is not None and set(listed) != set(urls):
             reason = "the registry entry has other URLs than were downloaded"
         else:
             changed = updated_urls(urls, record, built_at=built)
@@ -469,7 +471,7 @@ class LocalMiningStage(Stage):
             has_inputs = all(
                 index_inputs(directory) or empty_inputs(directory) for directory in directories
             )
-            urls = list(source.download_urls)
+            urls = entry_download_urls(source.qlever_entry())
             if needs_download(workdir, urls, has_inputs=has_inputs):
                 if not skip_download and not self.config.no_download:
                     get_data_cmd = config.get("data", "GET_DATA_CMD")

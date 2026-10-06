@@ -352,3 +352,54 @@ def test_a_checksum_file_sent_as_gzip_by_its_suffix_is_read_as_sent(monkeypatch)
 
     monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Answer())
     assert downloads_module._fetch_text("https://example.org/mesh.nt.gz.sha1") == body
+
+
+def test_the_size_of_a_file_is_asked_without_a_transfer_encoding(monkeypatch):
+    """L97: raw.githubusercontent.com gave the Content-Length of a gzip transfer, so unchanged
+    GitHub files looked changed. HEAD asks for identity encoding; a size that is still of an
+    encoded transfer is not the file's, and the ETag is compared instead."""
+    import requests
+
+    sent = {}
+
+    class Answer:
+        status_code = 200
+        url = "https://raw.githubusercontent.com/o/r/main/onto.owl"
+        headers = requests.structures.CaseInsensitiveDict(
+            {
+                "Content-Length": "1200",
+                "Content-Encoding": "gzip",
+                "ETag": '"abc"',
+                "Last-Modified": "Mon, 01 Sep 2026 10:00:00 GMT",
+            }
+        )
+
+    def head(url, **options):
+        sent.update(options)
+        return Answer()
+
+    monkeypatch.setattr(requests, "head", head)
+    state = downloads_module.server_state(Answer.url)
+    assert sent["headers"]["Accept-Encoding"] == "identity"
+    assert state["content_length"] is None and state["transfer_length"] == "1200"
+    assert state["content_encoding"] == "gzip"
+    # The record of the download holds the file's size (an identity answer then).
+    record = {
+        "files": {
+            Answer.url: {
+                **STATE,
+                "last_modified": Answer.headers["Last-Modified"],
+                "content_length": "9000",
+                "etag": '"abc"',
+            }
+        }
+    }
+    unchanged = updated_urls([Answer.url], record, built_at=0, head=lambda url: state)
+    assert unchanged == [], "The transfer's size is not compared with the file's"
+    moved = {**state, "etag": '"def"'}
+    assert updated_urls([Answer.url], record, built_at=0, head=lambda url: moved) == [Answer.url]
+    plain = {**STATE, "content_length": "11"}
+    write_record_state = {"files": {URLS[0]: STATE}}
+    assert updated_urls(URLS[:1], write_record_state, built_at=0, head=lambda url: plain) == [
+        URLS[0]
+    ], "Without an encoding the sizes are compared as before"

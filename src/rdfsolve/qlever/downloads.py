@@ -59,19 +59,31 @@ def server_state(url: str) -> dict[str, str | None] | None:
 
     Last-Modified and Content-Length tell an update; the final URL after redirects, the ETag,
     a Digest or Repr-Digest (RFC 3230, RFC 9530) and a Link header pin the file.
+
+    The request asks for the file as it is (Accept-Encoding: identity): raw.githubusercontent.com
+    otherwise gives the Content-Length of a gzip transfer, which is not the file's size and
+    made unchanged GitHub files look changed (PubChem's ontologies, 2026-10-06). A server that
+    still answers with a Content-Encoding gives no file size: content_length is None, and the
+    transfer's size and encoding are kept apart (updated_urls then compares the ETag).
     """
     import requests
 
     try:
-        answer = requests.head(url, allow_redirects=True, timeout=60)
+        answer = requests.head(
+            url, allow_redirects=True, timeout=60, headers={"Accept-Encoding": "identity"}
+        )
     except requests.RequestException:
         return None
     if answer.status_code != 200:
         return None
     headers = answer.headers
+    encoding = (headers.get("Content-Encoding") or "").strip().lower()
+    encoded = encoding not in ("", "identity")
     state = {
         "last_modified": headers.get("Last-Modified"),
-        "content_length": headers.get("Content-Length"),
+        "content_length": None if encoded else headers.get("Content-Length"),
+        "content_encoding": encoding if encoded else None,
+        "transfer_length": headers.get("Content-Length") if encoded else None,
         "final_url": answer.url if answer.url != url else None,
         "etag": headers.get("ETag"),
         "digest": headers.get("Repr-Digest") or headers.get("Digest"),
@@ -122,8 +134,8 @@ def needs_download(workdir: Path, urls: list[str], *, has_inputs: bool) -> bool:
     """
     if not has_inputs or (workdir / MARKER).exists():
         return True
-    record = read_record(workdir)
-    return record is not None and set(record.get("urls", [])) != set(urls)
+    recorded = recorded_urls(read_record(workdir))
+    return recorded is not None and set(recorded) != set(urls)
 
 
 def updated_urls(
@@ -131,8 +143,8 @@ def updated_urls(
 ) -> list[str]:
     """Return the URLs whose file the server changed since the download.
 
-    With a record, a file is changed when its Last-Modified or Content-Length is another.
-    Without a record, a file is changed when its Last-Modified is after *built_at* (the time of
+    With a record, a file is changed when its Last-Modified or Content-Length is another
+    (_changed). Without a record, a file is changed when its Last-Modified is after *built_at* (the time of
     the index, seconds since 1970). A URL for which the server gives no state is not counted.
     """
     changed = []
@@ -142,13 +154,71 @@ def updated_urls(
         if state is None:
             continue
         if known.get(url):
-            if any(state.get(key) != known[url].get(key) for key in COMPARED):
+            if _changed(state, known[url]):
                 changed.append(url)
             continue
         parsed = email.utils.parsedate(state.get("last_modified") or "")
         if parsed is not None and calendar.timegm(parsed) > built_at:
             changed.append(url)
     return changed
+
+
+def _changed(state: dict[str, Any], before: dict[str, Any]) -> bool:
+    """Return whether the server's state of a file is another than at its download.
+
+    Last-Modified and Content-Length are compared (COMPARED). When either answer gave the size
+    of an encoded transfer (content_encoding), its size is not the file's: the sizes are not
+    compared, and the ETags are, when both answers have one.
+    """
+    if state.get("last_modified") != before.get("last_modified"):
+        return True
+    if state.get("content_encoding") or before.get("content_encoding"):
+        etags = state.get("etag"), before.get("etag")
+        return None not in etags and etags[0] != etags[1]
+    return bool(state.get("content_length") != before.get("content_length"))
+
+
+def entry_download_urls(entry: dict[str, Any]) -> list[str]:
+    """Return the URLs that a registry entry downloads, in one list for every use.
+
+    downloads.json, the pin of the inputs (inputs.json) and downloads_differ all name the
+    downloads of a source by this list. An entry with graph_sources downloads the URLs of its
+    graphs, not top-level download fields: the pipeline wrote downloads.json with no URL for
+    such an entry, then pinned the graphs' URLs, and the next run saw other downloads and set
+    the folder aside (PubChem's pin, 2026-10-06).
+    """
+
+    def listed(value: Any) -> list[str]:
+        """Return the URLs of a download field, which holds one URL or a list."""
+        return [value] if isinstance(value, str) else list(value or [])
+
+    graph_sources = entry.get("graph_sources") or {}
+    if graph_sources:
+        found = [
+            url
+            for fields in graph_sources.values()
+            for key, urls in fields.items()
+            if key.startswith("download_")
+            for url in listed(urls)
+        ]
+    else:
+        found = [
+            url
+            for key, urls in entry.items()
+            if key.startswith("download_")
+            for url in listed(urls)
+        ]
+    return list(dict.fromkeys(found))
+
+
+def recorded_urls(record: dict[str, Any] | None) -> list[str] | None:
+    """Return the URLs a download record lists, or None when it lists none.
+
+    A record that lists no URL tells nothing: the pipeline wrote such records for entries with
+    graph_sources before entry_download_urls, and those folders are not set aside for it.
+    """
+    urls = list((record or {}).get("urls") or [])
+    return urls or None
 
 
 # Releases named by metalinks
@@ -607,10 +677,10 @@ def downloads_differ(
     pin = read_inputs(workdir)
     record = read_record(workdir)
     recorded: list[str] | None = None
-    if pin is not None and pin.get("downloaded_at"):
-        recorded = list(pin.get("urls") or [])
+    if pin is not None and pin.get("downloaded_at") and pin.get("urls"):
+        recorded = list(pin["urls"])
     elif record is not None:
-        recorded = list(record.get("urls") or [])
+        recorded = recorded_urls(record)
     if recorded is not None and set(recorded) != set(urls):
         gone = len(set(recorded) - set(urls))
         new = len(set(urls) - set(recorded))
