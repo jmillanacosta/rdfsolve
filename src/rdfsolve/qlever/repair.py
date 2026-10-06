@@ -1,6 +1,6 @@
 """Terms that QLever cannot read in an N-Triples or N-Quads input, written so that it can.
 
-QLever refuses a whole file for one term it cannot read. Two kinds are written anew, and each
+QLever refuses a whole file for one term it cannot read. Three kinds are written anew, and each
 changed line is recorded with its original text as a data-quality finding beside the index
 (REPAIRS_FILE); no triple is left out.
 
@@ -17,6 +17,12 @@ changed line is recorded with its original text as a data-quality finding beside
   xsd:float, xsd:double and xsd:boolean (NanoSolveIT has 12,050 ""^^xsd:float). It is still RDF,
   but QLever refuses it; it is written as a plain string with the same lexical form. QLever reads
   other ill-typed literals (""^^xsd:int, "x"^^xsd:dateTime) and they are kept.
+- An xsd:float or xsd:double whose magnitude is below the smallest double (GWAS Catalog has
+  "8E-610"^^xsd:double): QLever (9ec88a) refuses it ("could not be parsed as a floating point
+  value"), and has no setting for it (its parser-integer-overflow-behavior covers integers).
+  It is a valid literal whose XSD 1.1 value is the zero of its sign, so it is written as
+  "0E0" or "-0E0" of the same datatype: the value and the datatype are kept, the lexical form
+  is recorded. A subnormal double (1E-320) is read by QLever and kept.
 """
 
 from __future__ import annotations
@@ -56,11 +62,28 @@ _BLANK = re.compile(r"_:[^\s.]+(?:\.[^\s.]+)*")
 _SPACE = re.compile(r"[ \t]*")
 
 
+def rounded_zero(lexical: str, datatype: str) -> str | None:
+    """Return the zero that an xsd:float or xsd:double below the smallest double rounds to.
+
+    None when LEXICAL is not such a value (another datatype, zero itself, or a readable number).
+    """
+    if datatype not in _FLOATING or not _FLOAT.fullmatch(lexical):
+        return None
+    if lexical.strip("+-") in ("INF", "NaN") or float(lexical) != 0.0:
+        return None
+    mantissa = re.split("[eE]", lexical)[0]
+    if not any(digit in mantissa for digit in "123456789"):
+        return None
+    return "-0E0" if lexical.startswith("-") else "0E0"
+
+
 def readable_value(lexical: str, datatype: str) -> bool:
     """Whether QLever reads LEXICAL as a value of DATATYPE (True for a datatype it keeps as text)."""
     if datatype in _FLOATING:
-        return bool(_FLOAT.fullmatch(lexical)) and (
-            lexical.strip("+-") in ("INF", "NaN") or math.isfinite(float(lexical))
+        return (
+            bool(_FLOAT.fullmatch(lexical))
+            and (lexical.strip("+-") in ("INF", "NaN") or math.isfinite(float(lexical)))
+            and rounded_zero(lexical, datatype) is None
         )
     pattern = _LEXICAL.get(datatype)
     return pattern is None or bool(pattern.fullmatch(lexical))
@@ -92,6 +115,9 @@ def _term(line: str, start: int) -> tuple[str, int, str] | None:
             datatype = _iri(line, position + 2)
             if datatype is None:
                 return None
+            zero = rounded_zero(text[1:-1], datatype[0][1:-1])
+            if zero is not None:
+                return f'"{zero}"^^{datatype[0]}', datatype[1], "rounded"
             if not readable_value(text[1:-1], datatype[0][1:-1]):
                 return text, datatype[1], "literal"
             return text + "^^" + datatype[0], datatype[1], "iri"
@@ -183,6 +209,8 @@ def repair_inputs(
                 "iri": "IRIs with characters that an IRI cannot hold, written percent-encoded",
                 "literal": "ill-typed literals of a datatype QLever reads as a value, written as "
                 "plain strings",
+                "rounded": "xsd:float or xsd:double values below the smallest double, written "
+                "as the zero of their sign (their XSD value) with the same datatype",
             },
             "encoded": _ENCODED,
             "lines_by_change": dict(Counter(kind for c in changes for kind in c["changes"])),

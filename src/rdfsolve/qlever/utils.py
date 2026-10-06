@@ -451,14 +451,18 @@ def _folder_cmd(url: str, suffix: str) -> str:
     in /) and of its subfolders, kept in a folder named after it.
 
     RDF Portal publishes PDB as about 220,000 files in 1,080 folders under one folder. The listing
-    pages are read and not kept; a fetch that stops resumes its files.
+    pages are read and not kept; a fetch that stops resumes its files. The folders are followed
+    to any depth (-l inf): wget -r stops at 5 levels by default, and RDF Portal's MassBank files
+    are 6 levels down (MassBank-RDF/draft_ttl/MassBank_RDF_ttl/CC0/UFZ/*.nt.gz), so a fetch
+    without it gets only empty folders.
     """
     from urllib.parse import urlparse
 
     depth = len([part for part in urlparse(url).path.split("/") if part]) - 1
     accept = f"*.{suffix},*.{suffix}.gz"
     return (
-        f'wget -r -np -nH --cut-dirs={depth} -c -q {_RETRY} -A "{accept}" -R "index.html*" "{url}"'
+        f'wget -r -l inf -np -nH --cut-dirs={depth} -c -q {_RETRY} -A "{accept}" -R "index.html*" '
+        f'"{url}"'
     )
 
 

@@ -127,3 +127,9 @@ def test_a_line_the_census_cannot_read_is_left_out_and_recorded(tmp_path):
     assert [f["file"] for f in unread["files_counted_up_to_an_error"]] == ["b.ttl"]
     write_census(tmp_path / "census.json", census["properties"], [], unread=unread)
     assert json.loads((tmp_path / "census.json").read_text())["unread"] == unread
+
+
+def test_quads_in_an_n_triples_file_are_counted(tmp_path):
+    data = tmp_path / "hpa.nt"
+    data.write_text(f'<urn:a> <urn:n> "1"^^<{XSD}integer> .\n<urn:a> <urn:n> "2"^^<{XSD}integer> <urn:g> .\n')
+    assert count_literal_datatypes([(data, "nt")]) == {"urn:n": {XSD + "integer": 2}}

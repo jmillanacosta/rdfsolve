@@ -102,3 +102,14 @@ def test_a_file_without_a_change_is_not_written(tmp_path):
     before = data.stat().st_mtime_ns
     assert repair_inputs(tmp_path, [data], processes=1) == []
     assert data.stat().st_mtime_ns == before and not list(tmp_path.glob("*.part"))
+
+
+def test_a_double_below_the_smallest_double_is_written_as_its_zero():
+    double = "<http://www.w3.org/2001/XMLSchema#double>"
+    for lexical, zero in (("8E-610", "0E0"), ("-8E-610", "-0E0")):
+        line = f'_:b <urn:pvalue> "{lexical}"^^{double} .\n'
+        assert repair_line(line) == (f'_:b <urn:pvalue> "{zero}"^^{double} .\n', ["rounded"])
+    for kept in ("1E-320", "0E0", "0.0E-999", "1.5E0"):
+        line = f'_:b <urn:pvalue> "{kept}"^^{double} .\n'
+        assert repair_line(line) == (line, []), "QLever reads subnormals and zeros"
+    assert not readable_value("8E-610", double[1:-1]) and readable_value("1E-320", double[1:-1])

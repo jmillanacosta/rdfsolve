@@ -151,3 +151,14 @@ def test_a_feed_that_fails_and_input_qlever_left_unparsed_are_recorded(tmp_path)
         "936,951,434\nINFO: Triples parsed: 10,000,000\n"
     )
     assert unparsed_input(log) == [936951434]
+
+
+def test_quads_after_a_long_run_of_triples_make_an_n_quads_input(tmp_path):
+    import gzip
+
+    data = tmp_path / "proteinatlas.0.nt.gz"
+    with gzip.open(data, "wt") as stream:
+        stream.writelines(f"<urn:s{i}> <urn:p> <urn:o> .\n" for i in range(2501))
+        stream.write("<urn:a> <urn:p> <bad iri> .\n")
+        stream.write("<urn:a> <urn:p> <urn:o> <urn:g> .\n")
+    assert qlever_format(data) == "nq", "Quads begin at line 2,502 (RDF Portal HPA)"

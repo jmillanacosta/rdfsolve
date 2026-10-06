@@ -42,21 +42,37 @@ def qlever_format(path: Path) -> str:
     return "nq" if found == "nt" and path.exists() and _holds_quads(path) else found
 
 
-def _holds_quads(path: Path, lines: int = 100) -> bool:
-    """Whether the first statements of a line-based file name a graph."""
-    from itertools import islice
+def _holds_quads(path: Path, size: int = 8 << 20) -> bool:
+    """Whether a statement in the first SIZE bytes of a line-based file names a graph.
 
+    RDF Portal's proteinatlas.0.nt.gz opens with 2,501 triples and then holds quads, so the first
+    100 lines (the former window) said N-Triples and qlever-index refused the file. A head that
+    the parser refuses is read line by line, so that one bad line does not hide the quads.
+    """
     from pyoxigraph import DefaultGraph, RdfFormat, parse
 
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rb") as stream:
-        head = b"".join(islice(stream, lines))
-    try:
+        head = stream.read(size)
+    if len(head) == size:
+        head = head[: head.rfind(b"\n") + 1]
+
+    def named(data: bytes) -> bool:
+        """Whether a statement of DATA names a graph."""
         return any(
             not isinstance(quad.graph_name, DefaultGraph)
-            for quad in parse(head, RdfFormat.N_QUADS, lenient=True)
+            for quad in parse(data, RdfFormat.N_QUADS, lenient=True)
         )
+
+    try:
+        return named(head)
     except SyntaxError:
+        for line in head.splitlines(keepends=True):
+            try:
+                if named(line):
+                    return True
+            except SyntaxError:
+                continue
         return False
 
 

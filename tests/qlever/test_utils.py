@@ -145,7 +145,8 @@ def test_a_published_folder_is_fetched_with_its_subfolders(tmp_path):
     from rdfsolve.qlever.utils import _build_get_data_steps, analyse_source
 
     site = tmp_path / "site" / "ntriples" / "pdb" / "latest" / "pdb"
-    for folder, name in (("00", "100d"), ("01", "101d")):
+    # RDF Portal's MassBank files are 6 folders down; wget -r stops at 5 by default.
+    for folder, name in (("00", "100d"), ("01", "101d"), ("a/b/c/d/e/f", "deep")):
         (site / folder).mkdir(parents=True)
         (site / folder / f"{name}.nt").write_text(f"<urn:{name}> <urn:p> <urn:o> .\n")
     (site / "00" / "notes.txt").write_text("not RDF")
@@ -164,7 +165,7 @@ def test_a_published_folder_is_fetched_with_its_subfolders(tmp_path):
     finally:
         server.shutdown()
     assert done.returncode == 0, done.stderr
-    assert sorted(p.name for p in (tmp_path / "rdf").glob("*.nt")) == ["100d.nt", "101d.nt"]
+    assert sorted(p.name for p in (tmp_path / "rdf").glob("*.nt")) == ["100d.nt", "101d.nt", "deep.nt"]
     assert not list((tmp_path / "rdf").rglob("*.txt")) and not list(
         (tmp_path / "rdf").rglob("index.html*")
     )

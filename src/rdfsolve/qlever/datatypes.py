@@ -62,7 +62,9 @@ def _format(name: str) -> Any:
     formats = {
         "ttl": RdfFormat.TURTLE,
         "n3": RdfFormat.TURTLE,
-        "nt": RdfFormat.N_TRIPLES,
+        # N-Quads, a superset: RDF Portal publishes quads in .nt.gz files (proteinatlas), which
+        # are indexed as N-Quads (rdfsolve.qlever.inputs.qlever_format).
+        "nt": RdfFormat.N_QUADS,
         "nq": RdfFormat.N_QUADS,
     }
     xml = {"owl": RdfFormat.RDF_XML, "rdf": RdfFormat.RDF_XML, "xml": RdfFormat.RDF_XML}
