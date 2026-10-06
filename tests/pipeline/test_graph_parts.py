@@ -229,3 +229,26 @@ def test_a_source_level_setting_still_turns_void_first_off(tmp_path):
     source = _source(classes_as_data=True, graph_settings={})
     stage = RemoteMiningStage(_config(tmp_path, "_remote"))
     assert stage._void_strategy(source, source.graph_uris) is None
+
+
+def test_each_graph_part_names_the_pinned_inputs_of_its_source(tmp_path, monkeypatch):
+    from rdfsolve.qlever.inputs import graph_input_directory
+
+    run, _ = _mine_locally(tmp_path, monkeypatch)
+    paths = {g: (graph_input_directory(run.parent, g) / "rdf" / "x.ttl") for g in (A, B, R)}
+    files = [
+        {"path": p.relative_to(run.parent).as_posix(), "bytes": 1, "sha256": "d" * 64}
+        for p in paths.values()
+    ]
+    pins = {"source": "fixture", "recorded": "before_index", "downloads": [], "files": files}
+    (run / "fixture" / "fixture_local_inputs.json").write_text(json.dumps(pins))
+    records = {r.dataset_id: r for r in build_release_manifest(run).datasets}
+    source = records["fixture"]
+    assert source.input_manifest_artifact and source.input_file_count == 3
+    parts = {part.graph_uri: part for part in source.graph_parts}
+    for graph, part in parts.items():
+        assert part.input_manifest_artifact == source.input_manifest_artifact
+        assert part.input_paths == [paths[graph].relative_to(run.parent).as_posix()]
+    entry = records["fixture.proteins_entry"]
+    assert entry.input_manifest_artifact == source.input_manifest_artifact, "The source's pins"
+    assert entry.input_manifest_path == "fixture/fixture_local_inputs.json"

@@ -191,3 +191,41 @@ def test_release_separates_reference_resources_without_dropping_them(tmp_path):
         "ontology",
         "unknown",
     }, "Classification survives release serialization"
+
+
+def test_the_release_names_the_pinned_inputs_of_a_local_index(tmp_path):
+    _fixture(tmp_path)
+    pins = {
+        "format": "rdfsolve-inputs/1",
+        "source": "demo",
+        "recorded": "before_index",
+        "urls": ["https://example.org/demo.ttl"],
+        "release_versions": ["1.2"],
+        "downloads": [
+            {
+                "url": "https://example.org/demo.ttl",
+                "path": "rdf/demo.ttl",
+                "bytes": 4,
+                "sha256": "b" * 64,
+                "etag": '"e"',
+                "last_modified": "Wed, 02 Sep 2026 14:00:00 GMT",
+                "release": {"metalink": "https://example.org/RELEASE.metalink", "version": "1.2"},
+                "publisher_check": "match",
+            }
+        ],
+        "files": [{"path": "rdf/demo.ttl", "bytes": 4, "sha256": "b" * 64, "index_input": True}],
+    }
+    (tmp_path / "demo" / "demo_local_inputs.json").write_text(json.dumps(pins))
+    manifest = build_release_manifest(tmp_path, release_id="test")
+    dataset = manifest.datasets[0]
+    artifact = next(a for a in manifest.artifacts if a.role == "input_manifest")
+    assert dataset.input_manifest_artifact == artifact.artifact_id
+    assert dataset.input_manifest_path == "demo/demo_local_inputs.json"
+    assert (dataset.input_file_count, dataset.input_byte_size) == (1, 4)
+    assert dataset.input_release_versions == ["1.2"]
+    [download] = dataset.input_downloads
+    assert (download.sha256, download.release_version, download.publisher_check) == (
+        "b" * 64,
+        "1.2",
+        "match",
+    )

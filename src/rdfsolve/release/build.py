@@ -19,6 +19,7 @@ from .model import (
     ExtractionReleaseRecord,
     GraphPartExtraction,
     GraphPartReleaseRecord,
+    InputDownloadRecord,
     OntologyReleaseRef,
     OntologyUsageReleaseRecord,
     ReleaseArtifact,
@@ -91,6 +92,7 @@ def _role(path: Path) -> str | None:
         ("_ontology.ttl", "generated_ontology_slice"),
         ("_void.ttl", "generated_void"),
         ("_dataset.trig", "retrieved_dataset_description"),
+        ("_inputs.json", "input_manifest"),
     ):
         if name.endswith(marker):
             return role
@@ -429,6 +431,72 @@ def _artifact_refs_by_dataset(artifacts: list[ReleaseArtifact]) -> dict[str, lis
     return out
 
 
+def _input_pins(
+    run_root: Path, dataset_id: str, artifacts: list[ReleaseArtifact]
+) -> dict[str, Any]:
+    """Return the fields of a dataset record that name the pinned inputs of its local index."""
+    paths = sorted((run_root / dataset_id).glob("*_inputs.json"))
+    if not paths:
+        return {}
+    path = paths[0]
+    manifest = _load_json(path)
+    relative = path.relative_to(run_root).as_posix()
+    artifact = next((a for a in artifacts if a.path == relative), None)
+    files = manifest.get("files") or []
+    downloads = []
+    for item in manifest.get("downloads") or []:
+        release = item.get("release") or {}
+        size = item.get("bytes")
+        downloads.append(
+            InputDownloadRecord(
+                url=item["url"],
+                final_url=item.get("final_url"),
+                path=item.get("path"),
+                sha256=item.get("sha256"),
+                byte_size=size if isinstance(size, int) else None,
+                last_modified=item.get("last_modified"),
+                etag=item.get("etag"),
+                release_version=release.get("version"),
+                release_metalink=release.get("metalink"),
+                publisher_check=item.get("publisher_check"),
+            )
+        )
+    return {
+        "input_manifest_artifact": artifact.artifact_id if artifact else None,
+        "input_manifest_path": relative,
+        "inputs_recorded": manifest.get("recorded"),
+        "input_file_count": len(files),
+        "input_byte_size": sum(int(item.get("bytes") or 0) for item in files),
+        "input_release_versions": [str(v) for v in manifest.get("release_versions") or []],
+        "input_downloads": downloads,
+    }
+
+
+def _pins_of_graph_parts(run_root: Path, datasets: list[DatasetReleaseRecord]) -> None:
+    """Name the pinned inputs of a source in each of its graph parts, and in the registry
+    entry that is one of its graphs: the pins belong to the source, whose index the part's
+    schema was mined from.
+    """
+    from rdfsolve.qlever.inputs import graph_input_directory
+
+    by_id = {dataset.dataset_id: dataset for dataset in datasets}
+    for dataset in datasets:
+        if not dataset.input_manifest_path:
+            continue
+        files = (_load_json(run_root / dataset.input_manifest_path).get("files")) or []
+        paths = [str(item.get("path")) for item in files if isinstance(item, dict)]
+        for part in dataset.graph_parts:
+            prefix = graph_input_directory(Path(), part.graph_uri).as_posix() + "/"
+            part.input_manifest_artifact = dataset.input_manifest_artifact
+            part.input_paths = sorted(path for path in paths if path.startswith(prefix))
+    for dataset in datasets:
+        source = by_id.get(dataset.graph_part_of or "")
+        if source is not None and dataset.input_manifest_path is None:
+            dataset.input_manifest_artifact = source.input_manifest_artifact
+            dataset.input_manifest_path = source.input_manifest_path
+            dataset.inputs_recorded = source.inputs_recorded
+
+
 def _snapshot_id(dataset_id: str, about: dict[str, Any], report: dict[str, Any]) -> str:
     """Return the one snapshot identity used throughout rdfsolve.
 
@@ -599,6 +667,7 @@ def build_release_manifest(
                 local_ontology_file_candidate_count=local_ontology_file_count,
                 ontology_usages=_ontology_usages(run_root, dataset_id),
                 graph_parts=_graph_parts(run_root, dataset_id, by_path, extractions),
+                **_input_pins(run_root, dataset_id, artifacts),
             )
         )
     # An entry that is one graph of a source mined across its graphs points to that source.
@@ -610,6 +679,7 @@ def build_release_manifest(
     }
     for dataset in datasets:
         dataset.graph_part_of = part_of.get(dataset.dataset_id)
+    _pins_of_graph_parts(run_root, datasets)
 
     code_commit = None
     commit_path = run_root / "code_commit.txt"

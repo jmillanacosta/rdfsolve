@@ -11,7 +11,13 @@ from typing import Any
 
 from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.qlever import QleverConfig, build_qleverfile
-from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
+from rdfsolve.qlever.downloads import (
+    MARKER,
+    find_metalinks,
+    needs_download,
+    server_state,
+    write_record,
+)
 from rdfsolve.qlever.inputs import (
     convert_trig,
     empty_inputs,
@@ -116,6 +122,8 @@ class LocalMiningStage(Stage):
                         )
                         continue
 
+                self._carry_inputs(workdir, source)
+
                 if self.config.index_only:
                     log.info("  Index only: %s is not mined", source.name)
                     continue
@@ -217,6 +225,71 @@ class LocalMiningStage(Stage):
         workdir.mkdir()
         log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
 
+    def _pin_inputs(
+        self, workdir: Path, source: Source, index_files: list[Path], *, stage: str
+    ) -> dict[str, Any]:
+        """Pin the downloads and index inputs of a source (inputs.json); with --pinned-inputs,
+        refuse files whose SHA-256 is not the pinned one.
+        """
+        from rdfsolve.qlever.downloads import download_paths, record_inputs
+
+        downloads = download_paths(workdir, source.qlever_entry())
+        manifest = record_inputs(workdir, downloads, index_files, source=source.name, stage=stage)
+        self._check_pins(source, manifest)
+        return manifest
+
+    def _check_pins(self, source: Source, manifest: dict[str, Any] | None) -> None:
+        """With --pinned-inputs, refuse a source whose inputs are not the pinned ones."""
+        from rdfsolve.qlever.downloads import read_pins, unpinned_inputs
+
+        pins = self.config.pinned_inputs
+        if pins is None:
+            return
+        pinned = read_pins(pins, source.name)
+        if manifest is None:
+            problems = ["its input files are not there to check"]
+        elif pinned is None:
+            problems = ["no pinned inputs for this source"]
+        else:
+            problems = unpinned_inputs(manifest, pinned)
+        if problems:
+            shown = "; ".join(problems[:10]) + ("; ..." if len(problems) > 10 else "")
+            raise ValueError(f"The inputs of {source.name} are not those pinned in {pins}: {shown}")
+        if manifest is not None:
+            count = len(manifest["files"])
+            log.info("  The %d input files of %s are those pinned", count, source.name)
+
+    def _carry_inputs(self, workdir: Path, source: Source) -> None:
+        """Copy the pin of a source's inputs into the run, beside its schema.
+
+        An index built before inputs were pinned is pinned from the files that are there
+        (recorded after_index); without them, nothing is pinned.
+        """
+        from rdfsolve.qlever.downloads import INPUTS, read_inputs
+        from rdfsolve.qlever.inputs import index_inputs, mapped_input_files
+
+        manifest = read_inputs(workdir)
+        if manifest is None:
+            try:
+                if source.graph_sources:
+                    files = [p for p, _ in mapped_input_files(workdir, list(source.graph_sources))]
+                else:
+                    files = index_inputs(workdir)
+            except ValueError:
+                files = []
+            if not files:
+                self._check_pins(source, None)
+                log.warning("  The inputs of %s are not there; they are not pinned", source.name)
+                return
+            manifest = self._pin_inputs(workdir, source, files, stage="after_index")
+        else:
+            # The pin of the files the index was built from.
+            self._check_pins(source, manifest)
+        output_dir = self.config.output_dir / source.name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        target = output_dir / f"{source.name}{self.config.output_suffix}_inputs.json"
+        target.write_text((workdir / INPUTS).read_text(encoding="utf-8"), encoding="utf-8")
+
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
         from rdfsolve.qlever.index_check import has_cached_index
@@ -279,9 +352,9 @@ class LocalMiningStage(Stage):
                     # downloads again and does not index a part of the files.
                     (workdir / MARKER).touch()
                     subprocess.run(["bash"], input=get_data_cmd, text=True, check=True, cwd=workdir)
-                    # The server is asked about the files only in a run that asks for updates.
-                    head = server_state if self.config.update_downloads else (lambda url: None)
-                    write_record(workdir, urls, head)
+                    # What the server says of each file, and the release its metalink names,
+                    # pin the download (one request per file, and one per folder).
+                    write_record(workdir, urls, server_state, find_metalinks)
                     expanded.extend(path for directory in directories for path in convert_trig(directory))
             if source.graph_sources:
                 mapped = mapped_input_files(workdir, list(source.graph_sources))
@@ -297,6 +370,8 @@ class LocalMiningStage(Stage):
                 mapped = [(path, "") for path in index_inputs(workdir)]
             if not mapped:
                 raise ValueError(f"No prepared RDF inputs in {workdir}")
+            # The files are pinned as published, before the index (or a repair) reads them.
+            self._pin_inputs(workdir, source, [path for path, _ in mapped], stage="before_index")
         except BaseException:
             for path in expanded:
                 path.unlink(missing_ok=True)

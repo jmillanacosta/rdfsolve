@@ -150,6 +150,7 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     stage._prepare_qleverfile(workdir, source, 7020)
     run = subprocess.run
     calls = []
+
     def index(cmd, **kw):
         # As qlever-index: the index states its triples.
         calls.append(cmd)
@@ -213,6 +214,11 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     assert record.extractions[0].type_context_graph_scope == ["urn:types"]
     assert record.extractions[0].ontology_graph_scope == ["urn:ontology"]
     assert record.completion_state == "complete"
+    assert record.input_manifest_artifact and record.inputs_recorded == "before_index"
+    assert record.input_file_count == len(paths), "Each input file of the index is pinned"
+    assert {item.path for item in record.input_downloads} == {
+        path.relative_to(workdir).as_posix() for path in paths.values()
+    }
 
     parser = configparser.ConfigParser(interpolation=None)
     parser.read(workdir / "Qleverfile")

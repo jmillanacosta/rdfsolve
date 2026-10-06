@@ -109,6 +109,26 @@ class GraphPartReleaseRecord(BaseModel):
     membership_properties: list[str] = Field(default_factory=list)
     own_settings: bool = False
     extractions: list[GraphPartExtraction] = Field(default_factory=list)
+    # The pin of the source's inputs (the index is the source's), and the pinned files that
+    # hold this graph (graph_sources), by their path in it
+    input_manifest_artifact: str | None = None
+    input_paths: list[str] = Field(default_factory=list)
+
+
+class InputDownloadRecord(BaseModel):
+    """One downloaded file that a local index was built from, pinned when it was downloaded."""
+
+    url: str
+    final_url: str | None = None
+    path: str | None = None
+    sha256: str | None = None
+    byte_size: int | None = Field(default=None, ge=0)
+    last_modified: str | None = None
+    etag: str | None = None
+    release_version: str | None = None
+    release_metalink: str | None = None
+    # The file compared with the size and hashes of its publisher's metalink
+    publisher_check: Literal["match", "mismatch", "unchecked"] | None = None
 
 
 class DatasetReleaseRecord(BaseModel):
@@ -127,6 +147,15 @@ class DatasetReleaseRecord(BaseModel):
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     # Graphs whose local inputs are a sample of the endpoint's graph, with how they were sampled.
     sampled_graphs: dict[str, str] = Field(default_factory=dict)
+    # The pin of the files a local index was built from (<dataset>_inputs.json): every file
+    # with its SHA-256 is in the artifact; the downloads are listed here.
+    input_manifest_artifact: str | None = None
+    input_manifest_path: str | None = None
+    inputs_recorded: Literal["before_index", "after_index"] | None = None
+    input_file_count: int | None = None
+    input_byte_size: int | None = None
+    input_release_versions: list[str] = Field(default_factory=list)
+    input_downloads: list[InputDownloadRecord] = Field(default_factory=list)
     extraction_mode: str | None = None
     completion_state: CompletionState = "unknown"
     report_path: str | None = None

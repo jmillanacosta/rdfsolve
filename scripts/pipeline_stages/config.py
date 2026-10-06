@@ -114,6 +114,9 @@ class PipelineConfig:
     no_download: bool = False
     # Ask the server for updates of the files of a local source; download and index again
     update_downloads: bool = False
+    # Run directory (or inputs manifest) whose pinned input files a local source must have to be
+    # indexed and mined (rebuild a frozen run exactly)
+    pinned_inputs: Path | None = None
     no_index: bool = False
     # Download and index local sources only (prepare their indexes for a later mining run).
     index_only: bool = False

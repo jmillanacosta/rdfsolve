@@ -288,6 +288,13 @@ Examples:
         "with cheap counts, and mine only the endpoints that serve other data",
     )
     parser.add_argument(
+        "--pinned-inputs",
+        type=Path,
+        default=None,
+        help="Run directory (or one inputs manifest) of an earlier run: index a local source "
+        "only when its files have the SHA-256 pinned there (rebuild that run exactly)",
+    )
+    parser.add_argument(
         "--get-graphs-from-store",
         action="store_true",
         help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors",
@@ -534,6 +541,7 @@ Examples:
     config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
     config.local_records = args.local_records
+    config.pinned_inputs = args.pinned_inputs
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
     if config.ontology_discovery_max_graphs < 1:

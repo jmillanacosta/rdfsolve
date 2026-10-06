@@ -450,6 +450,37 @@ def _saved_names(urls_by_suffix: dict[str, list[str]]) -> dict[str, str]:
     return saved
 
 
+def graph_download_name(url: str, field_name: str) -> str:
+    """Return the name a download mapped to a named graph is saved under: the SHA-256 of its
+    URL, the format of its download field, and its compression.
+    """
+    suffix = field_name.removeprefix("download_")
+    suffix = "rdf" if suffix == "rdfxml" else suffix
+    compression = ".gz" if url.endswith(".gz") else ".xz" if url.endswith(".xz") else ""
+    return hashlib.sha256(url.encode()).hexdigest() + "." + suffix + compression
+
+
+def download_file_names(entry: dict[str, Any]) -> dict[str, str | None]:
+    """Return the name each download of a registry entry is saved under in its rdf/ folder,
+    as the download command names it (_wget_cmd); None for a published folder and for a file
+    named by the server (Content-Disposition).
+    """
+    analysis = analyse_source(entry)
+    saved = _saved_names(analysis.urls_by_suffix)
+    names: dict[str, str | None] = {}
+    for url in analysis.urls:
+        fname = url.rsplit("/", 1)[-1]
+        if url.endswith("/"):
+            names[url] = None
+        elif url in saved:
+            names[url] = saved[url]
+        elif any(fname.lower().endswith(ext) for ext in _RDF_EXTS):
+            names[url] = fname
+        else:
+            names[url] = _file_name(url)
+    return names
+
+
 def _wget_cmd(url: str, name: str | None = None) -> str:
     """Return a single wget command string for url, saved as NAME when given."""
     if name:
@@ -843,7 +874,7 @@ def build_qleverfile(
                     compression = (
                         ".gz" if url.endswith(".gz") else ".xz" if url.endswith(".xz") else ""
                     )
-                    filename = hashlib.sha256(url.encode()).hexdigest() + "." + suffix + compression
+                    filename = graph_download_name(url, key)
                     commands.append(f"wget -c -q -O {filename} {shlex.quote(url)}")
                     if compression:
                         executable = "gunzip" if compression == ".gz" else "xz -d"

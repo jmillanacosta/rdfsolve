@@ -311,3 +311,23 @@ def test_without_restarts_left_the_error_names_how_the_server_ended(tmp_path, mo
     with pytest.raises(RuntimeError, match=r"exited with status 137 \(SIGKILL\)"):
         stage._mine_with_restarts(source, workdir, 7000, pid)
     assert len(started) == 1 and stopped == [1]
+
+
+def test_the_inputs_of_an_index_are_carried_into_the_run_and_held_to_their_pins(tmp_path):
+    import json
+
+    stage, workdir, source = _stage(tmp_path, update=False)
+    stage._carry_inputs(workdir, source)
+    carried = tmp_path / "run" / "fixture" / "fixture_inputs.json"
+    pinned = json.loads(carried.read_text())
+    assert [item["path"] for item in pinned["files"]] == ["rdf/data.ttl"]
+    assert pinned["recorded"] == "after_index", "An index built before inputs were pinned"
+    stage.config.pinned_inputs = tmp_path / "run"
+    stage._carry_inputs(workdir, source)
+    (workdir / "rdf" / "data.ttl").write_text("<urn:a> <urn:p> <urn:c> .")
+    (workdir / downloads.INPUTS).unlink()
+    with pytest.raises(ValueError, match="not those pinned"):
+        stage._carry_inputs(workdir, source)
+    stage.config.pinned_inputs = tmp_path / "elsewhere"
+    with pytest.raises(ValueError, match="no pinned inputs"):
+        stage._carry_inputs(workdir, source)
