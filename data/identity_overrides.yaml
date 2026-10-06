@@ -391,3 +391,11 @@
     Two releases of METRIN-KG on Zenodo, one concept record (15689186): earthmetabolome
     downloads record 15689187 (2025-06-18), emi record 18652487 (2026-02-16; checked
     2026-10-06). The corpus selection mines one of them: the one whose inputs are on disk.
+- left: rdfportal.mesh
+  right: mesh.nlm
+  relation: version_of
+  newer: mesh.nlm
+  note: >-
+    Two yearly releases of NLM MeSH: rdfportal.mesh holds MeSH 2025 (15,349,035 triples, equal to
+    the endpoint's /mesh/2025 graph), mesh.nlm the 2026 dump (checked 2026-10-06). Only the newer
+    release is mined.
