@@ -19,6 +19,7 @@ from .model import (
     ExtractionReleaseRecord,
     GraphPartExtraction,
     GraphPartReleaseRecord,
+    InputArchiveRecord,
     InputDownloadRecord,
     OntologyReleaseRef,
     OntologyUsageReleaseRecord,
@@ -107,6 +108,8 @@ def _role(path: Path) -> str | None:
         return "pipeline_config"
     if name == "code_commit.txt":
         return "code_commit"
+    if name == "input_archive.json":
+        return "input_archive_record"
     if name == "identity_overrides.yaml":
         return "identity_overrides"
     if name == "sssom_sources.yaml":
@@ -497,6 +500,33 @@ def _pins_of_graph_parts(run_root: Path, datasets: list[DatasetReleaseRecord]) -
             dataset.inputs_recorded = source.inputs_recorded
 
 
+def _input_archive(
+    run_root: Path, datasets: list[DatasetReleaseRecord], artifacts: list[ReleaseArtifact]
+) -> InputArchiveRecord | None:
+    """Return where the run's downloaded inputs are kept, and name each archived download's
+    path in it (rdfsolve.release.input_archive); None when they were not archived.
+    """
+    from rdfsolve.release.input_archive import ARCHIVE_RECORD
+
+    path = run_root / ARCHIVE_RECORD
+    if not path.is_file():
+        return None
+    record = _load_json(path)
+    archived = record.get("files") or {}
+    for dataset in datasets:
+        for item in dataset.input_downloads:
+            item.archive_path = archived.get(f"{dataset.dataset_id}:{item.url}")
+    return InputArchiveRecord(
+        packaging=record["packaging"],
+        location=record["location"],
+        created=record.get("created"),
+        manifest_sha256=record["manifest_sha256"],
+        file_count=record["file_count"],
+        byte_size=record["byte_size"],
+        record_artifact=next((a.artifact_id for a in artifacts if a.path == ARCHIVE_RECORD), None),
+    )
+
+
 def _snapshot_id(dataset_id: str, about: dict[str, Any], report: dict[str, Any]) -> str:
     """Return the one snapshot identity used throughout rdfsolve.
 
@@ -680,6 +710,7 @@ def build_release_manifest(
     for dataset in datasets:
         dataset.graph_part_of = part_of.get(dataset.dataset_id)
     _pins_of_graph_parts(run_root, datasets)
+    input_archive = _input_archive(run_root, datasets, artifacts)
 
     code_commit = None
     commit_path = run_root / "code_commit.txt"
@@ -742,6 +773,7 @@ def build_release_manifest(
         identity_review_error=identity_review_error,
         ontology_registry_artifact=ontology_registry_artifact,
         service_records=service_records,
+        input_archive=input_archive,
         datasets=datasets,
         artifacts=artifacts,
     )

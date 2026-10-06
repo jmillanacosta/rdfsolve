@@ -129,6 +129,22 @@ class InputDownloadRecord(BaseModel):
     release_metalink: str | None = None
     # The file compared with the size and hashes of its publisher's metalink
     publisher_check: Literal["match", "mismatch", "unchecked"] | None = None
+    # Its path in the run's input archive (ReleaseManifest.input_archive), when it was archived
+    archive_path: str | None = None
+
+
+class InputArchiveRecord(BaseModel):
+    """Where the downloaded inputs of a run are kept (rdfsolve.release.input_archive)."""
+
+    packaging: str
+    # The bag's path or, once deposited, its URL or DOI
+    location: str
+    created: str | None = None
+    # SHA-256 of the bag's manifest-sha256.txt, which lists each file's pinned SHA-256
+    manifest_sha256: str
+    file_count: int = Field(ge=0)
+    byte_size: int = Field(ge=0)
+    record_artifact: str | None = None
 
 
 class DatasetReleaseRecord(BaseModel):
@@ -189,6 +205,8 @@ class ReleaseManifest(BaseModel):
     identity_review_error: str | None = None
     ontology_registry_artifact: str | None = None
     service_records: list[str] = Field(default_factory=list)
+    # The copy of the downloaded inputs of the local indexes, when one was made
+    input_archive: InputArchiveRecord | None = None
     datasets: list[DatasetReleaseRecord] = Field(default_factory=list)
     artifacts: list[ReleaseArtifact] = Field(default_factory=list)
 

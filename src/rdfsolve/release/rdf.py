@@ -23,8 +23,18 @@ def _artifact_uri(base: str, artifact_id: str) -> URIRef:
     return URIRef(mint_from_base(base, "distribution", digest))
 
 
-def _add_input(graph: Graph, base: str, snapshot: URIRef, item: InputDownloadRecord) -> None:
-    """Describe one pinned input file as a DCAT distribution the snapshot was derived from."""
+def _add_input(
+    graph: Graph,
+    base: str,
+    snapshot: URIRef,
+    item: InputDownloadRecord,
+    archive: str | None = None,
+) -> None:
+    """Describe one pinned input file as a DCAT distribution the snapshot was derived from.
+
+    *archive* is the URL of the run's input archive, when it is published (an archive kept on
+    a file system is named in release.json only): the archived copy is another access URL.
+    """
     if not item.sha256:
         return
     distribution = _artifact_uri(base, f"input:{item.url}:{item.sha256}")
@@ -33,6 +43,8 @@ def _add_input(graph: Graph, base: str, snapshot: URIRef, item: InputDownloadRec
     graph.add((distribution, DCAT.downloadURL, URIRef(item.url)))
     if item.final_url:
         graph.add((distribution, DCAT.accessURL, URIRef(item.final_url)))
+    if archive and item.archive_path:
+        graph.add((distribution, DCAT.accessURL, URIRef(f"{archive}/{item.archive_path}")))
     if item.byte_size is not None:
         graph.add(
             (distribution, DCAT.byteSize, Literal(item.byte_size, datatype=XSD.nonNegativeInteger))
@@ -102,6 +114,8 @@ def release_to_rdf(
         )
 
     artifact_by_id = manifest.artifact_by_id()
+    location = manifest.input_archive.location if manifest.input_archive else ""
+    archive = location.rstrip("/") if location.startswith(("http://", "https://")) else None
     for dataset in manifest.datasets:
         snapshot = URIRef(
             dataset.snapshot_id or mint_from_base(base, "dataset", dataset.dataset_id)
@@ -123,7 +137,7 @@ def release_to_rdf(
         if dataset.source_version_iri:
             graph.add((snapshot, PROV.wasDerivedFrom, URIRef(dataset.source_version_iri)))
         for item in dataset.input_downloads:
-            _add_input(graph, base, snapshot, item)
+            _add_input(graph, base, snapshot, item, archive)
 
         for extraction in dataset.extractions:
             if extraction.snapshot_id:
