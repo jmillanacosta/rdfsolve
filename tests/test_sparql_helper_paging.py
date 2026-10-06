@@ -13,7 +13,7 @@ from time import monotonic, sleep
 import pytest
 from rdflib import Graph, Literal, URIRef
 
-from rdfsolve import _http_policy
+from rdfsolve import _http_policy, sparql_helper
 from rdfsolve._host_gate import HostBusyError, host_request
 from rdfsolve.sparql_helper import (
     EndpointError,
@@ -100,6 +100,127 @@ def test_silent_servers_end_reads_by_option_and_dead_peers_are_probed(monkeypatc
                 "socket_options"
             ]
             assert (socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1) in options, "Dead peers are probed"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+class Trickle(BaseHTTPRequestHandler):
+    """Send a byte every 0.2 s, in the headers or in the body, for up to 30 s."""
+
+    in_headers = False
+
+    def do_GET(self):
+        try:
+            if self.in_headers:
+                self.wfile.write(b"HTTP/1.1 200 OK\r\n")
+                for byte in b"X-Slow: " + b"x" * 150:
+                    self.wfile.write(bytes([byte]))
+                    self.wfile.flush()
+                    sleep(0.2)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/sparql-results+json")
+            self.end_headers()  # no length: the body ends when the connection closes
+            self.wfile.write(b'{"head": {"vars": []}, "results": {"bindings": [')
+            for _ in range(150):
+                self.wfile.write(b" ")
+                self.wfile.flush()
+                sleep(0.2)
+            self.wfile.write(b"]}}")
+        except OSError:
+            pass
+
+    def log_message(self, *args):
+        pass
+
+
+class TrickledHeaders(Trickle):
+    in_headers = True
+
+
+@pytest.mark.parametrize("handler", [Trickle, TrickledHeaders], ids=["body", "headers"])
+def test_a_server_that_trickles_bytes_is_ended_at_the_deadline(monkeypatch, handler):
+    monkeypatch.setattr(_http_policy, "_next_request", {})
+    monkeypatch.setattr(sparql_helper, "DEADLINE_GRACE_S", 0.5)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with SparqlHelper(
+            f"http://127.0.0.1:{server.server_port}", timeout=5, max_retries=1
+        ) as helper:
+            helper.enable_query_collection()
+            assert helper.read_timeout is None, "Only the deadline can end this read"
+            # Each silence (0.2 s) is shorter than the read timeout of the budget (1 s).
+            started = monotonic()
+            with (
+                helper.budget(1.0),
+                pytest.raises(EndpointTimeoutError, match=r"deadline of 1\.5 s"),
+            ):
+                helper.select("SELECT * WHERE { ?s ?p ?o }", purpose="trickle")
+            assert monotonic() - started < 5, "The deadline ends the request, not the server"
+            record = helper.get_collected_queries()[-1]
+            assert record.error == "EndpointTimeoutError" and record.cut is None, (
+                "The client's own limit is not a cut of the endpoint"
+            )
+            assert helper.deadline is None and helper.read_timeout is None, "Budget restored"
+            helper.deadline = 0.5
+            started = monotonic()
+            with pytest.raises(EndpointTimeoutError):
+                helper.select("SELECT * WHERE { ?s ?p ?o }", purpose="trickle")
+            assert monotonic() - started < 4, "An explicit deadline holds outside budgets"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+def test_requests_through_an_http_proxy_are_watched_too():
+    adapter = SparqlHelper("https://example.org/sparql")._session.get_adapter("https://x")
+    pools = adapter.proxy_manager_for("http://proxy.example.org:3128").pool_classes_by_scheme
+    assert pools["https"] is sparql_helper._WatchedHTTPSConnectionPool
+    assert adapter.poolmanager.pool_classes_by_scheme["http"] is (
+        sparql_helper._WatchedHTTPConnectionPool
+    )
+
+
+def test_a_cost_limit_in_a_client_error_page_is_a_timeout(monkeypatch):
+    monkeypatch.setattr(_http_policy, "_next_request", {})
+    calls = []
+    page = (
+        b'<!DOCTYPE html SYSTEM "about:legacy-compat"><html><head><title>Endpoint</title>'
+        b"</head><body><p>Query evaluation exception. { &quot;exception&quot;: &quot;Tried to "
+        b"allocate 397.1 GB, but only 90.6 GB were available&quot;, &quot;query&quot;: "
+        b"&quot;SELECT ...&quot; }</p></body></html>"
+    )
+
+    class Refusing(BaseHTTPRequestHandler):
+        def do_GET(self):
+            calls.append(self.command)
+            self.send_response(400)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page)))
+            self.end_headers()
+            self.wfile.write(page)
+
+        def do_POST(self):
+            self.do_GET()
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Refusing)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with (
+            SparqlHelper(f"http://127.0.0.1:{server.server_port}", max_retries=1) as helper,
+            pytest.raises(EndpointTimeoutError, match=r"Tried to allocate 397\.1 GB"),
+        ):
+            helper.select("SELECT (COUNT(*) AS ?n) WHERE { ?s ?p ?o }")
+        assert calls == ["GET"], "The same query is not sent again by POST"
     finally:
         server.shutdown()
         server.server_close()

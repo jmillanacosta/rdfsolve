@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import logging
 import os
+import re
 import secrets
 import socket
 import threading
 import time
 import warnings
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -30,7 +32,8 @@ from typing import Self
 
 from rdflib import Graph, URIRef, Variable
 from rdflib import Literal as RdfLiteral
-from urllib3.connection import HTTPConnection
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
 from rdfsolve.schema_models.paths import PropertyPath
@@ -39,6 +42,8 @@ from rdfsolve.sparql_terms import writable_query
 logger = logging.getLogger(__name__)
 # Seconds between the log lines of a query that is still running.
 HEARTBEAT_S = 300.0
+# Seconds that a request may run past its timeout before it is ended (SparqlHelper.deadline).
+DEADLINE_GRACE_S = 30.0
 
 
 class SelectExecution(TypedDict, total=False):
@@ -103,12 +108,117 @@ def _default_agent() -> str:
         return "rdfsolve"
 
 
+class _Deadline:
+    """End one request at a wall-clock deadline, whatever the server sends.
+
+    A read timeout bounds one silence only: a server or proxy that sends a few bytes now and
+    then holds the read for ever (rehearsal 114981: two remote queries, one on QLever and one
+    at IDSM, ran for 16.8 h). At the deadline a watcher shuts the socket of the request down,
+    which ends a blocked read in the requesting thread; the request then raises a timeout
+    (SparqlHelper._request_serial). The connection pools tell the watcher which connection the
+    request uses (_WatchedHTTPConnectionPool).
+    """
+
+    def __init__(self, seconds: float) -> None:
+        """Start the deadline *seconds* from now."""
+        self.seconds = seconds
+        self.expired = False
+        self.connection: Any = None
+        self._done = threading.Event()
+        self._token: Any = None
+
+    def __enter__(self) -> Self:
+        self._token = _active_deadline.set(self)
+        threading.Thread(target=self._watch, daemon=True).start()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._done.set()
+        _active_deadline.reset(self._token)
+
+    def _watch(self) -> None:
+        if self._done.wait(self.seconds):
+            return
+        self.expired = True
+        # Repeated until the request ends: at the deadline its socket may still be connecting.
+        while True:
+            sock = getattr(self.connection, "watched_sock", None)
+            if sock is not None:
+                with suppress(OSError):
+                    # The shutdown of the plain socket, also under TLS: SSLSocket.shutdown
+                    # would change the TLS state that the reading thread uses.
+                    socket.socket.shutdown(sock, socket.SHUT_RDWR)
+            if self._done.wait(1.0):
+                return
+
+
+_active_deadline: ContextVar[_Deadline | None] = ContextVar("sparql_deadline", default=None)
+
+
+class _WatchedHTTPConnection(HTTPConnection):
+    """A connection that keeps its socket for the deadline: http.client drops ``sock`` when a
+    response without a length is read to the closing of the connection.
+    """
+
+    watched_sock: socket.socket | None = None
+
+    def connect(self) -> None:
+        """Open the connection and keep its socket for the request's deadline."""
+        super().connect()
+        self.watched_sock = self.sock
+
+
+class _WatchedHTTPSConnection(HTTPSConnection):
+    """A TLS connection that keeps its socket for the deadline (_WatchedHTTPConnection)."""
+
+    watched_sock: socket.socket | None = None
+
+    def connect(self) -> None:
+        """Open the TLS connection and keep its socket for the request's deadline."""
+        super().connect()
+        self.watched_sock = self.sock
+
+
+class _WatchedHTTPConnectionPool(HTTPConnectionPool):
+    """A pool that gives the connection of each request to the request's deadline."""
+
+    ConnectionCls = _WatchedHTTPConnection
+
+    def _get_conn(self, timeout: float | None = None) -> Any:
+        conn = super()._get_conn(timeout)
+        deadline = _active_deadline.get()
+        if deadline is not None:
+            deadline.connection = conn
+        return conn
+
+
+class _WatchedHTTPSConnectionPool(HTTPSConnectionPool):
+    """A pool that gives the connection of each request to the request's deadline."""
+
+    ConnectionCls = _WatchedHTTPSConnection
+
+    def _get_conn(self, timeout: float | None = None) -> Any:
+        conn = super()._get_conn(timeout)
+        deadline = _active_deadline.get()
+        if deadline is not None:
+            deadline.connection = conn
+        return conn
+
+
+_WATCHED_POOLS: dict[str, type[HTTPConnectionPool]] = {
+    "http": _WatchedHTTPConnectionPool,
+    "https": _WatchedHTTPSConnectionPool,
+}
+
+
 class _KeepaliveAdapter(HTTPAdapter):
-    """An HTTP adapter whose connections send TCP keepalive probes.
+    """An HTTP adapter whose connections send TCP keepalive probes and can be ended at a deadline.
 
     A long query can be silent for minutes, and a live server answers the probes during that
     time. When the peer is gone without a reset (for example after a network change), the
     probes fail and the read ends in about two minutes. Without them, the read waits for ever.
+    A live peer that keeps the connection open is ended by the deadline of the request
+    (_Deadline), also behind an HTTP proxy.
     """
 
     SOCKET_OPTIONS: ClassVar[list[tuple[int, int, int]]] = [
@@ -130,6 +240,14 @@ class _KeepaliveAdapter(HTTPAdapter):
         """Give the socket options to every connection pool."""
         kwargs["socket_options"] = self.SOCKET_OPTIONS
         super().init_poolmanager(*args, **kwargs)
+        self.poolmanager.pool_classes_by_scheme = _WATCHED_POOLS
+
+    def proxy_manager_for(self, proxy: str, **proxy_kwargs: Any) -> Any:
+        """Watch the connections through an HTTP proxy too; a SOCKS proxy keeps its own pools."""
+        manager = super().proxy_manager_for(proxy, **proxy_kwargs)
+        if not proxy.lower().startswith("socks"):
+            manager.pool_classes_by_scheme = _WATCHED_POOLS
+        return manager
 
 
 @dataclass(frozen=True)
@@ -348,6 +466,9 @@ class SparqlHelper:
         timeout: Connection and host-slot wait timeout in seconds
         read_timeout: Longest silence while a response is read; None (the default) lets a long
             query run. TCP keepalive probes find a dead connection in about two minutes.
+        deadline: Longest wall-clock time of one request, from sending it to the end of its
+            response, however the server sends it; past it the request raises
+            EndpointTimeoutError. None (the default) is timeout plus DEADLINE_GRACE_S.
         rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429 or 503
             with Retry-After). A longer cooldown raises EndpointRateLimitError.
 
@@ -506,6 +627,7 @@ class SparqlHelper:
         user_agent: str | None = None,
         read_timeout: float | None = None,
         rate_limit_wait: float = 600.0,
+        deadline: float | None = None,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints.
 
@@ -530,6 +652,7 @@ class SparqlHelper:
         self.max_backoff = max_backoff
         self.timeout = timeout
         self.read_timeout = read_timeout
+        self.deadline = deadline
         # A timed-out SELECT is retried in adaptive pages, unless a budget turns that off.
         self.page_recovery = True
         self.rate_limit_wait = rate_limit_wait
@@ -594,15 +717,28 @@ class SparqlHelper:
         """Give each request in the block *seconds* and *retries* tries, without page recovery.
 
         A probe: a query that does not answer in time raises EndpointTimeoutError at once,
-        instead of being retried and recovered in pages. The settings are restored after.
+        instead of being retried and recovered in pages. Each request ends at *seconds* plus
+        DEADLINE_GRACE_S. The settings are restored after.
         """
-        saved = (self.timeout, self.read_timeout, self.max_retries, self.page_recovery)
-        self.timeout, self.read_timeout = seconds, seconds
+        saved = (
+            self.timeout,
+            self.read_timeout,
+            self.deadline,
+            self.max_retries,
+            self.page_recovery,
+        )
+        self.timeout, self.read_timeout, self.deadline = seconds, seconds, None
         self.max_retries, self.page_recovery = max(1, retries), recover
         try:
             yield
         finally:
-            self.timeout, self.read_timeout, self.max_retries, self.page_recovery = saved
+            (
+                self.timeout,
+                self.read_timeout,
+                self.deadline,
+                self.max_retries,
+                self.page_recovery,
+            ) = saved
 
     def select(
         self,
@@ -852,6 +988,18 @@ class SparqlHelper:
                     )
                 ):
                     raise EndpointError(f"HTTP {status_code}: query rejected: {detail}") from e
+                # A cost or memory limit is a limit with any client status: QLever behind a web
+                # server answers "Tried to allocate 397.1 GB" with HTTP 400 and an HTML page.
+                # The caller makes the query smaller; the same query by POST is refused again.
+                if (
+                    400 <= status_code < 500
+                    and status_code != 429
+                    and any(pat in body for pat in self.COST_LIMIT_PATTERNS)
+                ):
+                    raise EndpointTimeoutError(
+                        f"Query cost/time limit: {detail or status_code}",
+                        status_code=status_code,
+                    ) from e
 
                 # Check if this looks like a POST-required error
                 # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
@@ -1151,6 +1299,26 @@ class SparqlHelper:
                     record.request_seconds += finished - request_started
 
     def _request_serial(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
+        """Send one request and read its response before the deadline (see _Deadline).
+
+        A request past its deadline raises a read timeout, which the caller turns into
+        EndpointTimeoutError, as for a server that is silent: a response that the deadline
+        ended is incomplete, even when its end looks like the end of the body.
+        """
+        seconds = self.deadline if self.deadline is not None else self.timeout + DEADLINE_GRACE_S
+        message = f"no complete response within the deadline of {seconds:g} s"
+        with _Deadline(seconds) as deadline:
+            try:
+                text = self._send(method, query, accept, raw=raw)
+            except Exception as error:
+                if deadline.expired:
+                    raise requests.exceptions.ReadTimeout(message) from error
+                raise
+            if deadline.expired:
+                raise requests.exceptions.ReadTimeout(message)
+            return text
+
+    def _send(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
         from rdfsolve._http_policy import defer_host, retry_after_seconds
 
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
@@ -1892,12 +2060,19 @@ def _error_detail(body: str) -> str:
     """Give the reason of an endpoint error without the echoed query.
 
     A JSON body (QLever) carries the reason in "exception", which itself may start with
-    "Invalid SPARQL query:"; other bodies are cut where the echoed query begins.
+    "Invalid SPARQL query:"; other bodies are cut where the echoed query begins. An HTML page is
+    read as its text, which may hold such a JSON body (sparql.uniprot.org, HTTP 400: "Query
+    evaluation exception. { "exception": "Tried to allocate 397.1 GB ..." }").
     """
     try:
         reason = json.loads(body).get("exception")
     except (ValueError, AttributeError):
         reason = None
+    if reason is None and any(marker in body[:1000] for marker in SparqlHelper.HTML_MARKERS):
+        body = re.sub(r"(?is)<(script|style)\b.*?</\1>|<[^>]+>", " ", body)
+        body = re.sub(r"\s+", " ", html.unescape(body))
+        found = re.search(r'"exception"\s*:\s*"((?:[^"\\]|\\.)*)"', body)
+        reason = found.group(1) if found else None
     if isinstance(reason, str) and reason.strip():
         return reason.strip()[:500]
     return body.split("SPARQL query:", 1)[0].strip()[:500]
