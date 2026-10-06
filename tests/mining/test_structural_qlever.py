@@ -10,7 +10,7 @@ from rdflib import Dataset
 
 from rdfsolve.mining import structural_strategy
 from rdfsolve.mining.miner import SchemaMiner
-from rdfsolve.sparql_helper import EndpointError
+from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
 
 DATA = """
 <urn:a> a <urn:A> ; <urn:p> <urn:b> .
@@ -30,7 +30,7 @@ def translate(query):
     )
 
 
-def mine(monkeypatch, data=DATA, *, engine="qlever", patterns=True):
+def mine(monkeypatch, data=DATA, *, engine="qlever", patterns=True, refuse=lambda q, p: False):
     with (
         monkeypatch.context() as patch,
         SchemaMiner.from_graph(Dataset().parse(data=data, format="turtle"), delay=0) as miner,
@@ -45,6 +45,8 @@ def mine(monkeypatch, data=DATA, *, engine="qlever", patterns=True):
                 sent.append(query)
                 if "ql:" in query and not patterns:
                     raise EndpointError("HTTP 400: unknown predicate ql:has-predicate")
+                if refuse(query, purpose):
+                    raise EndpointTimeoutError("Operation timed out. Last operation: GroupBy")
                 return run(translate(query), *args, purpose=purpose, **kwargs)
 
             return call
@@ -168,3 +170,23 @@ def test_distinct_subjects_follow_from_a_group_with_all_edges(monkeypatch):
     assert heavy + "/groups" in sent and heavy not in sent and state == "complete", (
         "The groups with part of the edges count their distinct subjects together"
     )
+
+
+def test_a_part_that_cannot_be_split_is_discovered_without_witnesses(monkeypatch):
+    """A refused part that no property of its subjects divides is asked again without the
+    witness, and each pattern reads its own: MedGen dcterms:references (95,419,320 edges of
+    125,005 subjects with one property set) took 273 s without the witness and timed out at
+    600 s with it (corpus-local-4a3affdf-2)."""
+    _, exact, _ = mine(monkeypatch, MORE, patterns=False)
+    entry, result, sent = mine(
+        monkeypatch,
+        MORE,
+        refuse=lambda q, p: "AS ?witness" in q or p == "structural/discovery-split",
+    )
+    assert entry["state"] == "complete" and shapes(result) == shapes(exact)
+    assert any("ql:has-predicate ?sp" in q and "?witness" not in q for q in sent)
+    witness = [q for q in sent if q.rstrip().endswith("LIMIT 1") and "ql:has-predicate" not in q]
+    assert len(set(witness)) == len(result.structural_patterns), "One witness for each pattern"
+    for pattern in result.structural_patterns:
+        (example,) = pattern.examples
+        assert {"s", "o"} <= set(example)

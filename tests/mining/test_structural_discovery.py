@@ -257,3 +257,16 @@ def test_the_discovery_queries_hold_no_string_escapes():
     source = inspect.getsource(structural_strategy)
     assert 'SEPARATOR=">"' in source and "\\\\n" not in source
     assert structural_strategy._properties("urn:a b>urn:c") == ["urn:a b", "urn:c"]
+
+
+def test_the_property_set_of_each_subject_is_read_once_for_the_subject():
+    """The property set of a subject is grouped from its ql:has-predicate rows, not from each of
+    its edges: MedGen dcterms:references (95,419,320 edges of 125,005 subjects) took 338 s
+    to group one row per edge and property, and 3.5 s to group one row per subject and property;
+    the discovery then timed out after 600 s (corpus-local-4a3affdf-2)."""
+    query = structural_strategy._patterns_query(
+        None, [], "urn:p", ["?s ql:has-predicate <urn:x> ."]
+    )
+    subjects = re.search(r"\{ SELECT \?s \(GROUP_CONCAT.*?GROUP BY \?s \}", query, re.DOTALL)[0]
+    assert "?s ql:has-predicate <urn:p> ." in subjects and "?_o" not in subjects
+    assert "?s ql:has-predicate <urn:x> ." in subjects, "The part's clauses apply to the subject"

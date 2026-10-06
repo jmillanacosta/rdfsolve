@@ -235,22 +235,39 @@ def _patterns_census(
 
 
 def _patterns_query(
-    graph: str | None, named: list[str], predicate: str, part: Sequence[str] = ()
+    graph: str | None,
+    named: list[str],
+    predicate: str,
+    part: Sequence[str] = (),
+    *,
+    witness: bool = True,
 ) -> str:
     """Return the query of the patterns of the edges of *predicate* whose subject is untyped and
     is in *part* (clauses on the subject's properties, see _split_property).
+
+    The property set of a subject is grouped from one row for each of its properties, not for
+    each of its edges: MedGen dcterms:references (95,419,320 edges of 125,005 subjects) took
+    338 s grouped by edge and 3.5 s by subject (corpus-local-4a3affdf-2).
+
+    Without *witness*, the rows have no sampled edge: the text of the edge is built for each
+    edge before it is sampled, which took the MedGen query past 600 s (273 s without it).
     """
     prop = f"<{predicate}>"
     subject = " ".join([_untyped_subject(), *part])
+    sample = (
+        '\n  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), ">", IF(isBlank(?o), "", STR(?o)))) '
+        "AS ?witness)"
+        if witness
+        else ""
+    )
     return (
         QLEVER_PREFIX
         + f"""SELECT ?p ?ss ?os ?sk ?ok ?dt ?lang (COUNT(*) AS ?n)
-  (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
-  (SAMPLE(CONCAT(IF(isBlank(?s), "", STR(?s)), ">", IF(isBlank(?o), "", STR(?o)))) AS ?witness)
+  (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects){sample}
 {_dataset(graph, named)} WHERE {{ {{ SELECT DISTINCT ?s ?o ?ss ?os ?p ?sk ?ok ?dt ?lang WHERE {{
   ?s {prop} ?o . {subject}
   {{ SELECT ?s (GROUP_CONCAT(DISTINCT STR(?sp); SEPARATOR=">") AS ?ss)
-     WHERE {{ ?s {prop} ?_o . {subject} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
+     WHERE {{ ?s ql:has-predicate {prop} . {subject} ?s ql:has-predicate ?sp }} GROUP BY ?s }}
   OPTIONAL {{
     {{ SELECT ?o (GROUP_CONCAT(DISTINCT STR(?op); SEPARATOR=">") AS ?os)
        WHERE {{ ?s {prop} ?o . {subject} ?o ql:has-predicate ?op }} GROUP BY ?o }}
@@ -308,7 +325,10 @@ def _discover_part(
     refused: list[tuple[int, Exception]],
 ) -> list[dict[str, Any]]:
     """Discover the patterns of a part, splitting it by a property of its subjects when the
-    endpoint refuses it; a part that cannot be split is added to *refused* with its triples.
+    endpoint refuses it. A part that cannot be split is asked again without witnesses, which
+    are then read for each pattern (structural_queries); one still refused is added to
+    *refused* with its triples. MedGen dcterms:references cannot be split: its 125,005 subjects
+    have one property set (corpus-local-4a3affdf-2).
     """
     try:
         return _select(
@@ -317,8 +337,16 @@ def _discover_part(
     except (SparqlHelperError, ValueError) as error:
         split = _split_property(context, graph, named, predicate, part, triples)
         if split is None:
-            refused.append((triples, error))
-            return []
+            logger.info("Discovery: %s asked again without witnesses", predicate)
+            try:
+                return _select(
+                    context,
+                    _patterns_query(graph, named, predicate, part, witness=False),
+                    "structural/discovery",
+                )
+            except (SparqlHelperError, ValueError):
+                refused.append((triples, error))
+                return []
         chosen, inside = split
         logger.info(
             "Discovery: %s split by %s (%d of %d triples)", predicate, chosen, inside, triples
@@ -959,7 +987,12 @@ class StructuralStrategy(MiningStrategy):
                     pattern.count = int(recount["n"]["value"])
                     pattern.distinct_subjects = int(recount["subjects"]["value"])
                     pattern.distinct_objects = int(recount["objects"]["value"])
-                pattern.examples = [_witness(group[0])]
+                sampled = [row for row in group if "witness" in row]
+                pattern.examples = (
+                    [_witness(sampled[0])]
+                    if sampled
+                    else _select(context, pattern.witness_query, "structural/witness")
+                )
             elif bulk:
                 pairs = {
                     (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
