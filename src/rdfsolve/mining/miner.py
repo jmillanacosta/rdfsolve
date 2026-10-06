@@ -111,6 +111,7 @@ class SchemaMiner:
         type_context_graph_uris: list[str] | None = None,
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
+        untyped_subjects: bool = True,
     ) -> None:
         """Initialize a SchemaMiner.
 
@@ -119,8 +120,12 @@ class SchemaMiner:
         the rows of these terms join the typed patterns and are grouped under their ancestors.
         *membership_properties* are the properties that place a record in its class when the
         source does not use rdf:type alone (rdf:type and a category, for example).
+        With *untyped_subjects*, the IRI subjects that have no type get property-level
+        patterns (subject_binding "untyped"; rdfsolve.mining.untyped_subjects), so that data
+        without classes has a schema; a scan run counts them from its rows.
         """
         self.endpoint_url = endpoint_url
+        self.untyped_subjects = untyped_subjects
         self.classes_as_data = classes_as_data
         self.membership_properties = list(membership_properties or [])
         self.local_backend = local_backend
@@ -381,6 +386,7 @@ class SchemaMiner:
                 "counts": self.counts,
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
+                "untyped_subject_patterns": self.untyped_subjects,
                 "unsafe_paging": self.unsafe_paging,
                 "filter_service_namespaces": self.filter_service_namespaces,
                 "enrich": self.enrich,
@@ -429,6 +435,14 @@ class SchemaMiner:
             self._scan_structure(context, patterns)
         elif not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
             StructuralStrategy(patterns).mine(context)
+        if self._store is None and not self._own_view and self.untyped_subjects:
+            from rdfsolve.mining.untyped_subjects import mine_untyped_subjects
+
+            # After the structural census, whose counts of untyped triples choose the
+            # properties to count; a scan run counts untyped subjects with its patterns.
+            patterns = [*patterns, *mine_untyped_subjects(context)]
+        elif not self.untyped_subjects:
+            patterns = [p for p in patterns if not p.untyped_subject]
         self._class_batches = context.class_batches
         if context.grouped_members:
             # A row of a representative is a grouping of its members' rows, not an observation
@@ -778,7 +792,8 @@ class SchemaMiner:
         classes: set[str] = set()
         properties: set[str] = set()
         for p in patterns:
-            classes.add(p.subject_class)
+            if not p.untyped_subject:
+                classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
             properties.add(p.property_uri)

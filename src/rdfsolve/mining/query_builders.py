@@ -34,6 +34,7 @@ def membership_path(properties: str | Sequence[str] | None = None) -> str:
 
 
 __all__ = [
+    "UntypedSubjects",
     "Window",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
@@ -114,6 +115,42 @@ def _context_pattern(pattern: str, graph_uris: list[str] | None) -> str:
     )
 
 
+class UntypedSubjects(str):
+    """The IRI subjects without a type, in place of a class in the pattern and count queries.
+
+    The value is rdfs:Resource (UNTYPED_SUBJECT), the subject class of the untyped patterns, so
+    that the rows of a query name it as ?class. A batch holds it alone. The subject test is
+    ``FILTER(isIRI(?s)) FILTER NOT EXISTS { ?s <p> ?o . ?s a ?t }``, the test of an untyped IRI
+    object turned to the subject; the group repeats the edge of the property (*edge*), as the
+    structural census does: QLever evaluates the group of NOT EXISTS on its own, and a group of
+    ``?s a ?t`` alone reads every type triple. With *every* (a census found no typed subject of
+    the property) only FILTER(isIRI(?s)) is sent.
+    """
+
+    every: bool
+    edge: str
+
+    def __new__(cls, *, every: bool = False, edge: str = "") -> Self:
+        """Keep whether every subject is untyped, and the edge that the test repeats."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
+
+        value = super().__new__(cls, UNTYPED_SUBJECT)
+        value.every = every
+        value.edge = edge
+        return value
+
+
+def _untyped_subject_test(
+    node: str, marker: UntypedSubjects, context_graph_uris: list[str] | None
+) -> str:
+    """Keep the IRI subjects without a type (see UntypedSubjects)."""
+    test = f"FILTER(isIRI({node}))"
+    if marker.every:
+        return test
+    types = _type_pattern(node, "?_subjectType", context_graph_uris)
+    return f"{test} FILTER NOT EXISTS {{ {marker.edge} {types} }}"
+
+
 def _type_pattern(
     node: str,
     cls: str,
@@ -123,8 +160,11 @@ def _type_pattern(
     """Match each node/type pair once across data and companion graphs.
 
     *membership* is the property, or the properties, that place a record in its class when the
-    source does not use rdf:type alone; by default, the membership of the mining run.
+    source does not use rdf:type alone; by default, the membership of the mining run. An
+    UntypedSubjects in place of the class keeps the nodes without a type instead.
     """
+    if isinstance(cls, UntypedSubjects):
+        return _untyped_subject_test(node, cls, context_graph_uris)
     triple = f"{node} {membership_path(membership)} {cls} ."
     if not context_graph_uris:
         return triple
@@ -165,9 +205,9 @@ class Window:
 
 
 def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
-    """Bind ?s to the class members, or to one window of them."""
+    """Bind ?s to the class members, or to one window of them (untyped subjects: no window)."""
     pattern = _type_pattern("?s", cls, context)
-    if window is None:
+    if window is None or isinstance(cls, UntypedSubjects):
         return pattern
     hint = (
         " <http://www.bigdata.com/queryHints#Prior> <http://www.bigdata.com/queryHints#runFirst> true ."
@@ -199,9 +239,20 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
     """Write one class or property as constants; BIND keeps their result columns.
 
     A Representative among the classes binds ?class to the representative for subjects typed
-    by any of its members (VALUES (?_member ?class)).
+    by any of its members (VALUES (?_member ?class)). UntypedSubjects, alone, binds ?class to
+    rdfs:Resource and returns, as the class, the subject test with the edge of the property.
     """
     binds = ""
+    prop = f"<{property_uri}>" if property_uri else "?p"
+    untyped = [c for c in class_uris if isinstance(c, UntypedSubjects)]
+    if untyped:
+        if len(class_uris) != 1:
+            raise ValueError("Untyped subjects are queried alone, not in a batch of classes")
+        binds = f" BIND(<{untyped[0]}> AS ?class)" + (
+            f" BIND({prop} AS ?p)" if property_uri else ""
+        )
+        marker = UntypedSubjects(every=untyped[0].every, edge=f"?s {prop} ?o .")
+        return "", marker, prop, binds
     if any(isinstance(c, Representative) for c in class_uris):
         rows = " ".join(
             f"(<{member}> <{c}>)"
@@ -214,7 +265,6 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
         binds += f" BIND({cls} AS ?class)"
     else:
         cls, values = "?class", _values_block(class_uris)
-    prop = f"<{property_uri}>" if property_uri else "?p"
     if property_uri:
         binds += f" BIND({prop} AS ?p)"
     return values, cls, prop, binds

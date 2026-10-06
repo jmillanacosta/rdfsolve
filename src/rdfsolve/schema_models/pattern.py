@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES, UNTYPED_SUBJECT
 
 
 class PatternType(StrEnum):
@@ -48,6 +48,11 @@ class SchemaPattern(BaseModel):
     - **blank-node**:
       ``?s a ?sc . ?s ?p ?o . FILTER(isBlank(?o))``
 
+    A pattern with subject_binding "untyped" describes the IRI subjects that have no type
+    (``?s ?p ?o . FILTER(isIRI(?s) && NOT EXISTS { ?s a ?any })``), with the same object
+    kinds and counts; its subject_class is rdfs:Resource (UNTYPED_SUBJECT). A typed subject is
+    never in such a pattern.
+
     This model is shared between SchemaMiner (direct SPARQL)
     and the VoID reader (published VoID partitions).
     """
@@ -69,8 +74,12 @@ class SchemaPattern(BaseModel):
             "'BlankNode' for blank node objects."
         ),
     )
-    subject_binding: Literal["type", "term"] = Field(
-        "type", description="Match instances of subject_class, or the subject IRI itself"
+    subject_binding: Literal["type", "term", "untyped"] = Field(
+        "type",
+        description=(
+            "Match instances of subject_class, the subject IRI itself, or (untyped) the IRI "
+            "subjects that have no type at all; subject_class is then rdfs:Resource"
+        ),
     )
     object_binding: Literal["type", "term"] = Field(
         "type", description="For IRI objects, match a type or the object IRI itself"
@@ -81,7 +90,14 @@ class SchemaPattern(BaseModel):
         """Require an IRI for an exact object binding."""
         if self.object_binding == "term" and self.object_class in _SENTINEL_OBJECTS:
             raise ValueError("An exact term binding requires an object IRI")
+        if self.subject_binding == "untyped" and self.subject_class != UNTYPED_SUBJECT:
+            raise ValueError(f"An untyped subject binding requires the class {UNTYPED_SUBJECT}")
         return self
+
+    @property
+    def untyped_subject(self) -> bool:
+        """Return whether the pattern describes subjects without a type."""
+        return self.subject_binding == "untyped"
 
     count: int | None = Field(
         None,

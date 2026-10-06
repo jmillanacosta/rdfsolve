@@ -188,11 +188,14 @@ def enrich_patterns_with_counts(
     Returns:
         Patterns with count field populated
     """
+    # The patterns of untyped subjects come counted (rdfsolve.mining.untyped_subjects).
+    untyped = [p for p in patterns if p.untyped_subject]
+    patterns = [p for p in patterns if not p.untyped_subject]
     # Collect unique subject classes from already-mined patterns
     shared = shared_extensions or {}
     subject_classes = sorted({p.subject_class for p in patterns} - shared.keys())
     if not subject_classes:
-        return patterns
+        return [*patterns, *untyped]
 
     bs = class_batch_size
     total = len(subject_classes)
@@ -318,38 +321,44 @@ def enrich_patterns_with_counts(
         if per_graph is None:
             enriched.append(pat.model_copy(update={"count": None}))
             continue
-        attributed = {graph: metric.triples for graph, metric in per_graph.items() if graph}
-        # Distinct counts are only safe to expose directly when the selected
-        # scope has at most one named graph (or the endpoint default graph).
-        # Summing per-graph distinct counts across several graphs would double
-        # count subjects/objects repeated in multiple graphs. Dataset-scope
-        # support is represented separately by PropertyUsageEvidence.
-        distinct_subjects = None
-        distinct_objects = None
-        if not graph_uris or len(graph_uris) <= 1:
-            metrics = list(per_graph.values())
-            if len(metrics) == 1:
-                distinct_subjects = metrics[0].distinct_subjects
-                distinct_objects = metrics[0].distinct_objects
-        enriched.append(
-            pat.model_copy(
-                update={
-                    "count": sum(metric.triples for metric in per_graph.values()),
-                    "count_semantics": (
-                        "quad_occurrences"
-                        if len(graph_uris or []) > 1
-                        else "triples_in_graph"
-                        if graph_uris
-                        else "endpoint_default"
-                    ),
-                    "graphs": attributed or None,
-                    "distinct_subjects": distinct_subjects,
-                    "distinct_objects": distinct_objects,
-                }
-            ),
-        )
+        enriched.append(apply_counts(pat, per_graph, graph_uris))
 
-    return enriched
+    return [*enriched, *untyped]
+
+
+def apply_counts(
+    pattern: SchemaPattern, per_graph: dict[str, _PatternCount], graph_uris: list[str] | None
+) -> SchemaPattern:
+    """Return *pattern* with the counts of its rows in each edge graph ("" without graphs).
+
+    Distinct counts are only safe to expose directly when the selected scope has at most one
+    named graph (or the endpoint default graph). Summing per-graph distinct counts across
+    several graphs would double count subjects/objects repeated in multiple graphs.
+    Dataset-scope support is represented separately by PropertyUsageEvidence.
+    """
+    attributed = {graph: metric.triples for graph, metric in per_graph.items() if graph}
+    distinct_subjects = None
+    distinct_objects = None
+    if not graph_uris or len(graph_uris) <= 1:
+        metrics = list(per_graph.values())
+        if len(metrics) == 1:
+            distinct_subjects = metrics[0].distinct_subjects
+            distinct_objects = metrics[0].distinct_objects
+    return pattern.model_copy(
+        update={
+            "count": sum(metric.triples for metric in per_graph.values()),
+            "count_semantics": (
+                "quad_occurrences"
+                if len(graph_uris or []) > 1
+                else "triples_in_graph"
+                if graph_uris
+                else "endpoint_default"
+            ),
+            "graphs": attributed or None,
+            "distinct_subjects": distinct_subjects,
+            "distinct_objects": distinct_objects,
+        }
+    )
 
 
 def _fetch_typed_count_batch(

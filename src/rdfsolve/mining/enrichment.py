@@ -9,6 +9,7 @@ from typing import Any
 
 from rdfsolve._outcomes import QueryFailure
 from rdfsolve.mining.query_builders import (
+    UntypedSubjects,
     _graph_clause,
     _graph_scope,
     _subject_type_pattern,
@@ -55,11 +56,17 @@ EXAMPLE_SAMPLE = 1000
 
 
 def _filtered(pattern: SchemaPattern) -> bool:
-    """Return whether the value condition of *pattern*'s example query is a filter."""
-    return pattern.object_binding != "term" and pattern.object_class in (
-        "Literal",
-        "Resource",
-        "BlankNode",
+    """Return whether the value condition of *pattern*'s example query is a filter (an untyped
+    subject is one too).
+    """
+    return pattern.untyped_subject or (
+        pattern.object_binding != "term"
+        and pattern.object_class
+        in (
+            "Literal",
+            "Resource",
+            "BlankNode",
+        )
     )
 
 
@@ -88,11 +95,13 @@ def example_query(
     dataset, opening, closing = _graph_scope(graph_uris, type_context_graph_uris)
     if not with_dataset:
         dataset = ""
-    subject = (
-        f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
-        if pattern.subject_binding == "term"
-        else _type_pattern("?subject", _iri(pattern.subject_class), type_context_graph_uris)
-    )
+    if pattern.subject_binding == "term":
+        subject = f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
+    elif pattern.untyped_subject:
+        edge = f"?subject {_iri(pattern.property_uri)} ?value ."
+        subject = _type_pattern("?subject", UntypedSubjects(edge=edge), type_context_graph_uris)
+    else:
+        subject = _type_pattern("?subject", _iri(pattern.subject_class), type_context_graph_uris)
     if pattern.object_binding == "term":
         condition = f"VALUES ?value {{ {_iri(pattern.object_class)} }}"
     elif pattern.object_class == "Literal":
@@ -106,6 +115,8 @@ def example_query(
     else:
         condition = _type_pattern("?value", _iri(pattern.object_class), type_context_graph_uris)
     if sample and _filtered(pattern):
+        if pattern.untyped_subject:
+            subject, condition = "", f"{subject} {condition}"
         return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
       {{ SELECT ?subject ?value WHERE {{
         {subject}
@@ -278,6 +289,7 @@ def query_enrichment(
         for pattern in schema.patterns:
             key = (
                 pattern.subject_class,
+                pattern.subject_binding,
                 pattern.property_uri,
                 pattern.object_class,
                 pattern.datatype,

@@ -451,7 +451,8 @@ class MinedSchema(BaseModel):
                 shape.target_class for shape in self.shapes.node_shapes if shape.target_class
             )
         for p in self.patterns:
-            classes.add(p.subject_class)
+            if not p.untyped_subject:
+                classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
         for profile in self.collections or []:

@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
@@ -77,10 +78,14 @@ def minedschema_to_shacl(
 
     from hashlib import md5
 
-    # Group patterns by subject class
+    # Group patterns by subject class; the patterns of untyped subjects by property.
     by_subject: dict[str, list[SchemaPattern]] = defaultdict(list)
+    untyped: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pat in schema.patterns:
-        by_subject[pat.subject_class].append(pat)
+        if pat.untyped_subject:
+            untyped[pat.property_uri].append(pat)
+        else:
+            by_subject[pat.subject_class].append(pat)
 
     lists: dict[tuple[str, str], list[CollectionProfile]] = defaultdict(list)
     for profile in schema.collections or []:
@@ -99,28 +104,7 @@ def minedschema_to_shacl(
             if prop == RDF_TYPE:
                 continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
-            options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
-            for pattern in patterns:
-                option = ShaclPropertyShape(path="")
-                if pattern.object_class == "Literal":
-                    option.node_kind = "Literal"
-                    option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
-                elif pattern.object_class == "Resource":
-                    option.node_kind = "IRI"
-                elif pattern.object_class == "BlankNode":
-                    option.node_kind = "BlankNode"
-                else:
-                    option.node_kind = "BlankNodeOrIRI"
-                    option.class_constraint = pattern.object_class
-                options[(pattern.object_class, pattern.datatype)] = option
-            for profile in lists.get((subject_class, prop), []):
-                options[("List", None)] = _list_option(profile)
-            alternatives = list(options.values())
-            shape = (
-                alternatives[0]
-                if len(alternatives) == 1
-                else ShaclPropertyShape(path="", alternatives=alternatives)
-            )
+            shape = _value_shape(patterns, lists.get((subject_class, prop), []))
             shape.path = prop
             shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
             shape.name = patterns[0].property_label
@@ -148,9 +132,97 @@ def minedschema_to_shacl(
             )
         )
 
+    node_shapes += _untyped_shapes(schema, untyped, base_uri, activate_observed)
     return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
     )
+
+
+def _value_shape(
+    patterns: list[SchemaPattern], profiles: list[CollectionProfile]
+) -> ShaclPropertyShape:
+    """Return the value constraint of the patterns of one property: one option, or sh:or."""
+    options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
+    for pattern in patterns:
+        option = ShaclPropertyShape(path="")
+        if pattern.object_class == "Literal":
+            option.node_kind = "Literal"
+            option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
+        elif pattern.object_class == "Resource":
+            option.node_kind = "IRI"
+        elif pattern.object_class == "BlankNode":
+            option.node_kind = "BlankNode"
+        else:
+            option.node_kind = "BlankNodeOrIRI"
+            option.class_constraint = pattern.object_class
+        options[(pattern.object_class, pattern.datatype)] = option
+    for profile in profiles:
+        options[("List", None)] = _list_option(profile)
+    alternatives = list(options.values())
+    return (
+        alternatives[0]
+        if len(alternatives) == 1
+        else ShaclPropertyShape(path="", alternatives=alternatives)
+    )
+
+
+def _membership_path(schema: MinedSchema) -> str | PropertyPath:
+    """Return the path of class membership: rdf:type, or the membership properties."""
+    membership = schema.about.membership_property
+    if not membership:
+        return RDF_TYPE
+    if isinstance(membership, str):
+        return membership
+    if len(membership) == 1:
+        return membership[0]
+    return PropertyPath(
+        operator="alternative",
+        items=[PropertyPath(operator="predicate", iri=p) for p in membership],
+    )
+
+
+def _untyped_shapes(
+    schema: MinedSchema,
+    untyped: dict[str, list[SchemaPattern]],
+    base_uri: str,
+    activate_observed: bool,
+) -> list[ShaclNodeShape]:
+    """Return a node shape for the untyped subjects of each property.
+
+    SHACL has no target for "the nodes without a type": the shape targets the subjects of the
+    property (sh:targetSubjectsOf) and holds when the node has a type (its class shapes
+    describe it) or when its values have the observed kinds: sh:or ([sh:path rdf:type;
+    sh:minCount 1] [sh:path p; values]). A typed subject is never held to the untyped values.
+    """
+    from hashlib import md5
+
+    shapes = []
+    typed = ShaclPropertyShape(path=_membership_path(schema), min_count=1)
+    for prop, patterns in sorted(untyped.items()):
+        short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+        values = _value_shape(patterns, [])
+        values.path = prop
+        values.uri = f"{base_uri}ps-untyped-{short}"
+        values.name = patterns[0].property_label
+        values.description = schema.enrichment.description(prop)
+        label = patterns[0].property_label or prop
+        shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}ns-untyped-{short}",
+                target_subjects_of=[prop],
+                alternatives=[typed.model_copy(deep=True), values],
+                deactivated=not activate_observed,
+                name=f"Subjects of {label} without a type",
+                description=(
+                    "Observed values of the IRI subjects of this property that have no type "
+                    "(rdfsolve patterns with subject_binding 'untyped'). A subject with a type "
+                    "conforms through the first alternative; its class shapes describe it. "
+                    "Observed value-type template, not a source constraint. No required fields "
+                    "or per-entity cardinalities were inferred."
+                ),
+            )
+        )
+    return shapes
 
 
 LIST_MEMBERS = "rdf:rest*/rdf:first"

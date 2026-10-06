@@ -5,7 +5,7 @@ from __future__ import annotations
 from hashlib import md5
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, UNTYPED_SUBJECT
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -326,12 +326,10 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
     # Structure: class partition -> property partition -> object/datatype partition
     from collections import defaultdict
 
-    # subject_class -> property_uri -> [(object_class, datatype, count), ...]
-    class_prop_objects: dict[str, dict[str, list[tuple[str, str | None, int | None]]]] = (
-        defaultdict(lambda: defaultdict(list))
-    )
-    # subject_class -> property_uri -> the patterns, for the totals of the property partition
+    # subject_class -> property_uri -> the patterns
     class_prop_patterns: dict[str, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
+    # property_uri -> the patterns of IRI subjects without a type
+    untyped: dict[str, list[Any]] = defaultdict(list)
 
     # Collect labels for all URIs
     uri_labels: dict[str, str] = {}
@@ -341,13 +339,17 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
         if not pat.property_uri:
             continue
 
-        class_prop_objects[pat.subject_class][pat.property_uri].append(
-            (pat.object_class, pat.datatype, pat.count)
-        )
-        class_prop_patterns[pat.subject_class][pat.property_uri].append(pat)
+        if pat.untyped_subject:
+            untyped[pat.property_uri].append(pat)
+        else:
+            class_prop_patterns[pat.subject_class][pat.property_uri].append(pat)
 
         # Collect labels
-        if pat.subject_label and pat.subject_class not in _SENTINEL_OBJECTS:
+        if (
+            pat.subject_label
+            and pat.subject_class not in _SENTINEL_OBJECTS
+            and not pat.untyped_subject
+        ):
             uri_labels[pat.subject_class] = pat.subject_label
         if pat.property_label:
             uri_labels[pat.property_uri] = pat.property_label
@@ -359,7 +361,7 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
         g.add((URIRef(uri), RDFS.label, RdfLiteral(label)))
 
     # Generate nested VoID class partitions per void-generator spec
-    for subject_class in sorted(class_prop_objects.keys()):
+    for subject_class in sorted(class_prop_patterns.keys()):
         # Create class partition URI
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
         class_partition_uri = URIRef(f"{base}class-{cls_hash}")
@@ -376,78 +378,49 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
             g.add((class_partition_uri, void.entities, RdfLiteral(count, datatype=XSD.integer)))
 
         # Add property partitions within this class partition
-        for prop_uri in sorted(class_prop_objects[subject_class].keys()):
-            prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
-            prop_partition_uri = URIRef(f"{base}class-{cls_hash}-prop-{prop_hash}")
+        for prop_uri in sorted(class_prop_patterns[subject_class].keys()):
+            _add_property_partition(
+                g,
+                class_partition_uri,
+                f"{base}class-{cls_hash}",
+                prop_uri,
+                class_prop_patterns[subject_class][prop_uri],
+            )
 
-            g.add((class_partition_uri, void.propertyPartition, prop_partition_uri))
-            g.add((prop_partition_uri, RDF.type, void.Dataset))
-            g.add((prop_partition_uri, void.property, URIRef(prop_uri)))
-
-            # Object classes can overlap; do not sum their triple counts. The totals of the
-            # partition are written only where the patterns give them exactly (_exact_totals).
-            for term, total in _exact_totals(class_prop_patterns[subject_class][prop_uri]):
-                g.add((prop_partition_uri, term, RdfLiteral(total, datatype=XSD.integer)))
-
-            # Add object class partitions or datatype partitions
-            for object_class, datatype, count in class_prop_objects[subject_class][prop_uri]:
-                if object_class == "Literal":
-                    # Add datatype partition for literals
-                    if datatype:
-                        dt_hash = md5(datatype.encode(), usedforsecurity=False).hexdigest()[:8]
-                        dt_partition_uri = URIRef(
-                            f"{base}class-{cls_hash}-prop-{prop_hash}-dt-{dt_hash}"
-                        )
-
-                        g.add((prop_partition_uri, void_ext.datatypePartition, dt_partition_uri))
-                        g.add((dt_partition_uri, void_ext.datatype, URIRef(datatype)))
-
-                        if count is not None:
-                            g.add(
-                                (
-                                    dt_partition_uri,
-                                    void.triples,
-                                    RdfLiteral(count, datatype=XSD.integer),
-                                )
-                            )
-                        _add_distinct(
-                            g,
-                            dt_partition_uri,
-                            class_prop_patterns[subject_class][prop_uri],
-                            object_class,
-                            datatype,
-                        )
-
-                elif (
-                    object_class
-                    and object_class != "Resource"
-                    and object_class not in _SENTINEL_OBJECTS
-                ):
-                    # Add nested class partition for typed objects
-                    obj_hash = md5(object_class.encode(), usedforsecurity=False).hexdigest()[:8]
-                    obj_partition_uri = URIRef(
-                        f"{base}class-{cls_hash}-prop-{prop_hash}-obj-{obj_hash}"
-                    )
-
-                    g.add((prop_partition_uri, void.classPartition, obj_partition_uri))
-                    g.add((obj_partition_uri, RDF.type, void.Dataset))
-                    g.add((obj_partition_uri, void["class"], URIRef(object_class)))
-
-                    if count is not None:
-                        g.add(
-                            (
-                                obj_partition_uri,
-                                void.triples,
-                                RdfLiteral(count, datatype=XSD.integer),
-                            )
-                        )
-                    _add_distinct(
-                        g,
-                        obj_partition_uri,
-                        class_prop_patterns[subject_class][prop_uri],
-                        object_class,
-                        None,
-                    )
+    if untyped:
+        # The triples of IRI subjects without a type: a subset of the dataset with the property
+        # partitions of a class partition, but no class (VoID has none for "no type"; a class
+        # partition of rdfs:Resource would say the members of that class). See UNTYPED_SUBJECT.
+        # Not typed void:Dataset (the range of void:subset says so): a reader that looks for
+        # the one dataset of the description (MetadataDocument.project) leaves out partitions,
+        # not subsets.
+        subset = URIRef(f"{base}untyped")
+        g.add((dataset_uri, void.subset, subset))
+        g.add((subset, DCTERMS.title, RdfLiteral("Subjects without a type")))
+        g.add(
+            (
+                subset,
+                DCTERMS.description,
+                RdfLiteral(
+                    "The triples whose subject is an IRI with no type (no rdf:type or membership "
+                    "triple in the mined graphs), by property: the rdfsolve patterns with "
+                    f"subject_binding 'untyped' and subject class <{UNTYPED_SUBJECT}>. Not a class "
+                    "partition."
+                ),
+            )
+        )
+        for prop_uri in sorted(untyped):
+            partition = _add_property_partition(
+                g, subset, f"{base}untyped", prop_uri, untyped[prop_uri]
+            )
+            if len(untyped[prop_uri]) == 1:
+                _add_distinct(
+                    g,
+                    partition,
+                    untyped[prop_uri],
+                    untyped[prop_uri][0].object_class,
+                    untyped[prop_uri][0].datatype,
+                )
 
     # A typed relationship alone does not establish a cross-dataset linkset.
 
@@ -457,6 +430,50 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
             if example.kind == "uri":
                 g.add((partition, void.exampleResource, example.to_rdf()))
     return g
+
+
+def _add_property_partition(
+    g: Graph, parent: Any, prefix: str, prop_uri: str, patterns: list[Any]
+) -> Any:
+    """Add the partition of *prop_uri* to *parent*, with its object and datatype partitions.
+
+    Object classes can overlap; their triple counts are not summed. The totals of the
+    partition are written only where the patterns give them exactly (_exact_totals).
+    """
+    from rdflib import RDF, URIRef
+    from rdflib import Literal as RdfLiteral
+    from rdflib.namespace import XSD
+
+    prop_hash = md5(prop_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+    stem = f"{prefix}-prop-{prop_hash}"
+    partition = URIRef(stem)
+    g.add((parent, URIRef(VOID + "propertyPartition"), partition))
+    g.add((partition, RDF.type, URIRef(VOID + "Dataset")))
+    g.add((partition, URIRef(VOID + "property"), URIRef(prop_uri)))
+    for term, total in _exact_totals(patterns):
+        g.add((partition, term, RdfLiteral(total, datatype=XSD.integer)))
+    for pattern in patterns:
+        object_class, datatype, count = pattern.object_class, pattern.datatype, pattern.count
+        if object_class == "Literal":
+            if not datatype:
+                continue
+            dt_hash = md5(datatype.encode(), usedforsecurity=False).hexdigest()[:8]
+            node = URIRef(f"{stem}-dt-{dt_hash}")
+            g.add((partition, URIRef(VOID_EXT + "datatypePartition"), node))
+            g.add((node, URIRef(VOID_EXT + "datatype"), URIRef(datatype)))
+        elif object_class and object_class not in _SENTINEL_OBJECTS:
+            # Add nested class partition for typed objects
+            obj_hash = md5(object_class.encode(), usedforsecurity=False).hexdigest()[:8]
+            node = URIRef(f"{stem}-obj-{obj_hash}")
+            g.add((partition, URIRef(VOID + "classPartition"), node))
+            g.add((node, RDF.type, URIRef(VOID + "Dataset")))
+            g.add((node, URIRef(VOID + "class"), URIRef(object_class)))
+        else:
+            continue
+        if count is not None:
+            g.add((node, URIRef(VOID + "triples"), RdfLiteral(count, datatype=XSD.integer)))
+        _add_distinct(g, node, patterns, object_class, datatype)
+    return partition
 
 
 def _exact_totals(patterns: list[Any]) -> list[tuple[Any, int]]:

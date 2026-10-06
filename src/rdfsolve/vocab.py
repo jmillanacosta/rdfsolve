@@ -28,7 +28,7 @@ _TERMS = {
     "http://rdfs.org/ns/void#": (
         "Dataset DatasetDescription Linkset class classPartition classes distinctObjects "
         "distinctSubjects documents entities exampleResource linkPredicate objectsTarget properties property "
-        "propertyPartition sparqlEndpoint subjectsTarget triples vocabulary"
+        "propertyPartition sparqlEndpoint subset subjectsTarget triples vocabulary"
     ),
     "http://ldf.fi/void-ext#": (
         "datatype datatypePartition distinctBlankNodeObjects distinctIRIReferenceObjects "
@@ -44,6 +44,7 @@ _TERMS = {
         "minCount name "
         "namespace nodeKind oneOrMorePath or path prefix prefixes property qualifiedMaxCount "
         "qualifiedMinCount qualifiedValueShape qualifiedValueShapesDisjoint select targetClass "
+        "targetSubjectsOf "
         "zeroOrMorePath zeroOrOnePath"
     ),
     "http://purl.org/dc/terms/": (

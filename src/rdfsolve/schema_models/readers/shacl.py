@@ -6,13 +6,18 @@ import logging
 
 from rdflib import RDF, RDFS, Graph, URIRef
 
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.metadata import RetainedMetadata
 from rdfsolve.schema_models.pattern import SchemaPattern
-from rdfsolve.schema_models.shacl_model import ShaclPropertyShape, ShaclShapesGraph
+from rdfsolve.schema_models.shacl_model import (
+    ShaclNodeShape,
+    ShaclPropertyShape,
+    ShaclShapesGraph,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +38,23 @@ def _list_members(option: ShaclPropertyShape) -> list[ShaclPropertyShape] | None
     if nested.path != members:
         return None
     return nested.alternatives or [nested]
+
+
+def _untyped_values(shape: ShaclNodeShape) -> ShaclPropertyShape | None:
+    """Return the value shape of a shape of untyped subjects, or None for another shape.
+
+    Such a shape (exporters.shacl._untyped_shapes) targets the subjects of one property and
+    holds when the node has a type or when its values of the property have the kinds:
+    sh:or ([sh:path rdf:type; sh:minCount 1] [sh:path p; values]).
+    """
+    if len(shape.target_subjects_of) != 1 or len(shape.alternatives) != 2:
+        return None
+    (prop,) = shape.target_subjects_of
+    values = [a for a in shape.alternatives if a.path == prop]
+    typed = [a for a in shape.alternatives if a.path != prop and a.min_count == 1]
+    if len(values) != 1 or len(typed) != 1:
+        return None
+    return values[0]
 
 
 def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
@@ -85,9 +107,13 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
             )
         ):
             shape.target_class = shape.uri
-        if not shape.target_class:
-            continue
-        for prop in shape.property_shapes:
+        subject, binding, properties = shape.target_class, "type", shape.property_shapes
+        if not subject:
+            values = _untyped_values(shape)
+            if values is None:
+                continue
+            subject, binding, properties = UNTYPED_SUBJECT, "untyped", [values]
+        for prop in properties:
             if not prop.path:
                 continue
             if not isinstance(prop.path, str) or (
@@ -101,9 +127,12 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
                     continue
                 listed = _list_members(option)
                 if listed is not None:
+                    if binding == "untyped":
+                        unrepresented += 1
+                        continue
                     lists.append(
                         CollectionProfile(
-                            subject_class=shape.target_class,
+                            subject_class=subject,
                             property_uri=prop.path,
                             member_types=sorted(
                                 {m.class_constraint for m in listed if m.class_constraint}
@@ -135,17 +164,18 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
                     unrepresented += 1
                     continue
                 for object_class in object_classes:
-                    key = (shape.target_class, prop.path, object_class, datatype)
+                    key = (subject, prop.path, object_class, datatype)
                     if key in keys:
                         continue
                     keys.add(key)
                     schema.patterns.append(
                         SchemaPattern(
-                            subject_class=shape.target_class,
+                            subject_class=subject,
+                            subject_binding=binding,
                             property_uri=prop.path,
                             object_class=object_class,
                             datatype=datatype,
-                            subject_label=shape.name,
+                            subject_label=shape.name if binding == "type" else None,
                             property_label=prop.name,
                             evidence_source="shacl",
                         )

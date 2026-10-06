@@ -14,7 +14,12 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from rdfsolve.mining.query_builders import _graph_clause, _graph_scope, _type_pattern
+from rdfsolve.mining.query_builders import (
+    UntypedSubjects,
+    _graph_clause,
+    _graph_scope,
+    _type_pattern,
+)
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
@@ -97,11 +102,16 @@ def pattern_existence_query(
     """Build a bounded existence query with the same selected-graph semantics as counts."""
     dataset, _, _ = _graph_scope(type_graph_scope or graph_scope, type_context_graph_scope)
     edge_open, edge_close = _graph_clause(graph_scope)
-    subject = (
-        f"VALUES ?s {{ <{pattern.subject_class}> }}"
-        if pattern.subject_binding == "term"
-        else _type_pattern("?s", f"<{pattern.subject_class}>", type_context_graph_scope)
-    )
+    if pattern.subject_binding == "term":
+        subject = f"VALUES ?s {{ <{pattern.subject_class}> }}"
+    elif pattern.untyped_subject:
+        subject = _type_pattern(
+            "?s",
+            UntypedSubjects(edge=f"?s <{pattern.property_uri}> ?o ."),
+            type_context_graph_scope,
+        )
+    else:
+        subject = _type_pattern("?s", f"<{pattern.subject_class}>", type_context_graph_scope)
     edge = f"{edge_open} ?s <{pattern.property_uri}> ?o . {edge_close}"
     conditions: list[str] = []
     if pattern.object_binding == "term":

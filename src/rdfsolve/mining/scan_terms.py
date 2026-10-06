@@ -257,7 +257,7 @@ def minimal_types(
     types of a record, those that are not a strict ancestor (rdfs:subClassOf closure) of
     another of its types. Two types that are ancestors of each other (equivalent by cycles) are
     both kept. Types outside the hierarchy are kept. Untyped records stay untyped (ABSTAT gives
-    them owl:Thing; rdfsolve leaves them to the structural patterns). Where no record asserts an
+    them owl:Thing; rdfsolve gives their IRI subjects the untyped patterns of rdfs:Resource). Where no record asserts an
     ancestor of its own type the table is unchanged (HRA-KG, lifesciencedict); TERA's NCBI taxa
     lose their division (1,829,829 rows).
     """

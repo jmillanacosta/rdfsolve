@@ -101,7 +101,7 @@ def graph_part_about(
     The part gets its own snapshot identity and IRIs. Statistics measured over the whole scope
     (triples, distinct terms, property partitions, the content hash of the input) are left out.
     """
-    classes = {p.subject_class for p in patterns} | {
+    classes = {p.subject_class for p in patterns if not p.untyped_subject} | {
         p.object_class for p in patterns if p.object_class not in _SENTINEL_OBJECTS
     }
     properties = {p.property_uri for p in patterns}

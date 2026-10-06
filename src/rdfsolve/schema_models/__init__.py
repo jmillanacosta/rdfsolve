@@ -10,6 +10,7 @@ from rdfsolve.schema_models._constants import (
     _SENTINEL_OBJECTS,
     _URI_SCHEMES,
     SERVICE_NAMESPACE_PREFIXES,
+    UNTYPED_SUBJECT,
 )
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema, MiningResult
@@ -78,6 +79,7 @@ def __getattr__(name: str) -> object:
 __all__ = [
     # constants
     "SERVICE_NAMESPACE_PREFIXES",
+    "UNTYPED_SUBJECT",
     "_BLANK_NODE_URIS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",

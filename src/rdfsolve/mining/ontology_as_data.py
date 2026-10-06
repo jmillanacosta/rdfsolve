@@ -577,23 +577,34 @@ def subsume_patterns(
     patterns: Iterable[SchemaPattern], representative: Mapping[str, str]
 ) -> list[SchemaPattern]:
     """Replace subject and object classes by their representatives and merge duplicates."""
-    groups: dict[tuple[str, str, str, str | None], list[SchemaPattern]] = defaultdict(list)
-    changed: set[tuple[str, str, str, str | None]] = set()
+    groups: dict[tuple[str, str, str, str | None, str], list[SchemaPattern]] = defaultdict(list)
+    changed: set[tuple[str, str, str, str | None, str]] = set()
     for pattern in patterns:
         if pattern.subject_binding == "term" or pattern.object_binding == "term":
             raise ValueError("Exact term bindings cannot be replaced by class representatives")
-        subject = representative.get(pattern.subject_class, pattern.subject_class)
+        # Untyped subjects have no class to replace; their typed objects are grouped.
+        subject = (
+            pattern.subject_class
+            if pattern.untyped_subject
+            else representative.get(pattern.subject_class, pattern.subject_class)
+        )
         obj = pattern.object_class
         if obj not in _SENTINEL_OBJECTS:
             obj = representative.get(obj, obj)
-        key = (subject, pattern.property_uri, obj, pattern.datatype)
+        key: tuple[str, str, str, str | None, str] = (
+            subject,
+            pattern.property_uri,
+            obj,
+            pattern.datatype,
+            pattern.subject_binding,
+        )
         groups[key].append(pattern)
         if subject != pattern.subject_class or obj != pattern.object_class:
             changed.add(key)
     out = []
-    for key, group in groups.items():
-        if key in changed or len(group) > 1:
-            out.append(_merge(group, key[0], key[2]))
+    for grouped, group in groups.items():
+        if grouped in changed or len(group) > 1:
+            out.append(_merge(group, grouped[0], grouped[2]))
         else:
             out.append(group[0])
     return out
@@ -603,7 +614,8 @@ def pattern_classes(patterns: Iterable[SchemaPattern]) -> set[str]:
     """Return the subject and non-sentinel object classes of *patterns*."""
     classes: set[str] = set()
     for pattern in patterns:
-        classes.add(pattern.subject_class)
+        if not pattern.untyped_subject:
+            classes.add(pattern.subject_class)
         if pattern.object_class not in _SENTINEL_OBJECTS:
             classes.add(pattern.object_class)
     return classes

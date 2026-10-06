@@ -255,6 +255,9 @@ def _example_rows(
     subject = f"<{pattern.subject_class}>"
     if pattern.subject_binding == "term":
         rows = rows.filter(pl.col("s") == subject)
+    elif pattern.untyped_subject:
+        typed = types.select("s").unique()
+        rows = rows.filter(pl.col("s").str.starts_with("<")).join(typed, on="s", how="anti")
     else:
         rows = rows.join(types.filter(pl.col("c") == subject).select("s"), on="s", how="semi")
     obj = pattern.object_class
@@ -328,7 +331,9 @@ def enrichment(
         unique = {}
         for pattern in schema.patterns:
             key = (pattern.subject_class, pattern.property_uri)
-            unique[(*key, pattern.object_class, pattern.datatype)] = pattern
+            unique[(*key, pattern.subject_binding, pattern.object_class, pattern.datatype)] = (
+                pattern
+            )
         for pattern in unique.values():
             for s, o, d in _example_rows(store, pattern, examples_per_pattern):
                 result.examples.append(

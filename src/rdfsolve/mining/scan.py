@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 from rdfsolve.mining.query_builders import MEMBERSHIP
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 
 if TYPE_CHECKING:
@@ -52,6 +53,8 @@ __all__ = [
 ]
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# The subject class of the rows of untyped IRI subjects while they are counted (not a term).
+UNTYPED = "\x00untyped"
 XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
 RDF_LANG = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
 STORE_VERSION = 3
@@ -84,6 +87,9 @@ class CountedStore(Protocol):
 
     def type_ids(self) -> pl.LazyFrame:
         """Return the type table by id (sid, c)."""
+
+    def typed_ids(self) -> pl.LazyFrame:
+        """Return the ids of the nodes with a type in scope (sid), whatever the type table."""
 
     def data_types(self) -> pl.LazyFrame:
         """Return the types in the data graphs."""
@@ -180,7 +186,12 @@ class RowStore:
         import polars as pl
 
         named = self.path / "types-named.parquet"
-        return pl.scan_parquet(named if named.is_file() else self.path / "types.parquet")
+        types = pl.scan_parquet(named if named.is_file() else self.path / "types.parquet")
+        # An index without any type (STRING's main graph): the empty table is held in memory,
+        # since Polars 2.0 panics on a join with unique() of an empty Parquet scan ("min > max").
+        if not types.select(pl.len()).collect().item():
+            return pl.DataFrame(schema=types.collect_schema()).lazy()
+        return types
 
     def types(self) -> pl.LazyFrame:
         """Return the members of each class (s, c), anonymous classes by their expression's IRI."""
@@ -189,6 +200,15 @@ class RowStore:
     def type_ids(self) -> pl.LazyFrame:
         """Return the members of each class by id (sid, c): 16 bytes a row, for large indexes."""
         return self.graph_types().select("sid", "c").unique()
+
+    def typed_ids(self) -> pl.LazyFrame:
+        """Return the ids of the nodes with a membership row (sid): the typed nodes.
+
+        A store whose type table is rewritten (scan_terms.RetypedStore: class expressions left
+        out, terms grouped) reads this from the store it wraps, so that a node typed only by a
+        left-out class is still typed.
+        """
+        return self.type_ids().select("sid").unique()
 
     def data_types(self) -> pl.LazyFrame:
         """Return the members read from the data graphs alone (all graphs here)."""
@@ -294,6 +314,10 @@ class StoreView:
     def type_ids(self) -> pl.LazyFrame:
         """Return (sid, c) read from the data and type context graphs."""
         return self.graph_types().select("sid", "c").unique()
+
+    def typed_ids(self) -> pl.LazyFrame:
+        """Return the ids of the nodes typed in the data and type context graphs (sid)."""
+        return self.type_ids().select("sid").unique()
 
     def data_types(self) -> pl.LazyFrame:
         """Return (s, c) read from the data graphs alone."""
@@ -1061,9 +1085,13 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     (_build_batched_typed_count_query) give one row per subject class and object class;
     untyped IRIs (_build_batched_untyped_count_query) "Resource"; blank nodes
     (_build_batched_blank_node_count_query) every blank-node object, typed or not, with the
-    predicates of those blank nodes; literals one row per datatype. Subjects without a type are
-    left out (the structural patterns describe them). Each row of the store is read once; small
-    predicates are counted together, in batches of about BATCH_ROWS rows.
+    predicates of those blank nodes; literals one row per datatype. IRI subjects without a type
+    (no membership row in scope: typed_ids) give the same rows with the subject class
+    rdfs:Resource and subject_binding "untyped", as rdfsolve.mining.untyped_subjects counts
+    them through an endpoint; blank-node subjects without a type are left out (the patterns of
+    the nodes that point to them and the structural patterns describe them). Each row of the
+    store is read once; small predicates are counted together, in batches of about BATCH_ROWS
+    rows.
 
     In a graph scope (a StoreView) the counts are those of the count queries, which group by the
     edge graph ?_g (pattern_enrichment.enrich_patterns_with_counts merges them): each edge is
@@ -1081,6 +1109,8 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     types = store.type_ids().with_columns(pl.col("c").cast(pl.Categorical)).collect()
     subjects = types.rename({"c": "subject_class"})
     objects = types.rename({"sid": "oid", "c": "oc"})
+    typed_ids = store.typed_ids() if hasattr(store, "typed_ids") else store.type_ids().select("sid")
+    typed_subjects = typed_ids.select("sid").unique().collect()
     keys = ["p", *(["g"] if scope else []), "subject_class", "object_class", "datatype"]
     tables, blank_objects, blank_outgoing = [], [], []
 
@@ -1100,6 +1130,20 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
             # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
             blank_outgoing.append(rows.filter(pl.col("sb")).select("sid", "p").unique())
         typed = rows.join(subjects, on="sid", how="inner")
+        # IRI subjects without a type, under one subject class of their own (UNTYPED).
+        untyped_subjects = (
+            rows.filter(~pl.col("sb"))
+            .join(typed_subjects, on="sid", how="anti")
+            .with_columns(subject_class=pl.lit(UNTYPED).cast(pl.Categorical))
+        )
+        if untyped_subjects.height:
+            typed = pl.concat(
+                [
+                    typed.with_columns(pl.col("subject_class").cast(pl.String)),
+                    untyped_subjects.with_columns(pl.col("subject_class").cast(pl.String)),
+                ],
+                how="vertical_relaxed",
+            )
         literal = typed.filter(pl.col("kind") == "literal").with_columns(
             object_class=pl.lit("Literal"), datatype=pl.col("d")
         )
@@ -1196,7 +1240,9 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
         else "quad_occurrences"
     )
     patterns: list[SchemaPattern] = []
-    for (subject, predicate, obj, datatype), per_graph in merged.items():
+    for (key_subject, predicate, obj, datatype), per_graph in merged.items():
+        untyped = key_subject == UNTYPED
+        subject = UNTYPED_SUBJECT if untyped else key_subject
         # The miner's rule: distinct counts of the whole scope only when it is one graph.
         ds = do = None
         if len(per_graph) == 1 and (not scope or len(scope) == 1):
@@ -1204,6 +1250,7 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
         patterns.append(
             SchemaPattern(
                 subject_class=subject,
+                subject_binding="untyped" if untyped else "type",
                 property_uri=predicate,
                 object_class=obj,
                 datatype=datatype,
@@ -1218,7 +1265,7 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
                 graph_distinct_objects={g: m[2] for g, m in sorted(per_graph.items())}
                 if scope
                 else None,
-                blank_node_predicates=(blank.get((subject, predicate)) or None)
+                blank_node_predicates=(blank.get((key_subject, predicate)) or None)
                 if obj == "BlankNode"
                 else None,
                 pattern_type={
@@ -1228,7 +1275,14 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
             )
         )
     return sorted(
-        patterns, key=lambda p: (p.subject_class, p.property_uri, p.object_class, p.datatype or "")
+        patterns,
+        key=lambda p: (
+            p.subject_class,
+            p.subject_binding,
+            p.property_uri,
+            p.object_class,
+            p.datatype or "",
+        ),
     )
 
 
@@ -1295,7 +1349,9 @@ class ScanStrategy(MiningStrategy):
             if pattern.object_class in expressions:
                 pattern.object_label = expressions[pattern.object_class]["manchester_labels"]
         context.report.finish_phase(phase, items=len(patterns))
-        context.discovered_classes = sorted({p.subject_class for p in patterns})
+        context.discovered_classes = sorted(
+            {p.subject_class for p in patterns if not p.untyped_subject}
+        )
         return patterns
 
 

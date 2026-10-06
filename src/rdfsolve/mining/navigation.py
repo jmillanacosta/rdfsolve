@@ -69,11 +69,12 @@ def _schema_graph(
 ]:
     """Return the distinct edges of a schema, the edges from each class, and the walk counts.
 
-    suffix[h][class] counts all length-h walks from a class in the schema graph.
+    suffix[h][class] counts all length-h walks from a class in the schema graph. Routes are
+    class-qualified: the patterns of untyped subjects have no class to start or join from.
     """
     unique: dict[tuple[str, str, str, str], SchemaPattern] = {}
     for pattern in schema.patterns:
-        if pattern.count == 0:
+        if pattern.count == 0 or pattern.untyped_subject:
             continue
         key = (
             pattern.subject_class,

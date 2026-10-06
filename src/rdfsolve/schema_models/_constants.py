@@ -81,3 +81,11 @@ _SENTINEL_OBJECTS = frozenset({"Literal", "Resource", "BlankNode"})
 - BlankNode: Object is a blank node (anonymous resource)
 """
 _URI_SCHEMES = ("http://", "https://", "urn:", "_:")
+UNTYPED_SUBJECT = "http://www.w3.org/2000/01/rdf-schema#Resource"
+"""The subject class of a pattern of IRI subjects that have no type (subject_binding "untyped").
+
+rdfs:Resource, the class of everything, as an untyped IRI object is "Resource" (rdfs:Resource):
+the pattern says nothing of the subject beyond its property. ABSTAT gives untyped records
+owl:Thing for the same purpose. The binding, not the IRI, marks the pattern: a source may type
+records with rdfs:Resource, and those are typed patterns of that class.
+"""

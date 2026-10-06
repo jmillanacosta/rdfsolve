@@ -177,7 +177,9 @@ def test_light_queries_that_run_past_their_limit_stop_and_the_rest_are_gaps(monk
     assert record["stopped"]["void/drift"]["cut_by"] == "client time limit"
     gaps = [g for g in miner.last_report.measurement_gaps if g.purpose == "void/drift"]
     assert any(g.message.startswith("not sent: 1 queries in a row ran past") for g in gaps)
-    assert len(schema.patterns) == 3 and not miner.last_report.query_failures
+    # Three from the VoID and its object gap; one of the IRI subject without a class (s1).
+    assert len(schema.patterns) == 4 and not miner.last_report.query_failures
+    assert sum(p.untyped_subject for p in schema.patterns) == 1
 
 
 def test_client_timeouts_do_not_stop_a_step_that_is_not_light():

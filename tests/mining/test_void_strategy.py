@@ -7,6 +7,7 @@ from rdflib import RDF, Dataset, Graph, Literal, Namespace, URIRef
 
 from rdfsolve.mining.miner import SchemaMiner
 from rdfsolve.mining.void_strategy import VoidStrategy, void_gaps
+from rdfsolve.schema_models import UNTYPED_SUBJECT
 from rdfsolve.schema_models.readers.void import scope_void_graph, void_datasets_of_graphs
 
 E = Namespace("urn:ex:")
@@ -73,7 +74,10 @@ def test_the_schema_is_read_from_the_void_and_its_gaps_are_mined():
         (str(E.A), str(E.link), str(E.B), 1, "void"),
         (str(E.A), str(E.name), "Literal", 1, "void"),
         (str(E.A), str(E.link), "Resource", None, "mined"),
-    }, "The link to B is typed in another graph; u1 has no class"
+        (UNTYPED_SUBJECT, str(E.link), "Resource", None, "mined"),
+    }, "The link to B is typed in another graph; u1 has no class; s1 has no class"
+    (untyped,) = [p for p in schema.patterns if p.untyped_subject]
+    assert untyped.subject_binding == "untyped", "A subject gap gives an untyped pattern"
     assert schema.about.class_entity_counts == {str(E.A): 1}
     record = miner.last_report.config["void_source"]
     assert [s["objects_by_class"] for s in record["object_samples"]] == [
@@ -132,7 +136,9 @@ def test_a_purpose_whose_queries_the_endpoint_cuts_is_stopped_and_recorded(monke
     assert record["drift"]["stopped"] == stop["stopped"] and record["drift"]["measured"] == 0
     gaps = [g for g in miner.last_report.measurement_gaps if g.purpose == "void/drift"]
     assert any("1 not sent" in g.message for g in gaps)
-    assert len(schema.patterns) == 3 and not miner.last_report.query_failures
+    # Three from the VoID and its object gap; one of the IRI subject without a class (s1).
+    assert len(schema.patterns) == 4 and not miner.last_report.query_failures
+    assert sum(p.untyped_subject for p in schema.patterns) == 1
 
 
 def test_a_void_term_that_is_not_an_rdf_iri_is_left_out_and_recorded():

@@ -40,9 +40,10 @@ from rdflib import RDF, Graph, Namespace, URIRef
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
 from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm
-from rdfsolve.schema_models.pattern import SchemaPattern
+from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 from rdfsolve.sparql_helper import QueryCuts
 
 if TYPE_CHECKING:
@@ -53,6 +54,7 @@ logger = logging.getLogger(__name__)
 VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 RDF_LANG_STRING = str(RDF.langString)
+XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
 
 
 @dataclass
@@ -164,6 +166,17 @@ def void_property_usage(void: Graph) -> dict[tuple[str, str], dict[str, Any]]:
     return {key: value for key, value in stated.items() if key not in twice}
 
 
+def _value_kind(binding: dict[str, Any]) -> tuple[str, str | None]:
+    """Return the object kind of a value without a class, and the datatype of a literal."""
+    if binding["type"] == "bnode":
+        return "BlankNode", None
+    if binding["type"] in ("literal", "typed-literal"):
+        if "xml:lang" in binding:
+            return "Literal", RDF_LANG_STRING
+        return "Literal", binding.get("datatype") or XSD_STRING
+    return "Resource", None
+
+
 def _term(binding: dict[str, Any]) -> RdfTerm:
     """Return an RdfTerm from a SPARQL JSON binding."""
     kind = {"uri": "uri", "literal": "literal", "typed-literal": "literal"}.get(
@@ -222,6 +235,9 @@ class VoidStrategy(MiningStrategy):
         self.untyped_subjects: list[dict[str, Any]] = []
         self.object_samples: list[dict[str, Any]] = []
         self._void_patterns: list[SchemaPattern] = []
+        # Patterns of IRI subjects without a class (subject gaps), added after the samples and
+        # the drift, which read classes.
+        self._untyped_patterns: list[SchemaPattern] = []
         self.cuts = QueryCuts(client_timeouts=True)
 
     @property
@@ -263,6 +279,7 @@ class VoidStrategy(MiningStrategy):
         context.report.finish_phase(phase, items=len(patterns))
         failures: list[QueryFailure] = []
         self.cuts = QueryCuts(client_timeouts=True)
+        self._untyped_patterns = []
         patterns += self._mine_gaps(context.helper, gaps, failures, context.graph_uris)
         self._languages(context.helper, patterns, failures, context.graph_uris)
         self._class_samples(context.helper, patterns, failures, context.graph_uris)
@@ -287,7 +304,7 @@ class VoidStrategy(MiningStrategy):
             )
         context.report.record_outcome(QueryOutcome(state="complete", gaps=failures))
         context.report.report.config["void_source"] = self.record
-        return patterns
+        return patterns + self._untyped_patterns
 
     @staticmethod
     def _edge(graph_uris: list[str] | None, property_uri: str) -> str:
@@ -407,8 +424,9 @@ class VoidStrategy(MiningStrategy):
                 continue
             obj = rows[0]["o"]
             if gap.kind == "subjects":
-                # A subject without a class has no place in a class pattern: recorded with the
-                # VoID's lower bound of its triples and the example found.
+                # Recorded with the VoID's lower bound of its triples and the example found. An
+                # IRI subject gives an untyped pattern of the kind of its value, without a
+                # count (the bound is not one; light mining does not count the property).
                 self.untyped_subjects.append(
                     {
                         "property": gap.property_uri,
@@ -416,6 +434,21 @@ class VoidStrategy(MiningStrategy):
                         "example": {"subject": rows[0]["s"], "value": obj},
                     }
                 )
+                if rows[0]["s"]["type"] == "uri":
+                    object_class, datatype = _value_kind(obj)
+                    self._untyped_patterns.append(
+                        SchemaPattern(
+                            subject_class=UNTYPED_SUBJECT,
+                            subject_binding="untyped",
+                            property_uri=gap.property_uri,
+                            object_class=object_class,
+                            datatype=datatype,
+                            pattern_type={
+                                "Literal": PatternType.DATATYPE_PROPERTY,
+                                "BlankNode": PatternType.BLANK_NODE_PROPERTY,
+                            }.get(object_class, PatternType.OBJECT_PROPERTY),
+                        )
+                    )
                 continue
             object_class = (
                 "BlankNode"

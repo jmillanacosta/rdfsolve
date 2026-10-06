@@ -163,7 +163,9 @@ def to_linkml(
     for pattern in schema.patterns:
         value = value_range(pattern)
         ranges.setdefault(pattern.property_uri, set()).add(value)
-        class_ranges.setdefault((pattern.subject_class, pattern.property_uri), set()).add(value)
+        # Untyped subjects have no class: their property is a slot of the schema alone.
+        if not pattern.untyped_subject:
+            class_ranges.setdefault((pattern.subject_class, pattern.property_uri), set()).add(value)
 
     def constraints(values: set[str]) -> dict[str, Any]:
         """Represent one range or a set of alternative ranges."""

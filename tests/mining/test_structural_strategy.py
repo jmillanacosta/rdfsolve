@@ -68,7 +68,10 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         assert "structural/count" not in mining_queries
         assert "structural/witness" not in mining_queries
 
-        assert not schema.patterns and not schema.about.class_entity_counts
+        # No class: the subjects without a type get property-level patterns (rdfs:Resource,
+        # subject_binding "untyped") as well as the structural patterns of their property sets.
+        assert schema.patterns and all(p.untyped_subject for p in schema.patterns)
+        assert not schema.about.class_entity_counts and not schema.get_classes()
         structural = schema.structural_patterns
         assert structural and miner.last_report.completion_state == "complete"
         assert all(p.property_uri != "urn:contextOnly" for p in structural)
@@ -99,7 +102,7 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         summary = summarize_release(manifest, tmp_path)
         assert summary["observed_evidence"]["structural_patterns"] == len(structural)
         plan = build_scientific_validation_plan(manifest, tmp_path, patterns_per_schema=100)
-        assert len(plan.pattern_checks) == len(structural)
+        assert len(plan.pattern_checks) == len(structural) + len(schema.patterns)
         results = execute_scientific_validation_plan(
             plan,
             miner.helper,
@@ -162,7 +165,7 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
         assert checked.exit_code == 0, checked.output
     summary = json.loads((output / "summary.json").read_text())
     assert summary["attempted_completion"] == {"complete": 1}
-    assert summary["observed_evidence"]["patterns"] == 0
+    assert summary["observed_evidence"]["patterns"] > 0, "Untyped subjects have patterns"
     assert summary["observed_evidence"]["structural_patterns"] > 0
 
     mixed = Dataset(default_union=False)
@@ -299,9 +302,13 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
     with SchemaMiner.from_graph(lists, delay=0) as miner:
         result = miner.mine("lists and multiple types")
         rows = result.structural_patterns
-        assert len(result.patterns) == 4, (
-            "(A|B) x (value, items); (C, rdf:type, Resource) rows are left out"
-        )
+        typed = [p for p in result.patterns if not p.untyped_subject]
+        assert len(typed) == 4, "(A|B) x (value, items); (C, rdf:type, Resource) rows are left out"
+        # e:u has no type; the blank nodes of the list have none either, but are not subjects
+        # of untyped patterns (the items pattern gives their predicates).
+        assert [
+            (p.property_uri, p.object_class, p.count) for p in result.patterns if p.untyped_subject
+        ] == [("https://example.org/label", "Literal", 1)]
         assert len(rows) == 3 and sum(p.count for p in rows) == 3
         assert len({(p.graph_uri, p.subject_kind, tuple(p.subject_properties)) for p in rows}) == 2
         assert len(result.collections) == 2

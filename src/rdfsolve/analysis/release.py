@@ -38,7 +38,7 @@ def _terms(rows: Sequence[SchemaPattern | StructuralPattern]) -> dict[str, set[s
                 (row.subject_class, row.subject_binding),
                 (row.object_class, row.object_binding),
             ):
-                if value not in _SENTINEL_OBJECTS:
+                if value not in _SENTINEL_OBJECTS and binding != "untyped":
                     terms["terms" if binding == "term" else "classes"].add(value)
     return terms
 
