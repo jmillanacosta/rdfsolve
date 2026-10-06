@@ -197,3 +197,51 @@ def test_one_schema_per_dataset_the_local_one_first(tmp_path):
     other = release(tmp_path / "other", [("both", "local")])
     with pytest.raises(ValueError, match="one extraction"):
         load_channel_schemas([local, other])
+
+
+def test_a_local_schema_of_a_sampled_graph_is_marked_as_a_sample(tmp_path):
+    """sampled_graphs: the local counts are of a sample, so its absences are no evidence."""
+    from rdfsolve.analysis.release import analyze_release
+
+    row = {
+        "name": "big",
+        "graph_uris": ["urn:g"],
+        "graph_sources": {"urn:g": {"download_ttl": ["https://example.org/g_p1.ttl"]}},
+        "sampled_graphs": {"urn:g": "Sample: g_p1 only, 1 of 2 parts."},
+    }
+    (tmp_path / "sources.yaml").write_text(yaml.safe_dump([row, {"name": "small"}]))
+    for name, mode in (("big", "local"), ("big", "remote"), ("small", "local")):
+        directory = tmp_path / name
+        directory.mkdir(exist_ok=True)
+        report = directory / f"{name}_{mode}_report.json"
+        data = "<urn:a> a <urn:A>; <urn:link> <urn:b> . <urn:b> a <urn:B> ."
+        with SchemaMiner.from_graph(
+            Graph().parse(data=data, format="turtle"), delay=0, report_path=report
+        ) as miner:
+            schema = miner.mine(name)
+        (directory / f"{name}_{mode}_schema.json").write_text(json.dumps(schema.to_dict()))
+    write_release_manifest(build_release_manifest(tmp_path), tmp_path)
+
+    result = analyze_release(tmp_path)
+    inventory = {(r["dataset_id"], r["mode"]): r for r in result["extraction_inventory"]}
+    assert inventory["big", "local"]["count_basis"] == "sample"
+    assert inventory["big", "local"]["sampled_graphs"] == row["sampled_graphs"]
+    assert inventory["big", "remote"]["count_basis"] == "full_data", "the endpoint holds it all"
+    assert inventory["small", "local"]["count_basis"] == "full_data"
+    comparison = next(r for r in result["channel_comparisons"] if r["view"] == "patterns")
+    assert comparison["comparison_state"] == "complete"
+    assert comparison["count_bases"] == ["sample", "full_data"]
+    assert comparison["absence_supported"] is False
+    assert comparison["shared_count_basis"] == "observed_lower_bound"
+    overlap = next(r for r in result["schema_overlaps"] if r["view"] == "patterns")
+    assert overlap["absence_supported"] is False, "big's local schema is a sample"
+    statistics = result["paper_statistics"]
+    assert statistics["sampled_datasets"] == {"big": row["sampled_graphs"]}
+    assert statistics["sampled_schema_extractions"] == 1
+    assert statistics["channels"]["local"]["sampled_schema_extractions"] == 1
+    assert statistics["channels"]["remote"]["sampled_schema_extractions"] == 0
+    nodes = result["class_connectivity"]["local"]["nodes"]
+    assert {n["dataset"]: n["count_basis"] for n in nodes} == {
+        "big": "sample",
+        "small": "full_data",
+    }

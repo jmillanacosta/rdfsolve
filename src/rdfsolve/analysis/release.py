@@ -1,4 +1,10 @@
-"""Analyse retained schema evidence by extraction and access channel."""
+"""Analyse retained schema evidence by extraction and access channel.
+
+A dataset whose local index holds a sample of some graphs (the release record's sampled_graphs)
+has local schemas whose counts are counts of the sample: their extraction rows say so
+(count_basis), and an absence in them is not evidence (absence_supported), in comparisons and
+corpus statistics alike. The remote channel reads the endpoint, which holds the whole data.
+"""
 
 from __future__ import annotations
 
@@ -69,6 +75,7 @@ def _compare(
         b = vocabulary[right["schema_path"]][view]
         recorded = a is not None and b is not None
         complete = recorded and left["completion_state"] == right["completion_state"] == "complete"
+        sampled = bool(left["sampled_graphs"] or right["sampled_graphs"])
         row: dict[str, Any] = {
             "source_dataset": left["dataset_id"],
             "target_dataset": right["dataset_id"],
@@ -85,11 +92,12 @@ def _compare(
             else "complete"
             if complete
             else "incomplete",
-            "absence_supported": complete,
+            "count_bases": [left["count_basis"], right["count_basis"]],
+            "absence_supported": complete and not sampled,
             "shared_count_basis": "unavailable"
             if not recorded
             else "retained_view"
-            if complete
+            if complete and not sampled
             else "observed_lower_bound",
         }
         for field in ("classes", "predicates", "terms"):
@@ -124,13 +132,18 @@ def analyze_release(
         return path
 
     kinds = {dataset.dataset_id: dataset.dataset_kind for dataset in manifest.datasets}
+    samples = {dataset.dataset_id: dataset.sampled_graphs for dataset in manifest.datasets}
     inventory: list[dict[str, Any]] = []
     schemas: dict[str, MinedSchema] = {}
     for dataset, attempt, schema in iter_extractions(root):
+        # Only an index built from the source's files holds the sample.
+        sampled = dict(samples[dataset]) if attempt.mode != "remote" else {}
         row: dict[str, Any] = {
             "dataset_id": dataset,
             "dataset_kind": kinds[dataset],
             **attempt.model_dump(),
+            "sampled_graphs": sampled,
+            "count_basis": "sample" if sampled else "full_data",
             "views": None,
             "coverage": None,
         }
@@ -220,6 +233,7 @@ def analyze_release(
                 schema_path=key,
                 snapshot_id=metadata[key]["snapshot_id"],
                 completion_state=metadata[key]["completion_state"],
+                count_basis=metadata[key]["count_basis"],
             )
         graph.graph.update(view="patterns", mode=mode, primary_view="pending_review")
         graphs[mode] = node_link_data(graph)
@@ -233,6 +247,9 @@ def analyze_release(
             "class_nodes": len(graph),
             "schema_edges": sum(d["kind"] == "schema" for _, _, d in graph.edges(data=True)),
             "explicit_mapping_edges": len(edges),
+            "sampled_schema_extractions": sum(
+                bool(r["sampled_graphs"]) for r in attempts if r["views"] is not None
+            ),
             "mapping_imports": imports,
         }
 
@@ -274,6 +291,13 @@ def analyze_release(
             "extraction_attempts": len(inventory),
             "schema_extractions": len(schemas),
             "completion_states": dict(Counter(row["completion_state"] for row in inventory)),
+            # Local schemas of these datasets are mined from a sample of the named graphs.
+            "sampled_datasets": {
+                d: dict(sorted(graphs.items())) for d, graphs in sorted(samples.items()) if graphs
+            },
+            "sampled_schema_extractions": sum(
+                bool(row["sampled_graphs"]) for row in inventory if row["views"] is not None
+            ),
             "channels": channels,
         },
         "dataset_inventory": dataset_inventory,
