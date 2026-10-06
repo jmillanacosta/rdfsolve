@@ -5659,18 +5659,60 @@
 - name: mesh.nlm
   dataset_kind: instance
   endpoint: https://id.nlm.nih.gov/mesh/sparql
+  graph_uris:
+  - http://id.nlm.nih.gov/mesh/2026
+  - http://id.nlm.nih.gov/mesh/vocab
   download_nt:
   - https://nlmpubs.nlm.nih.gov/projects/mesh/rdf/2026/mesh2026.nt.gz
   download_ttl:
   - https://nlmpubs.nlm.nih.gov/projects/mesh/rdf/2026/vocabulary_1.0.0.ttl
+  checksum_files: [sha1]
   notes: The local input is NLM's own RDF dump of MeSH 2026 (mesh2026.nt.gz, Last-Modified
     2026-01-09, published SHA-1 05b500df2b3b1a098e94fd1668754c8fae97de49, 15,357,108 triples;
     the endpoint's graph http://id.nlm.nih.gov/mesh/2026, counted 15,357,082 there on
     2026-10-06) and the MeSH RDF schema (vocabulary_1.0.0.ttl, the endpoint's graph
-    http://id.nlm.nih.gov/mesh/vocab, 342 triples). The endpoint also holds the yearly graphs of
-    earlier releases and the cumulative graph http://id.nlm.nih.gov/mesh (18.35 M triples,
-    inactive records included); no current dump of that graph is published (the undated
-    top-level mesh.nt dates from 2023-12).
+    http://id.nlm.nih.gov/mesh/vocab, 342 triples); graph_uris name these two graphs. The
+    endpoint also holds the yearly graphs of earlier releases and the cumulative graph
+    http://id.nlm.nih.gov/mesh (inactive records included), which is mesh.nlm.cumulative. The
+    2026 folder's mesh2026-dups.nt is the same triples before duplicates were removed, and is
+    not used.
+  bioregistry_prefix: mesh
+  keywords:
+  - bioinformatics
+  - biomedical science
+  - classification
+  - data retrieval
+  - life science
+  - literature curation
+  - metascience
+  terminology_nomenclature:
+  - phenotype
+  - topics
+  sparql_engine: blazegraph
+  sparql_strategy: get+json
+  supports_graph: true
+  science_area: life sciences
+- name: mesh.nlm.cumulative
+  dataset_kind: instance
+  endpoint: https://id.nlm.nih.gov/mesh/sparql
+  graph_uris:
+  - http://id.nlm.nih.gov/mesh
+  - http://id.nlm.nih.gov/mesh/vocab
+  download_nt:
+  - https://nlmpubs.nlm.nih.gov/projects/mesh/rdf/mesh.nt.gz
+  download_ttl:
+  - https://nlmpubs.nlm.nih.gov/projects/mesh/rdf/vocabulary_1.0.0.ttl
+  checksum_files: [sha1]
+  notes: NLM's cumulative MeSH graph http://id.nlm.nih.gov/mesh, which keeps the records no
+    longer active (meshv:active false, meshv:lastActiveYear). The local input is NLM's
+    top-level dump mesh.nt.gz (Last-Modified 2023-12-18, published SHA-1
+    c9ef004de88b9201b84f90aad2966bfd067af799; its header reads "<http://id.nlm.nih.gov/mesh>
+    exported at 2023-12-18"; 18,334,034 triples, the latest dateRevised 2023-12-15,
+    lastActiveYear 2015-2023), so the cumulative graph at the MeSH 2024 release, and the MeSH
+    RDF schema (top-level vocabulary_1.0.0.ttl, byte-identical to the 2026 one, the endpoint's
+    graph http://id.nlm.nih.gov/mesh/vocab). The endpoint's cumulative graph is newer (MeSH
+    2026, 18,348,391 triples, lastActiveYear up to 2025, checked 2026-10-06); NLM publishes
+    no dump of it.
   bioregistry_prefix: mesh
   keywords:
   - bioinformatics

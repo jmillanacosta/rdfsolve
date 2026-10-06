@@ -159,6 +159,10 @@ class SourceModel(BaseModel):
         File name patterns (shell globs, no paths) of downloaded or extracted files that are not
         the dataset's data, such as query examples or a VoID description in a provider's
         archive. They are kept in the download folder's left_out/ and not indexed.
+    checksum_files:
+        Hash kinds (md5, sha1, sha256) for which the publisher puts a checksum file beside each
+        download, named after it with the kind as suffix (mesh.nt.gz.sha1), in the format of
+        sha1sum. The hash is recorded with the download and checked against the file.
     bioregistry_prefix:
         Canonical Bioregistry prefix.
     bioregistry_name:
@@ -241,6 +245,7 @@ class SourceModel(BaseModel):
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
     archive_members_left_out: list[str] = Field(default_factory=list)
+    checksum_files: list[str] = Field(default_factory=list)
 
     # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str = ""
@@ -317,6 +322,14 @@ class SourceModel(BaseModel):
                     raise ValueError(f"Unsupported graph input format: {key}")
                 if not urls or any(not url.strip() for url in urls):
                     raise ValueError(f"Empty input locations for {graph}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_checksum_files(self) -> Self:
+        """Accept only the hash kinds whose checksum files are read."""
+        unknown = sorted(set(self.checksum_files) - {"md5", "sha1", "sha256"})
+        if unknown:
+            raise ValueError(f"checksum_files takes md5, sha1 or sha256, not {unknown}")
         return self
 
     @model_validator(mode="after")

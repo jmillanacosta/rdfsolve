@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -476,8 +477,12 @@ class LocalMiningStage(Stage):
                         env={**os.environ, PYTHON_VARIABLE: sys.executable},
                     )
                     # What the server says of each file, and the release its metalink names,
-                    # pin the download (one request per file, and one per folder).
-                    write_record(workdir, urls, server_state, find_metalinks)
+                    # pin the download (one request per file, and one per folder); checksum
+                    # files that the entry names add one request per file and kind.
+                    write_record(
+                        workdir, urls, server_state,
+                        partial(find_metalinks, checksum_files=source.checksum_files),
+                    )
                     expanded.extend(path for directory in directories for path in convert_trig(directory))
             if source.graph_sources:
                 mapped = mapped_input_files(workdir, list(source.graph_sources))

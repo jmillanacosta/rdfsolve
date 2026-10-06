@@ -419,7 +419,45 @@
 - left: biobricks-mesh
   right: mesh.heading
   relation: version_of
+  newer: mesh.heading
   note: >-
-    Two copies of NLM's cumulative MeSH graph taken at different dates (18,198,108 and
-    18,334,011 triples, checked 2026-10-06). Neither publishes its release, so neither is named
-    newer.
+    Two copies of NLM's cumulative MeSH graph taken at different releases (18,198,108 and
+    18,334,011 triples, checked 2026-10-06). Neither states its release; the data does:
+    meshv:lastActiveYear runs to 2022 in BioBricks (2,347,776 active records), so MeSH 2023,
+    and to 2023 in IDSM (2,365,878 active), so MeSH 2024.
+- left: mesh.heading
+  right: mesh.nlm.cumulative
+  relation: distribution_of
+  note: >-
+    IDSM's graph http://id.nlm.nih.gov/mesh/heading is NLM's cumulative graph at the MeSH 2024
+    release, the release of NLM's dump mesh.nt.gz (2023-12-18) that mesh.nlm.cumulative
+    indexes. Per predicate the two are equal (checked 2026-10-06), save 9 triples of the dump
+    that have meshv:Concept as predicate and 14 rdfs:label triples (18,334,034 in the dump,
+    18,334,011 on IDSM); meshv:active true/false 2,365,878/91,031 and meshv:lastActiveYear
+    2015-2023 are equal year by year.
+- left: biobricks-mesh
+  right: mesh.nlm.cumulative
+  relation: version_of
+  newer: mesh.nlm.cumulative
+  note: >-
+    BioBricks MeSH is NLM's cumulative graph at the MeSH 2023 release (meshv:lastActiveYear up
+    to 2022; 18,198,108 triples, checked 2026-10-06); mesh.nlm.cumulative indexes NLM's dump of
+    that graph at the MeSH 2024 release (lastActiveYear up to 2023).
+- left: mesh.nlm.cumulative
+  right: mesh.nlm
+  relation: same_upstream
+  note: >-
+    Two graphs of NLM's MeSH: the cumulative graph http://id.nlm.nih.gov/mesh (records no longer
+    active kept, with meshv:active and meshv:lastActiveYear; local dump at MeSH 2024) and the
+    yearly graph of MeSH 2026 (active records only). Neither holds the other.
+- left: mesh
+  right: mesh.nlm.cumulative
+  relation: same_upstream
+  note: >-
+    Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: rdfportal.mesh
+  right: mesh.nlm.cumulative
+  relation: same_upstream
+  note: >-
+    RDF Portal's MeSH 2025 is a yearly graph (active records only); mesh.nlm.cumulative is NLM's
+    cumulative graph. Neither holds the other.

@@ -112,6 +112,34 @@ def test_a_metalink_beside_the_files_names_their_release_and_hashes():
     assert find_metalinks(URLS, {}, fetch=lambda url: b"not xml") == {}
 
 
+def test_a_checksum_file_beside_a_download_gives_its_hash_and_is_checked(tmp_path):
+    content = b"<urn:a> <urn:p> <urn:b> .\n"
+    sha1 = hashlib.sha1(content).hexdigest()  # noqa: S324 - the hash a publisher gives
+    files = {
+        URLS[0] + ".sha1": f"{sha1.upper()}  a.ttl.gz\n".encode(),
+        URLS[1] + ".sha1": f"{sha1}  other.ttl.gz\n".encode(),
+    }
+    releases = find_metalinks(URLS, {}, fetch=files.get, checksum_files=["sha1"])
+    assert releases[URLS[0]] == {
+        "version": None,
+        "hashes": {"sha1": sha1},
+        "checksum_files": [URLS[0] + ".sha1"],
+    }
+    assert URLS[1] not in releases, "A checksum file of another file gives no hash"
+    assert find_metalinks(URLS, {}, fetch=files.get) == {}, "Checksum files are read on request"
+    (tmp_path / "rdf").mkdir()
+    path = tmp_path / "rdf" / "a.ttl.gz"
+    for body, check in ((content, "match"), (b"changed", "mismatch")):
+        path.write_bytes(body)
+        write_record(
+            tmp_path, URLS[:1], lambda url: STATE,
+            lambda urls, states: find_metalinks(urls, states, fetch=files.get, checksum_files=["sha1"]),
+        )
+        manifest = record_inputs(tmp_path, {URLS[0]: path}, [path], source="demo")
+        assert manifest["downloads"][0]["publisher_check"] == check
+        assert manifest["files"][0]["sha1"] == hashlib.sha1(body).hexdigest()  # noqa: S324
+
+
 def _downloaded(workdir, content=b"<urn:a> <urn:p> <urn:b> .\n"):
     (workdir / "rdf").mkdir(exist_ok=True)
     path = workdir / "rdf" / "a.ttl.gz"
@@ -288,3 +316,39 @@ def test_a_folder_without_a_record_that_lacks_a_listed_download_differs(tmp_path
     assert downloads_differ(tmp_path, urls, entry, []) is None, "Inputs deleted: no evidence"
     inputs += _folder(tmp_path, "data.nq")
     assert downloads_differ(tmp_path, urls, entry, inputs) is None
+
+
+def test_an_entry_names_only_the_checksum_kinds_that_are_read():
+    from rdfsolve.models.source_model import SourceModel
+
+    assert SourceModel.model_validate({"name": "x", "checksum_files": ["sha1"]}).checksum_files == ["sha1"]
+    with pytest.raises(ValueError, match="checksum_files"):
+        SourceModel.model_validate({"name": "x", "checksum_files": ["crc32"]})
+
+
+def test_a_checksum_file_sent_as_gzip_by_its_suffix_is_read_as_sent(monkeypatch):
+    import requests
+
+    body = b"c9ef004de88b9201b84f90aad2966bfd067af799  mesh.nt.gz\n"
+
+    class Raw:
+        def stream(self, size, decode_content=True):
+            assert decode_content is False
+            yield body
+
+    class Answer:
+        status_code = 200
+        raw = Raw()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def iter_content(self, size):
+            raise requests.exceptions.ContentDecodingError("incorrect header check")
+            yield b""
+
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Answer())
+    assert downloads_module._fetch_text("https://example.org/mesh.nt.gz.sha1") == body

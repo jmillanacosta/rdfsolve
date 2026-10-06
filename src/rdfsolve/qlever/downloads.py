@@ -193,7 +193,10 @@ def _described_by(link: str | None) -> list[str]:
     return found
 
 
-def _fetch_text(url: str) -> bytes | None:
+def _fetch_text(url: str, *, decode: bool = True) -> bytes | None:
+    """Return a small file, or None. A server that labels a file by each of its suffixes
+    (Apache: mesh.nt.gz.sha1 sent with Content-Encoding gzip) is read again as sent.
+    """
     import requests
 
     try:
@@ -201,11 +204,18 @@ def _fetch_text(url: str) -> bytes | None:
             if answer.status_code != 200:
                 return None
             data = b""
-            for chunk in answer.iter_content(1024 * 1024):
+            chunks = (
+                answer.iter_content(1024 * 1024)
+                if decode
+                else answer.raw.stream(1024 * 1024, decode_content=False)
+            )
+            for chunk in chunks:
                 data += chunk
                 if len(data) > _METALINK_LIMIT:
                     return None
             return data
+    except requests.exceptions.ContentDecodingError:
+        return _fetch_text(url, decode=False) if decode else None
     except requests.RequestException:
         return None
 
@@ -214,17 +224,39 @@ def _file_name_of(url: str) -> str:
     return unquote(urlparse(url).path.rstrip("/").rsplit("/", 1)[-1])
 
 
+_HASH_LENGTHS = {"md5": 32, "sha1": 40, "sha256": 64}
+
+
+def parse_checksum_file(text: bytes, kind: str, name: str) -> str | None:
+    """Return the hash that a checksum file (format of sha1sum: hash, then the file name) gives
+    for the file *name*, or None when it gives none of the length of *kind*.
+    """
+    for line in text.decode("utf-8", "replace").splitlines():
+        fields = line.split()
+        if not fields or len(fields[0]) != _HASH_LENGTHS[kind]:
+            continue
+        if not re.fullmatch(r"[0-9a-fA-F]+", fields[0]):
+            continue
+        named = fields[1].lstrip("*").rsplit("/", 1)[-1] if len(fields) > 1 else name
+        if named == name:
+            return fields[0].lower()
+    return None
+
+
 def find_metalinks(
     urls: list[str],
     states: dict[str, Any] | None = None,
     *,
     fetch: Callable[[str], bytes | None] = _fetch_text,
+    checksum_files: Iterable[str] = (),
 ) -> dict[str, dict[str, Any]]:
     """Return, per URL, what a metalink of its provider says of its file.
 
     The metalinks are those that the server names for the file (Link header) and those
     published in the folder of the file (METALINK_NAMES). The result names the metalink, the
     release version (of the file, else of the metalink), and the size and hashes it gives.
+    For each kind in *checksum_files*, the checksum file beside the download (its URL with
+    the kind as suffix) adds its hash, and is named under checksum_files.
     """
     parsed: dict[str, dict[str, Any] | None] = {}
 
@@ -259,6 +291,15 @@ def find_metalinks(
                 "hashes": entry["hashes"],
             }
             break
+        for kind in checksum_files:
+            location = f"{url}.{kind}"
+            data = fetch(location)
+            value = parse_checksum_file(data, kind, name) if data else None
+            if value is None:
+                continue
+            release = releases.setdefault(url, {"version": None, "hashes": {}})
+            release["hashes"] = {**release["hashes"], kind: value}
+            release.setdefault("checksum_files", []).append(location)
     return releases
 
 
