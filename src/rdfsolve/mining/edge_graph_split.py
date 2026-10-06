@@ -145,6 +145,11 @@ def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[Schem
         if not count:
             continue
         only_here = len(graphs) == 1 and set(pattern.graphs or {}) == set(graphs)
+        # Distinct counts measured in the one selected graph (scan mining counts them per
+        # graph); otherwise those of the pattern, when its edges are all in that graph.
+        measured = len(graphs) == 1 and pattern.count_semantics != "upper_bound"
+        subjects = (pattern.graph_distinct_subjects or {}).get(graphs[0]) if measured else None
+        objects = (pattern.graph_distinct_objects or {}).get(graphs[0]) if measured else None
         patterns.append(
             pattern.model_copy(
                 update={
@@ -155,8 +160,28 @@ def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[Schem
                     if len(graphs) == 1
                     else "quad_occurrences",
                     "graphs": attributed,
-                    "distinct_subjects": pattern.distinct_subjects if only_here else None,
-                    "distinct_objects": pattern.distinct_objects if only_here else None,
+                    "distinct_subjects": subjects
+                    if subjects is not None
+                    else pattern.distinct_subjects
+                    if only_here
+                    else None,
+                    "distinct_objects": objects
+                    if objects is not None
+                    else pattern.distinct_objects
+                    if only_here
+                    else None,
+                    "graph_distinct_subjects": {
+                        g: n
+                        for g, n in (pattern.graph_distinct_subjects or {}).items()
+                        if g in graphs
+                    }
+                    or None,
+                    "graph_distinct_objects": {
+                        g: n
+                        for g, n in (pattern.graph_distinct_objects or {}).items()
+                        if g in graphs
+                    }
+                    or None,
                 }
             )
         )

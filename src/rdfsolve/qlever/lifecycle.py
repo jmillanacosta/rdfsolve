@@ -11,6 +11,10 @@ import time
 from datetime import UTC, datetime, timezone
 from pathlib import Path
 
+# Queries a local server answers at once. The miners send one query at a time; scan mining
+# reads several predicates at once (the memory limit -m is shared by the running queries).
+SIMULTANEOUS_QUERIES = 4
+
 
 def read_qleverfile(workdir: Path) -> configparser.ConfigParser:
     """Read settings without expanding shell variables or percent escapes."""
@@ -174,7 +178,7 @@ def start_server(
         "-p",
         str(port),
         "-j",
-        "1",
+        str(SIMULTANEOUS_QUERIES),
         "-m",
         memory,
         "-c",

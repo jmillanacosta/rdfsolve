@@ -104,6 +104,9 @@ class PipelineConfig:
     navigation_hops: int = 5
     # Seconds for testing paths on the data; only paths that instances follow are written
     navigation_budget: float = 1800.0
+    # Local indexes: "scan" reads the rows of the index and counts them outside the server
+    # (rdfsolve.mining.scan); "sparql" sends the grouped queries of the two-phase strategy.
+    local_mining: str = "scan"
 
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019

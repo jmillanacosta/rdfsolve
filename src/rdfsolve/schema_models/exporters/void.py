@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 from hashlib import md5
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 if TYPE_CHECKING:
     from rdflib import Graph
 
+    from rdfsolve.evidence.observed import PropertyUsageCollection
     from rdfsolve.schema_models.core import MinedSchema
     from rdfsolve.schema_models.void_model import VoidDataset
+
+VOID = "http://rdfs.org/ns/void#"
+VOID_EXT = "http://ldf.fi/void-ext#"
 
 
 def public_endpoint(endpoint: str | None) -> bool:
@@ -326,6 +330,8 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
     class_prop_objects: dict[str, dict[str, list[tuple[str, str | None, int | None]]]] = (
         defaultdict(lambda: defaultdict(list))
     )
+    # subject_class -> property_uri -> the patterns, for the totals of the property partition
+    class_prop_patterns: dict[str, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
 
     # Collect labels for all URIs
     uri_labels: dict[str, str] = {}
@@ -338,6 +344,7 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
         class_prop_objects[pat.subject_class][pat.property_uri].append(
             (pat.object_class, pat.datatype, pat.count)
         )
+        class_prop_patterns[pat.subject_class][pat.property_uri].append(pat)
 
         # Collect labels
         if pat.subject_label and pat.subject_class not in _SENTINEL_OBJECTS:
@@ -375,7 +382,10 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
             g.add((prop_partition_uri, RDF.type, void.Dataset))
             g.add((prop_partition_uri, void.property, URIRef(prop_uri)))
 
-            # Object classes can overlap; do not sum their triple counts.
+            # Object classes can overlap; do not sum their triple counts. The totals of the
+            # partition are written only where the patterns give them exactly (_exact_totals).
+            for term, total in _exact_totals(class_prop_patterns[subject_class][prop_uri]):
+                g.add((prop_partition_uri, term, RdfLiteral(total, datatype=XSD.integer)))
 
             # Add object class partitions or datatype partitions
             for object_class, datatype, count in class_prop_objects[subject_class][prop_uri]:
@@ -398,6 +408,13 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
                                     RdfLiteral(count, datatype=XSD.integer),
                                 )
                             )
+                        _add_distinct(
+                            g,
+                            dt_partition_uri,
+                            class_prop_patterns[subject_class][prop_uri],
+                            object_class,
+                            datatype,
+                        )
 
                 elif (
                     object_class
@@ -422,6 +439,13 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
                                 RdfLiteral(count, datatype=XSD.integer),
                             )
                         )
+                    _add_distinct(
+                        g,
+                        obj_partition_uri,
+                        class_prop_patterns[subject_class][prop_uri],
+                        object_class,
+                        None,
+                    )
 
     # A typed relationship alone does not establish a cross-dataset linkset.
 
@@ -431,6 +455,93 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
             if example.kind == "uri":
                 g.add((partition, void.exampleResource, example.to_rdf()))
     return g
+
+
+def _exact_totals(patterns: list[Any]) -> list[tuple[Any, int]]:
+    """Return the counts of a (class, property) partition that its patterns give exactly.
+
+    The rows of literals (one per datatype), of IRIs without a class (Resource) and of blank
+    nodes (BlankNode, typed or not) do not overlap; rows of object classes overlap each other
+    (an object with two classes) and the blank-node row (a typed blank node). So:
+    void-ext:distinctLiterals is the sum of the literal rows (values of different datatypes
+    differ), void-ext:distinctBlankNodeObjects the blank-node row, and, when no row has an
+    object class, void-ext:distinctIRIReferenceObjects is the Resource row and void:triples the
+    sum of all rows. Property usage evidence gives the totals in the other cases
+    (add_property_usage).
+    """
+    from rdflib import URIRef
+
+    literal = [p for p in patterns if p.object_class == "Literal"]
+    resource = [p for p in patterns if p.object_class == "Resource"]
+    blank = [p for p in patterns if p.object_class == "BlankNode"]
+    classed = [p for p in patterns if p.object_class not in _SENTINEL_OBJECTS]
+    found: list[tuple[Any, int]] = []
+    if literal and all(p.distinct_objects is not None for p in literal):
+        found.append(
+            (URIRef(VOID_EXT + "distinctLiterals"), sum(p.distinct_objects for p in literal))
+        )
+    if len(blank) == 1 and blank[0].distinct_objects is not None:
+        found.append((URIRef(VOID_EXT + "distinctBlankNodeObjects"), blank[0].distinct_objects))
+    if not classed:
+        if len(resource) == 1 and resource[0].distinct_objects is not None:
+            found.append(
+                (URIRef(VOID_EXT + "distinctIRIReferenceObjects"), resource[0].distinct_objects)
+            )
+        if patterns and all(p.count is not None for p in patterns):
+            found.append((URIRef(VOID + "triples"), sum(p.count for p in patterns)))
+    return found
+
+
+def _add_distinct(
+    g: Graph, partition: Any, patterns: list[Any], object_class: str, datatype: str | None
+) -> None:
+    """Add the distinct subjects and objects of the pattern of a nested partition."""
+    from rdflib import Literal as RdfLiteral
+    from rdflib import URIRef
+    from rdflib.namespace import XSD
+
+    for p in patterns:
+        if p.object_class == object_class and (object_class != "Literal" or p.datatype == datatype):
+            for name, value in (
+                ("distinctSubjects", p.distinct_subjects),
+                ("distinctObjects", p.distinct_objects),
+            ):
+                if value is not None:
+                    g.add((partition, URIRef(VOID + name), RdfLiteral(value, datatype=XSD.integer)))
+            return
+
+
+def add_property_usage(g: Graph, schema: MinedSchema, usage: PropertyUsageCollection) -> int:
+    """Add the totals of each (class, property) partition from property usage evidence.
+
+    The evidence counts the edges of the members of each class with each property over every
+    object kind: void:triples, void:distinctSubjects (members with the property) and
+    void:distinctObjects. A partition that the patterns do not have is not added. Return the
+    partitions completed.
+    """
+    from rdflib import Literal as RdfLiteral
+    from rdflib import URIRef
+    from rdflib.namespace import XSD
+
+    from rdfsolve.config import mint
+
+    base = f"{mint('dataset', schema.about.dataset_name or 'unnamed')}/partition/"
+    added = 0
+    for record in usage.records:
+        cls = md5(record.subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
+        prop = md5(record.property_uri.encode(), usedforsecurity=False).hexdigest()[:8]
+        partition = URIRef(f"{base}class-{cls}-prop-{prop}")
+        if (None, URIRef(VOID + "propertyPartition"), partition) not in g:
+            continue
+        for name, value in (
+            ("triples", record.triple_count),
+            ("distinctSubjects", record.subjects_with_property),
+            ("distinctObjects", record.distinct_objects),
+        ):
+            if value is not None and record.summary_state.status == "complete":
+                g.set((partition, URIRef(VOID + name), RdfLiteral(value, datatype=XSD.integer)))
+        added += 1
+    return added
 
 
 def minedschema_to_void(schema: MinedSchema) -> VoidDataset:

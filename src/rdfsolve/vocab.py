@@ -30,14 +30,18 @@ _TERMS = {
         "distinctSubjects documents entities exampleResource linkPredicate objectsTarget properties property "
         "propertyPartition sparqlEndpoint subjectsTarget triples vocabulary"
     ),
-    "http://ldf.fi/void-ext#": "datatype datatypePartition",
+    "http://ldf.fi/void-ext#": (
+        "datatype datatypePartition distinctBlankNodeObjects distinctIRIReferenceObjects "
+        "distinctLiterals"
+    ),
     "http://www.w3.org/ns/sparql-service-description#": (
         "Dataset Graph NamedGraph Service defaultDataset endpoint graph name namedGraph"
     ),
     "http://www.w3.org/ns/shacl#": (
         "NodeShape PropertyShape SPARQLExecutable SPARQLSelectExecutable SPARQLAskExecutable "
         "SPARQLConstructExecutable alternativePath ask class closed construct datatype "
-        "deactivated declare description ignoredProperties inversePath maxCount minCount name "
+        "deactivated declare description ignoredProperties inversePath languageIn maxCount "
+        "minCount name "
         "namespace nodeKind oneOrMorePath or path prefix prefixes property qualifiedMaxCount "
         "qualifiedMinCount qualifiedValueShape qualifiedValueShapesDisjoint select targetClass "
         "zeroOrMorePath zeroOrOnePath"

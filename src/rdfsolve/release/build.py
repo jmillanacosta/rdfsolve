@@ -62,6 +62,7 @@ def _media_type(path: Path) -> str | None:
         ".tsv": "text/tab-separated-values",
         ".tsv.gz": "application/gzip",
         ".txt": "text/plain",
+        ".parquet": "application/vnd.apache.parquet",
     }
     if suffixes in overrides:
         return overrides[suffixes]
@@ -86,6 +87,10 @@ def _role(path: Path) -> str | None:
         ("_property_usage.json", "property_usage_evidence"),
         ("_declared_artifacts.json", "declared_artifact_index"),
         ("_paths.shacl.ttl", "generated_path_shapes"),
+        ("_observed_shapes.ttl", "observed_shapes"),
+        ("_observed_profiles.json", "observed_profiles"),
+        ("_term_classes.parquet", "term_classes"),
+        ("_terms.parquet", "term_patterns"),
         ("_endpoint_match.json", "endpoint_match"),
         ("_declared_identities.sssom.tsv", "declared_identities"),
         ("_declared_identities.json", "declared_identities_summary"),

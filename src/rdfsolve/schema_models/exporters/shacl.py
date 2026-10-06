@@ -64,8 +64,12 @@ def minedschema_to_shacl(
     )
     if lost_counts:
         logging.getLogger(__name__).warning(
-            "SHACL plus VoID metadata cannot retain %d pattern counts with unspecified "
-            "classes or datatypes. Keep canonical JSON; these are not sh:minCount values.",
+            "%d pattern rows describe objects without a class (IRIs without a type, blank "
+            "nodes, literals without a datatype). Their triples and distinct subjects, the "
+            "counts of each such kind for its class and property, are kept only in the JSON "
+            "schema; VoID gives the distinct blank-node and literal objects of each class and "
+            "property, and its distinct IRIs and triples only where no object has a class. "
+            "These counts are not sh:minCount values.",
             lost_counts,
         )
     if schema.shapes is not None:

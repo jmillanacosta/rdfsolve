@@ -176,7 +176,13 @@ def test_registry_graph_inputs_reach_one_index(tmp_path, monkeypatch):
     miners = []
 
     def local_miner(
-        port, graph_uris, report_path, *, type_context_graph_uris, resume_checkpoint=None
+        port,
+        graph_uris,
+        report_path,
+        *,
+        type_context_graph_uris,
+        resume_checkpoint=None,
+        strategy=None,  # the fixture is mined by SPARQL on its rdflib data
     ):
         miner = SchemaMiner.from_graph(
             data,

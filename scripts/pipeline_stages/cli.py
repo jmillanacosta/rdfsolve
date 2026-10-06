@@ -374,6 +374,13 @@ Examples:
         help="Longest path tested on the data, in steps; 0 disables",
     )
     parser.add_argument(
+        "--local-mining",
+        choices=["scan", "sparql"],
+        default="scan",
+        help="Local indexes: count the rows the index streams (scan) or send grouped SPARQL "
+        "queries to it (sparql); sources scoped to named graphs are mined with SPARQL",
+    )
+    parser.add_argument(
         "--navigation-budget",
         type=float,
         default=1800.0,
@@ -558,6 +565,7 @@ Examples:
         parser.error("--trim-descriptions must be nonnegative")
     config.navigation_hops = args.navigation_hops
     config.navigation_budget = args.navigation_budget
+    config.local_mining = args.local_mining
     if config.navigation_budget < 0:
         parser.error("--navigation-budget must be nonnegative")
 

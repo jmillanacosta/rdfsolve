@@ -187,6 +187,8 @@ class SchemaMiner:
         self._shared_extensions: dict[str, str] = {}
         self._subsumed_classes: set[str] = set()
         self._grouped_members: dict[str, list[str]] = {}
+        self._scan_types: Any = None
+        self._scan_grouping: Any = None
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
         self._structural_patterns: list[StructuralPattern] | None = None
@@ -422,7 +424,9 @@ class SchemaMiner:
         self._resumed: dict[tuple[str, ...], list[dict[str, Any]]] = context.resumed
         # Run strategy
         patterns = self._strategy.mine(context)
-        if not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
+        if self._store is not None:
+            self._scan_structure(context, patterns)
+        elif not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
             StructuralStrategy(patterns).mine(context)
         self._class_batches = context.class_batches
         if context.grouped_members:
@@ -452,6 +456,25 @@ class SchemaMiner:
             one_shot_results = self._report.report.one_shot_results or []
 
         return patterns, one_shot_results
+
+    @property
+    def _store(self) -> Any:
+        """The row store of a scan run (rdfsolve.mining.scan), whose phases count rows."""
+        return getattr(self._strategy, "store", None)
+
+    def _scan_structure(self, context: MiningContext, patterns: list[SchemaPattern]) -> None:
+        """Count the structural census and patterns from the rows (rdfsolve.mining.scan_structure)."""
+        from rdfsolve.mining.scan_structure import structural_coverage
+
+        phase = self._report.start_phase("structural-patterns")
+        config = self._report.report.config
+        config["structural_execution"] = "scan"
+        # One census for each data graph of a graph scope, as StructuralStrategy.mine.
+        entries, structural = structural_coverage(self._store, patterns)
+        config["structural_coverage"] = entries
+        context.structural_patterns = structural
+        config["structural_pattern_count"] = len(structural)
+        self._report.finish_phase(phase, items=len(structural))
 
     def _resumed_batches(self, path: str, text: str) -> dict[tuple[str, ...], list[dict[str, Any]]]:
         """Reuse completed class batches and census counts from an earlier checkpoint.
@@ -510,6 +533,79 @@ class SchemaMiner:
             self._report.finish_phase(phase, error=str(exc))
             raise
         return patterns
+
+    def _scan_terms(
+        self, patterns: list[SchemaPattern]
+    ) -> tuple[list[SchemaPattern], list[SchemaPattern] | None, list[SchemaPattern] | None]:
+        """Fold class expressions and group ontology terms on the rows (rdfsolve.mining.scan_terms).
+
+        Anonymous classes typed ``p some F`` become edges (C, p, F) of their members' named
+        classes, the fillers grouped per (C, p) slot. With ontology terms as data, the terms are
+        grouped as _run_term_subsumption_phase chooses them (before and after mining), by one
+        rewrite of the type table on both ends and a recount: the counts are exact, not sums.
+        The term patterns are read from the rows, as probe_term_patterns defines them. Returns
+        patterns, raw patterns, term patterns.
+        """
+        from rdfsolve.mining.scan import count_patterns
+        from rdfsolve.mining.scan_terms import (
+            RetypedStore,
+            fold_class_expressions,
+            foldable_expressions,
+            group_terms,
+            type_table,
+            without_classes,
+        )
+
+        store = self._store
+        config = self._report.report.config
+        expressions = foldable_expressions(store)
+        types = without_classes(type_table(store), expressions)
+        raw_patterns = term_patterns = None
+        budget = self._ontology_term_budget
+        phase = self._report.start_phase("ontology-terms")
+        if budget is not None:
+            from rdfsolve.mining.scan_enrichment import term_patterns as read_term_patterns
+
+            # The exact term observations, read from the rows (the probe's definitions).
+            term_patterns = read_term_patterns(
+                store, patterns, ontology_graph_uris=self._ontology_graph_uris
+            )
+            grouping = group_terms(
+                store,
+                # Minimal types (ABSTAT): a record's types never include their own ancestors,
+                # so that a client can merge the released per-term rows exactly.
+                minimal=True,
+                types=types,
+                # Without class expressions the type table is the store's: reuse its counts.
+                counted=None if expressions else patterns,
+                budget=budget,
+                group_before_mining=self._group_before_mining,
+                ontology_graph_uris=self._ontology_graph_uris,
+                hierarchy_files=self._hierarchy_files,
+            )
+            patterns, raw_patterns, types = grouping.patterns, grouping.raw_patterns, grouping.types
+            self._scan_grouping = grouping
+            config["ontology_term_subsumption"] = grouping.summary
+            if grouping.before_mining:
+                config["ontology_term_grouping"] = grouping.before_mining
+                self._grouped_members = dict(grouping.members)
+            self._subsumed_classes |= set(grouping.subsumed_classes)
+        elif expressions:
+            patterns = count_patterns(RetypedStore(store, types))
+        if expressions:
+            folding = fold_class_expressions(
+                store,
+                expressions,
+                types=types,
+                ontology_graph_uris=self._ontology_graph_uris,
+                hierarchy_files=self._hierarchy_files,
+            )
+            patterns = patterns + folding.patterns
+            config["class_expression_folding"] = folding.record
+        # Class counts and extensions read the rewritten type table (representatives counted).
+        self._scan_types = RetypedStore(store, types)
+        self._report.finish_phase(phase, items=len(patterns))
+        return patterns, raw_patterns, term_patterns
 
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int
@@ -658,6 +754,12 @@ class SchemaMiner:
         phase = self._report.start_phase("labels")
         logger.info("Fetching labels …")
         uris_before = self._unique_uris(patterns)
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import pattern_labels
+
+            patterns = pattern_labels(self._store, patterns)
+            self._report.finish_phase(phase, items=len(uris_before))
+            return patterns, uris_before
         patterns = enrich_patterns_with_labels(
             patterns,
             self._helper,
@@ -745,7 +847,12 @@ class SchemaMiner:
         from rdfsolve.mining.dataset_statistics import count_dataset
 
         phase = self._report.start_phase("dataset-statistics")
-        statistics = count_dataset(self._helper, self.graph_uris, self._report.record_query)
+        if self._store is not None:
+            from rdfsolve.mining.scan_structure import dataset_statistics
+
+            statistics = dataset_statistics(self._store)
+        else:
+            statistics = count_dataset(self._helper, self.graph_uris, self._report.record_query)
         self._report.report.config["dataset_statistics"] = statistics
         self._report.flush()
         self._report.finish_phase(phase, items=len(statistics.get("property_partitions", ())))
@@ -1037,7 +1144,20 @@ class SchemaMiner:
         # A strategy with its own view may state the members of its classes (VoID).
         entity_counts = dict(getattr(self._strategy, "entity_counts", {})) if self._own_view else {}
         entity_count_states: dict[str, QueryState] = {}
-        if self.counts and not self._own_view:
+        if self.counts and self._store is not None:
+            from rdfsolve.mining import scan_structure
+
+            phase = self._report.start_phase("class-entity-counts")
+            counted = sorted(classes - self._subsumed_classes)
+            members = getattr(self, "_scan_types", None) or self._store
+            entity_counts, entity_count_states = scan_structure.class_entity_counts(
+                members, counted
+            )
+            self._report.finish_phase(phase, items=len(entity_counts))
+            phase = self._report.start_phase("class-extensions")
+            schema.class_extensions = scan_structure.class_extensions(members, counted)
+            self._report.finish_phase(phase, items=len(schema.class_extensions.members))
+        elif self.counts and not self._own_view:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 
             # Subsumed representatives stand for many terms; their direct instance
@@ -1069,7 +1189,17 @@ class SchemaMiner:
         self._report.report.config["membership_rows_left_out"] = len(schema.patterns) - len(kept)
         schema.patterns = kept
         dataset = getattr(self._helper, "dataset", None)
-        if isinstance(dataset, Graph):
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import collections
+
+            phase = self._report.start_phase("collections")
+            schema.collections = collections(self._store)
+            self._report.report.config["collection_profile_count"] = len(schema.collections)
+            self._report.report.config["invalid_collection_count"] = sum(
+                p.invalid_count for p in schema.collections
+            )
+            self._report.finish_phase(phase, items=len(schema.collections))
+        elif isinstance(dataset, Graph):
             phase = self._report.start_phase("collections")
             try:
                 profiles = schema.discover_collections(
@@ -1154,7 +1284,19 @@ class SchemaMiner:
     def query_enrichment(
         self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
     ) -> SchemaEnrichment:
-        """Query definitions and observed examples with this miner's settings."""
+        """Query definitions and observed examples with this miner's settings.
+
+        A scan run reads them from its rows (rdfsolve.mining.scan_enrichment).
+        """
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import enrichment
+
+            return enrichment(
+                self._store,
+                schema,
+                examples_per_pattern=self.examples_per_pattern,
+                annotation_iris=annotation_iris,
+            )
         from rdfsolve.mining.enrichment import query_enrichment
 
         return query_enrichment(
@@ -1179,12 +1321,15 @@ class SchemaMiner:
             strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
-        if self.counts and not self._own_view:
+        # A strategy that counts its patterns itself (scan) needs no counts phase.
+        if self.counts and not self._own_view and not getattr(self._strategy, "counted", False):
             patterns = self._run_counts_phase(patterns)
 
         raw_patterns = None
         term_patterns = None
-        if self._ontology_term_budget is not None:
+        if self._store is not None:
+            patterns, raw_patterns, term_patterns = self._scan_terms(patterns)
+        elif self._ontology_term_budget is not None:
             raw_patterns = [pattern.model_copy(deep=True) for pattern in patterns]
             patterns, term_patterns = self._run_term_subsumption_phase(
                 patterns, self._ontology_term_budget

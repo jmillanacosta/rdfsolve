@@ -593,15 +593,32 @@ class LocalMiningStage(Stage):
                     "applied and the whole index is mined", source.name,
                 )
             scope = applied
+        strategy = None
+        # Scan mining follows the graph scope of the run (data graphs, type context graphs) and
+        # gives per-graph counts, so graph-scoped sources and sources with per-graph schemas
+        # are scanned too; --local-mining sparql mines them with the SPARQL strategies.
+        if self.config.local_mining == "scan":
+            from rdfsolve.mining.scan import ScanStrategy, index_description
+            from rdfsolve.qlever.lifecycle import index_name
+
+            workdir = self.config.data_dir / "qlever_workdirs" / source.name
+            strategy = ScanStrategy(
+                workdir / "scan-store",
+                index=index_description(workdir, index_name(workdir, source.name)),
+            )
         miner = self._local_miner(
             port, scope,
             report_path, type_context_graph_uris=source.type_context_graph_uris,
             resume_checkpoint=previous if previous and previous.is_file() else None,
+            **({"strategy": strategy} if strategy is not None else {}),
         )
         miner.classes_as_data = source.classes_as_data
         miner.membership_properties = list(source.membership_properties)
         schema = self._mine_schema(miner, source.name, output_dir,
                                    ontology_graph_uris=source.ontology_graph_uris or None)
+        # Paths are tested on the rows that scan mining read, not by probes.
+        self._scan_store = getattr(strategy, "store", None)
+        self._scan_grouping = getattr(miner, "_scan_grouping", None)
         with self._output_phase(miner, report_path):
             self._save_dataset_outputs(
                 source, schema, output_dir, miner.helper, mining_context,
@@ -699,7 +716,7 @@ class LocalMiningStage(Stage):
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
                      *, type_context_graph_uris: list[str] | None = None,
-                     resume_checkpoint: Path | None = None):
+                     resume_checkpoint: Path | None = None, strategy=None):
         """Create a miner for a local QLever instance."""
         from rdfsolve import SchemaMiner
 
@@ -721,6 +738,7 @@ class LocalMiningStage(Stage):
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
             resume_checkpoint=resume_checkpoint,
+            strategy=strategy,
         )
 
         return miner

@@ -126,6 +126,7 @@ def test_graph_pipeline_release(tmp_path, monkeypatch, mode):
             *,
             type_context_graph_uris=None,
             resume_checkpoint=None,
+            strategy=None,  # the fixture is mined by SPARQL on its rdflib data
         ):
             return factory(
                 graph_uris=graph_uris or [left_graph, right_graph],

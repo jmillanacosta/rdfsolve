@@ -682,13 +682,17 @@ def _enrich_with_local(
     patterns: list[SchemaPattern],
     label_map: dict[str, str],
 ) -> list[SchemaPattern]:
-    """Fill in labels using fetched labels with local name as fallback."""
+    """Fill in labels using fetched labels, then a label the pattern has, then the local name.
+
+    A pattern has a label of its own when its class is anonymous (scan mining names it by its
+    expression in Manchester syntax).
+    """
     enriched: list[SchemaPattern] = []
     for pat in patterns:
         updates: dict[str, Any] = {}
         updates["subject_label"] = label_map.get(
             pat.subject_class,
-            get_local_name(pat.subject_class),
+            pat.subject_label or get_local_name(pat.subject_class),
         )
         updates["property_label"] = label_map.get(
             pat.property_uri,
@@ -699,7 +703,7 @@ def _enrich_with_local(
         else:
             updates["object_label"] = label_map.get(
                 pat.object_class,
-                get_local_name(pat.object_class),
+                pat.object_label or get_local_name(pat.object_class),
             )
         enriched.append(pat.model_copy(update=updates))
     return enriched

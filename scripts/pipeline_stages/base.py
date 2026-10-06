@@ -330,22 +330,77 @@ class Stage:
         classes = sorted({pattern.subject_class for pattern in schema.patterns})
         report_path = output_dir / f"{name}{suffix}_report.json"
         report = json.loads(report_path.read_text()) if report_path.is_file() else {}
-        evidence = collect_property_usage_evidence(
+        settings = dict(
             dataset_id=name,
             classes=classes,
             class_entity_counts=schema.about.class_entity_counts,
             class_entity_count_states=schema.about.class_entity_count_states,
-            helper=helper,
             graph_uris=schema.about.graph_uris,
             batch_size=min(max(1, self.config.class_batch_size), 10),
-            chunk_size=self.config.class_chunk_size or self.config.chunk_size,
             collect_node_kinds=self.config.collect_property_value_profiles,
             collect_datatypes=self.config.collect_property_value_profiles,
             collect_histograms=self.config.collect_property_value_histograms,
             shared_extensions=(report.get("config") or {}).get("shared_extensions"),
         )
+        store = getattr(self, "_scan_store", None)
+        if store is not None:
+            from rdfsolve.mining.scan_structure import property_usage_evidence
+
+            evidence = property_usage_evidence(store, **settings)
+        else:
+            evidence = collect_property_usage_evidence(
+                **settings,
+                helper=helper,
+                chunk_size=self.config.class_chunk_size or self.config.chunk_size,
+            )
         path = output_dir / f"{name}{suffix}_property_usage.json"
         path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
+        # The evidence gives each (class, property) partition its totals over every object kind,
+        # which the patterns alone cannot give where object classes overlap.
+        void_path = output_dir / f"{name}{suffix}_void.ttl"
+        if void_path.is_file():
+            from rdfsolve.schema_models.exporters.void import add_property_usage
+
+            void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
+            add_property_usage(void_graph, schema, evidence)
+            void_path.write_text(void_graph.serialize(format="turtle"), encoding="utf-8")
+        if store is not None:
+            self._save_observed_shapes(schema, output_dir, name, suffix, store)
+        grouping = getattr(self, "_scan_grouping", None)
+        if store is not None and grouping is not None:
+            from rdfsolve.mining.term_release import write_term_release
+
+            # The exact per-term rows and the term hierarchy, which clients regroup on demand.
+            manifest = write_term_release(store, grouping, output_dir / f"{name}{suffix}", dataset=name)
+            report_path = output_dir / f"{name}{suffix}_report.json"
+            if report_path.is_file():
+                data = json.loads(report_path.read_text(encoding="utf-8"))
+                data.setdefault("config", {})["term_release"] = manifest
+                report_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+
+    def _save_observed_shapes(self, schema: Any, output_dir: Path, name: str, suffix: str, store: Any) -> None:
+        """Write SHACL shapes whose constraints are the extremes observed in the rows.
+
+        They validate the release they were read from by construction (rdfsolve.mining.scan_shapes);
+        they describe the release, not the source's rules, and are kept apart from the
+        deactivated templates of _shacl.ttl and from the constraints that sources declare.
+        """
+        from rdfsolve.mining.scan_shapes import class_property_profiles, observed_shapes
+        from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census
+
+        census_path = store.base.path.parent / CENSUS_FILE
+        profiles = class_property_profiles(
+            store, census=read_census(census_path) if census_path.is_file() else None
+        )
+        graph = observed_shapes(
+            profiles, dataset_name=name, graph_uris=schema.about.graph_uris or None
+        )
+        (output_dir / f"{name}{suffix}_observed_shapes.ttl").write_text(
+            graph.serialize(format="turtle"), encoding="utf-8"
+        )
+        (output_dir / f"{name}{suffix}_observed_profiles.json").write_text(
+            json.dumps([p.model_dump(mode="json") for p in profiles], indent=1), encoding="utf-8"
+        )
 
     def _without_service_data(self, schema: Any) -> Any:
         """Return the schema without engine and service data when the run asks for it.
@@ -397,7 +452,20 @@ class Stage:
                 name,
                 self.config.trim_descriptions,
             )
-        if self.config.navigation_hops and helper is not None:
+        store = getattr(self, "_scan_store", None)
+        if self.config.navigation_hops and store is not None:
+            from rdfsolve.mining.scan_paths import find_tested_paths_in_store
+
+            # The rows that scan mining read: paths are tested by joins, not by probes.
+            log.info("[%s] Navigation: testing paths on the rows (budget %s s)", name, self.config.navigation_budget)
+            schema.navigation = find_tested_paths_in_store(
+                schema,
+                store,
+                max_hops=self.config.navigation_hops,
+                budget_s=self.config.navigation_budget,
+                members=members,
+            )
+        elif self.config.navigation_hops and helper is not None:
             from rdfsolve.mining.navigation import find_tested_paths
 
             # Only paths that instances of the data follow are written (owner, 2026-09-30).
@@ -409,6 +477,7 @@ class Stage:
                 budget_s=self.config.navigation_budget,
                 members=members,
             )
+        if self.config.navigation_hops and schema.navigation is not None:
             navigation = schema.navigation
             if navigation.stop_reason is not None:
                 stopped = {
@@ -422,7 +491,12 @@ class Stage:
                 if report is not None:
                     report.config["navigation"] = stopped
 
-        if self.config.restriction_patterns and helper is not None:
+        if self.config.restriction_patterns and store is not None:
+            from rdfsolve.mining.scan_enrichment import restriction_patterns
+
+            log.info("[%s] Restriction patterns: from the rows", name)
+            schema.restriction_patterns = restriction_patterns(store)
+        elif self.config.restriction_patterns and helper is not None:
             from rdfsolve.mining.restrictions import mine_restriction_patterns
 
             log.info("[%s] Restriction patterns: mining", name)

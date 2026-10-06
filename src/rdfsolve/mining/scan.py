@@ -1,0 +1,1313 @@
+"""Scan mining: QLever only reads its index; every count is made by Polars on the rows it reads.
+
+The grouped SPARQL queries of the other strategies join and group inside the server, within
+its memory limit (QLever does not spill to disk: Bgee's census asked for more than 455 GB).
+Here the server is asked only for the rows of one predicate at a time,
+``SELECT ?s ?o (DATATYPE(?o) AS ?d) WHERE { ?s <p> ?o }``, a scan of one range of a sorted
+permutation that QLever streams without holding it, and for the members of the classes. The
+rows are saved as Parquet (the row store); patterns, their counts and the rest are computed
+from the store, one predicate at a time, so memory is bound by the largest predicate.
+
+Each value is saved twice: as the term QLever writes in TSV, and as QLever's 64-bit id of the
+value (the same query with ``Accept: application/octet-stream``). The ids count distinct
+values exactly: the TSV writes doubles with 13 significant digits, so values that differ further
+print the same (WikiPathways gpml:relY: 2,160 values, 2,021 printed).
+
+The patterns follow the definitions of the count queries of the two-phase strategy
+(query_builders: typed objects, untyped IRIs, blank nodes, literals), so that the two
+strategies give the same schema of the same index.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import shutil
+import time
+import urllib.parse
+import urllib.request
+from collections.abc import Iterable, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Protocol
+
+from rdfsolve.mining.query_builders import MEMBERSHIP
+from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+
+if TYPE_CHECKING:
+    import polars as pl
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "QLEVER_DEFAULT_GRAPH",
+    "RowStore",
+    "ScanStrategy",
+    "StoreView",
+    "count_patterns",
+    "export_index",
+    "name_class_expressions",
+    "store_from_graph",
+]
+
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
+RDF_LANG = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
+STORE_VERSION = 3
+# The graph of the triples that QLever keeps outside every named graph (input without a graph).
+QLEVER_DEFAULT_GRAPH = "http://qlever.cs.uni-freiburg.de/builtin-functions/default-graph"
+
+
+class CountedStore(Protocol):
+    """What count_patterns reads of a store: a RowStore, a StoreView, or a store whose type
+    table is replaced (scan_terms.RetypedStore).
+    """
+
+    @property
+    def manifest(self) -> dict[str, Any]:
+        """Return the manifest of the store (store.json)."""
+
+    @property
+    def predicates(self) -> dict[str, Path]:
+        """Return the file of each predicate in scope."""
+
+    @property
+    def base(self) -> RowStore:
+        """Return the whole store."""
+
+    def graph_rows(self, predicate: str) -> pl.LazyFrame:
+        """Return the rows of *predicate* with the graph of each row."""
+
+    def rows(self, predicate: str) -> pl.LazyFrame:
+        """Return the rows of *predicate*, each triple once."""
+
+    def type_ids(self) -> pl.LazyFrame:
+        """Return the type table by id (sid, c)."""
+
+    def data_types(self) -> pl.LazyFrame:
+        """Return the types in the data graphs."""
+
+
+class RowStore:
+    """The rows of one index, saved by predicate.
+
+    ``types.parquet`` has the members of each class (s, c: the rows of the membership
+    properties); ``rows/NNNNN.parquet`` the rows of one predicate (s, o, d, oid);
+    ``store.json`` names the file of each predicate, the membership properties, and the index
+    the rows were read from. Terms are written as in SPARQL TSV: <iri>, _:label, or a literal.
+
+    An index with named graphs gives each row its graph: columns g (the graph IRI as a term)
+    and gid (QLever's id of it), in the rows and in ``types.parquet``. A triple held by k
+    graphs is k rows. The triples that QLever keeps outside every named graph (input without
+    a graph) have the graph QLEVER_DEFAULT_GRAPH, which ``GRAPH ?g`` does not return.
+    ``store.json`` then lists the rows of each predicate in each graph (graphs), the rows of
+    each predicate (rows) and its triples in the default graph (triples_by_predicate).
+
+    The store itself is the default graph of the index, as QLever answers a query without FROM
+    or GRAPH: the union of all graphs, each triple once. view() selects a graph scope.
+    """
+
+    graph_uris: list[str] | None = None
+    context: tuple[str, ...] = ()
+
+    def __init__(self, path: Path) -> None:
+        """Open the store in *path*."""
+        self.path = Path(path)
+        self.manifest: dict[str, Any] = json.loads((self.path / "store.json").read_text())
+
+    @property
+    def base(self) -> RowStore:
+        """The store of the whole index (a view returns the store it selects from)."""
+        return self
+
+    @property
+    def graphs(self) -> dict[str, dict[str, int]] | None:
+        """The rows of each predicate in each graph, or None for an index without named graphs."""
+        graphs: dict[str, dict[str, int]] | None = self.manifest.get("graphs")
+        return graphs
+
+    @property
+    def predicates(self) -> dict[str, Path]:
+        """The file of the rows of each predicate."""
+        return {p: self.path / "rows" / f for p, f in self.manifest["predicates"].items()}
+
+    def _duplicated(self, predicate: str) -> bool:
+        """Whether some triple of *predicate* is in more than one graph (more rows than triples)."""
+        rows = (self.manifest.get("rows") or {}).get(predicate)
+        triples = (self.manifest.get("triples_by_predicate") or {}).get(predicate)
+        return self.graphs is not None and (rows is None or triples is None or rows > triples)
+
+    def graph_rows(self, predicate: str) -> pl.LazyFrame:
+        """Return every row of *predicate* (with its graph g and gid when the index has graphs)."""
+        import polars as pl
+
+        o = pl.col("o")
+        kind = (
+            pl.when(o.str.starts_with("<"))
+            .then(pl.lit("iri"))
+            .when(o.str.starts_with("_:"))
+            .then(pl.lit("bnode"))
+            .otherwise(pl.lit("literal"))
+        )
+        return (
+            pl.scan_parquet(self.predicates[predicate])
+            .with_columns(kind=kind)
+            .with_columns(
+                d=pl.when(pl.col("kind") == "literal").then(
+                    _bare(pl.col("d")).fill_null(XSD_STRING)
+                )
+            )
+        )
+
+    def rows(self, predicate: str) -> pl.LazyFrame:
+        """Return the triples of *predicate* in the default graph: s, o, d (datatype IRI of a
+        literal), oid, kind; a triple held by several graphs once.
+        """
+        rows = self.graph_rows(predicate)
+        if self.graphs is None:
+            return rows
+        if self._duplicated(predicate):
+            rows = rows.unique(subset=["s", "oid"])
+        return rows.drop("g", "gid")
+
+    def graph_types(self) -> pl.LazyFrame:
+        """Return the membership rows (s, c, and g when the index has graphs).
+
+        name_class_expressions writes types-named.parquet, where a type value that is a blank
+        node (an OWL class expression) is replaced by the IRI of its expression.
+        """
+        import polars as pl
+
+        named = self.path / "types-named.parquet"
+        return pl.scan_parquet(named if named.is_file() else self.path / "types.parquet")
+
+    def types(self) -> pl.LazyFrame:
+        """Return the members of each class (s, c), anonymous classes by their expression's IRI."""
+        return self.graph_types().select("s", "c").unique()
+
+    def type_ids(self) -> pl.LazyFrame:
+        """Return the members of each class by id (sid, c): 16 bytes a row, for large indexes."""
+        return self.graph_types().select("sid", "c").unique()
+
+    def data_types(self) -> pl.LazyFrame:
+        """Return the members read from the data graphs alone (all graphs here)."""
+        return self.types()
+
+    def data_type_ids(self) -> pl.LazyFrame:
+        """Return data_types by id (sid, c)."""
+        return self.type_ids()
+
+    def members(self) -> pl.LazyFrame:
+        """Return the members of each class as the miner counts them (_subject_type_pattern)."""
+        return self.types()
+
+    def view(
+        self, graph_uris: Sequence[str] | None, type_context_graph_uris: Sequence[str] | None = None
+    ) -> RowStore | StoreView:
+        """Select the graph scope of a mining run (rdfsolve.mining.query_builders._graph_scope).
+
+        Without data graphs the scope is the default graph (this store; type context graphs add
+        nothing to it, since it is the union of all graphs).
+        """
+        if not graph_uris:
+            return self
+        if self.graphs is None:
+            raise ValueError("The index has no named graphs: a graph scope selects no triple of it")
+        return StoreView(self, graph_uris, type_context_graph_uris or ())
+
+    @property
+    def class_expressions(self) -> dict[str, dict[str, Any]]:
+        """The anonymous classes: IRI -> Manchester syntax (CURIEs, and full IRIs), members."""
+        path = self.path / "class-expressions.json"
+        return json.loads(path.read_text()) if path.is_file() else {}
+
+
+class StoreView:
+    """The rows of a row store in a graph scope, as the miner's queries read them.
+
+    The scope of a mining run (query_builders._graph_scope, _type_pattern, _context_pattern):
+
+    - the data graphs (graph_uris) hold the edges: ``GRAPH ?_g { ?s ?p ?o }`` with ?_g one of
+      them; graph_rows() keeps the graph of each row, rows() is their RDF merge (``FROM`` each
+      data graph: a triple held by two of them once);
+    - types are read from the data graphs and the type context graphs (types(): DISTINCT
+      (s, c) over them);
+    - a class's members (_subject_type_pattern) are its typed nodes; with type context graphs,
+      only those with an edge in the data graphs (members());
+    - data_types(): the types in the data graphs alone, as a query without type context reads
+      them (the predicates of blank nodes; property usage evidence).
+    """
+
+    def __init__(
+        self, store: RowStore, graph_uris: Sequence[str], context: Sequence[str] = ()
+    ) -> None:
+        """Select *graph_uris* of *store*, with types also from *context*."""
+        self.base = store
+        self.path = store.path
+        self.manifest = store.manifest
+        self.graphs = store.graphs
+        self.graph_uris = list(dict.fromkeys(graph_uris))
+        self.context = tuple(dict.fromkeys(context))
+        self.type_graph_uris = list(dict.fromkeys([*self.graph_uris, *self.context]))
+
+    @staticmethod
+    def _terms(graphs: Iterable[str]) -> list[str]:
+        return [f"<{g}>" for g in graphs]
+
+    @property
+    def predicates(self) -> dict[str, Path]:
+        """The files of the predicates that have rows in the data graphs."""
+        held = {p for g in self.graph_uris for p, n in (self.graphs or {}).get(g, {}).items() if n}
+        return {p: f for p, f in self.base.predicates.items() if p in held}
+
+    @property
+    def class_expressions(self) -> dict[str, dict[str, Any]]:
+        """The anonymous classes of the store."""
+        return self.base.class_expressions
+
+    def graph_rows(self, predicate: str) -> pl.LazyFrame:
+        """Return the rows of *predicate* in the data graphs, each with its graph."""
+        import polars as pl
+
+        return self.base.graph_rows(predicate).filter(
+            pl.col("g").is_in(self._terms(self.graph_uris))
+        )
+
+    def rows(self, predicate: str) -> pl.LazyFrame:
+        """Return the triples of *predicate* in the RDF merge of the data graphs."""
+        rows = self.graph_rows(predicate)
+        if len(self.graph_uris) > 1 and self.base._duplicated(predicate):
+            rows = rows.unique(subset=["s", "oid"])
+        return rows.drop("g", "gid")
+
+    def graph_types(self) -> pl.LazyFrame:
+        """Return the membership rows of the data and type context graphs."""
+        import polars as pl
+
+        return self.base.graph_types().filter(pl.col("g").is_in(self._terms(self.type_graph_uris)))
+
+    def types(self) -> pl.LazyFrame:
+        """Return (s, c) read from the data and type context graphs."""
+        return self.graph_types().select("s", "c").unique()
+
+    def type_ids(self) -> pl.LazyFrame:
+        """Return (sid, c) read from the data and type context graphs."""
+        return self.graph_types().select("sid", "c").unique()
+
+    def data_types(self) -> pl.LazyFrame:
+        """Return (s, c) read from the data graphs alone."""
+        import polars as pl
+
+        return (
+            self.base.graph_types()
+            .filter(pl.col("g").is_in(self._terms(self.graph_uris)))
+            .select("s", "c")
+            .unique()
+        )
+
+    def data_type_ids(self) -> pl.LazyFrame:
+        """Return data_types by id (sid, c)."""
+        import polars as pl
+
+        return (
+            self.base.graph_types()
+            .filter(pl.col("g").is_in(self._terms(self.graph_uris)))
+            .select("sid", "c")
+            .unique()
+        )
+
+    def members(self) -> pl.LazyFrame:
+        """Return the members of each class: with type context graphs, those with an edge in
+        the data graphs (_subject_type_pattern's FILTER EXISTS).
+        """
+        import polars as pl
+
+        if not self.context:
+            return self.types()
+        subjects = pl.concat(
+            [self.graph_rows(p).select("s") for p in self.predicates], how="vertical_relaxed"
+        ).unique()
+        return self.types().join(subjects, on="s", how="semi")
+
+    def for_graph(self, graph: str) -> StoreView:
+        """Return the view of one data graph with the type graphs of this scope."""
+        return StoreView(self.base, [graph], [g for g in self.type_graph_uris if g != graph])
+
+    def view(
+        self, graph_uris: Sequence[str] | None, type_context_graph_uris: Sequence[str] | None = None
+    ) -> RowStore | StoreView:
+        """Select another scope of the same store."""
+        return self.base.view(graph_uris, type_context_graph_uris)
+
+
+def _bare(expr: pl.Expr) -> pl.Expr:
+    """Strip the angle brackets of an IRI term."""
+    return expr.str.strip_prefix("<").str.strip_suffix(">")
+
+
+# Building a store
+
+
+def _post(endpoint: str, query: str, accept: str) -> Any:
+    """Send *query* to a local endpoint; return the open response (no proxy, no time limit)."""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    data = urllib.parse.urlencode({"query": query}).encode()
+    request = urllib.request.Request(endpoint, data, {"Accept": accept})  # noqa: S310 (local)
+    return opener.open(request, timeout=None)
+
+
+def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
+    """Stream the TSV result of *query* to *path* as Parquet; return its rows.
+
+    QLever's TSV escapes tabs and newlines inside terms, so one line is one row.
+    """
+    import polars as pl
+
+    tsv = path.with_suffix(".tsv")
+    with _post(endpoint, query, "text/tab-separated-values") as response, tsv.open("wb") as out:
+        shutil.copyfileobj(response, out, 1 << 24)
+    frame = pl.scan_csv(tsv, separator="\t", quote_char=None, has_header=True, infer_schema=False)
+    frame.rename(lambda c: c.lstrip("?")).sink_parquet(path)
+    tsv.unlink()
+    return int(pl.scan_parquet(path).select(pl.len()).collect().item())
+
+
+# Literal text kept in full: the name and definition predicates (labels, Manchester names,
+# enrichment). Other literals keep their datatype, language and id; their text is cut to
+# LITERAL_CHARS characters (examples stay readable; counts use the ids).
+LITERAL_CHARS = 64
+BLOCK_BYTES = 1 << 26
+
+
+def _text_predicates() -> frozenset[str]:
+    from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, NAME_PREDICATES
+
+    return frozenset([*DEFINITION_PREDICATES, *NAME_PREDICATES, *LABEL_PROPERTIES])
+
+
+def _trim_literals(column: str) -> pl.Expr:
+    """Cut the lexical form of the literals of *column* to LITERAL_CHARS characters."""
+    import polars as pl
+
+    o = pl.col(column)
+    parts = r'^"(.*)"((?:@[A-Za-z0-9-]+)|(?:\^\^<[^>]*>))?$'
+    value = o.str.extract(parts, 1)
+    suffix = o.str.extract(parts, 2).fill_null("")
+    cut = value.str.slice(0, LITERAL_CHARS).str.strip_suffix("\\")
+    return (
+        pl.when(o.str.starts_with('"') & (value.str.len_chars() > LITERAL_CHARS))
+        .then(pl.lit('"') + cut + pl.lit('…"') + suffix)
+        .otherwise(o)
+        .alias(column)
+    )
+
+
+def _stream_rows(
+    endpoint: str,
+    query: str,
+    path: Path,
+    ids: dict[str, int],
+    *,
+    keep_text: bool = True,
+    extra: dict[str, Any] | None = None,
+) -> int:
+    """Write the rows of *query* to *path* as Parquet, with QLever's ids of some columns.
+
+    The TSV result (the terms) and the octet-stream result (one 64-bit id per cell, row by row,
+    in the same order) of the same query are read together, one block at a time, so memory is
+    bound by the block, not by the result, and nothing is written to disk but the Parquet file.
+    *ids* names the id columns and the position of their variable; *extra* adds constant
+    columns. Without *keep_text*, literal text in column o is cut (_trim_literals).
+    """
+    import io
+
+    import numpy as np
+    import polars as pl
+    import pyarrow.parquet as pq
+
+    partial = path.with_name(path.name + ".partial")
+    rows = 0
+    writer = None
+    with (
+        _post(endpoint, query, "text/tab-separated-values") as text,
+        _post(endpoint, query, "application/octet-stream") as binary,
+    ):
+        header = text.readline().decode().rstrip("\n").split("\t")
+        names = [h.lstrip("?") for h in header]
+        width = len(names)
+        rest = b""
+        while True:
+            block = text.read(BLOCK_BYTES)
+            data = rest + block
+            if not block:
+                lines, rest = data, b""
+                if lines and not lines.endswith(b"\n"):
+                    lines += b"\n"
+            else:
+                cut = data.rfind(b"\n") + 1
+                lines, rest = data[:cut], data[cut:]
+            count = lines.count(b"\n")
+            if count:
+                raw = binary.read(8 * width * count)
+                if len(raw) != 8 * width * count:
+                    raise RuntimeError(f"{len(raw) // 8} ids for {count} rows of {width}: {query}")
+                cells = np.frombuffer(raw, dtype="<u8")
+                frame = pl.read_csv(
+                    io.BytesIO(lines),
+                    has_header=False,
+                    new_columns=names,
+                    separator="\t",
+                    quote_char=None,
+                    infer_schema=False,
+                ).with_columns(
+                    *(
+                        pl.Series(name, cells[at::width], dtype=pl.UInt64)
+                        for name, at in ids.items()
+                    ),
+                    *(pl.lit(v).alias(k) for k, v in (extra or {}).items()),
+                )
+                if not keep_text and "o" in frame.columns:
+                    frame = frame.with_columns(_trim_literals("o"))
+                table = frame.to_arrow()
+                if writer is None:
+                    writer = pq.ParquetWriter(partial, table.schema, compression="zstd")
+                writer.write_table(table)
+                rows += count
+            if not block:
+                break
+        if binary.read(1):
+            raise RuntimeError(f"More ids than rows: {query}")
+    if writer is None:
+        pl.DataFrame(
+            {n: [] for n in [*names, *ids, *(extra or {})]},
+            schema={**dict.fromkeys(names, pl.String), **dict.fromkeys(ids, pl.UInt64)},
+        ).write_parquet(partial)
+    else:
+        writer.close()
+    partial.replace(path)
+    return rows
+
+
+def _ids(
+    endpoint: str, query: str, width: int, rows: int, columns: dict[str, int]
+) -> list[pl.Series]:
+    """Return QLever's 64-bit ids of some columns of *query* (application/octet-stream): one id
+    per cell, row by row, in the order of the TSV result of the same query.
+    """
+    import numpy as np
+    import polars as pl
+
+    with _post(endpoint, query, "application/octet-stream") as response:
+        ids = np.frombuffer(response.read(), dtype="<u8")
+    if len(ids) != width * rows:
+        raise RuntimeError(f"{len(ids)} ids for {rows} rows of {width} columns: {query}")
+    return [pl.Series(name, ids[c::width], dtype=pl.UInt64) for name, c in columns.items()]
+
+
+def _row_query(predicate: str) -> str:
+    return f"SELECT ?s ?o (DATATYPE(?o) AS ?d) WHERE {{ ?s <{predicate}> ?o }}"
+
+
+def _graph_row_query(predicate: str) -> str:
+    return f"SELECT ?g ?s ?o (DATATYPE(?o) AS ?d) WHERE {{ GRAPH ?g {{ ?s <{predicate}> ?o }} }}"
+
+
+def _unnamed_row_query(predicate: str) -> str:
+    """Read the triples of *predicate* outside every named graph (QLever's own default graph)."""
+    return (
+        f"SELECT ?s ?o (DATATYPE(?o) AS ?d) FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
+        f"WHERE {{ ?s <{predicate}> ?o }}"
+    )
+
+
+def _count(value: str) -> int:
+    """Read a count as QLever's TSV writes it (3, or "3"^^<...#int>)."""
+    return int(value.strip('"').split('"')[0])
+
+
+def _counts(endpoint: str, query: str, path: Path) -> list[tuple[tuple[str, ...], int]]:
+    """Return the rows of a grouped count query: the grouping terms, and the count as an int."""
+    import polars as pl
+
+    _tsv_to_parquet(endpoint, query, path)
+    rows = [(tuple(row[:-1]), _count(row[-1])) for row in pl.read_parquet(path).iter_rows()]
+    path.unlink()
+    return rows
+
+
+def _has_named_graphs(endpoint: str, path: Path) -> bool:
+    """Whether the index holds a named graph (QLever's GRAPH ?g returns only named graphs)."""
+    import polars as pl
+
+    probe = path / "graphs.parquet"
+    _tsv_to_parquet(endpoint, "SELECT ?g WHERE { GRAPH ?g { ?s ?p ?o } } LIMIT 1", probe)
+    found = pl.read_parquet(probe).height > 0
+    probe.unlink()
+    return found
+
+
+def export_index(
+    endpoint: str, path: Path, *, index: dict[str, Any] | None = None, workers: int = 4
+) -> RowStore:
+    """Read every predicate of a local QLever endpoint into a row store at *path*.
+
+    *index* describes the index (its metadata: build and triple count); a store of the same
+    index, read with the same membership properties, is reused. An export that stopped is
+    resumed: plan.json records what is being read, progress.jsonl each predicate written, and
+    only the predicates not written yet are read again. *workers* predicates are read at once
+    (the server answers qlever.lifecycle.SIMULTANEOUS_QUERIES queries at once).
+
+    Each row has the terms (s, o, the datatype d) and QLever's ids of the subject and object
+    (sid, oid); literal text is kept in full only for name and definition predicates.
+
+    When the index has named graphs, each row is read with its graph (``GRAPH ?g``), and the
+    triples outside every named graph, which ``GRAPH ?g`` does not return, are read with
+    ``FROM <QLEVER_DEFAULT_GRAPH>`` and given that graph.
+    """
+    import threading
+
+    import polars as pl
+
+    path = Path(path)
+    manifest = path / "store.json"
+    membership = list(MEMBERSHIP.get())
+    plan = {"version": STORE_VERSION, "index": index, "membership": membership}
+    if manifest.is_file() and index is not None:
+        old = json.loads(manifest.read_text())
+        same = (old.get("index"), old.get("version"), old.get("membership"))
+        if same == (index, STORE_VERSION, membership):
+            logger.info("Scan: reusing the row store %s", path)
+            return RowStore(path)
+    plan_file, progress = path / "plan.json", path / "progress.jsonl"
+    resumable = (
+        index is not None
+        and plan_file.is_file()
+        and json.loads(plan_file.read_text()) == plan
+        and not manifest.is_file()
+    )
+    if not resumable and path.exists():
+        shutil.rmtree(path)
+    (path / "rows").mkdir(parents=True, exist_ok=True)
+    plan_file.write_text(json.dumps(plan) + "\n")
+    done: dict[str, tuple[str, int]] = {}
+    if resumable and progress.is_file():
+        for line in progress.read_text().splitlines():
+            entry = json.loads(line)
+            if (path / "rows" / entry["file"]).is_file():
+                done[entry["predicate"]] = (entry["file"], entry["rows"])
+        logger.info("Scan: resuming %s with %d predicates read", path, len(done))
+    t0 = time.monotonic()
+    counted = path / "predicates.parquet"
+    sizes = {
+        p[1:-1]: n
+        for (p,), n in _counts(
+            endpoint, "SELECT ?p (COUNT(?s) AS ?n) WHERE { ?s ?p ?o } GROUP BY ?p", counted
+        )
+    }
+    named = _has_named_graphs(endpoint, path)
+    graphs: dict[str, dict[str, int]] | None = None
+    unnamed: dict[str, int] = {}
+    if named:
+        graphs = {}
+        for (g, p), n in _counts(
+            endpoint,
+            "SELECT ?g ?p (COUNT(?s) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ?p",
+            counted,
+        ):
+            graphs.setdefault(g[1:-1], {})[p[1:-1]] = n
+        unnamed = {
+            p[1:-1]: n
+            for (p,), n in _counts(
+                endpoint,
+                f"SELECT ?p (COUNT(?s) AS ?n) FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
+                "WHERE { ?s ?p ?o } GROUP BY ?p",
+                counted,
+            )
+        }
+        if unnamed:
+            graphs[QLEVER_DEFAULT_GRAPH] = unnamed
+    expected = {
+        p: sum(g.get(p, 0) for g in graphs.values()) if graphs is not None else n
+        for p, n in sizes.items()
+    }
+    if not (resumable and (path / "types.parquet").is_file()):
+        types = []
+        for number, prop in enumerate(membership):
+            part = path / f"types-{number}.parquet"
+            if not named:
+                query = f"SELECT ?s ?c WHERE {{ ?s <{prop}> ?c }}"
+                _stream_rows(endpoint, query, part, {"sid": 0})
+                types.append(pl.scan_parquet(part))
+                continue
+            query = f"SELECT ?g ?s ?c WHERE {{ GRAPH ?g {{ ?s <{prop}> ?c }} }}"
+            _stream_rows(endpoint, query, part, {"sid": 1})
+            types.append(pl.scan_parquet(part).select("s", "c", "g", "sid"))
+            if unnamed.get(prop):
+                rest = path / f"types-{number}-unnamed.parquet"
+                query = (
+                    f"SELECT ?s ?c FROM <{QLEVER_DEFAULT_GRAPH}> "  # noqa: S608 (SPARQL)
+                    f"WHERE {{ ?s <{prop}> ?c }}"
+                )
+                _stream_rows(
+                    endpoint, query, rest, {"sid": 0}, extra={"g": f"<{QLEVER_DEFAULT_GRAPH}>"}
+                )
+                types.append(pl.scan_parquet(rest).select("s", "c", "g", "sid"))
+        # The rows of one query are distinct; parts can repeat a row only when there are
+        # several membership properties (deduplicating a large table costs much memory).
+        if len(membership) == 1 and len(types) == 1:
+            (path / "types-0.parquet").rename(path / "types.parquet")
+        elif len(membership) == 1:
+            pl.concat(types).sink_parquet(path / "types.parquet")
+        else:
+            pl.concat(types).unique().sink_parquet(path / "types.parquet")
+        for part in path.glob("types-*.parquet"):
+            part.unlink()
+    text = _text_predicates()
+    lock = threading.Lock()
+
+    def read(job: tuple[int, str, int]) -> tuple[str, str, tuple[str, int, int] | None]:
+        """Write the rows of one predicate; return it, its file and any count mismatch."""
+        number, predicate, size = job
+        if predicate in done:
+            name, rows = done[predicate]
+            return predicate, name, (predicate, size, rows) if rows != size else None
+        file = path / "rows" / f"{number:05d}.parquet"
+        keep = predicate in text
+        if not named:
+            rows = _stream_rows(
+                endpoint, _row_query(predicate), file, {"sid": 0, "oid": 1}, keep_text=keep
+            )
+        else:
+            rows = _stream_rows(
+                endpoint,
+                _graph_row_query(predicate),
+                file,
+                {"gid": 0, "sid": 1, "oid": 2},
+                keep_text=keep,
+            )
+            if unnamed.get(predicate):
+                rest = file.with_name(file.stem + "-unnamed.parquet")
+                rows += _stream_rows(
+                    endpoint,
+                    _unnamed_row_query(predicate),
+                    rest,
+                    {"sid": 0, "oid": 1},
+                    keep_text=keep,
+                    extra={"g": f"<{QLEVER_DEFAULT_GRAPH}>"},
+                )
+                pl.concat(
+                    [
+                        pl.scan_parquet(file),
+                        pl.scan_parquet(rest).with_columns(gid=pl.lit(None, pl.UInt64)),
+                    ],
+                    how="diagonal_relaxed",
+                ).sink_parquet(file.with_name(file.name + ".all"))
+                file.with_name(file.name + ".all").replace(file)
+                rest.unlink()
+        with lock, progress.open("a") as log:
+            log.write(json.dumps({"predicate": predicate, "file": file.name, "rows": rows}) + "\n")
+        return predicate, file.name, (predicate, size, rows) if rows != size else None
+
+    order = sorted(sizes.items(), key=lambda x: (-x[1], x[0]))
+    jobs = [(n, p, expected[p]) for n, (p, _) in enumerate(order)]
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        finished = list(pool.map(read, jobs))
+    files = {predicate: name for predicate, name, _ in finished}
+    mismatches = [m for _, _, m in finished if m]
+    if mismatches:
+        raise RuntimeError(f"Rows read differ from the predicate counts: {mismatches[:5]}")
+    record: dict[str, Any] = {
+        **plan,
+        "endpoint": endpoint,
+        "predicates": files,
+        "triples": sum(sizes.values()),
+        "graphs": graphs,
+        "rows": expected,
+        "triples_by_predicate": sizes,
+        "seconds": round(time.monotonic() - t0, 1),
+        "resumed_predicates": len(done),
+        "literal_chars": LITERAL_CHARS,
+    }
+    manifest.write_text(json.dumps(record, indent=1) + "\n")
+    return RowStore(path)
+
+
+def _term(node: Any) -> str:
+    """Write an rdflib term as SPARQL TSV does."""
+    from rdflib import BNode, Literal
+
+    if isinstance(node, BNode):
+        return f"_:{node}"
+    if isinstance(node, Literal):
+        return node.n3()
+    return f"<{node}>"
+
+
+def _quads(graph: Any) -> list[tuple[Any, Any, Any, str | None]]:
+    """Return the quads of an rdflib graph or dataset; None as the graph of an unnamed triple."""
+    from rdflib import Dataset
+
+    if not isinstance(graph, Dataset):
+        return [(s, p, o, None) for s, p, o in graph]
+    default = graph.default_graph.identifier
+    quads: set[tuple[Any, Any, Any, str | None]] = set()
+    for context in graph.graphs():
+        name = None if context.identifier == default else str(context.identifier)
+        quads.update((s, p, o, name) for s, p, o in context)
+    return sorted(quads, key=str)
+
+
+def store_from_graph(graph: Any, path: Path) -> RowStore:
+    """Build a row store from an rdflib graph or dataset, as export_index reads a QLever index.
+
+    A dataset with named graphs gives a store with graphs: each named graph's triples with
+    their graph, the triples of the default graph with QLEVER_DEFAULT_GRAPH (QLever keeps input
+    without a graph there). The store's default graph is the union of all graphs, as QLever's
+    is (an rdflib Dataset with default_union=True answers the same). The id of a value is a hash
+    of its term, which identifies it as exactly as QLever's id does, since the term is written
+    in full.
+    """
+    import polars as pl
+    from rdflib import Literal
+
+    path = Path(path)
+    if path.exists():
+        shutil.rmtree(path)
+    (path / "rows").mkdir(parents=True)
+    quads = _quads(graph)
+    named = any(g is not None for *_, g in quads)
+    by_predicate: dict[str, set[tuple[str, str, str | None, str | None]]] = {}
+    for s, p, o, g in quads:
+        datatype = None
+        if isinstance(o, Literal):
+            datatype = str(o.datatype) if o.datatype else (RDF_LANG if o.language else XSD_STRING)
+        name = f"<{g or QLEVER_DEFAULT_GRAPH}>" if named else None
+        by_predicate.setdefault(str(p), set()).add(
+            (_term(s), _term(o), f"<{datatype}>" if datatype else None, name)
+        )
+    membership = list(MEMBERSHIP.get())
+    types = {(s, o, g) for p in membership for s, o, _, g in by_predicate.get(p, ())}
+    type_frame = pl.DataFrame(
+        sorted(types, key=str),
+        schema={"s": pl.String, "c": pl.String, "g": pl.String},
+        orient="row",
+    ).with_columns(sid=pl.col("s").hash())
+    (type_frame if named else type_frame.drop("g")).write_parquet(path / "types.parquet")
+    files = {}
+    graphs: dict[str, dict[str, int]] | None = {} if named else None
+    for number, (predicate, rows) in enumerate(sorted(by_predicate.items())):
+        frame = pl.DataFrame(
+            sorted(rows, key=str),
+            schema={"s": pl.String, "o": pl.String, "d": pl.String, "g": pl.String},
+            orient="row",
+        ).with_columns(sid=pl.col("s").hash(), oid=pl.col("o").hash())
+        if named and graphs is not None:
+            frame = frame.with_columns(gid=pl.col("g").hash()).select(
+                "s", "o", "d", "sid", "oid", "g", "gid"
+            )
+            for g, n in frame.group_by("g").len().iter_rows():
+                graphs.setdefault(g[1:-1], {})[predicate] = n
+        else:
+            frame = frame.select("s", "o", "d", "sid", "oid")
+        frame.write_parquet(path / "rows" / f"{number:05d}.parquet")
+        files[predicate] = f"{number:05d}.parquet"
+    (path / "store.json").write_text(
+        json.dumps(
+            {
+                "version": STORE_VERSION,
+                "index": None,
+                "membership": membership,
+                "predicates": files,
+                "triples": sum(len({r[:3] for r in rows}) for rows in by_predicate.values()),
+                "graphs": graphs,
+                "rows": {p: len(rows) for p, rows in by_predicate.items()},
+                "triples_by_predicate": {
+                    p: len({r[:3] for r in rows}) for p, rows in by_predicate.items()
+                },
+            }
+        )
+    )
+    return RowStore(path)
+
+
+# Anonymous classes
+
+EXPRESSION_IRI = "urn:rdfsolve:class-expression:"
+
+
+def _curie(iri: str) -> str:
+    from rdfsolve._uri import uri_to_curie
+
+    curie = uri_to_curie(iri)[0]
+    return curie if curie and curie != iri and ":" in curie and " " not in curie else f"<{iri}>"
+
+
+LABEL_PROPERTIES = (
+    "http://www.w3.org/2000/01/rdf-schema#label",
+    "http://www.w3.org/2004/02/skos/core#prefLabel",
+)
+
+
+def _expression_terms(outgoing: dict[str, list[tuple[str, str]]]) -> set[str]:
+    """Return the IRIs that appear in the expressions (classes, properties, individuals)."""
+    return {o[1:-1] for pairs in outgoing.values() for _, o in pairs if o.startswith("<")}
+
+
+def _labels(store: RowStore, iris: set[str]) -> dict[str, str]:
+    """One label of each IRI from the data: rdfs:label before skos:prefLabel, English or no
+    language before other languages, then the smallest text, so that the choice is stable.
+    """
+    import polars as pl
+
+    if not iris:
+        return {}
+    terms = [f"<{iri}>" for iri in iris]
+    found = []
+    for rank, prop in enumerate(LABEL_PROPERTIES):
+        if prop not in store.predicates:
+            continue
+        rows = store.rows(prop).filter(pl.col("s").is_in(terms) & (pl.col("kind") == "literal"))
+        found.append(
+            rows.select(
+                "s",
+                text=pl.col("o").str.extract(r'^"(.*)"(?:@[A-Za-z0-9-]+|\^\^<[^>]*>)?$', 1),
+                lang=pl.col("o").str.extract(r'"@([A-Za-z0-9-]+)$', 1),
+                rank=pl.lit(rank),
+            ).collect()
+        )
+    if not found:
+        return {}
+    table = pl.concat(found).filter(pl.col("text").is_not_null() & (pl.col("text") != ""))
+    table = table.with_columns(
+        english=~(
+            pl.col("lang").is_null() | pl.col("lang").str.to_lowercase().str.starts_with("en")
+        )
+    ).sort("rank", "english", "text")
+    return {
+        s[1:-1]: text
+        for s, text in table.group_by("s", maintain_order=True)
+        .first()
+        .select("s", "text")
+        .iter_rows()
+    }
+
+
+def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
+    """Give each OWL class expression used as a type a class IRI and a Manchester name.
+
+    A type value that is a blank node (``x rdf:type [ a owl:Restriction ; ... ]``) is an
+    anonymous class. Its expression is read from the rows of the expression predicates
+    (rdfsolve.ontology.manchester), written in Manchester syntax with full IRIs, and named
+    EXPRESSION_IRI + the SHA-256 of that text: the same expression in two places is one class.
+    Its members are the subjects typed by any blank node with that expression. A blank node
+    that is not a class expression OWL 2 maps to RDF stays out, as before. Writes
+    types-named.parquet and class-expressions.json; returns the expressions.
+    """
+    import hashlib
+
+    import polars as pl
+
+    from rdfsolve.ontology.manchester import (
+        EXPRESSION_PREDICATES,
+        UnsupportedExpressionError,
+        render,
+    )
+
+    for stale in ("types-named.parquet", "class-expressions.json"):
+        (store.path / stale).unlink(missing_ok=True)
+    types = pl.read_parquet(store.path / "types.parquet")
+    anonymous = types.filter(pl.col("c").str.starts_with("_:"))["c"].unique().to_list()
+    if not anonymous:
+        return {}
+    outgoing: dict[str, list[tuple[str, str]]] = {}
+    frontier = set(anonymous)
+    predicates = [p for p in store.predicates if p in EXPRESSION_PREDICATES]
+    while frontier:
+        found = pl.concat(
+            [
+                store.rows(p)
+                .filter(pl.col("s").is_in(list(frontier)))
+                .select("s", "o", q=pl.lit(p))
+                .collect()
+                for p in predicates
+            ]
+        )
+        frontier = set()
+        for s, o, q in found.iter_rows():
+            outgoing.setdefault(s, []).append((q, o))
+            if o.startswith("_:") and o not in outgoing:
+                frontier.add(o)
+    labels = _labels(store, _expression_terms(outgoing))
+
+    def labelled(iri: str) -> str:
+        """Write a term by its label in single quotes (Protege's rendering), else its CURIE."""
+        label = labels.get(iri)
+        return "'" + label.replace("'", "\\'") + "'" if label else _curie(iri)
+
+    names: dict[str, str] = {}
+    expressions: dict[str, dict[str, Any]] = {}
+    unsupported = 0
+    for node in anonymous:
+        try:
+            canonical = render(node, outgoing, lambda iri: f"<{iri}>")
+            readable = render(node, outgoing, _curie)
+            by_label = render(node, outgoing, labelled)
+        except UnsupportedExpressionError:
+            unsupported += 1
+            continue
+        iri = EXPRESSION_IRI + hashlib.sha256(canonical.encode()).hexdigest()[:24]
+        names[node] = f"<{iri}>"
+        expressions.setdefault(
+            iri,
+            {
+                "manchester": readable,
+                "manchester_labels": by_label,
+                "manchester_iris": canonical,
+                "nodes": 0,
+            },
+        )
+        expressions[iri]["nodes"] += 1
+    mapping = pl.DataFrame(
+        {"c": list(names), "named": list(names.values())},
+        schema={"c": pl.String, "named": pl.String},
+    )
+    named = (
+        types.join(mapping, on="c", how="left")
+        .with_columns(c=pl.coalesce("named", "c"))
+        .select(pl.exclude("named"))
+        .unique()
+    )
+    for iri in expressions:
+        expressions[iri]["members"] = named.filter(pl.col("c") == f"<{iri}>")["s"].n_unique()
+    named.write_parquet(store.path / "types-named.parquet")
+    record = dict(sorted(expressions.items()))
+    (store.path / "class-expressions.json").write_text(json.dumps(record, indent=1) + "\n")
+    if unsupported:
+        logger.info("Scan: %d blank-node types are not OWL class expressions", unsupported)
+    return record
+
+
+# Patterns
+
+
+BATCH_ROWS = 5_000_000
+# A predicate with more rows than this is counted in parts (count_patterns).
+PARTITION_ROWS = 50_000_000
+
+
+def store_rows(store: CountedStore, predicate: str) -> int:
+    """Return the rows of *predicate* in the store's file (from the manifest when it has them)."""
+    import polars as pl
+
+    rows = (store.manifest.get("rows") or {}).get(predicate)
+    if rows is not None:
+        return int(rows)
+    return int(pl.scan_parquet(store.predicates[predicate]).select(pl.len()).collect().item())
+
+
+def _batches(store: CountedStore) -> list[list[str]]:
+    """Group the predicates into batches of about BATCH_ROWS rows (a large one alone)."""
+    import polars as pl
+
+    sizes = {p: store_rows(store, p) for p in store.predicates}
+    batches: list[list[str]] = []
+    rows = BATCH_ROWS
+    for predicate in sorted(sizes, key=lambda p: sizes[p]):
+        if rows + sizes[predicate] > BATCH_ROWS:
+            batches.append([])
+            rows = 0
+        batches[-1].append(predicate)
+        rows += sizes[predicate]
+    return batches
+
+
+# The columns counting reads: ids, kind, datatype, and whether the subject is a blank node.
+# The text of subjects and objects is not read (on a source with long literals it is most of
+# the memory of a batch).
+def _counted_columns(frame: pl.LazyFrame, predicate: str, *, by_graph: bool) -> pl.LazyFrame:
+    import polars as pl
+
+    return frame.select(
+        "sid",
+        "oid",
+        "kind",
+        "d",
+        *(["g"] if by_graph else []),
+        sb=pl.col("s").str.starts_with("_:"),
+        p=pl.lit(predicate),
+    )
+
+
+def _batch_rows(
+    store: CountedStore, predicates: list[str], *, by_graph: bool = False
+) -> pl.DataFrame:
+    """Return the counted columns of the rows of some predicates, with the predicate as a
+    column p (and the graph of each row with *by_graph*).
+    """
+    import polars as pl
+
+    read = store.graph_rows if by_graph else store.rows
+    return pl.concat(
+        [_counted_columns(read(p), p, by_graph=by_graph) for p in predicates],
+        how="vertical_relaxed",
+    ).collect()
+
+
+def count_patterns(store: CountedStore) -> list[SchemaPattern]:
+    """Return the patterns of the store with triples, distinct subjects and distinct objects.
+
+    The patterns follow the definitions of the two-phase count queries: typed objects
+    (_build_batched_typed_count_query) give one row per subject class and object class;
+    untyped IRIs (_build_batched_untyped_count_query) "Resource"; blank nodes
+    (_build_batched_blank_node_count_query) every blank-node object, typed or not, with the
+    predicates of those blank nodes; literals one row per datatype. Subjects without a type are
+    left out (the structural patterns describe them). Each row of the store is read once; small
+    predicates are counted together, in batches of about BATCH_ROWS rows.
+
+    In a graph scope (a StoreView) the counts are those of the count queries, which group by the
+    edge graph ?_g (pattern_enrichment.enrich_patterns_with_counts merges them): each edge is
+    counted in its data graph, types come from the data and type context graphs; count is the
+    sum over the graphs, graphs the triples in each; one data graph gives triples_in_graph with
+    its distinct counts, several give quad_occurrences without distinct counts (a node in two
+    graphs would be counted twice). The distinct counts of each graph are kept in
+    graph_distinct_subjects and graph_distinct_objects, for the per-graph schemas.
+    """
+    import polars as pl
+
+    scope = getattr(store, "graph_uris", None)
+    # Joins use QLever's ids (an IRI or blank node has one id as subject and as object), and
+    # the classes as categories: the type table of a large index fits in memory this way.
+    types = store.type_ids().with_columns(pl.col("c").cast(pl.Categorical)).collect()
+    subjects = types.rename({"c": "subject_class"})
+    objects = types.rename({"sid": "oid", "c": "oc"})
+    keys = ["p", *(["g"] if scope else []), "subject_class", "object_class", "datatype"]
+    tables, blank_objects, blank_outgoing = [], [], []
+
+    def count(rows: pl.DataFrame, measure: str) -> list[pl.DataFrame]:
+        """Count the patterns of some rows: all three counts, or one of them (a partition)."""
+        aggregates = {
+            "all": {
+                "count": pl.len(),
+                "distinct_subjects": pl.col("sid").n_unique(),
+                "distinct_objects": pl.col("oid").n_unique(),
+            },
+            "subjects": {"count": pl.len(), "distinct_subjects": pl.col("sid").n_unique()},
+            "objects": {"distinct_objects": pl.col("oid").n_unique()},
+        }[measure]
+        if measure != "objects":
+            # The predicates of a blank node are read in the RDF merge of the data graphs
+            # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
+            blank_outgoing.append(rows.filter(pl.col("sb")).select("sid", "p").unique())
+        typed = rows.join(subjects, on="sid", how="inner")
+        literal = typed.filter(pl.col("kind") == "literal").with_columns(
+            object_class=pl.lit("Literal"), datatype=pl.col("d")
+        )
+        nonliteral = typed.filter(pl.col("kind") != "literal").with_columns(
+            datatype=pl.lit(None, pl.String)
+        )
+        with_types = nonliteral.join(objects, on="oid", how="left")
+        typed_object = with_types.filter(pl.col("oc").is_not_null()).with_columns(
+            object_class=pl.col("oc").cast(pl.String)
+        )
+        untyped = with_types.filter(
+            pl.col("oc").is_null() & (pl.col("kind") == "iri")
+        ).with_columns(object_class=pl.lit("Resource"))
+        blank = nonliteral.filter(pl.col("kind") == "bnode")
+        if measure != "objects":
+            blank_objects.append(
+                blank.select(pl.col("subject_class").cast(pl.String), "p", "oid").unique()
+            )
+        blank = blank.with_columns(object_class=pl.lit("BlankNode"))
+        return [
+            f.with_columns(pl.col("subject_class").cast(pl.String)).group_by(keys).agg(**aggregates)
+            for f in (literal, typed_object, untyped, blank)
+        ]
+
+    for batch in _batches(store):
+        size = sum(store_rows(store, p) for p in batch)
+        if len(batch) == 1 and size > PARTITION_ROWS:
+            # One predicate too large to hold: count it in parts by subject (triples and
+            # distinct subjects add up over parts) and again by object (distinct objects do).
+            parts = -(-size // PARTITION_ROWS)
+            read = store.graph_rows if scope else store.rows
+            frame = _counted_columns(read(batch[0]), batch[0], by_graph=bool(scope))
+            by_subject, by_object = [], []
+            for part in range(parts):
+                rows = frame.filter(pl.col("sid") % parts == part).collect()
+                by_subject.extend(count(rows, "subjects"))
+                rows = frame.filter(pl.col("oid") % parts == part).collect()
+                by_object.extend(count(rows, "objects"))
+            sums = (
+                pl.concat(by_subject).group_by(keys).agg(pl.col("count", "distinct_subjects").sum())
+            )
+            distinct = pl.concat(by_object).group_by(keys).agg(pl.col("distinct_objects").sum())
+            tables.append(sums.join(distinct, on=keys, how="left", nulls_equal=True))
+            continue
+        tables.extend(count(_batch_rows(store, batch, by_graph=bool(scope)), "all"))
+    if not tables:
+        return []
+    membership = list(MEMBERSHIP.get())
+    table = pl.concat(tables).with_columns(
+        subject_class=_bare(pl.col("subject_class")), object_class=_bare(pl.col("object_class"))
+    )
+    # Classes are IRIs (anonymous classes were given one by name_class_expressions); a blank
+    # node that is not a class expression is not a class. (C, rdf:type, Resource) says only
+    # that the class IRI has no type (miner.py keeps the rows whose type value has a class).
+    table = table.filter(
+        ~pl.col("subject_class").str.starts_with("_:")
+        & ~pl.col("object_class").str.starts_with("_:")
+        & ~(pl.col("p").is_in(membership) & (pl.col("object_class") == "Resource"))
+    )
+    # The predicates of the blank nodes each (subject class, predicate) points to, with
+    # rdf:type when the blank node has a type in the data.
+    blank_typed = (
+        store.data_types()
+        .filter(pl.col("s").str.starts_with("_:"))
+        .select("s")
+        .join(store.base.graph_types().select("s", "sid").unique(), on="s")
+        .select("sid", p=pl.lit(RDF_TYPE))
+        .unique()
+        .collect()
+    )
+    outgoing = pl.concat([*blank_outgoing, blank_typed]).rename({"sid": "oid", "p": "q"})
+    fields = (
+        pl.concat(blank_objects)
+        .join(outgoing, on="oid", how="inner")
+        .group_by("subject_class", "p")
+        .agg(pl.col("q").unique().sort())
+        .with_columns(subject_class=_bare(pl.col("subject_class")))
+    )
+    blank = {(c, p): list(q) for c, p, q in fields.iter_rows()}
+    merged: dict[tuple[str, str, str, str | None], dict[str, tuple[int, int, int]]] = {}
+    for row in table.iter_rows(named=True):
+        key = (row["subject_class"], row["p"], row["object_class"], row["datatype"])
+        graph = row["g"][1:-1] if scope else ""
+        merged.setdefault(key, {})[graph] = (
+            row["count"],
+            row["distinct_subjects"],
+            row["distinct_objects"],
+        )
+    semantics = (
+        "endpoint_default"
+        if not scope
+        else "triples_in_graph"
+        if len(scope) == 1
+        else "quad_occurrences"
+    )
+    patterns: list[SchemaPattern] = []
+    for (subject, predicate, obj, datatype), per_graph in merged.items():
+        # The miner's rule: distinct counts of the whole scope only when it is one graph.
+        ds = do = None
+        if len(per_graph) == 1 and (not scope or len(scope) == 1):
+            _, ds, do = next(iter(per_graph.values()))
+        patterns.append(
+            SchemaPattern(
+                subject_class=subject,
+                property_uri=predicate,
+                object_class=obj,
+                datatype=datatype,
+                count=sum(n for n, _, _ in per_graph.values()),
+                distinct_subjects=ds,
+                distinct_objects=do,
+                count_semantics=semantics,
+                graphs={g: n for g, (n, _, _) in sorted(per_graph.items())} if scope else None,
+                graph_distinct_subjects={g: m[1] for g, m in sorted(per_graph.items())}
+                if scope
+                else None,
+                graph_distinct_objects={g: m[2] for g, m in sorted(per_graph.items())}
+                if scope
+                else None,
+                blank_node_predicates=(blank.get((subject, predicate)) or None)
+                if obj == "BlankNode"
+                else None,
+                pattern_type={
+                    "Literal": PatternType.DATATYPE_PROPERTY,
+                    "BlankNode": PatternType.BLANK_NODE_PROPERTY,
+                }.get(obj, PatternType.OBJECT_PROPERTY),
+            )
+        )
+    return sorted(
+        patterns, key=lambda p: (p.subject_class, p.property_uri, p.object_class, p.datatype or "")
+    )
+
+
+# Strategy
+
+
+class ScanStrategy(MiningStrategy):
+    """Mine a local QLever index by reading its rows into a row store and counting in Polars.
+
+    The patterns come with their counts, so the miner skips its counts phase. *store_dir* is
+    where the rows are saved (next to the index); *index* describes the index, so that a store
+    of the same index is reused. A *store* already built (tests, a store from files) is used
+    as is. The graph scope of the run (context.graph_uris, context.type_context_graph_uris)
+    selects a view of the store (RowStore.view); ``store`` is then that view, which the miner's
+    other scan phases (rdfsolve.mining.scan_structure) and the tested paths read.
+    """
+
+    counted = True
+
+    def __init__(
+        self,
+        store_dir: Path | None = None,
+        *,
+        index: dict[str, Any] | None = None,
+        store: RowStore | None = None,
+    ) -> None:
+        """Keep where the rows go, or the store to read."""
+        self.store_dir = store_dir
+        self.index = index
+        self.row_store = store
+        self.store: RowStore | StoreView | None = store
+
+    @property
+    def name(self) -> str:
+        """Return the strategy name."""
+        return "scan"
+
+    def mine(self, context: MiningContext) -> list[SchemaPattern]:
+        """Read the rows (unless a store is given) and count the patterns in the run's scope."""
+        if self.row_store is None:
+            if self.store_dir is None:
+                raise ValueError("Give the scan strategy a store or a directory for one")
+            phase = context.report.start_phase("scan-export")
+            self.row_store = export_index(
+                context.helper.endpoint_url, self.store_dir, index=self.index
+            )
+            context.report.finish_phase(phase, items=len(self.row_store.predicates))
+            context.report.report.config["scan_store"] = {
+                "path": str(self.row_store.path),
+                "triples": self.row_store.manifest.get("triples"),
+                "predicates": len(self.row_store.predicates),
+                "graphs": len(self.row_store.graphs or {}),
+                "seconds": self.row_store.manifest.get("seconds"),
+            }
+        self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
+        phase = context.report.start_phase("scan-patterns")
+        expressions = name_class_expressions(self.row_store)
+        if expressions:
+            context.report.report.config["class_expressions"] = expressions
+        patterns = count_patterns(self.store)
+        for pattern in patterns:
+            if pattern.subject_class in expressions:
+                pattern.subject_label = expressions[pattern.subject_class]["manchester_labels"]
+            if pattern.object_class in expressions:
+                pattern.object_label = expressions[pattern.object_class]["manchester_labels"]
+        context.report.finish_phase(phase, items=len(patterns))
+        context.discovered_classes = sorted({p.subject_class for p in patterns})
+        return patterns
+
+
+def index_description(workdir: Path, name: str) -> dict[str, Any] | None:
+    """Describe a QLever index by its metadata (build, triples), to reuse a store of it."""
+    meta = Path(workdir) / f"{name}.meta-data.json"
+    if not meta.is_file():
+        return None
+    data = json.loads(meta.read_text())
+    return {
+        "name": name,
+        "git-hash": data.get("git-hash"),
+        "triples": (data.get("num-triples") or {}).get("normal"),
+        "modified": meta.stat().st_mtime_ns,
+    }

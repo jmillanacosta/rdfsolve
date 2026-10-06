@@ -99,6 +99,19 @@ class SchemaPattern(BaseModel):
             "subject-predicate-object edge is the one recorded."
         ),
     )
+    graph_distinct_subjects: dict[str, int] | None = Field(
+        None,
+        description=(
+            "Named graph URI to the distinct subjects of the pattern's edges in that graph, "
+            "when they were counted per graph (scan mining). A schema mined across several "
+            "graphs has no distinct counts of its own (count_semantics quad_occurrences); its "
+            "per-graph schemas take theirs from here."
+        ),
+    )
+    graph_distinct_objects: dict[str, int] | None = Field(
+        None,
+        description="Named graph URI to the distinct objects of the pattern's edges in that graph.",
+    )
     datatype: str | None = Field(
         None,
         description="XSD datatype URI for literal objects (only when object_class == 'Literal')",

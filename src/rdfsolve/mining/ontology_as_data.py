@@ -566,6 +566,8 @@ def _merge(group: list[SchemaPattern], subject: str, obj: str) -> SchemaPattern:
             "count_semantics": "upper_bound",
             "distinct_subjects": None,
             "distinct_objects": None,
+            "graph_distinct_subjects": None,
+            "graph_distinct_objects": None,
             "evidence_source": "inferred",
         }
     )
