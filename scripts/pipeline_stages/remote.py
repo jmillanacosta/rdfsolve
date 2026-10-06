@@ -11,7 +11,7 @@ from typing import Any
 from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
-from .base import PartialMiningError, Stage, rdf_only
+from .base import PartialMiningError, Stage, write_rdf
 from .config import Source
 
 log = logging.getLogger(__name__)
@@ -428,9 +428,7 @@ class RemoteMiningStage(Stage):
                                 include_examples=False,
                                 trim_descriptions=self.config.trim_descriptions,
                             )
-                            rdf_only(ontology_graph, "ontology", miner.last_report)
-                            ont_ttl = ontology_graph.serialize(format="turtle")
-                            ontology_path.write_text(ont_ttl, encoding="utf-8")
+                            write_rdf(ontology_graph, ontology_path, "ontology", miner.last_report)
                     except Exception as e:
                         raise RuntimeError(
                             f"[{source.name}] Could not generate ontology.ttl: {e}"
@@ -442,9 +440,7 @@ class RemoteMiningStage(Stage):
                             result.metadata, self.config.trim_descriptions
                         ).to_rdf_graph()
                         if metadata_graph:
-                            rdf_only(metadata_graph, "metadata", miner.last_report)
-                            meta_ttl = metadata_graph.serialize(format="turtle")
-                            metadata_path.write_text(meta_ttl, encoding="utf-8")
+                            write_rdf(metadata_graph, metadata_path, "metadata", miner.last_report)
                     except Exception as e:
                         raise RuntimeError(
                             f"[{source.name}] Could not generate metadata.ttl: {e}"

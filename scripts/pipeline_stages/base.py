@@ -46,6 +46,17 @@ def rdf_only(graph, what: str, report=None):
     return graph
 
 
+def write_rdf(graph, path: Path, what: str, report=None) -> None:
+    """Write *graph* as Turtle to *path* without the triples whose terms are not RDF IRIs.
+
+    The one way the pipeline writes an RDF output: rdf_only leaves out and records (with a
+    *report*) what no RDF syntax can write, so that one term with a space does not refuse the
+    whole file (bio2rdf.biomodels, job 115598: the class "http://bio2rdf.org/mathematical
+    modelling ontology_vocabulary:Resource" in the observed shapes ended the source partial).
+    """
+    path.write_text(rdf_only(graph, what, report).serialize(format="turtle"), encoding="utf-8")
+
+
 def _logged_step(step: str):
     """Log when an output step starts and ends, so that a long step is seen in the job log."""
 
@@ -176,6 +187,8 @@ class Stage:
         report.finished_at = None
         phase = collector.start_phase("pipeline-outputs")
         collector.flush()
+        # The report that the RDF outputs record what they leave out in (_write_rdf).
+        self._output_report = report
         try:
             yield
         except Exception as error:
@@ -184,8 +197,16 @@ class Stage:
         else:
             collector.finish_phase(phase)
         finally:
+            self._output_report = None
             report.finished_at = datetime.now(timezone.utc).isoformat()
             collector.flush()
+
+    def _write_rdf(self, graph, path: Path, what: str) -> None:
+        """Write an RDF output with write_rdf.
+
+        What it leaves out is recorded in the report of the output phase (_output_phase).
+        """
+        write_rdf(graph, path, what, getattr(self, "_output_report", None))
 
     @staticmethod
     def _require_complete(miner: Any) -> None:
@@ -414,7 +435,7 @@ class Stage:
 
             void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
             add_property_usage(void_graph, schema, evidence)
-            void_path.write_text(void_graph.serialize(format="turtle"), encoding="utf-8")
+            self._write_rdf(void_graph, void_path, "void")
         if store is not None:
             self._save_observed_shapes(schema, output_dir, name, suffix, store)
         grouping = getattr(self, "_scan_grouping", None)
@@ -446,9 +467,7 @@ class Stage:
         graph = observed_shapes(
             profiles, dataset_name=name, graph_uris=schema.about.graph_uris or None
         )
-        (output_dir / f"{name}{suffix}_observed_shapes.ttl").write_text(
-            graph.serialize(format="turtle"), encoding="utf-8"
-        )
+        self._write_rdf(graph, output_dir / f"{name}{suffix}_observed_shapes.ttl", "observed_shapes")
         (output_dir / f"{name}{suffix}_observed_profiles.json").write_text(
             json.dumps([p.model_dump(mode="json") for p in profiles], indent=1), encoding="utf-8"
         )
@@ -591,8 +610,7 @@ class Stage:
             try:
                 void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
                 if void_graph:
-                    void_ttl = void_graph.serialize(format="turtle")
-                    path.write_text(void_ttl, encoding="utf-8")
+                    self._write_rdf(void_graph, path, "void")
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate VoID: {e}") from e
 

@@ -294,3 +294,53 @@ def test_the_report_says_why_path_testing_stopped(tmp_path, monkeypatch):
     )
     assert report.config["navigation"]["stop_reason"] == "endpoint_cuts"
     assert report.config["navigation"]["cuts"] == cuts
+
+
+def test_an_output_with_a_class_that_is_not_an_rdf_iri_is_written_without_it(monkeypatch, tmp_path):
+    """bio2rdf.biomodels (job 115598): the observed shapes named the class
+    "http://bio2rdf.org/mathematical modelling ontology_vocabulary:Resource", rdflib refused to
+    write the Turtle and the source ended PARTIAL. The pipeline writes each RDF output through
+    one guard: the triple is left out, the file is written, and the report records it."""
+    from rdflib import RDF, Graph, URIRef
+    from rdflib.namespace import SH
+
+    from rdfsolve.mining import scan_shapes
+    from rdfsolve.schema_models.report import MiningReport
+
+    bad = URIRef("http://bio2rdf.org/mathematical modelling ontology_vocabulary:Resource")
+    good = URIRef("http://bio2rdf.org/biomodels_vocabulary:Model")
+    shapes = Graph()
+    for cls in (bad, good):
+        shape = URIRef(f"urn:shape:{len(shapes)}")
+        shapes.add((shape, RDF.type, SH.NodeShape))
+        shapes.add((shape, SH.targetClass, cls))
+    monkeypatch.setattr(scan_shapes, "class_property_profiles", lambda store, census=None: [])
+    monkeypatch.setattr(scan_shapes, "observed_shapes", lambda profiles, **kwargs: shapes)
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run"
+    )
+    report = MiningReport(
+        dataset_name="x",
+        endpoint_url="urn:x",
+        strategy="scan",
+        rdfsolve_version="0",
+        python_version="3",
+        started_at="2026-10-06T00:00:00+00:00",
+    )
+    miner = SimpleNamespace(last_report=report, helper=None)
+    schema = MinedSchema(about=AboutMetadata.build(dataset_name="x"), patterns=[])
+    store = SimpleNamespace(base=SimpleNamespace(path=tmp_path / "rows" / "base"))
+    stage = AnyStage(config)
+    with stage._output_phase(miner, tmp_path / "x_report.json"):
+        stage._save_observed_shapes(schema, tmp_path, "x", "_local", store)
+    written = Graph().parse(tmp_path / "x_local_observed_shapes.ttl", format="turtle")
+    assert (None, SH.targetClass, good) in written and len(written) == 3
+    assert report.config["iri_findings"]["graphs"]["observed_shapes"] == {
+        "triples_left_out": 1,
+        "terms": [{"iri": str(bad), "triples": 1}],
+    }
+    saved = json.loads((tmp_path / "x_report.json").read_text())
+    assert saved["config"]["iri_findings"]["graphs"]["observed_shapes"]["triples_left_out"] == 1
+    assert not any(p.error for p in report.phases), "The output phase is not failed"
