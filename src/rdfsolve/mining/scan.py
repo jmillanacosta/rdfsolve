@@ -179,21 +179,56 @@ class RowStore:
             rows = rows.unique(subset=["s", "oid"])
         return rows.drop("g", "gid")
 
+    def _type_rows(self) -> pl.LazyFrame:
+        """Return every membership row as read, whatever its type value."""
+        import polars as pl
+
+        named = self.path / "types-named.parquet"
+        return pl.scan_parquet(named if named.is_file() else self.path / "types.parquet")
+
     def graph_types(self) -> pl.LazyFrame:
         """Return the membership rows (s, c, and g when the index has graphs).
 
         name_class_expressions writes types-named.parquet, where a type value that is a blank
-        node (an OWL class expression) is replaced by the IRI of its expression.
+        node (an OWL class expression) is replaced by the IRI of its expression. A type value
+        that is neither an IRI nor a blank node (a literal: monarch-kg's ``?s rdf:type
+        "strain"``, job 115614) names no class and is left out, so that a node typed only so is
+        an untyped subject (literal_type_values reports them).
         """
         import polars as pl
 
-        named = self.path / "types-named.parquet"
-        types = pl.scan_parquet(named if named.is_file() else self.path / "types.parquet")
+        types = self._type_rows().filter(_class_term(pl.col("c")))
         # An index without any type (STRING's main graph): the empty table is held in memory,
         # since Polars 2.0 panics on a join with unique() of an empty Parquet scan ("min > max").
         if not types.select(pl.len()).collect().item():
             return pl.DataFrame(schema=types.collect_schema()).lazy()
         return types
+
+    def literal_type_values(self, limit: int = 20) -> dict[str, Any] | None:
+        """Return the type values that are not classes (literals), with their membership rows.
+
+        The form is that of the report's literal_type_values (count, samples), with the rows of
+        each value; None when there is none.
+        """
+        import polars as pl
+
+        found = (
+            self._type_rows()
+            .filter(~_class_term(pl.col("c")))
+            .group_by("c")
+            .agg(pl.len().alias("rows"))
+            .sort("rows", "c", descending=[True, False])
+            .collect()
+        )
+        if not found.height:
+            return None
+        return {
+            "count": int(found["rows"].sum()),
+            "values": found.height,
+            "samples": [
+                {"value": value, "rows": int(rows)} for value, rows in found.head(limit).iter_rows()
+            ],
+        }
 
     def types(self) -> pl.LazyFrame:
         """Return the members of each class (s, c), anonymous classes by their expression's IRI."""
@@ -365,6 +400,14 @@ class StoreView:
     ) -> RowStore | StoreView:
         """Select another scope of the same store."""
         return self.base.view(graph_uris, type_context_graph_uris)
+
+
+def _class_term(expr: pl.Expr) -> pl.Expr:
+    """Return whether a type value, as SPARQL TSV writes it, can be a class.
+
+    An IRI or a blank node (an OWL class expression) can; a literal cannot.
+    """
+    return expr.str.starts_with("<") | expr.str.starts_with("_:")
 
 
 def _bare(expr: pl.Expr) -> pl.Expr:
@@ -1964,6 +2007,17 @@ class ScanStrategy(MiningStrategy):
             }
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
+        literal_types = self.row_store.literal_type_values()
+        if literal_types:
+            # The SPARQL strategies count them as literal_type_values too (record_dropped_uri).
+            context.report.report.config["literal_type_values"] = literal_types
+            logger.warning(
+                "%d membership rows have a type value that is not a class (%d values, first: %s):"
+                " their subjects are mined as untyped (report: literal_type_values)",
+                literal_types["count"],
+                literal_types["values"],
+                literal_types["samples"][0]["value"],
+            )
         expressions = name_class_expressions(self.row_store)
         if expressions:
             context.report.report.config["class_expressions"] = expressions
