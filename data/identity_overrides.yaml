@@ -383,3 +383,11 @@
   relation: same_upstream
   note: >-
     Different RDF conversions of the same upstream resource; kept as separate datasets.
+- left: earthmetabolome
+  right: emi
+  relation: version_of
+  newer: emi
+  note: >-
+    Two releases of METRIN-KG on Zenodo, one concept record (15689186): earthmetabolome
+    downloads record 15689187 (2025-06-18), emi record 18652487 (2026-02-16; checked
+    2026-10-06). The corpus selection mines one of them: the one whose inputs are on disk.
