@@ -163,6 +163,11 @@ class SourceModel(BaseModel):
         Hash kinds (md5, sha1, sha256) for which the publisher puts a checksum file beside each
         download, named after it with the kind as suffix (mesh.nt.gz.sha1), in the format of
         sha1sum. The hash is recorded with the download and checked against the file.
+    checksums:
+        Hashes that the publisher gives for a download elsewhere than in a checksum file
+        beside it, per download URL and hash kind (md5, sha1, sha256), such as the MD5 that
+        names a file in a DVC remote. They are recorded with the download and checked against
+        the file, as the hashes of checksum files.
     bioregistry_prefix:
         Canonical Bioregistry prefix.
     bioregistry_name:
@@ -246,6 +251,7 @@ class SourceModel(BaseModel):
     download_ttl: list[str] = Field(default_factory=list)
     archive_members_left_out: list[str] = Field(default_factory=list)
     checksum_files: list[str] = Field(default_factory=list)
+    checksums: dict[str, dict[str, str]] = Field(default_factory=dict)
 
     # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str = ""
@@ -330,6 +336,15 @@ class SourceModel(BaseModel):
         unknown = sorted(set(self.checksum_files) - {"md5", "sha1", "sha256"})
         if unknown:
             raise ValueError(f"checksum_files takes md5, sha1 or sha256, not {unknown}")
+        import re
+
+        lengths = {"md5": 32, "sha1": 40, "sha256": 64}
+        for url, hashes in self.checksums.items():
+            for kind, value in hashes.items():
+                if kind not in lengths:
+                    raise ValueError(f"checksums takes md5, sha1 or sha256, not {kind}")
+                if not re.fullmatch(rf"[0-9a-f]{{{lengths[kind]}}}", value):
+                    raise ValueError(f"checksums: {kind} of {url} is not a hex digest")
         return self
 
     @model_validator(mode="after")

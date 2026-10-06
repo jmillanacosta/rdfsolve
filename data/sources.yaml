@@ -8484,8 +8484,13 @@
 - name: biobricks-ice
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-ice/sparql
-  notes: 'KG Registry: BioBricks ICE'
+  notes: "KG Registry: BioBricks ICE. Local input: BioBricks' HDT ice.hdt (368,384,185 bytes, 27,386,547 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.3 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 361,537,594 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-ice
+  download_hdt:
+  - https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/00/acca9cfecec1a64f1207897b9de87b
+  checksums:
+    https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/00/acca9cfecec1a64f1207897b9de87b:
+      md5: 00acca9cfecec1a64f1207897b9de87b
   keywords:
   - toxicology
   - chemical
@@ -8510,8 +8515,13 @@
 - name: biobricks-pubchem-annotations
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-pubchem-annotations/sparql
-  notes: 'KG Registry: BioBricks PubChem Annotations'
+  notes: "KG Registry: BioBricks PubChem Annotations. Local input: BioBricks' HDT annotations.hdt (1,026,674,753 bytes, 87,425,612 triples in its header) from BioBricks' public DVC remote, named by its MD5 (pubchem-annotations-kg dvc.lock at commit 985674b (2024-12-10), out brick/annotations.hdt; the repository's main branch replaced this transform on 2026-07-16 (8a943c9), so the HDT is reached from the older dvc.lock). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 1,015,746,624 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-pubchem-annotations
+  download_hdt:
+  - https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/18/8f7cc4f3b623e1a213c6aa4a12569b
+  checksums:
+    https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/18/8f7cc4f3b623e1a213c6aa4a12569b:
+      md5: 188f7cc4f3b623e1a213c6aa4a12569b
   keywords:
   - chemical
   - annotation
@@ -8523,8 +8533,13 @@
 - name: biobricks-tox21
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-tox21/sparql
-  notes: 'KG Registry: BioBricks Tox21'
+  notes: "KG Registry: BioBricks Tox21. Local input: BioBricks' HDT tox21.hdt (303,920 bytes, 26,939 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 300,573 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-tox21
+  download_hdt:
+  - https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/58/3ce780c4139a0e3e7ac8f0f222ab25
+  checksums:
+    https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/58/3ce780c4139a0e3e7ac8f0f222ab25:
+      md5: 583ce780c4139a0e3e7ac8f0f222ab25
   keywords:
   - toxicology
   - chemical
@@ -8536,8 +8551,13 @@
 - name: biobricks-toxcast
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-toxcast/sparql
-  notes: 'KG Registry: BioBricks ToxCast'
+  notes: "KG Registry: BioBricks ToxCast. Local input: BioBricks' HDT toxcast.hdt (275,037,358 bytes, 30,246,162 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 267,475,683 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-toxcast
+  download_hdt:
+  - https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/f7/66f940a71efa9b9a64e60b40c087f9
+  checksums:
+    https://ins-dvc.s3.amazonaws.com/insdvc/files/md5/f7/66f940a71efa9b9a64e60b40c087f9:
+      md5: f766f940a71efa9b9a64e60b40c087f9
   keywords:
   - toxicology
   - chemical
@@ -10336,8 +10356,11 @@
   dataset_kind: instance
   kg_registry_id: maudekg
   science_area: life sciences
-  notes: 'KG Registry: FDA MAUDE Adverse Event Knowledge Graph'
-  endpoint: https://apps.okn.us/maudekg/sparql
+  notes: "KG Registry: FDA MAUDE Adverse Event Knowledge Graph. FRINK serves it as medical-device-kg
+    (KG Fabric v0.0.4, 17,857,085 triples; registry.okn.us/registry/kgs/medical-device-kg/); the
+    former endpoint apps.okn.us/maudekg/sparql answers with the web app's HTML page (checked
+    2026-10-06). okn-void still lists maudekg v0.0.2 (95,913 triples), an earlier graph."
+  endpoint: https://apps.okn.us/medical-device-kg/sparql
   sparql_strategy: get+json
 - name: ncipidkg
   dataset_kind: instance
@@ -10447,3 +10470,24 @@
   - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/near_acupoint.ttl
   - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/part_of.ttl
   - https://raw.githubusercontent.com/yimingli99/AcuKG-Knowledge-graph-for-medical-acupuncture/main/AcuKG_RDF/pinyinname.ttl
+- name: ruralkg.sail
+  dataset_kind: instance
+  science_area: other
+  download_ttl:
+  - https://raw.githubusercontent.com/SAIL-UA/okn.github.io/main/data/rural_kg.ttl
+  notes: "Rural KG as its team (SAIL-UA, University of Alabama) publishes it on GitHub
+    (okn.github.io data/rural_kg.ttl, 24,140,143 bytes, commit of 2025-02-05, sha256
+    1598112a41bff63e917d3239eac473d94d80ec2dbfe1f57bd5a6f07d115cd40b): 757,242 triples (pyoxigraph,
+    2026-10-06). FRINK's ruralkg (KG Fabric v0.2.10, 885,098 triples) is a later release of the
+    same graph; FRINK publishes no dump of it. No licence is stated."
+- name: biomarkerkb.reviewed
+  dataset_kind: instance
+  science_area: life sciences
+  download_tar_gz:
+  - https://data.biomarkerkb.org/ln2data/releases/data/current/reviewed/all-biomarkers-nt.tar.gz
+  notes: "BiomarkerKB's own N-Triples of its reviewed biomarkers (dataset BMK_000019, data release
+    3.6.1, all-biomarkers-nt.tar.gz 3,044,602 bytes, Last-Modified 2026-10-01; one member
+    all-biomarkers.nt): 608,166 triples, OBCI predicates only (2026-10-06). FRINK's biomarkerkg
+    (KG Fabric v0.0.3, 1,215,057 triples) is another build of the same data that adds rdfs:label,
+    rdf:type and dct:source triples. The folder is 'current': the release changes at the same URL.
+    CC BY 4.0."

@@ -249,6 +249,7 @@ def find_metalinks(
     *,
     fetch: Callable[[str], bytes | None] = _fetch_text,
     checksum_files: Iterable[str] = (),
+    declared: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Return, per URL, what a metalink of its provider says of its file.
 
@@ -256,7 +257,8 @@ def find_metalinks(
     published in the folder of the file (METALINK_NAMES). The result names the metalink, the
     release version (of the file, else of the metalink), and the size and hashes it gives.
     For each kind in *checksum_files*, the checksum file beside the download (its URL with
-    the kind as suffix) adds its hash, and is named under checksum_files.
+    the kind as suffix) adds its hash, and is named under checksum_files. *declared* adds the
+    hashes that the registry entry gives per URL (checksums), named under declared.
     """
     parsed: dict[str, dict[str, Any] | None] = {}
 
@@ -300,6 +302,11 @@ def find_metalinks(
             release = releases.setdefault(url, {"version": None, "hashes": {}})
             release["hashes"] = {**release["hashes"], kind: value}
             release.setdefault("checksum_files", []).append(location)
+        given = {kind.lower(): value.lower() for kind, value in ((declared or {}).get(url) or {}).items()}
+        if given:
+            release = releases.setdefault(url, {"version": None, "hashes": {}})
+            release["hashes"] = {**release["hashes"], **given}
+            release["declared"] = sorted(given)
     return releases
 
 
@@ -529,7 +536,7 @@ def unpinned_inputs(current: dict[str, Any], pinned: dict[str, Any]) -> list[str
 _DERIVED_SUFFIXES = frozenset(
     {
         ".gz", ".xz", ".bz2", ".nt", ".nq", ".ttl", ".rdf", ".owl", ".xml", ".trig", ".n3",
-        ".jsonld", ".obo", ".jnl", ".part",
+        ".jsonld", ".obo", ".jnl", ".hdt", ".part",
     }
 )  # fmt: skip
 _ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tgz", ".tar.xz", ".tar.bz2", ".zip")

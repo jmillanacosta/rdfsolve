@@ -481,7 +481,11 @@ class LocalMiningStage(Stage):
                     # files that the entry names add one request per file and kind.
                     write_record(
                         workdir, urls, server_state,
-                        partial(find_metalinks, checksum_files=source.checksum_files),
+                        partial(
+                            find_metalinks,
+                            checksum_files=source.checksum_files,
+                            declared=source.checksums,
+                        ),
                     )
                     expanded.extend(path for directory in directories for path in convert_trig(directory))
             if source.graph_sources:

@@ -461,3 +461,32 @@
   note: >-
     RDF Portal's MeSH 2025 is a yearly graph (active records only); mesh.nlm.cumulative is NLM's
     cumulative graph. Neither holds the other.
+
+- left: biobricks-aopwiki
+  right: aopwikirdf
+  relation: same_upstream
+  note: >-
+    BioBricks AOP-Wiki is built from AOPWikiRDF (BioBricks' okn-registry provenance names
+    marvinm2/AOPWikiRDF as its source); its build repository is not public, so which AOPWikiRDF
+    release it copies is not known (184,333 triples at FRINK v0.0.4, checked 2026-10-06).
+- left: biobricks-pubchem-annotations
+  right: pubchem.ftp
+  relation: same_upstream
+  note: >-
+    BioBricks PubChem Annotations is BioBricks' RDF of PubChem's PUG-View annotation tables
+    (pubchem-annotations-kg, annotations.hdt, 87,425,612 triples), not PubChem's own RDF.
+- left: ruralkg.sail
+  right: ruralkg
+  relation: version_of
+  newer: ruralkg
+  note: >-
+    The team's GitHub Turtle (757,242 triples, commit of 2025-02-05) and FRINK's KG Fabric v0.2.10
+    (885,098 triples, served at apps.okn.us/ruralkg) are two releases of SAIL-UA's Rural KG
+    (same sail.ua.edu/ruralkg namespaces; checked 2026-10-06).
+- left: biomarkerkb.reviewed
+  right: biomarker
+  relation: same_upstream
+  note: >-
+    BiomarkerKB's own N-Triples (release 3.6.1, 608,166 triples, OBCI predicates only) and FRINK's
+    biomarkerkg (v0.0.3, 1,215,057 triples, with rdfs:label, rdf:type and dct:source added) are two
+    RDF builds of BiomarkerKB's reviewed biomarkers; neither holds the other (checked 2026-10-06).

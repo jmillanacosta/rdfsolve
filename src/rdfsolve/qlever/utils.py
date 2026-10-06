@@ -207,6 +207,13 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
         cat=DECOMPRESS_EACH,
         needs_conversion=True,
     ),
+    # HDT is written as gzip N-Triples beside it (rdfsolve.qlever.hdt).
+    "hdt": FormatSpec(
+        qlever_format="nt",
+        glob="*.hdt.nt.gz",
+        cat=DECOMPRESS_EACH,
+        needs_conversion=True,
+    ),
     # Archive-only keys (format decided by archive contents)
     "tar_gz": FormatSpec(
         qlever_format="ttl",
@@ -249,6 +256,7 @@ _RDF_EXTS = (
     ".obo",
     ".jnl.gz",
     ".jnl",
+    ".hdt",
     ".tar.gz",
     ".tgz",
     ".zip",
@@ -306,6 +314,11 @@ class SourceAnalysis:
     def needs_jsonld_conversion(self) -> bool:
         """Check if source requires JSON-LD to Turtle conversion."""
         return "jsonld" in self.suffixes
+
+    @property
+    def needs_hdt_conversion(self) -> bool:
+        """Check if source requires HDT to N-Triples conversion."""
+        return "hdt" in self.suffixes
 
     @property
     def needs_decompression(self) -> bool:
@@ -483,7 +496,8 @@ def _saved_names(urls_by_suffix: dict[str, list[str]]) -> dict[str, str]:
                 continue
             name = _file_name(url)
             base = url.split("?", 1)[0].rstrip("/").rsplit("/", 1)[-1]
-            if name is None and suffix in _DATA_FORMATS and base:
+            # A DVC remote serves each file under its hash, without an extension (BioBricks).
+            if name is None and suffix in (*_DATA_FORMATS, "hdt") and base:
                 stem, gz = (base[:-3], ".gz") if base.endswith(".gz") else (base, "")
                 name = f"{stem}.{suffix}{gz}"
             names.append((url, name))
@@ -892,6 +906,11 @@ def _build_get_data_steps(
 
     if analysis.needs_journal_conversion:
         steps.extend(_convert_journal_steps())
+
+    if analysis.needs_hdt_conversion:
+        from rdfsolve.qlever.hdt import convert_hdt_steps
+
+        steps.extend(convert_hdt_steps())
 
     return steps
 
