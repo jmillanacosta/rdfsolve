@@ -153,6 +153,8 @@ class _Deadline:
 
 
 _active_deadline: ContextVar[_Deadline | None] = ContextVar("sparql_deadline", default=None)
+# True inside SparqlHelper.graph_exclusion_suspended: queries are sent without the exclusion.
+_exclusion_suspended: ContextVar[bool] = ContextVar("graph_exclusion_suspended", default=False)
 
 
 class _WatchedHTTPConnection(HTTPConnection):
@@ -755,9 +757,13 @@ class SparqlHelper:
         self.rate_limit_wait = rate_limit_wait
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
-        # Graphs left out of the default and named graphs of a query without a dataset clause
-        # (graph_exclusion_prologue); set only after the endpoint accepted the exclusion.
+        # Graphs left out of the default graph of a query without a dataset clause
+        # (graph_exclusion_prologue); set only after the endpoint passed the exclusion check.
         self.excluded_graphs: list[str] = []
+        # The classes typed only in the excluded graphs, when they are known: a class listing
+        # is then read without the exclusion and these classes are dropped from it, which gives
+        # the same classes for less work (graph_exclusion_suspended).
+        self.engine_only_classes: frozenset[str] | None = None
         self.inter_request_delay = inter_request_delay
         if (
             type(select_page_size) is not int
@@ -949,6 +955,21 @@ class SparqlHelper:
                     result[s].append(c)
         return result
 
+    @contextmanager
+    def graph_exclusion_suspended(self) -> Iterator[None]:
+        """Send the queries of the block without the graph exclusion prologue.
+
+        For a query whose answer can be cleaned of the excluded graphs after it is read (a class
+        listing, with engine_only_classes): the prologue can make it much slower (forum,
+        2026-10-06: the class listing answered 155,649 classes in 175 s without it, and a 502
+        after 315 s with input:default-graph-exclude for its 5 engine graphs).
+        """
+        token = _exclusion_suspended.set(True)
+        try:
+            yield
+        finally:
+            _exclusion_suspended.reset(token)
+
     def _execute(
         self,
         query: str,
@@ -959,7 +980,11 @@ class SparqlHelper:
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
         query = writable_query(query)
-        if self.excluded_graphs and not has_dataset_clause(query):
+        if (
+            self.excluded_graphs
+            and not _exclusion_suspended.get()
+            and not has_dataset_clause(query)
+        ):
             query = graph_exclusion_prologue(self.excluded_graphs) + query
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         started = time.monotonic()
@@ -2280,28 +2305,67 @@ class SparqlHelper:
         return f"SparqlHelper({url!r}, use_post={self._requires_post})"
 
 
-_DATASET_CLAUSE = re.compile(r"(?i)\bFROM\s+(?:NAMED\s+)?(?:<|[A-Za-z_][\w.-]*:)")
+# The parts of a query that are not SPARQL syntax: long and short string literals, IRIs and
+# comments. They are blanked before a keyword is looked for, so that a FROM inside a literal, an
+# IRI or a comment is not taken for one. A literal is tried first (it may hold < or #), then an
+# IRI (it may hold #), then a comment.
+_OPAQUE_SPARQL = re.compile(
+    r'"""(?:[^"\\]|\\.|"(?!""))*"""'
+    r"|'''(?:[^'\\]|\\.|'(?!''))*'''"
+    r'|"(?:[^"\\\n]|\\.)*"'
+    r"|'(?:[^'\\\n]|\\.)*'"
+    r'|<[^<>"{}|^`\\\x00-\x20]*>'
+    r"|#[^\n]*"
+)
+# FROM as a keyword: not the end of a name, a variable (?from) or a prefixed name (ex:from).
+_DATASET_CLAUSE = re.compile(
+    r"(?i)(?<![\w?$:.\-])FROM(?:\s+NAMED)?(?:\s*<|\s+(?:[A-Za-z_][\w.-]*)?:)"
+)
+
+
+def _sparql_syntax(query: str) -> str:
+    """Return *query* with its literals, IRIs and comments blanked; an IRI keeps its brackets."""
+
+    def blank(match: re.Match[str]) -> str:
+        """Return the placeholder of one literal, IRI or comment."""
+        return "<>" if match.group(0).startswith("<") else " "
+
+    return _OPAQUE_SPARQL.sub(blank, query)
 
 
 def has_dataset_clause(query: str) -> bool:
-    """Return whether *query* names its graphs with FROM or FROM NAMED."""
-    return bool(_DATASET_CLAUSE.search(query))
+    """Return whether *query* names its graphs with FROM or FROM NAMED.
+
+    The keyword is looked for in the query's syntax only: a FROM inside a literal, an IRI or a
+    comment is not one.
+    """
+    return bool(_DATASET_CLAUSE.search(_sparql_syntax(query)))
 
 
 def graph_exclusion_prologue(graphs: list[str]) -> str:
-    """Return the Virtuoso pragmas that leave *graphs* out of the default and named graphs.
+    """Return the Virtuoso pragmas that leave *graphs* out of the default graph of a query.
 
     Without a dataset clause, Virtuoso's default graph is the union of every graph, its system
     graphs included (virtrdf#, the WebDAV graph): the census of AOP-Wiki counted 340,949 triples
     of which 2,479 are virtrdf# and 23 the service description. The pragmas are sent only with a
     query that has no FROM or FROM NAMED: Virtuoso drops a FROM that names an excluded graph and
     reads every other graph instead.
+
+    Only input:default-graph-exclude is sent, never input:named-graph-exclude:
+
+    - on some Virtuoso versions input:named-graph-exclude empties the default graph of the
+      query, silently (dbpedia.org, 2026-10-06: SELECT DISTINCT ?class WHERE { ?s a ?class }
+      answered 1099 classes without pragmas, 1086 with input:default-graph-exclude <virtrdf#>
+      alone, and 0 rows, HTTP 200, no error, with input:named-graph-exclude);
+    - it makes a query that binds a graph slow (sparql.string-db.org, 2026-10-06: SELECT
+      DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } } took 0.2 s without it, 0.24 s with
+      input:default-graph-exclude and 37.7 s with input:named-graph-exclude, past the 60 s cut
+      of its proxy under load).
+
+    A query that binds a graph (?g in GRAPH ?g) is cleaned of the engine graphs by the caller
+    instead: the graph listings drop the graphs with an excluded prefix.
     """
-    return "".join(
-        f"DEFINE input:default-graph-exclude {URIRef(g).n3()}\n"
-        f"DEFINE input:named-graph-exclude {URIRef(g).n3()}\n"
-        for g in graphs
-    )
+    return "".join(f"DEFINE input:default-graph-exclude {URIRef(g).n3()}\n" for g in graphs)
 
 
 # Convenience function for one-off queries

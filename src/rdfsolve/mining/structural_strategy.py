@@ -629,8 +629,10 @@ def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
     import hashlib
 
     # The graphs that the helper leaves out are part of the queries that it sends.
+    # The key names the pragma (default graph only), so that counts read with
+    # input:named-graph-exclude as well (dbpedia: emptied) are not resumed.
     excluded = list(getattr(getattr(context, "helper", None), "excluded_graphs", None) or [])
-    sent = [*(["exclude " + " ".join(excluded)] if excluded else []), *queries]
+    sent = [*(["exclude-default " + " ".join(excluded)] if excluded else []), *queries]
     key = ("census|" + hashlib.sha256("\n".join(sent).encode()).hexdigest(),)
     resumed = getattr(context, "resumed", None) or {}
     if key in resumed:

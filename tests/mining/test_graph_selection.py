@@ -221,7 +221,9 @@ def _fake_endpoint(monkeypatch, helper, refuse_define=False):
             raise QueryError("HTTP 400: Invalid SPARQL query: Token DEFINE")
         if query_type == "ASK":
             return {"boolean": True}
-        return {"head": {"vars": []}, "results": {"bindings": []}}
+        # One row: the self-check of the exclusion needs a non-empty answer.
+        row = {"s": {"type": "uri", "value": "urn:s"}}
+        return {"head": {"vars": ["s"]}, "results": {"bindings": [row]}}
 
     monkeypatch.setattr(helper, "_execute_request", execute)
     return sent
@@ -256,12 +258,14 @@ def test_engine_graphs_are_left_out_of_every_query_without_a_dataset(monkeypatch
         record = miner.last_report.config["excluded_graphs"]
         assert record["state"] == "excluded" and record["graph_uris"] == excluded
         miner.helper.select("SELECT DISTINCT ?p WHERE { ?s ?p ?o }")
+        miner.helper.select("SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }")
         miner.helper.select("SELECT ?p FROM <http://data.example/> WHERE { ?s ?p ?o }")
         miner.helper.ask("ASK FROM NAMED <http://data.example/> { GRAPH ?g { ?s ?p ?o } }")
-    unscoped, scoped, named = sent[-3:]
+    unscoped, graph_pattern, scoped, named = sent[-4:]
     for graph in excluded:
         assert f"DEFINE input:default-graph-exclude <{graph}>" in unscoped
-        assert f"DEFINE input:named-graph-exclude <{graph}>" in unscoped
+        assert f"DEFINE input:default-graph-exclude <{graph}>" in graph_pattern
+    assert "input:named-graph-exclude" not in "".join(sent), "It empties dbpedia's answers"
     assert "DEFINE" not in scoped and "DEFINE" not in named
     assert miner.helper.excluded_graphs == [], "The exclusion ends with the session"
 

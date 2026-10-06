@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self
 
 import pyoxigraph as ox
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve.local_rdf import LocalBackend
@@ -1025,15 +1025,19 @@ class SchemaMiner:
         WebDAV graph, ...): their predicates and edges entered the census and the structural
         patterns (WikiPathways: virtrdf# properties counted as properties 208/348 of the census).
         The graphs whose IRIs start with *excluded_graph_prefixes* (the prefixes that graph
-        discovery already leaves out) are excluded from each query without a dataset clause
-        with Virtuoso's input:default-graph-exclude and input:named-graph-exclude, which keeps
-        the default graph of the endpoint otherwise unchanged. An engine that refuses the
-        pragmas is recorded and nothing is excluded. When the listing is refused or does not
-        end in GRAPH_LISTING_BUDGET_S, the engine graphs known by name (KNOWN_ENGINE_GRAPHS) that
-        match the prefixes are asked for by name, which needs no scan of the quads.
+        discovery already leaves out) are excluded from the default graph of each query without
+        a dataset clause with Virtuoso's input:default-graph-exclude (graph_exclusion_prologue,
+        which says why input:named-graph-exclude is never sent), which keeps the default graph
+        of the endpoint otherwise unchanged. The pragma is first checked on the endpoint
+        (_check_exclusion): a pragma that empties a non-empty answer, or that makes a one-row
+        query slow, is recorded as an endpoint quirk and nothing is excluded. An engine that
+        refuses the pragma is recorded and nothing is excluded. When the listing is refused or
+        does not end in GRAPH_LISTING_BUDGET_S, the engine graphs known by name
+        (KNOWN_ENGINE_GRAPHS) that match the prefixes are asked for by name, which needs no scan
+        of the quads.
         """
         from rdfsolve.mining.local_graph import LocalGraphHelper
-        from rdfsolve.sparql_helper import SparqlHelperError, graph_exclusion_prologue
+        from rdfsolve.sparql_helper import SparqlHelperError
         from rdfsolve.void_retrieval import discover_graph_names
 
         helper = self._helper
@@ -1057,17 +1061,128 @@ class SchemaMiner:
         if not excluded:
             record["state"] = "none_found"
             return
+        record["graph_uris"] = excluded
         try:
-            probe = graph_exclusion_prologue(excluded) + "ASK { ?s ?p ?o }"
             with helper.budget(self.GRAPH_LISTING_BUDGET_S):
-                helper.ask(probe)
+                usable = self._check_exclusion(excluded, record)
         except SparqlHelperError as error:
             logger.warning("Graph exclusion: the endpoint refuses it: %s", str(error)[:200])
-            record.update(state="not_supported", graph_uris=excluded, error=str(error)[:500])
+            record.update(state="not_supported", error=str(error)[:500])
             return
+        if not usable:
+            return
+        self._find_engine_only_classes(excluded, record)
         helper.excluded_graphs = excluded
-        record.update(state="excluded", method="virtuoso_define_graph_exclude", graph_uris=excluded)
+        record.update(state="excluded", method="virtuoso_define_default_graph_exclude")
         logger.info("Graph exclusion: %d engine graphs left out: %s", len(excluded), excluded)
+
+    # The self-check of the exclusion: one row of the default graph, without and with the
+    # prologue. With the prologue it must answer a row, and not take more than
+    # EXCLUSION_SLOW_FACTOR times as long nor more than EXCLUSION_SLOW_S beyond the answer
+    # without it (sparql.string-db.org answered a graph listing in 0.2 s without a pragma and
+    # in 37.7 s with input:named-graph-exclude, 2026-10-06).
+    EXCLUSION_CHECK = "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1"
+    EXCLUSION_SLOW_FACTOR = 10.0
+    EXCLUSION_SLOW_S = 5.0
+
+    def _check_exclusion(self, excluded: list[str], record: dict[str, Any]) -> bool:
+        """Return whether the exclusion pragma leaves a one-row answer non-empty and fast.
+
+        Some Virtuoso versions answer an empty result, with HTTP 200 and no error, to a query
+        with an exclusion pragma (dbpedia.org, 2026-10-06, input:named-graph-exclude: 0 classes
+        where 1099 without it), and an ASK can still answer true there, so the check uses
+        SELECT. A pragma that empties a non-empty answer, or that makes the query slow, is an
+        endpoint quirk, recorded in *record* under ``quirks``. SparqlHelperError is raised for
+        a refused pragma.
+        """
+        import time
+
+        from rdfsolve.sparql_helper import graph_exclusion_prologue
+
+        helper = self._helper
+
+        def rows(query: str) -> tuple[int, float]:
+            """Return the number of rows of *query* and the seconds it took."""
+            started = time.monotonic()
+            bindings = helper.select(query).get("results", {}).get("bindings", [])
+            return len(bindings), time.monotonic() - started
+
+        quirks: list[dict[str, Any]] = []
+        record["quirks"] = quirks
+        plain, plain_s = rows(self.EXCLUSION_CHECK)
+        if not plain:
+            record["state"] = "check_inconclusive"
+            logger.warning("Graph exclusion: not used; the endpoint answers no triple to check it")
+            return False
+        found, found_s = rows(graph_exclusion_prologue(excluded) + self.EXCLUSION_CHECK)
+        record["check"] = {"query": self.EXCLUSION_CHECK, "seconds": [plain_s, found_s]}
+        slow = found_s > max(plain_s * self.EXCLUSION_SLOW_FACTOR, plain_s + self.EXCLUSION_SLOW_S)
+        if found and not slow:
+            return True
+        effect = "empties a non-empty answer" if not found else "makes a one-row query slow"
+        quirks.append({"pragma": "input:default-graph-exclude", "effect": effect})
+        record["state"] = "emptied_by_pragma" if not found else "slowed_by_pragma"
+        logger.warning("Graph exclusion: not used; the pragma %s (%.1f s)", effect, found_s)
+        return False
+
+    # At most this many classes typed in the engine graphs are checked one by one (forum: 12).
+    ENGINE_CLASS_CHECK_LIMIT = 200
+
+    def _find_engine_only_classes(self, excluded: list[str], record: dict[str, Any]) -> None:
+        """Find the classes typed only in the engine graphs, for a cheaper class listing.
+
+        A class listing with the exclusion prologue can be much slower than without it (forum,
+        2026-10-06: 155,649 classes in 175 s without it, a 502 after 315 s with it). The classes
+        typed in the engine graphs are listed graph by graph with FROM, which reads those small
+        graphs only (before the prologue is set: Virtuoso drops a FROM that names an excluded
+        graph), and each is asked for once in the rest of the endpoint (LIMIT 1, with the prologue). The
+        classes found nowhere else are dropped from a class listing read without the prologue
+        (SparqlHelper.graph_exclusion_suspended), which gives the same classes. When the classes
+        cannot be checked, the listing keeps the prologue.
+        """
+        from rdfsolve.sparql_helper import SparqlHelperError, graph_exclusion_prologue
+
+        helper = self._helper
+        limit = self.ENGINE_CLASS_CHECK_LIMIT
+        prologue = graph_exclusion_prologue(excluded)
+        try:
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                found: set[str] = set()
+                # One graph per query: several FROM in one query did not answer in 60 s on
+                # forum, where each graph alone answered in under 1 s (2026-10-06).
+                for graph in excluded:
+                    listing = helper.select(
+                        f"SELECT DISTINCT ?c FROM {URIRef(graph).n3()} "  # noqa: S608 (SPARQL)
+                        f"WHERE {{ ?s a ?c }} LIMIT {limit + 1}"
+                    )
+                    found.update(
+                        b["c"]["value"]
+                        for b in listing.get("results", {}).get("bindings", [])
+                        if b.get("c", {}).get("type") == "uri"
+                    )
+                    if len(found) > limit:
+                        break
+                typed = sorted(found)
+                if len(typed) > limit:
+                    record["engine_classes"] = {"state": f"more than {limit}; not checked"}
+                    return
+                only = []
+                for cls in typed:
+                    query = f"SELECT ?s WHERE {{ ?s a {URIRef(cls).n3()} }} LIMIT 1"
+                    rows = helper.select(prologue + query).get("results", {}).get("bindings", [])
+                    if not rows:
+                        only.append(cls)
+        except (SparqlHelperError, ValueError) as error:
+            record["engine_classes"] = {"state": "failed", "error": str(error)[:300]}
+            logger.warning("Graph exclusion: engine classes not checked: %s", str(error)[:200])
+            return
+        helper.engine_only_classes = frozenset(only)
+        record["engine_classes"] = {"state": "checked", "typed": len(typed), "engine_only": only}
+        logger.info(
+            "Graph exclusion: %d classes typed only in engine graphs; class listings are read "
+            "without the prologue and cleaned of them",
+            len(only),
+        )
 
     def _known_engine_graphs(self, record: dict[str, Any]) -> list[str]:
         """Return the engine graphs known by name that the endpoint holds; record the probe."""
@@ -1168,6 +1283,7 @@ class SchemaMiner:
         finally:
             MEMBERSHIP.reset(member)
             remote_helper.excluded_graphs = []
+            remote_helper.engine_only_classes = None
             if self._helper is not remote_helper:
                 self._helper.close()
                 self._helper = remote_helper

@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from collections.abc import Callable
+from contextlib import nullcontext
 from typing import Any
 
 from pydantic import ValidationError
@@ -63,6 +64,19 @@ def plan_class_batches(
     if batch:
         batches.append(batch)
     return batches
+
+
+def _engine_only_classes(context: MiningContext) -> frozenset[str] | None:
+    """Return the classes typed only in the excluded engine graphs, when a listing can use them.
+
+    None when the helper excludes no graph or does not know these classes; a class listing is
+    then read as it is sent (with the exclusion prologue, if any).
+    """
+    helper = context.helper
+    engine_only = getattr(helper, "engine_only_classes", None)
+    if isinstance(engine_only, frozenset) and getattr(helper, "excluded_graphs", None):
+        return engine_only
+    return None
 
 
 class TwoPhaseStrategy(MiningStrategy):
@@ -304,9 +318,12 @@ class TwoPhaseStrategy(MiningStrategy):
         for state, query in counts.items():
             t0 = time.monotonic()
             try:
-                rows = context.collect_bindings(
-                    query, "two-phase/class-weights", context.chunk_size
-                )
+                # Weights only pack batches: read without the exclusion when the listing is.
+                suspended = _engine_only_classes(context) is not None
+                with context.helper.graph_exclusion_suspended() if suspended else nullcontext():
+                    rows = context.collect_bindings(
+                        query, "two-phase/class-weights", context.chunk_size
+                    )
             except Exception as error:
                 context.report.record_query(
                     "two-phase/class-weights", time.monotonic() - t0, success=False
@@ -342,6 +359,25 @@ class TwoPhaseStrategy(MiningStrategy):
         return batches
 
     def _discover_classes(self, context: MiningContext) -> list[str]:
+        """Discover named classes; read the listing without the graph exclusion when it can be.
+
+        When the classes typed only in the excluded engine graphs are known
+        (SparqlHelper.engine_only_classes), the listing is read without the exclusion prologue,
+        which can make it much slower (forum, 2026-10-06: 175 s without it, a 502 after 315 s
+        with it), and those classes are dropped from it: the same classes.
+        """
+        engine_only = _engine_only_classes(context)
+        if engine_only is None:
+            return self._list_discovered_classes(context)
+        with context.helper.graph_exclusion_suspended():
+            classes = self._list_discovered_classes(context)
+        kept = [c for c in classes if c not in engine_only]
+        if len(kept) < len(classes):
+            logger.info("  -> %d classes of the engine graphs left out", len(classes) - len(kept))
+        context.discovered_classes = list(kept)
+        return kept
+
+    def _list_discovered_classes(self, context: MiningContext) -> list[str]:
         """Discover named classes in the current scope.
 
         Every later result depends on this listing, so a gateway that answers for an
