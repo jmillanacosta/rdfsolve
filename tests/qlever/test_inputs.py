@@ -42,7 +42,7 @@ def test_many_inputs_go_through_a_script(tmp_path):
     assert len(" ".join(cmd)) < 1000
     script = (workdir / "index-command.sh").read_text()
     words = shlex.split(script.splitlines()[-1])
-    assert words[:2] == ["exec", "qlever-index"]
+    assert words[:1] == ["qlever-index"] and words[-4:] == ["2>&1", "|", "tee", "wikipathways.index-log.txt"]
     assert words.count("-f") == 12544 and "rdf/WP0.ttl" in words and "rdf/WP12542.ttl" in words
     assert words[words.index("rdf/graph.nt") + 1 : words.index("rdf/graph.nt") + 5] == [
         "-F",
@@ -100,8 +100,10 @@ def test_compressed_inputs_are_streamed_through_pipes(tmp_path):
     script = (tmp_path / "index-command.sh").read_text()
     assert "-f .index-pipes/0.nt -F nt -f rdf/b.ttl -F ttl" in script
     assert (
-        (tmp_path / FEED).read_text().endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt || true\n")
-    ), "A failed write goes on to the next pipe"
+        (tmp_path / FEED)
+        .read_text()
+        .endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt || echo rdf/a.nt.gz >> .index-feed.failed\n")
+    ), "A failed write goes on to the next pipe, and is recorded"
 
 
 def test_n_triples_that_name_graphs_are_indexed_as_n_quads(tmp_path):
@@ -113,3 +115,39 @@ def test_n_triples_that_name_graphs_are_indexed_as_n_quads(tmp_path):
     triples = tmp_path / "plain.nt"
     triples.write_text("<urn:a> <urn:p> <urn:o> .\n")
     assert (qlever_format(quads), qlever_format(triples)) == ("nq", "nt")
+
+
+def test_a_feed_that_fails_and_input_qlever_left_unparsed_are_recorded(tmp_path):
+    import gzip
+
+    from rdfsolve.qlever.index_check import unparsed_input
+    from rdfsolve.qlever.inputs import FEED_FAILED
+
+    (tmp_path / "rdf").mkdir()
+    hidden = tmp_path / "rdf" / "a.nt"
+    hidden.write_bytes(gzip.compress(b"<urn:a> <urn:p> <urn:o> .\n"))
+    index_command(
+        Path("/data/qlever.sif"),
+        tmp_path,
+        tmp_path,
+        "t",
+        tmp_path / "s.json",
+        [(hidden, "")],
+        parallel="false",
+        buffer="10M",
+        memory="1G",
+    )
+    script = (tmp_path / "index-command.sh").read_text()
+    assert "-f .index-pipes/0.nt -F nt" in script, "gzip data in a .nt file is decompressed"
+    assert "2>&1 | tee t.index-log.txt" in script
+    assert f"if [ -s {FEED_FAILED} ]" in script.splitlines()[-1]
+    assert (tmp_path / FEED).read_text() == (
+        f"gzip -dc rdf/a.nt > .index-pipes/0.nt || echo rdf/a.nt >> {FEED_FAILED}\n"
+    )
+    log = tmp_path / "t.index-log.txt"
+    assert unparsed_input(log) == []
+    log.write_text(
+        "INFO: Parsing of line has Failed, but parseInput is not yet exhausted. Remaining bytes: "
+        "936,951,434\nINFO: Triples parsed: 10,000,000\n"
+    )
+    assert unparsed_input(log) == [936951434]

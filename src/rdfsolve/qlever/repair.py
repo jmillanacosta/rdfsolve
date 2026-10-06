@@ -6,7 +6,10 @@ changed line is recorded with its original text as a data-quality finding beside
 
 - An IRI holding <, > or ": QLever ends an IRI at the first of them. ONCO cites Wiley DOIs with
   the angle brackets of their SICI form
-  (<https://doi.org/10.1002/1097-0142(197601)37:1<141::AID-CNCR2820370121>3.0.CO;2-Y>). In a
+  (<https://doi.org/10.1002/1097-0142(197601)37:1<141::AID-CNCR2820370121>3.0.CO;2-Y>), and
+  rdfportal.clinvar links dbSNP with an HGVS change (<http://ncbi.nlm.nih.gov/snp/rsc.2899A>C>);
+  for the second, qlever-index keeps <http://ncbi.nlm.nih.gov/snp/rsc.2899A>, skips the rest of
+  the file and succeeds (rdfsolve.qlever.index_check.unparsed_input). In a
   line-based format a term still ends unambiguously: an IRI ends at the > that whitespace (or
   the closing dot) follows. The characters are written %3C, %3E and %22, the IRI's valid form
   (doi.org resolves it to the same DOI).
@@ -39,10 +42,12 @@ _LEXICAL = {
 }
 _FLOATING = {_XSD + "float", _XSD + "double"}
 _FLOAT = re.compile(r"(?:[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[+-]?INF|NaN)")
-# A line that may hold an IRI with one of these characters, or a literal of a datatype that
-# QLever reads as a value.
+# A line that may hold an IRI with one of these characters (a > that a term cannot follow ends
+# no IRI), or a literal of a datatype that QLever reads as a value.
 _SUSPECT = re.compile(
-    r'<[^>\s]*[<"]|"\^\^<' + re.escape(_XSD) + r"(?:integer|decimal|float|double|boolean)>"
+    r'<[^>\s]*[<"]|<[^<>"\s]*>(?=[^\s.<"_])|"\^\^<'
+    + re.escape(_XSD)
+    + r"(?:integer|decimal|float|double|boolean)>"
 )
 _IRI_END = re.compile(r">(?=[ \t]|\.[ \t]*\r?\n?$)")
 _LITERAL = re.compile(r'"(?:[^"\\]|\\.)*"')
@@ -115,11 +120,17 @@ def repair_line(line: str) -> tuple[str, list[str]]:
 
 
 def repair_file(path: Path) -> list[dict[str, Any]]:
-    """Write the unreadable terms of one N-Triples or N-Quads file anew; return the changes."""
+    """Write the unreadable terms of one N-Triples or N-Quads file anew; return the changes.
+
+    The file is read first; only a file with a line to change is written again.
+    """
     changes: list[dict[str, Any]] = []
     partial = path.with_name(f"{path.name}.part")
     # A compressed input is read and written compressed (it is streamed to the index).
     opener: Any = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8", newline="") as stream:
+        if not any(repair_line(line)[1] for line in stream):
+            return changes
     with (
         opener(path, "rt", encoding="utf-8", newline="") as stream,
         opener(partial, "wt", encoding="utf-8", newline="") as out,
@@ -144,14 +155,28 @@ def repair_file(path: Path) -> list[dict[str, Any]]:
     return changes
 
 
-def repair_inputs(workdir: Path, paths: list[Path]) -> list[dict[str, Any]]:
-    """Repair the line-based inputs and record the changes in WORKDIR/REPAIRS_FILE."""
-    changes = [
-        change
+def repair_inputs(
+    workdir: Path, paths: list[Path], processes: int | None = None
+) -> list[dict[str, Any]]:
+    """Repair the line-based inputs and record the changes in WORKDIR/REPAIRS_FILE.
+
+    The files are read in PROCESSES processes (default: half the CPUs).
+    """
+    import os
+    from concurrent.futures import ProcessPoolExecutor
+
+    lines = [
+        path
         for path in paths
         if (path.with_suffix("") if path.suffix == ".gz" else path).suffix in LINE_FORMATS
-        for change in repair_file(path)
     ]
+    workers = processes or max(1, (os.cpu_count() or 2) // 2)
+    if workers == 1 or len(lines) < 2:
+        found = [repair_file(path) for path in lines]
+    else:
+        with ProcessPoolExecutor(min(workers, len(lines))) as pool:
+            found = list(pool.map(repair_file, lines))
+    changes = [change for part in found for change in part]
     if changes:
         record = {
             "findings": {

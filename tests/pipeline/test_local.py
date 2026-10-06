@@ -386,3 +386,96 @@ def test_the_files_an_entry_leaves_out_reach_the_qleverfile(tmp_path):
         workdir=tmp_path / "dump",
     )
     assert "for f in queries.ttl;" in qleverfile and "left_out/" in qleverfile
+
+
+CLINVAR = (
+    "_:b <http://www.w3.org/2000/01/rdf-schema#seeAlso> "
+    "<http://ncbi.nlm.nih.gov/snp/rsc.2899A>C> .\n"
+)
+TRUNCATED = (
+    "2026-10-06 11:32:53.175 - INFO: Parsing of line has Failed, but parseInput is not yet "
+    "exhausted. Remaining bytes: 128,436,885\n"
+)
+
+
+def _built(tmp_path, logs, monkeypatch):
+    """A local source whose qlever-index writes the given logs, one per run."""
+    import gzip
+    import json
+
+    config = PipelineConfig(base_dir=tmp_path, data_dir=tmp_path, no_download=True)
+    source = Source.from_dict({"name": "fixture", "download_nt": ["https://example.org/d.nt.gz"]})
+    workdir = tmp_path / "qlever_workdirs" / "fixture"
+    (workdir / "rdf").mkdir(parents=True)
+    data = workdir / "rdf" / "d.nt.gz"
+    xsd = "http://www.w3.org/2001/XMLSchema#"
+    with gzip.open(data, "wt") as stream:
+        stream.write(f'<urn:a> <urn:n> "1"^^<{xsd}integer> .\n' + CLINVAR + "<urn:b> <urn:p> <urn:c> .\n")
+    stage = LocalMiningStage(config)
+    stage._prepare_qleverfile(workdir, source, 7020)
+    runs = []
+
+    def index(cmd, **options):
+        runs.append(cmd)
+        (workdir / "fixture.meta-data.json").write_text(json.dumps({"num-triples": {"normal": 3}}))
+        (workdir / "fixture.index-log.txt").write_text(logs[len(runs) - 1])
+
+    monkeypatch.setattr("scripts.pipeline_stages.local.subprocess.run", index)
+    return stage, workdir, source, data, runs
+
+
+def test_an_index_of_inputs_that_qlever_stopped_reading_is_repaired_and_built_again(
+    tmp_path, monkeypatch
+):
+    import gzip
+    import json
+
+    from rdfsolve.qlever.datatypes import CENSUS_FILE
+    from rdfsolve.qlever.repair import REPAIRS_FILE
+
+    stage, workdir, source, data, runs = _built(tmp_path, [TRUNCATED, "done\n"], monkeypatch)
+    stage._execute_qleverfile(workdir, source)
+    assert len(runs) == 2, "qlever-index succeeds on a truncated input; the build is not kept"
+    with gzip.open(data, "rt") as stream:
+        assert "rsc.2899A%3EC>" in stream.read()
+    repairs = json.loads((workdir / REPAIRS_FILE).read_text())
+    assert repairs["lines"][0]["line"] == 2 and repairs["lines"][0]["changes"] == ["iri"]
+    census = json.loads((workdir / CENSUS_FILE).read_text())
+    assert census["properties"] == {"urn:n": {"http://www.w3.org/2001/XMLSchema#integer": 1}}
+    assert census["unread"]["lines"] == 1, "The census of the published files records the line"
+    assert census["unread"]["sample"][0]["line"] == 2
+
+
+def test_an_index_that_stays_truncated_fails_and_is_set_aside_on_the_next_run(
+    tmp_path, monkeypatch
+):
+    from rdfsolve.qlever.index_check import TruncatedIndexError, has_cached_index
+
+    stage, workdir, source, data, runs = _built(tmp_path, [TRUNCATED, TRUNCATED], monkeypatch)
+    with pytest.raises(TruncatedIndexError, match="128,436,885 bytes not parsed"):
+        stage._execute_qleverfile(workdir, source)
+    assert len(runs) == 2
+    for permutation in ("pso", "pos"):
+        for suffix in ("", ".meta"):
+            (workdir / f"fixture.index.{permutation}{suffix}").write_text("x")
+    (workdir / "fixture.meta-data.json").write_text(
+        '{"num-subjects": {"normal": 1, "internal": 0}, "num-predicates": {"normal": 1, '
+        '"internal": 0}, "num-objects": {"normal": 1, "internal": 0}, "num-triples": '
+        '{"normal": 1, "internal": 0}, "has-all-permutations": false, "index-format-version": '
+        '{}, "vocabulary-type": "x"}'
+    )
+    with pytest.raises(TruncatedIndexError):
+        has_cached_index(workdir, "fixture")
+    assert stage._has_usable_index(workdir, source) is False
+    (kept,) = workdir.glob("set-aside-index-*")
+    assert sorted(p.name for p in kept.iterdir()) == [
+        "SET-ASIDE.txt",
+        "fixture.index-log.txt",
+        "fixture.index.pos",
+        "fixture.index.pos.meta",
+        "fixture.index.pso",
+        "fixture.index.pso.meta",
+        "fixture.meta-data.json",
+    ]
+    assert data.is_file() and (workdir / "fixture.settings.json").is_file(), "Inputs are kept"
+    assert has_cached_index(workdir, "fixture") is False

@@ -46,6 +46,13 @@ NUMERIC = INTEGERS | DECIMALS
 RDF_SUFFIXES = (".ttl", ".nt", ".nq", ".trig", ".n3", ".owl", ".rdf")
 # A member of a zip archive is written ARCHIVE.zip!MEMBER.
 MEMBER = ".zip!"
+# Line-based formats: a line that the census parser refuses is left out and recorded.
+LINE_FORMATS = frozenset({"nt", "nq"})
+# Lines parsed at once; a block that the parser refuses is read line by line.
+BLOCK_LINES = 100_000
+# The refused lines kept as a sample in the census, and the characters kept of each.
+SAMPLE_LINES = 20
+SAMPLE_CHARS = 500
 
 
 def _format(name: str) -> Any:
@@ -131,26 +138,124 @@ def merge_counts(parts: Iterable[dict[str, dict[str, int]]]) -> dict[str, dict[s
     return {prop: dict(found) for prop, found in sorted(total.items())}
 
 
-def count_literal_datatypes(files: Iterable[tuple[Path, str]]) -> dict[str, dict[str, int]]:
-    """Count the numeric literals of each property by datatype in the source files.
+def _count(statements: Iterable[Any], counts: dict[str, Counter[str]]) -> None:
+    """Add the numeric literals of STATEMENTS to COUNTS, by property and datatype."""
+    from pyoxigraph import Literal
+
+    for statement in statements:
+        value = statement.object
+        if isinstance(value, Literal) and value.datatype.value in NUMERIC:
+            counts[statement.predicate.value][value.datatype.value] += 1
+
+
+def _count_lines(
+    stream: IO[bytes], name: str, file: str, counts: dict[str, Counter[str]]
+) -> list[dict[str, Any]]:
+    """Count a line-based file block by block; return the lines that the parser refuses.
+
+    A block that the parser refuses is read line by line, and each refused line is left out of
+    the counts and returned with its number, the parser's message and its text.
+    """
+    from pyoxigraph import parse
+
+    unread: list[dict[str, Any]] = []
+    block: list[bytes] = []
+    first = 1
+
+    def read(lines: list[bytes], start: int) -> None:
+        """Count LINES (from line START); split a block the parser refuses down to its lines."""
+        try:
+            statements = list(parse(b"".join(lines), _format(name), lenient=True))
+        except SyntaxError as error:
+            if len(lines) > 1:
+                for offset, line in enumerate(lines):
+                    read([line], start + offset)
+                return
+            text = lines[0].decode("utf-8", "replace").rstrip("\r\n")[:SAMPLE_CHARS]
+            unread.append({"file": file, "line": start, "error": str(error), "text": text})
+            return
+        _count(statements, counts)
+
+    for number, line in enumerate(stream, 1):
+        block.append(line)
+        if len(block) == BLOCK_LINES:
+            read(block, first)
+            block, first = [], number + 1
+    if block:
+        read(block, first)
+    return unread
+
+
+def census_of_files(files: Iterable[tuple[Path, str]]) -> dict[str, Any]:
+    """Count the numeric literals of each property by datatype; record what was not read.
 
     *files* are (path, QLever input format) pairs; a path may be gzip-compressed or a member of a
     zip archive (zip_members). The parser is lenient, as QLever is (AOP-Wiki has IRIs without a
-    scheme).
+    scheme). The census is a statistic beside an index that is already built, so a statement
+    that its parser refuses never fails the build: an N-Triples or N-Quads file is read again
+    line by line and each refused line is left out and recorded (rdfportal.clinvar has an IRI
+    holding >); another format is counted up to the error, and the file is recorded.
+    Returns {"properties": counts, "unread": record} (unread_record).
     """
     from contextlib import ExitStack
 
-    from pyoxigraph import Literal, parse
+    from pyoxigraph import parse
 
     counts: dict[str, Counter[str]] = defaultdict(Counter)
+    lines: list[dict[str, Any]] = []
+    stopped: list[dict[str, Any]] = []
     for path, name in files:
-        with ExitStack() as stack:
-            stream = _open(path, stack)
-            for statement in parse(stream, _format(name), lenient=True):
-                value = statement.object
-                if isinstance(value, Literal) and value.datatype.value in NUMERIC:
-                    counts[statement.predicate.value][value.datatype.value] += 1
-    return {prop: dict(found) for prop, found in sorted(counts.items())}
+        file = _name(path)
+        read: dict[str, Counter[str]] = defaultdict(Counter)
+        try:
+            with ExitStack() as stack:
+                _count(parse(_open(path, stack), _format(name), lenient=True), read)
+        except SyntaxError as error:
+            if name in LINE_FORMATS:
+                read = defaultdict(Counter)
+                with ExitStack() as stack:
+                    lines += _count_lines(_open(path, stack), name, file, read)
+            else:
+                stopped.append({"file": file, "error": str(error)})
+        for prop, found in read.items():
+            counts[prop].update(found)
+    return {
+        "properties": {prop: dict(found) for prop, found in sorted(counts.items())},
+        "unread": unread_record(lines, stopped),
+    }
+
+
+def unread_record(
+    lines: list[dict[str, Any]], stopped: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
+    """Count the refused lines by file, with a sample, and the files counted up to an error."""
+    by_file = Counter(line["file"] for line in lines)
+    return {
+        "lines": len(lines),
+        "lines_by_file": dict(sorted(by_file.items())),
+        "sample": lines[:SAMPLE_LINES],
+        "files_counted_up_to_an_error": stopped or [],
+    }
+
+
+def merge_census(parts: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    """Add the censuses of several files (census_of_files)."""
+    parts = list(parts)
+    lines = [line for part in parts for line in part["unread"]["sample"]]
+    by_file: Counter[str] = Counter()
+    for part in parts:
+        by_file.update(part["unread"]["lines_by_file"])
+    unread = unread_record(
+        lines, [f for p in parts for f in p["unread"]["files_counted_up_to_an_error"]]
+    )
+    unread.update(lines=sum(by_file.values()), lines_by_file=dict(sorted(by_file.items())))
+    return {"properties": merge_counts(p["properties"] for p in parts), "unread": unread}
+
+
+def count_literal_datatypes(files: Iterable[tuple[Path, str]]) -> dict[str, dict[str, int]]:
+    """Count the numeric literals of each property by datatype (census_of_files, counts only)."""
+    properties: dict[str, dict[str, int]] = census_of_files(files)["properties"]
+    return properties
 
 
 def write_census(
@@ -159,11 +264,23 @@ def write_census(
     sources: Iterable[Path],
     *,
     fetched: str | None = None,
+    unread: dict[str, Any] | None = None,
 ) -> None:
-    """Write the counts with the names and sizes of the source files and when they were fetched."""
+    """Write the counts with the names and sizes of the source files and when they were fetched.
+
+    *unread* records the statements that the census could not read (census_of_files).
+    """
     files = [{"file": _name(Path(s)), "bytes": _size(Path(s))} for s in sources]
-    record = {"sources": files, "fetched": fetched, "properties": counts}
+    record: dict[str, Any] = {"sources": files, "fetched": fetched, "properties": counts}
+    if unread is not None:
+        record["unread"] = unread
     path.write_text(json.dumps(record, indent=1, sort_keys=True))
+
+
+def read_unread(path: Path) -> dict[str, Any] | None:
+    """Read the record of the statements that a census could not read (None: not recorded)."""
+    unread: dict[str, Any] | None = json.loads(Path(path).read_text()).get("unread")
+    return unread
 
 
 def read_census(path: Path) -> dict[str, dict[str, int]]:

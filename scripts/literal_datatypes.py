@@ -25,9 +25,9 @@ from pathlib import Path
 from rdfsolve.qlever.datatypes import (
     CENSUS_FILE,
     RDF_SUFFIXES as SUFFIXES,
-    count_literal_datatypes,
+    census_of_files,
     input_format,
-    merge_counts,
+    merge_census,
     write_census,
     zip_members,
 )
@@ -91,11 +91,15 @@ def main() -> None:
                     # A zip archive (Bgee) is read member by member, without extraction.
                     files.extend(zip_members(target) if name.endswith(".zip") else [target])
             with ProcessPoolExecutor(args.processes) as pool:
-                parts = pool.map(count_literal_datatypes, [[(p, input_format(p))] for p in files])
-                counts = merge_counts(parts)
-            write_census(workdir / CENSUS_FILE, counts, files, fetched=fetched)
+                parts = pool.map(census_of_files, [[(p, input_format(p))] for p in files])
+                counted = merge_census(parts)
+            counts = counted["properties"]
+            write_census(
+                workdir / CENSUS_FILE, counts, files, fetched=fetched, unread=counted["unread"]
+            )
             numeric = sum(sum(found.values()) for found in counts.values())
-            print(f"{workdir.name}: {len(files)} files, {len(counts)} properties, {numeric} numeric literals", flush=True)
+            unread = counted["unread"]["lines"]
+            print(f"{workdir.name}: {len(files)} files, {len(counts)} properties, {numeric} numeric literals, {unread} unread lines", flush=True)
         finally:
             # Only fetched inputs: a server of the index may write its log beside them meanwhile.
             for path in {p for p in workdir.rglob("*") if p.is_file()} - before:

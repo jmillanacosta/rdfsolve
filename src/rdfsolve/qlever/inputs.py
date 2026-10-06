@@ -19,6 +19,10 @@ PIPES = ".index-pipes"
 # The script that fills them, beside the index command.
 FEED = "index-feed.sh"
 FEED_PIPES = "index-feed.pipes"
+# The compressed inputs that the feed could not decompress to the end (one per line).
+FEED_FAILED = ".index-feed.failed"
+# The log of qlever-index, the name that the qlever command line gives it.
+INDEX_LOG = "{name}.index-log.txt"
 # Beside a converted input that was published empty: the download is accounted for and holds no
 # statement (UniProt publishes enzyme-hierarchy.rdf.xz empty), so there is no file to index.
 EMPTY = ".empty"
@@ -231,7 +235,14 @@ def index_command(
     qlever-index does not read gzip: given a .gz file it builds an empty index and reports
     success. A compressed input is given as a named pipe that one feeder fills with the
     decompressed file, in the order of the inputs, which is the order qlever-index reads them;
-    no plain copy is written. When qlever-index ends, the feeder is stopped.
+    no plain copy is written. When qlever-index ends, the feeder is stopped. A file is fed
+    decompressed when its suffix is .gz or its first bytes are gzip's (a .nt file that holds
+    gzip data); a file that gzip cannot decompress to the end is named in FEED_FAILED and the
+    command fails after qlever-index, which reads a truncated stream without an error.
+
+    The output of qlever-index is written to INDEX_LOG as well: qlever-index skips the rest of
+    an input after a statement it cannot read, logs it and succeeds
+    (rdfsolve.qlever.index_check.unparsed_input reads the log).
     """
     import os
     import shlex
@@ -240,7 +251,7 @@ def index_command(
     feeds: list[tuple[str, str]] = []
     for path, graph in mapped:
         relative = os.path.relpath(path, workdir)
-        if path.suffix == ".gz":
+        if path.suffix == ".gz" or (path.is_file() and _is_gzip(path)):
             pipe = f"{PIPES}/{len(feeds)}.{qlever_format(path)}"
             feeds.append((relative, pipe))
             relative = pipe
@@ -248,6 +259,8 @@ def index_command(
         if graph:
             args += ["-g", graph]
     args += ["-p", parallel, "-b", buffer, "-m", memory]
+    # set -o pipefail keeps the exit status of qlever-index.
+    run = f"{shlex.join(args)} 2>&1 | tee {shlex.quote(INDEX_LOG.format(name=name))}"
     lines = [
         "#!/bin/bash",
         "# Written by rdfsolve: the index command, run inside the container.",
@@ -261,23 +274,28 @@ def index_command(
             # A write that fails (qlever-index stopped reading a pipe) goes on to the next pipe:
             # every pipe that qlever-index opens gets a writer, so that it ends, with its error.
             "".join(
-                f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)} || true\n"
+                f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)} || "
+                f"echo {shlex.quote(src)} >> {FEED_FAILED}\n"
                 for src, pipe in feeds
             )
         )
         lines += [
-            f"rm -rf {PIPES} && mkdir {PIPES}",
+            f"rm -rf {PIPES} {FEED_FAILED} && mkdir {PIPES}",
             f"xargs -d '\\n' -a {FEED_PIPES} mkfifo --",
             # The feeder is a process group of its own: a gzip waiting for its pipe is stopped
             # with it when qlever-index ends early.
             f"setsid bash {FEED} &",
             "feeder=$!",
             f"trap 'kill -- -$feeder 2>/dev/null || true; rm -rf {PIPES}' EXIT",
-            shlex.join(args),
+            run,
             "wait $feeder",
+            (
+                f"if [ -s {FEED_FAILED} ]; then echo 'Inputs not decompressed to the end:' >&2; "
+                f"cat {FEED_FAILED} >&2; exit 1; fi"
+            ),
         ]
     else:
-        lines.append(f"exec {shlex.join(args)}")
+        lines.append(run)
     script = workdir / "index-command.sh"
     script.write_text("\n".join(lines) + "\n")
     return [

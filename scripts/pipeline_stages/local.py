@@ -127,7 +127,7 @@ class LocalMiningStage(Stage):
             try:
                 self._set_aside_when_differs(workdir, source)
                 self._set_aside_when_updated(workdir, source)
-                has_index = self._has_qlever_index(workdir, source.name)
+                has_index = self._has_usable_index(workdir, source)
                 if not has_index and source.download_error and not self.config.no_download:
                     self._record_skip(source, source.download_error)
                     results["skipped"].append(source.name)
@@ -373,6 +373,38 @@ class LocalMiningStage(Stage):
         target = output_dir / f"{source.name}{self.config.output_suffix}_inputs.json"
         target.write_text((workdir / INPUTS).read_text(encoding="utf-8"), encoding="utf-8")
 
+    def _has_usable_index(self, workdir: Path, source: Source) -> bool:
+        """Whether the work folder has an index to reuse; set aside a truncated one.
+
+        A truncated index (its build log reports input that qlever-index did not parse) is
+        moved into a folder of its own, kept, and the source is indexed again from its files;
+        a run that does not index refuses the source instead.
+        """
+        from rdfsolve.qlever.index_check import TruncatedIndexError
+
+        try:
+            return self._has_qlever_index(workdir, source.name)
+        except TruncatedIndexError as error:
+            if self.config.no_index:
+                raise
+            self._set_aside_index(workdir, source.name, str(error))
+            return False
+
+    def _set_aside_index(self, workdir: Path, source_name: str, reason: str) -> Path:
+        """Move the files of an index (not its inputs) into a folder of their own, with the reason."""
+        from rdfsolve.qlever.lifecycle import index_name
+
+        name = index_name(workdir, source_name)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        kept = workdir / f"set-aside-index-{stamp}"
+        kept.mkdir()
+        for path in [*workdir.glob(f"{name}.*"), workdir / ".index.done"]:
+            if path.is_file() and not path.name.endswith(".settings.json"):
+                path.rename(kept / path.name)
+        (kept / "SET-ASIDE.txt").write_text(f"{reason}\n", encoding="utf-8")
+        log.warning("  %s; the index is set aside (%s) and built again", reason, kept)
+        return kept
+
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
         from rdfsolve.qlever.index_check import has_cached_index
@@ -503,51 +535,78 @@ class LocalMiningStage(Stage):
 
         from rdfsolve.qlever.datatypes import (
             CENSUS_FILE,
-            count_literal_datatypes,
+            census_of_files,
             input_format,
-            merge_counts,
+            merge_census,
             write_census,
         )
+        from rdfsolve.qlever.index_check import TruncatedIndexError, unparsed_input
+        from rdfsolve.qlever.inputs import INDEX_LOG
         from rdfsolve.qlever.repair import REPAIRS_FILE, repair_inputs
 
         files = [(path, input_format(path)) for path, _ in mapped]
         census = ProcessPoolExecutor(max(1, min(len(files), (os.cpu_count() or 2) // 2)))
 
         def count() -> dict:
-            return merge_counts(
+            return merge_census(
                 future.result()
-                for future in [census.submit(count_literal_datatypes, [item]) for item in files]
+                for future in [census.submit(census_of_files, [item]) for item in files]
             )
+
+        build_log = workdir / INDEX_LOG.format(name=index_name)
+
+        def build() -> None:
+            """Run qlever-index; refuse an index of inputs that it stopped reading."""
+            subprocess.run(cmd, cwd=workdir, check=True)
+            unparsed = unparsed_input(build_log)
+            if unparsed:
+                raise TruncatedIndexError(
+                    f"qlever-index stopped reading {len(unparsed)} inputs "
+                    f"({sum(unparsed):,} bytes not parsed; {build_log.name})"
+                )
 
         log.info(f"    Indexing {len(mapped)} files...")
         changes: list = []
         try:
-            counting = [census.submit(count_literal_datatypes, [item]) for item in files]
+            counting = [census.submit(census_of_files, [item]) for item in files]
             try:
-                subprocess.run(cmd, cwd=workdir, check=True)
-            except subprocess.CalledProcessError:
+                build()
+            except (subprocess.CalledProcessError, TruncatedIndexError) as error:
                 # QLever refuses a whole file for one term it cannot read (an IRI holding < > or
-                # ", an ill-typed number or boolean); such terms of a line-based input are written
-                # anew, recorded, and indexed again. The census is of the files as published.
+                # ", an ill-typed number or boolean), or skips the rest of the file after it and
+                # succeeds; such terms of a line-based input are written anew, recorded, and
+                # indexed again. The census is of the files as published.
                 wait(counting)
                 changes = repair_inputs(workdir, [path for path, _ in mapped])
                 if not changes:
                     raise
                 log.warning(
-                    f"    {len(changes)} input lines hold terms that QLever cannot read; "
-                    f"written anew ({REPAIRS_FILE}); indexing again"
+                    f"    {error}; {len(changes)} input lines hold terms that QLever cannot "
+                    f"read; written anew ({REPAIRS_FILE}); indexing again"
                 )
-                subprocess.run(cmd, cwd=workdir, check=True)
+                build()
             try:
-                counts = merge_counts(future.result() for future in counting)
+                counted = merge_census(future.result() for future in counting)
             except Exception as error:
                 if not changes:
                     raise
-                # The census parser refuses what was repaired (an IRI holding <): it counts the
-                # repaired files.
                 log.warning(f"    Counting the repaired files: {error}")
-                counts = count()
-            write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
+                counted = count()
+            # A statement that the census parser refuses is left out of the counts and recorded
+            # in the census (unread); it never fails the index that QLever built.
+            unread = counted["unread"]
+            if unread["lines"] or unread["files_counted_up_to_an_error"]:
+                log.warning(
+                    f"    The datatype census could not read {unread['lines']} input lines and "
+                    f"{len(unread['files_counted_up_to_an_error'])} files to the end; recorded "
+                    f"in {CENSUS_FILE} (unread)"
+                )
+            write_census(
+                workdir / CENSUS_FILE,
+                counted["properties"],
+                [path for path, _ in files],
+                unread=unread,
+            )
             built = json.loads((workdir / f"{index_name}.meta-data.json").read_text(encoding="utf-8"))
             if not built["num-triples"]["normal"]:
                 # qlever-index builds an empty index from input it cannot read (gzip) and succeeds.
@@ -814,7 +873,12 @@ class LocalMiningStage(Stage):
 
         The input lines written percent-encoded before indexing are recorded (input_repairs).
         """
-        from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census, restore_datatypes
+        from rdfsolve.qlever.datatypes import (
+            CENSUS_FILE,
+            read_census,
+            read_unread,
+            restore_datatypes,
+        )
         from rdfsolve.qlever.repair import REPAIRS_FILE
 
         census = self.config.data_dir / "qlever_workdirs" / name / CENSUS_FILE
@@ -822,6 +886,13 @@ class LocalMiningStage(Stage):
             patterns = [*schema.patterns, *(schema.structural_patterns or [])]
             record = {"state": "restored", "census": str(census)}
             record.update(restore_datatypes(patterns, read_census(census)))
+            unread = read_unread(census)
+            if unread is not None:
+                # The statements of the files that the census could not read (not counted).
+                record["unread_lines"] = unread["lines"]
+                record["files_counted_up_to_an_error"] = len(
+                    unread["files_counted_up_to_an_error"]
+                )
         else:
             record = {
                 "state": "not_restored",

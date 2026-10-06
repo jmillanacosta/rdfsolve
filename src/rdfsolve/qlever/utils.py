@@ -127,6 +127,13 @@ class FormatSpec:
     needs_conversion: bool = False
 
 
+# Each input decompressed when it holds gzip data and read as it is otherwise (gzip -f). The
+# former "( zcat FILES || cat FILES )" wrote every file raw, gzip data too, after the part that
+# zcat had decompressed when one file was not gzip: the indexes of rdfportal.bacdive and
+# rdfportal.glytoucan (2026-04-21) stopped at the raw bytes and kept 10,000,000 of 16,593,980
+# triples.
+DECOMPRESS_EACH = "gzip -dcf ${INPUT_FILES} | grep -v '^$'"
+
 # Order matters: first match wins when multiple download_* keys exist.
 FORMAT_REGISTRY: dict[str, FormatSpec] = {
     # Quad formats
@@ -143,13 +150,13 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
     "trig": FormatSpec(
         qlever_format="nq",
         glob="*.trig* *.nq*",
-        cat="( zcat ${INPUT_FILES} 2>/dev/null || cat ${INPUT_FILES} 2>/dev/null ) | grep -v '^$'",
+        cat=DECOMPRESS_EACH,
     ),
     # Triple formats
     "nt": FormatSpec(
         qlever_format="nt",
         glob="*.nt*",
-        cat="( zcat ${INPUT_FILES} 2>/dev/null || cat ${INPUT_FILES} 2>/dev/null ) | grep -v '^$'",
+        cat=DECOMPRESS_EACH,
     ),
     "ttl": FormatSpec(
         qlever_format="ttl",

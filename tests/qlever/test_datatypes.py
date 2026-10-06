@@ -105,3 +105,25 @@ def test_members_of_a_zip_archive_are_counted_without_extraction(tmp_path):
     sources = json.loads((tmp_path / "census.json").read_text())["sources"]
     assert sources[1] == {"file": "rdf.zip!dir/a.ttl", "bytes": len(MEMBER)}
     assert sorted(p.name for p in tmp_path.iterdir()) == ["census.json", "rdf.zip"], "Not extracted"
+
+
+def test_a_line_the_census_cannot_read_is_left_out_and_recorded(tmp_path):
+    from rdfsolve.qlever.datatypes import census_of_files, merge_census
+
+    bad = "<urn:x> <urn:p> <http://example.org/a>C> .\n"
+    with gzip.open(tmp_path / "a.nt.gz", "wt") as out:
+        out.write(TRIPLES + bad + TRIPLES)
+    (tmp_path / "b.ttl").write_text("@prefix ex: <urn:> .\nex:a ex:n 1 .\nex:a ex:n <a>C> .\n")
+    parts = [census_of_files([(tmp_path / "a.nt.gz", "nt")]), census_of_files([(tmp_path / "b.ttl", "ttl")])]
+    census = merge_census(parts)
+    assert census["properties"] == {
+        "urn:mixed": {XSD + "int": 2},
+        "urn:f": {XSD + "double": 2},
+        "urn:n": {XSD + "integer": 1},
+    }, "Every other statement is counted; Turtle up to the error"
+    unread = census["unread"]
+    assert unread["lines"] == 1 and unread["lines_by_file"] == {"a.nt.gz": 1}
+    assert unread["sample"][0]["line"] == 3 and unread["sample"][0]["text"] == bad.strip()
+    assert [f["file"] for f in unread["files_counted_up_to_an_error"]] == ["b.ttl"]
+    write_census(tmp_path / "census.json", census["properties"], [], unread=unread)
+    assert json.loads((tmp_path / "census.json").read_text())["unread"] == unread

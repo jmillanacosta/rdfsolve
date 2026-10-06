@@ -80,3 +80,25 @@ def test_a_compressed_input_is_repaired_compressed(tmp_path):
     assert len(repair_inputs(tmp_path, [data])) == 1
     with gzip.open(data, "rt") as stream:
         assert "%3C141" in stream.read()
+
+
+def test_an_iri_holding_a_closing_bracket_is_encoded():
+    line = (
+        "_:b <http://www.w3.org/2000/01/rdf-schema#seeAlso> "
+        "<http://ncbi.nlm.nih.gov/snp/rsc.2899A>C> .\n"
+    )
+    written = (
+        "_:b <http://www.w3.org/2000/01/rdf-schema#seeAlso> "
+        "<http://ncbi.nlm.nih.gov/snp/rsc.2899A%3EC> .\n"
+    )
+    assert repair_line(line) == (written, ["iri"])
+    for kept in ("<urn:a><urn:p><urn:o>.\n", '<urn:a> <urn:p>"x" .\n', "<urn:a> <urn:p> <urn:o>.\n"):
+        assert repair_line(kept) == (kept, []), "Terms written without whitespace are kept"
+
+
+def test_a_file_without_a_change_is_not_written(tmp_path):
+    data = tmp_path / "a.nt"
+    data.write_text("<urn:a> <urn:p> <urn:o> .\n")
+    before = data.stat().st_mtime_ns
+    assert repair_inputs(tmp_path, [data], processes=1) == []
+    assert data.stat().st_mtime_ns == before and not list(tmp_path.glob("*.part"))
