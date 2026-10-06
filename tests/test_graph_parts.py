@@ -75,6 +75,10 @@ def test_names_that_clash_must_be_given_in_graph_settings():
     source = _source()
     with pytest.raises(ValueError, match="another registry entry"):
         graph_parts(source, [_entry("fixture.extra", [], "https://other.invalid/sparql")])
+    with pytest.raises(ValueError, match="entry or alias"):
+        graph_parts(
+            source, [_entry("other", [], "https://other.invalid/sparql", aliases=["fixture.extra"])]
+        )
     with pytest.raises(ValueError, match="each the graph"):
         graph_parts(
             source,
@@ -122,3 +126,41 @@ def test_uniprot_mines_its_rhea_graph_as_classes_and_names_its_graphs_after_thei
     names = {part.name for part in graph_parts(pubchem, registry)}
     assert "pubchem.ftp.anatomy" in names
     assert set(pubchem.aliases) <= names, "pubchem.ftp's per-graph aliases name its parts"
+
+
+def test_every_uniprot_graph_is_named_uniprot_and_its_local_name():
+    """The 17 data graphs of uniprot: 6 named by their graph-scope entries, 11 derived, one rule."""
+    registry = [SourceModel.model_validate(row) for row in yaml.safe_load(REGISTRY.read_text())]
+    uniprot = next(entry for entry in registry if entry.name == "uniprot")
+    parts = graph_parts(uniprot, registry)
+    assert {p.name: p.graph.rstrip("/").rsplit("/", 1)[1] for p in parts} == {
+        f"uniprot.{local}": local
+        for local in [
+            "citationmapping",
+            "citations",
+            "database",
+            "diseases",
+            "enzymes",
+            "journal",
+            "keywords",
+            "locations",
+            "obsolete",
+            "pathways",
+            "proteomes",
+            "taxonomy",
+            "tissues",
+            "uniparc",
+            "uniprot",
+            "uniref",
+            "rhea",
+        ]
+    }
+    assert sorted(p.name for p in parts if p.registry_entry) == [
+        "uniprot.citationmapping",
+        "uniprot.citations",
+        "uniprot.database",
+        "uniprot.diseases",
+        "uniprot.enzymes",
+        "uniprot.uniparc",
+    ]
+    assert all(p.registry_entry in (None, p.name) for p in parts)

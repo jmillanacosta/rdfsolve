@@ -12,7 +12,10 @@ A part is named, in this order:
 2. by the registry entry that is a graph scope of the source for that graph: a dataset entry on
    the same endpoint whose only data graph is that graph (the structural rule of
    rdfsolve.dataset_identity for ``graph_scope_of``), such as uniprot.citations;
-3. as ``<source>.<last segment of the graph IRI>``, such as pubchem.ftp.anatomy.
+3. as ``<source>.<last segment of the graph IRI>``, such as pubchem.ftp.anatomy or
+   uniprot.journal. The graph-scope entries of rule 2 follow the same form (uniprot.citations
+   is http://sparql.uniprot.org/citations), so every part of a source is named the same way,
+   whether or not the registry has an entry for its graph.
 
 The outputs of a part are written to ``<run>/<source>/graphs/<part>/<part><suffix>_*``, next to
 the source's own outputs, and listed in ``<run>/<source>/<source><suffix>_graph_parts.json``.
@@ -96,7 +99,8 @@ def graph_parts(source: SourceModel, registry: Iterable[SourceModel] = ()) -> li
     the graph its name.
     """
     entries = [entry for entry in registry if entry.name != source.name]
-    names = {entry.name for entry in entries}
+    # A derived name must not be another entry's name or one of its aliases.
+    names = {name for entry in entries for name in (entry.name, *entry.aliases)}
     endpoint = _endpoint(source.endpoint)
     parts: list[GraphPart] = []
     for graph in source.graph_uris:
@@ -127,7 +131,7 @@ def graph_parts(source: SourceModel, registry: Iterable[SourceModel] = ()) -> li
             if name in names:
                 raise ValueError(
                     f"{name}, the derived name of the graph {graph}, is another registry "
-                    "entry; name the part in graph_settings"
+                    "entry or alias; name the part in graph_settings"
                 )
         classes_as_data = source.classes_as_data
         membership = tuple(source.membership_properties)

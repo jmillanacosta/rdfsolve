@@ -3621,8 +3621,12 @@
     http://purl.uniprot.org/core/ on the endpoint; its service description names
     http://purl.uniprot.org/core, which is empty. keywords-, locations-, pathways- and enzyme-
     hierarchy.rdf.xz are published empty in this release. The release VoID (void.rdf) is in no graph
-    of the endpoint and is recorded in uniprot.schema. Evidence: article/corpus/agent-
-    findings/uniprot-whole.md.
+    of the endpoint and is recorded in uniprot.schema. The per-graph schemas are named
+    uniprot.<last segment of the graph IRI> (rdfsolve.graph_parts): uniprot.citationmapping,
+    citations, database, diseases, enzymes and uniparc, which are also graph-scope entries, and
+    uniprot.journal, keywords, locations, obsolete, pathways, proteomes, taxonomy, tissues, uniprot
+    (UniProtKB, sampled to Swiss-Prot), uniref and rhea, which are not. Evidence:
+    article/corpus/agent-findings/uniprot-whole.md.
   science_area: life sciences
 - name: uniprot.schema
   source_role: service
