@@ -56,7 +56,7 @@ def convert_hdt_steps() -> list[str]:
         (
             # The tools are fetched only when an HDT file still needs converting. The step is
             # one group: the steps are joined with &&.
-            "{ need=0; for f in *.hdt; do [ -f \"$f\" ] && [ ! -f \"$f.nt.gz\" ] && need=1; done; "
+            '{ need=0; for f in *.hdt; do [ -f "$f" ] && [ ! -f "$f.nt.gz" ] && need=1; done; '
             f"if [ $need = 1 ] && [ ! -d {_TOOL_DIR} ]; then "
             f'wget -q -O {archive} "{HDT_JAVA_URL}" && '
             f'echo "{HDT_JAVA_SHA256}  {archive}" | sha256sum -c --quiet - && '

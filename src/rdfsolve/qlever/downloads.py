@@ -302,7 +302,9 @@ def find_metalinks(
             release = releases.setdefault(url, {"version": None, "hashes": {}})
             release["hashes"] = {**release["hashes"], kind: value}
             release.setdefault("checksum_files", []).append(location)
-        given = {kind.lower(): value.lower() for kind, value in ((declared or {}).get(url) or {}).items()}
+        given = {
+            kind.lower(): value.lower() for kind, value in ((declared or {}).get(url) or {}).items()
+        }
         if given:
             release = releases.setdefault(url, {"version": None, "hashes": {}})
             release["hashes"] = {**release["hashes"], **given}
