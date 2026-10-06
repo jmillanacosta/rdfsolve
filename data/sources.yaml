@@ -9038,6 +9038,23 @@
 - name: pdbj.bmrb
   dataset_kind: instance
   endpoint: https://bmrbpub.pdbj.org/search/rdf
+  graph_uris:
+  - http://bmrbpub.pdbj.org/rdf/bmr
+  - http://bmrbpub.pdbj.org/rdf/bms
+  download_nt:
+  - https://bmrb.io/ftp/pub/bmrb/entry_lists/rdf-nt/
+  - https://bmrbpub.pdbj.org/archive/rdf-nt/mmcif_nmr-star-v3.2.1.18/bms_nt_doc/
+  notes: >-
+    The local input is BMRB/RDF in N-Triples, made by PDBj (BMRBoTool, NMR-STAR v3.2.1.18),
+    one .nt.gz per entry - the 17,908 BMRB entries from BMRB's FTP (bmrb.io, dated
+    2026-09-03; the same files as PDBj's archive/rdf-nt/.../bmr_nt_doc, which answers about
+    3x slower per file) and the 3,633 metabolomics entries (bmse, bmst) from PDBj's
+    bms_nt_doc (dated 2026-09-04; BMRB's FTP copy of these is from 2019). About 3.3 GB, as
+    checked 2026-10-06. The endpoint holds BMRB in the graphs bmrbpub.pdbj.org/rdf/bmr and
+    /bms (645.6 M triples, 35.8 M rdf:type) and also PDBj's PDB/RDF (rdf.wwpdb.org/pdb, /cc,
+    /prd); graph_uris scope the endpoint to BMRB. The top level of archive/rdf-nt/ repeats
+    an older subset of the same files and is not downloaded. The BMRB/OWL ontology is not
+    loaded in the endpoint and not indexed.
   bioregistry_prefix: bmrb
   keywords:
   - 3d structure
