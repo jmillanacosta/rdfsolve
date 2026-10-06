@@ -9,11 +9,35 @@ from rdflib import URIRef
 from rdfsolve.mining.query_builders import _context_pattern, membership_path
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
+# Alternatives joined by || in one expression, and IRIs in one IN list. Virtuoso refuses an
+# expression of about 170 alternatives joined by || ("SQ074: Too many opened parentheses";
+# GlyCoNAVI GlycoSample#Date, 195 subject classes, job 115329), and answers 165; IN lists of
+# 400 IRIs are answered (checked 2026-10-06). Longer lists are nested in groups of this size, so
+# the depth of an expression grows with the logarithm of its length.
+ALTERNATIVES_PER_GROUP = 32
+IRIS_PER_IN = 256
 
-def _is(variable: str, iris: set[str]) -> str:
-    """Compare a variable with one IRI or a list of IRIs."""
+
+def _any(tests: list[str], separator: str = " ||\n  ") -> str:
+    """Join *tests* with ||, nested in parenthesised groups of ALTERNATIVES_PER_GROUP."""
+    while len(tests) > ALTERNATIVES_PER_GROUP:
+        tests = [
+            "(" + " || ".join(tests[i : i + ALTERNATIVES_PER_GROUP]) + ")"
+            for i in range(0, len(tests), ALTERNATIVES_PER_GROUP)
+        ]
+    return separator.join(tests)
+
+
+def _is(variable: str, iris: set[str] | frozenset[str]) -> str:
+    """Compare a variable with one IRI or a list of IRIs (IN lists of at most IRIS_PER_IN)."""
     terms = sorted(f"<{iri}>" for iri in iris)
-    return f"{variable} = {terms[0]}" if len(terms) == 1 else f"{variable} IN ({', '.join(terms)})"
+    if len(terms) == 1:
+        return f"{variable} = {terms[0]}"
+    lists = [
+        f"{variable} IN ({', '.join(terms[i : i + IRIS_PER_IN])})"
+        for i in range(0, len(terms), IRIS_PER_IN)
+    ]
+    return lists[0] if len(lists) == 1 else f"({_any(lists, ' || ')})"
 
 
 def typed_match(
@@ -67,18 +91,32 @@ def typed_match(
         return test if predicate else f"{_is('?p', {prop})} && {test}"
 
     groups = []
-    if typed:
-        pairs = " ||\n  ".join(
-            f"({on(prop, _is('?_subjectType', {subject}))} && {_is('?_objectType', targets)})"
-            for (prop, subject), targets in sorted(typed.items())
+    # Subject classes with the same test are compared at once (?_subjectType IN ...): one
+    # alternative for each property and test, not for each profile.
+    by_targets: dict[tuple[str, frozenset[str]], set[str]] = defaultdict(set)
+    for (prop, subject), targets in typed.items():
+        by_targets[prop, frozenset(targets)].add(subject)
+    if by_targets:
+        pairs = _any(
+            [
+                f"({on(prop, _is('?_subjectType', subjects))} && {_is('?_objectType', targets)})"
+                for (prop, targets), subjects in sorted(
+                    by_targets.items(), key=lambda item: (item[0][0], sorted(item[0][1]))
+                )
+            ]
         )
         groups.append(f"EXISTS {{ {edge} {subject_type} {object_type}\nFILTER(\n  {pairs}\n) }}")
     tests: list[str] = []
-    for (prop, subject), datatypes in sorted(literal.items(), key=str):
+    by_datatypes: dict[tuple[str, frozenset[str | None]], set[str]] = defaultdict(set)
+    for (prop, subject), datatypes in literal.items():
+        by_datatypes[prop, frozenset(datatypes)].add(subject)
+    for (prop, stated), subjects in sorted(
+        by_datatypes.items(), key=lambda item: (item[0][0], sorted(map(str, item[0][1])))
+    ):
         kind = "isLiteral(?o)"
-        if None not in datatypes:
-            kind += f" && {_is('DATATYPE(?o)', {dt for dt in datatypes if dt})}"
-        tests.append(f"({on(prop, _is('?_subjectType', {subject}))} && {kind})")
+        if None not in stated:
+            kind += f" && {_is('DATATYPE(?o)', {dt for dt in stated if dt})}"
+        tests.append(f"({on(prop, _is('?_subjectType', subjects))} && {kind})")
     for prop, subjects in sorted(untyped["Resource"].items()):
         tests.append(
             f"({on(prop, _is('?_subjectType', subjects))} && isIRI(?o) && "
@@ -87,7 +125,7 @@ def typed_match(
     for prop, subjects in sorted(untyped["BlankNode"].items()):
         tests.append(f"({on(prop, _is('?_subjectType', subjects))} && isBlank(?o))")
     if tests:
-        joined = " ||\n  ".join(tests)
+        joined = _any(tests)
         groups.append(f"EXISTS {{ {edge} {subject_type}\nFILTER(\n  {joined}\n) }}")
     # The types are compared with IRIs, grouped by property and subject class; no VALUES list
     # of profiles is joined with them. QLever joins such a list with every type triple of the

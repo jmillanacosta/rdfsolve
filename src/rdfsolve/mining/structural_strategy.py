@@ -22,7 +22,13 @@ logger = logging.getLogger(__name__)
 from rdfsolve.mining.typed_coverage import typed_match, uncovered_filter
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
-from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError, SparqlHelperError
+from rdfsolve.sparql_helper import (
+    EndpointError,
+    EndpointRateLimitError,
+    EndpointTimeoutError,
+    QueryParserLimitError,
+    SparqlHelperError,
+)
 
 
 def _dataset(graph: str | None, type_graphs: list[str] | None = None) -> str:
@@ -508,6 +514,7 @@ def _property_discovery(
     named: list[str],
     keys: list[tuple[str, str, str, str | None]],
     entry: dict[str, Any],
+    residuals: dict[str, str] | None = None,
 ) -> tuple[list[dict[str, Any]], set[str]]:
     """Discover the uncovered edges with one query for each property.
 
@@ -535,6 +542,8 @@ def _property_discovery(
         else:
             test = uncovered_filter(own, context.graph_uris, context.type_context_graph_uris)
         residual = f"VALUES ?p {{ <{predicate}> }} " + test
+        if residuals is not None:
+            residuals[predicate] = residual
         query = _discovery_query(graph, named, residual)
         found: list[dict[str, Any]] = []
         missing: int | None = None
@@ -547,7 +556,8 @@ def _property_discovery(
             except (SparqlHelperError, ValueError) as refused:
                 error = refused
             logger.info("Discovery: %s refused; discovering it in batches of subjects", predicate)
-            found, missing = _discover_by_subjects(context, graph, named, residual)
+            last: list[Exception] = [error]
+            found, missing = _discover_by_subjects(context, graph, named, residual, last)
         rows += found
         if missing is None or missing:
 
@@ -568,8 +578,79 @@ def _property_discovery(
                 rows += sampled
                 n["discovery_sampled"] = _provenance(sampled)
             else:
-                _refused(context, n, predicate, error, missing)
+                # The reason is the last refusal, not the first one (the refusal of the
+                # whole property, or of reading it in pages).
+                _refused(context, n, predicate, last[-1], missing)
     return rows, untyped
+
+
+def _discover_pairs(
+    context: MiningContext, graph: str | None, named: list[str], residual: str
+) -> list[dict[str, Any]]:
+    """Discover the patterns of the edges that *residual* selects without GROUP_CONCAT.
+
+    The rows are those of _discovery_query: the edges with the kinds, datatype and language of
+    their objects, and the property sets of their subjects and objects. Here the edges and the
+    (node, property) pairs are read with queries without aggregates, which the helper can read
+    in pages in a fixed order (ORDER BY of every projected variable); the property sets are
+    built from the pairs (sorted, as StructuralPattern keeps them). GROUP_CONCAT has no fixed
+    order, so the helper does not page a query with it (IDEAL author and WikiPathways
+    gpml:hasDataNode, jobs 115329 and 115327: subjects refused one by one at the time limit).
+    A blank node has no name that holds from one request to the next, so the edges whose subject
+    or object is a blank node are discovered with the grouped query, as before. Raise
+    SparqlHelperError or ValueError when a query is refused.
+    """
+    dataset = _dataset(graph, named)
+    binds = (
+        'BIND(IF(isBlank(?s), "BlankNode", "IRI") AS ?sk) '
+        'BIND(IF(isBlank(?o), "BlankNode", IF(isLiteral(?o), "Literal", "IRI")) AS ?ok) '
+        "BIND(DATATYPE(?o) AS ?dt) BIND(LANG(?o) AS ?lang)"
+    )
+    named_nodes = "FILTER(!isBlank(?s) && !isBlank(?o))"
+    edges = _select(
+        context,
+        f"SELECT DISTINCT ?s ?o ?p ?sk ?ok ?dt ?lang {dataset} WHERE {{ "
+        f"?s ?p ?o . {residual} {named_nodes} {binds} }}",
+        "structural/discovery-pairs",
+    )
+    subject_pairs = _select(
+        context,
+        f"SELECT DISTINCT ?s ?sp {dataset} WHERE {{ {{ SELECT DISTINCT ?s WHERE {{ "
+        f"?s ?p ?o . {residual} {named_nodes} }} }} ?s ?sp ?sv }}",
+        "structural/discovery-pairs",
+    )
+    object_pairs = _select(
+        context,
+        f"SELECT DISTINCT ?o ?op {dataset} WHERE {{ {{ SELECT DISTINCT ?o WHERE {{ "
+        f"?s ?p ?o . {residual} {named_nodes} FILTER(isIRI(?o)) }} }} ?o ?op ?ov }}",
+        "structural/discovery-pairs",
+    )
+    sets: dict[str, dict[str, set[str]]] = {"s": defaultdict(set), "o": defaultdict(set)}
+    for node, prop, pairs in (("s", "sp", subject_pairs), ("o", "op", object_pairs)):
+        for row in pairs:
+            sets[node][row[node]["value"]].add(row[prop]["value"])
+    rows: dict[str, dict[str, Any]] = {}
+    for edge in edges:
+        row = {name: edge[name] for name in ("sk", "ok", "dt", "lang") if name in edge}
+        row["p"] = edge["p"]
+        row["ss"] = {"type": "literal", "value": ">".join(sorted(sets["s"][edge["s"]["value"]]))}
+        if edge["o"]["type"] == "uri" and sets["o"].get(edge["o"]["value"]):
+            row["os"] = {
+                "type": "literal",
+                "value": ">".join(sorted(sets["o"][edge["o"]["value"]])),
+            }
+        rows[json.dumps(row, sort_keys=True)] = row
+    blank = f"{residual} FILTER(isBlank(?s) || isBlank(?o))"
+    if _select(
+        context,
+        f"SELECT ?s {dataset} WHERE {{ ?s ?p ?o . {blank} }} LIMIT 1",
+        "structural/discovery-pairs",
+        paged=False,
+    ):
+        query = _discovery_query(graph, named, blank)
+        for row in _select(context, query, "structural/discovery", paged=False):
+            rows[json.dumps(row, sort_keys=True)] = row
+    return list(rows.values())
 
 
 # Subjects of one discovery query when the discovery of a property is refused as a whole. The
@@ -579,7 +660,11 @@ DISCOVERY_SUBJECT_BATCH = 50
 
 
 def _discover_by_subjects(
-    context: MiningContext, graph: str | None, named: list[str], residual: str
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    residual: str,
+    errors: list[Exception] | None = None,
 ) -> tuple[list[dict[str, Any]], int | None]:
     """Discover the patterns of the uncovered edges of one property in batches of subjects.
 
@@ -592,6 +677,9 @@ def _discover_by_subjects(
     triples of the subjects that were still refused; None when the subjects cannot be listed or
     those triples cannot be counted, and the whole property stays undiscovered (WikiPathways
     dc:creator, 8,095 edges: "estimated execution time 1115 s exceeds the limit of 400 s").
+    A subject refused alone is discovered from its edges and the pairs of its nodes and their
+    properties (_discover_pairs), which need no GROUP_CONCAT. The refusals are added to
+    *errors*, when given.
     """
     dataset = _dataset(graph, named)
     try:
@@ -601,6 +689,8 @@ def _discover_by_subjects(
             "structural/discovery-subjects",
         )
     except (SparqlHelperError, ValueError) as error:
+        if errors is not None:
+            errors.append(error)
         logger.warning("Discovery: subjects not listed: %s", str(error)[:200])
         return [], None
     subjects = sorted({_object_term(r["s"]) for r in listed if r["s"]["type"] == "uri"})
@@ -621,9 +711,20 @@ def _discover_by_subjects(
         batch = pending.pop()
         try:
             found = discover(f"FILTER(?s IN ({', '.join(batch)}))")
-        except (SparqlHelperError, ValueError):
+        except (SparqlHelperError, ValueError) as error:
+            if errors is not None:
+                errors.append(error)
             if len(batch) == 1:
-                refused.append(f"FILTER(?s IN ({batch[0]}))")
+                restriction = f"FILTER(?s IN ({batch[0]}))"
+                try:
+                    found = _discover_pairs(context, graph, named, f"{residual} {restriction}")
+                except (SparqlHelperError, ValueError) as pairs_error:
+                    if errors is not None:
+                        errors.append(pairs_error)
+                    refused.append(restriction)
+                    continue
+                logger.info("Discovery: subject %s discovered from pairs", batch[0])
+                rows.update((json.dumps(row, sort_keys=True), row) for row in found)
                 continue
             pending += [batch[len(batch) // 2 :], batch[: len(batch) // 2]]
             continue
@@ -632,7 +733,9 @@ def _discover_by_subjects(
         try:
             found = discover("FILTER(isBlank(?s))")
             rows.update((json.dumps(row, sort_keys=True), row) for row in found)
-        except (SparqlHelperError, ValueError):
+        except (SparqlHelperError, ValueError) as error:
+            if errors is not None:
+                errors.append(error)
             refused.append("FILTER(isBlank(?s))")
     missing = 0
     for restriction in refused:
@@ -666,7 +769,7 @@ def _undiscovered_triples(entry: dict[str, Any]) -> int:
 
 def _to_discover(entry: dict[str, Any]) -> bool:
     """Return whether a graph has uncovered edges, counted or seen in a census sample."""
-    return bool(entry["uncovered_triples"] or entry.get("sampled_uncovered_triples"))
+    return bool(entry.get("uncovered_triples") or entry.get("sampled_uncovered_triples"))
 
 
 def _sample_counts(pattern: StructuralPattern, rows: list[dict[str, Any]]) -> None:
@@ -712,6 +815,14 @@ CENSUS_BATCH_TRIPLES = 20_000_000
 # Fewest triples per object for a census in batches of objects: with fewer, a batch names about
 # as many objects as it has triples (SIBiLS pattern#contains: one triple per object).
 CENSUS_MIN_TRIPLES_PER_OBJECT = 10
+# Properties counted in one census request through an endpoint (see _census_batch), and the
+# longest such request. A refused or too slow request is split in halves; one property is counted
+# by itself, as before. 1 turns batching off.
+CENSUS_PROPERTIES_PER_QUERY = 16
+CENSUS_QUERY_CHARS = 100_000
+# Branches of one UNION group in a batched census; longer unions are nested in groups of this
+# size, so that the depth of the query stays bounded (Virtuoso SQ074 counts open groups).
+CENSUS_UNION_GROUP = 16
 
 
 class CensusRefusedError(Exception):
@@ -763,12 +874,8 @@ def _census_queries(
     ]
 
 
-def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
-    """Run the census queries; each returns one count.
-
-    The counts are kept in the checkpoint of the run, keyed by the queries, and a resumed run
-    takes them from there (the census of Bgee RO_0002206 takes about 6.5 h).
-    """
+def _census_key(context: MiningContext, queries: list[str]) -> tuple[str]:
+    """Return the checkpoint key of a census: its queries and the graphs the helper leaves out."""
     import hashlib
 
     # The graphs that the helper leaves out are part of the queries that it sends.
@@ -776,7 +883,143 @@ def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
     # input:named-graph-exclude as well (dbpedia: emptied) are not resumed.
     excluded = list(getattr(getattr(context, "helper", None), "excluded_graphs", None) or [])
     sent = [*(["exclude-default " + " ".join(excluded)] if excluded else []), *queries]
-    key = ("census|" + hashlib.sha256("\n".join(sent).encode()).hexdigest(),)
+    return ("census|" + hashlib.sha256("\n".join(sent).encode()).hexdigest(),)
+
+
+def _union(branches: list[str]) -> str:
+    """Join group patterns with UNION, nested in groups of CENSUS_UNION_GROUP."""
+    while len(branches) > CENSUS_UNION_GROUP:
+        branches = [
+            "{ " + " UNION ".join(branches[i : i + CENSUS_UNION_GROUP]) + " }"
+            for i in range(0, len(branches), CENSUS_UNION_GROUP)
+        ]
+    return " UNION ".join(branches)
+
+
+def _batched_census_query(
+    graph: str | None, named: list[str], queries: dict[str, list[str]]
+) -> tuple[str, dict[str, tuple[str, str]]]:
+    """Return one query that answers the census queries of several properties, and its keys.
+
+    Each branch is one census query of one property (_census_queries, unchanged) as a subquery,
+    tagged with a key: the engine evaluates the same pattern as when the query is sent alone, with
+    the constant property that the typed test needs (a VALUES ?p with GROUP BY ?p would make the
+    property a variable inside the EXISTS group, which QLever evaluates over every edge of the
+    graph and Virtuoso has counted wrongly; see typed_match and _census). The dataset clause is
+    the outer query's, as for each query alone.
+    """
+    dataset = _dataset(graph, named)
+    branches: list[str] = []
+    keys: dict[str, tuple[str, str]] = {}
+    for predicate, sent in queries.items():
+        for query in sent:
+            head, body = query.split(" WHERE ", 1)
+            name = head.split("AS ?", 1)[1].split(")", 1)[0]
+            key = f"{len(keys)}"
+            keys[key] = (predicate, name)
+            branches.append(
+                f'{{ {{ SELECT (COUNT(*) AS ?_n) WHERE {body} }} BIND("{key}" AS ?_census) }}'
+            )
+    return f"SELECT ?_census ?_n {dataset} WHERE {{ {_union(branches)} }}", keys
+
+
+def _census_batch(
+    context: MiningContext,
+    graph: str | None,
+    named: list[str],
+    keys: list[tuple[str, str, str, str | None]],
+    predicates: list[str],
+    entry: dict[str, Any],
+) -> dict[str, Counter[str]]:
+    """Count the census of several properties in few requests; return the counted properties.
+
+    The census queries of each property are those of _property_census without a restriction,
+    joined into one request (_batched_census_query). A request that the endpoint refuses, or
+    that runs past its limits, is split in halves; a property left alone is not sent here, and
+    _property_census counts it as before (with batches of its objects when refused). A request
+    whose answer misses a count leaves its properties to _property_census too, so every count is
+    the count of the query of one property (Rhea answers some empty counts with no row). An
+    endpoint that rejects the batched form turns batching off for the rest of the census. The
+    counts of each property are kept in the checkpoint under the key of its own queries, so a
+    resumed run, batched or not, takes them again.
+    """
+    batching = context.report.report.config.setdefault(
+        "census_batching",
+        {
+            "state": "on",
+            "properties_per_query": CENSUS_PROPERTIES_PER_QUERY,
+            "requests": 0,
+            "split": 0,
+            "properties": 0,
+        },
+    )
+    if batching["state"] != "on" or CENSUS_PROPERTIES_PER_QUERY < 2:
+        return {}
+    resumed = getattr(context, "resumed", None) or {}
+    queries: dict[str, list[str]] = {}
+    length = 0
+    for predicate in predicates:
+        if len(queries) >= CENSUS_PROPERTIES_PER_QUERY:
+            break
+        own = [key for key in keys if key[1] == predicate]
+        match = typed_match(own, context.graph_uris, context.type_context_graph_uris, predicate)
+        sent = _census_queries(graph, named, match, False, predicate)
+        if _census_key(context, sent) in resumed:
+            continue  # _count takes it from the checkpoint
+        size = sum(len(q) for q in sent)
+        if queries and length + size > CENSUS_QUERY_CHARS:
+            break
+        queries[predicate] = sent
+        length += size
+    counted: dict[str, Counter[str]] = {}
+    pending = [list(queries)] if len(queries) > 1 else []
+    while pending and batching["state"] == "on":
+        batch = pending.pop()
+        if len(batch) < 2:
+            continue  # counted alone by _property_census
+        query, tags = _batched_census_query(graph, named, {p: queries[p] for p in batch})
+        try:
+            rows = _select(context, query, "structural/coverage", paged=False)
+        except EndpointRateLimitError:
+            raise
+        except EndpointTimeoutError as error:
+            logger.info("Census: %d properties in one query refused (%s)", len(batch), error)
+            batching["split"] += 1
+            if len(batch) > 2:
+                half = len(batch) // 2
+                pending += [batch[half:], batch[:half]]
+            continue
+        except EndpointError as error:
+            logger.warning("Census: the batched census was rejected; one property at a time")
+            batching.update(state="off", reason=str(error)[:300])
+            break
+        batching["requests"] += 1
+        found: dict[str, Counter[str]] = defaultdict(Counter)
+        seen: set[str] = set()
+        for row in rows:
+            tag = row.get("_census", {}).get("value")
+            if tag in tags and "_n" in row and tag not in seen:
+                seen.add(tag)
+                predicate, name = tags[tag]
+                found[predicate][name] = int(row["_n"]["value"])
+        for predicate in batch:
+            if len(found[predicate]) != len(queries[predicate]):
+                continue  # a count is missing: counted alone
+            counted[predicate] = found[predicate]
+            context.report.checkpoint(
+                "census", list(_census_key(context, queries[predicate])), [dict(found[predicate])]
+            )
+    batching["properties"] += len(counted)
+    return counted
+
+
+def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
+    """Run the census queries; each returns one count.
+
+    The counts are kept in the checkpoint of the run, keyed by the queries, and a resumed run
+    takes them from there (the census of Bgee RO_0002206 takes about 6.5 h).
+    """
+    key = _census_key(context, queries)
     resumed = getattr(context, "resumed", None) or {}
     if key in resumed:
         counts: Counter[str] = Counter(resumed[key][0])
@@ -836,6 +1079,9 @@ def _census(
     logger.info("Census: counting %d properties one at a time", len(predicates))
     counts = Counter[str]()
     per_property: dict[str, dict[str, Any]] = {}
+    # Properties counted together (_census_batch), and those already tried in a batch.
+    batched: dict[str, Counter[str]] = {}
+    tried: set[str] = set()
     # After the endpoint has refused the test of each edge of one property, and when typed
     # mining mined every discovered class and skipped no type value, the test is not sent for
     # the next properties: their uncovered edges are the edges of their untyped subjects, the
@@ -853,8 +1099,15 @@ def _census(
             per_property[predicate] = {**untyped, "census": "untyped subjects"}
             counts.update(untyped)
             continue
+        if not skipped and predicate not in tried:
+            following = [p for p in predicates[number - 1 :] if p not in tried]
+            batched.update(_census_batch(context, graph, named, keys, following, entry))
+            tried.update(following[:CENSUS_PROPERTIES_PER_QUERY])
         try:
-            found = _property_census(context, graph, named, own, local, predicate, entry)
+            if predicate in batched:
+                found = batched.pop(predicate)
+            else:
+                found = _property_census(context, graph, named, own, local, predicate, entry)
         except CensusRefusedError as refused:
             untyped = (
                 _untyped_census(context, graph, named, predicate)
@@ -999,6 +1252,10 @@ def _property_census(
 
     try:
         return count("")
+    except QueryParserLimitError as error:
+        # Batches of objects keep the typed test of the property, which is what the parser
+        # refused; the property is recorded as not checked.
+        raise CensusRefusedError(None, f"census refused by the parser: {error}") from error
     except EndpointTimeoutError:
         pass
     size_query = (
@@ -1062,6 +1319,30 @@ def _property_census(
         batches += 1
     entry.setdefault("census_batches", {})[predicate] = batches
     return counts
+
+
+def _structural_gap(
+    context: MiningContext, entry: dict[str, Any], purpose: str, error: SparqlHelperError
+) -> None:
+    """Record that the endpoint refused the structural census or discovery of one graph.
+
+    The structural layer adds evidence for edges that no typed profile covers; the typed
+    patterns, mined before it, do not depend on it. So a refusal leaves this graph unchecked,
+    recorded as a measurement gap (the source ends partial), and the source keeps its typed
+    patterns (GlyCoNAVI, job 115329: one census query refused with Virtuoso SQ074 failed the
+    whole source after 1025 s). A rate limit is not a refusal of the query and is raised.
+    """
+    if isinstance(error, EndpointRateLimitError):
+        raise error
+    graph = entry.get("graph_uri")
+    logger.warning("Structural %s of %s not completed: %s", purpose, graph or "the data", error)
+    entry.update(state="failed", reason=f"{purpose}: {str(error)[:300]}")
+    failure = QueryFailure(
+        "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+        f"structural evidence of {graph or 'the default graph'} not checked: {str(error)[:300]}",
+        purpose,
+    )
+    context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
 
 
 class StructuralStrategy(MiningStrategy):
@@ -1143,6 +1424,8 @@ class StructuralStrategy(MiningStrategy):
                 )
                 if seen:
                     entry.update(sampled_uncovered_triples=seen, state="needed")
+            except SparqlHelperError as error:
+                _structural_gap(context, entry, "structural/coverage", error)
             except Exception:
                 entry["state"] = "failed"
                 raise
@@ -1151,6 +1434,8 @@ class StructuralStrategy(MiningStrategy):
             phase = context.report.start_phase("structural-discovery")
             for entry in coverage:
                 graph = entry["graph_uri"]
+                if entry["state"] == "failed":
+                    continue
                 try:
                     needed = entry["untyped_subject_triples"] > 0 or bool(
                         _select(
@@ -1187,8 +1472,9 @@ class StructuralStrategy(MiningStrategy):
             context.report.finish_phase(
                 phase, items=sum(len(rows) for rows in observations.values())
             )
-        if keys and not any(entry["covered_triples"] for entry in coverage):
-            for entry in coverage:
+        counted = [entry for entry in coverage if "covered_triples" in entry]
+        if keys and counted and not any(entry["covered_triples"] for entry in counted):
+            for entry in counted:
                 entry.update(state="failed", reason="typed_coverage_mismatch")
             raise ValueError("Typed observations have zero edge coverage")
         if not any(_to_discover(entry) for entry in coverage):
@@ -1202,6 +1488,8 @@ class StructuralStrategy(MiningStrategy):
                 if rows is None and entry.get("census") == "qlever_patterns":
                     rows = _patterns_discovery(context, entry["graph_uri"], named, entry)
                 self._mine_graph(context, entry, keys, named, rows)
+            except SparqlHelperError as error:
+                _structural_gap(context, entry, "structural/discovery", error)
             except Exception:
                 entry["state"] = "failed"
                 raise
@@ -1220,8 +1508,9 @@ class StructuralStrategy(MiningStrategy):
         graph = entry["graph_uri"]
         bulk = rows is not None
         untyped: set[str] = set()
+        residuals: dict[str, str] = {}
         if rows is None:
-            rows, untyped = _property_discovery(context, graph, named, keys, entry)
+            rows, untyped = _property_discovery(context, graph, named, keys, entry, residuals)
         if bulk:
             census = entry.get("census_properties", {})
             found: Counter[str] = Counter()
@@ -1233,124 +1522,159 @@ class StructuralStrategy(MiningStrategy):
                 if census.get(p, {}).get("untypedTriples")
                 == n + census.get(p, {}).get("undiscoveredTriples", 0)
             }
-        candidates: dict[str, StructuralPattern] = {}
-        bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
-        for row in rows:
-            predicate = row["p"]["value"]
-            candidate = StructuralPattern(
-                subject_properties=_properties(row["ss"]["value"]),
-                object_properties=_properties(row.get("os", {}).get("value", "")),
-                subject_kind=row["sk"]["value"],
-                object_kind=row["ok"]["value"],
-                property_uri=predicate,
-                datatype=row.get("dt", {}).get("value"),
-                language=row.get("lang", {}).get("value"),
-                graph_uri=graph,
-                type_graph_uris=named,
-                object_type_graph_uris=context.type_context_graph_uris or [],
-                covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
-                subject_selection="untyped" if predicate in untyped else "uncovered",
-                count=0,
-                distinct_subjects=0,
-                distinct_objects=0,
-                witness_query="",
-                recount_query="",
-            )
-            key = json.dumps(candidate.model_dump(), sort_keys=True)
-            candidates[key] = candidate
-            if bulk or sample_of(row) is not None:
-                bindings[key].append(row)
-        structural = []
-        inconsistent: list[dict[str, Any]] = []
-        for key in sorted(candidates):
-            pattern = candidates[key]
-            refused_check: str | None = None
-            pattern.witness_query, pattern.recount_query = structural_queries(pattern)
-            provenance = next(
-                (p for row in bindings[key] if (p := sample_of(row)) is not None), None
-            )
-            if provenance is not None:
-                # Found in a sample of a refused discovery: other shapes of the property may
-                # exist. Counted below exactly when the recount answers, else from the sample.
-                flag(pattern, provenance, ["patterns"])
-            if provenance is not None and "n" in bindings[key][0] and len(bindings[key]) > 1:
-                # Rows of a sample of grouped patterns: the counts of the sample, lower bounds.
-                group = bindings[key]
-                pattern.count = sum(int(row["n"]["value"]) for row in group)
-                pattern.distinct_subjects = max(int(row["subjects"]["value"]) for row in group)
-                pattern.distinct_objects = max(int(row["objects"]["value"]) for row in group)
-                flag(pattern, provenance, ["counts"])
-                sampled_witness = [row for row in group if "witness" in row]
-                pattern.examples = [_witness(sampled_witness[0])] if sampled_witness else []
-            elif bulk and "n" in bindings[key][0]:
-                # Rows of patterns (_patterns_discovery). Rows of one pattern with two spellings of
-                # a property set are recounted: their distinct objects do not add up.
-                group = bindings[key]
-                pattern.count = sum(int(row["n"]["value"]) for row in group)
-                if len(group) == 1:
-                    pattern.distinct_subjects = int(group[0]["subjects"]["value"])
-                    pattern.distinct_objects = int(group[0]["objects"]["value"])
-                    if provenance is not None:
-                        flag(pattern, provenance, ["counts"])
-                else:
-                    (recount,) = _select(context, pattern.recount_query, "structural/count")
-                    pattern.count = int(recount["n"]["value"])
-                    pattern.distinct_subjects = int(recount["subjects"]["value"])
-                    pattern.distinct_objects = int(recount["objects"]["value"])
-                sampled = [row for row in group if "witness" in row]
-                pattern.examples = (
-                    [_witness(sampled[0])]
-                    if sampled
-                    else _select(context, pattern.witness_query, "structural/witness")
+
+        def confirm(
+            rows: list[dict[str, Any]],
+        ) -> tuple[list[StructuralPattern], list[dict[str, Any]]]:
+            """Build the patterns of discovered rows, and recount and witness each one."""
+            candidates: dict[str, StructuralPattern] = {}
+            bindings: dict[str, list[dict[str, Any]]] = defaultdict(list)
+            for row in rows:
+                predicate = row["p"]["value"]
+                candidate = StructuralPattern(
+                    subject_properties=_properties(row["ss"]["value"]),
+                    object_properties=_properties(row.get("os", {}).get("value", "")),
+                    subject_kind=row["sk"]["value"],
+                    object_kind=row["ok"]["value"],
+                    property_uri=predicate,
+                    datatype=row.get("dt", {}).get("value"),
+                    language=row.get("lang", {}).get("value"),
+                    graph_uri=graph,
+                    type_graph_uris=named,
+                    object_type_graph_uris=context.type_context_graph_uris or [],
+                    covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
+                    subject_selection="untyped" if predicate in untyped else "uncovered",
+                    count=0,
+                    distinct_subjects=0,
+                    distinct_objects=0,
+                    witness_query="",
+                    recount_query="",
                 )
-            elif bulk:
-                pairs = {
-                    (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
-                    for row in bindings[key]
-                }
-                pattern.count = len(pairs)
-                pattern.distinct_subjects = len({subject for subject, _ in pairs})
-                pattern.distinct_objects = len({obj for _, obj in pairs})
-                pattern.examples = [{name: bindings[key][0][name] for name in ("s", "o")}]
-            else:
-                try:
-                    counts = _select(context, pattern.recount_query, "structural/count")
-                    if len(counts) != 1:
-                        raise ValueError("Expected one structural count row")
-                    pattern.count = int(counts[0]["n"]["value"])
-                    pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
-                    pattern.distinct_objects = int(counts[0]["objects"]["value"])
-                    pattern.examples = _select(context, pattern.witness_query, "structural/witness")
-                except (SparqlHelperError, ValueError) as error:
-                    # A refused recount leaves the pattern unconfirmed, as a recount of 0 does;
-                    # a pattern seen in the edges of a sample keeps the counts of the sample.
-                    refused_check = str(error)[:300]
-                    if provenance is not None and "s" in bindings[key][0]:
-                        _sample_counts(pattern, bindings[key])
-                        flag(pattern, provenance, ["counts"])
-                        refused_check = None
-                else:
-                    refused_check = None
-            if refused_check or pattern.count < 1 or len(pattern.examples) != 1:
-                # The discovered property sets are not confirmed by the recount or the witness
-                # (Virtuoso: one subject in two groups of a GROUP BY). The pattern is left out
-                # and recorded; the other patterns and the typed schema stand.
-                inconsistent.append(
-                    {
-                        "property": pattern.property_uri,
-                        "subject_kind": pattern.subject_kind,
-                        "subject_properties": pattern.subject_properties,
-                        "object_kind": pattern.object_kind,
-                        "object_properties": pattern.object_properties,
-                        "datatype": pattern.datatype,
-                        "language": pattern.language,
-                        "recount": pattern.count,
-                        "witnesses": len(pattern.examples),
-                        **({"refused": refused_check} if refused_check else {}),
+                key = json.dumps(candidate.model_dump(), sort_keys=True)
+                candidates[key] = candidate
+                if bulk or sample_of(row) is not None:
+                    bindings[key].append(row)
+            structural = []
+            inconsistent: list[dict[str, Any]] = []
+            for key in sorted(candidates):
+                pattern = candidates[key]
+                refused_check: str | None = None
+                pattern.witness_query, pattern.recount_query = structural_queries(pattern)
+                provenance = next(
+                    (p for row in bindings[key] if (p := sample_of(row)) is not None), None
+                )
+                if provenance is not None:
+                    # Found in a sample of a refused discovery: other shapes of the property may
+                    # exist. Counted below exactly when the recount answers, else from the sample.
+                    flag(pattern, provenance, ["patterns"])
+                if provenance is not None and "n" in bindings[key][0] and len(bindings[key]) > 1:
+                    # Rows of a sample of grouped patterns: the counts of the sample, lower bounds.
+                    group = bindings[key]
+                    pattern.count = sum(int(row["n"]["value"]) for row in group)
+                    pattern.distinct_subjects = max(int(row["subjects"]["value"]) for row in group)
+                    pattern.distinct_objects = max(int(row["objects"]["value"]) for row in group)
+                    flag(pattern, provenance, ["counts"])
+                    sampled_witness = [row for row in group if "witness" in row]
+                    pattern.examples = [_witness(sampled_witness[0])] if sampled_witness else []
+                elif bulk and "n" in bindings[key][0]:
+                    # Rows of patterns (_patterns_discovery). Rows of one pattern with two spellings of
+                    # a property set are recounted: their distinct objects do not add up.
+                    group = bindings[key]
+                    pattern.count = sum(int(row["n"]["value"]) for row in group)
+                    if len(group) == 1:
+                        pattern.distinct_subjects = int(group[0]["subjects"]["value"])
+                        pattern.distinct_objects = int(group[0]["objects"]["value"])
+                        if provenance is not None:
+                            flag(pattern, provenance, ["counts"])
+                    else:
+                        (recount,) = _select(context, pattern.recount_query, "structural/count")
+                        pattern.count = int(recount["n"]["value"])
+                        pattern.distinct_subjects = int(recount["subjects"]["value"])
+                        pattern.distinct_objects = int(recount["objects"]["value"])
+                    sampled = [row for row in group if "witness" in row]
+                    pattern.examples = (
+                        [_witness(sampled[0])]
+                        if sampled
+                        else _select(context, pattern.witness_query, "structural/witness")
+                    )
+                elif bulk:
+                    pairs = {
+                        (json.dumps(row["s"], sort_keys=True), json.dumps(row["o"], sort_keys=True))
+                        for row in bindings[key]
                     }
-                )
-                continue
-            structural.append(pattern)
+                    pattern.count = len(pairs)
+                    pattern.distinct_subjects = len({subject for subject, _ in pairs})
+                    pattern.distinct_objects = len({obj for _, obj in pairs})
+                    pattern.examples = [{name: bindings[key][0][name] for name in ("s", "o")}]
+                else:
+                    try:
+                        counts = _select(context, pattern.recount_query, "structural/count")
+                        if len(counts) != 1:
+                            raise ValueError("Expected one structural count row")
+                        pattern.count = int(counts[0]["n"]["value"])
+                        pattern.distinct_subjects = int(counts[0]["subjects"]["value"])
+                        pattern.distinct_objects = int(counts[0]["objects"]["value"])
+                        pattern.examples = _select(
+                            context, pattern.witness_query, "structural/witness"
+                        )
+                    except (SparqlHelperError, ValueError) as error:
+                        # A refused recount leaves the pattern unconfirmed, as a recount of 0 does;
+                        # a pattern seen in the edges of a sample keeps the counts of the sample.
+                        refused_check = str(error)[:300]
+                        if provenance is not None and "s" in bindings[key][0]:
+                            _sample_counts(pattern, bindings[key])
+                            flag(pattern, provenance, ["counts"])
+                            refused_check = None
+                    else:
+                        refused_check = None
+                if refused_check or pattern.count < 1 or len(pattern.examples) != 1:
+                    # The discovered property sets are not confirmed by the recount or the witness
+                    # (Virtuoso: one subject in two groups of a GROUP BY). The pattern is left out
+                    # and recorded; the other patterns and the typed schema stand.
+                    inconsistent.append(
+                        {
+                            "property": pattern.property_uri,
+                            "subject_kind": pattern.subject_kind,
+                            "subject_properties": pattern.subject_properties,
+                            "object_kind": pattern.object_kind,
+                            "object_properties": pattern.object_properties,
+                            "datatype": pattern.datatype,
+                            "language": pattern.language,
+                            "recount": pattern.count,
+                            "witnesses": len(pattern.examples),
+                            **({"refused": refused_check} if refused_check else {}),
+                        }
+                    )
+                    continue
+                structural.append(pattern)
+            return structural, inconsistent
+
+        structural, inconsistent = confirm(rows)
+        redo = sorted({i["property"] for i in inconsistent if i["property"] in residuals})
+        if redo:
+            # Virtuoso can give a subject a wrong property set in a grouped discovery of many
+            # subjects (PlantMetWiki rdfs:seeAlso, 2,478 subjects: PC857 grouped with 5 of its 8
+            # properties, alone with all of them; job 115327, 681 patterns that recount to 0).
+            # The properties with unconfirmed patterns are discovered again from their edges and
+            # the (node, property) pairs, without GROUP_CONCAT (_discover_pairs).
+            again: dict[str, dict[str, int]] = {}
+            for predicate in redo:
+                before = sum(1 for i in inconsistent if i["property"] == predicate)
+                try:
+                    rediscovered = _discover_pairs(context, graph, named, residuals[predicate])
+                except (SparqlHelperError, ValueError) as error:
+                    logger.warning("Discovery: %s not discovered again: %s", predicate, error)
+                    continue
+                kept, unconfirmed = confirm(rediscovered)
+                structural = [p for p in structural if p.property_uri != predicate] + kept
+                inconsistent = [i for i in inconsistent if i["property"] != predicate]
+                inconsistent += unconfirmed
+                again[predicate] = {
+                    "unconfirmed_before": before,
+                    "unconfirmed_after": len(unconfirmed),
+                }
+            if again:
+                entry["discovered_again_from_pairs"] = again
         undiscovered = _undiscovered_triples(entry)
         # The properties discovered over a sample are left out of the account: their patterns
         # may not cover their uncovered triples, by design (rdfsolve.mining.sampling).
@@ -1380,13 +1704,27 @@ class StructuralStrategy(MiningStrategy):
                     graph_uris=[graph] if graph else None,
                 )
             )
-        if recounted != expected:
-            entry["unaccounted_triples"] = expected - recounted
+        # A recount counts every edge of its pattern, also the edges of subjects whose discovery
+        # was refused when they have a discovered pattern (PlantMetWiki, job 115327: 1,855,293
+        # recounted of 1,855,296 uncovered, 354 of them not discovered). So the recounts are
+        # consistent between the discovered triples and all uncovered triples.
+        total = expected + undiscovered
+        if undiscovered:
+            entry["undiscovered_triples_in_patterns"] = max(0, recounted - expected)
+        if not expected <= recounted <= total:
+            entry["unaccounted_triples"] = (
+                expected - recounted if recounted < expected else total - recounted
+            )
             gaps.append(
                 QueryFailure(
                     "invalid_response",
-                    f"Structural patterns account for {recounted} of {expected} uncovered triples "
-                    f"({entry['uncovered_triples']} uncovered, {undiscovered} not discovered)",
+                    f"Structural patterns account for {recounted} of {total} uncovered triples"
+                    + (
+                        f" ({undiscovered} of them in subjects whose discovery was refused, so "
+                        f"between {expected} and {total} are expected)"
+                        if undiscovered
+                        else ""
+                    ),
                     "structural/count",
                     graph_uris=[graph] if graph else None,
                 )

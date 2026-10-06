@@ -343,9 +343,37 @@ def test_a_refused_discovery_is_read_in_batches_of_subjects(monkeypatch):
     assert not report.query_failures
 
 
+def test_a_subject_refused_alone_is_discovered_from_pairs(monkeypatch):
+    """A subject whose grouped discovery is refused even alone is discovered from its edges and
+    the (node, property) pairs, queries without GROUP_CONCAT that can be paged in a fixed order
+    (IDEAL author, WikiPathways gpml:hasDataNode: "Cannot paginate volatile expressions")."""
+    plain, *_ = _mine_refusing(monkeypatch, lambda q: False)
+    result, entry, report, sent = _mine_refusing(
+        monkeypatch, lambda q: "FILTER(?s IN" not in q or "<urn:w>" in q
+    )
+    assert any(p == "structural/discovery-pairs" for p, _ in sent)
+    assert entry["state"] == "complete" and entry["undiscovered_triples"] == 0
+    assert not report.query_failures
+    dump = sorted(p.model_dump_json() for p in result.structural_patterns)
+    assert dump == sorted(p.model_dump_json() for p in plain.structural_patterns), (
+        "The same patterns as the grouped discovery of the whole property"
+    )
+
+
 def test_subjects_still_refused_are_counted_as_not_discovered(monkeypatch):
+    original = structural_strategy._select
+
+    def pairs_refused(context, query, purpose, **options):
+        if purpose == "structural/discovery-pairs" and "<urn:w>" in query:
+            raise QueryError("Virtuoso 42000 Error SR171: Transaction timed out")
+        return original(context, query, purpose, **options)
+
+    monkeypatch.setattr(structural_strategy, "_select", pairs_refused)
     result, entry, report, _ = _mine_refusing(
         monkeypatch, lambda q: "FILTER(?s IN" not in q or "<urn:w>" in q
+    )
+    assert "SR171" in entry["census_properties"]["urn:q"]["discovery_refused"], (
+        "The reason is the last refusal, not the refusal to page the whole property"
     )
     q = entry["census_properties"]["urn:q"]
     assert q["undiscoveredTriples"] == 1 and "discovery_refused" in q
@@ -353,3 +381,101 @@ def test_subjects_still_refused_are_counted_as_not_discovered(monkeypatch):
     found = sorted((p.property_uri, p.count) for p in result.structural_patterns)
     assert found == [("urn:p", 1), ("urn:q", 1)], "urn:u keeps its patterns"
     assert report.query_failures, "The refused part is recorded"
+
+
+def test_blank_node_edges_of_a_subject_refused_alone_keep_their_grouped_query(monkeypatch):
+    """Blank-node labels do not hold between requests, so the pairs of a blank node cannot be
+    joined to its edges: those edges are discovered with the grouped query of the subject."""
+    data = DATA + '<urn:w> <urn:r> [ <urn:k> "k" ] .\n'
+
+    def mine_with(refuse):
+        monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+        with SchemaMiner.from_graph(Dataset().parse(data=data, format="turtle"), delay=0) as miner:
+            select = miner.helper.select
+
+            def call(query, *args, purpose="", **kwargs):
+                if purpose == "structural/discovery" and refuse(query):
+                    raise QueryError("Virtuoso 42000 Error SR171: Transaction timed out")
+                return select(query, *args, purpose=purpose, **kwargs)
+
+            monkeypatch.setattr(miner.helper, "select", call)
+            result = miner.mine("blank")
+            (entry,) = miner.last_report.config["structural_coverage"]
+        return result, entry
+
+    plain, _ = mine_with(lambda q: False)
+    result, entry = mine_with(
+        lambda q: (
+            ("FILTER(?s IN" not in q and "FILTER(isBlank(?s))" not in q)
+            or ("<urn:w>" in q and "isBlank(?s) || isBlank(?o)" not in q)
+        )
+    )
+    assert entry["undiscovered_triples"] == 0
+    assert sorted(p.model_dump_json(exclude={"examples"}) for p in result.structural_patterns) == (
+        sorted(p.model_dump_json(exclude={"examples"}) for p in plain.structural_patterns)
+    )
+    assert any(p.object_kind == "BlankNode" for p in result.structural_patterns)
+
+
+SAME_SHAPE = """
+<urn:a> a <urn:A> ; <urn:q> "x" .
+<urn:u> <urn:q> "y" .
+<urn:w> <urn:q> "z" .
+"""
+
+
+def _mine(monkeypatch, data, select_hook):
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    with SchemaMiner.from_graph(Dataset().parse(data=data, format="turtle"), delay=0) as miner:
+        select = miner.helper.select
+
+        def call(query, *args, purpose="", **kwargs):
+            return select_hook(select, query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", call)
+        result = miner.mine("hook")
+        (entry,) = miner.last_report.config["structural_coverage"]
+        return result, entry, miner.last_report
+
+
+def test_a_refused_subject_with_a_discovered_pattern_is_not_a_gap(monkeypatch):
+    """The recount of a pattern counts the edges of every subject with its property set, also
+    of a subject whose discovery was refused (PlantMetWiki: 1,855,293 recounted of 1,855,296
+    uncovered, 354 not discovered, was reported as more than the 1,854,942 expected)."""
+
+    def hook(select, query, *args, purpose="", **kwargs):
+        refused = ("FILTER(?s IN" not in query and purpose == "structural/discovery") or (
+            "<urn:w>" in query and purpose in ("structural/discovery", "structural/discovery-pairs")
+        )
+        if refused:
+            raise QueryError("Virtuoso 42000 Error SR171: Transaction timed out")
+        return select(query, *args, purpose=purpose, **kwargs)
+
+    result, entry, report = _mine(monkeypatch, SAME_SHAPE, hook)
+    assert entry["undiscovered_triples"] == 1 and entry["undiscovered_triples_in_patterns"] == 1
+    assert "unaccounted_triples" not in entry
+    assert not any("account for" in gap.message for gap in report.measurement_gaps)
+    assert [p.count for p in result.structural_patterns] == [2]
+
+
+def test_a_wrong_property_set_of_a_grouped_discovery_is_discovered_again(monkeypatch):
+    """Virtuoso gave PlantMetWiki pathways property sets with properties missing in the grouped
+    discovery of 2,478 subjects; the patterns recounted to 0. The property is discovered again
+    from pairs, and its patterns are those of a correct discovery."""
+    plain, *_ = _mine(monkeypatch, DATA, lambda select, q, *a, **k: select(q, *a, **k))
+
+    def hook(select, query, *args, purpose="", **kwargs):
+        answer = select(query, *args, purpose=purpose, **kwargs)
+        if purpose == "structural/discovery":
+            for row in answer["results"]["bindings"]:
+                if "ss" in row and row["ss"]["value"].count(">"):
+                    row["ss"] = {"type": "literal", "value": row["ss"]["value"].split(">")[0]}
+        return answer
+
+    result, entry, report = _mine(monkeypatch, DATA, hook)
+    assert entry["discovered_again_from_pairs"]
+    assert all(n["unconfirmed_after"] == 0 for n in entry["discovered_again_from_pairs"].values())
+    assert "inconsistent_patterns" not in entry
+    assert sorted(p.model_dump_json(exclude={"examples"}) for p in result.structural_patterns) == (
+        sorted(p.model_dump_json(exclude={"examples"}) for p in plain.structural_patterns)
+    )

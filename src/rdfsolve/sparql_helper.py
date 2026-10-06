@@ -423,6 +423,14 @@ class ResponseLimitError(EndpointTimeoutError):
     """Response exceeded the byte budget; use a smaller query."""
 
 
+class QueryParserLimitError(EndpointTimeoutError):
+    """The parser of the endpoint refused the query as too large or too deep (Virtuoso SQ074).
+
+    The same query is refused again; a query with fewer terms or alternatives is answered.
+    Splitting the rows it reads (for example batches of objects) does not shorten it.
+    """
+
+
 class EndpointRateLimitError(EndpointError):
     """Remote host rate limit; do not split the query into more requests."""
 
@@ -559,6 +567,19 @@ class SparqlHelper:
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
         "tried to allocate",
+    )
+    # Limits of the query parser: the same query is refused again, and a smaller one (fewer
+    # properties, terms or alternatives in one expression) is answered. Virtuoso answers a
+    # FILTER with more than about 170 alternatives joined by || with "SQ074: Too many opened
+    # parentheses" and HTTP 500 (GlyCoNAVI, job 115329: 195 alternatives refused, 165 answered;
+    # checked 2026-10-06); a Java engine overflows its stack on a deep expression.
+    PARSER_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "sq074",
+        "too many opened parentheses",
+        "stackoverflowerror",
+        "stack overflow",
+        "query is too complex",
+        "expression too complex",
     )
 
     # A 503 (or a remote 429) whose body says that the server is busy, not that the query is
@@ -1106,6 +1127,17 @@ class SparqlHelper:
                     f"HTTP {status_code}: {detail or 'Endpoint request failed'}"
                 )
                 failure.gateway_overload = self._gateway_overload(status_code, body)
+                if any(marker in (detail or body).lower() for marker in self.PARSER_LIMIT_PATTERNS):
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    logger.warning(
+                        "%s query too large for the parser of %s - not retrying the unchanged"
+                        " query",
+                        tag,
+                        self.endpoint_url,
+                    )
+                    raise QueryParserLimitError(
+                        f"Query parser limit: {detail or status_code}", status_code=status_code
+                    ) from e
                 if any(
                     marker in body
                     for marker in (
@@ -2108,6 +2140,10 @@ class SparqlHelper:
 
                 except EndpointTimeoutError as error:
                     last_error = error
+                    if not self.page_recovery:
+                        # A probe (budget()): a page that does not answer in time is not asked
+                        # again in smaller pages.
+                        raise
                     if reductions >= max_page_retries:
                         logger.warning(
                             "Page recovery budget exhausted at offset %d", current_offset

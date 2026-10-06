@@ -267,9 +267,14 @@ def test_untyped_relations_survive_mining_release_and_recount(tmp_path, monkeypa
             return select(query, purpose)
 
         monkeypatch.setattr(miner.helper, "select", fail_coverage)
-        with pytest.raises(EndpointError, match="coverage unavailable"):
-            miner.mine("failed coverage")
-        assert miner.last_report.completion_state != "complete"
+        failed = miner.mine("failed coverage")
+        # The structural layer adds to the typed patterns, which do not depend on it: a refused
+        # census is a measurement gap, and the source keeps its typed patterns.
+        assert miner.last_report.completion_state == "partial"
+        assert failed.patterns and not failed.structural_patterns
+        (entry,) = miner.last_report.config["structural_coverage"]
+        assert entry["state"] == "failed" and "coverage unavailable" in entry["reason"]
+        assert any(f.purpose == "structural/coverage" for f in miner.last_report.query_failures)
 
     with SchemaMiner.from_graph(mixed, graph_uris=["urn:data"], delay=0) as miner:
         from rdfsolve.sparql_helper import SparqlHelper

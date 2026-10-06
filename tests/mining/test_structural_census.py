@@ -7,6 +7,7 @@ import re
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
 from rdflib import Dataset
 
 from rdfsolve.mining import structural_strategy
@@ -21,6 +22,13 @@ DATA = """
 
 
 COUNTS = ("triple_count", "covered_triples", "uncovered_triples", "untyped_subject_triples")
+
+
+@pytest.fixture(autouse=True)
+def one_property_at_a_time(monkeypatch):
+    """These tests check the census of one property, sent alone; test_structural_census_batched
+    checks that several properties in one query give the same counts."""
+    monkeypatch.setattr(structural_strategy, "CENSUS_PROPERTIES_PER_QUERY", 1)
 
 
 def census(monkeypatch, *, endpoint=True):
