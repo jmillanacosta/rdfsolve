@@ -153,12 +153,29 @@ def test_the_inputs_of_an_index_are_pinned_with_their_download(tmp_path):
 
 
 def test_a_file_that_did_not_change_is_not_read_again(tmp_path, monkeypatch):
+    import os
+    import time
+
     path = _downloaded(tmp_path)
+    old = time.time_ns() - 60 * 10**9  # changed a minute before it is pinned
+    os.utime(path, ns=(old, old))
     record_inputs(tmp_path, {URLS[0]: path}, [path])
     monkeypatch.setattr(
         downloads_module, "digest_file", lambda *args: pytest.fail("The file was read again")
     )
     assert record_inputs(tmp_path, {URLS[0]: path}, [path])["files"][0]["sha256"]
+
+
+def test_a_file_rewritten_within_one_tick_is_read_again(tmp_path):
+    """A file rewritten with the same size and modification time is not taken from the cache."""
+    import os
+
+    path = _downloaded(tmp_path)
+    first = record_inputs(tmp_path, {URLS[0]: path}, [path])["files"][0]
+    path.write_bytes(b"<urn:a> <urn:p> <urn:c> .\n")  # the same size
+    os.utime(path, ns=(first["modified_ns"], first["modified_ns"]))
+    second = record_inputs(tmp_path, {URLS[0]: path}, [path])["files"][0]
+    assert second["sha256"] != first["sha256"]
 
 
 def test_a_pinned_run_refuses_other_missing_and_added_files(tmp_path):

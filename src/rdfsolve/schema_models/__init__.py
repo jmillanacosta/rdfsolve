@@ -4,19 +4,6 @@ from __future__ import annotations
 
 import importlib
 
-from rdfsolve.ontology.structure import (
-    DisjointClassRelation,
-    DomainAssertion,
-    EquivalentClassRelation,
-    EquivalentPropertyRelation,
-    InverseRelation,
-    OntologyStructure,
-    PropertyCharacteristic,
-    RangeAssertion,
-    Restriction,
-    SubClassRelation,
-    SubPropertyRelation,
-)
 from rdfsolve.schema_models._constants import (
     _BLANK_NODE_URIS,
     _RESOURCE_URIS,
@@ -53,7 +40,24 @@ from rdfsolve.schema_models.void_model import (
     VoidPropertyPartition,
 )
 
-# Names that should be resolved lazily via __getattr__
+# Names that should be resolved lazily via __getattr__. The ontology structure models are lazy
+# because rdfsolve.ontology.structure imports rdfsolve.schema_models.enrichment: importing them
+# here would make "import rdfsolve.ontology.structure" fail on a partly initialised module.
+_LAZY_STRUCTURE = frozenset(
+    {
+        "DisjointClassRelation",
+        "DomainAssertion",
+        "EquivalentClassRelation",
+        "EquivalentPropertyRelation",
+        "InverseRelation",
+        "OntologyStructure",
+        "PropertyCharacteristic",
+        "RangeAssertion",
+        "Restriction",
+        "SubClassRelation",
+        "SubPropertyRelation",
+    }
+)
 _LAZY_LINKML = {
     "make_valid_linkml_name": "rdfsolve.schema_models.exporters.linkml",
     "to_linkml": "rdfsolve.schema_models.exporters.linkml",
@@ -62,7 +66,9 @@ _LAZY_LINKML = {
 
 
 def __getattr__(name: str) -> object:
-    """Lazily import LinkML-dependent symbols on first access."""
+    """Lazily import LinkML-dependent symbols and the ontology structure models on first access."""
+    if name in _LAZY_STRUCTURE:
+        return getattr(importlib.import_module("rdfsolve.ontology.structure"), name)
     if name in _LAZY_LINKML:
         module = importlib.import_module(_LAZY_LINKML[name])
         return getattr(module, name)

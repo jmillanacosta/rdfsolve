@@ -20,6 +20,7 @@ import email.utils
 import hashlib
 import json
 import re
+import time
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -320,6 +321,10 @@ def download_paths(workdir: Path, entry: dict[str, Any]) -> dict[str, Path | Non
     return found
 
 
+# A file changed less than this before it was pinned may have changed again within the same tick.
+RACY_NS = 2 * 10**9
+
+
 def record_inputs(
     workdir: Path,
     downloads: dict[str, Path | None],
@@ -359,13 +364,24 @@ def record_inputs(
             "path": relative(path),
             "bytes": stat.st_size,
             "modified_ns": stat.st_mtime_ns,
+            "pinned_ns": time.time_ns(),
         }
         url = url_of.get(path)
         given = (releases.get(url) or {}).get("hashes") or {}
         wanted = {"md5", "sha1"} & {_HASH_NAMES.get(kind) for kind in given}
         before = earlier.get(item["path"])
+        # A checksum is reused only for a file that was last changed clearly before it was
+        # pinned (Git's "racy clean" rule): a file rewritten with the same size within one tick
+        # of the clock keeps its modification time. Records without a pin time are trusted only
+        # for files older than a day.
+        settled = (
+            item["modified_ns"] + RACY_NS < before["pinned_ns"]
+            if before and "pinned_ns" in before
+            else item["modified_ns"] + 86_400 * 10**9 < time.time_ns()
+        )
         if (
             before
+            and settled
             and before.get("bytes") == item["bytes"]
             and before.get("modified_ns") == item["modified_ns"]
             and all(name in before for name in wanted)
