@@ -399,3 +399,27 @@
     Two yearly releases of NLM MeSH: rdfportal.mesh holds MeSH 2025 (15,349,035 triples, equal to
     the endpoint's /mesh/2025 graph), mesh.nlm the 2026 dump (checked 2026-10-06). Only the newer
     release is mined.
+- left: mesh.heading
+  right: mesh.nlm
+  relation: same_upstream
+  note: >-
+    Not the same data, nor a part of it (checked 2026-10-06). IDSM's graph
+    http://id.nlm.nih.gov/mesh/heading (18,334,011 triples) is a copy of NLM's cumulative graph
+    http://id.nlm.nih.gov/mesh (18.35 M on NLM's endpoint): every record carries meshv:active
+    (2,365,878 true = the rdf:type count of NLM's /mesh/2024 graph; 91,031 false), and inactive
+    records carry meshv:lastActiveYear (2015-2023). mesh.nlm is the yearly 2026 dump (15.36 M),
+    in which meshv:active and meshv:lastActiveYear do not occur, so its local index does not
+    cover this graph's schema.
+- left: biobricks-mesh
+  right: mesh.nlm
+  relation: same_upstream
+  note: >-
+    BioBricks MeSH (18,198,108 triples, checked 2026-10-06) is also a copy of NLM's cumulative
+    graph (meshv:active on 2,437,645 records), not of the yearly dump that mesh.nlm indexes.
+- left: biobricks-mesh
+  right: mesh.heading
+  relation: version_of
+  note: >-
+    Two copies of NLM's cumulative MeSH graph taken at different dates (18,198,108 and
+    18,334,011 triples, checked 2026-10-06). Neither publishes its release, so neither is named
+    newer.
