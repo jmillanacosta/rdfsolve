@@ -6777,7 +6777,26 @@
   science_area: life sciences
 - name: biogateway
   dataset_kind: instance
-  endpoint: https://2407.biogateway.eu/sparql/
+  classes_as_data: true  # records are classes (each record an owl:Class under its kind)
+  # The release that the University of Murcia serves; its graphs are the Zenodo dump below
+  # (per-graph counts checked 2026-10-06). 2407.biogateway.eu serves another build (its taxon
+  # graph holds the subClassOf closure: 62.0 M triples against 18.1 M).
+  endpoint: https://semantics.inf.um.es/biogateway
+  # One folder per named graph (rdf.biogateway.eu/graph/<folder>), N-Triples; indexed as one graph.
+  download_zip: https://zenodo.org/records/20747001/files/graphs.zip
+  archive_members_left_out:
+  # Plain copies of ENdb.nt.gz and gene_coord_9606.nt.gz (same statements, checked).
+  - ENdb.nt
+  - gene_coord_9606.nt
+  # BFO, RO and SIO (onto/): no graph of the service holds them.
+  - bfo.nt.gz
+  - ro.nt.gz
+  - sio.nt.gz
+  notes: >-
+    Mined locally from Zenodo record 20747001 (2026-06-18, CC BY 4.0, graphs.zip md5
+    3e8a83003b35fa8c994da96a97c2943c), the graphs of Mulero-Hernandez et al. 2024 (NAR,
+    doi:10.1093/nar/gkae566). Records are owl:Class instances under a few kinds (SO_0000727,
+    rdf:Statement, NCBITaxon). Remote mining stopped at the class listing (over 10 M classes).
   keywords:
   - biomedical science
   sparql_engine: virtuoso
@@ -8377,7 +8396,15 @@
   science_area: life sciences
 - name: gocam
   dataset_kind: instance
-  endpoint: http://rdf.geneontology.org/blazegraph/sparql
+  endpoint: https://rdf.geneontology.org/blazegraph/sparql
+  # The production Blazegraph journal that the endpoint serves; GO publishes the store in no
+  # RDF serialization. It is exported to N-Quads (one named graph per model) before indexing.
+  download_jnl: https://current.geneontology.org/products/blazegraph/blazegraph-production.jnl.gz
+  notes: >-
+    Mined locally from the production journal (owner, 2026-10-06: group by ontology, the local
+    dump when remote fails): the endpoint's 60 s limit refuses the typed-object query of a
+    single GO class. The products/ttl/*_cam.ttl.gz files are GOA-derived GO-CAMs, another
+    dataset. The endpoint's http URL answers 301 to https.
   keywords:
   - gene
   - interaction/pathway

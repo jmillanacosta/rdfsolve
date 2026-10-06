@@ -384,6 +384,9 @@ _LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset(
         ".nq.xz",
         ".trig",
         ".trig.gz",
+        # A Blazegraph journal, exported to N-Quads before indexing (qlever.utils).
+        ".jnl",
+        ".jnl.gz",
     }
 )
 

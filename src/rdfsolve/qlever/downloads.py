@@ -529,7 +529,7 @@ def unpinned_inputs(current: dict[str, Any], pinned: dict[str, Any]) -> list[str
 _DERIVED_SUFFIXES = frozenset(
     {
         ".gz", ".xz", ".bz2", ".nt", ".nq", ".ttl", ".rdf", ".owl", ".xml", ".trig", ".n3",
-        ".jsonld", ".obo", ".part",
+        ".jsonld", ".obo", ".jnl", ".part",
     }
 )  # fmt: skip
 _ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tgz", ".tar.xz", ".tar.bz2", ".zip")

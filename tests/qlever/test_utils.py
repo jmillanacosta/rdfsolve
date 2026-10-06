@@ -10,7 +10,9 @@ import pytest
 
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.utils import (
+    _BLAZEGRAPH_RUNNER,
     _build_get_data_steps,
+    _convert_journal_steps,
     _convert_obo_steps,
     _convert_rdfxml_steps,
     _extract_archives_steps,
@@ -467,3 +469,99 @@ def test_left_out_patterns_are_file_names(pattern):
 
     with pytest.raises(ValueError):
         SourceModel.model_validate({"name": "x", "archive_members_left_out": [pattern]})
+
+
+# A Blazegraph journal (GO-CAM) is exported to N-Quads with blazegraph-runner before indexing.
+
+JOURNAL_URL = "https://example.org/store/blazegraph-production.jnl.gz"
+
+
+def _run_export(tmp_path, java="exit 0"):
+    """Run the export steps with a java stand-in (the runner stand-in does not call it)."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "java").write_text(f"#!/bin/sh\n{java}\n")
+    (bin_dir / "java").chmod(0o755)
+    env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"}
+    return subprocess.run(
+        ["bash"],
+        input=" && ".join(_convert_journal_steps()),
+        text=True,
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+    )
+
+
+def _fake_runner(tmp_path, body):
+    """Put a blazegraph-runner stand-in where the step looks for it (no download)."""
+    runner = tmp_path / _BLAZEGRAPH_RUNNER
+    runner.parent.mkdir(parents=True)
+    runner.write_text("#!/bin/sh\n" + body)
+    runner.chmod(0o755)
+    return runner
+
+
+def test_a_journal_is_exported_to_compressed_nquads_without_the_runner_log(tmp_path):
+    import gzip
+
+    (tmp_path / "store.jnl").write_bytes(b"journal")
+    # The runner logs to its standard output; the data go to the file it is given (last argument).
+    _fake_runner(
+        tmp_path,
+        'echo "INFO opening journal"\n'
+        "for a; do out=$a; done\n"
+        'printf "<urn:s> <urn:p> <urn:o> <urn:g> .\\n" > "$out"\n',
+    )
+    done = _run_export(tmp_path)
+    assert done.returncode == 0, done.stderr
+    assert gzip.decompress((tmp_path / "store.nq.gz").read_bytes()) == (
+        b"<urn:s> <urn:p> <urn:o> <urn:g> .\n"
+    )
+    assert not (tmp_path / "store.nq.gz.part").exists()
+    assert not (tmp_path / ".jnl-export.fifo").exists()
+
+
+def test_a_failed_journal_export_stops_the_step_and_leaves_no_output(tmp_path):
+    (tmp_path / "store.jnl").write_bytes(b"journal")
+    _fake_runner(tmp_path, 'for a; do out=$a; done\necho partial > "$out"\nexit 1\n')
+    done = _run_export(tmp_path)
+    assert done.returncode != 0 and "Journal export failed: store.jnl" in done.stderr
+    assert not (tmp_path / "store.nq.gz").exists()
+    assert not (tmp_path / "store.nq.gz.part").exists()
+
+
+def test_an_exported_journal_is_not_exported_again(tmp_path):
+    (tmp_path / "store.jnl").write_bytes(b"journal")
+    (tmp_path / "store.nq.gz").write_bytes(b"kept")
+    _fake_runner(tmp_path, "exit 1\n")
+    done = _run_export(tmp_path)
+    assert done.returncode == 0, done.stderr
+    assert (tmp_path / "store.nq.gz").read_bytes() == b"kept"
+
+
+def test_a_journal_download_is_indexed_as_nquads_from_its_export(tmp_path):
+    from pathlib import Path
+
+    from rdfsolve.qlever.downloads import download_names, unlisted_inputs
+    from rdfsolve.sources import SourceModel, classify_source_mode
+
+    entry = {"name": "store", "endpoint": "https://example.org/sparql", "download_jnl": JOURNAL_URL}
+    analysis = analyse_source(entry)
+    assert analysis.needs_journal_conversion and analysis.needs_gz
+    steps = " && ".join(_build_get_data_steps(analysis, str(tmp_path)))
+    assert "blazegraph-runner" in steps and "dump" in steps
+    qleverfile = build_qleverfile(entry, tmp_path, 7001, "native")
+    assert "FORMAT            = nq" in qleverfile
+    # The export is the download converted: an index input the registry entry accounts for.
+    assert download_names(entry) == {JOURNAL_URL: "blazegraph-production.jnl.gz"}
+    assert unlisted_inputs(download_names(entry), [Path("blazegraph-production.nq.gz")]) == []
+    assert classify_source_mode(SourceModel.model_validate(entry)) == "both"
+
+
+def test_a_journal_export_without_java_stops_before_the_runner(tmp_path):
+    (tmp_path / "store.jnl").write_bytes(b"journal")
+    _fake_runner(tmp_path, "touch ran\n")
+    done = _run_export(tmp_path, java="exit 127")
+    assert done.returncode != 0 and "needs java on the PATH" in done.stderr
+    assert not (tmp_path / "ran").exists()

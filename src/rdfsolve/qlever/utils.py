@@ -199,6 +199,14 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
         cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
+    # A Blazegraph journal (GO-CAM publishes its production store only as one), exported to
+    # compressed N-Quads with the graph of each statement.
+    "jnl": FormatSpec(
+        qlever_format="nq",
+        glob="*.nq*",
+        cat=DECOMPRESS_EACH,
+        needs_conversion=True,
+    ),
     # Archive-only keys (format decided by archive contents)
     "tar_gz": FormatSpec(
         qlever_format="ttl",
@@ -239,6 +247,8 @@ _RDF_EXTS = (
     ".xml.gz",
     ".jsonld",
     ".obo",
+    ".jnl.gz",
+    ".jnl",
     ".tar.gz",
     ".tgz",
     ".zip",
@@ -286,6 +296,11 @@ class SourceAnalysis:
     def needs_obo_conversion(self) -> bool:
         """Check if source requires OBO to Turtle conversion."""
         return "obo" in self.suffixes
+
+    @property
+    def needs_journal_conversion(self) -> bool:
+        """Check if source requires a Blazegraph journal to N-Quads export."""
+        return "jnl" in self.suffixes
 
     @property
     def needs_jsonld_conversion(self) -> bool:
@@ -671,6 +686,8 @@ def _decompress_gz_steps(*, include_data_formats: bool = False) -> list[str]:
     loop = (
         'for f in *.gz; do [ -f "$f" ] || continue; '
         'case "$f" in *.tar.gz|*.ttl.gz|*.nt.gz|*.nq.gz|*.trig.gz|*.n3.gz) continue;; esac; '
+        # A journal already exported is not decompressed again.
+        'case "$f" in *.jnl.gz) [ -s "${f%.jnl.gz}.nq.gz" ] && continue;; esac; '
         'gunzip -fk "$f" 2>/dev/null || true; done'
     )
     return ["echo 'Decompressing .gz files to be converted ...'", loop]
@@ -725,6 +742,53 @@ def _convert_jsonld_steps() -> list[str]:
             "if not os.path.exists(os.path.splitext(f)[0]+'.ttl')]"
             '"'
         ),
+    ]
+
+
+# The exporter of Blazegraph journals: blazegraph-runner, the tool the Gene Ontology pipeline
+# builds its journals with. Its release is pinned by URL and SHA-256.
+BLAZEGRAPH_RUNNER_URL = (
+    "https://github.com/balhoff/blazegraph-runner/releases/download/v1.7/blazegraph-runner-1.7.tgz"
+)
+BLAZEGRAPH_RUNNER_SHA256 = "d96aab4abad0d473c130207070820e8a48e5572bd5a57fed68262f3c5e8d1cb0"
+_BLAZEGRAPH_RUNNER = ".blazegraph-runner/blazegraph-runner-1.7/bin/blazegraph-runner"
+
+
+def _convert_journal_steps() -> list[str]:
+    """Shell steps: export each Blazegraph journal (X.jnl) to X.nq.gz, every named graph kept.
+
+    The export streams through a named pipe to gzip, so no plain copy fills the disk; the
+    runner's log goes to its standard output, not into the data. The Java heap is
+    ``$RDFSOLVE_BLAZEGRAPH_JAVA_OPTS`` (default -Xmx16G). A failed export leaves no output.
+    """
+    export = (
+        'for f in *.jnl; do [ -f "$f" ] || continue; '
+        'nq="${f%.jnl}.nq.gz"; [ -s "$nq" ] && continue; '
+        'rm -f "$nq.part" .jnl-export.fifo; mkfifo .jnl-export.fifo; '
+        '"$(command -v pigz || echo gzip)" -c < .jnl-export.fifo > "$nq.part" & z=$!; '
+        'JAVA_OPTS="${RDFSOLVE_BLAZEGRAPH_JAVA_OPTS:--Xmx16G}" '
+        f'{_BLAZEGRAPH_RUNNER} dump --journal="$PWD/$f" --outformat=nquads .jnl-export.fifo; r=$?; '
+        "wait $z; g=$?; rm -f .jnl-export.fifo; "
+        'if [ $r -ne 0 ] || [ $g -ne 0 ]; then rm -f "$nq.part"; '
+        'echo "Journal export failed: $f" >&2; exit 1; fi; mv -f "$nq.part" "$nq"; done'
+    )
+    return [
+        "echo 'Exporting Blazegraph journals -> N-Quads (blazegraph-runner 1.7) ...'",
+        # The runner calls java; named here, the job's tool check refuses a job without it.
+        (
+            "{ java -version >/dev/null 2>&1 || "
+            "{ echo 'blazegraph-runner needs java on the PATH' >&2; exit 1; }; }"
+        ),
+        (
+            "{ [ -x " + _BLAZEGRAPH_RUNNER + " ] || { "
+            f'wget -q -O .blazegraph-runner.tgz "{BLAZEGRAPH_RUNNER_URL}" && '
+            f'echo "{BLAZEGRAPH_RUNNER_SHA256}  .blazegraph-runner.tgz" | sha256sum -c --quiet && '
+            "mkdir -p .blazegraph-runner && tar xzf .blazegraph-runner.tgz -C .blazegraph-runner && "
+            "rm -f .blazegraph-runner.tgz; }; } || "
+            "{ echo 'blazegraph-runner could not be fetched or did not match its SHA-256' >&2; "
+            "exit 1; }"
+        ),
+        export,
     ]
 
 
@@ -821,6 +885,9 @@ def _build_get_data_steps(
 
     if analysis.needs_jsonld_conversion:
         steps.extend(_convert_jsonld_steps())
+
+    if analysis.needs_journal_conversion:
+        steps.extend(_convert_journal_steps())
 
     return steps
 
