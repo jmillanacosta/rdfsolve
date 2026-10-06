@@ -279,6 +279,14 @@ class QueryCut:
 # timeouts followed by an answer were seen (VoID gap queries, 60 s).
 CUTS_BEFORE_STOP = 3
 
+# Consecutive timeouts at the client's own limit after which a light step (QueryCuts with
+# client_timeouts) stops a purpose. Runs of three such timeouts followed by an answer were seen
+# (VoID gap queries at 60 s, rehearsal 2026-10-05), so the stop waits for five: a purpose whose
+# five queries in a row each ran past the limit has its remaining queries recorded as not sent
+# (IDSM, rehearsal 2026-10-06: drift re-counts of a 347 M-triple partition each cost 62 s).
+TIMEOUTS_BEFORE_STOP = 5
+CLIENT_TIME_LIMIT = "client time limit"
+
 
 @dataclass
 class _PurposeCuts:
@@ -301,11 +309,24 @@ class QueryCuts:
     for each stopped purpose, why, how many queries were cut and how many were not sent.
     """
 
-    def __init__(self, after: int = CUTS_BEFORE_STOP) -> None:
-        """Stop after *after* consecutive cuts at the same limit."""
-        if after < 1:
+    def __init__(
+        self,
+        after: int = CUTS_BEFORE_STOP,
+        *,
+        client_timeouts: bool = False,
+        timeouts_after: int = TIMEOUTS_BEFORE_STOP,
+    ) -> None:
+        """Stop after *after* consecutive cuts at the same limit.
+
+        With *client_timeouts* (light steps, whose queries all run under one short limit), a
+        query that ran past the client's own limit counts too: *timeouts_after* of them in a
+        row stop the purpose.
+        """
+        if after < 1 or timeouts_after < 1:
             raise ValueError("Stop after at least one cut")
         self.after = after
+        self.client_timeouts = client_timeouts
+        self.timeouts_after = timeouts_after
         self._purposes: dict[str, _PurposeCuts] = {}
 
     def _of(self, purpose: str) -> _PurposeCuts:
@@ -335,6 +356,8 @@ class QueryCuts:
     def failed(self, purpose: str, error: BaseException) -> str | None:
         """Record a failed query; return why the purpose is stopped, once it is."""
         cut: QueryCut | None = getattr(error, "cut", None)
+        if cut is None and self.client_timeouts and isinstance(error, EndpointTimeoutError):
+            cut = QueryCut(CLIENT_TIME_LIMIT, 0.0)
         state = self._of(purpose)
         if cut is None or state.stopped:
             return state.stopped
@@ -342,14 +365,15 @@ class QueryCuts:
         same = state.last is not None and state.last.same_limit(cut)
         state.run = state.run + 1 if same else 1
         state.last = cut
-        if state.run >= self.after:
-            state.stopped = f"endpoint cuts queries at {cut.seconds:.0f} s"
+        client = cut.kind == CLIENT_TIME_LIMIT
+        if state.run >= (self.timeouts_after if client else self.after):
+            state.stopped = (
+                f"{state.run} queries in a row ran past the step's time limit"
+                if client
+                else f"endpoint cuts queries at {cut.seconds:.0f} s"
+            )
             logger.warning(
-                "%s: %d queries in a row cut (%s) at %.0f s - no more queries of it are sent",
-                purpose,
-                state.run,
-                cut.kind,
-                cut.seconds,
+                "%s: %s (%s) - no more queries of it are sent", purpose, state.stopped, cut.kind
             )
         return state.stopped
 
@@ -507,12 +531,50 @@ class SparqlHelper:
         "cost limit exceeded",
         # Virtuoso: "Query did not complete due to ANYTIME timeout" (S1TAT).
         "anytime timeout",
+        # Virtuoso refusals that repeat for the same query, so the caller makes it smaller:
+        # "S1T00 Error SR171: Transaction timed out" (IDEAL: 3 tries of 63 s each before the
+        # batched fallback answered in 3 s) and "SR319 Max row length is exceeded" (GlyTouCan;
+        # a GROUP_CONCAT over too many values), rehearsal 2026-10-06.
+        "transaction timed out",
+        "sr171",
+        "sr319",
+        "max row length is exceeded",
         "sorted top clause",
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
         "tried to allocate",
     )
+
+    # A 503 (or a remote 429) whose body says that the server is busy, not that the query is
+    # too costly: SwissLipids answers "Too many concurrent queries. Please try again later."
+    # (rehearsal 2026-10-06, job 115300). The request is repeated after OVERLOAD_BACKOFF_S,
+    # doubled at each try, or after the Retry-After that the server sends, up to
+    # OVERLOAD_RETRIES times, whatever the retries of the step: one busy moment must not lose a
+    # source. A 503 that does not say so (a proxy that cannot resolve the host) is not waited for.
+    OVERLOAD_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "too many concurrent",
+        "too many queries",
+        "too many requests",
+        "try again later",
+        "server is busy",
+        "overloaded",
+    )
+    # Row counts at which an engine cuts an unpaged result without saying so: Virtuoso's
+    # ResultSetMaxRows (FANAVI answers 1000 of its 33,358 classes, even under LIMIT 5000, with
+    # HTTP 200 and no header; rehearsal 2026-10-06), and the defaults of other engines. An
+    # unpaged listing with exactly this many rows is read again in pages of that size.
+    SUSPECTED_ROW_CAPS: ClassVar[frozenset[int]] = frozenset(
+        {1000, 2000, 5000, 10000, 50000, 100000, 1000000}
+    )
+
+    @classmethod
+    def row_cap_suspected(cls, rows: int) -> bool:
+        """Return whether an unpaged result of *rows* rows may have been cut at a server cap."""
+        return rows in cls.SUSPECTED_ROW_CAPS
+
+    OVERLOAD_BACKOFF_S: ClassVar[float] = 30.0
+    OVERLOAD_RETRIES: ClassVar[int] = 4
 
     # HTTP statuses with which a gateway says that it stopped waiting for the server.
     GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
@@ -644,7 +706,10 @@ class SparqlHelper:
         self._collect_queries = False
         self.max_response_bytes = max_response_bytes
         self._last_error_body = ""
+        self._last_retry_after: float | None = None
         self.endpoint_url = endpoint_url.rstrip("/")
+        # The endpoint URL given, when the endpoint redirected to another (_follow_redirect).
+        self.redirected_from: str | None = None
         self.user_agent = user_agent or os.environ.get("RDFSOLVE_USER_AGENT") or _default_agent()
         self.use_post = use_post
         self.max_retries = max_retries
@@ -923,6 +988,7 @@ class SparqlHelper:
 
         attempt = 0
         requests_made = 0
+        overloads = 0
         while attempt < self.max_retries:
             attempt += 1
             requests_made += 1
@@ -1033,6 +1099,31 @@ class SparqlHelper:
                         record.fallback_used = True
                     _use_raw_post = True
                     _tried_raw_post = True
+                    attempt -= 1
+                    continue
+
+                # A server that says it is busy is waited for, with a long backoff.
+                if self._overloaded(status_code, body):
+                    overloads += 1
+                    wait = self._overload_wait(overloads)
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    if overloads > self.OVERLOAD_RETRIES or wait > self.rate_limit_wait:
+                        raise EndpointRateLimitError(
+                            f"HTTP {status_code}: the server stayed busy after {overloads} "
+                            f"tries: {detail}"
+                        ) from e
+                    from rdfsolve._http_policy import defer_host
+
+                    logger.warning(
+                        "%s HTTP %d from %s: the server is busy; waiting %.0f s (try %d of %d)",
+                        tag,
+                        status_code,
+                        self.endpoint_url,
+                        wait,
+                        overloads + 1,
+                        self.OVERLOAD_RETRIES + 1,
+                    )
+                    defer_host(urlsplit(self.endpoint_url).hostname or self.endpoint_url, wait)
                     attempt -= 1
                     continue
 
@@ -1169,24 +1260,19 @@ class SparqlHelper:
                 )
 
             except json.JSONDecodeError as e:
-                # JSON parse error raises fast.
-                err_msg = str(e).lower()
-                if "control character" in err_msg or "invalid" in err_msg:
-                    tag = f"{query_type}[{purpose}]" if purpose else query_type
-                    logger.warning(
-                        "%s JSON parse error (invalid/control-char) from %s - not retrying: %s",
-                        tag,
-                        self.endpoint_url,
-                        e,
-                    )
-                    raise EndpointTimeoutError(f"JSON decode error (non-retriable): {e}") from e
-                # Other JSON parse error, is HTML response - retry.
-                self._handle_retry(
-                    attempt,
-                    query_type,
+                # A body that does not parse (empty, cut off, or with invalid characters) is
+                # not repeated unchanged: an empty or cut-off answer to a heavy query is a cut
+                # (FANAVI answers its heavy queries with an empty HTTP 200, rehearsal
+                # 2026-10-06), so the caller makes the query smaller, as for a timeout.
+                tag = f"{query_type}[{purpose}]" if purpose else query_type
+                logger.warning(
+                    "%s response from %s does not parse - not retrying the unchanged query: %s",
+                    tag,
+                    self.endpoint_url,
                     e,
-                    purpose,
                 )
+                kind = "empty response" if e.pos == 0 else "incomplete or invalid response"
+                raise EndpointTimeoutError(f"JSON decode error ({kind}): {e}") from e
 
             except Exception as e:
                 error_msg = str(e).lower()
@@ -1324,8 +1410,6 @@ class SparqlHelper:
             return text
 
     def _send(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
-        from rdfsolve._http_policy import defer_host, retry_after_seconds
-
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
         headers = {"Accept": accept, "User-Agent": self.user_agent}
         if method == "POST":
@@ -1333,59 +1417,121 @@ class SparqlHelper:
                 "application/sparql-query" if raw else "application/x-www-form-urlencoded"
             )
         self._last_error_body = ""
-        with self._session.request(
-            method,
-            self.endpoint_url,
-            params={"query": query} if method == "GET" else None,
-            data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
-            headers=headers,
-            timeout=(self.timeout, self.read_timeout),
-            stream=True,
-        ) as response:
-            body = bytearray()
-            error_response = response.status_code >= 400
-            limit = (
-                min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+        self._last_retry_after = None
+        for _ in range(self.MAX_REDIRECTS + 1):
+            with self._session.request(
+                method,
+                self.endpoint_url,
+                params={"query": query} if method == "GET" else None,
+                data=(
+                    (query.encode("utf-8") if raw else {"query": query})
+                    if method == "POST"
+                    else None
+                ),
+                headers=headers,
+                timeout=(self.timeout, self.read_timeout),
+                stream=True,
+                allow_redirects=False,
+            ) as response:
+                location = response.headers.get("Location")
+                if response.status_code not in self.REDIRECT_STATUS or not location:
+                    return self._read_response(response, host)
+            self._follow_redirect(location)
+        raise EndpointError(f"More than {self.MAX_REDIRECTS} redirects from the endpoint")
+
+    # A redirect of the endpoint (http to https: AgroLD's sparql.southgreen.fr answers a POST
+    # with 302) is followed by sending the same request, with its method and body, to the new
+    # URL, which is kept for every later query. requests turns a POST that it follows after a
+    # 302 into a GET without the query (AgroLD: HTTP 406, rehearsal 2026-10-06).
+    REDIRECT_STATUS: ClassVar[tuple[int, ...]] = (301, 302, 303, 307, 308)
+    MAX_REDIRECTS: ClassVar[int] = 5
+
+    def _follow_redirect(self, location: str) -> None:
+        """Move the endpoint to where it redirects, without the query string; log it once."""
+        from urllib.parse import urljoin, urlunsplit
+
+        parts = urlsplit(urljoin(self.endpoint_url, location))
+        target = urlunsplit((parts.scheme, parts.netloc, parts.path, "", "")).rstrip("/") or (
+            self.endpoint_url
+        )
+        if target == self.endpoint_url:
+            raise EndpointError(f"The endpoint redirects to itself: {location}")
+        logger.warning(
+            "The endpoint %s redirects to %s; queries go there", self.endpoint_url, target
+        )
+        if self.redirected_from is None:
+            self.redirected_from = self.endpoint_url
+        self.endpoint_url = target
+
+    def _read_response(self, response: requests.Response, host: str) -> str:
+        """Read a response within the byte limit; raise for an error status or a cut."""
+        from rdfsolve._http_policy import defer_host, retry_after_seconds
+
+        body = bytearray()
+        error_response = response.status_code >= 400
+        limit = min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+        for chunk in response.iter_content(chunk_size=65536):
+            available = limit - len(body)
+            body.extend(chunk[:available])
+            if len(chunk) > available:
+                if error_response:
+                    break
+                raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
+        encoding = (
+            response.encoding
+            if "charset=" in response.headers.get("Content-Type", "").lower()
+            else "utf-8"
+        )
+        text = body.decode(encoding or "utf-8", errors="replace" if error_response else "strict")
+        if error_response:
+            self._last_error_body = text
+        if response.status_code == 503 or (
+            response.status_code == 429
+            and not any(pattern in text.lower() for pattern in self.COST_LIMIT_PATTERNS)
+        ):
+            cooldown = retry_after_seconds(response.headers.get("Retry-After"))
+            self._last_retry_after = cooldown
+            defer_host(host, cooldown if cooldown is not None else max(1.0, self.initial_backoff))
+        response.raise_for_status()
+        state = response.headers.get("X-SQL-State", "")
+        if response.status_code == 206 or state == "S1TAT":
+            # Virtuoso returns what it found before its ANYTIME limit as HTTP 206 with
+            # X-SQL-State S1TAT. The results are incomplete: a count is too low and a
+            # FILTER NOT EXISTS keeps rows that the rest of the query would remove.
+            message = response.headers.get("X-SQL-Message", "").strip()
+            raise EndpointTimeoutError(
+                f"Query cost/time limit: incomplete results (HTTP {response.status_code}, "
+                f"X-SQL-State {state or 'none'}): {message}",
+                status_code=response.status_code,
             )
-            for chunk in response.iter_content(chunk_size=65536):
-                available = limit - len(body)
-                body.extend(chunk[:available])
-                if len(chunk) > available:
-                    if error_response:
-                        break
-                    raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
-            encoding = (
-                response.encoding
-                if "charset=" in response.headers.get("Content-Type", "").lower()
-                else "utf-8"
-            )
-            text = body.decode(
-                encoding or "utf-8", errors="replace" if error_response else "strict"
-            )
-            if error_response:
-                self._last_error_body = text
-            if response.status_code == 503 or (
-                response.status_code == 429
-                and not any(pattern in text.lower() for pattern in self.COST_LIMIT_PATTERNS)
-            ):
-                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
-                defer_host(
-                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
-                )
-            response.raise_for_status()
-            state = response.headers.get("X-SQL-State", "")
-            if response.status_code == 206 or state == "S1TAT":
-                # Virtuoso returns what it found before its ANYTIME limit as HTTP 206 with
-                # X-SQL-State S1TAT. The results are incomplete: a count is too low and a
-                # FILTER NOT EXISTS keeps rows that the rest of the query would remove.
-                message = response.headers.get("X-SQL-Message", "").strip()
-                raise EndpointTimeoutError(
-                    f"Query cost/time limit: incomplete results (HTTP {response.status_code}, "
-                    f"X-SQL-State {state or 'none'}): {message}",
-                    status_code=response.status_code,
-                )
-            self._check_response_health(response, text)
-            return text
+        self._check_response_health(response, text)
+        return text
+
+    def _overloaded(self, status_code: int, body: str) -> bool:
+        """Return whether a response says that the server is busy (OVERLOAD_PATTERNS).
+
+        A 503 or a remote 429 that says so, or that sends Retry-After, is one; a local QLever's
+        429 is its capacity limit (the caller makes the query smaller).
+        """
+        if status_code not in (429, 503):
+            return False
+        if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        ):
+            return False
+        if any(pattern in body for pattern in self.COST_LIMIT_PATTERNS):
+            return False
+        return self._last_retry_after is not None or any(
+            pattern in body for pattern in self.OVERLOAD_PATTERNS
+        )
+
+    def _overload_wait(self, tries: int) -> float:
+        """Return the seconds to wait after the *tries*-th busy answer in a row."""
+        if self._last_retry_after is not None:
+            return max(1.0, self._last_retry_after)
+        return float(self.OVERLOAD_BACKOFF_S * 2 ** (tries - 1))
 
     def _cut(self, error: BaseException, seconds: float) -> QueryCut | None:
         """Return how a request was cut, when a limit on the way to the data ended it.
@@ -1989,6 +2135,23 @@ class SparqlHelper:
                 effective_limit,
             )
 
+            if (
+                chunk_count < effective_limit
+                and not until_empty
+                and not cursor_names
+                and self.row_cap_suspected(chunk_count)
+            ):
+                # A short page of a common server cap may be cut, not the end: the next page is
+                # asked for, in pages of the cap (FANAVI: 1000 rows whatever the LIMIT).
+                logger.warning(
+                    "Chunked %s: %d rows of %d asked, a common server cap; paging by %d",
+                    purpose or "query",
+                    chunk_count,
+                    effective_limit,
+                    chunk_count,
+                )
+                current_chunk_size = chunk_count
+                continue
             if chunk_count < effective_limit and not until_empty and not cursor_names:
                 logger.debug(
                     "Partial chunk received, pagination complete",

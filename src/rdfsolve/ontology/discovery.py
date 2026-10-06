@@ -9,6 +9,7 @@ endpoint is probed with bounded queries.
 from __future__ import annotations
 
 import hashlib
+import logging
 from collections.abc import Iterable
 from datetime import UTC, datetime, timezone
 from typing import Any, Literal
@@ -25,6 +26,8 @@ from rdfsolve.ontology.vocabulary import (
 from rdfsolve.ontology.vocabulary import OWL as _OWL
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
 from rdfsolve.void_retrieval import discover_graph_names
+
+logger = logging.getLogger(__name__)
 
 _CLASS_KINDS = CLASS_TYPES
 _PROPERTY_KINDS = PROPERTY_TYPES
@@ -282,6 +285,8 @@ class OntologyDiscoverySummary(BaseModel):
     # endpoint publishes ("service_description"), or a scan of the endpoint ("endpoint_scan").
     graph_names_source: Literal["given", "service_description", "endpoint_scan"] = "endpoint_scan"
     graph_names_evidence: str | None = None
+    # Why the named graphs were not listed (the listing was refused or cut); None when listed.
+    graph_listing_error: str | None = None
     candidates: list[OntologyGraphCandidate] = Field(default_factory=list)
 
 
@@ -466,13 +471,20 @@ def discover_remote_ontology_graphs(
     """
     if min(batch_size, max_pages, max_graphs, term_batch_size) < 1:
         raise ValueError("discovery limits must be positive")
-    names = (
-        sorted(set(graph_uris))
-        if graph_uris is not None
-        else discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages)
-    )
+    listing_error: str | None = None
+    if graph_uris is not None:
+        names = sorted(set(graph_uris))
+    else:
+        from rdfsolve.sparql_helper import SparqlHelperError
+
+        try:
+            names = discover_graph_names(helper, batch_size=batch_size, max_pages=max_pages)
+        except SparqlHelperError as error:
+            # Optional evidence: the default graph is still inspected; the refusal is kept.
+            logger.warning("Ontology discovery: named graphs not listed: %s", str(error)[:200])
+            names, listing_error = [], str(error)[:500]
     discovered_count = len(names)
-    truncated = discovered_count > max_graphs
+    truncated = discovered_count > max_graphs or listing_error is not None
     names = names[:max_graphs]
     candidates: list[OntologyGraphCandidate] = []
     for graph_uri in names:
@@ -504,6 +516,7 @@ def discover_remote_ontology_graphs(
         default_graph_scanned=include_default_graph,
         graph_names_source="endpoint_scan" if graph_uris is None else graph_names_source,
         graph_names_evidence=None if graph_uris is None else graph_names_evidence,
+        graph_listing_error=listing_error,
         candidates=sorted(candidates, key=lambda item: item.graph_uri),
     )
 

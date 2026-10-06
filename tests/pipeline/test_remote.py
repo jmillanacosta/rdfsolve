@@ -125,3 +125,14 @@ def test_a_remote_run_resumes_from_the_checkpoint_of_an_earlier_run(tmp_path, mo
         )
         assert RemoteMiningStage(config)._mine_single_source(source)["status"] == "failed"
         assert received.pop() == expected
+
+
+def test_a_source_mined_void_first_tests_its_paths_within_its_own_budget(tmp_path):
+    """--void-first-navigation-budget applies only to sources read from their VoID; the
+    choice is made per source when it is mined. Unset, the global budget applies."""
+    config = PipelineConfig(base_dir=tmp_path, repo_dir=tmp_path, navigation_budget=1800.0)
+    stage = RemoteMiningStage(config)
+    assert stage._navigation_budget(True) == stage._navigation_budget(False) == 1800.0
+    config.void_first_navigation_budget = 300.0
+    assert stage._navigation_budget(True) == 300.0
+    assert stage._navigation_budget(False) == 1800.0

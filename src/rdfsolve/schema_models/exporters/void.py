@@ -370,7 +370,9 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
         g.add((class_partition_uri, void["class"], URIRef(subject_class)))
 
         count = schema.about.class_entity_counts.get(subject_class)
-        if count is not None:
+        # void:entities states the members; a count that is only a lower bound is not written.
+        state = schema.about.class_entity_count_states.get(subject_class, "complete")
+        if count is not None and state == "complete":
             g.add((class_partition_uri, void.entities, RdfLiteral(count, datatype=XSD.integer)))
 
         # Add property partitions within this class partition

@@ -13,6 +13,8 @@ from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 
+logger = logging.getLogger(__name__)
+
 VOID = Namespace("http://rdfs.org/ns/void#")
 VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
@@ -32,6 +34,75 @@ def service_description_graph_names(g: Graph) -> list[str]:
             if isinstance(name, URIRef)
         }
     )
+
+
+def void_class_populations(
+    g: Graph, *, subjects_fallback: bool = False
+) -> tuple[dict[str, int], dict[str, str], list[dict[str, object]]]:
+    """Return the members of each class that a VoID states, checked against its own counts.
+
+    A class partition states its members with void:entities (with *subjects_fallback*, also
+    with void:distinctSubjects). Each of its property partitions bounds them from below: its
+    distinct subjects are members, and its triples need at least triples / distinctObjects
+    subjects. A stated count below that bound is wrong; IDSM's VoID of 2026-09-28 states 1
+    distinct subject for PubChem's SubstanceVersion, whose has-value partition has 347 M
+    distinct subjects (and 220 distinct objects). Such a class gets the bound, with the state
+    "partial" (a lower bound), and the contradiction is returned; a class with no stated count
+    has none. A class described by two partitions with different counts
+    (two graphs) has at least the larger: "partial".
+
+    Returns the counts, their states ("complete" or "partial") and the contradictions found.
+    """
+    counts: dict[str, int] = {}
+    states: dict[str, str] = {}
+    contradictions: list[dict[str, object]] = []
+    partitions = set(g.objects(None, VOID.classPartition)) | set(g.subjects(VOID["class"], None))
+    for partition in sorted(partitions, key=str):
+        class_iri = g.value(partition, VOID["class"])
+        if class_iri is None:
+            continue
+        stated = optional_count(g.value(partition, VOID.entities))
+        if stated is None and subjects_fallback:
+            stated = optional_count(g.value(partition, VOID.distinctSubjects))
+        bound, witness = 0, None
+        for part in g.objects(partition, VOID.propertyPartition):
+            subjects = optional_count(g.value(part, VOID.distinctSubjects))
+            if subjects is None:
+                triples = optional_count(g.value(part, VOID.triples))
+                objects = optional_count(g.value(part, VOID.distinctObjects))
+                subjects = -(-triples // objects) if triples and objects else None
+            if subjects is not None and subjects > bound:
+                bound, witness = subjects, g.value(part, VOID.property)
+        if stated is None:
+            continue
+        cls = str(class_iri)
+        if stated >= bound:
+            count, state = stated, "complete"
+        else:
+            count, state = bound, "partial"
+            contradictions.append(
+                {
+                    "class": cls,
+                    "stated": stated,
+                    "lower_bound": bound,
+                    "property": str(witness) if witness is not None else None,
+                }
+            )
+        if cls in counts and counts[cls] != count:
+            count, state = max(count, counts[cls]), "partial"
+        if cls in counts and states[cls] == "partial":
+            state = "partial"
+        counts[cls], states[cls] = count, state
+    for item in contradictions:
+        logger.warning(
+            "VoID states %s members of %s, but its partition of %s has at least %s: the count "
+            "is kept as a lower bound",
+            item["stated"],
+            item["class"],
+            item["property"],
+            item["lower_bound"],
+        )
+    return counts, states, contradictions
 
 
 def void_datasets_of_graphs(g: Graph, graph_names: list[str]) -> list[URIRef]:
@@ -110,13 +181,11 @@ def void_graph_to_minedschema(
         warn_untyped_partitions(g, patterns)
     about = _extract_metadata_from_void(g, endpoint=endpoint)
     about.pattern_count = len(patterns)
-    for partition in set(g.objects(None, VOID.classPartition)) | set(
-        g.subjects(VOID["class"], None)
-    ):
-        class_iri = g.value(partition, VOID["class"])
-        count = optional_count(g.value(partition, VOID.entities))
-        if class_iri is not None and count is not None:
-            about.class_entity_counts[str(class_iri)] = count
+    counts, states, _ = void_class_populations(g)
+    about.class_entity_counts.update(counts)
+    about.class_entity_count_states.update(
+        {cls: state for cls, state in states.items() if state != "complete"}  # type: ignore[misc]
+    )
 
     from rdfsolve.schema_models.enrichment import SchemaEnrichment
     from rdfsolve.schema_models.metadata import MetadataDocument, RetainedMetadata

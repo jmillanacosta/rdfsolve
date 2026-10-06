@@ -20,6 +20,13 @@ Also asked: the language tags of language-tagged literals (from a sample), five 
 every class (their IRI namespaces), one example of the largest patterns, and a re-count of the
 largest and of randomly chosen patterns, which measures how the endpoint drifted from its VoID
 since the VoID was issued. The drift is reported; the VoID is used (the owner's decision).
+
+Light means light: each query has query_seconds (30 s; 99 % of the answered void/* queries of
+the rehearsal of 2026-10-06 took under 20 s, most of them 2 s), and a purpose whose queries run
+past that limit five times in a row is stopped (QueryCuts with client_timeouts): the queries it
+does not send are each recorded as a measurement gap, with the reason. The class members that
+the VoID states are checked against its own property partitions (void_class_populations): a
+count that they contradict is kept as a lower bound, never as an exact number.
 """
 
 from __future__ import annotations
@@ -119,6 +126,44 @@ def void_gaps(void: Graph) -> list[VoidGap]:
     return sorted(gaps, key=lambda g: -g.triples)
 
 
+def void_property_usage(void: Graph) -> dict[tuple[str, str], dict[str, Any]]:
+    """Return what a VoID states of each class and property: the measures of property usage.
+
+    A class-property partition gives the triples, distinct subjects and distinct objects of
+    the property on the members of the class, and its datatype partitions the triples of each
+    datatype: the counts that rdfsolve.evidence.observed would otherwise query. A measure
+    that the partition leaves out is None. A class described by two partitions (two graphs)
+    is left out: their counts do not add up over the merge of the graphs.
+    """
+    stated: dict[tuple[str, str], dict[str, Any]] = {}
+    twice: set[tuple[str, str]] = set()
+    for partition in set(void.objects(None, VOID.classPartition)):
+        cls = void.value(partition, VOID["class"])
+        if cls is None:
+            continue
+        for part in void.objects(partition, VOID.propertyPartition):
+            prop = void.value(part, VOID.property)
+            if prop is None or prop == RDF.type:
+                continue
+            key = (str(cls), str(prop))
+            if key in stated:
+                twice.add(key)
+            datatypes: dict[str, int] = {}
+            for d in void.objects(part, VOID_EXT.datatypePartition):
+                datatype = void.value(d, VOID_EXT.datatype)
+                triples = optional_count(void.value(d, VOID.triples))
+                if datatype is not None and triples is not None:
+                    datatypes[str(datatype)] = datatypes.get(str(datatype), 0) + triples
+            stated[key] = {
+                "triples": optional_count(void.value(part, VOID.triples)),
+                "subjects": optional_count(void.value(part, VOID.distinctSubjects)),
+                "objects": optional_count(void.value(part, VOID.distinctObjects)),
+                "literals": optional_count(void.value(part, VOID_EXT.distinctLiterals)),
+                "datatypes": datatypes,
+            }
+    return {key: value for key, value in stated.items() if key not in twice}
+
+
 def _term(binding: dict[str, Any]) -> RdfTerm:
     """Return an RdfTerm from a SPARQL JSON binding."""
     kind = {"uri": "uri", "literal": "literal", "typed-literal": "literal"}.get(
@@ -145,7 +190,8 @@ class VoidStrategy(MiningStrategy):
         *,
         void_graph: str,
         issued: str | None = None,
-        query_seconds: float = 60.0,
+        read_by: str = "construct",
+        query_seconds: float = 30.0,
         class_samples: int = 5,
         example_patterns: int = 200,
         drift_largest: int = 20,
@@ -158,6 +204,7 @@ class VoidStrategy(MiningStrategy):
         self.void = void
         self.void_graph = void_graph
         self.issued = issued
+        self.read_by = read_by
         self.query_seconds = query_seconds
         self.class_samples = class_samples
         self.example_patterns = example_patterns
@@ -170,11 +217,12 @@ class VoidStrategy(MiningStrategy):
         self.labels: list[Any] = []
         self.class_examples: dict[str, list[RdfTerm]] = {}
         self.entity_counts: dict[str, int] = {}
+        self.entity_count_states: dict[str, str] = {}
         self.record: dict[str, Any] = {}
         self.untyped_subjects: list[dict[str, Any]] = []
         self.object_samples: list[dict[str, Any]] = []
         self._void_patterns: list[SchemaPattern] = []
-        self.cuts = QueryCuts()
+        self.cuts = QueryCuts(client_timeouts=True)
 
     @property
     def name(self) -> str:
@@ -183,7 +231,10 @@ class VoidStrategy(MiningStrategy):
 
     def mine(self, context: MiningContext) -> list[SchemaPattern]:
         """Read the patterns of the VoID, then mine its gaps, samples and drift."""
-        from rdfsolve.schema_models.readers.void import void_graph_to_minedschema
+        from rdfsolve.schema_models.readers.void import (
+            void_class_populations,
+            void_graph_to_minedschema,
+        )
 
         phase = context.report.start_phase("void")
         schema = void_graph_to_minedschema(self.void, report_untyped=False)
@@ -194,23 +245,24 @@ class VoidStrategy(MiningStrategy):
         patterns = list(schema.patterns)
         for pattern in patterns:
             pattern.count_semantics = "endpoint_default"
-        self.entity_counts = dict(schema.about.class_entity_counts)
         self._void_patterns = list(patterns)
-        for partition in set(self.void.objects(None, VOID.classPartition)):
-            cls = self.void.value(partition, VOID["class"])
-            subjects = optional_count(self.void.value(partition, VOID.distinctSubjects))
-            if cls is not None and subjects is not None:
-                self.entity_counts.setdefault(str(cls), subjects)
+        # void:entities, else void:distinctSubjects, checked against the property partitions.
+        counts, states, contradicted = void_class_populations(self.void, subjects_fallback=True)
+        self.entity_counts = counts
+        self.entity_count_states = {c: s for c, s in states.items() if s != "complete"}
         gaps = void_gaps(self.void)
         self.record = {
             "void_graph": self.void_graph,
             "issued": self.issued,
+            "read_by": self.read_by,
             "void_patterns": len(patterns),
             "gaps": [g.__dict__ for g in gaps],
         }
+        if contradicted:
+            self.record["class_counts_contradicted"] = contradicted
         context.report.finish_phase(phase, items=len(patterns))
         failures: list[QueryFailure] = []
-        self.cuts = QueryCuts()
+        self.cuts = QueryCuts(client_timeouts=True)
         patterns += self._mine_gaps(context.helper, gaps, failures, context.graph_uris)
         self._languages(context.helper, patterns, failures, context.graph_uris)
         self._class_samples(context.helper, patterns, failures, context.graph_uris)
@@ -281,11 +333,25 @@ class VoidStrategy(MiningStrategy):
     ) -> list[dict[str, Any]] | None:
         """Send one light query under the time limit; record a refusal as a gap.
 
-        A query of a purpose that the endpoint cuts at a fixed limit is not sent (self.cuts).
+        A query of a purpose that the endpoint cuts at a fixed limit, or that ran past the time
+        limit of the step five times in a row, is not sent (self.cuts): it is recorded as a gap.
         """
-        from rdfsolve.sparql_helper import EndpointError, EndpointTimeoutError
+        from rdfsolve.sparql_helper import (
+            EndpointError,
+            EndpointRateLimitError,
+            EndpointTimeoutError,
+        )
 
         if self.cuts.skip(purpose):
+            failures.append(
+                QueryFailure(
+                    "timeout",
+                    f"not sent: {self.cuts.stopped(purpose)}",
+                    purpose,
+                    classes,
+                    graph_uris,
+                )
+            )
             return None
         try:
             with helper.budget(self.query_seconds):
@@ -295,6 +361,10 @@ class VoidStrategy(MiningStrategy):
         except EndpointTimeoutError as error:
             self.cuts.failed(purpose, error)
             failures.append(QueryFailure("timeout", str(error)[:300], purpose, classes, graph_uris))
+        except EndpointRateLimitError as error:
+            failures.append(
+                QueryFailure("rate_limited", str(error)[:300], purpose, classes, graph_uris)
+            )
         except (EndpointError, KeyError) as error:
             self.cuts.failed(purpose, error)
             failures.append(
@@ -599,6 +669,9 @@ class PublishedVoid:
     graph: str
     void: Graph
     issued: str | None
+    # How the graph was read: "construct" (whole), "construct_void_terms" (only the triples of
+    # VoID and service-description terms) or "select_pages" (paged SELECT, rebuilt locally).
+    read_by: str = "construct"
 
 
 def find_published_void(
@@ -630,20 +703,78 @@ def find_published_void(
     saved = helper.max_response_bytes
     helper.max_response_bytes = max(saved, max_bytes)
     try:
-        text = helper.construct(
-            f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}"
-        )
-    except EndpointError as error:
-        logger.warning("The VoID in %s could not be fetched: %s", graph, str(error)[:200])
-        return None
+        void, read_by = _read_void_graph(helper, graph)
     finally:
         helper.max_response_bytes = saved
-    void = Graph().parse(data=text, format="turtle")
+    if void is None:
+        return None
     from rdflib.namespace import DCTERMS
 
     issued = max((str(o) for o in void.objects(None, DCTERMS.issued)), default=None)
-    logger.info("Published VoID in %s: %d triples, issued %s", graph, len(void), issued)
-    return PublishedVoid(graph, void, issued)
+    logger.info(
+        "Published VoID in %s: %d triples, issued %s (read by %s)",
+        graph,
+        len(void),
+        issued,
+        read_by,
+    )
+    return PublishedVoid(graph, void, issued, read_by)
+
+
+def _read_void_graph(helper: SparqlHelper, graph: str) -> tuple[Graph | None, str]:
+    """Read a VoID graph: whole, else only its VoID terms, else in pages of SELECT.
+
+    Virtuoso refuses a CONSTRUCT of a large graph ("D1CTX: Hash dictionary is full, exceeded
+    1000000/2000000 entries": SIBiLS, RIKEN BRC, rehearsal 2026-10-06). The triples of the
+    VoID, void-ext and service-description terms (and rdf:type, dcterms:issued) are then asked
+    for alone; when that is refused too, the graph is read in ordered pages of SELECT and
+    rebuilt here, unless it has blank nodes (their names do not hold across pages).
+    """
+    from rdflib import Literal
+
+    from rdfsolve.sparql_helper import EndpointError
+
+    whole = f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}"
+    terms = (
+        f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o "
+        'FILTER(STRSTARTS(STR(?p), "http://rdfs.org/ns/void#") '
+        '|| STRSTARTS(STR(?p), "http://ldf.fi/void-ext#") '
+        '|| STRSTARTS(STR(?p), "http://www.w3.org/ns/sparql-service-description#") '
+        "|| ?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> "
+        "|| ?p = <http://purl.org/dc/terms/issued>) } }"
+    )
+    for query, read_by in ((whole, "construct"), (terms, "construct_void_terms")):
+        try:
+            return Graph().parse(data=helper.construct(query), format="turtle"), read_by
+        except EndpointError as error:
+            logger.warning(
+                "The VoID in %s was not read by %s: %s", graph, read_by, str(error)[:200]
+            )
+    void = Graph()
+    template = helper.prepare_paginated_query(
+        f"SELECT ?s ?p ?o WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }} ORDER BY ?s ?p ?o"
+    )
+
+    def term(binding: dict[str, Any]) -> Any:
+        """Return the RDF term of a SPARQL JSON binding; a blank node cannot be paged."""
+        if binding["type"] == "bnode":
+            raise ValueError("blank node")
+        if binding["type"] == "uri":
+            return URIRef(binding["value"])
+        return Literal(
+            binding["value"],
+            lang=binding.get("xml:lang"),
+            datatype=URIRef(binding["datatype"]) if binding.get("datatype") else None,
+        )
+
+    try:
+        for page in helper.select_chunked(template, chunk_size=10_000, purpose="void/read"):
+            for row in page:
+                void.add((term(row["s"]), term(row["p"]), term(row["o"])))
+    except (EndpointError, ValueError, KeyError) as error:
+        logger.warning("The VoID in %s could not be fetched: %s", graph, str(error)[:200])
+        return None, "not_read"
+    return void, "select_pages"
 
 
 def void_for_source(published: PublishedVoid, graph_uris: list[str] | None) -> Graph | None:

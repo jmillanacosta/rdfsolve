@@ -7,6 +7,7 @@ import json
 import logging
 import subprocess
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,6 +63,16 @@ def _logged_step(step: str):
 
     return wrap
 
+
+@contextmanager
+def _light(helper: Any, seconds: float | None) -> Iterator[None]:
+    """Run the block with each query of *helper* limited to *seconds* (helper.budget), if set."""
+    budget = getattr(helper, "budget", None)
+    if seconds is None or budget is None:
+        yield
+        return
+    with budget(seconds):
+        yield
 
 class PartialMiningError(RuntimeError):
     """Saved patterns have incomplete evidence."""
@@ -154,6 +165,13 @@ class Stage:
         from rdfsolve.mining.report_tracking import ReportCollector
 
         report = miner.last_report
+        redirected = getattr(getattr(miner, "helper", None), "redirected_from", None)
+        if isinstance(redirected, str):
+            # The endpoint redirected (http to https): the queries went to the new URL.
+            report.config["endpoint_redirect"] = {
+                "given": redirected,
+                "queried": miner.helper.endpoint_url,
+            }
         collector = ReportCollector(report, report_path, fresh=False)
         report.finished_at = None
         phase = collector.start_phase("pipeline-outputs")
@@ -199,6 +217,7 @@ class Stage:
         mining_context: str = "unknown",
         local_ontology_file_candidates: list[Any] | None = None,
         published_void: Any | None = None,
+        light: bool = False,
     ) -> None:
         """Save ontology discovery/acquisition evidence for one mined snapshot.
 
@@ -209,7 +228,9 @@ class Stage:
 
         When the endpoint publishes a VoID whose service description lists its named
         graphs, those names are inspected and the endpoint is not scanned for them; the
-        discovery file records the VoID graph as their source.
+        discovery file records the VoID graph as their source. With *light* (a VoID-first
+        source), each query has config.void_first_probe_seconds; a probe that does not answer
+        is recorded in the discovery file (discovery_error), as any refusal.
         """
         local_candidates = list(local_ontology_file_candidates or [])
         if not self.config.discover_ontology_graphs and not local_candidates:
@@ -240,13 +261,14 @@ class Stage:
                     "graph_names_source": "service_description",
                     "graph_names_evidence": evidence,
                 }
-            result = discover_remote_ontology_graphs(
-                helper,
-                observed_classes=schema.get_classes(),
-                observed_properties=schema.get_properties(),
-                max_graphs=self.config.ontology_discovery_max_graphs,
-                **known,
-            )
+            with _light(helper, self.config.void_first_probe_seconds if light else None):
+                result = discover_remote_ontology_graphs(
+                    helper,
+                    observed_classes=schema.get_classes(),
+                    observed_properties=schema.get_properties(),
+                    max_graphs=self.config.ontology_discovery_max_graphs,
+                    **known,
+                )
             graph_candidates = result.candidates
             path = output_dir / f"{name}{suffix}_ontology_discovery.json"
             path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
@@ -321,13 +343,38 @@ class Stage:
         suffix: str,
         *,
         helper: Any,
+        void: Any | None = None,
+        void_name: str = "",
     ) -> None:
-        """Write class/property subject-support evidence as a separate artifact."""
+        """Write class/property subject-support evidence as a separate artifact.
+
+        With the scoped VoID of a VoID-first source, the classes whose every property it
+        describes take their measures from it and are not queried; the others are queried
+        with config.void_first_probe_seconds per query (IDSM, rehearsal 2026-10-06: one
+        property-usage query of PubChem's substance graph ran to the 330 s deadline).
+        """
         if not self.config.collect_property_usage_evidence:
             return
         from rdfsolve.evidence.observed import collect_property_usage_evidence
 
         classes = sorted({pattern.subject_class for pattern in schema.patterns})
+        stated: dict[tuple[str, str], dict[str, Any]] = {}
+        if void is not None:
+            from rdfsolve.mining.query_builders import MEMBERSHIP
+            from rdfsolve.mining.void_strategy import void_property_usage
+
+            described = void_property_usage(void)
+            members = set(MEMBERSHIP.get())
+            used: dict[str, set[str]] = {}
+            for pattern in schema.patterns:
+                if pattern.property_uri not in members:
+                    used.setdefault(pattern.subject_class, set()).add(pattern.property_uri)
+            covered = {
+                cls
+                for cls, props in used.items()
+                if props and all((cls, prop) in described for prop in props)
+            }
+            stated = {key: value for key, value in described.items() if key[0] in covered}
         report_path = output_dir / f"{name}{suffix}_report.json"
         report = json.loads(report_path.read_text()) if report_path.is_file() else {}
         settings = dict(
@@ -348,11 +395,15 @@ class Stage:
 
             evidence = property_usage_evidence(store, **settings)
         else:
-            evidence = collect_property_usage_evidence(
-                **settings,
-                helper=helper,
-                chunk_size=self.config.class_chunk_size or self.config.chunk_size,
-            )
+            light = self.config.void_first_probe_seconds if void is not None else None
+            with _light(helper, light):
+                evidence = collect_property_usage_evidence(
+                    **settings,
+                    helper=helper,
+                    chunk_size=self.config.class_chunk_size or self.config.chunk_size,
+                    stated=stated,
+                    stated_by=f"void/{void_name}" if void_name else "void",
+                )
         path = output_dir / f"{name}{suffix}_property_usage.json"
         path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
         # The evidence gives each (class, property) partition its totals over every object kind,
@@ -422,6 +473,11 @@ class Stage:
         )
         return cleaned
 
+    def _navigation_budget(self, void_first: bool) -> float:
+        """Return the seconds for testing paths: the VoID-first budget for such a source."""
+        special = self.config.void_first_navigation_budget
+        return special if void_first and special is not None else self.config.navigation_budget
+
     @_logged_step("schema outputs")
     def _save_schema_outputs(
         self,
@@ -432,8 +488,12 @@ class Stage:
         helper=None,
         members: dict[str, list[str]] | None = None,
         report: Any = None,
+        void_first: bool = False,
     ) -> None:
         """Save schema in requested output formats.
+
+        A source mined VoID-first (*void_first*) tests its paths within
+        config.void_first_navigation_budget, when it is set, else config.navigation_budget.
 
         Args:
             schema: MinedSchema object to save
@@ -452,29 +512,30 @@ class Stage:
                 name,
                 self.config.trim_descriptions,
             )
+        budget = self._navigation_budget(void_first)
         store = getattr(self, "_scan_store", None)
         if self.config.navigation_hops and store is not None:
             from rdfsolve.mining.scan_paths import find_tested_paths_in_store
 
             # The rows that scan mining read: paths are tested by joins, not by probes.
-            log.info("[%s] Navigation: testing paths on the rows (budget %s s)", name, self.config.navigation_budget)
+            log.info("[%s] Navigation: testing paths on the rows (budget %s s)", name, budget)
             schema.navigation = find_tested_paths_in_store(
                 schema,
                 store,
                 max_hops=self.config.navigation_hops,
-                budget_s=self.config.navigation_budget,
+                budget_s=budget,
                 members=members,
             )
         elif self.config.navigation_hops and helper is not None:
             from rdfsolve.mining.navigation import find_tested_paths
 
             # Only paths that instances of the data follow are written (owner, 2026-09-30).
-            log.info("[%s] Navigation: testing paths (budget %s s)", name, self.config.navigation_budget)
+            log.info("[%s] Navigation: testing paths (budget %s s)", name, budget)
             schema.navigation = find_tested_paths(
                 schema,
                 helper,
                 max_hops=self.config.navigation_hops,
-                budget_s=self.config.navigation_budget,
+                budget_s=budget,
                 members=members,
             )
         if self.config.navigation_hops and schema.navigation is not None:

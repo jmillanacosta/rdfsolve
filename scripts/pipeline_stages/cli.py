@@ -387,6 +387,14 @@ Examples:
         help="Seconds for testing paths on the data, per dataset (default: 1800)",
     )
     parser.add_argument(
+        "--void-first-navigation-budget",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Seconds for testing paths of a source read from its published VoID "
+        "(default: the --navigation-budget)",
+    )
+    parser.add_argument(
         "--examples-per-pattern",
         type=int,
         default=1,
@@ -568,6 +576,9 @@ Examples:
     config.local_mining = args.local_mining
     if config.navigation_budget < 0:
         parser.error("--navigation-budget must be nonnegative")
+    config.void_first_navigation_budget = args.void_first_navigation_budget
+    if config.void_first_navigation_budget is not None and config.void_first_navigation_budget < 0:
+        parser.error("--void-first-navigation-budget must be nonnegative")
 
     config.load_sources(args.sources, skip_providers=args.skip_providers)
 

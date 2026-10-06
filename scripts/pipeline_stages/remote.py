@@ -154,7 +154,12 @@ class RemoteMiningStage(Stage):
             published.graph,
             published.issued,
         )
-        return VoidStrategy(scoped, void_graph=published.graph, issued=published.issued)
+        return VoidStrategy(
+            scoped,
+            void_graph=published.graph,
+            issued=published.issued,
+            read_by=published.read_by,
+        )
 
     def _remote_miner(
         self,
@@ -447,6 +452,9 @@ class RemoteMiningStage(Stage):
                 source.endpoint_down = False
 
             schema = self._without_service_data(schema)
+            from rdfsolve.mining.void_strategy import VoidStrategy
+
+            from_void = isinstance(strategy, VoidStrategy)
             with self._output_phase(miner, report_path):
                 self._save_schema_outputs(
                     schema,
@@ -456,6 +464,7 @@ class RemoteMiningStage(Stage):
                     helper=miner.helper,
                     members=self._group_members(miner),
                     report=miner.last_report,
+                    void_first=from_void,
                 )
                 self._save_ontology_discovery(
                     schema,
@@ -465,6 +474,7 @@ class RemoteMiningStage(Stage):
                     helper=miner.helper,
                     mining_context="remote_endpoint",
                     published_void=self.__dict__.get("_published_void", {}).get(source.endpoint),
+                    light=from_void,
                 )
                 self._save_declared_artifacts(
                     source,
@@ -475,7 +485,13 @@ class RemoteMiningStage(Stage):
                     access_context="remote_endpoint",
                 )
                 self._save_property_usage_evidence(
-                    schema, source_output_dir, source.name, suffix, helper=miner.helper
+                    schema,
+                    source_output_dir,
+                    source.name,
+                    suffix,
+                    helper=miner.helper,
+                    void=strategy.void if from_void else None,
+                    void_name=strategy.void_graph if from_void else "",
                 )
                 if has_graph_parts(source) and not use_graph_store:
                     self._save_graph_parts(source, schema, miner, strategy, polite_delay)

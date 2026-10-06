@@ -48,6 +48,18 @@ Endpoint-specific description graphs, such as a host's
 ``.well-known/sparql-examples``, are named per endpoint by the caller.
 """
 
+KNOWN_ENGINE_GRAPHS: tuple[str, ...] = (
+    "http://www.openlinksw.com/schemas/virtrdf#",
+    "http://localhost:8890/DAV/",
+    "http://localhost:8890/sparql",
+    "http://www.w3.org/ns/ldp#",
+    "urn:core:services:sparql",
+    "urn:activitystreams-owl:map",
+)
+"""Graphs that a Virtuoso endpoint holds of its own (rehearsal 2026-10-06: AOP-Wiki, AOPDB,
+WikiPathways, NanoSafety). Asked for by name when the endpoint does not list its graphs in time.
+"""
+
 _RESOURCE_URIS = frozenset(
     {
         "http://www.w3.org/2000/01/rdf-schema#Resource",

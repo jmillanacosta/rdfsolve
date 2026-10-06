@@ -104,9 +104,16 @@ class PipelineConfig:
     navigation_hops: int = 5
     # Seconds for testing paths on the data; only paths that instances follow are written
     navigation_budget: float = 1800.0
+    # Seconds for testing paths of a source mined VoID-first (decided per source at run time);
+    # None uses navigation_budget. Path testing of IDSM's molmedb and isdb ran out of its 1800 s
+    # without finishing, the largest cost left in their VoID-first runs (2026-10-06).
+    void_first_navigation_budget: float | None = None
     # Local indexes: "scan" reads the rows of the index and counts them outside the server
     # (rdfsolve.mining.scan); "sparql" sends the grouped queries of the two-phase strategy.
     local_mining: str = "scan"
+    # Seconds for each evidence and ontology-discovery query of a source read from its VoID
+    # (VoID-first): what the VoID states is not queried, and the rest is probed, not mined.
+    void_first_probe_seconds: float = 60.0
 
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019

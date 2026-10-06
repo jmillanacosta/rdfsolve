@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from rdfsolve._outcomes import QueryOutcome
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
     _build_batched_blank_node_query,
@@ -24,7 +24,7 @@ from rdfsolve.mining.query_builders import (
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
-from rdfsolve.sparql_helper import EndpointTimeoutError
+from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper, SparqlHelperError
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +139,39 @@ class TwoPhaseStrategy(MiningStrategy):
         budget, limit = context.ontology_term_budget, context.group_before_mining
         if budget is None or limit is None or len(classes) <= limit:
             return classes
+        phase = context.report.start_phase("ontology-terms/group-before-mining")
+        try:
+            return self._group_terms_now(classes, context, phase)
+        except SparqlHelperError as error:
+            # Grouping is an optimisation, but these classes are too many to mine one by one
+            # (GO-CAM: 1.7 M; at 15 classes a batch and a few queries a batch, weeks). The
+            # source is not failed: it ends partial, with the reason and the class count.
+            logger.warning("Grouping before mining failed (%s); classes not mined", error)
+            context.report.finish_phase(phase, error=str(error)[:300])
+            context.report.report.config["ontology_term_grouping"] = {
+                "before_mining": False,
+                "state": "failed",
+                "error": str(error)[:500],
+                "limit": limit,
+                "classes": len(classes),
+            }
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="failed",
+                    failures=[
+                        QueryFailure(
+                            "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+                            f"{len(classes)} classes not mined: grouping before mining failed: "
+                            f"{str(error)[:300]}",
+                            "ontology-terms/group-before-mining",
+                        )
+                    ],
+                )
+            )
+            return []
+
+    def _group_terms_now(self, classes: list[str], context: MiningContext, phase: Any) -> list[str]:
+        """Group the classes (see _group_terms); raise SparqlHelperError when a query fails."""
         from collections import Counter
 
         from rdfsolve.mining import ontology_as_data
@@ -152,9 +185,15 @@ class TwoPhaseStrategy(MiningStrategy):
         from rdfsolve.ontology.hierarchy import fetch_superclasses, fill_parents, read_hierarchy
         from rdfsolve.ontology.terms import namespace
 
-        phase = context.report.start_phase("ontology-terms/group-before-mining")
+        budget, limit = context.ontology_term_budget, context.group_before_mining
+        if budget is None or limit is None:
+            return classes
+        unreadable_parents: set[str] = set()
         parents = fetch_superclasses(
-            context.helper, classes, graph_uris=context.ontology_graph_uris
+            context.helper,
+            classes,
+            graph_uris=context.ontology_graph_uris,
+            unreadable=unreadable_parents,
         )
         files = {path: read_hierarchy([path]) for path in context.ontology_hierarchy_files}
         with_loaded = fill_parents(parents, list(files.values()), classes)
@@ -214,6 +253,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 1 for t in shapes if chosen.representative.get(t) == t
             ),
             "unreadable_shape_terms": sorted(unreadable),
+            "terms_whose_parents_were_not_read": len(unreadable_parents),
             "representative_members": members,
             "review_state": "unreviewed",
         }
@@ -313,6 +353,19 @@ class TwoPhaseStrategy(MiningStrategy):
                 try:
                     result = context.helper.select(q, purpose="two-phase/classes")
                     class_bindings = result.get("results", {}).get("bindings", [])
+                    if SparqlHelper.row_cap_suspected(len(class_bindings)):
+                        # A server cap cuts a listing silently: read it in pages of the cap.
+                        logger.warning(
+                            "Class listing: exactly %d rows, a common server cap; paging it",
+                            len(class_bindings),
+                        )
+                        class_bindings = context.collect_bindings(
+                            _build_class_discovery_query(
+                                context.graph_uris, context.type_context_graph_uris
+                            ),
+                            "two-phase/classes",
+                            len(class_bindings),
+                        )
                 except EndpointTimeoutError as error:
                     # A response limit, a time limit, or an answer cut off at the time limit of
                     # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
@@ -358,12 +411,35 @@ class TwoPhaseStrategy(MiningStrategy):
         return classes
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
-        """Retry Phase 1 in the named graphs when the default graph has no types."""
+        """Retry Phase 1 in the named graphs when the default graph has no types.
+
+        Graph listing is optional: when the endpoint does not list its graphs (STRING's proxy
+        cuts the listing with HTTP 502 at 62 s), the source is not failed for it. The refusal
+        is recorded as an unresolved failure of graph discovery, so that the source ends partial
+        with the reason, not complete and apparently empty.
+        """
         from rdfsolve.mining.graph_selection import discover_data_graphs
 
-        graphs = discover_data_graphs(
-            context.helper, excluded_prefixes=context.excluded_graph_prefixes
-        )
+        try:
+            graphs = discover_data_graphs(
+                context.helper, excluded_prefixes=context.excluded_graph_prefixes
+            )
+        except SparqlHelperError as error:
+            logger.warning(
+                "The default graph holds no typed data, and the named graphs are not listed: %s",
+                str(error)[:200],
+            )
+            failure = QueryFailure(
+                "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+                f"named graphs not listed: {str(error)[:300]}",
+                "void/graph-discovery",
+            )
+            context.report.record_outcome(QueryOutcome(state="failed", failures=[failure]))
+            context.report.report.config["named_graph_discovery"] = {
+                "state": "graphs_not_listed",
+                "error": str(error)[:500],
+            }
+            return []
         companion = set(context.type_context_graph_uris or []) | set(
             context.ontology_graph_uris or []
         )

@@ -797,6 +797,16 @@ class SchemaMiner:
             try:
                 raw = self._helper.select(query, purpose="declared_classes")
                 bindings = raw.get("results", {}).get("bindings", [])
+                if SparqlHelper.row_cap_suspected(len(bindings)):
+                    logger.warning(
+                        "Declared classes: exactly %d rows, a common server cap; paging them",
+                        len(bindings),
+                    )
+                    bindings = self._collect_bindings(
+                        SparqlHelper.prepare_paginated_query(query),
+                        "declared_classes",
+                        len(bindings),
+                    )
             except ResponseLimitError:
                 logger.warning("Declared classes exceeded the response limit; paging the query")
                 bindings = self._collect_bindings(
@@ -986,8 +996,11 @@ class SchemaMiner:
         context["state"] = "nonempty"
         self._report.flush()
 
-    # Seconds for listing the endpoint's graphs before the system graphs are left out.
-    GRAPH_LISTING_BUDGET_S = 120.0
+    # Seconds for listing the endpoint's graphs before the system graphs are left out. The
+    # listing reads every quad (DISTINCT ?g); where it does not end in 30 s it did not end in
+    # 120 s either (colil.dbcls.jp, sparql.orthodb.org: 120 s each, rehearsal 2026-10-06), and
+    # the source is then mined without the exclusion, which is recorded.
+    GRAPH_LISTING_BUDGET_S = 30.0
 
     def _exclude_engine_graphs(self) -> None:
         """Leave the engine's own graphs out of every query of a source mined without graphs.
@@ -999,7 +1012,9 @@ class SchemaMiner:
         discovery already leaves out) are excluded from each query without a dataset clause
         with Virtuoso's input:default-graph-exclude and input:named-graph-exclude, which keeps
         the default graph of the endpoint otherwise unchanged. An engine that refuses the
-        pragmas, or a graph listing that is refused, is recorded and nothing is excluded.
+        pragmas is recorded and nothing is excluded. When the listing is refused or does not
+        end in GRAPH_LISTING_BUDGET_S, the engine graphs known by name (KNOWN_ENGINE_GRAPHS) that
+        match the prefixes are asked for by name, which needs no scan of the quads.
         """
         from rdfsolve.mining.local_graph import LocalGraphHelper
         from rdfsolve.sparql_helper import SparqlHelperError, graph_exclusion_prologue
@@ -1018,9 +1033,11 @@ class SchemaMiner:
         except (SparqlHelperError, ValueError) as error:
             logger.warning("Graph exclusion: graphs not listed: %s", str(error)[:200])
             record.update(state="graph_listing_refused", error=str(error)[:500])
-            return
+            graphs = self._known_engine_graphs(record)
+            if not graphs:
+                return
         excluded = sorted(g for g in graphs if g.startswith(self.excluded_graph_prefixes))
-        record["listed_graphs"] = len(graphs)
+        record.setdefault("listed_graphs", len(graphs))
         if not excluded:
             record["state"] = "none_found"
             return
@@ -1035,6 +1052,30 @@ class SchemaMiner:
         helper.excluded_graphs = excluded
         record.update(state="excluded", method="virtuoso_define_graph_exclude", graph_uris=excluded)
         logger.info("Graph exclusion: %d engine graphs left out: %s", len(excluded), excluded)
+
+    def _known_engine_graphs(self, record: dict[str, Any]) -> list[str]:
+        """Return the engine graphs known by name that the endpoint holds; record the probe."""
+        from rdfsolve.schema_models._constants import KNOWN_ENGINE_GRAPHS
+        from rdfsolve.sparql_helper import SparqlHelperError
+
+        names = [g for g in KNOWN_ENGINE_GRAPHS if g.startswith(self.excluded_graph_prefixes)]
+        if not names:
+            return []
+        from rdfsolve.mining.graph_selection import missing_graphs
+
+        try:
+            # One ASK per graph: it stops at the first triple (missing_graphs).
+            with self._helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                absent = set(missing_graphs(self._helper, names))
+        except (SparqlHelperError, ValueError) as error:
+            record["known_graphs_probe"] = {"state": "failed", "error": str(error)[:300]}
+            return []
+        found = [g for g in names if g not in absent]
+        record["known_graphs_probe"] = {"state": "complete", "asked": names, "found": found}
+        logger.info(
+            "Graph exclusion: %d of %d known engine graphs found by name", len(found), len(names)
+        )
+        return found
 
     @contextmanager
     def _session(
@@ -1143,7 +1184,11 @@ class SchemaMiner:
         classes, properties = self._collect_class_property_sets(schema.patterns)
         # A strategy with its own view may state the members of its classes (VoID).
         entity_counts = dict(getattr(self._strategy, "entity_counts", {})) if self._own_view else {}
-        entity_count_states: dict[str, QueryState] = {}
+        # A count that the strategy holds for a lower bound (VoID: contradicted by its own
+        # property partitions) keeps the state "partial".
+        entity_count_states: dict[str, QueryState] = (
+            dict(getattr(self._strategy, "entity_count_states", {})) if self._own_view else {}
+        )
         if self.counts and self._store is not None:
             from rdfsolve.mining import scan_structure
 

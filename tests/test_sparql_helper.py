@@ -60,8 +60,11 @@ def test_http_errors_preserve_query_limits_and_host_limits(monkeypatch, tmp_path
         response.headers["Retry-After"] = "30"
         with pytest.raises(EndpointRateLimitError):
             helper.select("SELECT ?s WHERE { ?s ?p ?o }")
-        defer.assert_called_once_with("example.org", 30)
-        assert request.call_count == 5, "Rejected queries must not repeat unchanged"
+        assert {c.args for c in defer.call_args_list} == {("example.org", 30)}
+        assert request.call_count == 4 + 1 + SparqlHelper.OVERLOAD_RETRIES, (
+            "A busy server's Retry-After is waited out, OVERLOAD_RETRIES times, whatever the "
+            "retries of the step; rejected queries are not repeated"
+        )
     sent = request.call_args.kwargs["headers"]["User-Agent"]
     assert sent.startswith("rdfsolve/") and "@" not in sent, "Identify the software, never a person"
     monkeypatch.setenv("RDFSOLVE_USER_AGENT", "my-project/1 (https://example.org/contact)")
