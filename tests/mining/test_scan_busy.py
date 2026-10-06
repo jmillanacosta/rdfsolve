@@ -39,3 +39,10 @@ def test_a_busy_server_is_asked_again(monkeypatch):
 def test_the_server_has_two_slots_per_export_stream(monkeypatch, workers, slots):
     monkeypatch.setenv("RDFSOLVE_SCAN_WORKERS", workers)
     assert lifecycle.simultaneous_queries() == slots
+
+
+def test_a_result_cut_while_sending_is_refused():
+    cut = b"?s\n<urn:a>\n<urn:b\n!!!!>># An error has occurred while exporting the query result.\n"
+    with pytest.raises(RuntimeError, match="cut the result"):
+        scan._check_trailer(cut, "SELECT ?s WHERE { ?s ?p ?o }")
+    scan._check_trailer(b"?s\n<urn:a>\n", "SELECT ?s WHERE { ?s ?p ?o }")

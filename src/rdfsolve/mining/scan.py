@@ -397,6 +397,18 @@ def _post(endpoint: str, query: str, accept: str) -> Any:
             wait = min(wait * 2, 60.0)
 
 
+# QLever ends a result that failed while it was being sent with this line, after HTTP 200.
+QLEVER_ERROR_TRAILER = b"!!!!>># An error has occurred"
+
+
+def _check_trailer(data: bytes, query: str) -> None:
+    """Raise if *data* holds QLever's error trailer: the result was cut while being sent."""
+    if QLEVER_ERROR_TRAILER in data:
+        at = data.index(QLEVER_ERROR_TRAILER)
+        message = data[at : at + 300].decode(errors="replace").replace("\n", " ")
+        raise RuntimeError(f"QLever cut the result while sending it ({message}): {query}")
+
+
 def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
     """Stream the TSV result of *query* to *path* as Parquet; return its rows.
 
@@ -406,7 +418,11 @@ def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
 
     tsv = path.with_suffix(".tsv")
     with _post(endpoint, query, "text/tab-separated-values") as response, tsv.open("wb") as out:
-        shutil.copyfileobj(response, out, 1 << 24)
+        tail = b""
+        while chunk := response.read(1 << 24):
+            _check_trailer(tail + chunk, query)
+            tail = chunk[-len(QLEVER_ERROR_TRAILER) :]
+            out.write(chunk)
     frame = pl.scan_csv(tsv, separator="\t", quote_char=None, has_header=True, infer_schema=False)
     frame.rename(lambda c: c.lstrip("?")).sink_parquet(path)
     tsv.unlink()
@@ -486,6 +502,7 @@ def _stream_rows(
         while True:
             block = text.read(BLOCK_BYTES)
             data = rest + block
+            _check_trailer(data, query)
             if not block:
                 lines, rest = data, b""
                 if lines and not lines.endswith(b"\n"):
