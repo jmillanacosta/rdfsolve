@@ -820,6 +820,14 @@ CENSUS_MIN_TRIPLES_PER_OBJECT = 10
 # by itself, as before. 1 turns batching off.
 CENSUS_PROPERTIES_PER_QUERY = 16
 CENSUS_QUERY_CHARS = 100_000
+# Censuses of 2 properties (the smallest batched form) in a row that the parser of an endpoint
+# refuses (QueryParserLimitError: Virtuoso SQ200, SQ074), after which the census of that endpoint
+# counts one property at a time for the rest of the source. Job 115589: Virtuoso refused the
+# batches of 8, 4 and 2 properties with "SQ200: Stack Overflow in cost model" before the single
+# properties answered, so every batch of 16 cost 4 refused requests. Refusals of larger batches
+# do not count: an endpoint that answers batches of 4 keeps batching. The count is kept on the
+# helper of the endpoint (SparqlHelper.census_parser_refusals); an answered batch resets it.
+CENSUS_PARSER_REFUSALS_BEFORE_SINGLE = 2
 # Branches of one UNION group in a batched census; longer unions are nested in groups of this
 # size, so that the depth of the query stays bounded (Virtuoso SQ074 counts open groups).
 CENSUS_UNION_GROUP = 16
@@ -953,6 +961,11 @@ def _census_batch(
             "properties": 0,
         },
     )
+    helper = context.helper
+    if batching["state"] == "on" and (
+        getattr(helper, "census_parser_refusals", 0) >= CENSUS_PARSER_REFUSALS_BEFORE_SINGLE
+    ):
+        batching.update(state="single", reason="the endpoint's parser refused batched censuses")
     if batching["state"] != "on" or CENSUS_PROPERTIES_PER_QUERY < 2:
         return {}
     resumed = getattr(context, "resumed", None) or {}
@@ -985,6 +998,21 @@ def _census_batch(
         except EndpointTimeoutError as error:
             logger.info("Census: %d properties in one query refused (%s)", len(batch), error)
             batching["split"] += 1
+            if (
+                isinstance(error, QueryParserLimitError)
+                and len(batch) == 2
+                and _parser_refused(helper)
+            ):
+                logger.info(
+                    "Census: the parser of %s refused %d censuses of 2 properties in a row; counting"
+                    " one property at a time for the rest of the source",
+                    getattr(helper, "endpoint_url", "the endpoint"),
+                    CENSUS_PARSER_REFUSALS_BEFORE_SINGLE,
+                )
+                batching.update(
+                    state="single", reason=f"the endpoint's parser refused: {str(error)[:300]}"
+                )
+                break
             if len(batch) > 2:
                 half = len(batch) // 2
                 pending += [batch[half:], batch[:half]]
@@ -994,6 +1022,8 @@ def _census_batch(
             batching.update(state="off", reason=str(error)[:300])
             break
         batching["requests"] += 1
+        if hasattr(helper, "census_parser_refusals"):
+            helper.census_parser_refusals = 0
         found: dict[str, Counter[str]] = defaultdict(Counter)
         seen: set[str] = set()
         for row in rows:
@@ -1011,6 +1041,18 @@ def _census_batch(
             )
     batching["properties"] += len(counted)
     return counted
+
+
+def _parser_refused(helper: Any) -> bool:
+    """Count a batched census that the parser of the endpoint refused; return whether the
+    census of the endpoint now counts one property at a time.
+    """
+    try:
+        refusals = int(getattr(helper, "census_parser_refusals", 0)) + 1
+        helper.census_parser_refusals = refusals
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return refusals >= CENSUS_PARSER_REFUSALS_BEFORE_SINGLE
 
 
 def _count(context: MiningContext, queries: list[str]) -> Counter[str]:

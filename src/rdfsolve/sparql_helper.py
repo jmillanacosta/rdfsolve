@@ -775,6 +775,9 @@ class SparqlHelper:
         self._last_request_seconds = 0.0
         # The last gateway timeout seen on this endpoint (_gateway_timed_out).
         self._gateway_cut: QueryCut | None = None
+        # Censuses of 2 properties in a row that the parser of the endpoint refused
+        # (structural_strategy.CENSUS_PARSER_REFUSALS_BEFORE_SINGLE).
+        self.census_parser_refusals = 0
         self.endpoint_url = endpoint_url.rstrip("/")
         # The endpoint URL given, when the endpoint redirected to another (_follow_redirect).
         self.redirected_from: str | None = None

@@ -298,3 +298,56 @@ def test_a_host_that_stays_busy_leaves_the_census_a_gap_not_a_failed_source(monk
     assert state == "partial" and entry["state"] == "failed"
     assert "stayed busy" in entry["reason"]
     assert result.patterns and not result.structural_patterns
+
+
+def test_an_endpoint_whose_parser_refuses_batches_is_counted_one_property_at_a_time(
+    monkeypatch, alone, caplog
+):
+    """Job 115589: Virtuoso refused the batches of 8, 4 and 2 properties (SQ200) before the
+    single properties answered, for every batch of 16. After two censuses of 2 properties in a
+    row refused by the parser, the endpoint is counted one property at a time for the rest of
+    the source, with the same counts."""
+    from rdfsolve.mining.structural_strategy import CENSUS_PARSER_REFUSALS_BEFORE_SINGLE
+
+    def refuse(query):
+        if "?_census" in query:
+            raise QueryParserLimitError("Virtuoso 42000 Error SQ200: Stack Overflow in cost model")
+
+    with caplog.at_level("INFO"):
+        entry, sent, batching, *_ = mine(monkeypatch, 16, refuse)
+    _same(entry, alone[0])
+    batched = [_properties(q) for q in sent if "?_census" in q]
+    assert batched == [16, 8, 4, 2, 2], "Two pairs refused, then no more batches"
+    assert batched.count(2) == CENSUS_PARSER_REFUSALS_BEFORE_SINGLE
+    assert batching["state"] == "single" and "SQ200" in batching["reason"]
+    switched = [r for r in caplog.records if "one property at a time for the rest" in r.message]
+    assert len(switched) == 1, "Logged once"
+
+
+def test_an_answered_batch_resets_the_parser_refusals(monkeypatch, alone):
+    """A refusal followed by an answered half is not a run: batching stays on."""
+    refused = []
+
+    def refuse(query):
+        if "?_census" in query and _properties(query) > 8:
+            refused.append(query)
+            raise QueryParserLimitError("Virtuoso 42000 Error SQ200: Stack Overflow in cost model")
+
+    entry, _, batching, *_ = mine(monkeypatch, 16, refuse)
+    _same(entry, alone[0])
+    assert len(refused) >= 2 and batching["state"] == "on"
+
+
+def test_an_endpoint_that_answers_batches_of_four_keeps_batching(monkeypatch, alone):
+    """Refusals of batches larger than 2 do not count: an endpoint whose parser refuses 16 and
+    8 properties but answers 4 keeps batching (2 refused and 4 answered queries for 16
+    properties, not 16 single ones)."""
+
+    def refuse(query):
+        if "?_census" in query and _properties(query) > 4:
+            raise QueryParserLimitError("Virtuoso 42000 Error SQ200: Stack Overflow in cost model")
+
+    entry, sent, batching, *_ = mine(monkeypatch, 16, refuse)
+    _same(entry, alone[0])
+    assert batching["state"] == "on"
+    assert [_properties(q) for q in sent if "?_census" in q][:7] == [16, 8, 4, 4, 8, 4, 4]
