@@ -89,6 +89,42 @@ def _query_memory(value: str) -> str:
     return f"{max(1, int(megabytes))}MB"
 
 
+def exit_status(process: subprocess.Popen[bytes]) -> str | None:
+    """Describe how a server process ended, or None while it runs.
+
+    A server that dies writes nothing to its log (a signal, or the kernel's out-of-memory
+    killer): its status is the only record of the cause. A negative status is the signal that
+    ended the process; singularity reports a signal of its container as 128 plus the signal.
+    """
+    import signal
+
+    status = process.poll()
+    if status is None:
+        return None
+    number = -status if status < 0 else status - 128 if 128 < status < 160 else None
+    try:
+        name = signal.Signals(number).name if number else None
+    except ValueError:
+        name = None
+    return f"exited with status {status}" + (f" ({name})" if name else "")
+
+
+def _wait_for_port(port: int, wait: float) -> None:
+    """Wait up to *wait* seconds for *port* to be free; refuse it when it stays in use."""
+    deadline = time.monotonic() + wait
+    while True:
+        with socket.socket() as check:
+            try:
+                check.bind(("0.0.0.0", port))  # noqa: S104 - Check only; do not listen.
+                return
+            except OSError as error:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        f"Port {port} is in use; choose another --base-port"
+                    ) from error
+        time.sleep(1)
+
+
 def stop_server(process: subprocess.Popen[bytes]) -> None:
     """Stop an owned process and reap it before returning."""
     if process.poll() is not None:
@@ -109,15 +145,16 @@ def start_server(
     port: int,
     *,
     startup_timeout: float = 600,
+    port_wait: float = 0,
 ) -> subprocess.Popen[bytes]:
-    """Start a cached index. Refuse occupied ports; never kill another server."""
+    """Start a cached index. Refuse occupied ports; never kill another server.
+
+    *port_wait* is how long an occupied port is waited for: the port of a server that died is
+    held for a while by its closed connections.
+    """
     if not image.is_file():
         raise FileNotFoundError(f"QLever image not found: {image}")
-    with socket.socket() as check:
-        try:
-            check.bind(("0.0.0.0", port))  # noqa: S104 - Check only; do not listen.
-        except OSError as error:
-            raise RuntimeError(f"Port {port} is in use; choose another --base-port") from error
+    _wait_for_port(port, port_wait)
     config = read_qleverfile(workdir)
     name = index_name(workdir, name)
     memory = _query_memory(config.get("server", "MEMORY_FOR_QUERIES", fallback="30G"))

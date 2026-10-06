@@ -19,6 +19,7 @@ from rdfsolve.qlever.inputs import (
     index_inputs,
     mapped_input_files,
 )
+from rdfsolve.qlever.lifecycle import exit_status
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .base import PartialMiningError, Stage, rdf_only
@@ -122,12 +123,9 @@ class LocalMiningStage(Stage):
                 server_pid = self._qlever_start(workdir, source.name, port)
 
                 if server_pid:
-                    try:
-                        log.info("  Mining schema...")
-                        self._mine_local(source, port)
-                        results["mined"].append(source.name)
-                    finally:
-                        self._qlever_stop(server_pid)
+                    log.info("  Mining schema...")
+                    self._mine_with_restarts(source, workdir, port, server_pid)
+                    results["mined"].append(source.name)
                 else:
                     log.warning(f"  -> Server failed to start, skipping {source.name}")
                     results["failed"].append(
@@ -140,6 +138,53 @@ class LocalMiningStage(Stage):
                 results[state].append({"name": source.name, "error": str(e)})
 
         return results
+
+    def _mine_with_restarts(
+        self, source: Source, workdir: Path, port: int, server_pid: int
+    ) -> None:
+        """Mine *source*; when its server dies, start it again and resume from this run.
+
+        A server that stops answering ends every later query of the source (Bgee: the server
+        exited without a message 13 h into the census, and the source failed). When the mining
+        fails and the server process has exited, its exit status is logged, the server is
+        started again on the same port, and the source is mined again with the checkpoint that
+        this run wrote: the finished class batches and census counts are reused. At most
+        --qlever-restarts restarts are made for a source; an error while the server still runs
+        is not retried.
+        """
+        restarts = self.config.qlever_restarts
+        resume: Path | None = None
+        try:
+            while True:
+                try:
+                    self._mine_local(source, port, resume_checkpoint=resume)
+                    return
+                except Exception as error:
+                    process = self._servers.get(server_pid)
+                    status = exit_status(process) if process is not None else None
+                    if status is None:
+                        raise
+                    log.warning(
+                        "  QLever server of %s %s; see its log in %s", source.name, status, workdir
+                    )
+                    if restarts <= 0:
+                        if isinstance(error, PartialMiningError):
+                            raise
+                        raise RuntimeError(f"{error} (QLever server {status})") from error
+                    restarts -= 1
+                    suffix = self.config.output_suffix
+                    own = (
+                        self.config.output_dir
+                        / source.name
+                        / f"{source.name}{suffix}_report.checkpoint.jsonl"
+                    )
+                    # Without a checkpoint of this run, the --resume-from checkpoint is used.
+                    resume = own if own.is_file() else resume
+                    self._qlever_stop(server_pid)
+                    log.info("  Starting QLever again on port %s; resuming from %s", port, resume)
+                    server_pid = self._qlever_start(workdir, source.name, port, port_wait=300)
+        finally:
+            self._qlever_stop(server_pid)
 
     def _set_aside_when_updated(self, workdir: Path, source: Source) -> None:
         """With --update-downloads, keep the folder of a source only when it has no update.
@@ -342,8 +387,13 @@ class LocalMiningStage(Stage):
         *,
         graph_uris: list[str] | None = None,
         mining_context: str = "local_distribution",
+        resume_checkpoint: Path | None = None,
     ):
-        """Mine one dataset from a local QLever instance."""
+        """Mine one dataset from a local QLever instance.
+
+        *resume_checkpoint* overrides the checkpoint of --resume-from (a restart after the
+        server died resumes from the checkpoint of its own run).
+        """
         output_dir = self.config.output_dir / source.name
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
@@ -353,6 +403,8 @@ class LocalMiningStage(Stage):
             if self.config.resume_from
             else None
         )
+        if resume_checkpoint is not None:
+            previous = resume_checkpoint
         if previous and not previous.is_file():
             log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
         scope = graph_uris if graph_uris is not None else source.graph_uris or None
@@ -549,7 +601,7 @@ class LocalMiningStage(Stage):
         if not image.is_file():
             raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
 
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int:
+    def _qlever_start(self, workdir: Path, name: str, port: int, *, port_wait: float = 0) -> int:
         import hashlib
 
         from rdfsolve.qlever.lifecycle import image_for_index, index_build, start_server
@@ -572,6 +624,7 @@ class LocalMiningStage(Stage):
             name,
             port,
             startup_timeout=self.config.qlever_startup_timeout,
+            port_wait=port_wait,
         )
         self._servers[process.pid] = process
         return process.pid

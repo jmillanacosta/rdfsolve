@@ -412,6 +412,13 @@ Examples:
         default=600,
         help="Seconds to wait for an index to load",
     )
+    parser.add_argument(
+        "--qlever-restarts",
+        type=int,
+        default=1,
+        help="Restarts of a local QLever server that dies while its source is mined "
+        "(each resumes from the run's checkpoint)",
+    )
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument(
         "--no-download",
@@ -475,6 +482,9 @@ Examples:
         parser.error("--qlever-startup-timeout must be positive")
     config.base_port = args.base_port
     config.qlever_startup_timeout = args.qlever_startup_timeout
+    if args.qlever_restarts < 0:
+        parser.error("--qlever-restarts must not be negative")
+    config.qlever_restarts = args.qlever_restarts
     if min(args.parallelism, args.chunk_size, args.class_batch_size, args.max_response_mb) < 1:
         parser.error("Request and concurrency limits must be positive")
     if args.timeout is not None and args.timeout <= 0:

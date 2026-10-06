@@ -105,6 +105,9 @@ class PipelineConfig:
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
     qlever_startup_timeout: int = 600  # Seconds to load the index.
+    # Restarts of a local server that dies while its source is mined; each resumes from the
+    # run's checkpoint.
+    qlever_restarts: int = 1
     no_download: bool = False
     # Ask the server for updates of the files of a local source; download and index again
     update_downloads: bool = False

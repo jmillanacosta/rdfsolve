@@ -1,13 +1,23 @@
 """rdfsolve.qlever.lifecycle: QLever servers are started and stopped, with their memory, images and a
-pool of servers."""
+pool of servers; how a server ended is described, and the port of a server that died is waited for."""
 
 import json
+import socket
+import subprocess
+import sys
 from unittest.mock import Mock
 
 import pytest
 
 from rdfsolve.qlever import lifecycle
-from rdfsolve.qlever.lifecycle import ServerPool, _query_memory, image_for_index, index_build
+from rdfsolve.qlever.lifecycle import (
+    ServerPool,
+    _query_memory,
+    _wait_for_port,
+    exit_status,
+    image_for_index,
+    index_build,
+)
 
 
 def test_failed_start_reaps_process_and_preserves_old_log(tmp_path, monkeypatch):
@@ -95,3 +105,34 @@ def test_an_index_not_yet_built_gets_the_default_image(tmp_path):
     new = tmp_path / "workdirs" / "src"
     new.mkdir(parents=True)
     assert image_for_index(tmp_path, new, "src") == tmp_path / "qlever.sif"
+
+
+def test_a_running_server_has_no_exit_status():
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        assert exit_status(process) is None
+    finally:
+        process.kill()
+        process.wait()
+
+
+@pytest.mark.parametrize(
+    ("code", "text"),
+    [
+        ("import os, signal; os.kill(os.getpid(), signal.SIGSEGV)", "status -11 (SIGSEGV)"),
+        ("raise SystemExit(137)", "status 137 (SIGKILL)"),
+        ("raise SystemExit(1)", "status 1"),
+    ],
+)
+def test_the_exit_status_names_the_signal(code, text):
+    process = subprocess.Popen([sys.executable, "-c", code])
+    process.wait()
+    assert exit_status(process) == f"exited with {text}"
+
+
+def test_a_port_in_use_is_refused_after_the_wait():
+    with socket.socket() as held:
+        held.bind(("0.0.0.0", 0))  # noqa: S104 - The port that the check binds.
+        held.listen()
+        with pytest.raises(RuntimeError, match="in use"):
+            _wait_for_port(held.getsockname()[1], 1)

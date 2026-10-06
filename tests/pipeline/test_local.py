@@ -232,3 +232,82 @@ def test_grouped_mining_mines_all_graphs_once_and_splits_per_dataset(
     assert part.about.class_entity_counts == {"urn:A": 2}
     miner.count_class_entities.assert_any_call(["urn:A", "urn:B"], [one])
     assert [p.property_uri for p in saved["two"][0].patterns] == ["urn:q"]
+
+
+class _Server:
+    """A server process that is running until *dies* is set."""
+
+    def __init__(self, pid):
+        self.pid, self.status = pid, None
+
+    def poll(self):
+        return self.status
+
+
+def _restart_stage(tmp_path, monkeypatch, *, restarts=1):
+    stage, workdir, source = _stage(tmp_path, update=False)
+    stage.config.qlever_restarts = restarts
+    started, stopped, mined = [], [], []
+
+    def start(workdir, name, port, *, port_wait=0):
+        server = _Server(len(started) + 1)
+        started.append((port, port_wait))
+        stage._servers[server.pid] = server
+        return server.pid
+
+    monkeypatch.setattr(stage, "_qlever_start", start)
+    monkeypatch.setattr(
+        stage, "_qlever_stop", lambda pid: stopped.append(stage._servers.pop(pid, None) and pid)
+    )
+    return stage, workdir, source, started, stopped, mined
+
+
+def test_a_dead_server_is_started_again_and_the_source_resumes_from_its_checkpoint(
+    tmp_path, monkeypatch
+):
+    stage, workdir, source, started, stopped, mined = _restart_stage(tmp_path, monkeypatch)
+    pid = stage._qlever_start(workdir, source.name, 7000)
+    suffix = stage.config.output_suffix
+    checkpoint = tmp_path / "run" / "fixture" / f"fixture{suffix}_report.checkpoint.jsonl"
+
+    def mine(source, port, *, resume_checkpoint=None):
+        mined.append(resume_checkpoint)
+        if len(mined) == 1:
+            checkpoint.parent.mkdir(parents=True)
+            checkpoint.write_text('{"phase": "census"}\n')
+            stage._servers[pid].status = -11  # the server died during a query
+            raise RuntimeError("Endpoint unreachable")
+
+    monkeypatch.setattr(stage, "_mine_local", mine)
+    stage._mine_with_restarts(source, workdir, 7000, pid)
+    assert mined == [None, checkpoint], "The second run resumes from the first run's checkpoint"
+    assert started == [(7000, 0), (7000, 300)], "Same port, waited for while it is released"
+    assert stopped == [1, 2] and not stage._servers
+
+
+def test_an_error_while_the_server_runs_is_not_retried(tmp_path, monkeypatch):
+    stage, workdir, source, started, stopped, mined = _restart_stage(tmp_path, monkeypatch)
+    pid = stage._qlever_start(workdir, source.name, 7000)
+
+    def mine(source, port, *, resume_checkpoint=None):
+        mined.append(resume_checkpoint)
+        raise ValueError("a mining error")
+
+    monkeypatch.setattr(stage, "_mine_local", mine)
+    with pytest.raises(ValueError, match="a mining error"):
+        stage._mine_with_restarts(source, workdir, 7000, pid)
+    assert len(mined) == 1 and len(started) == 1 and stopped == [1]
+
+
+def test_without_restarts_left_the_error_names_how_the_server_ended(tmp_path, monkeypatch):
+    stage, workdir, source, started, stopped, _ = _restart_stage(tmp_path, monkeypatch, restarts=0)
+    pid = stage._qlever_start(workdir, source.name, 7000)
+
+    def mine(source, port, *, resume_checkpoint=None):
+        stage._servers[pid].status = 137
+        raise RuntimeError("Endpoint unreachable")
+
+    monkeypatch.setattr(stage, "_mine_local", mine)
+    with pytest.raises(RuntimeError, match=r"exited with status 137 \(SIGKILL\)"):
+        stage._mine_with_restarts(source, workdir, 7000, pid)
+    assert len(started) == 1 and stopped == [1]
