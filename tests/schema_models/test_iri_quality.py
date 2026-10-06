@@ -147,3 +147,19 @@ def test_mining_result_export_leaves_out_and_records_terms_that_are_not_rdf_iris
     assert json.loads((tmp_path / "iri_findings.json").read_text()) == found
     assert len(Graph().parse(tmp_path / "metadata.ttl")) == 1
     assert len(Graph().parse(tmp_path / "schema.ttl"))
+
+
+def test_rdf_iri_check_uses_the_ascii_exclusions_of_rfc_3987():
+    """U+00A0 and other non-ASCII spaces are ucschar, allowed in an IRI (Python's \\s matches them);
+    the ASCII space, controls and <>"{}|^`\\ are not."""
+    from rdfsolve.schema_models.paths import is_rdf_iri
+
+    for allowed in (
+        "http://ex.org/a\u00a0",
+        "http://ex.org/\u2003b",
+        "http://ex.org/\u3000",
+        "urn:é",
+    ):
+        assert is_rdf_iri(allowed), repr(allowed)
+    for excluded in (" ", "\t", "\n", "\x00", "\x1f", "<", ">", '"', "{", "}", "|", "^", "`", "\\"):
+        assert not is_rdf_iri(f"http://ex.org/a{excluded}b"), repr(excluded)

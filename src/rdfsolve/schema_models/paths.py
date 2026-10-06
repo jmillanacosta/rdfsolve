@@ -48,9 +48,12 @@ class PropertyPath(BaseModel):
         return self
 
 
-# Characters that RDF IRIs exclude. Lenient engines keep terms with them, and a query writes such
-# a term with IRI("...") (rdfsolve.sparql_terms).
-_INVALID_IRI_CHAR = re.compile(r'[\s<>"{}|^`\\\x00-\x1f]')
+# Characters that RDF IRIs exclude: the ASCII ones of RFC 3987 that the IRIREF production of
+# N-Triples, Turtle and SPARQL leaves out (controls and space, <>"{}|^`\). Non-ASCII characters
+# such as U+00A0 are allowed (ucschar), so the class is ASCII only, not Python's Unicode \s.
+# Lenient engines keep terms with them, and a query writes such a term with IRI("...")
+# (rdfsolve.sparql_terms).
+_INVALID_IRI_CHAR = re.compile(r'[\x00-\x20<>"{}|^`\\]')
 # Characters that end the term or the string of IRI("..."): such a term cannot be written.
 _UNWRITABLE_IRI_CHAR = re.compile(r'[<>"{}\n\r]')
 
