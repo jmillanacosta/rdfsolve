@@ -210,3 +210,137 @@ def release_acquire_ontologies(run_dir: Path, max_artifacts: int | None) -> None
 
     result = acquire_reference_ontologies(run_dir, max_artifacts=max_artifacts)
     click.echo(result.model_dump_json(indent=2))
+
+
+@main.command("export-graphs")
+@click.option(
+    "--sources",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    required=True,
+    help="Registry YAML with the entries to export.",
+)
+@click.option("--name", "names", multiple=True, help="Entry to export; repeatable.")
+@click.option("--host", "hosts", multiple=True, help="Export every entry on this endpoint host.")
+@click.option(
+    "--output-root",
+    type=click.Path(file_okay=False, path_type=Path),
+    required=True,
+    help="Exports go to OUTPUT_ROOT/<name>/<stamp>/.",
+)
+@click.option("--stamp", required=True, help="Folder name of this export, such as 20261006.")
+@click.option("--cap", type=int, default=50_000_000, show_default=True, help="LIMIT per CONSTRUCT.")
+@click.option(
+    "--max-gb", type=float, default=300.0, show_default=True, help="Stop a source past this size."
+)
+@click.option(
+    "--max-hours", type=float, default=72.0, show_default=True, help="Stop a source past this."
+)
+@click.option(
+    "--max-requests", type=int, default=5000, show_default=True, help="CONSTRUCTs per source."
+)
+@click.option(
+    "--count-seconds", type=float, default=900.0, show_default=True, help="Budget of a COUNT."
+)
+@click.option(
+    "--read-timeout", type=float, default=1800.0, show_default=True, help="Longest silence."
+)
+def export_graphs(
+    sources: Path,
+    names: tuple[str, ...],
+    hosts: tuple[str, ...],
+    output_root: Path,
+    stamp: str,
+    cap: int,
+    max_gb: float,
+    max_hours: float,
+    max_requests: int,
+    count_seconds: float,
+    read_timeout: float,
+) -> None:
+    """Export every graph of the selected entries' endpoints to verified gzip files."""
+    import json
+    import logging
+
+    import yaml
+
+    from rdfsolve.graph_export import ExportBudgetError, entries_on_host, export_source
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    entries = yaml.safe_load(sources.read_text(encoding="utf-8"))
+    # In the order given: a caller lists small sources first.
+    by_name = {e["name"]: e for e in entries}
+    chosen = [by_name[n] for n in dict.fromkeys(names) if n in by_name]
+    for host in hosts:
+        chosen += [e for e in entries_on_host(entries, host) if e not in chosen]
+    missing = set(names) - {e["name"] for e in chosen}
+    if missing or not chosen:
+        raise click.ClickException(f"No such entries: {sorted(missing) or 'none selected'}")
+    for entry in chosen:
+        try:
+            manifest = export_source(
+                entry,
+                output_root,
+                stamp,
+                cap=cap,
+                max_bytes=int(max_gb * 10**9),
+                max_seconds=max_hours * 3600,
+                max_requests=max_requests,
+                count_seconds=count_seconds,
+                read_timeout=read_timeout,
+            )
+        except ExportBudgetError as error:
+            click.echo(
+                json.dumps(
+                    {"source": entry["name"], "outcome": "not started", "reason": str(error)}
+                )
+            )
+            continue
+        graphs = manifest.get("graphs", [])
+        click.echo(
+            json.dumps(
+                {
+                    "source": entry["name"],
+                    "outcome": manifest.get("outcome"),
+                    "graphs": len(graphs),
+                    "retrieved": sum(str(g["outcome"]).startswith("retrieved") for g in graphs),
+                    "bytes": manifest.get("bytes"),
+                    "seconds": manifest.get("seconds"),
+                    "reason": manifest.get("reason"),
+                }
+            )
+        )
+
+
+@main.command("export-local")
+@click.argument(
+    "export_dirs",
+    nargs=-1,
+    required=True,
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+)
+@click.option(
+    "--workdir-root",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=None,
+    help="QLever work folders go to WORKDIR_ROOT/<name> (a data directory's qlever_workdirs); "
+    "by default to qlever/ inside each export folder.",
+)
+def export_local(export_dirs: tuple[Path, ...], workdir_root: Path | None) -> None:
+    """Make complete exports local inputs: a prepared QLever folder and the registry fields."""
+    import json
+
+    import yaml
+
+    from rdfsolve.graph_export import prepare_workdir
+
+    for export_dir in export_dirs:
+        manifest = json.loads((export_dir / "manifest.json").read_text(encoding="utf-8"))
+        name = manifest["source"]
+        workdir = workdir_root / name if workdir_root else export_dir / "qlever"
+        try:
+            fields = prepare_workdir(export_dir, workdir)
+        except ValueError as error:
+            click.echo(f"# {name}: not exported-local: {error}")
+            continue
+        click.echo(f"# {name}: QLever folder {workdir}")
+        click.echo(yaml.safe_dump({name: fields}, sort_keys=False))
