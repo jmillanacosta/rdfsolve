@@ -24,6 +24,27 @@ def test_slices_give_the_store_of_one_query(endpoint, tmp_path, monkeypatch):  #
     assert not list((sliced.path / "rows").glob("*.slice-*"))
 
 
+@pytest.mark.parametrize("cut_after_200", [False, True])
+def test_a_read_the_server_times_out_on_is_read_in_halves(
+    endpoint,  # noqa: F811
+    tmp_path,
+    monkeypatch,
+    cut_after_200,
+):
+    """A time limit reached before the result (429) or while it is sent (the trailer)."""
+    endpoint.cut_after_200 = cut_after_200
+    whole = scan.export_index(endpoint.url, tmp_path / "whole", index={"name": "t"}, workers=1)
+    endpoint.timeout_rows = 1
+    monkeypatch.setattr(scan, "SPLIT_ROWS", 0)
+    split = scan.export_index(endpoint.url, tmp_path / "split", index={"name": "t"}, workers=1)
+    for predicate, frame in _rows(whole).items():
+        assert _rows(split)[predicate].equals(frame), predicate
+    assert not [f for f in (split.path / "rows").iterdir() if not f.name.endswith(".parquet")]
+    monkeypatch.setattr(scan, "SPLIT_ROWS", 10)
+    with pytest.raises(scan.QueryTimeoutError):
+        scan.export_index(endpoint.url, tmp_path / "small", index={"name": "t"}, workers=1)
+
+
 def test_the_last_slice_reads_the_rows_beyond_the_count(monkeypatch):
     monkeypatch.setattr(scan, "SLICE_ROWS", 10)
     assert scan._slices(25) == [(0, 10), (10, 10), (20, None)]

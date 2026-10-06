@@ -33,10 +33,16 @@ class Endpoint:
         self.store = ox.Store()
         self.store.load(DATA, format=ox.RdfFormat.N_TRIPLES)
         self.fail_after: int | None = None
-        self.row_queries = 0
+        # The rows of urn:link are refused as QLever does at its time limit (429, "timed out")
+        # when a query would read more than this many of them.
+        self.timeout_rows: int | None = None
+        # With cut_after_200, the time limit is reported as QLever does when it is reached while
+        # the result is sent: HTTP 200, one row, then the error trailer.
+        self.cut_after_200 = False
         # The predicates whose row queries the server refuses (400, as a query it cannot parse).
         self.refuse: set[str] = set()
         self.queries: list[str] = []
+        self.row_queries = 0
         endpoint = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -61,6 +67,49 @@ class Endpoint:
                         self.send_response(500)
                         self.end_headers()
                         return
+                if (
+                    endpoint.timeout_rows is not None
+                    and "<urn:link>" in query
+                    and "COUNT" not in query
+                    and "GRAPH" not in query
+                    and len(list(endpoint.store.query(query))) > endpoint.timeout_rows
+                ):
+                    if (
+                        endpoint.cut_after_200
+                        and self.headers["Accept"] != "application/octet-stream"
+                    ):
+                        self.send_response(200)
+                        self.end_headers()
+                        self.wfile.write(
+                            b"?s\t?o\t?d\n<urn:a1>\t<urn:b1>\t\n"
+                            + scan.QLEVER_ERROR_TRAILER
+                            + b" while exporting the query result. Unfortunately due to limitations"
+                            + b" in the HTTP 1.1 protocol, there is no better way to report this"
+                            + b" than to append it to the incomplete result. The error message"
+                            + b" was:\n"
+                            + b" " * 300
+                            + b"Operation timed out.\n"
+                        )
+                        return
+                    if endpoint.cut_after_200:
+                        text = endpoint.store.query(query).serialize(
+                            format=ox.QueryResultsFormat.TSV
+                        )
+                        cells = [line.split(b"\t") for line in text.split(b"\n")[1:] if line]
+                        self.send_response(200)
+                        self.end_headers()
+                        self.wfile.write(
+                            b"".join(
+                                hashlib.blake2b(c, digest_size=8).digest()
+                                for row in cells
+                                for c in row
+                            )
+                        )
+                        return
+                    self.send_response(429)
+                    self.end_headers()
+                    self.wfile.write(b'{"exception": "Operation timed out. Last operation: Scan"}')
+                    return
                 if "GRAPH ?g" in query:
                     text = b"?g\n"
                 else:

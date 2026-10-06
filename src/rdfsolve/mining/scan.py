@@ -20,16 +20,18 @@ strategies give the same schema of the same index.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import shutil
+import threading
 import time
 import urllib.parse
 import urllib.request
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, Self
 
 from rdfsolve.mining.query_builders import MEMBERSHIP
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
@@ -373,11 +375,87 @@ def _bare(expr: pl.Expr) -> pl.Expr:
 # Building a store
 
 
+class QueryTimeoutError(RuntimeError):
+    """The server stopped the query at its time limit (QLever answers 429 with "timed out")."""
+
+
+# The queries this process has open on a local server: at most two per export stream
+# (2 * export_workers()), below the slots the server is started with
+# (qlever.lifecycle.simultaneous_queries: 2 * export_workers() + 2), so that the client never
+# sends more than the server can take. BUSY_WAIT: how long a query waits on a busy server
+# (429) after the last of this process's queries ended.
+BUSY_WAIT = 600.0
+_OPEN: dict[str, Any] = {}
+_OPEN_LOCK = threading.Lock()
+_PAIR_LOCK = threading.Lock()
+
+
+def _query_slots() -> threading.BoundedSemaphore:
+    """Return the semaphore of the queries this process has open (sized when first used)."""
+    with _OPEN_LOCK:
+        slots = 2 * export_workers()
+        if _OPEN.get("size") != slots:
+            _OPEN.update(size=slots, semaphore=threading.BoundedSemaphore(slots))
+        _OPEN.setdefault("ended", time.monotonic())
+        semaphore: threading.BoundedSemaphore = _OPEN["semaphore"]
+        return semaphore
+
+
+class _OpenQuery:
+    """A response that holds one query slot until it is closed."""
+
+    def __init__(self, response: Any, semaphore: threading.BoundedSemaphore) -> None:
+        """Keep the open *response* and the semaphore whose slot it holds."""
+        self._response = response
+        self._semaphore: threading.BoundedSemaphore | None = semaphore
+
+    def read(self, *args: Any) -> bytes:
+        """Read from the response."""
+        data: bytes = self._response.read(*args)
+        return data
+
+    def readline(self, *args: Any) -> bytes:
+        """Read a line from the response."""
+        data: bytes = self._response.readline(*args)
+        return data
+
+    def close(self) -> None:
+        """Close the response and give its slot back (once)."""
+        self._response.close()
+        if self._semaphore is not None:
+            self._semaphore.release()
+            self._semaphore = None
+            _OPEN["ended"] = time.monotonic()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
+@contextlib.contextmanager
+def _post_pair(endpoint: str, query: str, id_query: str) -> Iterator[tuple[Any, Any]]:
+    """Open the TSV result of *query* and the ids of *id_query* together. The two slots are
+    taken under one lock, so that streams never each hold one slot waiting for a second.
+    """
+    with contextlib.ExitStack() as stack:
+        with _PAIR_LOCK:
+            text = stack.enter_context(_post(endpoint, query, "text/tab-separated-values"))
+            binary = stack.enter_context(_post(endpoint, id_query, "application/octet-stream"))
+        yield text, binary
+
+
 def _post(endpoint: str, query: str, accept: str) -> Any:
     """Send *query* to a local endpoint; return the open response (no proxy, no time limit).
 
-    A server whose query slots are all taken answers 429; the query is sent again after a wait
-    (1, 2, 4 … 60 s, for at most about ten minutes).
+    The process has at most 2 * export_workers() queries open at once (_query_slots), fewer
+    than the server's slots. A server whose query slots are all taken (queries of other
+    clients, or ones it is still ending) answers 429; the query is sent again after a wait
+    (1, 2, 4 … 60 s) for as long as this process's other queries go on ending, and up to
+    BUSY_WAIT seconds after the last one ended. QLever also answers 429 to a query it stopped
+    at its time limit, with "timed out" in the body: that raises QueryTimeoutError at once
+    (the caller reads it in slices; sending it again would time out again).
     """
     import urllib.error
 
@@ -387,29 +465,51 @@ def _post(endpoint: str, query: str, accept: str) -> Any:
     # A term that is not an RDF IRI (Bio2RDF: <...statistic  n>) is written with IRI("...").
     data = urllib.parse.urlencode({"query": writable_query(query)}).encode()
     wait = 1.0
-    deadline = time.monotonic() + 600
-    while True:
-        request = urllib.request.Request(endpoint, data, {"Accept": accept})  # noqa: S310 (local)
-        try:
-            return opener.open(request, timeout=None)
-        except urllib.error.HTTPError as error:
-            if error.code != 429 or time.monotonic() > deadline:
-                raise
-            logger.info("Scan: the server is busy (429); sending the query again in %.0f s", wait)
-            time.sleep(wait)
-            wait = min(wait * 2, 60.0)
+    started = time.monotonic()
+    semaphore = _query_slots()
+    semaphore.acquire()
+    try:
+        while True:
+            request = urllib.request.Request(endpoint, data, {"Accept": accept})  # noqa: S310
+            try:
+                return _OpenQuery(opener.open(request, timeout=None), semaphore)
+            except urllib.error.HTTPError as error:
+                if error.code != 429:
+                    raise
+                body = error.read(4096).decode(errors="replace")
+                if "timed out" in body.lower():
+                    raise QueryTimeoutError(
+                        f"The server timed out on the query: {query}"
+                    ) from error
+                if time.monotonic() > max(started, _OPEN["ended"]) + BUSY_WAIT:
+                    raise
+                logger.info(
+                    "Scan: the server is busy (429); sending the query again in %.0f s", wait
+                )
+                time.sleep(wait)
+                wait = min(wait * 2, 60.0)
+    except BaseException:
+        semaphore.release()
+        raise
 
 
 # QLever ends a result that failed while it was being sent with this line, after HTTP 200.
 QLEVER_ERROR_TRAILER = b"!!!!>># An error has occurred"
 
 
-def _check_trailer(data: bytes, query: str) -> None:
-    """Raise if *data* holds QLever's error trailer: the result was cut while being sent."""
+def _check_trailer(data: bytes, query: str, rest: Callable[[], bytes] | None = None) -> None:
+    """Raise if *data* holds QLever's error trailer: the result was cut while being sent.
+
+    The trailer explains itself before it gives the error, so the rest of the response is read
+    (*rest*) to find it. A query that timed out raises QueryTimeoutError (read in slices).
+    """
     if QLEVER_ERROR_TRAILER in data:
+        if rest is not None:
+            data += rest()
         at = data.index(QLEVER_ERROR_TRAILER)
-        message = data[at : at + 300].decode(errors="replace").replace("\n", " ")
-        raise RuntimeError(f"QLever cut the result while sending it ({message}): {query}")
+        message = data[at : at + 2000].decode(errors="replace").replace("\n", " ")
+        error = QueryTimeoutError if "timed out" in message.lower() else RuntimeError
+        raise error(f"QLever cut the result while sending it ({message}): {query}")
 
 
 def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
@@ -423,7 +523,7 @@ def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
     with _post(endpoint, query, "text/tab-separated-values") as response, tsv.open("wb") as out:
         tail = b""
         while chunk := response.read(1 << 24):
-            _check_trailer(tail + chunk, query)
+            _check_trailer(tail + chunk, query, lambda: response.read(4096))
             tail = chunk[-len(QLEVER_ERROR_TRAILER) :]
             out.write(chunk)
     frame = pl.scan_csv(tsv, separator="\t", quote_char=None, has_header=True, infer_schema=False)
@@ -483,7 +583,7 @@ def _stream_rows(
     *id_query* is the query whose ids are read, when it is not *query*: the same scan without
     the columns that need no id (``DATATYPE(?o)``, which QLever computes for every row, takes
     most of the time of the octet-stream result). It must give the rows of *query* in the same
-    order, with the id columns at the same positions.
+    order, with the id columns at the same positions. A read that fails leaves no file.
     """
     import io
 
@@ -494,56 +594,61 @@ def _stream_rows(
     partial = path.with_name(path.name + ".partial")
     rows = 0
     writer = None
-    with (
-        _post(endpoint, query, "text/tab-separated-values") as text,
-        _post(endpoint, id_query or query, "application/octet-stream") as binary,
-    ):
-        header = text.readline().decode().rstrip("\n").split("\t")
-        names = [h.lstrip("?") for h in header]
-        width = _width(id_query) if id_query else len(names)
-        rest = b""
-        while True:
-            block = text.read(BLOCK_BYTES)
-            data = rest + block
-            _check_trailer(data, query)
-            if not block:
-                lines, rest = data, b""
-                if lines and not lines.endswith(b"\n"):
-                    lines += b"\n"
-            else:
-                cut = data.rfind(b"\n") + 1
-                lines, rest = data[:cut], data[cut:]
-            count = lines.count(b"\n")
-            if count:
-                raw = binary.read(8 * width * count)
-                if len(raw) != 8 * width * count:
-                    raise RuntimeError(f"{len(raw) // 8} ids for {count} rows of {width}: {query}")
-                cells = np.frombuffer(raw, dtype="<u8")
-                frame = pl.read_csv(
-                    io.BytesIO(lines),
-                    has_header=False,
-                    new_columns=names,
-                    separator="\t",
-                    quote_char=None,
-                    infer_schema=False,
-                ).with_columns(
-                    *(
-                        pl.Series(name, cells[at::width], dtype=pl.UInt64)
-                        for name, at in ids.items()
-                    ),
-                    *(pl.lit(v).alias(k) for k, v in (extra or {}).items()),
-                )
-                if not keep_text and "o" in frame.columns:
-                    frame = frame.with_columns(_trim_literals("o"))
-                table = frame.to_arrow()
-                if writer is None:
-                    writer = pq.ParquetWriter(partial, table.schema, compression="zstd")
-                writer.write_table(table)
-                rows += count
-            if not block:
-                break
-        if binary.read(1):
-            raise RuntimeError(f"More ids than rows: {query}")
+    try:
+        with _post_pair(endpoint, query, id_query or query) as (text, binary):
+            header = text.readline().decode().rstrip("\n").split("\t")
+            names = [h.lstrip("?") for h in header]
+            width = _width(id_query) if id_query else len(names)
+            rest = b""
+            while True:
+                block = text.read(BLOCK_BYTES)
+                data = rest + block
+                _check_trailer(data, query, lambda: text.read(4096))
+                if not block:
+                    lines, rest = data, b""
+                    if lines and not lines.endswith(b"\n"):
+                        lines += b"\n"
+                else:
+                    cut = data.rfind(b"\n") + 1
+                    lines, rest = data[:cut], data[cut:]
+                count = lines.count(b"\n")
+                if count:
+                    raw = binary.read(8 * width * count)
+                    if len(raw) != 8 * width * count:
+                        raise RuntimeError(
+                            f"{len(raw) // 8} ids for {count} rows of {width}: {query}"
+                        )
+                    cells = np.frombuffer(raw, dtype="<u8")
+                    frame = pl.read_csv(
+                        io.BytesIO(lines),
+                        has_header=False,
+                        new_columns=names,
+                        separator="\t",
+                        quote_char=None,
+                        infer_schema=False,
+                    ).with_columns(
+                        *(
+                            pl.Series(name, cells[at::width], dtype=pl.UInt64)
+                            for name, at in ids.items()
+                        ),
+                        *(pl.lit(v).alias(k) for k, v in (extra or {}).items()),
+                    )
+                    if not keep_text and "o" in frame.columns:
+                        frame = frame.with_columns(_trim_literals("o"))
+                    table = frame.to_arrow()
+                    if writer is None:
+                        writer = pq.ParquetWriter(partial, table.schema, compression="zstd")
+                    writer.write_table(table)
+                    rows += count
+                if not block:
+                    break
+            if binary.read(1):
+                raise RuntimeError(f"More ids than rows: {query}")
+    except BaseException:
+        if writer is not None:
+            writer.close()
+        partial.unlink(missing_ok=True)
+        raise
     if writer is None:
         pl.DataFrame(
             {n: [] for n in [*names, *ids, *(extra or {})]},
@@ -676,23 +781,45 @@ def _read_query(
     """
     import pyarrow.parquet as pq
 
+    def read(part: Path, offset: int | None, limit: int | None, size: int) -> int:
+        """Write the whole result (*offset* None), or one slice of it, to *part*; return its
+        rows. A read the server times out on is read again in two halves, joined in order.
+        """
+        try:
+            if offset is None:
+                return _stream_rows(
+                    endpoint, query, part, ids, keep_text=keep_text, extra=extra, id_query=id_query
+                )
+            return _stream_rows(
+                endpoint,
+                _sliced(query, offset, limit),
+                part,
+                ids,
+                keep_text=keep_text,
+                extra=extra,
+                id_query=_sliced(id_query, offset, limit) if id_query else None,
+            )
+        except QueryTimeoutError:
+            if size <= max(SPLIT_ROWS, 1):
+                raise
+        offset = offset or 0
+        half = size // 2
+        logger.info("Scan: the server timed out on %d rows; reading them in halves", size)
+        halves = [part.with_name(part.name + ".a"), part.with_name(part.name + ".b")]
+        count = read(halves[0], offset, half, half)
+        count += read(
+            halves[1], offset + half, None if limit is None else limit - half, size - half
+        )
+        _join_parts(halves, part)
+        return count
+
     def stream(part: Path, offset: int | None = None, limit: int | None = None) -> int:
         """Write the whole result, or one slice of it, to *part*; return its rows."""
         if offset is None:
-            return _stream_rows(
-                endpoint, query, part, ids, keep_text=keep_text, extra=extra, id_query=id_query
-            )
+            return read(part, None, None, rows)
         if part.is_file():
             return int(pq.ParquetFile(part).metadata.num_rows)
-        return _stream_rows(
-            endpoint,
-            _sliced(query, offset, limit),
-            part,
-            ids,
-            keep_text=keep_text,
-            extra=extra,
-            id_query=_sliced(id_query, offset, limit) if id_query else None,
-        )
+        return read(part, offset, limit, limit if limit is not None else rows - offset)
 
     if rows <= SLICE_ROWS:
         return pool.submit(stream, path).result()
@@ -723,6 +850,82 @@ def _counts(endpoint: str, query: str, path: Path) -> list[tuple[tuple[str, ...]
     rows = [(tuple(row[:-1]), _count(row[-1])) for row in pl.read_parquet(path).iter_rows()]
     path.unlink()
     return rows
+
+
+def _graph_counts(
+    endpoint: str, path: Path, sizes: dict[str, int], unnamed: dict[str, int]
+) -> dict[str, dict[str, int]]:
+    """Return the rows of each predicate in each named graph.
+
+    One grouped query (GROUP BY ?g ?p) answers it, but on a large index QLever sorts every
+    triple by graph and predicate (PubChem: timed out after ten minutes, where GROUP BY ?p takes
+    a second). Then the graphs are listed; one graph that holds every triple (no triple outside
+    the named graphs) has the counts of GROUP BY ?p (*sizes*); otherwise each predicate is
+    counted by graph with the predicate bound.
+    """
+    import polars as pl
+
+    graphs: dict[str, dict[str, int]] = {}
+    try:
+        for (g, p), n in _counts(
+            endpoint,
+            "SELECT ?g ?p (COUNT(?s) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ?p",
+            path,
+        ):
+            graphs.setdefault(g[1:-1], {})[p[1:-1]] = n
+        return graphs
+    except QueryTimeoutError:
+        logger.info("Scan: the count by graph and predicate timed out; counting by predicate")
+    path.unlink(missing_ok=True)
+    path.with_suffix(".tsv").unlink(missing_ok=True)
+    _tsv_to_parquet(endpoint, "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }", path)
+    names = [g[1:-1] for g in pl.read_parquet(path)["g"].to_list()]
+    path.unlink()
+    if len(names) == 1 and not unnamed:
+        return {names[0]: dict(sizes)}
+    for predicate, size in sizes.items():
+        for g, n in _predicate_graph_counts(endpoint, path, predicate, 0, None, size).items():
+            graphs.setdefault(g[1:-1], {})[predicate] = n
+    return graphs
+
+
+# A read that the server stops at its time limit is read again in two halves (LIMIT, OFFSET),
+# down to slices of SPLIT_ROWS rows.
+SPLIT_ROWS = 100_000
+
+
+def _predicate_graph_counts(
+    endpoint: str, path: Path, predicate: str, offset: int, limit: int | None, size: int
+) -> dict[str, int]:
+    """Count the rows of *predicate* in each named graph, rows *offset* to *offset* + *limit*
+    of its scan (all from *offset* when *limit* is None; about *size* rows); a count the server
+    times out on is made in two halves.
+    """
+    scan_rows = f"SELECT ?g ?s WHERE {{ GRAPH ?g {{ ?s <{predicate}> ?o }} }}"
+    if offset == 0 and limit is None:
+        query = f"SELECT ?g (COUNT(?s) AS ?n) WHERE {{ GRAPH ?g {{ ?s <{predicate}> ?o }} }} "
+    else:
+        query = (
+            f"SELECT ?g (COUNT(?s) AS ?n) WHERE {{ {{ {_sliced(scan_rows, offset, limit)} }} }} "
+        )
+    try:
+        return {g: n for (g,), n in _counts(endpoint, query + "GROUP BY ?g", path)}
+    except QueryTimeoutError:
+        if size <= max(SPLIT_ROWS, 1):
+            raise
+    path.unlink(missing_ok=True)
+    path.with_suffix(".tsv").unlink(missing_ok=True)
+    half = size // 2
+    logger.info(
+        "Scan: counting <%s> by graph timed out; counting %d rows in halves", predicate, size
+    )
+    counts = _predicate_graph_counts(endpoint, path, predicate, offset, half, half)
+    rest = None if limit is None else limit - half
+    for g, n in _predicate_graph_counts(
+        endpoint, path, predicate, offset + half, rest, size - half
+    ).items():
+        counts[g] = counts.get(g, 0) + n
+    return counts
 
 
 def _has_named_graphs(endpoint: str, path: Path) -> bool:
@@ -800,13 +1003,6 @@ def export_index(
     graphs: dict[str, dict[str, int]] | None = None
     unnamed: dict[str, int] = {}
     if named:
-        graphs = {}
-        for (g, p), n in _counts(
-            endpoint,
-            "SELECT ?g ?p (COUNT(?s) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ?p",
-            counted,
-        ):
-            graphs.setdefault(g[1:-1], {})[p[1:-1]] = n
         unnamed = {
             p[1:-1]: n
             for (p,), n in _counts(
@@ -816,6 +1012,7 @@ def export_index(
                 counted,
             )
         }
+        graphs = _graph_counts(endpoint, counted, sizes, unnamed)
         if unnamed:
             graphs[QLEVER_DEFAULT_GRAPH] = unnamed
     expected = {
@@ -1166,8 +1363,15 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
 
     for stale in ("types-named.parquet", "class-expressions.json"):
         (store.path / stale).unlink(missing_ok=True)
-    types = pl.read_parquet(store.path / "types.parquet")
-    anonymous = types.filter(pl.col("c").str.starts_with("_:"))["c"].unique().to_list()
+    # The type table is read lazily: on a large index (Bgee: 725 M rows) its text does not fit.
+    types = pl.scan_parquet(store.path / "types.parquet")
+    anonymous = (
+        types.filter(pl.col("c").str.starts_with("_:"))
+        .select("c")
+        .unique()
+        .collect()["c"]
+        .to_list()
+    )
     if not anonymous:
         return {}
     outgoing: dict[str, list[tuple[str, str]]] = {}
@@ -1218,7 +1422,7 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
             },
         )
         expressions[iri]["nodes"] += 1
-    mapping = pl.DataFrame(
+    mapping = pl.LazyFrame(
         {"c": list(names), "named": list(names.values())},
         schema={"c": pl.String, "named": pl.String},
     )
@@ -1228,9 +1432,17 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
         .select(pl.exclude("named"))
         .unique()
     )
+    named.sink_parquet(store.path / "types-named.parquet")
+    members = dict(
+        pl.scan_parquet(store.path / "types-named.parquet")
+        .filter(pl.col("c").is_in([f"<{iri}>" for iri in expressions]))
+        .group_by("c")
+        .agg(pl.col("s").n_unique())
+        .collect()
+        .iter_rows()
+    )
     for iri in expressions:
-        expressions[iri]["members"] = named.filter(pl.col("c") == f"<{iri}>")["s"].n_unique()
-    named.write_parquet(store.path / "types-named.parquet")
+        expressions[iri]["members"] = members.get(f"<{iri}>", 0)
     record = dict(sorted(expressions.items()))
     (store.path / "class-expressions.json").write_text(json.dumps(record, indent=1) + "\n")
     if unsupported:
@@ -1242,8 +1454,26 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
 
 
 BATCH_ROWS = 5_000_000
-# A predicate with more rows than this is counted in parts (count_patterns).
+# A predicate with more rows than this is counted in parts (count_patterns): the rows of one
+# part are held at once, with about 300 bytes a row at the peak of counting.
 PARTITION_ROWS = 50_000_000
+# A type table with more rows than this is joined in parts (by id), each about 40 bytes a row.
+TYPE_PARTITION_ROWS = 200_000_000
+COUNTS = ("count", "distinct_subjects", "distinct_objects")
+
+
+def count_limits() -> tuple[int, int]:
+    """Return the rows of a predicate and of the type table counted at once (PARTITION_ROWS,
+    TYPE_PARTITION_ROWS), or both from RDFSOLVE_SCAN_COUNT_GB: the memory counting may use,
+    in GB, which a part of rows and a part of the type table share.
+    """
+    import os
+
+    value = os.environ.get("RDFSOLVE_SCAN_COUNT_GB")
+    if not value:
+        return PARTITION_ROWS, TYPE_PARTITION_ROWS
+    budget = float(value) * 1e9
+    return max(1, int(budget / 2 / 300)), max(1, int(budget / 2 / 40))
 
 
 def store_rows(store: CountedStore, predicate: str) -> int:
@@ -1258,8 +1488,6 @@ def store_rows(store: CountedStore, predicate: str) -> int:
 
 def _batches(store: CountedStore) -> list[list[str]]:
     """Group the predicates into batches of about BATCH_ROWS rows (a large one alone)."""
-    import polars as pl
-
     sizes = {p: store_rows(store, p) for p in store.predicates}
     batches: list[list[str]] = []
     rows = BATCH_ROWS
@@ -1289,19 +1517,56 @@ def _counted_columns(frame: pl.LazyFrame, predicate: str, *, by_graph: bool) -> 
     )
 
 
-def _batch_rows(
-    store: CountedStore, predicates: list[str], *, by_graph: bool = False
-) -> pl.DataFrame:
-    """Return the counted columns of the rows of some predicates, with the predicate as a
-    column p (and the graph of each row with *by_graph*).
-    """
+def _batch_frame(store: CountedStore, predicates: list[str], *, by_graph: bool) -> pl.LazyFrame:
     import polars as pl
 
     read = store.graph_rows if by_graph else store.rows
     return pl.concat(
         [_counted_columns(read(p), p, by_graph=by_graph) for p in predicates],
         how="vertical_relaxed",
-    ).collect()
+    )
+
+
+def _batch_rows(
+    store: CountedStore, predicates: list[str], *, by_graph: bool = False
+) -> pl.DataFrame:
+    """Return the counted columns of the rows of some predicates, with the predicate as a
+    column p (and the graph of each row with *by_graph*).
+    """
+    return _batch_frame(store, predicates, by_graph=by_graph).collect()
+
+
+def _spill(frame: pl.LazyFrame, directory: Path, parts: int, column: str) -> None:
+    """Write *frame* in *parts* files by its id *column* modulo *parts* (directory/b=<part>)."""
+    import polars as pl
+
+    frame.with_columns(b=(pl.col(column) % parts).cast(pl.UInt32)).sink_parquet(
+        pl.PartitionBy(directory, key="b", include_key=False), mkdir=True
+    )
+
+
+def _part(directory: Path, part: int, schema: pl.Schema) -> pl.DataFrame:
+    """Read one part written by _spill (no rows when the part has none)."""
+    import polars as pl
+
+    files = sorted((directory / f"b={part}").glob("*.parquet"))
+    if not files:
+        return pl.DataFrame(schema=schema)
+    return pl.read_parquet(files).select(pl.col(n).cast(t) for n, t in schema.items())
+
+
+def _part_counts(classified: list[pl.DataFrame], keys: list[str]) -> list[pl.DataFrame]:
+    """Count the patterns of classified rows (keys, sid, oid) that hold all rows of each key."""
+    import polars as pl
+
+    return [
+        f.group_by(keys).agg(
+            count=pl.len(),
+            distinct_subjects=pl.col("sid").n_unique(),
+            distinct_objects=pl.col("oid").n_unique(),
+        )
+        for f in classified
+    ]
 
 
 def count_patterns(store: CountedStore) -> list[SchemaPattern]:
@@ -1319,6 +1584,15 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     store is read once; small predicates are counted together, in batches of about BATCH_ROWS
     rows.
 
+    Memory is bound by count_limits. A predicate (or batch) with more rows than PARTITION_ROWS
+    is written once to a scratch directory in the store, in parts by subject id, and counted
+    one part at a time: triples and distinct subjects add up over parts; the distinct
+    (pattern, object) pairs of each part are written in parts by object id and counted per
+    object part, so an object shared by most rows (a class, a constant) costs one pair, not
+    its rows. A type table with more rows than TYPE_PARTITION_ROWS is split by id the same way:
+    the subjects of a part are joined with their part of the types, and the objects of each
+    part of the types with that part.
+
     In a graph scope (a StoreView) the counts are those of the count queries, which group by the
     edge graph ?_g (pattern_enrichment.enrich_patterns_with_counts merges them): each edge is
     counted in its data graph, types come from the data and type context graphs; count is the
@@ -1327,34 +1601,42 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     graphs would be counted twice). The distinct counts of each graph are kept in
     graph_distinct_subjects and graph_distinct_objects, for the per-graph schemas.
     """
+    import tempfile
+
     import polars as pl
 
     scope = getattr(store, "graph_uris", None)
-    # Joins use QLever's ids (an IRI or blank node has one id as subject and as object), and
-    # the classes as categories: the type table of a large index fits in memory this way.
-    types = store.type_ids().with_columns(pl.col("c").cast(pl.Categorical)).collect()
-    subjects = types.rename({"c": "subject_class"})
-    objects = types.rename({"sid": "oid", "c": "oc"})
-    typed_ids = store.typed_ids() if hasattr(store, "typed_ids") else store.type_ids().select("sid")
-    typed_subjects = typed_ids.select("sid").unique().collect()
+    by_graph = bool(scope)
     keys = ["p", *(["g"] if scope else []), "subject_class", "object_class", "datatype"]
-    tables, blank_objects, blank_outgoing = [], [], []
+    tables: list[pl.DataFrame] = []
+    blank_objects: list[pl.DataFrame] = []
+    blank_outgoing: list[pl.DataFrame] = []
+    partition_rows, type_rows = count_limits()
+    typed_ids = store.typed_ids() if hasattr(store, "typed_ids") else store.type_ids().select("sid")
+    typed_ids = typed_ids.select("sid").unique()
+    # The type rows of the whole index bound those of the scope (a view or a retyped table).
+    type_count = int(store.base.graph_types().select(pl.len()).collect().item())
+    type_parts = max(1, -(-type_count // type_rows))
+    scratch: list[Path] = []
 
-    def count(rows: pl.DataFrame, measure: str) -> list[pl.DataFrame]:
-        """Count the patterns of some rows: all three counts, or one of them (a partition)."""
-        aggregates = {
-            "all": {
-                "count": pl.len(),
-                "distinct_subjects": pl.col("sid").n_unique(),
-                "distinct_objects": pl.col("oid").n_unique(),
-            },
-            "subjects": {"count": pl.len(), "distinct_subjects": pl.col("sid").n_unique()},
-            "objects": {"distinct_objects": pl.col("oid").n_unique()},
-        }[measure]
-        if measure != "objects":
-            # The predicates of a blank node are read in the RDF merge of the data graphs
-            # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
-            blank_outgoing.append(rows.filter(pl.col("sb")).select("sid", "p").unique())
+    def directory() -> Path:
+        """Return the scratch directory of this count (made when first needed)."""
+        if not scratch:
+            scratch.append(Path(tempfile.mkdtemp(prefix=".count-", dir=store.base.path)))
+        return scratch[0]
+
+    def classify(
+        rows: pl.DataFrame,
+        subjects: pl.DataFrame,
+        typed_subjects: pl.DataFrame,
+        objects: pl.DataFrame,
+    ) -> list[pl.DataFrame]:
+        """Give each row its patterns: the keys with sid and oid, in four tables (literal,
+        typed object, untyped IRI object, blank object).
+        """
+        # The predicates of a blank node are read in the RDF merge of the data graphs
+        # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
+        blank_outgoing.append(rows.filter(pl.col("sb")).select("sid", "p").unique())
         typed = rows.join(subjects, on="sid", how="inner")
         # IRI subjects without a type, under one subject class of their own (UNTYPED).
         untyped_subjects = (
@@ -1384,41 +1666,151 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
             pl.col("oc").is_null() & (pl.col("kind") == "iri")
         ).with_columns(object_class=pl.lit("Resource"))
         blank = nonliteral.filter(pl.col("kind") == "bnode")
-        if measure != "objects":
-            blank_objects.append(
-                blank.select(pl.col("subject_class").cast(pl.String), "p", "oid").unique()
-            )
+        blank_objects.append(
+            blank.select(pl.col("subject_class").cast(pl.String), "p", "oid").unique()
+        )
         blank = blank.with_columns(object_class=pl.lit("BlankNode"))
         return [
-            f.with_columns(pl.col("subject_class").cast(pl.String)).group_by(keys).agg(**aggregates)
+            f.with_columns(pl.col("subject_class").cast(pl.String)).select(*keys, "sid", "oid")
             for f in (literal, typed_object, untyped, blank)
         ]
 
-    for batch in _batches(store):
-        size = sum(store_rows(store, p) for p in batch)
-        if len(batch) == 1 and size > PARTITION_ROWS:
-            # One predicate too large to hold: count it in parts by subject (triples and
-            # distinct subjects add up over parts) and again by object (distinct objects do).
-            parts = -(-size // PARTITION_ROWS)
-            read = store.graph_rows if scope else store.rows
-            frame = _counted_columns(read(batch[0]), batch[0], by_graph=bool(scope))
-            by_subject, by_object = [], []
-            for part in range(parts):
-                rows = frame.filter(pl.col("sid") % parts == part).collect()
-                by_subject.extend(count(rows, "subjects"))
-                rows = frame.filter(pl.col("oid") % parts == part).collect()
-                by_object.extend(count(rows, "objects"))
-            sums = (
-                pl.concat(by_subject).group_by(keys).agg(pl.col("count", "distinct_subjects").sum())
+    # Joins use QLever's ids (an IRI or blank node has one id as subject and as object), and
+    # the classes as categories: the type table of a large index fits in memory this way.
+    if type_parts == 1:
+        types = store.type_ids().with_columns(pl.col("c").cast(pl.Categorical)).collect()
+        typed_all = typed_ids.collect()
+
+        def type_part(part: int) -> pl.DataFrame:
+            """Return one part of the type table (sid, c)."""
+            return types
+
+        def typed_part(part: int) -> pl.DataFrame:
+            """Return one part of the typed ids (sid)."""
+            return typed_all
+
+    else:
+        for part in range(type_parts):
+            selected = pl.col("sid") % type_parts == part
+            folder = directory() / "types"
+            folder.mkdir(exist_ok=True)
+            store.type_ids().filter(selected).with_columns(pl.col("c").cast(pl.String)).collect(
+                engine="streaming"
+            ).write_parquet(folder / f"{part}.parquet")
+            typed_ids.filter(selected).collect(engine="streaming").write_parquet(
+                folder / f"typed-{part}.parquet"
             )
-            distinct = pl.concat(by_object).group_by(keys).agg(pl.col("distinct_objects").sum())
-            tables.append(sums.join(distinct, on=keys, how="left", nulls_equal=True))
-            continue
-        tables.extend(count(_batch_rows(store, batch, by_graph=bool(scope)), "all"))
+
+        def type_part(part: int) -> pl.DataFrame:
+            """Return one part of the type table (sid, c)."""
+            return pl.read_parquet(directory() / "types" / f"{part}.parquet").with_columns(
+                pl.col("c").cast(pl.Categorical)
+            )
+
+        def typed_part(part: int) -> pl.DataFrame:
+            """Return one part of the typed ids (sid)."""
+            return pl.read_parquet(directory() / "types" / f"typed-{part}.parquet")
+
+    def renamed(types: pl.DataFrame) -> pl.DataFrame:
+        """Return a type table as the types of objects (oid, oc)."""
+        return types.rename({"sid": "oid", "c": "oc"})
+
+    try:
+        for unit, batch in enumerate(_batches(store)):
+            size = sum(store_rows(store, p) for p in batch)
+            row_parts = -(-size // partition_rows)
+            if row_parts <= 1 and type_parts == 1:
+                rows = _batch_rows(store, batch, by_graph=by_graph)
+                cells = classify(
+                    rows, types.rename({"c": "subject_class"}), typed_all, renamed(types)
+                )
+                tables.extend(_part_counts(cells, keys))
+                continue
+            # Parts by subject id; the parts of the type table divide them (parts is a multiple
+            # of type_parts), so the subjects of a part are in one part of the types.
+            parts = type_parts * -(-row_parts // type_parts)
+            logger.info(
+                "Scan count: %d rows of %d predicates in %d parts (types in %d)",
+                size,
+                len(batch),
+                parts,
+                type_parts,
+            )
+            frame = _batch_frame(store, batch, by_graph=by_graph)
+            schema = frame.collect_schema()
+            folder = directory() / f"unit-{unit}"
+            _spill(frame, folder / "rows", parts, "sid")
+            sums, subject_counts = [], []
+            for part in range(parts):
+                rows = _part(folder / "rows", part, schema)
+                selected = pl.col("sid") % parts == part
+                subjects = type_part(part % type_parts).filter(selected)
+                typed_subjects = typed_part(part % type_parts).filter(selected)
+                pairs = []
+                for object_part in range(type_parts):
+                    cell = rows.filter(pl.col("oid") % type_parts == object_part)
+                    objects = renamed(type_part(object_part))
+                    cells = classify(
+                        cell,
+                        subjects.rename({"c": "subject_class"}),
+                        typed_subjects,
+                        objects,
+                    )
+                    for index, f in enumerate(cells):
+                        sums.append(f.group_by(keys).agg(count=pl.len()))
+                        pairs.append(f.select(*keys, "sid").unique())
+                        by_object = (
+                            f.select(*keys, "oid")
+                            .unique()
+                            .with_columns(b=(pl.col("oid") % parts).cast(pl.UInt32))
+                        )
+                        for (b,), chunk in by_object.partition_by(
+                            "b", as_dict=True, include_key=False
+                        ).items():
+                            target = folder / "objects" / str(b)
+                            target.mkdir(parents=True, exist_ok=True)
+                            chunk.write_parquet(target / f"{part}-{object_part}-{index}.parquet")
+                subject_counts.append(
+                    pl.concat(pairs).unique().group_by(keys).agg(distinct_subjects=pl.len())
+                )
+            object_counts = [
+                pl.read_parquet(sorted(target.glob("*.parquet")))
+                .unique()
+                .group_by(keys)
+                .agg(distinct_objects=pl.len())
+                for target in sorted((folder / "objects").glob("*"))
+            ]
+            counted = (
+                pl.concat(sums)
+                .group_by(keys)
+                .agg(pl.col("count").sum())
+                .join(
+                    pl.concat(subject_counts).group_by(keys).agg(pl.col("distinct_subjects").sum()),
+                    on=keys,
+                    how="left",
+                    nulls_equal=True,
+                )
+            )
+            if object_counts:
+                counted = counted.join(
+                    pl.concat(object_counts).group_by(keys).agg(pl.col("distinct_objects").sum()),
+                    on=keys,
+                    how="left",
+                    nulls_equal=True,
+                )
+            else:
+                counted = counted.with_columns(distinct_objects=pl.lit(0))
+            tables.append(counted)
+            shutil.rmtree(folder)
+    finally:
+        if scratch:
+            shutil.rmtree(scratch[0], ignore_errors=True)
     if not tables:
         return []
     membership = list(MEMBERSHIP.get())
-    table = pl.concat(tables).with_columns(
+    table = pl.concat(
+        [t.select(*keys, *(pl.col(c).cast(pl.Int64) for c in COUNTS)) for t in tables]
+    ).with_columns(
         subject_class=_bare(pl.col("subject_class")), object_class=_bare(pl.col("object_class"))
     )
     # Classes are IRIs (anonymous classes were given one by name_class_expressions); a blank
@@ -1435,7 +1827,13 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
         store.data_types()
         .filter(pl.col("s").str.starts_with("_:"))
         .select("s")
-        .join(store.base.graph_types().select("s", "sid").unique(), on="s")
+        .join(
+            store.base.graph_types()
+            .filter(pl.col("s").str.starts_with("_:"))
+            .select("s", "sid")
+            .unique(),
+            on="s",
+        )
         .select("sid", p=pl.lit(RDF_TYPE))
         .unique()
         .collect()
