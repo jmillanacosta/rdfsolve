@@ -270,3 +270,39 @@ def test_the_property_set_of_each_subject_is_read_once_for_the_subject():
     subjects = re.search(r"\{ SELECT \?s \(GROUP_CONCAT.*?GROUP BY \?s \}", query, re.DOTALL)[0]
     assert "?s ql:has-predicate <urn:p> ." in subjects and "?_o" not in subjects
     assert "?s ql:has-predicate <urn:x> ." in subjects, "The part's clauses apply to the subject"
+
+
+def test_a_pattern_that_its_recount_does_not_confirm_is_a_gap_not_a_failure(monkeypatch):
+    """Virtuoso can group one subject twice, so that a discovered property set has no edge in its
+    recount (AOP-Wiki virtrdf:item, WikiPathways pav:hasVersion: "Structural discovery and
+    witnesses disagree"). The pattern is left out and recorded with its numbers; the other
+    patterns and the typed schema stand, and the coverage is partial."""
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
+        select = miner.helper.select
+
+        def refuse_p(query, *args, purpose="", **kwargs):
+            if purpose in ("structural/count", "structural/witness") and "{ <urn:p> }" in query:
+                if purpose == "structural/witness":
+                    return {"head": {"vars": ["s", "o"]}, "results": {"bindings": []}}
+                zero = {"type": "literal", "value": "0"}
+                return {
+                    "head": {"vars": ["n", "subjects", "objects"]},
+                    "results": {"bindings": [{"n": zero, "subjects": zero, "objects": zero}]},
+                }
+            return select(query, *args, purpose=purpose, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", refuse_p)
+        result = miner.mine("inconsistent")
+        report = miner.last_report
+        (entry,) = report.config["structural_coverage"]
+    assert entry["state"] == "partial" and entry["uncovered_triples"] == 3
+    (left_out,) = entry["inconsistent_patterns"]
+    assert left_out["property"] == "urn:p" and left_out["recount"] == 0
+    assert left_out["witnesses"] == 0 and left_out["subject_properties"] == ["urn:p", "urn:q"]
+    assert entry["unaccounted_triples"] == 1
+    assert sorted(p.property_uri for p in result.structural_patterns) == ["urn:q", "urn:q"]
+    messages = [gap.message for gap in report.measurement_gaps]
+    assert any("urn:p" in m for m in messages)
+    assert any("account for 2 of 3 uncovered triples" in m for m in messages)
+    assert result.patterns, "The typed schema stands"

@@ -974,6 +974,7 @@ class StructuralStrategy(MiningStrategy):
             if bulk:
                 bindings[key].append(row)
         structural = []
+        inconsistent: list[dict[str, Any]] = []
         for key in sorted(candidates):
             pattern = candidates[key]
             pattern.witness_query, pattern.recount_query = structural_queries(pattern)
@@ -1014,15 +1015,62 @@ class StructuralStrategy(MiningStrategy):
                 pattern.distinct_objects = int(counts[0]["objects"]["value"])
                 pattern.examples = _select(context, pattern.witness_query, "structural/witness")
             if pattern.count < 1 or len(pattern.examples) != 1:
-                raise ValueError("Structural discovery and witnesses disagree")
+                # The discovered property sets are not confirmed by the recount or the witness
+                # (Virtuoso: one subject in two groups of a GROUP BY). The pattern is left out
+                # and recorded; the other patterns and the typed schema stand.
+                inconsistent.append(
+                    {
+                        "property": pattern.property_uri,
+                        "subject_kind": pattern.subject_kind,
+                        "subject_properties": pattern.subject_properties,
+                        "object_kind": pattern.object_kind,
+                        "object_properties": pattern.object_properties,
+                        "datatype": pattern.datatype,
+                        "language": pattern.language,
+                        "recount": pattern.count,
+                        "witnesses": len(pattern.examples),
+                    }
+                )
+                continue
             structural.append(pattern)
         undiscovered = _undiscovered_triples(entry)
-        if sum(p.count for p in structural) != entry["uncovered_triples"] - undiscovered:
-            raise ValueError("Structural patterns do not account for the uncovered edges")
+        expected = entry["uncovered_triples"] - undiscovered
+        recounted = sum(p.count for p in structural)
+        gaps = []
+        if inconsistent:
+            entry["inconsistent_patterns"] = inconsistent
+            gaps.append(
+                QueryFailure(
+                    "invalid_response",
+                    f"{len(inconsistent)} discovered structural patterns not confirmed by their "
+                    "recount and witness (properties: "
+                    + ", ".join(sorted({i["property"] for i in inconsistent}))
+                    + ")",
+                    "structural/count",
+                    graph_uris=[graph] if graph else None,
+                )
+            )
+        if recounted != expected:
+            entry["unaccounted_triples"] = expected - recounted
+            gaps.append(
+                QueryFailure(
+                    "invalid_response",
+                    f"Structural patterns account for {recounted} of {expected} uncovered triples "
+                    f"({entry['uncovered_triples']} uncovered, {undiscovered} not discovered)",
+                    "structural/count",
+                    graph_uris=[graph] if graph else None,
+                )
+            )
+        if gaps:
+            for gap in gaps:
+                logger.warning("Structural consistency: %s", gap.message)
+            context.report.record_outcome(QueryOutcome(state="complete", gaps=gaps))
         context.structural_patterns.extend(structural)
         entry.update(
             undiscovered_triples=undiscovered,
-            state="partial" if entry.get("unchecked_triples") or undiscovered else "complete",
+            state="partial"
+            if entry.get("unchecked_triples") or undiscovered or gaps
+            else "complete",
             pattern_count=len(structural),
             representation="exact_property_sets",
         )
