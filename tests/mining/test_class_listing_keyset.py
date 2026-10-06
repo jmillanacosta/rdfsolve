@@ -218,16 +218,17 @@ def test_when_keys_fail_too_the_classes_read_by_both_are_kept(monkeypatch):
 
 def test_a_failure_on_the_first_page_is_not_read_by_key(monkeypatch):
     """Only a failure beyond the first page is the cost of skipping rows; a listing refused at
-    once is raised as before (and the gateway wait applies)."""
-    from rdfsolve.sparql_helper import SparqlHelperError
-
+    once is not read by key (the gateway wait applies). It is read over a sample of the type
+    statements instead of failing the source (pdbj.bmrb, job 115591)."""
     with (
         _endpoint(monkeypatch, depth=0, paged_only=True) as (url, server),
         SparqlHelper(url, max_retries=1, initial_backoff=0) as helper,
-        pytest.raises(SparqlHelperError),
     ):
-        TwoPhaseStrategy()._discover_classes(_context(helper, 10))
+        context = _context(helper, 10)
+        classes = TwoPhaseStrategy()._discover_classes(context)
     assert not any("__rdfsolve_cursor" in q for q in server.queries)
+    assert sorted(classes) == sorted(CLASSES), "The sample holds every type statement here"
+    assert context.report.report.config["class_listing"]["state"] == "sampled"
 
 
 def test_a_cursor_run_does_not_read_the_listing_twice(monkeypatch):

@@ -11,7 +11,7 @@ from typing import Any
 
 from rdflib import Literal, URIRef
 
-from rdfsolve._outcomes import QueryFailure, QueryOutcome, QuerySample
+from rdfsolve._outcomes import FailureCategory, QueryFailure, QueryOutcome, QuerySample
 from rdfsolve.mining.local_graph import LocalGraphHelper
 from rdfsolve.mining.query_builders import MEMBERSHIP, membership_path
 from rdfsolve.mining.sampling import flag, sample_of
@@ -1330,15 +1330,23 @@ def _structural_gap(
     patterns, mined before it, do not depend on it. So a refusal leaves this graph unchecked,
     recorded as a measurement gap (the source ends partial), and the source keeps its typed
     patterns (GlyCoNAVI, job 115329: one census query refused with Virtuoso SQ074 failed the
-    whole source after 1025 s). A rate limit is not a refusal of the query and is raised.
+    whole source after 1025 s). A host that stayed busy through the waits of the helper
+    (EndpointRateLimitError) is the same: the endpoint answered the typed mining before, so the
+    graph is left unchecked and the source goes on (STRING, job 115591: one census query
+    failed the whole source after its busy-host waits).
     """
-    if isinstance(error, EndpointRateLimitError):
-        raise error
     graph = entry.get("graph_uri")
     logger.warning("Structural %s of %s not completed: %s", purpose, graph or "the data", error)
     entry.update(state="failed", reason=f"{purpose}: {str(error)[:300]}")
+    category: FailureCategory = (
+        "rate_limited"
+        if isinstance(error, EndpointRateLimitError)
+        else "timeout"
+        if isinstance(error, EndpointTimeoutError)
+        else "endpoint"
+    )
     failure = QueryFailure(
-        "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+        category,
         f"structural evidence of {graph or 'the default graph'} not checked: {str(error)[:300]}",
         purpose,
     )

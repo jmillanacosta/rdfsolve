@@ -333,3 +333,41 @@ def test_the_release_counts_sampled_rows(tmp_path):
     summary = _summarize_observed(manifest, tmp_path)
     assert summary["sampled_patterns"] == 1
     assert summary["patterns_with_lower_bound_counts"] == 1
+
+
+def _refusing_class_listing(miner: SchemaMiner, *, samples: bool = True) -> None:
+    """Cut every form of the class listing (one query and its pages), as pdbj.bmrb's proxy
+    did (job 115591); with *samples*, a listing over a LIMIT sub-select answers."""
+    select = miner.helper.select
+
+    def answer(query, purpose="", **kwargs):
+        if purpose.startswith("two-phase/classes") and (not samples or "} LIMIT " not in query):
+            raise EndpointTimeoutError(CUT)
+        return select(query, purpose, **kwargs)
+
+    miner.helper.select = answer
+
+
+@pytest.mark.parametrize("samples", [True, False])
+def test_a_refused_class_listing_does_not_fail_the_source(samples):
+    """pdbj.bmrb ended FAILED after its class listing was cut in every form. The classes of a
+    sample of the type statements are mined instead (a lower bound); when the samples are
+    refused too, the listing is a gap and the untyped subjects are still mined. Either way the
+    source ends partial, not failed."""
+    graph = typed_graph()
+    graph.add((EX.loose, EX.name, Literal("untyped")))
+    with SchemaMiner.from_graph(graph, delay=0, sample_size=1000) as miner:
+        _refusing_class_listing(miner, samples=samples)
+        schema = miner.mine(dataset_name="classes")
+        report = miner.last_report
+    listing = report.config["class_listing"]
+    assert report.completion_state == "partial"
+    assert any(p.untyped_subject for p in schema.patterns), "Untyped subjects mined"
+    typed = {p.subject_class for p in schema.patterns if not p.untyped_subject}
+    if samples:
+        assert listing["state"] == "sampled" and listing["count_bound"] == "lower_bound"
+        assert typed == {str(EX.A), str(EX.B)}
+        assert [f.category for f in report.query_failures] == ["sampled"]
+    else:
+        assert listing["state"] == "refused" and not typed
+        assert report.config["class_schema_state"] == "class_listing_refused"

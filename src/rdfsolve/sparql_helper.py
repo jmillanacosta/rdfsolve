@@ -634,6 +634,15 @@ class SparqlHelper:
     # HTTP statuses with which a gateway says that it stopped waiting for the server.
     GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
 
+    # A gateway answer that says the server is busy but comes only after a long wait is the
+    # gateway's timer, not a busy server: STRING (job 115591) answered one census query with
+    # Cloudflare's "502 Bad gateway ... the origin is overloaded" after 61 to 62 s, five times
+    # in a row (8 min of busy-host waits), while its other queries answered in seconds. A busy
+    # server answers at once. Two such answers in a row to the same query, or one at the time
+    # of a gateway timeout already seen on the endpoint (QueryCut.same_limit), are a timeout
+    # of the query: the caller makes it smaller or samples it (_gateway_timed_out).
+    GATEWAY_CUT_AFTER_S: ClassVar[float] = 45.0
+
     def enable_query_collection(
         self, *, clear: bool = True, include_results: bool | None = None
     ) -> None:
@@ -762,6 +771,10 @@ class SparqlHelper:
         self.max_response_bytes = max_response_bytes
         self._last_error_body = ""
         self._last_retry_after: float | None = None
+        # Seconds that the last request ran, from sending it to its answer or failure.
+        self._last_request_seconds = 0.0
+        # The last gateway timeout seen on this endpoint (_gateway_timed_out).
+        self._gateway_cut: QueryCut | None = None
         self.endpoint_url = endpoint_url.rstrip("/")
         # The endpoint URL given, when the endpoint redirected to another (_follow_redirect).
         self.redirected_from: str | None = None
@@ -1067,6 +1080,8 @@ class SparqlHelper:
         attempt = 0
         requests_made = 0
         overloads = 0
+        # Whether the last busy answer to this query came only after a long wait.
+        late_before = False
         while attempt < self.max_retries:
             attempt += 1
             requests_made += 1
@@ -1192,8 +1207,28 @@ class SparqlHelper:
                     attempt -= 1
                     continue
 
-                # A server that says it is busy is waited for, with a long backoff.
+                # A server that says it is busy is waited for, with a long backoff, unless the
+                # answer is a gateway's timer that ended the query (_gateway_timed_out).
                 if self._overloaded(status_code, body):
+                    late = self._late_gateway_answer(status_code)
+                    if late is not None and (late_before or self._same_gateway_cut(late)):
+                        self._gateway_cut = late
+                        tag = f"{query_type}[{purpose}]" if purpose else query_type
+                        logger.warning(
+                            "%s HTTP %d from %s after %.0f s: treated as a gateway timeout of the"
+                            " query, not a busy server - not retrying the unchanged query (the"
+                            " caller makes it smaller or samples it)",
+                            tag,
+                            status_code,
+                            self.endpoint_url,
+                            late.seconds,
+                        )
+                        raise EndpointTimeoutError(
+                            f"Gateway timeout: HTTP {status_code} after {late.seconds:.0f} s"
+                            f" ({detail or 'busy answer'})",
+                            status_code=status_code,
+                        ) from e
+                    late_before = late is not None
                     overloads += 1
                     wait = self._overload_wait(overloads)
                     tag = f"{query_type}[{purpose}]" if purpose else query_type
@@ -1475,6 +1510,9 @@ class SparqlHelper:
             raise
         finally:
             finished = time.monotonic()
+            self._last_request_seconds = (
+                finished - request_started if request_started is not None else 0.0
+            )
             if record is not None:
                 record.wait_seconds += (
                     request_started if request_started is not None else finished
@@ -1625,6 +1663,20 @@ class SparqlHelper:
         return self._last_retry_after is not None or any(
             pattern in body for pattern in self.OVERLOAD_PATTERNS
         )
+
+    def _late_gateway_answer(self, status_code: int) -> QueryCut | None:
+        """Return the busy gateway answer just received as a cut, when it came late.
+
+        A 502 or 504 (a gateway's statuses; a 503 or 429 is the server's own) that came after
+        GATEWAY_CUT_AFTER_S is one; a quick one is a busy server and None is returned.
+        """
+        if status_code not in (502, 504) or self._last_request_seconds < self.GATEWAY_CUT_AFTER_S:
+            return None
+        return QueryCut(f"HTTP {status_code}", self._last_request_seconds)
+
+    def _same_gateway_cut(self, cut: QueryCut) -> bool:
+        """Return whether a late answer is at the gateway timeout already seen on the endpoint."""
+        return self._gateway_cut is not None and self._gateway_cut.same_limit(cut)
 
     def _gateway_overload(self, status_code: int, body: str) -> bool:
         """Return whether a gateway error may be an overloaded host (gateway_overload).

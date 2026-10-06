@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from rdfsolve._outcomes import QueryFailure, QueryOutcome
+from rdfsolve._outcomes import FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
     _build_batched_blank_node_query,
@@ -28,7 +28,12 @@ from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
 from rdfsolve.mining.sampling import mark_sampled
 from rdfsolve.mining.strategy import ClassListingLimitError, MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
-from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper, SparqlHelperError
+from rdfsolve.sparql_helper import (
+    EndpointRateLimitError,
+    EndpointTimeoutError,
+    SparqlHelper,
+    SparqlHelperError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +124,10 @@ class TwoPhaseStrategy(MiningStrategy):
             classes = self._discover_classes_in_named_graphs(context)
         if not classes:
             context.report.finish_phase(p1, items=0)
-            context.report.report.config["class_schema_state"] = "no_observed_data_classes"
+            refused = context.report.report.config.get("class_listing", {}).get("state")
+            context.report.report.config["class_schema_state"] = (
+                "class_listing_refused" if refused == "refused" else "no_observed_data_classes"
+            )
             return []
 
         # Merge with ontology classes if available
@@ -437,7 +445,8 @@ class TwoPhaseStrategy(MiningStrategy):
         kept = [c for c in classes if c not in engine_only]
         if len(kept) < len(classes):
             logger.info("  -> %d classes of the engine graphs left out", len(classes) - len(kept))
-        context.discovered_classes = list(kept)
+        if context.discovered_classes is not None:  # None: a sampled listing
+            context.discovered_classes = list(kept)
         return kept
 
     def _per_record(self, context: MiningContext, stopped: ClassListingLimitError) -> list[str]:
@@ -519,6 +528,33 @@ class TwoPhaseStrategy(MiningStrategy):
         overloaded host (pdbj.bmrb: Apache "Proxy Error" 502, job 115329) is waited out before
         the listing is given up (graph_selection.wait_out_gateway).
         """
+        listed = True
+        try:
+            class_bindings = self._read_class_listing(context)
+        except (EndpointTimeoutError, EndpointRateLimitError) as error:
+            class_bindings = self._sample_classes(context, error)
+            listed = False
+
+        classes = []
+        non_iri_count = 0
+        for b in class_bindings:
+            binding = b.get("class", {})
+            if binding.get("type") == "uri":
+                value = binding.get("value", "")
+                if value:
+                    classes.append(value)
+            else:
+                non_iri_count += 1
+        if non_iri_count:
+            logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
+        logger.info(f"  -> {len(classes)} data classes found")
+        # A sampled listing leaves discovered_classes None: not every class was listed.
+        context.discovered_classes = list(classes) if listed else None
+        context.skipped_type_values = non_iri_count
+        return classes
+
+    def _read_class_listing(self, context: MiningContext) -> list[dict[str, Any]]:
+        """Read the whole class listing, in one query or in pages (_list_discovered_classes)."""
         from rdfsolve.mining.graph_selection import wait_out_gateway
 
         ccs = context.class_chunk_size
@@ -539,31 +575,80 @@ class TwoPhaseStrategy(MiningStrategy):
                     success=False,
                 )
                 raise
-        else:
-            logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
-            class_bindings = wait_out_gateway(
-                context.helper,
-                lambda: self._page_classes(context, q, ccs),
-                "Class listing",
-            )
+            return class_bindings
+        logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
+        q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
+        return wait_out_gateway(
+            context.helper,
+            lambda: self._page_classes(context, q, ccs),
+            "Class listing",
+        )
 
-        classes = []
-        non_iri_count = 0
-        for b in class_bindings:
-            binding = b.get("class", {})
-            if binding.get("type") == "uri":
-                value = binding.get("value", "")
-                if value:
-                    classes.append(value)
-            else:
-                non_iri_count += 1
-        if non_iri_count:
-            logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
-        logger.info(f"  -> {len(classes)} data classes found")
-        context.discovered_classes = list(classes)
-        context.skipped_type_values = non_iri_count
-        return classes
+    def _sample_classes(
+        self, context: MiningContext, error: SparqlHelperError
+    ) -> list[dict[str, Any]]:
+        """List the classes of a sample of the type statements when the whole listing failed.
+
+        pdbj.bmrb (job 115591): every form of ``SELECT DISTINCT ?class WHERE { ?s a ?class }``
+        (one query, then pages from offset 0) was cut by the proxy with HTTP 502 at about
+        122 s, while a trivial query answered at once, and the source ended FAILED after
+        1295 s. The listing is asked again over the first N type statements
+        (rdfsolve.mining.sampling: N, N/10, N/100). The classes of the sample are mined as
+        any others; classes outside it are not, so the listing is recorded as sampled (a lower
+        bound, config class_listing) and the source ends partial. When the samples are refused
+        too, or the host stayed busy, the listing is recorded as a gap and no class is mined:
+        the source goes on with the steps that do not need classes (untyped subjects). A host
+        that does not answer a trivial query either (host_answers) answers nothing at all, and
+        the error is raised: the source fails.
+        """
+        from rdfsolve.mining.query_fallbacks import _failure
+        from rdfsolve.mining.sampling import sample_query, sampled_select
+
+        plain = _build_class_discovery_query_plain(
+            context.graph_uris, context.type_context_graph_uris
+        )
+        refused = _failure(error, "two-phase/classes", [], context.graph_uris)
+        found = sampled_select(
+            lambda size: sample_query(plain, size),
+            "two-phase/classes",
+            context.helper,
+            refused,
+            unit="type statements",
+            graph_uris=context.graph_uris,
+        )
+        context.class_listing_stopped = True  # the named-graph retry would be refused alike
+        if found.state == "complete" and found.samples:
+            (sample, *_) = found.samples
+            listing = {
+                "state": "sampled",
+                "count_bound": "lower_bound",
+                "sample": sample.provenance(),
+                "error": str(error)[:500],
+            }
+            message = (
+                f"class listing refused ({str(error)[:300]}); the classes of a sample of "
+                f"{sample.size} type statements are mined, a lower bound"
+            )
+            category: FailureCategory = "sampled"
+            logger.warning("Class listing: %s", message)
+        else:
+            from rdfsolve.mining.graph_selection import host_answers
+
+            if not host_answers(context.helper):
+                raise error  # an endpoint that answers nothing at all fails the source
+            listing = {"state": "refused", "error": str(error)[:500]}
+            message = f"class listing refused, also over samples: {str(error)[:300]}"
+            category = refused.failures[0].category
+            logger.warning("Class listing: %s; no class is mined", message)
+        context.report.report.config["class_listing"] = listing
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure(category, message, "two-phase/classes")],
+                samples=found.samples,
+            )
+        )
+        return found.rows if found.state == "complete" else []
 
     def _list_classes(self, context: MiningContext) -> list[dict[str, Any]]:
         """List the classes in one query; page the listing when it is cut or capped."""

@@ -17,6 +17,7 @@ from rdfsolve.mining.report_tracking import ReportCollector
 from rdfsolve.mining.typed_coverage import ALTERNATIVES_PER_GROUP, typed_match
 from rdfsolve.sparql_helper import (
     EndpointError,
+    EndpointRateLimitError,
     EndpointTimeoutError,
     QueryParserLimitError,
     SparqlHelper,
@@ -282,4 +283,18 @@ def test_a_refused_census_leaves_the_source_partial(monkeypatch):
 
     entry, _, _, _, result, state = mine(monkeypatch, 16, refuse)
     assert state == "partial" and entry["state"] == "failed"
+    assert result.patterns and not result.structural_patterns
+
+
+def test_a_host_that_stays_busy_leaves_the_census_a_gap_not_a_failed_source(monkeypatch):
+    """STRING (job 115591): the busy-host waits of one census query ended in
+    EndpointRateLimitError, which failed the whole source. The endpoint answered the typed
+    mining, so the census of the graph is recorded as a gap and the source ends partial."""
+
+    def refuse(query):
+        raise EndpointRateLimitError("HTTP 502: the server stayed busy after 5 tries")
+
+    entry, _, _, _, result, state = mine(monkeypatch, 16, refuse)
+    assert state == "partial" and entry["state"] == "failed"
+    assert "stayed busy" in entry["reason"]
     assert result.patterns and not result.structural_patterns

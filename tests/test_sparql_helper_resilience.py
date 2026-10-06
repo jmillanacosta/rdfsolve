@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -287,6 +287,13 @@ SQUID = (
     b"<html><title>ERROR: The requested URL could not be retrieved</title>"
     b"Unable to determine IP address from host name ERR_DNS_FAIL</html>"
 )
+# STRING's Cloudflare answer to a census query that ran about 61 s (job 115591).
+CLOUDFLARE_502 = (
+    b'{"type":"https://developers.cloudflare.com/support/troubleshooting/http-status-codes/'
+    b'cloudflare-5xx-errors/error-502/","title":"Error 502: Bad gateway","status":502,'
+    b'"detail":"The origin web server returned an invalid or incomplete response to Cloudflare.'
+    b' This typically indicates the origin is overloaded."}'
+)
 GATEWAY_SCRIPTS: dict[str, list[tuple[int, bytes, dict[str, str]]]] = {
     "/busy-502": [(502, b"<html>Upstream server overloaded, try again later</html>", {})],
     "/retry-504": [(504, b"<html>Gateway Timeout</html>", {"Retry-After": "7"})],
@@ -295,6 +302,7 @@ GATEWAY_SCRIPTS: dict[str, list[tuple[int, bytes, dict[str, str]]]] = {
     "/listing-502": [(502, b"<html><center>502 Bad Gateway</center>nginx</html>", {})] * 3,
     "/squid": [(502, SQUID, {})] * 9,
     "/always-502": [(502, b"<html>502 Bad Gateway</html>", {})] * 99,
+    "/cloudflare-502": [(502, CLOUDFLARE_502, {"Content-Type": "application/json"})] * 99,
 }
 
 
@@ -358,6 +366,39 @@ def test_a_gateway_that_says_the_host_is_busy_is_waited_out(monkeypatch):
             helper.select("SELECT ?g WHERE { GRAPH ?g {} } OFFSET 0")
         assert _waits(defer) == [7.0]
     assert [p for p, _ in server.requests].count("/busy-502") == 2
+
+
+def test_a_late_busy_gateway_answer_twice_is_a_timeout_of_the_query(monkeypatch, caplog):
+    """STRING (job 115591): Cloudflare answered one census query with "502 ... the origin is
+    overloaded" after about 61 s, five times, and the busy-host waits ended in
+    EndpointRateLimitError, which failed the source. A busy answer that comes late twice in a
+    row is the gateway's timer: the query is not repeated a third time, and the caller gets
+    EndpointTimeoutError (it makes the query smaller or samples it). The next query cut at the
+    same time is given up at once. A quick busy answer is still waited out."""
+    with _gateway(monkeypatch) as (base, server, defer):
+        with SparqlHelper(f"{base}/cloudflare-502", max_retries=3) as helper:
+            helper.GATEWAY_CUT_AFTER_S = 0.0  # every answer counts as late
+            with caplog.at_level("WARNING"), pytest.raises(EndpointTimeoutError) as cut:
+                helper.select("SELECT (COUNT(*) AS ?n) WHERE { ?s <urn:big> ?o }")
+            assert "Gateway timeout: HTTP 502" in str(cut.value) and cut.value.status_code == 502
+            assert not cut.value.gateway_overload, "A timeout of the query, not a busy host"
+            assert _waits(defer) == [SparqlHelper.OVERLOAD_BACKOFF_S], "One wait, not five"
+            assert [p for p, _ in server.requests].count("/cloudflare-502") == 2
+            warned = [r for r in caplog.records if "treated as a gateway timeout" in r.message]
+            assert len(warned) == 1
+            with pytest.raises(EndpointTimeoutError, match="Gateway timeout"):
+                helper.select("SELECT (COUNT(*) AS ?n) WHERE { ?s <urn:big2> ?o }")
+            assert _waits(defer) == [SparqlHelper.OVERLOAD_BACKOFF_S], "Known cut: no wait"
+            assert [p for p, _ in server.requests].count("/cloudflare-502") == 3
+        defer.reset_mock()
+        server.scripts.clear()
+        server.scripts["/cloudflare-502"] = [
+            (502, CLOUDFLARE_502, {"Content-Type": "application/json"})
+        ] * 2
+        with SparqlHelper(f"{base}/cloudflare-502", max_retries=1) as helper:
+            # Quick busy answers (the default threshold): waited out, then answered.
+            assert helper.select("SELECT ?g WHERE { GRAPH ?g {} } OFFSET 0")
+        assert _waits(defer) == [30.0, 60.0]
 
 
 def test_a_bare_gateway_error_is_marked_and_a_proxy_dns_failure_is_not(monkeypatch):
@@ -441,6 +482,7 @@ PROXY_ERROR = (
 
 class _ClassGateway(BaseHTTPRequestHandler):
     """/flaky: two gateway errors, then the classes; /cut: the listing is always cut, ASK
+    answers; /sampled: the listing is cut unless it reads a sample (a LIMIT sub-select), ASK
     answers; /down: every query gets a gateway error."""
 
     def log_message(self, *args):  # silence the test server
@@ -455,6 +497,7 @@ class _ClassGateway(BaseHTTPRequestHandler):
         if (
             path == "/down"
             or (path == "/cut" and not ask)
+            or (path == "/sampled" and not ask and "} LIMIT " not in query)
             or (path == "/flaky" and len(listing) <= 2)
         ):
             self.send_response(502)
@@ -466,6 +509,8 @@ class _ClassGateway(BaseHTTPRequestHandler):
             payload = {"head": {}, "boolean": True}
         else:
             rows = [{"class": {"type": "uri", "value": c}} for c in ("urn:A", "urn:B")]
+            if path == "/sampled":
+                rows = rows[:1]  # the sample holds only the type statements of urn:A
             if "OFFSET" in query and "OFFSET 0" not in query:
                 rows = []
             payload = {"head": {"vars": ["class"]}, "results": {"bindings": rows}}
@@ -503,13 +548,15 @@ def _class_context(helper: SparqlHelper, class_chunk_size: int | None = None) ->
             for row in page
         ]
 
+    report = MagicMock()
+    report.report.config = {}
     return SimpleNamespace(
         helper=helper,
         class_chunk_size=class_chunk_size,
         graph_uris=None,
         type_context_graph_uris=None,
         chunk_size=10_000,
-        report=Mock(),
+        report=report,
         collect_bindings=collect,
     )
 
@@ -531,19 +578,46 @@ def test_class_discovery_waits_out_an_overloaded_gateway(monkeypatch, class_chun
 
 def test_class_discovery_stops_waiting_when_the_host_answers_a_trivial_query(monkeypatch):
     """pdbj.bmrb: the listing is cut by the gateway's timer every time, while ASK answers at
-    once. One repeat is made; then the host is shown not to be overloaded and the error is
-    raised, without the remaining waits."""
+    once. One repeat is made; then the host is shown not to be overloaded, without the
+    remaining waits. The samples are cut too: the listing is a gap (no class is mined, the
+    source goes on), not an error that fails the source."""
     from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
-    from rdfsolve.sparql_helper import SparqlHelperError
 
     with (
         _class_gateway(monkeypatch) as (base, server, defer),
         SparqlHelper(f"{base}/cut", max_retries=1) as helper,
-        pytest.raises(SparqlHelperError),
     ):
-        TwoPhaseStrategy()._discover_classes(_class_context(helper))
+        context = _class_context(helper)
+        assert TwoPhaseStrategy()._discover_classes(context) == []
     assert _waits(defer) == [30.0]
-    assert sum("ASK" in q for _, q in server.requests) == 1
+    assert sum("ASK" in q for _, q in server.requests) == 2, "The wait, then the gap"
+    assert context.report.report.config["class_listing"]["state"] == "refused"
+    (outcome,) = [c.args[0] for c in context.report.record_outcome.call_args_list]
+    assert outcome.state == "partial" and outcome.failures[0].purpose == "two-phase/classes"
+
+
+@pytest.mark.parametrize("class_chunk_size", [None, 1000])
+def test_a_class_listing_cut_every_time_is_read_over_a_sample(monkeypatch, class_chunk_size):
+    """pdbj.bmrb (job 115591): every form of the class listing got the proxy's 502 and the
+    source ended FAILED after 1295 s. The classes of a sample of the type statements (a LIMIT
+    sub-select) are listed instead; they are mined, recorded as a lower bound."""
+    from rdfsolve.mining.two_phase_strategy import TwoPhaseStrategy
+
+    with (
+        _class_gateway(monkeypatch) as (base, server, _),
+        SparqlHelper(f"{base}/sampled", max_retries=1) as helper,
+    ):
+        context = _class_context(helper, class_chunk_size)
+        context.discovered_classes = None
+        assert TwoPhaseStrategy()._discover_classes(context) == ["urn:A"]
+    sampled = [q for _, q in server.requests if "} LIMIT " in q]
+    assert sampled and "LIMIT 100000" in sampled[0], "The first sample: 100k statements"
+    listing = context.report.report.config["class_listing"]
+    assert listing["state"] == "sampled" and listing["count_bound"] == "lower_bound"
+    assert listing["sample"]["size"] == 100_000
+    (outcome,) = [c.args[0] for c in context.report.record_outcome.call_args_list]
+    assert outcome.failures[0].category == "sampled" and outcome.samples
+    assert context.discovered_classes is None, "Not every class was listed"
 
 
 def test_class_discovery_waits_while_the_host_answers_nothing(monkeypatch):
