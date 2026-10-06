@@ -4,6 +4,7 @@ two-phase strategy counts with SPARQL on the same data."""
 from rdflib import OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace
 
 from rdfsolve.mining.miner import SchemaMiner
+from rdfsolve.mining import scan
 from rdfsolve.mining.scan import ScanStrategy, store_from_graph
 
 E = Namespace("urn:ex:")
@@ -144,3 +145,25 @@ def test_a_branch_carrying_only_the_nodes_it_reaches_finds_the_same_paths(tmp_pa
     with_pairs = routes()
     monkeypatch.setattr(scan_paths, "PAIR_LIMIT", 0)
     assert routes() == with_pairs and with_pairs
+
+
+def test_a_predicate_of_nul_bytes_is_left_out_and_reported(tmp_path):
+    """rdfportal.oma (job 115716) failed the source: a pattern's property was a string of NUL
+    bytes, which SchemaPattern refuses. A term that cannot be a class or property is left out
+    of the patterns and reported (scan_invalid_terms); the source is mined."""
+    from rdflib import Graph, Literal, URIRef
+
+    graph = Graph()
+    a, cls = URIRef("urn:x:a"), URIRef("urn:x:A")
+    graph.add((a, URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), cls))
+    graph.add((a, URIRef("urn:x:name"), Literal("a")))
+    graph.add((a, URIRef("\x00" * 16), Literal("damaged")))
+    store = store_from_graph(graph, tmp_path / "store")
+    assert "\x00" * 16 not in store.predicates and list(store.left_out_predicates) == ["\x00" * 16]
+    assert all(p.property_uri != "\x00" * 16 for p in scan.count_patterns(store))
+    with SchemaMiner.from_graph(graph, delay=0, strategy=ScanStrategy(store=store)) as miner:
+        schema = miner.mine()
+        report = miner.last_report
+    assert any(p.property_uri == "urn:x:name" for p in schema.patterns)
+    [term] = report.config["scan_invalid_terms"]["terms"]
+    assert term["term"] == repr("\x00" * 16)

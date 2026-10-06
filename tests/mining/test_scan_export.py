@@ -196,3 +196,42 @@ def test_a_term_that_is_not_an_rdf_iri_is_sent_with_iri(endpoint):
         pass
     assert 'IRI("urn:statistic  n")' in endpoint.queries[-1]
     assert "<urn:statistic  n>" not in endpoint.queries[-1]
+
+
+def test_a_resumed_export_reads_again_the_files_that_are_not_whole(endpoint, tmp_path):
+    """rdfportal.oma (job 115716) resumed a store an earlier job left when it was killed. A
+    file that is zero-filled or short, or a progress line that was cut, is not trusted: its
+    predicate is read again, and the store is whole."""
+    endpoint.fail_after = 2
+    with pytest.raises(Exception):
+        scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
+    store_dir = tmp_path / "store"
+    progress = store_dir / "progress.jsonl"
+    written = [line for line in progress.read_text().splitlines() if line]
+    assert len(written) == 2
+    files = [store_dir / "rows" / scan.json.loads(line)["file"] for line in written]
+    files[0].write_bytes(b"\x00" * files[0].stat().st_size)  # zero-filled, same size
+    files[1].write_bytes(files[1].read_bytes()[:20])  # short
+    with progress.open("a") as log:
+        log.write('{"predicate": "urn:cut", "fi')  # a line the kill cut
+    endpoint.fail_after, endpoint.row_queries = None, 0
+    store = scan.export_index(endpoint.url, store_dir, index={"name": "t"}, workers=1)
+    assert endpoint.row_queries == 5, "The two damaged predicates and the three left"
+    assert store.manifest["resumed_predicates"] == 0
+    for predicate in store.predicates:
+        assert scan.store_file_problem(store.predicates[predicate]) is None
+    assert sum(store.rows(p).collect().height for p in store.predicates) == 9
+
+
+def test_a_store_file_with_nul_terms_is_not_reused(tmp_path):
+    import polars as pl
+
+    good = tmp_path / "good.parquet"
+    pl.DataFrame({"s": ["<urn:a>"], "o": ["<urn:b>"]}).write_parquet(good)
+    assert scan.store_file_problem(good, 1) is None
+    assert "rows" in scan.store_file_problem(good, 2)
+    nul = tmp_path / "nul.parquet"
+    pl.DataFrame({"s": ["\x00" * 8], "o": ["<urn:b>"]}).write_parquet(nul)
+    assert "NUL" in scan.store_file_problem(nul)
+    (tmp_path / "zero.parquet").write_bytes(b"\x00" * 100)
+    assert "open" in scan.store_file_problem(tmp_path / "zero.parquet")

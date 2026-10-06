@@ -23,6 +23,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+import os
 import shutil
 import threading
 import time
@@ -35,7 +36,7 @@ from typing import TYPE_CHECKING, Any, Protocol, Self
 
 from rdfsolve.mining.query_builders import MEMBERSHIP
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
-from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES, UNTYPED_SUBJECT
 from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
 
 if TYPE_CHECKING:
@@ -137,8 +138,24 @@ class RowStore:
 
     @property
     def predicates(self) -> dict[str, Path]:
-        """The file of the rows of each predicate."""
-        return {p: self.path / "rows" / f for p, f in self.manifest["predicates"].items()}
+        """The file of the rows of each predicate that can be a pattern's property.
+
+        A predicate that cannot (_pattern_term: a string of NUL bytes, rdfportal.oma job
+        115716) is left out of every scan phase; left_out_predicates names it.
+        """
+        return {
+            p: self.path / "rows" / f
+            for p, f in self.manifest["predicates"].items()
+            if _pattern_term(p)
+        }
+
+    @property
+    def left_out_predicates(self) -> dict[str, int]:
+        """The predicates that cannot be a pattern's property, with their rows."""
+        rows = self.manifest.get("rows") or {}
+        return {
+            p: int(rows.get(p) or 0) for p in self.manifest["predicates"] if not _pattern_term(p)
+        }
 
     def _duplicated(self, predicate: str) -> bool:
         """Whether some triple of *predicate* is in more than one graph (more rows than triples)."""
@@ -410,6 +427,25 @@ def _class_term(expr: pl.Expr) -> pl.Expr:
     return expr.str.starts_with("<") | expr.str.starts_with("_:")
 
 
+def _durable(partial: Path, path: Path) -> None:
+    """Flush *partial* to disk and rename it to *path*, so that *path* is whole or absent.
+
+    A job killed (OOM, time limit) or a node that fails while a store file is written leaves a
+    file named ``.partial`` at most, never a short or zero-filled file under the final name that
+    a resumed export would reuse (rdfportal.oma, job 115716).
+    """
+    with partial.open("rb") as stream:
+        os.fsync(stream.fileno())
+    partial.replace(path)
+
+
+def _write_text(path: Path, text: str) -> None:
+    """Write a store's JSON file whole: to a partial file, flushed, then renamed."""
+    partial = path.with_name(path.name + ".partial")
+    partial.write_text(text)
+    _durable(partial, path)
+
+
 def _bare(expr: pl.Expr) -> pl.Expr:
     """Strip the angle brackets of an IRI term."""
     return expr.str.strip_prefix("<").str.strip_suffix(">")
@@ -570,7 +606,9 @@ def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
             tail = chunk[-len(QLEVER_ERROR_TRAILER) :]
             out.write(chunk)
     frame = pl.scan_csv(tsv, separator="\t", quote_char=None, has_header=True, infer_schema=False)
-    frame.rename(lambda c: c.lstrip("?")).sink_parquet(path)
+    partial = path.with_name(path.name + ".partial")
+    frame.rename(lambda c: c.lstrip("?")).sink_parquet(partial)
+    _durable(partial, path)
     tsv.unlink()
     return int(pl.scan_parquet(path).select(pl.len()).collect().item())
 
@@ -699,7 +737,7 @@ def _stream_rows(
         ).write_parquet(partial)
     else:
         writer.close()
-    partial.replace(path)
+    _durable(partial, path)
     return rows
 
 
@@ -797,11 +835,50 @@ def _join_parts(parts: Sequence[Path], path: Path) -> None:
             for group in range(file.num_row_groups):
                 writer.write_table(file.read_row_group(group))
         writer.close()
-        partial.replace(path)
+        _durable(partial, path)
     for file in files:
         file.close()
     for part in parts:
         Path(part).unlink(missing_ok=True)
+
+
+def store_file_problem(path: Path, rows: int | None = None) -> str | None:
+    """Return why a Parquet file of a row store cannot be reused, or None when it can.
+
+    It must open, hold *rows* rows when they are known, and its term columns (s, o, c) must
+    hold no empty term and no NUL byte in its first and last row groups: a file that a
+    killed job or a failed node left short or zero-filled (rdfportal.oma, job 115716) is read
+    again, not trusted. The check reads two row groups, not the whole file.
+    """
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+
+    try:
+        file = pq.ParquetFile(path)
+    except Exception as error:  # any unreadable file is read again
+        return f"does not open: {error}"
+    try:
+        found = file.metadata.num_rows
+        if rows is not None and found != rows:
+            return f"{found} rows, {rows} recorded"
+        columns = [c for c in ("s", "o", "c") if c in file.schema_arrow.names]
+        for group in sorted({0, file.num_row_groups - 1}):
+            if group < 0 or not columns:
+                continue
+            table = file.read_row_group(group, columns=columns)
+            for name in columns:
+                column = table.column(name)
+                bad = pc.or_(
+                    pc.equal(pc.utf8_length(column), 0),
+                    pc.match_substring(column, "\x00"),
+                )
+                if pc.any(bad).as_py():
+                    return f"an empty term or one with NUL bytes in column {name}"
+    except Exception as error:
+        return f"does not read: {error}"
+    finally:
+        file.close()
+    return None
 
 
 def _read_query(
@@ -860,7 +937,7 @@ def _read_query(
         """Write the whole result, or one slice of it, to *part*; return its rows."""
         if offset is None:
             return read(part, None, None, rows)
-        if part.is_file():
+        if part.is_file() and store_file_problem(part) is None:
             return int(pq.ParquetFile(part).metadata.num_rows)
         return read(part, offset, limit, limit if limit is not None else rows - offset)
 
@@ -1026,14 +1103,34 @@ def export_index(
     if not resumable and path.exists():
         shutil.rmtree(path)
     (path / "rows").mkdir(parents=True, exist_ok=True)
-    plan_file.write_text(json.dumps(plan) + "\n")
+    _write_text(plan_file, json.dumps(plan) + "\n")
     done: dict[str, tuple[str, int]] = {}
     if resumable and progress.is_file():
-        for line in progress.read_text().splitlines():
-            entry = json.loads(line)
-            if (path / "rows" / entry["file"]).is_file():
-                done[entry["predicate"]] = (entry["file"], entry["rows"])
+        rejected: list[str] = []
+        for line in progress.read_text(errors="replace").splitlines():
+            try:
+                entry = json.loads(line)
+                predicate, name, rows = entry["predicate"], entry["file"], int(entry["rows"])
+            except (ValueError, KeyError, TypeError):
+                continue  # a line cut when the job was killed
+            problem = store_file_problem(path / "rows" / name, rows)
+            if problem is None:
+                done[predicate] = (name, rows)
+            else:
+                rejected.append(f"<{predicate}> ({name}: {problem})")
+                done.pop(predicate, None)
         logger.info("Scan: resuming %s with %d predicates read", path, len(done))
+        if rejected:
+            logger.warning(
+                "Scan: %d predicates read before are read again, their files are not whole: %s",
+                len(rejected),
+                "; ".join(rejected[:5]),
+            )
+    if resumable and (path / "types.parquet").is_file():
+        problem = store_file_problem(path / "types.parquet")
+        if problem is not None:
+            logger.warning("Scan: the type table is read again (%s)", problem)
+            (path / "types.parquet").unlink()
     t0 = time.monotonic()
     counted = path / "predicates.parquet"
     sizes = {
@@ -1095,12 +1192,14 @@ def export_index(
                 types.append(pl.scan_parquet(rest).select("s", "c", "g", "sid"))
         # The rows of one query are distinct; parts can repeat a row only when there are
         # several membership properties (deduplicating a large table costs much memory).
+        joined = path / "types.parquet.partial"
         if len(membership) == 1 and len(types) == 1:
-            (path / "types-0.parquet").rename(path / "types.parquet")
+            (path / "types-0.parquet").rename(joined)
         elif len(membership) == 1:
-            pl.concat(types).sink_parquet(path / "types.parquet")
+            pl.concat(types).sink_parquet(joined)
         else:
-            pl.concat(types).unique().sink_parquet(path / "types.parquet")
+            pl.concat(types).unique().sink_parquet(joined)
+        _durable(joined, path / "types.parquet")
         for part in path.glob("types-*.parquet"):
             part.unlink()
     text = _text_predicates()
@@ -1175,10 +1274,13 @@ def export_index(
                     ],
                     how="diagonal_relaxed",
                 ).sink_parquet(file.with_name(file.name + ".all"))
-                file.with_name(file.name + ".all").replace(file)
+                _durable(file.with_name(file.name + ".all"), file)
                 rest.unlink()
+        # A predicate is marked read only after its file is whole on disk (_durable).
         with lock, progress.open("a") as log:
             log.write(json.dumps({"predicate": predicate, "file": file.name, "rows": rows}) + "\n")
+            log.flush()
+            os.fsync(log.fileno())
         return predicate, file.name, (predicate, size, rows) if rows != size else None
 
     gaps: dict[str, str] = {}
@@ -1219,7 +1321,7 @@ def export_index(
         # triples and rows, not in predicates).
         "gaps": dict(sorted(gaps.items())),
     }
-    manifest.write_text(json.dumps(record, indent=1) + "\n")
+    _write_text(manifest, json.dumps(record, indent=1) + "\n")
     return RowStore(path)
 
 
@@ -1612,7 +1714,22 @@ def _part_counts(classified: list[pl.DataFrame], keys: list[str]) -> list[pl.Dat
     ]
 
 
-def count_patterns(store: CountedStore) -> list[SchemaPattern]:
+def _pattern_term(term: str, *, sentinels: bool = False) -> bool:
+    """Return whether *term* can be a class or property of a SchemaPattern.
+
+    It is an IRI (an IRI that is not an RDF IRI, with a space, is kept: iri_findings reports
+    it) without control characters; an object may also be a sentinel (Literal, Resource,
+    BlankNode). A term of NUL bytes, as a damaged count read (rdfportal.oma, job 115716), is
+    not.
+    """
+    if sentinels and term in _SENTINEL_OBJECTS:
+        return True
+    return term.startswith(_URI_SCHEMES) and not any(ord(c) < 32 for c in term)
+
+
+def count_patterns(
+    store: CountedStore, invalid: dict[str, int] | None = None
+) -> list[SchemaPattern]:
     """Return the patterns of the store with triples, distinct subjects and distinct objects.
 
     The patterns follow the definitions of the two-phase count queries: typed objects
@@ -1643,6 +1760,9 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     its distinct counts, several give quad_occurrences without distinct counts (a node in two
     graphs would be counted twice). The distinct counts of each graph are kept in
     graph_distinct_subjects and graph_distinct_objects, for the per-graph schemas.
+
+    A row whose predicate or class is not a term a pattern can hold (_pattern_term) is left
+    out; its triples are added to *invalid* by term (repr), so that the caller reports them.
     """
     import tempfile
 
@@ -1910,6 +2030,21 @@ def count_patterns(store: CountedStore) -> list[SchemaPattern]:
     for (key_subject, predicate, obj, datatype), per_graph in merged.items():
         untyped = key_subject == UNTYPED
         subject = UNTYPED_SUBJECT if untyped else key_subject
+        bad = [
+            term
+            for term, ok in (
+                (predicate, _pattern_term(predicate)),
+                (subject, untyped or _pattern_term(subject)),
+                (obj, _pattern_term(obj, sentinels=True)),
+            )
+            if not ok
+        ]
+        if bad:
+            if invalid is not None:
+                for term in bad:
+                    name = repr(term[:200])
+                    invalid[name] = invalid.get(name, 0) + sum(n for n, _, _ in per_graph.values())
+            continue
         # The miner's rule: distinct counts of the whole scope only when it is one graph.
         ds = do = None
         if len(per_graph) == 1 and (not scope or len(scope) == 1):
@@ -2021,7 +2156,20 @@ class ScanStrategy(MiningStrategy):
         expressions = name_class_expressions(self.row_store)
         if expressions:
             context.report.report.config["class_expressions"] = expressions
-        patterns = count_patterns(self.store)
+        invalid = {repr(p[:200]): n for p, n in self.row_store.left_out_predicates.items()}
+        patterns = count_patterns(self.store, invalid)
+        if invalid:
+            # Not a pattern's term: left out and reported, the source goes on.
+            context.report.report.config["scan_invalid_terms"] = {
+                "triples_left_out": sum(invalid.values()),
+                "terms": [{"term": t, "triples": n} for t, n in sorted(invalid.items())],
+            }
+            logger.warning(
+                "Scan: %d triples with %d terms that cannot be a class or property left out "
+                "(report: scan_invalid_terms)",
+                sum(invalid.values()),
+                len(invalid),
+            )
         for pattern in patterns:
             if pattern.subject_class in expressions:
                 pattern.subject_label = expressions[pattern.subject_class]["manchester_labels"]
