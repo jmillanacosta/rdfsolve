@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import Field
@@ -109,6 +109,10 @@ class PipelineConfig:
     # None uses navigation_budget. Path testing of IDSM's molmedb and isdb ran out of its 1800 s
     # without finishing, the largest cost left in their VoID-first runs (2026-10-06).
     void_first_navigation_budget: float | None = None
+    # How the miner pages its listings: "offset" (LIMIT/OFFSET) or "cursor" (keyset: ORDER BY
+    # the projected keys and FILTER past the last row). Class listings switch to keys by
+    # themselves when an OFFSET page fails beyond the first.
+    pagination: Literal["offset", "cursor"] = "offset"
     # Local indexes: "scan" reads the rows of the index and counts them outside the server
     # (rdfsolve.mining.scan); "sparql" sends the grouped queries of the two-phase strategy.
     local_mining: str = "scan"

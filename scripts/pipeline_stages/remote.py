@@ -209,6 +209,7 @@ class RemoteMiningStage(Stage):
             membership_properties=membership_properties,
             report_path=str(report_path),
             resume_checkpoint=resume_checkpoint,
+            pagination=self.config.pagination,
         )
 
     def _save_graph_parts(

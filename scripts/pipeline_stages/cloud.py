@@ -209,6 +209,7 @@ class LsLodCloudStage(LocalMiningStage):
             examples_per_pattern=self.config.examples_per_pattern,
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
+            pagination=self.config.pagination,
         )
 
         schema = self._without_service_data(miner.mine(dataset_name="lslod_cloud"))

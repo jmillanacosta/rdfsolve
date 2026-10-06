@@ -417,6 +417,7 @@ class SchemaMiner:
             ontology_term_budget=self._ontology_term_budget,
             group_before_mining=self._group_before_mining,
             ontology_hierarchy_files=self._hierarchy_files,
+            pagination=self.pagination,
         )
 
         if self._resume is not None:

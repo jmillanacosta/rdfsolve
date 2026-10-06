@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from collections.abc import Callable
@@ -427,46 +428,86 @@ class TwoPhaseStrategy(MiningStrategy):
     def _page_classes(
         self, context: MiningContext, query: str, size: int | None
     ) -> list[dict[str, Any]]:
-        """Read the class listing in pages; keep the pages read when a later page fails.
+        """Read the class listing in pages; on a deep OFFSET failure, read it by key.
 
-        forum (job 115328) paged 89,375 classes, then a 502 at that offset threw them all away
-        after 48 min and the source failed. The classes read are now kept and mined: the
-        listing is recorded as truncated at its offset (an unresolved failure, so the source
-        ends PARTIAL, and config.class_listing, whose class count is a lower bound). A failure
-        before any row is read is raised as before.
+        forum (job 115328) read 89,375 classes in OFFSET pages of 0.2-0.7 s, then each page
+        from offset 80,000 took about 5 min and ended in a 502: an engine that skips OFFSET
+        rows pays for every row skipped. When an OFFSET page fails after the first, the
+        listing is read again by key (keyset paging: ORDER BY the class's key and FILTER past
+        the last key read, SparqlHelper.select_chunked with pagination="cursor"), which costs
+        the same at any depth. The OFFSET pages stay the first choice: a key page sorts the
+        whole listing (forum: more than its proxy's 300 s), while a shallow OFFSET page does
+        not. When the key pages fail too, the classes read by both are kept and mined: the
+        listing is recorded as truncated (an unresolved failure, so the source ends PARTIAL,
+        and config.class_listing, whose class count is a lower bound). A failure before any
+        row is read is raised as before.
         """
         from rdfsolve.sparql_helper import PaginationTruncatedError
 
         try:
             return context.collect_bindings(query, "two-phase/classes", size)
         except PaginationTruncatedError as error:
+            failure = error
             rows = list(error.partial_rows)
-            if not rows:
-                raise
+        keyset: dict[str, Any] | None = None
+        if failure.offset > 0 and getattr(context, "pagination", "offset") != "cursor":
             logger.warning(
-                "Class listing truncated at offset %d after %d rows (%s); mining what was read",
-                error.offset,
-                len(rows),
-                str(error)[:200],
+                "Class listing: an OFFSET page failed at offset %d (%s); reading it by key",
+                failure.offset,
+                str(failure)[:200],
             )
-            message = (
-                f"class listing truncated at offset {error.offset}: {len(rows)} rows read, "
-                f"the classes are a lower bound: {str(error)[:300]}"
+            keyed: list[dict[str, Any]] = []
+            try:
+                for page in context.helper.select_chunked(
+                    query,
+                    chunk_size=size or context.chunk_size,
+                    purpose="two-phase/classes",
+                    pagination="cursor",
+                    cursor_keys=["class"],
+                    max_page_retries=1,
+                    # The host gate already spaces the requests to the endpoint.
+                    delay_between_chunks=0.0,
+                ):
+                    keyed.extend(page)
+            except PaginationTruncatedError as error:
+                # The OFFSET failure stays the one recorded: it says how far the listing got.
+                keyset = {"state": "truncated", "rows_read": len(keyed), "error": str(error)[:500]}
+            else:
+                context.report.report.config["class_listing"] = {
+                    "state": "complete",
+                    "read_by": "keyset",
+                    "offset_failure": {"offset": failure.offset, "error": str(failure)[:500]},
+                }
+                return keyed
+            seen = {json.dumps(row, sort_keys=True) for row in rows}
+            rows += [row for row in keyed if json.dumps(row, sort_keys=True) not in seen]
+        if not rows:
+            raise failure
+        logger.warning(
+            "Class listing truncated at offset %d after %d rows (%s); mining what was read",
+            failure.offset,
+            len(rows),
+            str(failure)[:200],
+        )
+        message = (
+            f"class listing truncated at offset {failure.offset}: {len(rows)} rows read, "
+            f"the classes are a lower bound: {str(failure)[:300]}"
+        )
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure("truncated", message, "two-phase/classes")],
             )
-            context.report.record_outcome(
-                QueryOutcome(
-                    state="partial",
-                    failures=[QueryFailure("truncated", message, "two-phase/classes")],
-                )
-            )
-            context.report.report.config["class_listing"] = {
-                "state": "truncated",
-                "offset": error.offset,
-                "rows_read": len(rows),
-                "count_bound": "lower_bound",
-                "error": str(error)[:500],
-            }
-            return rows
+        )
+        context.report.report.config["class_listing"] = {
+            "state": "truncated",
+            "offset": failure.offset,
+            "rows_read": len(rows),
+            "count_bound": "lower_bound",
+            "error": str(failure)[:500],
+            **({"keyset": keyset} if keyset is not None else {}),
+        }
+        return rows
 
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
         """Retry Phase 1 in the named graphs when the default graph has no types.

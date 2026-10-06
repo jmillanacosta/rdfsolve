@@ -37,6 +37,7 @@ class MiningContext:
         ontology_term_budget: int | None = None,
         group_before_mining: int | None = None,
         ontology_hierarchy_files: list[str] | None = None,
+        pagination: str = "offset",
     ) -> None:
         """Initialize mining context.
 
@@ -58,6 +59,7 @@ class MiningContext:
             group_before_mining: Group terms before per-class mining above this class count
             ontology_hierarchy_files: Files of (child, parent) pairs for terms whose
                 hierarchy is not in the data
+            pagination: How collect_bindings pages: "offset" or "cursor" (keyset)
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -75,6 +77,7 @@ class MiningContext:
         self.ontology_term_budget = ontology_term_budget
         self.group_before_mining = group_before_mining
         self.ontology_hierarchy_files = ontology_hierarchy_files or []
+        self.pagination = pagination
         # Classes that typed mining discovered, and type values that it skipped (not IRIs).
         self.discovered_classes: list[str] | None = None
         self.skipped_type_values = 0

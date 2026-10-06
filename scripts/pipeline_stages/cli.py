@@ -387,6 +387,13 @@ Examples:
         help="Seconds for testing paths on the data, per dataset (default: 1800)",
     )
     parser.add_argument(
+        "--pagination",
+        choices=("offset", "cursor"),
+        default="offset",
+        help="How listings are paged: LIMIT/OFFSET, or by key (cursor: ORDER BY the projected "
+        "keys and FILTER past the last row read) (default: offset)",
+    )
+    parser.add_argument(
         "--void-first-navigation-budget",
         type=float,
         default=None,
@@ -577,6 +584,7 @@ Examples:
     if config.navigation_budget < 0:
         parser.error("--navigation-budget must be nonnegative")
     config.void_first_navigation_budget = args.void_first_navigation_budget
+    config.pagination = "cursor" if args.pagination == "cursor" else "offset"
     if config.void_first_navigation_budget is not None and config.void_first_navigation_budget < 0:
         parser.error("--void-first-navigation-budget must be nonnegative")
 

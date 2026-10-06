@@ -136,3 +136,46 @@ def test_a_source_mined_void_first_tests_its_paths_within_its_own_budget(tmp_pat
     config.void_first_navigation_budget = 300.0
     assert stage._navigation_budget(True) == 300.0
     assert stage._navigation_budget(False) == 1800.0
+
+
+def test_the_pagination_option_reaches_the_miner(tmp_path, monkeypatch):
+    """--pagination cursor is read from the command line and passed to SchemaMiner."""
+    import sys
+
+    from scripts.pipeline_stages import cli
+
+    seen = {}
+
+    def stop(config, **_):
+        seen["config"] = config
+        raise SystemExit(0)
+
+    monkeypatch.setattr(cli, "preflight", stop)
+    monkeypatch.setattr(sys, "argv", ["pipeline.py", "--preflight", "--pagination", "cursor"])
+    with pytest.raises(SystemExit):
+        cli.main()
+    assert seen["config"].pagination == "cursor"
+
+    received = {}
+
+    def miner(**kwargs):
+        received.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(rdfsolve, "SchemaMiner", miner)
+    config = PipelineConfig(base_dir=tmp_path, repo_dir=tmp_path, pagination="cursor")
+    source = Source.from_dict({"name": "fixture", "endpoint": "https://example.invalid/sparql"})
+    RemoteMiningStage(config)._remote_miner(
+        source,
+        strategy=None,
+        use_graph_store=False,
+        graph_store_dir=tmp_path,
+        graph_uris=None,
+        type_context_graph_uris=[],
+        delay=0.0,
+        classes_as_data=False,
+        membership_properties=[],
+        report_path=tmp_path / "report.json",
+    )
+    assert received["pagination"] == "cursor"
+    assert PipelineConfig(base_dir=tmp_path, repo_dir=tmp_path).pagination == "offset"

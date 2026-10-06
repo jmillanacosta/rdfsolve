@@ -739,6 +739,7 @@ class LocalMiningStage(Stage):
             report_path=str(report_path),
             resume_checkpoint=resume_checkpoint,
             strategy=strategy,
+            pagination=self.config.pagination,
         )
 
         return miner
