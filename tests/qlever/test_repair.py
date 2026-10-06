@@ -113,3 +113,44 @@ def test_a_double_below_the_smallest_double_is_written_as_its_zero():
         line = f'_:b <urn:pvalue> "{kept}"^^{double} .\n'
         assert repair_line(line) == (line, []), "QLever reads subnormals and zeros"
     assert not readable_value("8E-610", double[1:-1]) and readable_value("1E-320", double[1:-1])
+
+
+def test_a_backslash_that_starts_no_escape_is_escaped_in_a_literal_and_encoded_in_an_iri():
+    """BioGateway (job 115623): "Dmel\\CG6650" failed the index ("Unsupported escape sequence")
+    and <.../Dmel\\CG10011> stopped qlever-index reading the file. The literal keeps its text
+    with the backslash escaped; the IRI gets %5C. Valid escapes are kept."""
+    gene = "<http://rdf.biogateway.eu/gene/7227/Dmel\\CG10011>"
+    label = "<http://www.w3.org/2000/01/rdf-schema#label>"
+    assert repair_line(f'<urn:g> {label} "Dmel\\CG6650" .\n') == (
+        f'<urn:g> {label} "Dmel\\\\CG6650" .\n',
+        ["escape"],
+    )
+    assert repair_line(f'<urn:g> {label} "a\\qb"@en <urn:graph> .\n') == (
+        f'<urn:g> {label} "a\\\\qb"@en <urn:graph> .\n',
+        ["escape"],
+    )
+    assert repair_line(f'<urn:g> <urn:p> "x\\y"^^<{XSD}string> .\n') == (
+        f'<urn:g> <urn:p> "x\\\\y"^^<{XSD}string> .\n',
+        ["escape"],
+    )
+    assert repair_line(f"{gene} <urn:p> <urn:o> .\n") == (
+        "<http://rdf.biogateway.eu/gene/7227/Dmel%5CCG10011> <urn:p> <urn:o> .\n",
+        ["iri"],
+    )
+    for line in (
+        '<urn:a> <urn:p> "tab\\t quote\\" back\\\\ \\u00e9 \\U0001F600" .\n',
+        "<urn:a\\u0041> <urn:p> <urn:o> .\n",
+        '<urn:a> <urn:p> "a\\\\C" .\n',
+    ):
+        assert repair_line(line) == (line, []), line
+
+
+def test_an_escape_repair_is_recorded_with_its_original_line(tmp_path):
+    data = tmp_path / "biogateway.nt"
+    original = '<urn:g> <urn:symbol> "Dmel\\CG6650" .'
+    data.write_text(original + "\n")
+    [change] = repair_inputs(tmp_path, [data])
+    assert change["changes"] == ["escape"] and change["original"] == original
+    assert data.read_text() == '<urn:g> <urn:symbol> "Dmel\\\\CG6650" .\n'
+    record = json.loads((tmp_path / REPAIRS_FILE).read_text())
+    assert record["lines_by_change"] == {"escape": 1} and "escape" in record["findings"]

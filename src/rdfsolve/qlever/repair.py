@@ -23,6 +23,14 @@ changed line is recorded with its original text as a data-quality finding beside
   It is a valid literal whose XSD 1.1 value is the zero of its sign, so it is written as
   "0E0" or "-0E0" of the same datatype: the value and the datatype are kept, the lexical form
   is recorded. A subnormal double (1E-320) is read by QLever and kept.
+- A backslash that starts no N-Triples escape. In a literal, N-Triples allows a backslash only
+  before t, b, n, r, f, a quote, an apostrophe, a backslash, or u and 4 or U and 8 hex digits;
+  in an IRI only before the last two. BioGateway writes FlyBase symbols with a bare backslash
+  (job 115623): in an IRI (<http://rdf.biogateway.eu/gene/7227/Dmel%5CCG10011> as written
+  here) qlever-index stops reading the file and skips the rest of it, and in a literal (the
+  symbol Dmel, backslash, CG6650) it fails the index ("Unsupported escape sequence"). In a
+  literal the backslash is escaped (doubled), which keeps the text as published (an "escape"
+  change); in an IRI it is written %5C, its valid form (an "iri" change).
 """
 
 from __future__ import annotations
@@ -38,7 +46,10 @@ from typing import Any
 # The record of an index's repaired lines, in its work directory.
 REPAIRS_FILE = "input-repairs.json"
 LINE_FORMATS = (".nt", ".nq")
-_ENCODED = {"<": "%3C", ">": "%3E", '"': "%22"}
+_ENCODED = {"<": "%3C", ">": "%3E", '"': "%22", "\\": "%5C"}
+# A backslash and what follows it: an escape that N-Triples allows (group 1), or a bare one.
+_ESCAPE = re.compile(r"\\(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|[tbnrf\"'\\])?")
+_UCHAR = re.compile(r"\\(?:u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})")
 _XSD = "http://www.w3.org/2001/XMLSchema#"
 # The lexical forms that QLever reads, by datatype (whitespace is not collapsed).
 _LEXICAL = {
@@ -54,6 +65,7 @@ _SUSPECT = re.compile(
     r'<[^>\s]*[<"]|<[^<>"\s]*>(?=[^\s.<"_])|"\^\^<'
     + re.escape(_XSD)
     + r"(?:integer|decimal|float|double|boolean)>"
+    + r"|\\(?!u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|[tbnrf\"'\\])"
 )
 _IRI_END = re.compile(r">(?=[ \t]|\.[ \t]*\r?\n?$)")
 _LITERAL = re.compile(r'"(?:[^"\\]|\\.)*"')
@@ -90,12 +102,26 @@ def readable_value(lexical: str, datatype: str) -> bool:
 
 
 def _iri(line: str, start: int) -> tuple[str, int] | None:
-    """Read the IRI at START, encoded; return it and the position after it."""
+    """Read the IRI at START, encoded; return it and the position after it.
+
+    A backslash that starts a u or U escape (UCHAR) is kept; any other is encoded.
+    """
     end = _IRI_END.search(line, start + 1)
     if end is None:
         return None
     body = line[start + 1 : end.start()]
-    return "<" + "".join(_ENCODED.get(c, c) for c in body) + ">", end.end()
+    written = []
+    for position, character in enumerate(body):
+        if character == "\\" and _UCHAR.match(body, position):
+            written.append(character)
+        else:
+            written.append(_ENCODED.get(character, character))
+    return "<" + "".join(written) + ">", end.end()
+
+
+def escaped_literal(text: str) -> str:
+    """Return a quoted literal TEXT with each backslash that starts no escape doubled."""
+    return _ESCAPE.sub(lambda m: m.group() if m.group(1) else "\\\\", text)
 
 
 def _term(line: str, start: int) -> tuple[str, int, str] | None:
@@ -108,9 +134,11 @@ def _term(line: str, start: int) -> tuple[str, int, str] | None:
         return None
     text, position = match.group(), match.end()
     if text.startswith('"'):
+        written = escaped_literal(text)
+        escape = "escape" if written != text else ""
         language = _LANGUAGE.match(line, position)
         if language:
-            return text + language.group(), language.end(), ""
+            return written + language.group(), language.end(), escape
         if line.startswith("^^<", position):
             datatype = _iri(line, position + 2)
             if datatype is None:
@@ -119,8 +147,10 @@ def _term(line: str, start: int) -> tuple[str, int, str] | None:
             if zero is not None:
                 return f'"{zero}"^^{datatype[0]}', datatype[1], "rounded"
             if not readable_value(text[1:-1], datatype[0][1:-1]):
-                return text, datatype[1], "literal"
-            return text + "^^" + datatype[0], datatype[1], "iri"
+                return written, datatype[1], "literal"
+            kind = escape or "iri"
+            return written + "^^" + datatype[0], datatype[1], kind
+        return written, position, escape
     return text, position, ""
 
 
@@ -211,6 +241,8 @@ def repair_inputs(
                 "plain strings",
                 "rounded": "xsd:float or xsd:double values below the smallest double, written "
                 "as the zero of their sign (their XSD value) with the same datatype",
+                "escape": "literals with a backslash that starts no N-Triples escape, written "
+                "with the backslash escaped (the same text)",
             },
             "encoded": _ENCODED,
             "lines_by_change": dict(Counter(kind for c in changes for kind in c["changes"])),
