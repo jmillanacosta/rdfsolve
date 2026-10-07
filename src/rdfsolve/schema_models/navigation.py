@@ -228,3 +228,20 @@ def tested_step_support(
         if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
             support[key] = (matched, sources)
     return support
+
+
+def step_support(paths: Any) -> dict[tuple[str, str], tuple[int, int]]:
+    """Return, for each first step (class, property) of tested paths, the most matched records of
+    the paths that start with it, and their start records (as tested_step_support, from paths).
+    """
+    support: dict[tuple[str, str], tuple[int, int]] = {}
+    for route in paths:
+        if route.instance_support != "matched" or not route.steps:
+            continue
+        step = route.steps[0]
+        key = (step.subject_class, step.property_uri)
+        matched, sources = route.matched_sources or 0, route.source_count or 0
+        seen = support.get(key, (0, 0))
+        if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
+            support[key] = (matched, sources)
+    return support

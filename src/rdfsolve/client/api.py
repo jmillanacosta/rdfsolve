@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -39,6 +40,8 @@ if TYPE_CHECKING:
     from rdfsolve.ontology import Ontologies, Term
     from rdfsolve.property_graph import Conversion, Fold, Identity, PropertyGraph
     from rdfsolve.schema_models.selection import SchemaSelection
+
+logger = logging.getLogger(__name__)
 
 
 def _key(name: str) -> str:
@@ -193,6 +196,7 @@ class Client(DatasetClient):
         *,
         format: FormatLiteral["json", "shacl", "void"] | None = None,
         data_file: str | Path | Sequence[str | Path] | None = None,
+        paths: str | Path | None = None,
         **kwargs: Any,
     ) -> Client:
         """Open a saved schema without mining or making source requests.
@@ -239,7 +243,10 @@ class Client(DatasetClient):
                     raise ValueError("A single local RDF graph has no named graph scope")
                 kwargs["graph_uris"] = []
             source = store
-        return cls(schema, source, **kwargs)
+        client = cls(schema, source, **kwargs)
+        if paths is not None:
+            client.add_paths(paths)
+        return client
 
     def registry(self, *, source_id: str) -> Registry:
         """Describe generated classes and source bindings from retained metadata."""
@@ -491,6 +498,51 @@ class Client(DatasetClient):
         query.ref = identifier("q", query.sparql)
         self._prepared[query.ref] = query, self.source, tuple(self.graph_uris)
         return query
+
+    def add_paths(self, path: str | Path) -> Client:
+        """Read the paths tested on the source from a saved schema (a mining run's schema JSON).
+
+        Only how many records follow each link of each kind is read now (link_support); a
+        kind's paths are read when asked for (client.kinds.<Kind>.paths). The kinds' links
+        then show the share of records that follow each.
+        """
+        from rdfsolve.schema_models.navigation import tested_step_support
+
+        self._paths_file = Path(path)
+        self._link_support = tested_step_support(self._paths_file)
+        logger.info(
+            "Read how often %d links are followed in the tested paths; client.kinds.<Kind>.links "
+            "shows them, client.kinds.<Kind>.paths the paths.",
+            len(self._link_support),
+        )
+        return self
+
+    def link_support(self, kind_iri: str, property_iri: str) -> float | None:
+        """Return the share of a kind's records that follow a link in the tested paths, or None.
+
+        The paths are those added (add_paths), else those of the client's own schema.
+        """
+        support = getattr(self, "_link_support", None)
+        if support is None:
+            from rdfsolve.schema_models.navigation import step_support
+
+            summary = self._schema.navigation
+            support = step_support(summary.paths if summary else [])
+            self._link_support = support
+        found = support.get((kind_iri, property_iri))
+        return found[0] / found[1] if found and found[1] else None
+
+    def tested_paths(self, kind_iri: str) -> list[Any]:
+        """Return the tested paths that start at a kind (read from the added file when there is one)."""
+        path = getattr(self, "_paths_file", None)
+        if path is not None:
+            from rdfsolve.schema_models.navigation import read_tested_paths
+
+            return read_tested_paths(path, start_classes=[kind_iri])
+        summary = self._schema.navigation
+        return [
+            r for r in (summary.paths if summary else []) if r.steps[0].subject_class == kind_iri
+        ]
 
     def navigation(self, *, max_hops: int = 6, observed_only: bool = False) -> pd.DataFrame:
         """Retrieve retained elongated routes and their snapshot support summaries."""

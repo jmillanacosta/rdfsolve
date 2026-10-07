@@ -19,6 +19,7 @@ ex:pw1 a ex:Pathway ; rdfs:label "first pathway" .
 <{CHEBI}16761> a ex:Metabolite ; rdfs:label "small molecule two" ; ex:isPartOf ex:pw1 .
 ex:r1 a ex:Reaction ; ex:source <{CHEBI}15422> ; ex:target <{CHEBI}16761> ; ex:isPartOf ex:pw1 .
 ex:c1 a ex:Catalysis ; ex:source <{UNIPROT}P00001> ; ex:target ex:r1 ; ex:isPartOf ex:pw1 .
+ex:g1 a ex:Group ; ex:member <{UNIPROT}P00001>, <{UNIPROT}P00002>, <{CHEBI}15422> ; ex:isPartOf ex:pw1 .
 """
 
 MODEL = """id: http://example.org/target/
@@ -102,9 +103,10 @@ def test_choices_print_as_tables_with_what_they_would_do(plan):
     assert "Decided" in text and "To choose" in text and "plan.Reaction" in repr(plan.open)
     plan.Reaction.as_edge()
     assert plan.Reaction.role == "edge"
-    plan.Reaction.use(plan.target.predicates.related_to)
-    assert plan.Reaction.status == "chosen" and plan.open == [plan.Pathway]
-    plan.Pathway.use(plan.target.classes.pathway)
+    plan.Reaction.use(plan.target.relations.related_to)
+    assert plan.Reaction.status == "chosen" and plan.Pathway in plan.open
+    plan.Pathway.use(plan.target.kinds.pathway)
+    plan.Group.leave_out()
     assert not plan.open
     assert "Nothing open" in repr(plan.open)
 
@@ -117,7 +119,7 @@ def test_contents_are_written_as_in_related_from_either_side(tmp_path):
     client = _client()
     scope = client.from_table("Pathway", [EX + "pw1"])
     by_text = Plan(scope, into=Target(path), contents="^Is part of")
-    assert by_text.contents_incoming and len(by_text.records) == len(scope) + 6
+    assert by_text.contents_incoming and len(by_text.records) == len(scope) + 7
     by_link = Plan(scope, into=Target(path), contents=client.kinds.Protein.IsPartOf)
     assert by_link.contents_incoming and len(by_link.records) == len(by_text.records)
     with pytest.raises(ValueError, match='contents="\\^Is part of"'):
@@ -131,7 +133,7 @@ def test_following_links_reads_large_sets_in_batches():
     client.max_subjects, client.batch_size = 1, 1  # every request as small as it can be
     scope = client.from_table("Pathway", [EX + "pw1"])
     members = scope.related(via="Is part of", incoming=True)
-    assert len(members) == 6
+    assert len(members) == 7
     client.max_rows = 1
     with pytest.raises(HydrationLimitError, match="max_rows=1"):
         scope.related(via="Is part of", incoming=True)
@@ -139,8 +141,8 @@ def test_following_links_reads_large_sets_in_batches():
 
 def test_a_node_kind_can_be_converted_as_edges_between_named_links(plan, tmp_path):
     plan.Reaction.leave_out()
-    plan.Pathway.use(plan.target.classes.pathway)
-    plan.Catalysis.as_edge("source", "TARGET").use(plan.target.predicates.related_to)
+    plan.Pathway.use(plan.target.kinds.pathway)
+    plan.Catalysis.as_edge("source", "TARGET").use(plan.target.relations.related_to)
     assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "related to"
     with pytest.raises(ValueError, match="has no link 'Nowhere'"):
         plan.Catalysis.as_edge("Nowhere", "Target")
@@ -160,12 +162,12 @@ def test_the_printouts_show_the_ends_and_how_to_convert_a_kind_as_edges(plan):
 
 
 def test_a_kind_switches_reading_with_the_term_chosen(plan):
-    plan.Catalysis.use(plan.target.classes.thing)  # a class: its records become nodes
+    plan.Catalysis.use(plan.target.kinds.thing)  # a class: its records become nodes
     assert plan.Catalysis.role == "node" and plan.Catalysis.ends == (None, None)
     assert any(o.reading == "edge" for o in plan.Catalysis.options), (
         "the edge reading stays offered"
     )
-    plan.Catalysis.use(plan.target.predicates.catalyzes)  # a relation: edges between its links
+    plan.Catalysis.use(plan.target.relations.catalyzes)  # a relation: edges between its links
     assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "catalyzes"
     assert [e.label for e in plan.Catalysis.ends] == ["Source", "Target"]
     plan.Catalysis.as_node()
@@ -180,13 +182,13 @@ def test_options_show_every_reading_of_a_kind(plan):
 
 
 def test_a_term_that_does_not_fit_is_refused(plan):
-    with pytest.raises(ValueError, match="no two links to be an edge between"):
-        plan.Protein.use(plan.target.predicates.catalyzes)
+    with pytest.raises(ValueError, match="no start and end link"):
+        plan.Protein.use(plan.target.relations.catalyzes)
 
 
 def test_the_plan_runs_as_generated_queries(plan, tmp_path):
     plan.Reaction.leave_out()
-    plan.Pathway.use(plan.target.classes.pathway)
+    plan.Pathway.use(plan.target.kinds.pathway)
     network = plan.run(tmp_path / "queries")
     written = {p.name for p in network.rules}
     assert {"protein.rq", "metabolite.rq", "catalysis.rq", "is_part_of.rq"} <= written
@@ -277,15 +279,37 @@ def test_tested_paths_are_read_for_the_plans_kinds_only_and_give_evidence(plan, 
         (EX + "Catalysis", EX + "source"): (8, 10),
         (EX + "Catalysis", EX + "target"): (9, 10),
     }
-    with_paths = plan.add_paths(path)
-    assert (
-        with_paths.path_support(with_paths.kinds.Catalysis, with_paths.kinds.Catalysis.Source)
-        == 0.8
+    with_paths = plan.add_paths(path)  # into the client; the plan proposes again
+    catalysis = with_paths.kinds.Catalysis
+    assert with_paths.client.link_support(catalysis.iri, catalysis.Source.property) == 0.8
+    assert with_paths.path_support(catalysis, catalysis.Target) == 0.9
+    assert list(catalysis.paths.frame["follow"]) == [9, 8]
+    assert "80%" in repr(catalysis.links), "the links show the share of records that follow them"
+
+
+def test_a_group_kind_can_be_edges_between_each_pair_of_its_members(plan, tmp_path):
+    assert "pairs" in {o.reading for o in plan.Group.options}, (
+        "a link to several records offers pairs"
     )
-    assert list(with_paths.routes("Catalysis", paths=True)["follow"]) == [9, 8]
-    links = with_paths.routes("Catalysis").frame
-    assert dict(zip(links["link"], links["share of records"], strict=True))["Source"] == 0.8
-    assert (
-        with_paths.path_support(with_paths.kinds.Catalysis, with_paths.kinds.Catalysis.Target)
-        == 0.9
-    )
+    assert "pairs over Member" in repr(plan.open)
+    plan.Group.use(plan.target.relations.related_to)  # a relation: pairs of its members
+    assert plan.Group.role == "pairs" and plan.Group.ends[0].label == "Member"
+    assert "3 edges, each pair" in plan.consequence(plan.Group, plan.target.relations.related_to)
+    plan.Reaction.leave_out()
+    plan.Pathway.use(plan.target.kinds.pathway)
+    for p in list(plan.open):
+        p.leave_out()
+    network = plan.run(tmp_path / "queries")
+    assert (tmp_path / "queries" / "group.rq").exists()
+    assert network.counts()["relations"]["related to"] >= 3
+
+
+def test_terms_can_be_named_as_text(plan):
+    plan.Pathway.use("Pathway")
+    assert plan.Pathway.target.name == "pathway"
+    plan.Catalysis.use("RelatedTo")
+    assert plan.Catalysis.target.name == "related to"
+    assert "CONSTRUCT" in plan.Catalysis.query and "related_to" in repr(plan.Catalysis.query)
+    assert "no query until it is decided" in plan.Reaction.query
+    with pytest.raises(ValueError, match="no term named 'relatd'"):
+        plan.Catalysis.use("relatd")
