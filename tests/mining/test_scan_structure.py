@@ -250,3 +250,22 @@ def test_a_property_set_with_a_term_that_is_not_one_is_left_out_and_reported(
     found = entry["invalid_terms"]
     assert found["triples_left_out"] == sum(p.count for p in whole)
     assert all("\x00" not in t for p in patterns for t in p.subject_properties)
+
+
+def test_a_census_in_parts_by_subject_equals_the_whole(mined, tmp_path, monkeypatch):
+    """A property with more rows than CENSUS_PART_ROWS is tested for coverage in parts by
+    subject id; the census and the structural patterns are those of the whole property."""
+    from rdfsolve.mining import scan_structure
+
+    _, schema, _, store = mined
+    whole_entry, whole = structural_census(
+        store, schema.patterns, buckets=3, work_dir=tmp_path / "a"
+    )
+    monkeypatch.setattr(scan_structure, "CENSUS_PART_ROWS", 2)
+    entry, parts = structural_census(store, schema.patterns, buckets=3, work_dir=tmp_path / "b")
+    assert entry["census_properties"] == whole_entry["census_properties"]
+    assert entry["uncovered_triples"] == whole_entry["uncovered_triples"] > 0
+    # The example of a pattern is any one of its edges.
+    assert [p.model_dump(exclude={"examples"}) for p in parts] == [
+        p.model_dump(exclude={"examples"}) for p in whole
+    ]

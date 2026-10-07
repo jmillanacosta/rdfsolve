@@ -72,6 +72,9 @@ BUCKETS = 8
 # "property_profile"), with exact counts: a source without classes can give millions of
 # property-set patterns, which the outputs cannot hold.
 STRUCTURAL_SHAPES_PER_PROPERTY = 200
+# Rows of one property whose coverage is tested at a time: a larger property is tested in parts
+# by subject id, so that the covered edges of one part are held, not those of the property.
+CENSUS_PART_ROWS = 50_000_000
 _KIND = {"iri": "IRI", "bnode": "BlankNode", "literal": "Literal"}
 
 
@@ -80,12 +83,15 @@ def _bare(expr: pl.Expr) -> pl.Expr:
 
 
 def _types(store: RowStore | StoreView) -> pl.LazyFrame:
-    """Return the members of each class (s, c) with bare class IRIs (a blank-node class keeps _:),
-    read from the data and type context graphs of the scope.
+    """Return the members of each class by id (sid, c: a category) with bare class IRIs (a
+    blank-node class keeps _:), read from the data and type context graphs of the scope.
+
+    The census joins the rows with it by QLever's ids, not by their text: a type table and a
+    property of hundreds of millions of rows each are held as integers and categories.
     """
     import polars as pl
 
-    return store.types().select("s", c=_bare(pl.col("c"))).unique()
+    return store.type_ids().select("sid", c=_bare(pl.col("c")).cast(pl.Categorical)).unique()
 
 
 def _members(store: RowStore | StoreView) -> pl.LazyFrame:
@@ -264,18 +270,19 @@ def _membership_keys(
     """
     import polars as pl
 
-    classes = types.filter(~pl.col("c").str.starts_with("_:")).select("c").unique()
+    classes = types.filter(~pl.col("c").cast(pl.String).str.starts_with("_:")).select("c").unique()
     added = set(keys)
-    typed_objects = types.select(o="s").unique()
+    typed_objects = types.select(oid="sid").unique()
     for prop in MEMBERSHIP.get():
         if prop not in store.predicates:
             continue
         found = (
             store.rows(prop)
             .filter(pl.col("kind") == "iri")
-            .join(typed_objects, on="o", how="anti")
-            .join(types.join(classes, on="c", how="semi"), on="s")
-            .select("c")
+            .select("sid", "oid")
+            .join(typed_objects, on="oid", how="anti")
+            .join(types.join(classes, on="c", how="semi"), on="sid")
+            .select(pl.col("c").cast(pl.String))
             .unique()
             .collect(engine="streaming")
         )
@@ -284,9 +291,19 @@ def _membership_keys(
 
 
 def _covered(
-    rows: pl.LazyFrame, types: pl.LazyFrame, keys: list[tuple[str, str, str, str | None]]
+    rows: pl.LazyFrame,
+    types: pl.LazyFrame,
+    keys: list[tuple[str, str, str, str | None]],
+    *,
+    subject_types: pl.LazyFrame | None = None,
+    typed_nodes: pl.LazyFrame | None = None,
 ) -> pl.LazyFrame:
-    """Return the edges (s, o) of one property that a typed profile covers (typed_coverage.typed_match).
+    """Return the edges (sid, oid) of one property that a typed profile covers
+    (typed_coverage.typed_match); *types* is the type table by id (_types).
+
+    *subject_types* (the rows of *types* that can be the subjects of *rows*, such as those of
+    one part of the subject ids) and *typed_nodes* (the distinct ids of *types*) are read in
+    their place when given.
 
     An edge is covered when a type T of its subject has a profile (T, p, X) that the object
     matches: X a type of the object, X = Literal with the object's datatype (or any datatype),
@@ -300,39 +317,57 @@ def _covered(
     resource = sorted({s for s, _, o, _ in keys if o == "Resource"})
     blank = sorted({s for s, _, o, _ in keys if o == "BlankNode"})
     subjects = sorted({k[0] for k in keys})
-    edges = rows.join(types.filter(pl.col("c").is_in(subjects)).rename({"c": "t"}), on="s")
+    category = pl.Categorical
+    edges = (
+        rows.select("sid", "oid", "kind", "d")
+        .join(
+            (types if subject_types is None else subject_types)
+            .filter(pl.col("c").cast(pl.String).is_in(subjects))
+            .rename({"c": "t"}),
+            on="sid",
+        )
+        .with_columns(name=pl.col("t").cast(pl.String))
+    )
     parts = []
     if typed:
-        pairs = pl.LazyFrame(typed, schema={"t": pl.String, "x": pl.String}, orient="row")
+        pairs = pl.LazyFrame(typed, schema={"t": category, "x": category}, orient="row")
         parts.append(
             edges.filter(pl.col("kind") != "literal")
-            .join(types.rename({"s": "o", "c": "x"}), on="o")
+            .join(types.rename({"sid": "oid", "c": "x"}), on="oid")
             .join(pairs, on=["t", "x"], how="semi")
         )
     if exact:
-        pairs = pl.LazyFrame(exact, schema={"t": pl.String, "d": pl.String}, orient="row")
+        pairs = pl.LazyFrame(exact, schema={"t": category, "d": pl.String}, orient="row")
         literal = edges.filter(pl.col("kind") == "literal")
         parts.append(literal.join(pairs, on=["t", "d"], how="semi"))
     if any_literal:
-        parts.append(edges.filter((pl.col("kind") == "literal") & pl.col("t").is_in(any_literal)))
+        parts.append(
+            edges.filter((pl.col("kind") == "literal") & pl.col("name").is_in(any_literal))
+        )
     if resource:
         parts.append(
-            edges.filter((pl.col("kind") == "iri") & pl.col("t").is_in(resource)).join(
-                types.select(o="s").unique(), on="o", how="anti"
+            edges.filter((pl.col("kind") == "iri") & pl.col("name").is_in(resource)).join(
+                (types.select("sid").unique() if typed_nodes is None else typed_nodes).rename(
+                    {"sid": "oid"}
+                ),
+                on="oid",
+                how="anti",
             )
         )
     if blank:
-        parts.append(edges.filter((pl.col("kind") == "bnode") & pl.col("t").is_in(blank)))
+        parts.append(edges.filter((pl.col("kind") == "bnode") & pl.col("name").is_in(blank)))
     if not parts:
-        return rows.select("s", "o").head(0)
-    return pl.concat([p.select("s", "o") for p in parts]).unique()
+        return rows.select("sid", "oid").head(0)
+    return pl.concat([p.select("sid", "oid") for p in parts]).unique()
 
 
 def _property_sets(
     store: RowStore | StoreView, nodes: pl.LazyFrame, work: Path, buckets: int
 ) -> pl.LazyFrame:
-    """Return the exact property set of each of *nodes* (column s): its outgoing predicates, sorted
-    and joined by ">" (no IRI holds it), grouped one bucket of nodes at a time.
+    """Return the exact property set of each of *nodes* (column sid, QLever's id): its outgoing
+    predicates, sorted and joined by ">" (no IRI holds it), grouped one bucket of nodes at a
+    time. The sets are categories (sid, ps), so that joining them with the edges holds an id and
+    a code for each node, not its text.
     """
     import polars as pl
 
@@ -342,21 +377,59 @@ def _property_sets(
     for number, predicate in enumerate(store.predicates):
         (
             store.rows(predicate)
-            .select("s")
+            .select("sid")
             .unique()
-            .join(nodes, on="s", how="semi")
-            .with_columns(p=pl.lit(predicate), b=pl.col("s").hash() % buckets)
+            .join(nodes, on="sid", how="semi")
+            .with_columns(p=pl.lit(predicate), b=pl.col("sid") % buckets)
             .sink_parquet(pairs / f"{number:05d}.parquet")
         )
     for bucket in range(buckets):
         (
             pl.scan_parquet(pairs / "*.parquet")
             .filter(pl.col("b") == bucket)
-            .group_by("s")
-            .agg(ps=pl.col("p").unique().sort().str.join(">"))
+            .group_by("sid")
+            .agg(ps=pl.col("p").unique().sort().str.join(">").cast(pl.Categorical))
             .sink_parquet(sets / f"{bucket:03d}.parquet")
         )
     return pl.scan_parquet(sets / "*.parquet")
+
+
+def _shape_counts(edges: pl.LazyFrame, keys: list[str], parts: int) -> pl.DataFrame:
+    """Return the triples (n), distinct subjects and objects, and an example edge (ws, wo) of
+    each group of *keys* of the uncovered *edges*, with the keys as text.
+
+    The distinct subjects are counted in *parts* by subject id and the distinct objects by
+    object id, and added up (the parts are disjoint): a group's distinct ids are held for one
+    part at a time, never with the text of its edges.
+    """
+    import polars as pl
+
+    def text(frame: pl.DataFrame) -> pl.DataFrame:
+        """Return *frame* with its category keys as text."""
+        return frame.with_columns(
+            pl.col(k).cast(pl.String) for k in keys if frame.schema[k] == pl.Categorical
+        )
+
+    base = text(
+        edges.group_by(keys)
+        .agg(n=pl.len(), ws=pl.col("s").first(), wo=pl.col("o").first())
+        .collect(engine="streaming")
+    )
+    for column, name in (("sid", "subjects"), ("oid", "objects")):
+        found = [
+            text(
+                edges.filter(pl.col(column) % parts == part)
+                .select(*keys, column)
+                .unique()
+                .group_by(keys)
+                .agg(pl.len().alias(name))
+                .collect(engine="streaming")
+            )
+            for part in range(parts)
+        ]
+        counts = pl.concat(found).group_by(keys).agg(pl.col(name).sum())
+        base = base.join(counts, on=keys, how="left", nulls_equal=True)
+    return base.select(*keys, "n", "subjects", "objects", "ws", "wo")
 
 
 def _lexical(term: str) -> tuple[str, str | None]:
@@ -472,24 +545,41 @@ def _census_graph(
 
     from rdfsolve.mining.structural_strategy import structural_queries
 
-    members = types.select("s").unique()
     owned = tempfile.mkdtemp(prefix="scan-structure-") if work_dir is None else None
     work = Path(owned or work_dir)  # type: ignore[arg-type]
     try:
         uncovered_dir = work / "uncovered"
         uncovered_dir.mkdir(parents=True)
+        # The type table and its typed nodes are written once and read from the files: every
+        # part of every property joins them, and each plan would make them distinct again.
+        types.sink_parquet(work / "types.parquet")
+        types = pl.scan_parquet(work / "types.parquet")
+        types.select("sid").unique().sink_parquet(work / "typed.parquet")
+        members = pl.scan_parquet(work / "typed.parquet")
         census: dict[str, dict[str, Any]] = {}
         files: dict[str, Path] = {}
         for number, predicate in enumerate(sorted(store.predicates)):
             rows = store.rows(predicate)
             own = [k for k in keys if k[1] == predicate]
-            covered = _covered(rows, types, own)
-            path = uncovered_dir / f"{number:05d}.parquet"
-            rows.join(covered, on=["s", "o"], how="anti").sink_parquet(path)
+            folder = uncovered_dir / f"{number:05d}"
+            folder.mkdir()
             # Two plans, not one collect_all over a shared scan: collect_all can panic in Polars'
             # plan formatting ("index out of bounds: the len is 0 but the index is 0").
             triples = rows.select(pl.len()).collect()
-            untyped = rows.join(members, on="s", how="anti").select(pl.len()).collect()
+            # The edges are tested in parts by subject id (CENSUS_PART_ROWS): the covered edges
+            # of a part are held to leave them out, those of the whole property never are.
+            parts = max(1, -(-int(triples.item()) // CENSUS_PART_ROWS))
+            for part in range(parts):
+                selected = rows.filter(pl.col("sid") % parts == part) if parts > 1 else rows
+                subject_types = types.filter(pl.col("sid") % parts == part) if parts > 1 else types
+                covered = _covered(
+                    selected, types, own, subject_types=subject_types, typed_nodes=members
+                )
+                selected.join(covered, on=["sid", "oid"], how="anti").sink_parquet(
+                    folder / f"{part:05d}.parquet"
+                )
+            path = folder / "*.parquet"
+            untyped = rows.join(members, on="sid", how="anti").select(pl.len()).collect()
             missing = pl.scan_parquet(path).select(pl.len()).collect().item()
             census[predicate] = {
                 "triples": int(triples.item()),
@@ -519,8 +609,8 @@ def _census_graph(
             return entry, []
         uncovered = [pl.scan_parquet(p) for p in files.values()]
         nodes = pl.concat(
-            [f.select("s") for f in uncovered]
-            + [f.filter(pl.col("kind") != "literal").select(s="o") for f in uncovered]
+            [f.select("sid") for f in uncovered]
+            + [f.filter(pl.col("kind") != "literal").select(sid="oid") for f in uncovered]
         ).unique()
         sets = _property_sets(store, nodes, work, buckets)
         candidates: dict[str, StructuralPattern] = {}
@@ -530,31 +620,21 @@ def _census_graph(
         for predicate, path in files.items():
             edges = (
                 pl.scan_parquet(path)
-                .join(sets.rename({"ps": "ss"}), on="s", how="left")
-                .join(sets.rename({"s": "o", "ps": "os"}), on="o", how="left")
+                .join(sets.rename({"ps": "ss"}), on="sid", how="left")
+                .join(sets.rename({"sid": "oid", "ps": "os"}), on="oid", how="left")
                 .with_columns(
                     os=pl.when(pl.col("kind") == "literal")
-                    .then(pl.lit(""))
-                    .otherwise(pl.col("os").fill_null("")),
+                    .then(pl.lit("", pl.Categorical))
+                    .otherwise(pl.col("os").fill_null(pl.lit("", pl.Categorical))),
                     sk=pl.when(pl.col("s").str.starts_with("_:"))
                     .then(pl.lit("BlankNode"))
                     .otherwise(pl.lit("IRI")),
-                    dt=pl.when(pl.col("kind") == "literal").then(pl.col("d")),
+                    dt=pl.when(pl.col("kind") == "literal").then(pl.col("d").cast(pl.Categorical)),
                     lang=_language(),
                 )
             )
-            measures = {
-                "n": pl.len(),
-                "subjects": pl.col("s").n_unique(),
-                "objects": pl.col("oid").n_unique(),
-                "ws": pl.col("s").first(),
-                "wo": pl.col("o").first(),
-            }
-            group = (
-                edges.group_by("ss", "os", "sk", "kind", "dt", "lang")
-                .agg(**measures)
-                .collect(engine="streaming")
-            )
+            parts = max(1, -(-census[predicate]["uncoveredTriples"] // CENSUS_PART_ROWS))
+            group = _shape_counts(edges, ["ss", "os", "sk", "kind", "dt", "lang"], parts)
             semantics = "exact_property_sets"
             if group.height > STRUCTURAL_SHAPES_PER_PROPERTY:
                 # Too many shapes: one row per kind, datatype and language, with exact counts,
@@ -562,11 +642,7 @@ def _census_graph(
                 profiled[predicate] = group.height
                 semantics = "property_profile"
                 shared = _shared_properties(group)
-                group = (
-                    edges.group_by("sk", "kind", "dt", "lang")
-                    .agg(**measures)
-                    .collect(engine="streaming")
-                )
+                group = _shape_counts(edges, ["sk", "kind", "dt", "lang"], parts)
                 keys_of = [_profile_key(row) for row in group.iter_rows(named=True)]
                 group = group.with_columns(
                     ss=pl.Series([shared[k][0] for k in keys_of], dtype=pl.String),
