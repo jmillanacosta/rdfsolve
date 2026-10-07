@@ -150,7 +150,7 @@ def test_structure_counts_and_paths_follow_the_graph_scope(store, scope):
         )
 
     assert structural(scan) == structural(sparql)
-    drop = {"census", "census_properties"}
+    drop = {"census", "census_properties", "census_patterns"}
     assert [
         {k: v for k, v in e.items() if k not in drop} for e in scan_config["structural_coverage"]
     ] == [

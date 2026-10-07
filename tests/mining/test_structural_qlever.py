@@ -97,6 +97,34 @@ def test_the_exact_census_is_kept_when_the_patterns_cannot_decide(monkeypatch, d
     assert entry["census"] == "per_property"
 
 
+def test_a_refused_patterns_census_is_recorded_with_its_reason_and_fallback(monkeypatch):
+    message = (
+        "HTTP 400: Tried to allocate 22.9 GB, but only 7.8 GB were available. "
+        "Clear the cache or allow more memory for QLever during startup"
+    )
+
+    def refuse(query, purpose):
+        if "ql:has-predicate ?p } LIMIT 1" in query:
+            raise EndpointTimeoutError(f"Query cost/time limit: {message}", status_code=400)
+        return False
+
+    entry, result, _ = mine(monkeypatch, refuse=refuse)
+    exact, exact_result, _ = mine(monkeypatch, engine="")
+    assert entry["census"] == "per_property"
+    assert entry["census_patterns"] == {
+        "state": "refused",
+        "query": "probe",
+        "reason": f"Query cost/time limit: {message}",
+        "memory_asked": "22.9 GB",
+        "memory_available": "7.8 GB",
+        "fallback": "per_property",
+    }
+    assert shapes(result) == shapes(exact_result), "The schema does not change"
+    assert "census_patterns" not in exact, "Nothing recorded when the census is not tried"
+    fast, _, _ = mine(monkeypatch)
+    assert "census_patterns" not in fast
+
+
 MORE = (
     DATA
     + """

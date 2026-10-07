@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable, Sequence
@@ -228,6 +229,23 @@ def _typed_edges_covered(context: MiningContext) -> bool:
     return not (discovered is None or context.skipped_type_values or not set(discovered) <= mined)
 
 
+_MEMORY = re.compile(
+    r"tried to allocate\s+([\d.]+\s*[KMGT]?i?B).*?only\s+([\d.]+\s*[KMGT]?i?B)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _refusal(step: str, error: Exception) -> dict[str, Any]:
+    """Describe a refused query of the patterns census: the query, the server's message and,
+    when the message states them, the memory the query asked for and the memory available.
+    """
+    record: dict[str, Any] = {"state": "refused", "query": step, "reason": str(error)[:500]}
+    memory = _MEMORY.search(str(error))
+    if memory:
+        record.update(memory_asked=memory[1], memory_available=memory[2])
+    return record
+
+
 def _patterns_census(
     context: MiningContext, graph: str | None, named: list[str], entry: dict[str, Any]
 ) -> Counter[str] | None:
@@ -238,7 +256,9 @@ def _patterns_census(
     property are two grouped queries, far cheaper than the test of each edge. When typed mining mined every discovered class and skipped no type value, every
     edge of a typed subject is in a typed profile, so the uncovered edges are the edges of
     untyped subjects. The patterns cover the whole index, so the scope must hold every graph of
-    it. Otherwise None, and the exact census runs.
+    it. Otherwise None, and the exact census runs. A query of this census that the endpoint
+    refuses (for example for lack of query memory) is recorded on *entry* as census_patterns,
+    with the query and the server's message, so the slower census that follows is not silent.
     """
     if str(getattr(context.helper, "sparql_engine", "")).lower() != "qlever":
         return None
@@ -246,6 +266,7 @@ def _patterns_census(
         return None
     dataset = _dataset(graph, named)
     scope = list(dict.fromkeys(([graph] if graph else []) + named))
+    step = "probe"
     try:
         probe = QLEVER_PREFIX + "SELECT ?s WHERE { ?s ql:has-predicate ?p } LIMIT 1"
         _select(context, probe, "structural/patterns", paged=False)
@@ -258,12 +279,14 @@ def _patterns_census(
             (row,) = _select(context, outside, "structural/patterns", paged=False)
             if int(row["n"]["value"]):
                 return None
+        step = "triples"
         triples = _select(
             context,
             f"SELECT ?p (COUNT(*) AS ?n) {dataset} WHERE {{ ?s ?p ?o }} GROUP BY ?p",
             "structural/coverage",
             paged=False,
         )
+        step = "untyped_triples"
         untyped = _select(
             context,
             QLEVER_PREFIX + f"SELECT ?p (COUNT(*) AS ?n) {dataset} "
@@ -271,7 +294,9 @@ def _patterns_census(
             "structural/coverage",
             paged=False,
         )
-    except EndpointError:
+    except EndpointError as error:
+        entry["census_patterns"] = _refusal(step, error)
+        logger.warning("Census: the patterns census was refused at its %s query: %s", step, error)
         return None
     by_property = {r["p"]["value"]: int(r["n"]["value"]) for r in untyped}
     counts = Counter[str]()
@@ -1431,6 +1456,9 @@ class StructuralStrategy(MiningStrategy):
                 counts = None if local else _patterns_census(context, graph, named, entry)
                 if counts is None:
                     counts = _census(context, graph, named, keys, local, entry)
+                    if "census_patterns" in entry:
+                        # The census that ran instead of the refused patterns census.
+                        entry["census_patterns"]["fallback"] = entry["census"]
                 total, untyped = counts["triples"], counts["untypedTriples"]
                 if local:
                     entry.update(triple_count=total, untyped_subject_triples=untyped)
