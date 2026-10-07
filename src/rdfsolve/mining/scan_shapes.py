@@ -110,16 +110,20 @@ def _bare(expr: pl.Expr) -> pl.Expr:
 
 
 def _instances(store: RowStore | StoreView, classes: Sequence[str] | None) -> pl.LazyFrame:
-    """Return the SHACL instances (s, c): rdf:type, then rdfs:subClassOf* between IRIs."""
+    """Return the SHACL instances (sid, c): rdf:type, then rdfs:subClassOf* between IRIs.
+
+    The instances are QLever's ids and the classes categories, so that the profiles join and
+    group the rows by integers and codes, not by the text of every instance.
+    """
     import polars as pl
 
     predicates = store.predicates
     if RDF_TYPE not in predicates:
-        return pl.LazyFrame(schema={"s": pl.String, "c": pl.String})
+        return pl.LazyFrame(schema={"sid": pl.UInt64, "c": pl.Categorical})
     typed = (
         store.rows(RDF_TYPE)
         .filter(pl.col("kind") == "iri")
-        .select("s", c=_bare(pl.col("o")))
+        .select("sid", c=_bare(pl.col("o")).cast(pl.Categorical))
         .unique()
     )
     parents: dict[str, set[str]] = defaultdict(set)
@@ -136,7 +140,7 @@ def _instances(store: RowStore | StoreView, classes: Sequence[str] | None) -> pl
     if not parents:
         found = typed
     else:
-        direct = typed.select("c").unique().collect()["c"].to_list()
+        direct = typed.select(pl.col("c").cast(pl.String)).unique().collect()["c"].to_list()
         pairs = []
         for cls in direct:  # rdfs:subClassOf*: the class and each ancestor
             seen, todo = {cls}, [cls]
@@ -146,10 +150,12 @@ def _instances(store: RowStore | StoreView, classes: Sequence[str] | None) -> pl
                         seen.add(parent)
                         todo.append(parent)
             pairs += [(cls, ancestor) for ancestor in seen]
-        closure = pl.LazyFrame(pairs, schema={"c": pl.String, "a": pl.String}, orient="row")
-        found = typed.join(closure, on="c").select("s", c="a").unique()
+        closure = pl.LazyFrame(
+            pairs, schema={"c": pl.Categorical, "a": pl.Categorical}, orient="row"
+        )
+        found = typed.join(closure, on="c").select("sid", c="a").unique()
     if classes is not None:
-        found = found.filter(pl.col("c").is_in(list(classes)))
+        found = found.filter(pl.col("c").cast(pl.String).is_in(list(classes)))
     return found
 
 
@@ -204,11 +210,14 @@ def class_property_profiles(
 
     instances = _instances(store, classes)
     sizes = dict(instances.group_by("c").agg(n=pl.len()).collect().iter_rows())
+    # Objects are joined with their types by id (oid), the classes as categories.
     object_types = (
-        store.rows(RDF_TYPE).filter(pl.col("kind") == "iri").select("s", oc=_bare(pl.col("o")))
+        store.rows(RDF_TYPE)
+        .filter(pl.col("kind") == "iri")
+        .select(oid="sid", oc=_bare(pl.col("o")).cast(pl.Categorical))
         if RDF_TYPE in store.predicates
-        else pl.LazyFrame(schema={"s": pl.String, "oc": pl.String})
-    ).rename({"s": "o"})
+        else pl.LazyFrame(schema={"oid": pl.UInt64, "oc": pl.Categorical})
+    )
     profiles: dict[str, list[PropertyProfile]] = defaultdict(list)
     for predicate in sorted(store.predicates):
         if predicate == RDF_TYPE:
@@ -218,7 +227,7 @@ def class_property_profiles(
         rows = store.rows(predicate).with_columns(
             d=pl.col("d").replace(unique) if unique else pl.col("d")
         )
-        edges = rows.join(instances, on="s")
+        edges = rows.join(instances, on="sid")
         literal = pl.col("kind") == "literal"
         checked = (
             rows.filter(literal & ~pl.col("d").is_in([*_ANY_FORM, *options]))
@@ -226,32 +235,30 @@ def class_property_profiles(
             .select("d", lex=_lexical())
             .unique()
         )
-        frames = pl.collect_all(
-            [
-                edges.group_by("c", "s").agg(n=pl.len()).group_by("c", "n").agg(k=pl.len()),
-                edges.group_by("c", "kind").agg(n=pl.len(), distinct=pl.col("oid").n_unique()),
-                edges.group_by("c").agg(n=pl.len(), distinct=pl.col("oid").n_unique()),
-                edges.filter(~literal)
-                .join(object_types, on="o")
-                .group_by("c", "oc")
-                .agg(n=pl.len()),
-                edges.filter(~literal)
-                .join(object_types, on="o", how="anti")
-                .group_by("c", "kind")
-                .agg(n=pl.len()),
-                edges.filter(literal)
-                .with_columns(
-                    lang=pl.when(pl.col("d") == RDF_LANG).then(
-                        pl.col("o").str.extract(r"@([A-Za-z0-9-]+)$", 1)
-                    )
+        # One plan at a time: run together, each held its own join of the rows with the
+        # instances and its own distinct objects. The totals of a class are the sums over the
+        # kinds of its objects (an object id has one kind).
+        plans = [
+            edges.group_by("c", "sid").agg(n=pl.len()).group_by("c", "n").agg(k=pl.len()),
+            edges.group_by("c", "kind").agg(n=pl.len(), distinct=pl.col("oid").n_unique()),
+            edges.filter(~literal).join(object_types, on="oid").group_by("c", "oc").agg(n=pl.len()),
+            edges.filter(~literal)
+            .join(object_types, on="oid", how="anti")
+            .group_by("c", "kind")
+            .agg(n=pl.len()),
+            edges.filter(literal)
+            .with_columns(
+                lang=pl.when(pl.col("d") == RDF_LANG).then(
+                    pl.col("o").str.extract(r"@([A-Za-z0-9-]+)$", 1)
                 )
-                .group_by("c", "d", "lang")
-                .agg(n=pl.len()),
-                checked,
-            ],
-            engine="streaming",
-        )
-        counts, kinds, totals, typed, unclassed, literals, forms = frames
+            )
+            .group_by("c", "d", "lang")
+            .agg(n=pl.len()),
+            checked,
+        ]
+        frames = [plan.collect(engine="streaming") for plan in plans]
+        counts, kinds, typed, unclassed, literals, forms = frames
+        totals = kinds.group_by("c").agg(pl.col("n").sum(), pl.col("distinct").sum())
         bad: set[tuple[str, str]] = set()
         for dt, pattern in _SAFE.items():
             subset = forms.filter((pl.col("d") == dt) & ~pl.col("lex").str.contains(pattern))
