@@ -80,10 +80,13 @@ def _fake_counts(monkeypatch, graphs, by_predicate):
 
     asked = []
 
-    def counts(endpoint, query, path):
+    def counts(endpoint, query, path, timeout=None):
         asked.append(query)
         if "GROUP BY ?g ?p" in query:
             raise scan.QueryTimeoutError(query)
+        if "GRAPH <" in query:  # one known graph, grouped by predicate
+            graph = query.split("GRAPH <")[1].split(">")[0]
+            return [((f"<{p}>",), n[graph]) for p, n in by_predicate.items() if graph in n]
         predicate = query.split("<")[1].split(">")[0]
         return [((f"<{g}>",), n) for g, n in by_predicate[predicate].items()]
 
@@ -97,11 +100,21 @@ def _fake_counts(monkeypatch, graphs, by_predicate):
     return asked
 
 
-def test_one_graph_takes_the_counts_by_predicate(monkeypatch, tmp_path):
+def test_one_known_graph_takes_the_counts_by_predicate(monkeypatch, tmp_path):
     asked = _fake_counts(monkeypatch, ["urn:g"], {})
     sizes = {"urn:p": 3, "urn:q": 5}
-    assert scan._graph_counts("x", tmp_path / "c.parquet", sizes, {}) == {"urn:g": sizes}
-    assert len(asked) == 2, "The grouped count and the list of graphs"
+    found = scan._graph_counts("x", tmp_path / "c.parquet", sizes, {}, ["urn:g"])
+    assert found == {"urn:g": sizes}
+    assert asked == [], "Nothing is asked of the server"
+
+
+def test_known_graphs_are_counted_graph_by_graph(monkeypatch, tmp_path):
+    by_predicate = {"urn:p": {"urn:g": 2, "urn:h": 1}, "urn:q": {"urn:h": 5}}
+    asked = _fake_counts(monkeypatch, [], by_predicate)
+    sizes = {"urn:p": 3, "urn:q": 5}
+    found = scan._graph_counts("x", tmp_path / "c.parquet", sizes, {}, ["urn:g", "urn:h"])
+    assert found == {"urn:g": {"urn:p": 2}, "urn:h": {"urn:p": 1, "urn:q": 5}}
+    assert len(asked) == 2 and not any("?g" in q for q in asked), "One query per graph"
 
 
 @pytest.mark.parametrize(
@@ -109,19 +122,20 @@ def test_one_graph_takes_the_counts_by_predicate(monkeypatch, tmp_path):
 )
 def test_several_graphs_are_counted_by_predicate(monkeypatch, tmp_path, graphs, unnamed):
     by_predicate = {"urn:p": {"urn:g": 2, "urn:h": 1}, "urn:q": {"urn:h": 5}}
-    _fake_counts(monkeypatch, graphs, by_predicate)
+    asked = _fake_counts(monkeypatch, graphs, by_predicate)
     sizes = {"urn:p": 3, "urn:q": 5}
     assert scan._graph_counts("x", tmp_path / "c.parquet", sizes, unnamed) == {
         "urn:g": {"urn:p": 2},
         "urn:h": {"urn:p": 1, "urn:q": 5},
     }
+    assert not any("DISTINCT ?g" in q for q in asked), "The graphs are not listed"
 
 
 def test_a_count_by_graph_that_times_out_is_made_in_slices(monkeypatch, tmp_path):
     """The count of one predicate by graph is summed over slices of its scan."""
     scan_rows = ["urn:g"] * 5 + ["urn:h"] * 4  # the graph of each row of urn:p, in scan order
 
-    def counts(endpoint, query, path):
+    def counts(endpoint, query, path, timeout=None):
         if "LIMIT" not in query and "OFFSET" not in query:
             raise scan.QueryTimeoutError(query)
         offset = int(query.split(" OFFSET ")[1].split()[0])

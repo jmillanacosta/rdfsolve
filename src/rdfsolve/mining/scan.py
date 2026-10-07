@@ -287,6 +287,14 @@ class RowStore:
         if not graph_uris:
             return self
         if self.graphs is None:
+            if (self.manifest.get("graph_split") or {}).get("state") == "missing":
+                # The rows were read without their graphs (export_index): the scope is not
+                # applied, and every row is mined.
+                logger.warning(
+                    "Scan: the graph split of the store is missing; the graph scope is not "
+                    "applied and the whole index is mined"
+                )
+                return self
             raise ValueError("The index has no named graphs: a graph scope selects no triple of it")
         return StoreView(self, graph_uris, type_context_graph_uris or ())
 
@@ -525,7 +533,7 @@ def _post_pair(endpoint: str, query: str, id_query: str) -> Iterator[tuple[Any, 
         yield text, binary
 
 
-def _post(endpoint: str, query: str, accept: str) -> Any:
+def _post(endpoint: str, query: str, accept: str, *, timeout: float | None = None) -> Any:
     """Send *query* to a local endpoint; return the open response (no proxy, no time limit).
 
     The process has at most 2 * export_workers() queries open at once (_query_slots), fewer
@@ -534,7 +542,10 @@ def _post(endpoint: str, query: str, accept: str) -> Any:
     (1, 2, 4 … 60 s) for as long as this process's other queries go on ending, and up to
     BUSY_WAIT seconds after the last one ended. QLever also answers 429 to a query it stopped
     at its time limit, with "timed out" in the body: that raises QueryTimeoutError at once
-    (the caller reads it in slices; sending it again would time out again).
+    (the caller reads it in slices; sending it again would time out again). With *timeout*,
+    QLever stops the query after that many seconds (its per-query ``timeout`` parameter; a
+    time below the server's default needs no access token): a planning query that a large
+    index cannot answer soon is given up early.
     """
     import urllib.error
 
@@ -542,7 +553,10 @@ def _post(endpoint: str, query: str, accept: str) -> Any:
 
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     # A term that is not an RDF IRI (Bio2RDF: <...statistic  n>) is written with IRI("...").
-    data = urllib.parse.urlencode({"query": writable_query(query)}).encode()
+    form = {"query": writable_query(query)}
+    if timeout is not None:
+        form["timeout"] = f"{timeout:g}s"
+    data = urllib.parse.urlencode(form).encode()
     wait = 1.0
     started = time.monotonic()
     semaphore = _query_slots()
@@ -591,15 +605,19 @@ def _check_trailer(data: bytes, query: str, rest: Callable[[], bytes] | None = N
         raise error(f"QLever cut the result while sending it ({message}): {query}")
 
 
-def _tsv_to_parquet(endpoint: str, query: str, path: Path) -> int:
+def _tsv_to_parquet(endpoint: str, query: str, path: Path, *, timeout: float | None = None) -> int:
     """Stream the TSV result of *query* to *path* as Parquet; return its rows.
 
-    QLever's TSV escapes tabs and newlines inside terms, so one line is one row.
+    QLever's TSV escapes tabs and newlines inside terms, so one line is one row. *timeout*
+    limits the query (_post).
     """
     import polars as pl
 
     tsv = path.with_suffix(".tsv")
-    with _post(endpoint, query, "text/tab-separated-values") as response, tsv.open("wb") as out:
+    with (
+        _post(endpoint, query, "text/tab-separated-values", timeout=timeout) as response,
+        tsv.open("wb") as out,
+    ):
         tail = b""
         while chunk := response.read(1 << 24):
             _check_trailer(tail + chunk, query, lambda: response.read(4096))
@@ -962,35 +980,62 @@ def _count(value: str) -> int:
     return int(value.strip('"').split('"')[0])
 
 
-def _counts(endpoint: str, query: str, path: Path) -> list[tuple[tuple[str, ...], int]]:
+def _counts(
+    endpoint: str, query: str, path: Path, *, timeout: float | None = None
+) -> list[tuple[tuple[str, ...], int]]:
     """Return the rows of a grouped count query: the grouping terms, and the count as an int."""
     import polars as pl
 
-    _tsv_to_parquet(endpoint, query, path)
+    _tsv_to_parquet(endpoint, query, path, timeout=timeout)
     rows = [(tuple(row[:-1]), _count(row[-1])) for row in pl.read_parquet(path).iter_rows()]
     path.unlink()
     return rows
 
 
+# The time a planning query of the export (the count by graph and predicate) is given before
+# the export counts another way: on PubChem (29.8 B triples) it ran to QLever's 600 s.
+PLAN_SECONDS = 120.0
+
+
 def _graph_counts(
-    endpoint: str, path: Path, sizes: dict[str, int], unnamed: dict[str, int]
+    endpoint: str,
+    path: Path,
+    sizes: dict[str, int],
+    unnamed: dict[str, int],
+    known: Sequence[str] | None = None,
 ) -> dict[str, dict[str, int]]:
     """Return the rows of each predicate in each named graph.
 
-    One grouped query (GROUP BY ?g ?p) answers it, but on a large index QLever sorts every
-    triple by graph and predicate (PubChem: timed out after ten minutes, where GROUP BY ?p takes
-    a second). Then the graphs are listed; one graph that holds every triple (no triple outside
-    the named graphs) has the counts of GROUP BY ?p (*sizes*); otherwise each predicate is
-    counted by graph with the predicate bound.
+    When the graphs of the index are *known* (a graph-mapped registry entry names the graph of
+    each input file), they are not listed: one graph that holds every triple has the counts of
+    GROUP BY ?p (*sizes*), and several are counted graph by graph (GROUP BY ?p in one graph,
+    which reads that graph alone). Otherwise one grouped query (GROUP BY ?g ?p), given
+    PLAN_SECONDS, answers it; on a large index QLever sorts every triple by graph and predicate
+    (PubChem: timed out after ten minutes, where GROUP BY ?p takes a second), and then each
+    predicate is counted by graph with the predicate bound, which also lists the graphs. The
+    graphs are not listed with DISTINCT ?g, which reads every triple (PubChem, job 115703: it
+    timed out too and failed the source). A count that still times out raises
+    QueryTimeoutError: the caller reads the rows without their graphs.
     """
-    import polars as pl
-
     graphs: dict[str, dict[str, int]] = {}
+    if known:
+        names = list(dict.fromkeys(known))
+        if len(names) == 1 and not unnamed:
+            return {names[0]: dict(sizes)}
+        for name in names:
+            query = (
+                f"SELECT ?p (COUNT(?s) AS ?n) WHERE {{ GRAPH <{name}> {{ ?s ?p ?o }} }} GROUP BY ?p"
+            )
+            counts = {p[1:-1]: n for (p,), n in _counts(endpoint, query, path)}
+            if counts:
+                graphs[name] = counts
+        return graphs
     try:
         for (g, p), n in _counts(
             endpoint,
             "SELECT ?g ?p (COUNT(?s) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ?p",
             path,
+            timeout=PLAN_SECONDS,
         ):
             graphs.setdefault(g[1:-1], {})[p[1:-1]] = n
         return graphs
@@ -998,12 +1043,9 @@ def _graph_counts(
         logger.info("Scan: the count by graph and predicate timed out; counting by predicate")
     path.unlink(missing_ok=True)
     path.with_suffix(".tsv").unlink(missing_ok=True)
-    _tsv_to_parquet(endpoint, "SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }", path)
-    names = [g[1:-1] for g in pl.read_parquet(path)["g"].to_list()]
-    path.unlink()
-    if len(names) == 1 and not unnamed:
-        return {names[0]: dict(sizes)}
     for predicate, size in sizes.items():
+        if size - unnamed.get(predicate, 0) <= 0:
+            continue  # no row in a named graph
         for g, n in _predicate_graph_counts(endpoint, path, predicate, 0, None, size).items():
             graphs.setdefault(g[1:-1], {})[predicate] = n
     return graphs
@@ -1048,6 +1090,16 @@ def _predicate_graph_counts(
     return counts
 
 
+def _has_graph_column(path: Path) -> bool:
+    """Whether a row file was read with the graph of each row (column g)."""
+    import pyarrow.parquet as pq
+
+    try:
+        return "g" in pq.ParquetFile(path).schema_arrow.names
+    except Exception:  # an unreadable file is read again anyway
+        return False
+
+
 def _has_named_graphs(endpoint: str, path: Path) -> bool:
     """Whether the index holds a named graph (QLever's GRAPH ?g returns only named graphs)."""
     import polars as pl
@@ -1060,7 +1112,12 @@ def _has_named_graphs(endpoint: str, path: Path) -> bool:
 
 
 def export_index(
-    endpoint: str, path: Path, *, index: dict[str, Any] | None = None, workers: int | None = None
+    endpoint: str,
+    path: Path,
+    *,
+    index: dict[str, Any] | None = None,
+    workers: int | None = None,
+    named_graphs: Sequence[str] | None = None,
 ) -> RowStore:
     """Read every predicate of a local QLever endpoint into a row store at *path*.
 
@@ -1077,7 +1134,11 @@ def export_index(
 
     When the index has named graphs, each row is read with its graph (``GRAPH ?g``), and the
     triples outside every named graph, which ``GRAPH ?g`` does not return, are read with
-    ``FROM <QLEVER_DEFAULT_GRAPH>`` and given that graph.
+    ``FROM <QLEVER_DEFAULT_GRAPH>`` and given that graph. *named_graphs* are the named graphs of the
+    index when they are known (the graphs of a graph-mapped entry), which are then not listed
+    (_graph_counts). When the rows of each graph cannot be counted in time, the rows are read
+    without their graphs, and the manifest says that the graph split is missing (graph_split):
+    the source is mined over all its graphs, not failed.
     """
     import threading
 
@@ -1140,8 +1201,10 @@ def export_index(
         )
     }
     named = _has_named_graphs(endpoint, path)
+    known = list(named_graphs or [])
     graphs: dict[str, dict[str, int]] | None = None
     unnamed: dict[str, int] = {}
+    split: dict[str, Any] = {"state": "by_graph" if named else "no_named_graphs"}
     if named:
         unnamed = {
             p[1:-1]: n
@@ -1152,9 +1215,32 @@ def export_index(
                 counted,
             )
         }
-        graphs = _graph_counts(endpoint, counted, sizes, unnamed)
-        if unnamed:
-            graphs[QLEVER_DEFAULT_GRAPH] = unnamed
+        try:
+            graphs = _graph_counts(endpoint, counted, sizes, unnamed, known)
+        except QueryTimeoutError as error:
+            # The rows are read without their graphs: every triple is mined, the per-graph
+            # schemas and a graph scope are not available (RowStore.view).
+            logger.warning(
+                "Scan: the rows of each graph could not be counted in time; the rows are read "
+                "without their graphs (graph split missing): %s",
+                str(error)[:200],
+            )
+            split = {"state": "missing", "reason": str(error)[:500]}
+            named, graphs, unnamed = False, None, {}
+            counted.unlink(missing_ok=True)
+            counted.with_suffix(".tsv").unlink(missing_ok=True)
+        else:
+            if unnamed:
+                graphs[QLEVER_DEFAULT_GRAPH] = unnamed
+            split["graphs_from"] = "registry" if known else "index"
+    # Files read before in the other mode (with or without the graph of each row) are read
+    # again: a resumed export whose graph split failed this time, or succeeded.
+    for predicate, (name, _) in list(done.items()):
+        if _has_graph_column(path / "rows" / name) != named:
+            del done[predicate]
+    types_file = path / "types.parquet"
+    if resumable and types_file.is_file() and _has_graph_column(types_file) != named:
+        types_file.unlink()
     expected = {
         p: sum(g.get(p, 0) for g in graphs.values()) if graphs is not None else n
         for p, n in sizes.items()
@@ -1320,6 +1406,7 @@ def export_index(
         # The predicates whose rows the server refused: left out of the store (counted in
         # triples and rows, not in predicates).
         "gaps": dict(sorted(gaps.items())),
+        "graph_split": split,
     }
     _write_text(manifest, json.dumps(record, indent=1) + "\n")
     return RowStore(path)
@@ -2110,10 +2197,12 @@ class ScanStrategy(MiningStrategy):
         *,
         index: dict[str, Any] | None = None,
         store: RowStore | None = None,
+        graphs: Sequence[str] | None = None,
     ) -> None:
-        """Keep where the rows go, or the store to read."""
+        """Keep where the rows go, or the store to read, and the index's graphs when known."""
         self.store_dir = store_dir
         self.index = index
+        self.graphs = list(graphs) if graphs else None
         self.row_store = store
         self.store: RowStore | StoreView | None = store
 
@@ -2129,7 +2218,10 @@ class ScanStrategy(MiningStrategy):
                 raise ValueError("Give the scan strategy a store or a directory for one")
             phase = context.report.start_phase("scan-export")
             self.row_store = export_index(
-                context.helper.endpoint_url, self.store_dir, index=self.index
+                context.helper.endpoint_url,
+                self.store_dir,
+                index=self.index,
+                named_graphs=self.graphs,
             )
             context.report.finish_phase(phase, items=len(self.row_store.predicates))
             context.report.report.config["scan_store"] = {
@@ -2139,6 +2231,7 @@ class ScanStrategy(MiningStrategy):
                 "graphs": len(self.row_store.graphs or {}),
                 "seconds": self.row_store.manifest.get("seconds"),
                 "gaps": self.row_store.manifest.get("gaps") or {},
+                "graph_split": self.row_store.manifest.get("graph_split"),
             }
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")

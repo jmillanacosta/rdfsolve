@@ -704,6 +704,8 @@ class LocalMiningStage(Stage):
             strategy = ScanStrategy(
                 workdir / "scan-store",
                 index=index_description(workdir, index_name(workdir, source.name)),
+                # A graph-mapped entry names the graphs of its index: they are not listed.
+                graphs=list(source.graph_sources) or None,
             )
         miner = self._local_miner(
             port, scope,

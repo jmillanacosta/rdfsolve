@@ -42,6 +42,12 @@ class Endpoint:
         # The predicates whose row queries the server refuses (400, as a query it cannot parse).
         self.refuse: set[str] = set()
         self.queries: list[str] = []
+        # The form fields of each request (the per-query timeout of a planning query).
+        self.forms: list[dict[str, list[str]]] = []
+        # With quads, the data is in named graphs (the default graph is their union, as in
+        # QLever), and the planning queries over all graphs (counts or DISTINCT with GRAPH ?g)
+        # time out, as on PubChem (job 115703).
+        self.quads = False
         self.row_queries = 0
         endpoint = self
 
@@ -51,8 +57,16 @@ class Endpoint:
 
             def do_POST(self):
                 body = self.rfile.read(int(self.headers["Content-Length"])).decode()
-                query = urllib.parse.parse_qs(body)["query"][0]
+                form = urllib.parse.parse_qs(body)
+                query = form["query"][0]
                 endpoint.queries.append(query)
+                endpoint.forms.append(form)
+                planning = "COUNT" in query or "DISTINCT" in query
+                if endpoint.quads and "GRAPH ?g" in query and planning:
+                    self.send_response(429)
+                    self.end_headers()
+                    self.wfile.write(b'{"exception": "Operation timed out. Last operation: Sort"}')
+                    return
                 if any(f"<{p}>" in query and "COUNT" not in query for p in endpoint.refuse):
                     self.send_response(400)
                     self.end_headers()
@@ -110,10 +124,15 @@ class Endpoint:
                     self.end_headers()
                     self.wfile.write(b'{"exception": "Operation timed out. Last operation: Scan"}')
                     return
-                if "GRAPH ?g" in query:
+                if "GRAPH ?g" in query and not endpoint.quads:
                     text = b"?g\n"
                 else:
-                    text = endpoint.store.query(query).serialize(format=ox.QueryResultsFormat.TSV)
+                    # QLever's default graph is the union of the graphs; its triples outside
+                    # every named graph (FROM QLEVER_DEFAULT_GRAPH) are none here.
+                    union = endpoint.quads and scan.QLEVER_DEFAULT_GRAPH not in query
+                    text = endpoint.store.query(query, use_default_graph_as_union=union).serialize(
+                        format=ox.QueryResultsFormat.TSV
+                    )
                 if self.headers["Accept"] == "application/octet-stream":
                     cells = [line.split(b"\t") for line in text.split(b"\n")[1:] if line]
                     text = b"".join(
@@ -235,3 +254,38 @@ def test_a_store_file_with_nul_terms_is_not_reused(tmp_path):
     assert "NUL" in scan.store_file_problem(nul)
     (tmp_path / "zero.parquet").write_bytes(b"\x00" * 100)
     assert "open" in scan.store_file_problem(tmp_path / "zero.parquet")
+
+
+def test_a_graph_split_that_times_out_does_not_fail_the_source(endpoint, tmp_path):
+    """PubChem (job 115703): the count by graph and predicate and then the listing of the graphs
+    (DISTINCT ?g, which reads every triple) timed out, and the source failed. The count by
+    graph is a planning query with a time limit; when the graph split cannot be counted, the
+    rows are read without their graphs, the store says so, and a graph scope mines them all."""
+    endpoint.store = ox.Store()
+    endpoint.store.load(DATA.replace(b" .\n", b" <urn:graph:one> .\n"), format=ox.RdfFormat.N_QUADS)
+    endpoint.quads = True
+    store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
+    assert store.graphs is None and store.manifest["graph_split"]["state"] == "missing"
+    assert not any("DISTINCT ?g" in q for q in endpoint.queries), "The graphs are not listed"
+    planned = [f for f in endpoint.forms if "GROUP BY ?g ?p" in f["query"][0]]
+    assert planned and planned[0]["timeout"] == [f"{scan.PLAN_SECONDS:g}s"]
+    assert sum(store.rows(p).collect().height for p in store.predicates) == 9
+    assert store.view(["urn:graph:one"]) is store, "The scope is not applied"
+
+
+def test_known_graphs_are_not_listed_or_grouped(endpoint, tmp_path):
+    """The graphs of a graph-mapped entry are given: each is counted alone, nothing is
+    grouped by graph over the whole index."""
+    endpoint.store = ox.Store()
+    endpoint.store.load(DATA.replace(b" .\n", b" <urn:graph:one> .\n"), format=ox.RdfFormat.N_QUADS)
+    endpoint.quads = True
+    store = scan.export_index(
+        endpoint.url,
+        tmp_path / "store",
+        index={"name": "t"},
+        workers=1,
+        named_graphs=["urn:graph:one"],
+    )
+    assert store.manifest["graph_split"] == {"state": "by_graph", "graphs_from": "registry"}
+    assert set(store.graphs) == {"urn:graph:one"}
+    assert not any("GROUP BY ?g" in q or "DISTINCT ?g" in q for q in endpoint.queries)
