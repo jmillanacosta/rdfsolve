@@ -549,6 +549,7 @@ def _property_discovery(
         missing: int | None = None
         if counted is not n:
             error: Exception = EndpointTimeoutError(n.get("refused") or "census refused")
+            last: list[Exception] = [error]
         else:
             try:
                 rows += _select(context, query, "structural/discovery")
@@ -556,7 +557,7 @@ def _property_discovery(
             except (SparqlHelperError, ValueError) as refused:
                 error = refused
             logger.info("Discovery: %s refused; discovering it in batches of subjects", predicate)
-            last: list[Exception] = [error]
+            last = [error]
             found, missing = _discover_by_subjects(context, graph, named, residual, last)
         rows += found
         if missing is None or missing:

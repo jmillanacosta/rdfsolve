@@ -371,3 +371,29 @@ def test_a_refused_class_listing_does_not_fail_the_source(samples):
     else:
         assert listing["state"] == "refused" and not typed
         assert report.config["class_schema_state"] == "class_listing_refused"
+
+
+def test_a_sampled_census_whose_discovery_sample_is_refused_is_recorded(monkeypatch):
+    """The census of functional-any is answered over a sample, and the discovery of its edges
+    is refused even over a sample: the property is recorded as refused (the source partial),
+    as STRING's census was in job 115712, where it raised UnboundLocalError instead."""
+    from rdfsolve.mining import structural_strategy
+
+    monkeypatch.setattr(structural_strategy, "LocalGraphHelper", type("Remote", (), {}))
+    with SchemaMiner.from_graph(string_like(), delay=0, graph_uris=[GRAPH], sample_size=2) as miner:
+        refusing(miner, f"<{FUNCTIONAL}>")
+        select = miner.helper.select
+
+        def answer(query, purpose="", **kwargs):
+            if purpose.startswith("structural/discovery") and str(FUNCTIONAL) in query:
+                raise EndpointTimeoutError(CUT)
+            return select(query, purpose, **kwargs)
+
+        miner.helper.select = answer
+        miner.mine(dataset_name="refused-discovery")
+        report = miner.last_report
+    (entry,) = report.config["structural_coverage"]
+    census = entry["census_properties"][str(FUNCTIONAL)]
+    assert "sampled" in census and "discovery_refused" in census
+    assert report.completion_state == "partial"
+    assert any(f.purpose == "structural/discovery" for f in report.query_failures)
