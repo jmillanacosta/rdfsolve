@@ -9469,6 +9469,8 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  graph_uris:
+  - https://purl.org/okn/frink/kg/biobricks-aopwiki
 - name: biobricks-ice
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-ice/sparql
@@ -9502,6 +9504,8 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  graph_uris:
+  - https://purl.org/okn/frink/kg/biobricks-mesh
 - name: biobricks-pubchem-annotations
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-pubchem-annotations/sparql
@@ -10051,14 +10055,10 @@
   science_area: life sciences
   graph_uris:
   - https://purl.org/okn/frink/kg/ruralkg
-  - https://purl.org/okn/frink/kg/ruralkg#void
   graph_sources:
     https://purl.org/okn/frink/kg/ruralkg:
       download_ttl:
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ruralkg/20261006/g0001.whole.ttl.gz
-    https://purl.org/okn/frink/kg/ruralkg#void:
-      download_ttl:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ruralkg/20261006/g0002.whole.ttl.gz
   endpoint_export:
     endpoint: https://apps.okn.us/ruralkg/sparql
     finished: '2026-10-06T15:23:38+00:00'
@@ -10067,6 +10067,8 @@
     graphs: 2
     triples: 887232
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/ruralkg#void
 - name: sawgraph
   dataset_kind: instance
   endpoint: https://apps.okn.us/sawgraph/sparql
@@ -10082,7 +10084,6 @@
   science_area: life sciences
   graph_uris:
   - https://purl.org/okn/frink/kg/sawgraph
-  - https://purl.org/okn/frink/kg/sawgraph#void
   graph_sources:
     https://purl.org/okn/frink/kg/sawgraph:
       download_nt:
@@ -10288,9 +10289,6 @@
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sawgraph/20261006/g0001.p0200.nt.gz
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sawgraph/20261006/g0001.p0201.nt.gz
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sawgraph/20261006/g0001.p0202.nt.gz
-    https://purl.org/okn/frink/kg/sawgraph#void:
-      download_nt:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/sawgraph/20261006/g0002.whole.nt.gz
   endpoint_export:
     endpoint: https://apps.okn.us/sawgraph/sparql
     finished: '2026-10-06T20:10:07+00:00'
@@ -10299,6 +10297,8 @@
     graphs: 2
     triples: 161390321
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/sawgraph#void
 - name: scales
   dataset_kind: instance
   endpoint: https://apps.okn.us/scales/sparql
@@ -10486,6 +10486,8 @@
   sparql_strategy: get+json
   supports_graph: false
   science_area: life sciences
+  graph_uris:
+  - https://purl.org/okn/frink/kg/spoke-genelab
 - name: sudokn
   dataset_kind: instance
   endpoint: https://apps.okn.us/sudokn/sparql
@@ -10572,14 +10574,10 @@
   science_area: life sciences
   graph_uris:
   - https://purl.org/okn/frink/kg/wildlifekn
-  - https://purl.org/okn/frink/kg/wildlifekn#void
   graph_sources:
     https://purl.org/okn/frink/kg/wildlifekn:
       download_nt:
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wildlifekn/20261006/g0001.whole.nt.gz
-    https://purl.org/okn/frink/kg/wildlifekn#void:
-      download_nt:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/wildlifekn/20261006/g0002.whole.nt.gz
   endpoint_export:
     endpoint: https://apps.okn.us/wildlifekn/sparql
     finished: '2026-10-06T20:00:42+00:00'
@@ -10588,6 +10586,8 @@
     graphs: 2
     triples: 9425999
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/wildlifekn#void
 - name: diseaseontology
   dataset_kind: ontology
   endpoint: https://sparql.disease-ontology.org
@@ -11405,14 +11405,10 @@
   endpoint: https://apps.okn.us/biomarkerkg/sparql
   graph_uris:
   - https://purl.org/okn/frink/kg/biomarkerkg
-  - https://purl.org/okn/frink/kg/biomarkerkg#void
   graph_sources:
     https://purl.org/okn/frink/kg/biomarkerkg:
       download_nt:
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/biomarker/20261006/g0001.whole.nt.gz
-    https://purl.org/okn/frink/kg/biomarkerkg#void:
-      download_nt:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/biomarker/20261006/g0002.whole.nt.gz
   endpoint_export:
     endpoint: https://apps.okn.us/biomarkerkg/sparql
     finished: '2026-10-06T20:01:33+00:00'
@@ -11421,6 +11417,8 @@
     graphs: 2
     triples: 1215644
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/biomarkerkg#void
 - name: culture-knowledge-graph
   dataset_kind: instance
   kg_registry_id: culture-knowledge-graph
@@ -12341,6 +12339,8 @@
   endpoint: https://apps.okn.us/medical-device-kg/sparql
   void_iri: https://purl.org/okn/frink/kg/medical-device-kg
   sparql_strategy: get+json
+  graph_uris:
+  - https://purl.org/okn/frink/kg/medical-device-kg
 - name: ncipidkg
   dataset_kind: instance
   kg_registry_id: ncipidkg
@@ -12349,14 +12349,10 @@
   endpoint: https://apps.okn.us/ncipidkg/sparql
   graph_uris:
   - https://purl.org/okn/frink/kg/ncipidkg
-  - https://purl.org/okn/frink/kg/ncipidkg#void
   graph_sources:
     https://purl.org/okn/frink/kg/ncipidkg:
       download_nt:
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ncipidkg/20261006/g0001.whole.nt.gz
-    https://purl.org/okn/frink/kg/ncipidkg#void:
-      download_nt:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/ncipidkg/20261006/g0002.whole.nt.gz
   endpoint_export:
     endpoint: https://apps.okn.us/ncipidkg/sparql
     finished: '2026-10-06T20:01:12+00:00'
@@ -12365,6 +12361,8 @@
     graphs: 2
     triples: 775360
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/ncipidkg#void
 - name: nextprot
   dataset_kind: instance
   kg_registry_id: nextprot
@@ -12527,7 +12525,6 @@
   endpoint: https://apps.okn.us/prokn/sparql
   graph_uris:
   - https://purl.org/okn/frink/kg/prokn
-  - https://purl.org/okn/frink/kg/prokn#void
   graph_sources:
     https://purl.org/okn/frink/kg/prokn:
       download_nt:
@@ -12749,9 +12746,6 @@
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0216.nt.gz
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0217.nt.gz
       - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0001.p0218.nt.gz
-    https://purl.org/okn/frink/kg/prokn#void:
-      download_nt:
-      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/prokn/20261006/g0002.whole.nt.gz
   endpoint_export:
     endpoint: https://apps.okn.us/prokn/sparql
     finished: '2026-10-06T20:09:04+00:00'
@@ -12760,6 +12754,8 @@
     graphs: 2
     triples: 99309452
     verified: true
+    left_out_graphs:
+    - https://purl.org/okn/frink/kg/prokn#void
 - name: uf-okn
   dataset_kind: instance
   kg_registry_id: uf-okn
