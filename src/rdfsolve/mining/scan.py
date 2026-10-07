@@ -652,6 +652,63 @@ def _text_predicates() -> frozenset[str]:
     return frozenset([*DEFINITION_PREDICATES, *NAME_PREDICATES, *LABEL_PROPERTIES])
 
 
+# QLever's datatype of an id, in its top four bits, for the values it keeps in the id (written
+# bare in TSV): 1 bool, 2 int, 3 double, 7 a date. DATATYPE(?o) gives xsd:boolean, xsd:int,
+# xsd:double, and xsd:date, xsd:dateTime, xsd:gYearMonth or xsd:gYear by the lexical form
+# (checked on the stores of WikiPathways, HRA-KG and Bgee: the same datatype for every row).
+_XSD = "http://www.w3.org/2001/XMLSchema#"
+_ID_DATATYPES = {1: "boolean", 2: "int", 3: "double"}
+_DATE_ID = 7
+_ZONE = r"(Z|[+-][0-9]{2}:[0-9]{2})?"
+
+
+def _literal_datatype(term: str = "o", ids: str = "oid") -> pl.Expr:
+    """Return the datatype IRI of each literal of *term* (``<...>``, as DATATYPE writes it), from
+    its TSV form and QLever's id, without asking the server; None for an IRI or blank node.
+
+    A quoted literal names its datatype (``"x"^^<dt>``), its language (rdf:langString) or none
+    (xsd:string); a bare value is one that QLever keeps in its id, whose top bits say which
+    (_ID_DATATYPES). DATATYPE(?o) in the export query made QLever read the text of every
+    literal of the predicate before LIMIT and OFFSET (rdfportal.pubmed dc:title, 39 M rows:
+    LIMIT 100000 OFFSET 0 timed out at 600 s, job 115868; rdfportal.clinvar comment, job
+    115722), so a slice cost as much as the whole predicate.
+    """
+    import polars as pl
+
+    o = pl.col(term)
+    bits = pl.col(ids) // (2**60)
+    typed = o.str.extract(r'"\^\^(<[^>]*>)$', 1)
+    date = pl.lit(None, pl.String)
+    for pattern, name in (
+        (r"^-?[0-9]{4,}-[0-9]{2}-[0-9]{2}T", "dateTime"),
+        (rf"^-?[0-9]{{4,}}-[0-9]{{2}}-[0-9]{{2}}{_ZONE}$", "date"),
+        (rf"^-?[0-9]{{4,}}-[0-9]{{2}}{_ZONE}$", "gYearMonth"),
+        (rf"^-?[0-9]{{4,}}{_ZONE}$", "gYear"),
+    ):
+        date = (
+            pl.when(date.is_null() & o.str.contains(pattern))
+            .then(pl.lit(f"<{_XSD}{name}>"))
+            .otherwise(date)
+        )
+    value = pl.lit(None, pl.String)
+    for code, name in _ID_DATATYPES.items():
+        value = pl.when(bits == code).then(pl.lit(f"<{_XSD}{name}>")).otherwise(value)
+    return (
+        pl.when(o.str.starts_with("<") | o.str.starts_with("_:") | o.is_null())
+        .then(pl.lit(None, pl.String))
+        .when(o.str.starts_with('"') & typed.is_not_null())
+        .then(typed)
+        .when(o.str.starts_with('"') & o.str.contains(r'"@[A-Za-z0-9-]+$'))
+        .then(pl.lit("<http://www.w3.org/1999/02/22-rdf-syntax-ns#langString>"))
+        .when(o.str.starts_with('"'))
+        .then(pl.lit(f"<{_XSD}string>"))
+        .when(bits == _DATE_ID)
+        .then(date)
+        .otherwise(value)
+        .alias("d")
+    )
+
+
 def _trim_literals(column: str) -> pl.Expr:
     """Cut the lexical form of the literals of *column* to LITERAL_CHARS characters."""
     import polars as pl
@@ -800,6 +857,9 @@ def _stream_rows(
                         ),
                         *(pl.lit(v).alias(k) for k, v in (extra or {}).items()),
                     )
+                    if "o" in frame.columns and "oid" in frame.columns and "d" not in names:
+                        # The datatype of each literal, from its form and id (_literal_datatype).
+                        frame = frame.with_columns(_literal_datatype())
                     if not keep_text and "o" in frame.columns:
                         frame = frame.with_columns(_trim_literals("o"))
                     table = frame.to_arrow()
@@ -817,9 +877,13 @@ def _stream_rows(
         partial.unlink(missing_ok=True)
         raise
     if writer is None:
+        derived = ["d"] if "o" in names and "oid" in ids and "d" not in names else []
         pl.DataFrame(
-            {n: [] for n in [*names, *ids, *(extra or {})]},
-            schema={**dict.fromkeys(names, pl.String), **dict.fromkeys(ids, pl.UInt64)},
+            {n: [] for n in [*names, *ids, *(extra or {}), *derived]},
+            schema={
+                **dict.fromkeys([*names, *derived], pl.String),
+                **dict.fromkeys(ids, pl.UInt64),
+            },
         ).write_parquet(partial)
     else:
         writer.close()
@@ -1401,7 +1465,7 @@ def export_index(
             rows = _read_query(
                 streams,
                 endpoint,
-                _row_query(predicate),
+                _row_query(predicate, datatype=False),
                 file,
                 {"sid": 0, "oid": 1},
                 size,
@@ -1412,7 +1476,7 @@ def export_index(
             rows = _read_query(
                 streams,
                 endpoint,
-                _graph_row_query(predicate),
+                _graph_row_query(predicate, datatype=False),
                 file,
                 {"gid": 0, "sid": 1, "oid": 2},
                 size - unnamed.get(predicate, 0),
@@ -1424,7 +1488,7 @@ def export_index(
                 rows += _read_query(
                     streams,
                     endpoint,
-                    _unnamed_row_query(predicate),
+                    _unnamed_row_query(predicate, datatype=False),
                     rest,
                     {"sid": 0, "oid": 1},
                     unnamed[predicate],

@@ -25,6 +25,16 @@ DATA = b"""
 """
 
 
+def _qlever_id(cell: bytes) -> bytes:
+    """Return an id as QLever gives it: a value kept in the id (an integer) carries its datatype
+    in the top four bits (2: int); other terms get a hash of their text."""
+    import re
+
+    if re.fullmatch(rb"-?[0-9]+", cell) and abs(int(cell)) < 2**59:
+        return ((2 << 60) + int(cell) % 2**60).to_bytes(8, "little")
+    return hashlib.blake2b(cell, digest_size=8).digest()
+
+
 class Endpoint:
     """A local SPARQL endpoint on pyoxigraph answering as QLever does: TSV, or one 64-bit id per
     cell (a hash of the cell's text); it can fail after a number of row queries."""
@@ -42,6 +52,8 @@ class Endpoint:
         # The predicates whose row queries the server refuses (400, as a query it cannot parse).
         self.refuse: set[str] = set()
         self.queries: list[str] = []
+        # Whether a query with DATATYPE times out whatever its LIMIT (rdfportal.pubmed).
+        self.datatype_times_out = False
         # The form fields of each request (the per-query timeout of a planning query).
         self.forms: list[dict[str, list[str]]] = []
         # With quads, the data is in named graphs (the default graph is their union, as in
@@ -59,6 +71,14 @@ class Endpoint:
 
             def do_POST(self):
                 body = self.rfile.read(int(self.headers["Content-Length"])).decode()
+                if "DATATYPE" in body and endpoint.datatype_times_out:
+                    # QLever computes DATATYPE(?o) for every row of the predicate before LIMIT
+                    # and OFFSET: on rdfportal.pubmed's titles every slice timed out.
+                    endpoint.queries.append(urllib.parse.parse_qs(body)["query"][0])
+                    self.send_response(429)
+                    self.end_headers()
+                    self.wfile.write(b'{"exception": "Operation timed out."}')
+                    return
                 form = urllib.parse.parse_qs(body)
                 query = form["query"][0]
                 endpoint.queries.append(query)
@@ -74,7 +94,12 @@ class Endpoint:
                     self.end_headers()
                     self.wfile.write(b"Invalid SPARQL query")
                     return
-                if "DATATYPE" in query:
+                # A row query: the text of the rows of a predicate (the ids are read with
+                # application/octet-stream).
+                if (
+                    query.startswith("SELECT ?s ?o")
+                    and self.headers["Accept"] != "application/octet-stream"
+                ):
                     endpoint.row_queries += 1
                     if (
                         endpoint.fail_after is not None
@@ -97,7 +122,7 @@ class Endpoint:
                         self.send_response(200)
                         self.end_headers()
                         self.wfile.write(
-                            b"?s\t?o\t?d\n<urn:a1>\t<urn:b1>\t\n"
+                            b"?s\t?o\n<urn:a1>\t<urn:b1>\n"
                             + scan.QLEVER_ERROR_TRAILER
                             + b" while exporting the query result. Unfortunately due to limitations"
                             + b" in the HTTP 1.1 protocol, there is no better way to report this"
@@ -137,9 +162,7 @@ class Endpoint:
                     )
                 if self.headers["Accept"] == "application/octet-stream":
                     cells = [line.split(b"\t") for line in text.split(b"\n")[1:] if line]
-                    text = b"".join(
-                        hashlib.blake2b(c, digest_size=8).digest() for row in cells for c in row
-                    )
+                    text = b"".join(_qlever_id(c) for row in cells for c in row)
                 elif endpoint.latin1:
                     text = text.replace("®".encode(), "®".encode("latin-1"))
                 self.send_response(200)
@@ -175,7 +198,7 @@ def test_rows_are_read_in_blocks_with_their_ids(endpoint, tmp_path, monkeypatch)
 
 
 def test_an_export_that_stopped_reads_only_the_predicates_not_yet_written(endpoint, tmp_path):
-    endpoint.fail_after = 2  # two of the five predicates (their text; the ids have no DATATYPE)
+    endpoint.fail_after = 2  # two of the five predicates (their text queries)
     with pytest.raises(Exception):
         scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
     assert (tmp_path / "store" / "progress.jsonl").read_text().count("\n") == 2
@@ -314,3 +337,49 @@ def test_rows_that_are_not_utf8_are_read_lossy_and_counted(endpoint, tmp_path):
     assert found["rows"] == 1 and "duricef\\xae" in found["samples"][0]
     assert store.manifest["gaps"] == {"urn:brand\ufffd": "the predicate IRI is not valid UTF-8"}
     assert "urn:link" in store.predicates, "The other predicates are read"
+
+
+def test_the_export_does_not_ask_the_server_for_datatypes(endpoint, tmp_path):
+    """rdfportal.pubmed (job 115718): every slice of dc:title with DATATYPE(?o), down to 78,125
+    rows, ran to QLever's 600 s, which computes DATATYPE for the whole predicate before LIMIT
+    and OFFSET (LIMIT 100000 OFFSET 0 timed out too, job 115868). The rows are read without
+    it, and the datatype of each literal comes from its form and id."""
+    endpoint.datatype_times_out = True
+    store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
+    assert not any("DATATYPE" in q for q in endpoint.queries)
+    size = store.rows("urn:size").collect()
+    # QLever keeps an integer in its id and gives it xsd:int, as DATATYPE does.
+    assert size["d"].to_list() == ["http://www.w3.org/2001/XMLSchema#int"]
+    note = store.rows("urn:note").collect()
+    assert note["d"].to_list() == ["http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"]
+    label = store.rows("http://www.w3.org/2000/01/rdf-schema#label").collect()
+    assert label["d"].to_list() == ["http://www.w3.org/2001/XMLSchema#string"]
+
+
+def test_the_datatype_of_a_literal_comes_from_its_form_and_id():
+    """The datatype that DATATYPE(?o) gives, for each form of QLever's TSV (checked against the
+    stored DATATYPE of every row of WikiPathways and HRA-KG and of samples of Bgee and OMA:
+    no difference)."""
+    import polars as pl
+
+    xsd = "http://www.w3.org/2001/XMLSchema#"
+    bits = {"bool": 1 << 60, "int": 2 << 60, "double": 3 << 60, "vocab": 4 << 60, "date": 7 << 60}
+    rows = [
+        ('"x"', bits["vocab"], f"<{xsd}string>"),
+        ('"x"@en-GB', bits["vocab"], "<http://www.w3.org/1999/02/22-rdf-syntax-ns#langString>"),
+        (f'"a ^^b"^^<{xsd}anyURI>', bits["vocab"], f"<{xsd}anyURI>"),
+        ("false", bits["bool"] + 0, f"<{xsd}boolean>"),
+        ("32768", bits["int"] + 5, f"<{xsd}int>"),
+        ("-6.1e-06", bits["double"] + 9, f"<{xsd}double>"),
+        ("2012-01-12T09:58:38Z", bits["date"] + 1, f"<{xsd}dateTime>"),
+        ("2024-03-18", bits["date"] + 2, f"<{xsd}date>"),
+        ("2024-03", bits["date"] + 3, f"<{xsd}gYearMonth>"),
+        ("2024", bits["date"] + 4, f"<{xsd}gYear>"),
+        ("<urn:a>", bits["vocab"], None),
+        ("_:b1", 8 << 60, None),
+    ]
+    frame = pl.DataFrame(
+        {"o": [r[0] for r in rows], "oid": [r[1] for r in rows]},
+        schema={"o": pl.String, "oid": pl.UInt64},
+    )
+    assert frame.select(scan._literal_datatype())["d"].to_list() == [r[2] for r in rows]
