@@ -229,3 +229,35 @@ def test_the_release_names_the_pinned_inputs_of_a_local_index(tmp_path):
         "1.2",
         "match",
     )
+
+
+def test_the_release_gives_roles_to_the_recipe_of_a_local_index(tmp_path):
+    """The Qleverfile and its companions, the repaired lines and the export manifest of a
+    local index are release artifacts with their checksums (the release could not say how to
+    build an index again)."""
+    from rdfsolve.qlever.recipe import EXPORT_MANIFEST, EXPORT_NOTES, RECIPE_DIR
+    from rdfsolve.qlever.repair import REPAIRS_FILE
+    from rdfsolve.release.build import INDEX_RECIPE_ROLES, INDEX_RECIPE_SUFFIX
+
+    _fixture(tmp_path)
+    folder = tmp_path / "demo" / RECIPE_DIR.format(name="demo", suffix="_local")
+    assert folder.name.endswith(INDEX_RECIPE_SUFFIX)
+    assert set(INDEX_RECIPE_ROLES) == {REPAIRS_FILE, EXPORT_MANIFEST, EXPORT_NOTES}
+    folder.mkdir()
+    for name in ("Qleverfile", "index-command.sh", "recipe.json", "downloads.json",
+                 "export_inputs.json", REPAIRS_FILE, EXPORT_MANIFEST, EXPORT_NOTES):
+        (folder / name).write_text("{}\n")
+    (tmp_path / "demo" / "demo_local_engine.json").write_text("{}\n")
+    manifest = build_release_manifest(tmp_path, release_id="test")
+    roles = {a.path: a.role for a in manifest.artifacts}
+    recipe = f"demo/{folder.name}"
+    assert roles[f"{recipe}/Qleverfile"] == "index_recipe"
+    assert roles[f"{recipe}/index-command.sh"] == "index_recipe"
+    assert roles[f"{recipe}/export_inputs.json"] == "index_recipe", "Not the input manifest"
+    assert roles[f"{recipe}/{REPAIRS_FILE}"] == "input_repairs"
+    assert roles[f"{recipe}/{EXPORT_MANIFEST}"] == "export_manifest"
+    assert roles[f"{recipe}/{EXPORT_NOTES}"] == "export_manifest_notes"
+    assert roles["demo/demo_local_engine.json"] == "engine_record"
+    qleverfile = next(a for a in manifest.artifacts if a.path == f"{recipe}/Qleverfile")
+    assert qleverfile.dataset_id == "demo" and len(qleverfile.sha256) == 64
+    assert manifest.datasets[0].input_manifest_path is None, "The recipe is no input pin"

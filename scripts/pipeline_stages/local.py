@@ -37,7 +37,7 @@ from rdfsolve.qlever.lifecycle import exit_status
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
 from .base import PartialMiningError, Stage, write_rdf
-from .config import Source
+from .config import PipelineConfig, Source
 
 log = logging.getLogger(__name__)
 
@@ -109,6 +109,11 @@ class LocalMiningStage(Stage):
 
     name = "local_mining"
 
+    def __init__(self, config: PipelineConfig):
+        super().__init__(config)
+        # The SHA-256 and labels of each QLever image, read once per run.
+        self._images: dict[str, tuple[str | None, dict[str, str]]] = {}
+
     def _execute(self) -> dict[str, Any]:
         sources = self.config.get_local_sources()
         log.info(f"Processing {len(sources)} local sources")
@@ -171,6 +176,7 @@ class LocalMiningStage(Stage):
                         continue
 
                 self._carry_inputs(workdir, source)
+                self._carry_index_recipe(workdir, source)
 
                 if self.config.index_only:
                     log.info("  Index only: %s is not mined", source.name)
@@ -390,6 +396,56 @@ class LocalMiningStage(Stage):
         output_dir.mkdir(parents=True, exist_ok=True)
         target = output_dir / f"{source.name}{self.config.output_suffix}_inputs.json"
         target.write_text((workdir / INPUTS).read_text(encoding="utf-8"), encoding="utf-8")
+
+    def _carry_index_recipe(self, workdir: Path, source: Source) -> None:
+        """Write the recipe of a source's index into the run, beside its schema.
+
+        The Qleverfile, the index command, the settings, the census of literal datatypes, the
+        download record, the repaired input lines and the manifest of an endpoint export go to
+        <source>_local_index_recipe, made portable (rdfsolve.qlever.recipe); a work folder
+        without a Qleverfile has none.
+        """
+        from rdfsolve.qlever.lifecycle import index_name
+        from rdfsolve.qlever.recipe import RECIPE_DIR, engine_details, write_index_recipe
+
+        if not (workdir / "Qleverfile").is_file():
+            return
+        name = index_name(workdir, source.name)
+        engine, labels = self._engine_record(workdir, name)
+        suffix = self.config.output_suffix
+        folder = RECIPE_DIR.format(name=source.name, suffix=suffix)
+        target = self.config.output_dir / source.name / folder
+        recipe = write_index_recipe(
+            workdir, target, name=name, engine=engine_details(engine, labels),
+            data_dir=self.config.data_dir,
+        )
+        if recipe and recipe["absolute_paths_left"]:
+            log.warning("  The index recipe of %s keeps absolute paths: %s", source.name,
+                        recipe["absolute_paths_left"])
+
+    def _engine_record(self, workdir: Path, name: str) -> tuple[dict[str, Any], dict[str, str]]:
+        """Return the engine record of an index (its image, the image's SHA-256, its QLever
+        build) and the labels of the image; an image is read once per run.
+        """
+        import hashlib
+
+        from rdfsolve.qlever.lifecycle import image_for_index, index_build
+        from rdfsolve.qlever.recipe import image_labels
+
+        image = image_for_index(self.config.data_dir, workdir, name)
+        key = str(image.resolve())
+        if key not in self._images:
+            sha256, labels = None, {}
+            if image.is_file():
+                digest = hashlib.sha256()
+                with image.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1 << 20), b""):
+                        digest.update(chunk)
+                sha256, labels = digest.hexdigest(), image_labels(image)
+            self._images[key] = (sha256, labels)
+        sha256, labels = self._images[key]
+        engine = {"image": key, "image_sha256": sha256, "index_build": index_build(workdir, name)}
+        return engine, labels
 
     def _has_usable_index(self, workdir: Path, source: Source) -> bool:
         """Whether the work folder has an index to reuse; set aside a truncated one.
@@ -1008,16 +1064,10 @@ class LocalMiningStage(Stage):
             raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
 
     def _qlever_start(self, workdir: Path, name: str, port: int, *, port_wait: float = 0) -> int:
-        import hashlib
-
-        from rdfsolve.qlever.lifecycle import image_for_index, index_build, start_server
+        from rdfsolve.qlever.lifecycle import image_for_index, start_server
 
         image = image_for_index(self.config.data_dir, workdir, name)
-        engine = {
-            "image": str(image.resolve()),
-            "image_sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
-            "index_build": index_build(workdir, name),
-        }
+        engine, _ = self._engine_record(workdir, name)
         output_dir = self.config.output_dir / name
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"{name}{self.config.output_suffix}_engine.json").write_text(

@@ -34,6 +34,14 @@ _SELF_FILES = {
     "summary.tsv",
     "validation_release.json",
 }
+# The folder of the recipe of a local index (rdfsolve.qlever.recipe.RECIPE_DIR) and the roles of
+# its files that are not the recipe itself.
+INDEX_RECIPE_SUFFIX = "_index_recipe"
+INDEX_RECIPE_ROLES = {
+    "input-repairs.json": "input_repairs",
+    "export-manifest.json": "export_manifest",
+    "export-manifest-notes.json": "export_manifest_notes",
+}
 
 
 def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -73,6 +81,11 @@ def _media_type(path: Path) -> str | None:
 
 def _role(path: Path) -> str | None:
     name = path.name
+    if path.parent.name.endswith(INDEX_RECIPE_SUFFIX):
+        # The recipe of a local index (rdfsolve.qlever.recipe): its files have generic names.
+        return INDEX_RECIPE_ROLES.get(name, "index_recipe")
+    if name.endswith("_engine.json"):
+        return "engine_record"
     if name == "scientific_checks.json":
         return "scientific_validation_plan"
     if name.endswith("scientific_check_results.json"):

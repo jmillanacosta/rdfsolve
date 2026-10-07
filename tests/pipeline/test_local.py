@@ -671,3 +671,24 @@ def test_a_failed_source_logs_its_traceback(tmp_path, monkeypatch, caplog):
         results = stage._execute()
     assert [f["name"] for f in results["failed"]] == ["broken"]
     assert "Traceback" in caplog.text and "KeyError" in caplog.text
+
+
+def test_a_run_writes_the_recipe_of_the_index_beside_the_outputs(tmp_path):
+    """The run folder of a local source held only its outputs: the Qleverfile and its companions
+    stayed in the work folder, and a release could not say how to build the index again."""
+    stage, workdir, source = _stage(tmp_path, update=False)
+    stage.config.output_suffix = "_local"
+    stage.config.data_dir = tmp_path / "data"
+    (workdir / "Qleverfile").write_text(
+        f"[data]\nNAME = fixture\nGET_DATA_CMD = mkdir -p {workdir}/rdf && cd {workdir}/rdf\n"
+        "[server]\nPORT = 7000\nACCESS_TOKEN = fixture\n"
+        "[runtime]\nIMAGE = docker.io/adfreiburg/qlever:latest\n"
+    )
+    (workdir / "fixture.settings.json").write_text("{}")
+    stage._carry_index_recipe(workdir, source)
+    recipe = tmp_path / "run" / "fixture" / "fixture_local_index_recipe"
+    qleverfile = (recipe / "Qleverfile").read_text()
+    assert "cd rdf" in qleverfile and str(tmp_path) not in qleverfile
+    assert "ACCESS_TOKEN" not in qleverfile.split("[runtime]")[0].replace("# PORT, ACCESS", "")
+    assert (recipe / "fixture.settings.json").exists() and (recipe / "recipe.json").exists()
+    assert not (recipe / "rdf").exists()
