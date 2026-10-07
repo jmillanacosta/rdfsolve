@@ -594,8 +594,10 @@ def group_before_counting(
     table = type_table(store)
     if limit is None:
         return None
+    # The distinct classes of the type rows, read without making the rows distinct first.
     count = int(
-        table.filter(pl.col("c").str.starts_with("<"))
+        store.graph_types()
+        .filter(pl.col("c").str.starts_with("<"))
         .select(pl.col("c").n_unique())
         .collect(engine="streaming")
         .item()

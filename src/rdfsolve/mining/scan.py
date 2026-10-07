@@ -90,6 +90,9 @@ class CountedStore(Protocol):
     def type_ids(self) -> pl.LazyFrame:
         """Return the type table by id (sid, c)."""
 
+    def graph_types(self) -> pl.LazyFrame:
+        """Return the type rows as read (s, sid, c), not made distinct."""
+
     def typed_ids(self) -> pl.LazyFrame:
         """Return the ids of the nodes with a type in scope (sid), whatever the type table."""
 
@@ -260,7 +263,7 @@ class RowStore:
         out, terms grouped) reads this from the store it wraps, so that a node typed only by a
         left-out class is still typed.
         """
-        return self.type_ids().select("sid").unique()
+        return self.graph_types().select("sid").unique()
 
     def data_types(self) -> pl.LazyFrame:
         """Return the members read from the data graphs alone (all graphs here)."""
@@ -377,7 +380,7 @@ class StoreView:
 
     def typed_ids(self) -> pl.LazyFrame:
         """Return the ids of the nodes typed in the data and type context graphs (sid)."""
-        return self.type_ids().select("sid").unique()
+        return self.graph_types().select("sid").unique()
 
     def data_types(self) -> pl.LazyFrame:
         """Return (s, c) read from the data graphs alone."""
@@ -2268,33 +2271,48 @@ def _pattern_term(term: str, *, sentinels: bool = False) -> bool:
 
 
 def _blank_outgoing(store: CountedStore) -> pl.DataFrame:
-    """Return the predicates of each blank node (oid, q: categories), rdf:type for one that has
-    a type in the data.
+    """Return the predicates of each blank node (oid, q: an enum of the predicates), rdf:type
+    for one that has a type in the data.
 
-    Read before counting (the subject column of each predicate in a stream), so that a
-    pattern's blank objects are joined with their predicates as they are found: keeping
-    the blank objects of every pattern until the end held each blank-object row once for each
-    class of its subject.
+    Read before counting, so that a pattern's blank objects are joined with their predicates as
+    they are found: keeping the blank objects of every pattern until the end held each
+    blank-object row once for each class of its subject. Each predicate's blank subjects are
+    read and made distinct on their own, in a stream, and kept as ids with the predicate as an
+    enum: a row is a node id and a small integer. Only the rdf:type rows can repeat (a blank
+    node typed in the rows of rdf:type and in the type table), and only they are made distinct
+    together.
     """
     import polars as pl
 
     blank = pl.col("s").str.starts_with("_:")
-    frames = [
-        store.rows(p).filter(blank).select("sid").unique().with_columns(q=pl.lit(p))
-        for p in store.predicates
-    ]
-    typed = (
-        store.data_types()
-        .filter(pl.col("s").str.starts_with("_:"))
-        .select("s")
-        .join(
-            store.base.graph_types().filter(blank).select("s", "sid").unique(),
-            on="s",
-        )
-        .select("sid", q=pl.lit(RDF_TYPE))
+    names = pl.Enum(sorted({*store.predicates, RDF_TYPE}))
+    frames: list[pl.DataFrame] = []
+    # The blank nodes typed in the data graphs (data_types), read by id from the type rows:
+    # making the (node, class) text rows distinct first held every typed blank node's text.
+    typed = store.base.graph_types().filter(blank)
+    scope = getattr(store, "graph_uris", None)
+    if scope:
+        typed = typed.filter(pl.col("g").is_in([f"<{g}>" for g in scope]))
+    typed = typed.select("sid")
+    if RDF_TYPE in store.predicates:
+        typed = pl.concat([typed, store.rows(RDF_TYPE).filter(blank).select("sid")])
+    frames.append(
+        typed.unique()
+        .collect(engine="streaming")
+        .select(oid="sid", q=pl.lit(RDF_TYPE, dtype=names))
     )
-    found = pl.concat([*frames, typed]).unique().collect(engine="streaming")
-    return found.select(oid="sid", q=pl.col("q").cast(pl.Categorical))
+    for p in store.predicates:
+        if p == RDF_TYPE:
+            continue
+        frames.append(
+            store.rows(p)
+            .filter(blank)
+            .select(oid="sid")
+            .unique()
+            .collect(engine="streaming")
+            .with_columns(q=pl.lit(p, dtype=names))
+        )
+    return pl.concat(frames, rechunk=True)
 
 
 def _compact(*lists: list[pl.DataFrame]) -> None:
@@ -2417,8 +2435,10 @@ def count_patterns(
     blank_fields: list[pl.DataFrame] = []
     partition_rows, type_rows = count_limits()
     limit = _max_classes()
+    # The distinct classes are those of the type rows: read without making the rows distinct
+    # first, which would hold every (node, class) row of a large type table.
     classes = int(
-        store.type_ids().select(pl.col("c").approx_n_unique()).collect(engine="streaming").item()
+        store.graph_types().select(pl.col("c").approx_n_unique()).collect(engine="streaming").item()
     )
     if classes > limit and rows_path is None:
         raise TooManyClassesError(
@@ -2499,8 +2519,15 @@ def count_patterns(
     # Joins use QLever's ids (an IRI or blank node has one id as subject and as object), and
     # the classes as categories: the type table of a large index fits in memory this way.
     if type_parts == 1:
-        types = store.type_ids().with_columns(pl.col("c").cast(pl.Categorical)).collect()
-        typed_all = typed_ids.collect()
+        # type_ids read from the type rows with the classes as categories before they are made
+        # distinct: distinct (id, text) rows hold the text of every row.
+        types = (
+            store.graph_types()
+            .select("sid", pl.col("c").cast(pl.Categorical))
+            .unique()
+            .collect(engine="streaming")
+        )
+        typed_all = typed_ids.collect(engine="streaming")
 
         def type_part(part: int) -> pl.DataFrame:
             """Return one part of the type table (sid, c)."""
