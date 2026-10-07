@@ -1975,11 +1975,12 @@ class Plan(_Shown):
             out.append((name, f"{label} becomes {p.target.name}", rules, name))
         return out
 
-    def run(self, folder: str | Path = "output/queries") -> Network:
+    def run(self, folder: str | Path = "queries") -> Network:
         """Convert the scope by the decided proposals; return the network in the target model.
 
         The rules are written as SPARQL CONSTRUCT files in *folder* (one per kind, for anyone to
-        read or run again), run on the source within the scope, and followed by what the
+        read or run again; "queries" in the current directory by default; earlier .rq files
+        there are replaced), run on the source within the scope, and followed by what the
         target model's conventions imply. Open choices are not converted, and are listed.
         """
         from rdfsolve.conversion import Profile, derive_conversions, within, write_query
@@ -1989,8 +1990,14 @@ class Plan(_Shown):
                 "Not converted, still open: %s. Decide them first for a complete conversion.",
                 ", ".join(f"plan.{_attribute(p.name)}" for p in self.open),
             )
-        folder = Path(folder)
-        folder.mkdir(parents=True, exist_ok=True)
+        folder = Path(folder).expanduser().resolve()
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            raise ValueError(
+                f"The queries cannot be written to {folder} ({error.strerror}); give a folder you "
+                "can write to: plan.run('<folder>')"
+            ) from error
         for old in folder.glob("*.rq"):
             old.unlink()
         paths = []
@@ -2016,6 +2023,7 @@ class Plan(_Shown):
         statements = profile.run(self.client, scope=scope)
         implied = derive_conversions(self.client, statements, cast("Model", self.target.model))
         network = Network(self, statements, paths, implied, profile)
+        logger.info("Wrote %d queries to %s.", len(paths), folder)
         logger.info("%r", network)
         logger.info(
             "Next: network.graph() builds the property graph; network.save(folder) writes RDF, "
@@ -2150,8 +2158,14 @@ class Network(_Shown):
 
         import pyoxigraph as ox
 
-        folder = Path(folder)
-        (folder / "queries").mkdir(parents=True, exist_ok=True)
+        folder = Path(folder).expanduser().resolve()
+        try:
+            (folder / "queries").mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            raise ValueError(
+                f"The network cannot be saved to {folder} ({error.strerror}); give a folder you "
+                "can write to: network.save('<folder>')"
+            ) from error
         out = {"statements": folder / "statements.nq", "mappings": folder / "mappings.sssom.tsv"}
         ox.serialize(self.statements, str(out["statements"]), format=ox.RdfFormat.N_QUADS)
         from sssom.writers import write_table

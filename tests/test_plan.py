@@ -313,3 +313,10 @@ def test_terms_can_be_named_as_text(plan):
     assert "no query until it is decided" in plan.Reaction.query
     with pytest.raises(ValueError, match="no term named 'relatd'"):
         plan.Catalysis.use("relatd")
+
+
+def test_run_says_where_it_cannot_write(plan, tmp_path):
+    blocked = tmp_path / "file"
+    blocked.write_text("")
+    with pytest.raises(ValueError, match="cannot be written to"):
+        plan.run(blocked / "queries")
