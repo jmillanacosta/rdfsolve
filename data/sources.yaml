@@ -9458,6 +9458,7 @@
 - name: biobricks-aopwiki
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-aopwiki/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-aopwiki
   notes: 'KG Registry: BioBricks AOP-Wiki'
   kg_registry_id: biobricks-aopwiki
   keywords:
@@ -9471,6 +9472,7 @@
 - name: biobricks-ice
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-ice/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-ice
   notes: "KG Registry: BioBricks ICE. Local input: BioBricks' HDT ice.hdt (368,384,185 bytes, 27,386,547 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.3 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 361,537,594 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-ice
   download_hdt:
@@ -9488,6 +9490,7 @@
 - name: biobricks-mesh
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-mesh/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-mesh
   notes: 'KG Registry: BioBricks MeSH'
   kg_registry_id: biobricks-mesh
   keywords: null
@@ -9502,6 +9505,7 @@
 - name: biobricks-pubchem-annotations
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-pubchem-annotations/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-pubchem-annotations
   notes: "KG Registry: BioBricks PubChem Annotations. Local input: BioBricks' HDT annotations.hdt (1,026,674,753 bytes, 87,425,612 triples in its header) from BioBricks' public DVC remote, named by its MD5 (pubchem-annotations-kg dvc.lock at commit 985674b (2024-12-10), out brick/annotations.hdt; the repository's main branch replaced this transform on 2026-07-16 (8a943c9), so the HDT is reached from the older dvc.lock). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 1,015,746,624 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-pubchem-annotations
   download_hdt:
@@ -9520,6 +9524,7 @@
 - name: biobricks-tox21
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-tox21/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-tox21
   notes: "KG Registry: BioBricks Tox21. Local input: BioBricks' HDT tox21.hdt (303,920 bytes, 26,939 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 300,573 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-tox21
   download_hdt:
@@ -9538,6 +9543,7 @@
 - name: biobricks-toxcast
   dataset_kind: instance
   endpoint: https://apps.okn.us/biobricks-toxcast/sparql
+  void_iri: https://purl.org/okn/frink/kg/biobricks-toxcast
   notes: "KG Registry: BioBricks ToxCast. Local input: BioBricks' HDT toxcast.hdt (275,037,358 bytes, 30,246,162 triples in its header) from BioBricks' public DVC remote, named by its MD5 (biobricks-okg dvc.lock at commit 00d0c6047236e985325f321c654a5154ccab1076 (2025-01-10), stage outs path brick). The triple count equals the FRINK KG Fabric release v0.0.2 served at the endpoint (kgf manifest counts.triples; FRINK re-encodes the same graph as data.hdt, 267,475,683 bytes, whose own copy in lakeFS is not public). Checked 2026-10-06."
   kg_registry_id: biobricks-toxcast
   download_hdt:
@@ -9757,6 +9763,7 @@
 - name: fiokg
   dataset_kind: instance
   endpoint: https://apps.okn.us/fiokg/sparql
+  void_iri: https://purl.org/okn/frink/kg/fiokg
   notes: 'KG Registry: SAWGraph FIO KG'
   kg_registry_id: fiokg
   keywords:
@@ -9769,6 +9776,7 @@
 - name: geoconnex
   dataset_kind: instance
   endpoint: https://apps.okn.us/geoconnex/sparql
+  void_iri: https://purl.org/okn/frink/kg/geoconnex
   notes: 'KG Registry: GEOCONNEX'
   kg_registry_id: geoconnex
   keywords:
@@ -10294,6 +10302,7 @@
 - name: scales
   dataset_kind: instance
   endpoint: https://apps.okn.us/scales/sparql
+  void_iri: https://purl.org/okn/frink/kg/scales
   notes: 'KG Registry: SCALES'
   kg_registry_id: scales
   keywords:
@@ -10425,6 +10434,7 @@
 - name: spatialkg
   dataset_kind: instance
   endpoint: https://apps.okn.us/spatialkg/sparql
+  void_iri: https://purl.org/okn/frink/kg/spatialkg
   notes: 'KG Registry: SAWGraph Spatial KG'
   kg_registry_id: spatialkg
   keywords:
@@ -10465,6 +10475,7 @@
 - name: spoke-genelab
   dataset_kind: instance
   endpoint: https://apps.okn.us/spoke-genelab/sparql
+  void_iri: https://purl.org/okn/frink/kg/spoke-genelab
   notes: 'KG Registry: SPOKE GeneLab'
   kg_registry_id: spoke-genelab
   keywords:
@@ -11757,6 +11768,7 @@
   science_area: other
   notes: 'KG Registry: SAWGraph Hydrology KG'
   endpoint: https://apps.okn.us/hydrologykg/sparql
+  void_iri: https://purl.org/okn/frink/kg/hydrologykg
 - name: identifier-mappings
   dataset_kind: instance
   kg_registry_id: identifier-mappings
@@ -12327,6 +12339,7 @@
     former endpoint apps.okn.us/maudekg/sparql answers with the web app's HTML page (checked
     2026-10-06). okn-void still lists maudekg v0.0.2 (95,913 triples), an earlier graph."
   endpoint: https://apps.okn.us/medical-device-kg/sparql
+  void_iri: https://purl.org/okn/frink/kg/medical-device-kg
   sparql_strategy: get+json
 - name: ncipidkg
   dataset_kind: instance
@@ -12420,7 +12433,7 @@
     left_out_relative_graphs:
     - void
 - name: okn-void
-  dataset_kind: instance
+  dataset_kind: catalog
   kg_registry_id: okn-void
   science_area: other
   notes: 'KG Registry: OKN VoID graph descriptions'
@@ -12753,6 +12766,7 @@
   science_area: other
   notes: 'KG Registry: UF-OKN'
   endpoint: https://apps.okn.us/ufokn/sparql
+  void_iri: https://purl.org/okn/frink/kg/ufokn
 - name: acukg
   dataset_kind: instance
   kg_registry_id: acukg
