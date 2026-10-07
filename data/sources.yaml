@@ -2839,8 +2839,24 @@
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   graph_uris:
   - https://rdf.molmedb.upol.cz
+  # The publisher's dump, in the graph that IDSM serves it in (one graph, as the endpoint).
+  graph_sources:
+    https://rdf.molmedb.upol.cz:
+      download_nt:
+      - https://zenodo.org/records/19492586/files/molmedb.nt.gz
+  checksums:
+    https://zenodo.org/records/19492586/files/molmedb.nt.gz:
+      md5: 4f4cccf6acfa76886cbda5764fe4182f
   local_provider: idsm
-  notes: MolMeDB (molecules and membranes) as served by IDSM, described in IDSM's VoID; MolMeDB publishes no RDF dump (2026-10-05).
+  notes: >-
+    MolMeDB (molecules and membranes), also served by IDSM and described in IDSM's VoID. Mined
+    locally from the publisher's RDF dump, Zenodo record 19492586 (2026-04-10, the latest
+    version of concept record 18632779; CC0; molmedb.nt.gz, 149,245,148 bytes, md5
+    4f4cccf6acfa76886cbda5764fe4182f). IDSM's graph, exported on 2026-10-07 (verified by
+    COUNT), holds the same 34,019,186 triples as this version; the earlier version 18632780
+    (2026-02-13, md5 6c5564f490bc1333e4616cdc54381000) differs in 1,081,591 of them
+    (dcterms:source and dcterms:references, since prov:wasQuotedFrom and prov:hadPrimarySource,
+    and 12 values with a trailing space).
   bioregistry_prefix: molmedb
   sparql_engine: idsm
   sparql_strategy: get+json
@@ -2876,8 +2892,6 @@
   catalogs: ["idsm"]
   endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
   void_iri: https://idsm.elixir-czech.cz/rdf/isdb/
-  graph_uris:
-  - https://idsm.elixir-czech.cz/rdf/isdb/
   local_provider: idsm
   keywords:
   - metabolite
@@ -2887,6 +2901,37 @@
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
+  graph_uris:
+  - https://idsm.elixir-czech.cz/rdf/isdb/
+  graph_sources:
+    https://idsm.elixir-czech.cz/rdf/isdb/:
+      download_nt:
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0001.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0002.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0003.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0004.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0005.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0006.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0007.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0008.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0009.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0010.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0011.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0012.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0013.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0014.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0015.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0016.u.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0017.nt.gz
+      - file:///trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/g0001.p0018.nt.gz
+  endpoint_export:
+    endpoint: https://idsm.elixir-czech.cz/sparql/endpoint/idsm
+    finished: '2026-10-07T14:48:29+00:00'
+    manifest: /trinity/home/javier.millanacosta/rdfsolve/data/exports/isdb/20261006/manifest.json
+    manifest_sha256: b3318214dcc7721eebfbaae7a90a42b83d67dbf0968f30338cc6034c812be88b
+    graphs: 1
+    triples: 29496595
+    verified: true
 - name: pubchem.anatomy
   dataset_kind: instance
   catalogs: ["idsm"]
