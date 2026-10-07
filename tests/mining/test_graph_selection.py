@@ -4,6 +4,8 @@ whose types come from companion (context) graphs are mined with them."""
 import json
 from unittest.mock import Mock
 
+import pytest
+
 from rdflib import Dataset, URIRef
 
 from rdfsolve.mining.miner import SchemaMiner
@@ -317,3 +319,25 @@ def test_no_engine_graph_and_a_scoped_source_send_no_pragma(monkeypatch):
     with scoped._session("scoped"):
         assert "excluded_graphs" not in scoped.last_report.config
     assert not any("DEFINE" in q for q in sent)
+
+
+@pytest.mark.parametrize(
+    ("graph", "engine"),
+    [
+        ("http://localhost:8890/DAV", True),
+        ("http://localhost:8890/DAV/", True),
+        ("http://localhost:8891/DAV/", True),
+        ("http://localhost:8890/dataspace", True),
+        ("http://localhost:8890/dataspace/inf", True),
+        ("http://localhost:8890/sparql", True),
+        # STRING (2026-10-07): graphs on Virtuoso's default host that are not its system paths.
+        ("http://localhost:8890/human", False),
+        ("http://localhost:8890/511145info", False),
+        ("http://localhost:8890/string_test_4", False),
+    ],
+)
+def test_only_virtuoso_system_paths_on_localhost_are_engine_graphs(graph, engine):
+    """The engine-graph prefixes name Virtuoso's system paths, not every graph on localhost."""
+    from rdfsolve.schema_models._constants import SUGGESTED_SERVICE_GRAPHS
+
+    assert graph.startswith(SUGGESTED_SERVICE_GRAPHS) is engine

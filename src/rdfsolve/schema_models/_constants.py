@@ -33,10 +33,21 @@ Pass these to :meth:`MinedSchema.clean_schema`; nothing applies them
 implicitly. Extend the list per endpoint instead of editing it.
 """
 
+# Virtuoso's own graphs under its default host name: the WebDAV store, the ODS dataspace and the
+# SPARQL endpoint's graph, on the ports that public endpoints showed (8890; SIBiLS: 8891). Other
+# graphs on localhost may be data: STRING names graphs http://localhost:8890/human and
+# http://localhost:8890/511145info (2026-10-07), so the host as a whole is not a prefix.
+VIRTUOSO_SYSTEM_PATHS: tuple[str, ...] = ("DAV", "dataspace", "sparql")
+VIRTUOSO_LOCAL_PORTS: tuple[int, ...] = (8890, 8891)
+
 SUGGESTED_SERVICE_GRAPHS: tuple[str, ...] = (
     "http://www.openlinksw.com/",
     "http://www.w3.org/ns/ldp#",
-    "http://localhost:8890/",
+    *(
+        f"http://localhost:{port}/{path}"
+        for port in VIRTUOSO_LOCAL_PORTS
+        for path in VIRTUOSO_SYSTEM_PATHS
+    ),
     "urn:core:services:sparql",
     "urn:activitystreams-owl:",
     # Virtuoso's service description graph, named with a relative IRI (AOP-Wiki, WikiPathways).
@@ -55,6 +66,7 @@ KNOWN_ENGINE_GRAPHS: tuple[str, ...] = (
     "http://www.openlinksw.com/schemas/virtrdf#",
     "http://localhost:8890/DAV/",
     "http://localhost:8890/sparql",
+    "http://localhost:8891/DAV/",
     "http://www.w3.org/ns/ldp#",
     "urn:core:services:sparql",
     "urn:activitystreams-owl:map",
