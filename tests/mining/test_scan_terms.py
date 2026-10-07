@@ -2,6 +2,7 @@
 the type table of a row store and counting again (exact counts), minimal types, and the folding
 of ``p some F`` class expressions into edge rows."""
 
+import pytest
 from rdflib import BNode, Graph, Literal, Namespace
 from rdflib.namespace import OWL, RDF, RDFS
 
@@ -195,13 +196,20 @@ def test_records_kept_as_classes_are_counted_under_their_kind(tmp_path):
     assert not any(c.startswith(EX + "gene") for c, *_ in rows), "No record class is counted"
 
 
-def test_records_kept_as_classes_are_released_as_their_own_terms(tmp_path):
+@pytest.mark.parametrize("per_part", [None, 2])
+def test_records_kept_as_classes_are_released_as_their_own_terms(tmp_path, monkeypatch, per_part):
     """The schema counts the kinds (BioGateway: 18), and the release still ships one term per
     record class, each with its kind's class, written by streams (no list of the 65.9 million
-    record classes): the same rows and classes as the release of any source."""
+    record classes): the same rows and classes as the release of any source, whether the
+    classes are made whole or in parts."""
     from dataclasses import replace
 
     import polars as pl
+
+    from rdfsolve.mining import term_release
+
+    if per_part is not None:
+        monkeypatch.setattr(term_release, "RECORD_CLASSES_PER_PART", per_part)
 
     from rdfsolve.mining.scan import ScanStrategy
     from rdfsolve.mining.term_release import term_rows, write_term_release
