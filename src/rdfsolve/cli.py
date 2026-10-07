@@ -58,6 +58,40 @@ def identity(sources: Path | None, overrides: Path | None, output: Path) -> None
         )
 
 
+@registry.command("rdf")
+@click.option(
+    "--sources",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Registry YAML. Defaults to data/sources.yaml.",
+)
+@click.option(
+    "--overrides",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Curated relations. Defaults to identity_overrides.yaml next to the registry.",
+)
+@click.option(
+    "--output",
+    "outputs",
+    type=click.Path(dir_okay=False, path_type=Path),
+    multiple=True,
+    required=True,
+    help="File to write; .ttl, .jsonld or .nt. Repeat for several formats.",
+)
+def registry_rdf(sources: Path | None, overrides: Path | None, outputs: tuple[Path, ...]) -> None:
+    """Describe the registry and its identity decisions as RDF (DCAT, VoID, SD)."""
+    from rdfsolve.registry_rdf import write_registry_rdf
+    from rdfsolve.sources import DEFAULT_SOURCES_YAML
+
+    try:
+        graph = write_registry_rdf(sources or DEFAULT_SOURCES_YAML, outputs, overrides)
+    except ValueError as error:
+        raise click.ClickException(str(error)) from error
+    for path in outputs:
+        click.echo(f"Wrote {path} ({len(graph)} triples)")
+
+
 @registry.command("enrich-bioregistry")
 @click.option(
     "--sources",
@@ -94,7 +128,8 @@ def release() -> None:
     "--release-id", default=None, help="Stable release identifier; generated when omitted."
 )
 def release_build(run_dir: Path, release_id: str | None) -> None:
-    """Build release.json and release.ttl from one completed run directory."""
+    """Build registry.ttl, release.json and release.ttl from one completed run directory."""
+    from rdfsolve.registry_rdf import write_registry_rdf
     from rdfsolve.release import (
         build_release_manifest,
         release_to_rdf,
@@ -104,6 +139,16 @@ def release_build(run_dir: Path, release_id: str | None) -> None:
     )
     from rdfsolve.version import VERSION
 
+    # The registry's RDF is written first, so the manifest lists it as an artifact.
+    registry_ttl = run_dir / "registry.ttl"
+    if (run_dir / "sources.yaml").exists():
+        try:
+            write_registry_rdf(run_dir / "sources.yaml", [registry_ttl])
+            click.echo(f"Wrote {registry_ttl}")
+        except ValueError as error:
+            # As for the identity review, a broken registry is reported, not fatal.
+            registry_ttl.unlink(missing_ok=True)
+            click.echo(f"registry.ttl not written: {error}", err=True)
     manifest = build_release_manifest(run_dir, release_id=release_id, rdfsolve_version=VERSION)
     json_path = write_release_manifest(manifest, run_dir)
     ttl_path = run_dir / "release.ttl"

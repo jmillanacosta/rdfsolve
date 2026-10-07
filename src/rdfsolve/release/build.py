@@ -104,6 +104,8 @@ def _role(path: Path) -> str | None:
             return role
     if name == "sources.yaml":
         return "source_registry"
+    if name in {"registry.ttl", "registry.jsonld"}:
+        return "source_registry_rdf"
     if name == "environment.txt":
         return "environment"
     if name.endswith(("config.yaml", "config.yml")) or name in {

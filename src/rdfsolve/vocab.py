@@ -22,13 +22,16 @@ VOCABULARIES: dict[str, str] = {
     "http://www.w3.org/2000/01/rdf-schema#": "https://www.w3.org/TR/rdf-schema/",
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "https://www.w3.org/TR/rdf11-concepts/",
     "https://schema.org/": "https://schema.org/docs/schemas.html",
+    "http://www.w3.org/ns/dcat#": "https://www.w3.org/TR/vocab-dcat-3/",
+    "http://spdx.org/rdf/terms#": "https://spdx.github.io/spdx-spec/v2.3/",
 }
 
 _TERMS = {
     "http://rdfs.org/ns/void#": (
         "Dataset DatasetDescription Linkset class classPartition classes distinctObjects "
         "distinctSubjects documents entities exampleResource linkPredicate objectsTarget properties property "
-        "propertyPartition sparqlEndpoint subset subjectsTarget triples vocabulary"
+        "propertyPartition sparqlEndpoint subset subjectsTarget triples vocabulary dataDump "
+        "uriRegexPattern uriSpace"
     ),
     "http://ldf.fi/void-ext#": (
         "datatype datatypePartition distinctBlankNodeObjects distinctIRIReferenceObjects "
@@ -48,13 +51,22 @@ _TERMS = {
         "zeroOrMorePath zeroOrOnePath"
     ),
     "http://purl.org/dc/terms/": (
-        "created creator description issued license modified publisher source title type"
+        "created creator description issued license modified publisher source title type "
+        "LicenseDocument identifier isPartOf isReferencedBy"
     ),
     "http://xmlns.com/foaf/0.1/": "homepage primaryTopic",
-    "http://www.w3.org/2002/07/owl#": "Ontology imports versionIRI versionInfo",
+    "http://www.w3.org/2002/07/owl#": "Ontology differentFrom imports versionIRI versionInfo",
     "http://www.w3.org/2000/01/rdf-schema#": "comment label seeAlso",
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "first rest type",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": (
+        "Property Statement first object predicate rest subject type"
+    ),
     "https://schema.org/": "isBasedOn target url",
+    "http://www.w3.org/ns/dcat#": (
+        "Catalog CatalogRecord DataService Dataset Distribution compressFormat dataset "
+        "distribution downloadURL endpointURL keyword landingPage mediaType packageFormat "
+        "record service"
+    ),
+    "http://spdx.org/rdf/terms#": "Checksum algorithm checksum checksumValue",
 }
 
 GENERATED_TERMS: frozenset[str] = frozenset(
