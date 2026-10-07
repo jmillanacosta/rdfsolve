@@ -660,6 +660,10 @@ def _text_predicates() -> frozenset[str]:
 _XSD = "http://www.w3.org/2001/XMLSchema#"
 _ID_DATATYPES = {1: "boolean", 2: "int", 3: "double"}
 _DATE_ID = 7
+# A WKT point (geo:wktLiteral "POINT(x y)") is kept in the id too (code 8), written bare in TSV;
+# other WKT shapes stay in the vocabulary, with their datatype written.
+_GEO_POINT_ID = 8
+_WKT_LITERAL = "<http://www.opengis.net/ont/geosparql#wktLiteral>"
 _ZONE = r"(Z|[+-][0-9]{2}:[0-9]{2})?"
 
 
@@ -704,6 +708,8 @@ def _literal_datatype(term: str = "o", ids: str = "oid") -> pl.Expr:
         .then(pl.lit(f"<{_XSD}string>"))
         .when(bits == _DATE_ID)
         .then(date)
+        .when(bits == _GEO_POINT_ID)
+        .then(pl.lit(_WKT_LITERAL))
         .otherwise(value)
         .alias("d")
     )
@@ -1228,6 +1234,7 @@ def _read_long_literals(
         d = pl.lit(datatype)
         for code, name in _ID_DATATYPES.items():
             d = pl.when(bits == code).then(pl.lit(f"<{_XSD}{name}>")).otherwise(d)
+        d = pl.when(bits == _GEO_POINT_ID).then(pl.lit(_WKT_LITERAL)).otherwise(d)
         known = sample.select("oid", known_o="o", known_d="d").unique("oid")
         rest = (
             ids.join(names, on="sid", how="left")

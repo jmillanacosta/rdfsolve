@@ -377,8 +377,8 @@ def test_the_export_does_not_ask_the_server_for_datatypes(endpoint, tmp_path):
 
 def test_the_datatype_of_a_literal_comes_from_its_form_and_id():
     """The datatype that DATATYPE(?o) gives, for each form of QLever's TSV (checked against the
-    stored DATATYPE of every row of WikiPathways and HRA-KG and of samples of Bgee and OMA:
-    no difference)."""
+    stored DATATYPE of every row of indexed sources: no difference). A WKT point is kept in the
+    id (code 8) and written bare."""
     import polars as pl
 
     xsd = "http://www.w3.org/2001/XMLSchema#"
@@ -394,8 +394,18 @@ def test_the_datatype_of_a_literal_comes_from_its_form_and_id():
         ("2024-03-18", bits["date"] + 2, f"<{xsd}date>"),
         ("2024-03", bits["date"] + 3, f"<{xsd}gYearMonth>"),
         ("2024", bits["date"] + 4, f"<{xsd}gYear>"),
+        (
+            "POINT(-122.193001 37.855202)",
+            (8 << 60) + 6,
+            "<http://www.opengis.net/ont/geosparql#wktLiteral>",
+        ),
+        (
+            '"POLYGON ((0 0, 1 0, 1 1, 0 0))"^^<http://www.opengis.net/ont/geosparql#wktLiteral>',
+            bits["vocab"],
+            "<http://www.opengis.net/ont/geosparql#wktLiteral>",
+        ),
         ("<urn:a>", bits["vocab"], None),
-        ("_:b1", 8 << 60, None),
+        ("_:b1", 10 << 60, None),
     ]
     frame = pl.DataFrame(
         {"o": [r[0] for r in rows], "oid": [r[1] for r in rows]},
