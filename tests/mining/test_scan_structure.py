@@ -224,3 +224,29 @@ def test_too_many_shapes_are_counted_by_kind_with_exact_counts(mined, tmp_path, 
     for p in shaped:
         (row,) = graph.query(p.recount_query)
         assert int(row[0]) == p.count, p.property_uri
+
+
+def test_a_property_set_with_a_term_that_is_not_one_is_left_out_and_reported(
+    mined, tmp_path, monkeypatch
+):
+    """rdfportal.oma (job 115902) failed its structural census with a bare "KeyError: ''" at
+    the limit of its memory (the same source had a NUL-filled property, job 115716); its store
+    and code count it whole outside that job. A shape whose kind or property set holds a term
+    that cannot be one is left out of the patterns and reported, not raised."""
+    import polars as pl
+
+    from rdfsolve.mining import scan_structure
+
+    _, schema, _, store = mined
+    original = scan_structure._property_sets
+
+    def damaged(store, nodes, work, buckets):
+        sets = original(store, nodes, work, buckets)
+        return sets.with_columns(ps=pl.lit("\x00" * 8 + ">") + pl.col("ps"))
+
+    _, whole = structural_census(store, schema.patterns, buckets=3, work_dir=tmp_path / "a")
+    monkeypatch.setattr(scan_structure, "_property_sets", damaged)
+    entry, patterns = structural_census(store, schema.patterns, buckets=3, work_dir=tmp_path / "b")
+    found = entry["invalid_terms"]
+    assert found["triples_left_out"] == sum(p.count for p in whole)
+    assert all("\x00" not in t for p in patterns for t in p.subject_properties)

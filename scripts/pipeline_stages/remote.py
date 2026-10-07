@@ -535,7 +535,7 @@ class RemoteMiningStage(Stage):
                 if source.failure_count >= 3:
                     source.endpoint_down = True
 
-            log.error(f"[{source.name}] -> FAILED: {e}")
+            log.error("[%s] -> FAILED: %s", source.name, e, exc_info=True)
             return {"status": "failed", "data": {"name": source.name, "error": str(e)}}
 
 

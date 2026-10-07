@@ -35,7 +35,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.mining.query_builders import MEMBERSHIP
-from rdfsolve.mining.scan import QLEVER_DEFAULT_GRAPH, RDF_LANG, XSD_STRING, RowStore, StoreView
+from rdfsolve.mining.scan import (
+    QLEVER_DEFAULT_GRAPH,
+    RDF_LANG,
+    XSD_STRING,
+    RowStore,
+    StoreView,
+    _pattern_term,
+)
 from rdfsolve.schema_models.class_extensions import ClassExtensions, relate
 from rdfsolve.schema_models.structural import StructuralPattern
 
@@ -519,6 +526,8 @@ def _census_graph(
         sets = _property_sets(store, nodes, work, buckets)
         candidates: dict[str, StructuralPattern] = {}
         profiled: dict[str, int] = {}
+        # Uncovered edges whose kind or property set holds a term that cannot be one.
+        left_out: dict[str, int] = {}
         for predicate, path in files.items():
             edges = (
                 pl.scan_parquet(path)
@@ -567,6 +576,14 @@ def _census_graph(
             n = census[predicate]
             selection = "untyped" if n["untypedTriples"] == n["uncoveredTriples"] else "uncovered"
             for row in group.iter_rows(named=True):
+                terms = [p for p in f"{row['ss'] or ''}>{row['os'] or ''}".split(">") if p]
+                if row["kind"] not in _KIND or not all(_pattern_term(t) for t in terms):
+                    # A row whose kind or property is not a term (an empty or NUL-filled
+                    # string): left out and reported, not a KeyError that fails the source
+                    # (rdfportal.oma, job 115902: "KeyError: ''").
+                    shown = repr(f"{predicate} {row['kind']} {row['ss']} {row['os']}"[:200])
+                    left_out[shown] = left_out.get(shown, 0) + int(row["n"])
+                    continue
                 pattern = StructuralPattern(
                     subject_properties=[p for p in (row["ss"] or "").split(">") if p],
                     object_properties=[p for p in row["os"].split(">") if p],
@@ -597,8 +614,13 @@ def _census_graph(
                 ]
                 candidates[key] = pattern
         structural = [candidates[k] for k in sorted(candidates)]
-        if sum(p.count for p in structural) != missing_total:
+        if sum(p.count for p in structural) + sum(left_out.values()) != missing_total:
             raise ValueError("Structural patterns do not account for the uncovered edges")
+        if left_out:
+            entry["invalid_terms"] = {
+                "triples_left_out": sum(left_out.values()),
+                "rows": dict(sorted(left_out.items())),
+            }
         entry.update(
             undiscovered_triples=0,
             state="complete",

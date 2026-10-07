@@ -193,7 +193,9 @@ class LocalMiningStage(Stage):
                 # A Rust panic of Polars (pyo3's PanicException is a BaseException) ends this
                 # source, not the job (rdfportal.chembl, job 115861: the next source never ran).
                 state = "partial" if isinstance(e, PartialMiningError) else "failed"
-                log.warning("  -> %s: %s", state.upper(), e)
+                # The traceback is logged with a failure: a bare message ("KeyError: ''",
+                # rdfportal.oma, job 115902) does not say where it came from.
+                log.warning("  -> %s: %s", state.upper(), e, exc_info=state == "failed")
                 results[state].append({"name": source.name, "error": str(e)})
 
         return results

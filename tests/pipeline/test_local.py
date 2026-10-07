@@ -412,7 +412,9 @@ def _built(tmp_path, logs, monkeypatch):
     data = workdir / "rdf" / "d.nt.gz"
     xsd = "http://www.w3.org/2001/XMLSchema#"
     with gzip.open(data, "wt") as stream:
-        stream.write(f'<urn:a> <urn:n> "1"^^<{xsd}integer> .\n' + CLINVAR + "<urn:b> <urn:p> <urn:c> .\n")
+        stream.write(
+            f'<urn:a> <urn:n> "1"^^<{xsd}integer> .\n' + CLINVAR + "<urn:b> <urn:p> <urn:c> .\n"
+        )
     stage = LocalMiningStage(config)
     stage._prepare_qleverfile(workdir, source, 7020)
     runs = []
@@ -636,3 +638,36 @@ def test_a_polars_panic_ends_the_source_not_the_job(tmp_path, monkeypatch):
     assert mined == ["after"]
     assert [f["name"] for f in results["failed"]] == ["panics"]
     assert "index out of bounds" in results["failed"][0]["error"]
+
+
+def test_a_failed_source_logs_its_traceback(tmp_path, monkeypatch, caplog):
+    """rdfportal.oma (job 115902) failed with the bare message "''" (a KeyError) and no
+    traceback, so the failing line was unknown. A failed source logs its traceback."""
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run"
+    )
+    source = Source.from_dict({"name": "broken", "download_nt": ["https://example.org/b.nt"]})
+    monkeypatch.setattr(config, "get_local_sources", lambda: [source])
+    stage = LocalMiningStage(config)
+
+    def mine(source, workdir, port, pid):
+        return {}[""]
+
+    for name, value in {
+        "_ensure_qlever_image": lambda: None,
+        "_check_converters": lambda: None,
+        "_set_aside_when_differs": lambda *args: None,
+        "_set_aside_when_updated": lambda *args: None,
+        "_has_usable_index": lambda *args: True,
+        "_carry_inputs": lambda *args: None,
+        "_qlever_start": lambda *args: 1,
+        "_qlever_stop": lambda *args: None,
+        "_mine_with_restarts": mine,
+    }.items():
+        monkeypatch.setattr(stage, name, value)
+    with caplog.at_level("WARNING"):
+        results = stage._execute()
+    assert [f["name"] for f in results["failed"]] == ["broken"]
+    assert "Traceback" in caplog.text and "KeyError" in caplog.text
