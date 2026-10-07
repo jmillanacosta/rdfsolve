@@ -79,7 +79,7 @@ dependencies = [
     "tqdm", # progress bars
     "pyyaml>=6.0", # YAML source registry
     "pyarrow>=23.0.1", # Parquet support for DataFrames; 22.0.0 has a security advisory
-    "polars>=1.30", # scan mining: counts over the rows a local index streams
+    "polars[rt64]>=2.0", # scan mining: counts over the rows a local index streams (64-bit row indexes, for tables past 2^32 rows)
     # CLI and web framework
     "click",
     "more_click",
