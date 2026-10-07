@@ -189,6 +189,14 @@ class Sparql(str):
         """Print the query as it is written."""
         return str(self)
 
+    def row(self) -> dict[str, Any]:
+        """Return the query as a table row: its title (the "# title:" line) and its length."""
+        title = next(
+            (x[len("# title:") :].strip() for x in self.splitlines() if x.startswith("# title:")),
+            "",
+        )
+        return {"title": title, "lines": len(self.splitlines())}
+
 
 class Names(_Shown):
     """Objects reachable by attribute, with completion and a printout of what is there."""
@@ -2200,6 +2208,17 @@ class Network(_Shown):
         logger.info("Saved to %s: %s", folder, ", ".join(p.name for p in out.values()))
         return out
 
+    @property
+    def queries(self) -> Names:
+        """Return the queries that made the statements, read from the files the run wrote:
+        network.queries prints them as a table, network.queries.<name> prints one.
+        """
+        return Names(
+            f"Queries of the run ({len(self.rules)}, in {self.rules[0].parent if self.rules else '-'})",
+            {path.stem: Sparql(path.read_text(encoding="utf-8")) for path in self.rules},
+            snake=True,
+        )
+
     def counts(self) -> dict[str, Counter[str]]:
         """Return how many nodes of each kind and statements of each relation there are."""
         rdf_type = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
@@ -2249,5 +2268,7 @@ class Network(_Shown):
                 "implied by the target model: "
                 + " · ".join(f"{k} {n}" for k, n in self.implied.items())
             )
-        parts.append("next: network.graph() · network.save(folder)")
+        parts.append(
+            "next: network.queries (the SPARQL that made them) · network.graph() · network.save(folder)"
+        )
         return parts

@@ -197,6 +197,7 @@ def test_the_plan_runs_as_generated_queries(plan, tmp_path):
     assert counts["kinds"]["protein"] == 2 and counts["kinds"]["small molecule"] == 2
     assert counts["relations"]["catalyzes"] == 1 and counts["relations"]["part of"] >= 4
     assert counts["relations"]["name"] >= 4
+    assert "CONSTRUCT" in network.queries.catalysis and "catalysis" in repr(network.queries)
     saved = network.save(tmp_path / "out")
     assert (
         saved["statements"].stat().st_size > 0
