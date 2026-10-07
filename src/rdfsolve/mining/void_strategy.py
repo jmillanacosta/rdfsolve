@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import logging
 import random
+from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -243,6 +244,8 @@ class VoidStrategy(MiningStrategy):
         self.untyped_subjects: list[dict[str, Any]] = []
         self.object_samples: list[dict[str, Any]] = []
         self._void_patterns: list[SchemaPattern] = []
+        # (subject class, property) of the VoID's gaps: their edges hold more than their patterns.
+        self._gap_edges: set[tuple[str | None, str | None]] = set()
         # Patterns of IRI subjects without a class (subject gaps), added after the samples and
         # the drift, which read classes.
         self._untyped_patterns: list[SchemaPattern] = []
@@ -276,6 +279,7 @@ class VoidStrategy(MiningStrategy):
         self.entity_counts = counts
         self.entity_count_states = {c: s for c, s in states.items() if s != "complete"}
         gaps = void_gaps(self.void)
+        self._gap_edges = {(g.subject_class, g.property_uri) for g in gaps}
         self.record = {
             "void_graph": self.void_graph,
             "issued": self.issued,
@@ -619,12 +623,18 @@ class VoidStrategy(MiningStrategy):
                 self.class_examples[cls] = [_term(r["s"]) for r in rows]
 
     def _match(
-        self, p: SchemaPattern, graph_uris: list[str] | None, *, sample: bool = False
+        self,
+        p: SchemaPattern,
+        graph_uris: list[str] | None,
+        *,
+        sample: bool = False,
+        datatype_filter: bool = True,
     ) -> str:
         """Return the graph pattern of a pattern's triples.
 
         For a count, each triple once; for a sample, starting from the members of the subject
-        class.
+        class. Without *datatype_filter*, a literal pattern matches every object of its edge
+        (see _sole_edges).
         """
         edge = self._edge(graph_uris, p.property_uri)
         head = (
@@ -633,7 +643,9 @@ class VoidStrategy(MiningStrategy):
             else f"{edge} {self._typed('?s', p.subject_class)}"
         )
         if p.object_class == "Literal":
-            return head + (f" FILTER(DATATYPE(?o) = <{p.datatype}>)" if p.datatype else "")
+            return head + (
+                f" FILTER(DATATYPE(?o) = <{p.datatype}>)" if p.datatype and datatype_filter else ""
+            )
         if p.object_class in ("Resource", "BlankNode"):
             return head
         return f"{head} {self._typed('?o', p.object_class)}"
@@ -651,10 +663,17 @@ class VoidStrategy(MiningStrategy):
             (p for p in patterns if p.evidence_source == "void"),
             key=lambda p: -(p.count or 0),
         )[: self.example_patterns]
+        sole = _sole_edges(patterns, self._gap_edges)
         for p in largest:
             if (p.subject_class, p.property_uri) in done:
                 continue
-            query = f"SELECT ?s ?o WHERE {{ {self._match(p, graph_uris, sample=True)} }} LIMIT 1"
+            match = self._match(
+                p,
+                graph_uris,
+                sample=True,
+                datatype_filter=(p.subject_class, p.property_uri) not in sole,
+            )
+            query = f"SELECT ?s ?o WHERE {{ {match} }} LIMIT 1"
             rows = self._ask(
                 helper, query, "void/examples", failures, graph_uris, [p.subject_class]
             )
@@ -681,9 +700,12 @@ class VoidStrategy(MiningStrategy):
         largest = sorted(counted, key=lambda p: -(p.count or 0))[: self.drift_largest]
         rest = [p for p in counted if p not in largest]
         chosen = largest + self.random.sample(rest, min(self.drift_random, len(rest)))
+        sole = _sole_edges(patterns, self._gap_edges)
         rows_out: list[dict[str, Any]] = []
         for p in chosen:
-            query = f"SELECT (COUNT(*) AS ?n) WHERE {{ {self._match(p, graph_uris)} }}"
+            filtered = (p.subject_class, p.property_uri) not in sole
+            match = self._match(p, graph_uris, datatype_filter=filtered)
+            query = f"SELECT (COUNT(*) AS ?n) WHERE {{ {match} }}"
             rows = self._ask(helper, query, "void/drift", failures, graph_uris, [p.subject_class])
             now = int(rows[0]["n"]["value"]) if rows else None
             rows_out.append(
@@ -696,6 +718,7 @@ class VoidStrategy(MiningStrategy):
                     "count_now": now,
                     "ratio": round(now / p.count, 4) if now is not None and p.count else None,
                     "chosen": "largest" if p in largest else "random",
+                    "datatype_filter": bool(p.datatype) and filtered,
                 }
             )
         measured = [r for r in rows_out if r["ratio"] is not None]
@@ -706,6 +729,20 @@ class VoidStrategy(MiningStrategy):
             "off_by_more_than_10_percent": len(off),
             "patterns": rows_out,
         }
+
+
+def _sole_edges(
+    patterns: list[SchemaPattern], gap_edges: set[tuple[str | None, str | None]]
+) -> set[tuple[str, str | None]]:
+    """Return the (subject class, property) pairs that have one pattern alone and no VoID gap.
+
+    The triples of such a pattern are all the triples of its edge, so a re-count or an example
+    of a literal pattern needs no DATATYPE filter: QLever computes DATATYPE on every row before
+    it filters or limits, so the filter makes a fast count slow on a large edge. A change of
+    datatype since the VoID then shows as drift of the edge's count.
+    """
+    edges = Counter((p.subject_class, p.property_uri) for p in patterns)
+    return {edge for edge, n in edges.items() if n == 1 and edge not in gap_edges}
 
 
 @dataclass

@@ -160,3 +160,63 @@ def test_a_void_term_that_is_not_an_rdf_iri_is_left_out_and_recorded():
         "terms": [{"iri": space, "triples": 1}],
     }
     assert {p.evidence_source for p in schema.patterns} == {"void", "mined"}
+
+
+VOID_DATATYPES = """
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <urn:ex:> .
+
+[] sd:namedGraph [ sd:name <urn:g1> ; sd:graph <urn:void:g1> ] .
+<urn:void:g1> void:classPartition <urn:cp:A> .
+<urn:cp:A> void:class ex:A ; void:entities 2 ;
+    void:propertyPartition <urn:pp:code> , <urn:pp:size> .
+<urn:pp:code> void:property ex:code ; void:triples 2 ;
+    void-ext:datatypePartition [ void-ext:datatype xsd:string ; void:triples 2 ] .
+<urn:pp:size> void:property ex:size ; void:triples 2 ;
+    void-ext:datatypePartition [ void-ext:datatype xsd:integer ; void:triples 1 ] ,
+        [ void-ext:datatype xsd:decimal ; void:triples 1 ] .
+"""
+
+
+def test_a_literal_pattern_alone_on_its_edge_is_recounted_without_a_datatype_filter(monkeypatch):
+    """QLever computes DATATYPE on every row : a re-count of the only
+    pattern of its (class, property) counts the edge; a pattern beside others keeps the filter."""
+    from rdflib import XSD
+
+    data = Dataset(default_union=True)
+    g1 = data.graph(URIRef(G1))
+    for node, size in ((E.a1, Literal(1)), (E.a2, Literal("1.5", datatype=XSD.decimal))):
+        g1.add((node, RDF.type, E.A))
+        g1.add((node, E.code, Literal(f"c-{node}")))
+        g1.add((node, E.size, size))
+    void = Graph().parse(data=VOID_DATATYPES, format="turtle")
+    scoped = scope_void_graph(void, void_datasets_of_graphs(void, [G1]))
+    strategy = VoidStrategy(scoped, void_graph="urn:void", drift_random=0)
+    sent: list[tuple[str, str]] = []
+    ask = VoidStrategy._ask
+
+    def recording(self, helper, query, purpose, *args, **kwargs):
+        sent.append((purpose, query))
+        return ask(self, helper, query, purpose, *args, **kwargs)
+
+    monkeypatch.setattr(VoidStrategy, "_ask", recording)
+    miner = SchemaMiner.from_graph(data, graph_uris=[G1], strategy=strategy, delay=0)
+    try:
+        miner.mine(dataset_name="fixture")
+    finally:
+        miner.close()
+    drift = miner.last_report.config["void_source"]["drift"]["patterns"]
+    found = {(r["property"], r["datatype"], r["datatype_filter"], r["ratio"]) for r in drift}
+    assert found == {
+        (str(E.code), str(XSD.string), False, 1.0),
+        (str(E.size), str(XSD.integer), True, 1.0),
+        (str(E.size), str(XSD.decimal), True, 1.0),
+    }
+    recounts = [q for purpose, q in sent if purpose == "void/drift"]
+    assert [q for q in recounts if str(E.code) in q and "DATATYPE" in q] == []
+    assert len([q for q in recounts if str(E.size) in q and "DATATYPE" in q]) == 2
+    examples = [q for purpose, q in sent if purpose == "void/examples"]
+    assert examples and all("DATATYPE" not in q for q in examples if str(E.code) in q)
