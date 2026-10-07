@@ -146,11 +146,14 @@ class DatasetClient(Hydrator):
             path = PropertyPath(operator="inverse", items=[path])
         path_text = path_to_sparql(path)
         subjects = list(dict.fromkeys(str(vars(record)["uri"]) for record in records))
-        if len(subjects) > self.max_subjects:
-            raise HydrationLimitError("Subject budget exceeded")
         targets: set[str] = set()
-        for start in range(0, len(subjects), self.batch_size):
-            batch = subjects[start : start + self.batch_size]
+        # The start records are read in batches; a batch whose links pass max_rows is read
+        # again in halves, so the limits size each query and never cut the result.
+        pending = [
+            subjects[i : i + self.batch_size] for i in range(0, len(subjects), self.batch_size)
+        ]
+        while pending:
+            batch = pending.pop(0)
             values = " ".join(_iri(iri) for iri in batch)
             body = self._scope(
                 f"VALUES ?source {{ {values} }} "
@@ -164,7 +167,15 @@ class DatasetClient(Hydrator):
                 f"LIMIT {self.max_rows + 1}"
             )
             if len(rows) > self.max_rows:
-                raise HydrationLimitError("Link budget exceeded; use fewer source records")
+                if len(batch) > 1:
+                    half = len(batch) // 2
+                    pending[:0] = [batch[:half], batch[half:]]
+                    continue
+                raise HydrationLimitError(
+                    f"One record ({batch[0]}) has more than max_rows={self.max_rows} links of this "
+                    "kind; open the client with a larger max_rows (Client.open(..., max_rows=N)) "
+                    "to read them all."
+                )
             for row in rows:
                 source_term, target_term = (
                     _term(row.get("source", {})),
@@ -193,9 +204,14 @@ class DatasetClient(Hydrator):
                         "query_id": len(self._records()),
                     }
                 )
-            if len(targets) > self.max_subjects:
-                raise HydrationLimitError("Target budget exceeded; use fewer source records")
-        return self.get_many(target, sorted(targets), fields=fields)
+        # The records reached are read in calls of at most max_subjects.
+        ordered = sorted(targets)
+        found: list[Model] = []
+        for start in range(0, len(ordered), self.max_subjects):
+            found += self.get_many(
+                target, ordered[start : start + self.max_subjects], fields=fields
+            )
+        return found
 
     @property
     def _matches(self) -> list[dict[str, Any]]:

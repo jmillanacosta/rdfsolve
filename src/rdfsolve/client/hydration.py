@@ -127,6 +127,11 @@ class Hydrator:
     ) -> None:
         """Create models and budgets without making requests.
 
+        The budgets size each request to the source: batch_size records per query,
+        max_rows rows per answer, max_subjects records per call. Following links and reading
+        values work through larger sets in requests of these sizes; a request that cannot be
+        made smaller (one record with more than max_rows values) is an error that names the limit.
+
         None graph scope uses the schema scope. Pass [] for the default graph.
         A supplied helper remains owned by the caller. Without a source or a schema
         endpoint, the client writes records but cannot query.
@@ -559,7 +564,12 @@ class Hydrator:
             raise ValueError('Use missing="raise" or missing="skip"')
         self._check_model_scope(model)
         if len(iris) > self.max_subjects:
-            raise HydrationLimitError("Too many subjects; use smaller calls")
+            raise HydrationLimitError(
+                f"{len(iris)} records asked in one call; the client reads at most "
+                f"max_subjects={self.max_subjects} per call (a limit that keeps each request to "
+                "the source small). Ask in smaller groups, or open the client with a larger "
+                "limit: Client.open(..., max_subjects=N)."
+            )
         for iri in iris:
             _iri(iri)
         paths = {}
@@ -600,7 +610,11 @@ class Hydrator:
             rows = self._select(query)
             query_ids.update(dict.fromkeys(batch, len(self._records())))
             if len(rows) > self.max_rows:
-                raise HydrationLimitError("Value budget exceeded; select fewer fields or subjects")
+                raise HydrationLimitError(
+                    f"The values of {len(batch)} records pass max_rows={self.max_rows} rows in one "
+                    "query (a limit that keeps each answer small). Read fewer fields (load('a', "
+                    "'b')), or open the client with a larger limit: Client.open(..., max_rows=N)."
+                )
             for row in rows:
                 subject = _term(row.get("s", {}))
                 field_term = _term(row.get("field", {}))

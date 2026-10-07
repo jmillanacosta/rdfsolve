@@ -108,6 +108,34 @@ def test_choices_print_as_tables_with_what_they_would_do(plan):
     assert "Nothing open" in repr(plan.open)
 
 
+def test_contents_are_written_as_in_related_from_either_side(tmp_path):
+    from rdfsolve.plan import Plan, Target
+
+    path = tmp_path / "target.yaml"
+    path.write_text(MODEL)
+    client = _client()
+    scope = client.from_table("Pathway", [EX + "pw1"])
+    by_text = Plan(scope, into=Target(path), contents="^Is part of")
+    assert by_text.contents_incoming and len(by_text.records) == len(scope) + 6
+    by_link = Plan(scope, into=Target(path), contents=client.kinds.Protein.IsPartOf)
+    assert by_link.contents_incoming and len(by_link.records) == len(by_text.records)
+    with pytest.raises(ValueError, match='contents="\\^Is part of"'):
+        Plan(scope, into=Target(path), contents="Has part")
+
+
+def test_following_links_reads_large_sets_in_batches():
+    from rdfsolve.client.hydration import HydrationLimitError
+
+    client = _client()
+    client.max_subjects, client.batch_size = 1, 1  # every request as small as it can be
+    scope = client.from_table("Pathway", [EX + "pw1"])
+    members = scope.related(via="Is part of", incoming=True)
+    assert len(members) == 6
+    client.max_rows = 1
+    with pytest.raises(HydrationLimitError, match="max_rows=1"):
+        scope.related(via="Is part of", incoming=True)
+
+
 def test_a_term_that_does_not_fit_is_refused(plan):
     with pytest.raises(ValueError, match="choose a class"):
         plan.Protein.use(plan.target.predicates.catalyzes)

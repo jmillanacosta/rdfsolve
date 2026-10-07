@@ -1304,9 +1304,10 @@ def write_query(
     return "\n".join(lines)
 
 
-def within(client: Client, records: Any, via: str) -> str:
+def within(client: Client, records: Any, via: str, inverse: bool = False) -> str:
     """Return the scope "the focus is linked by *via* to these records, or is one of them"
-    (Profile.run and rebuilds). *via* is a link name of the client.
+    (Profile.run and rebuilds). *via* is a link name of the client. With *inverse*, the records
+    link to the focus by *via* instead (a link of the records, to what they contain).
     """
     iris = [str(vars(record)["uri"]) for record in records.records]
     kinds = {client.type_name(type(record)) for record in records.records}
@@ -1314,7 +1315,8 @@ def within(client: Client, records: Any, via: str) -> str:
         raise ValueError("Give records of one record type")
     prop = _link(client, via, next(iter(kinds)))
     values = " ".join(f"<{iri}>" for iri in iris)
-    return f"{{ ?x <{prop}> ?within . VALUES ?within {{ {values} }} }} UNION {{ VALUES ?x {{ {values} }} }}"
+    linked = f"?within <{prop}> ?x" if inverse else f"?x <{prop}> ?within"
+    return f"{{ {linked} . VALUES ?within {{ {values} }} }} UNION {{ VALUES ?x {{ {values} }} }}"
 
 
 _ASSOCIATION_SLOTS = ("subject", "predicate", "object")

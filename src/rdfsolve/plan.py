@@ -677,8 +677,15 @@ class Choices(_Shown, list):  # type: ignore[type-arg]
 class Plan(_Shown):
     """The proposed conversion of the records in a scope into a target model."""
 
-    def __init__(self, scope: Results, into: Target, *, contents: Link | None = None) -> None:
-        """Propose a conversion for *scope* (records) and, through *contents*, what they contain."""
+    def __init__(self, scope: Results, into: Target, *, contents: str | Link | None = None) -> None:
+        """Propose a conversion for *scope* (records) and, through *contents*, what they contain.
+
+        *contents* is the link between the scope and what it contains, written as in
+        Results.related: "name" for a link of the scope's records to their contents, "^name"
+        for a link of the contents to the scope's records (each record that is part of one of
+        them). A Link object works too, from either side. Without it, only the scope's records
+        are converted, and the plan lists the links that could give their contents.
+        """
         self.client = scope.client
         self.target = into
         self.scope = scope
@@ -690,17 +697,75 @@ class Plan(_Shown):
                 self.client.max_subjects,
                 self.client.max_rows,
             )
-        self.contents = contents
         self.kinds = kinds_of(self.client)
+        self.contents, self.contents_incoming = self._contents_link(contents)
         records = list(scope.records)
-        if contents is not None:
-            inner = scope.related(via=contents.label, incoming=contents.property != "", depth=1)
+        if self.contents is not None:
+            from rdfsolve.client.hydration import HydrationLimitError
+
+            try:
+                inner = scope.related(
+                    via=self.contents.label, incoming=self.contents_incoming, depth=1
+                )
+            except HydrationLimitError as error:
+                raise ValueError(
+                    f"{self._contents_text()} reaches more records of one kind than the client "
+                    f"reads in one call (max_subjects={self.client.max_subjects}). Open the client "
+                    "with a larger max_subjects, or start from fewer records."
+                ) from error
             records += list(inner.records)
         self.records = records
         self.proposals: dict[str, Proposal] = {}
         self.identity: Identities | None = None
         self._propose()
         self._hint()
+
+    def _scope_kinds(self) -> set[str]:
+        """Return the record types of the scope."""
+        return {self.client.type_name(type(r)) for r in self.scope.records}
+
+    def _contents_text(self) -> str:
+        """Return the contents link as written in Results.related ("^name" when it points in)."""
+        if self.contents is None:
+            return "no contents"
+        return f'contents="{"^" if self.contents_incoming else ""}{self.contents.label}"'
+
+    def _container_links(self) -> list[tuple[str, str]]:
+        """Return the links that could give the scope's contents: (via text, kinds that have it)."""
+        scope = self._scope_kinds()
+        found: dict[str, set[str]] = defaultdict(set)
+        for kind in self.kinds:
+            for link in kind.links:
+                if kind.label in scope and set(link.targets) - scope:
+                    found[link.label].add(kind.label)
+                elif kind.label not in scope and set(link.targets) & scope:
+                    found["^" + link.label].add(kind.label)
+        return sorted(((via, ", ".join(sorted(k))) for via, k in found.items()), key=lambda x: x[0])
+
+    def _contents_link(self, contents: str | Link | None) -> tuple[Link | None, bool]:
+        """Return the contents link and whether it points to the scope (from the contents)."""
+        if contents is None:
+            return None, False
+        scope = self._scope_kinds()
+        if isinstance(contents, Link):
+            return contents, contents.kind.label not in scope
+        incoming = contents.startswith("^")
+        label = contents.lstrip("^")
+        for kind in self.kinds:
+            if (kind.label in scope) == incoming:
+                continue
+            for link in kind.links:
+                if _attribute(link.label) == _attribute(label) and (
+                    not incoming or set(link.targets) & scope
+                ):
+                    return link, incoming
+        choices = "\n".join(
+            f'  contents="{via}"   ({kinds})' for via, kinds in self._container_links()
+        )
+        raise ValueError(
+            f"No link {contents!r} between the scope ({', '.join(sorted(scope))}) and other "
+            f'records. The links that could give its contents ("^" points to the scope):\n{choices}'
+        )
 
     def _hint(self) -> None:
         """Log what the plan holds and the next step, with the objects to use."""
@@ -1260,7 +1325,7 @@ class Plan(_Shown):
                         client,
                         focus=holder,
                         predicate=p.target.iri,
-                        subject="^" + p.ends[1].label,
+                        subject=("^" if self.contents_incoming else "") + p.ends[1].label,
                         subject_as="member",
                     )
                 ]
@@ -1408,7 +1473,12 @@ class Plan(_Shown):
             paths.append(path)
         profile = Profile.from_queries(paths, client=self.client)
         scope = (
-            within(self.client, records=self.scope, via=self.contents.label)
+            within(
+                self.client,
+                records=self.scope,
+                via=self.contents.label,
+                inverse=not self.contents_incoming,
+            )
             if self.contents
             else ""
         )
