@@ -32,6 +32,7 @@ classes:
   pathway: {is_a: thing}
   protein: {is_a: thing, id_prefixes: [UniProtKB]}
   small molecule: {is_a: thing, id_prefixes: [CHEBI]}
+  catalysis event: {is_a: thing}
 slots:
   name: {slot_uri: "rdfs:label"}
   related to: {domain: thing, range: thing}
@@ -136,8 +137,50 @@ def test_following_links_reads_large_sets_in_batches():
         scope.related(via="Is part of", incoming=True)
 
 
+def test_a_node_kind_can_be_converted_as_edges_between_named_links(plan, tmp_path):
+    plan.Reaction.leave_out()
+    plan.Pathway.use(plan.target.classes.pathway)
+    plan.Catalysis.as_edge("source", "TARGET").use(plan.target.predicates.related_to)
+    assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "related to"
+    with pytest.raises(ValueError, match="has no link 'Nowhere'"):
+        plan.Catalysis.as_edge("Nowhere", "Target")
+    counts = plan.run(tmp_path / "queries").counts()
+    assert counts["relations"]["related to"] == 1
+
+
+def test_the_printouts_show_the_ends_and_how_to_convert_a_kind_as_edges(plan):
+    assert "Source → Target" in repr(plan) or "source → target" in repr(plan).lower()
+    line = plan.Pathway.edge_line()
+    assert line == "" or line.startswith("plan.Pathway.as_edge(")
+    plan.Catalysis.as_node()
+    assert plan.Catalysis.edge_line().startswith("plan.Catalysis.as_edge('")
+    assert "as edges Source → Target" in repr(plan.Catalysis)
+    table = repr(plan.open)
+    assert "as edges" in table and "why it is open" in table and "Source → Target" in table
+
+
+def test_a_kind_switches_reading_with_the_term_chosen(plan):
+    plan.Catalysis.use(plan.target.classes.thing)  # a class: its records become nodes
+    assert plan.Catalysis.role == "node" and plan.Catalysis.ends == (None, None)
+    assert any(o.reading == "edge" for o in plan.Catalysis.options), (
+        "the edge reading stays offered"
+    )
+    plan.Catalysis.use(plan.target.predicates.catalyzes)  # a relation: edges between its links
+    assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "catalyzes"
+    assert [e.label for e in plan.Catalysis.ends] == ["Source", "Target"]
+    plan.Catalysis.as_node()
+    assert plan.Catalysis.role == "node"
+
+
+def test_options_show_every_reading_of_a_kind(plan):
+    readings = {o.reading or plan.Catalysis.role for o in plan.Catalysis.options}
+    assert readings == {"edge", "node"}
+    table = plan.Catalysis.options_table()
+    assert set(table["as"]) == {"edge", "node"}
+
+
 def test_a_term_that_does_not_fit_is_refused(plan):
-    with pytest.raises(ValueError, match="choose a class"):
+    with pytest.raises(ValueError, match="no two links to be an edge between"):
         plan.Protein.use(plan.target.predicates.catalyzes)
 
 
@@ -205,3 +248,44 @@ def test_a_diagram_is_its_mermaid_text_and_prints_drawn():
     assert "Kind" in repr(drawn) and "flowchart" not in repr(drawn)
     both = Diagram('flowchart LR\n  A["Kind"] -->|"to"| B["Other"]\n  B -->|"back"| A')
     assert "▸ Other" in repr(both) and "└◂" in repr(both)
+
+
+def test_tested_paths_are_read_for_the_plans_kinds_only_and_give_evidence(plan, tmp_path):
+    from rdfsolve.schema_models.navigation import read_tested_paths, tested_step_support
+
+    step = lambda s, p, o: {"subject_class": EX + s, "property_uri": EX + p, "object_class": EX + o}  # noqa: E731
+    packed = {
+        "format": "edges-1",
+        "edges": [
+            step("Catalysis", "source", "Protein"),
+            step("Protein", "isPartOf", "Pathway"),
+            step("Catalysis", "target", "Reaction"),
+            step("Other", "x", "Pathway"),
+        ],
+        "rows": [
+            {"edges": [0, 1], "matched": 8, "sources": 10},
+            {"edges": [2, 1], "matched": 9, "sources": 10},
+            {"edges": [3, 1], "matched": 1, "sources": 1},
+        ],
+    }
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps({"schema": {"navigation": {"strategy": "tested", "paths": packed}}}))
+    assert len(read_tested_paths(path)) == 3
+    assert len(read_tested_paths(path, start_classes=[EX + "Catalysis"])) == 2
+    support = tested_step_support(path, start_classes=[EX + "Catalysis"])
+    assert support == {
+        (EX + "Catalysis", EX + "source"): (8, 10),
+        (EX + "Catalysis", EX + "target"): (9, 10),
+    }
+    with_paths = plan.add_paths(path)
+    assert (
+        with_paths.path_support(with_paths.kinds.Catalysis, with_paths.kinds.Catalysis.Source)
+        == 0.8
+    )
+    assert list(with_paths.routes("Catalysis", paths=True)["follow"]) == [9, 8]
+    links = with_paths.routes("Catalysis").frame
+    assert dict(zip(links["link"], links["share of records"], strict=True))["Source"] == 0.8
+    assert (
+        with_paths.path_support(with_paths.kinds.Catalysis, with_paths.kinds.Catalysis.Target)
+        == 0.9
+    )

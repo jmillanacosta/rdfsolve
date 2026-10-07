@@ -171,6 +171,17 @@ class _Shown:
             display(Markdown(part.strip()) if isinstance(part, str) else part)
 
 
+class Table(_Shown):
+    """A titled table that prints as the plan's other tables do (.frame is the DataFrame)."""
+
+    def __init__(self, title: str, frame: Any, note: str = "") -> None:
+        """Keep the title, the DataFrame and a closing note."""
+        self.title, self.frame, self.note = title, frame, note
+
+    def _parts(self) -> list[Any]:
+        return [self.title, self.frame, *([self.note] if self.note else [])]
+
+
 class Names(_Shown):
     """Objects reachable by attribute, with completion and a printout of what is there."""
 
@@ -504,6 +515,8 @@ class Option:
     term: Term
     support: int
     why: str
+    reading: str = ""  # "node", "edge" or "process" when it reads the kind otherwise than proposed
+    ends: tuple[Link | None, Link | None] = (None, None)  # an edge reading's start and end links
 
 
 @dataclass(eq=False, repr=False)
@@ -537,7 +550,16 @@ class Proposal(_Shown):
                 "node, target.predicates.<name> for an edge (Tab completes the names)"
             )
         wanted = "class" if self.role in ("node", "process") else "predicate"  # edge, container
-        if term.role != wanted:
+        offered = next((o for o in self.options if o.term is term), None)
+        if term.role == "predicate" and self.role in ("node", "process"):
+            # A relation: the records become edges, between the option's ends or the kind's.
+            ends = offered.ends if offered and offered.ends[0] else self.edge_links()
+            if ends is None:
+                raise ValueError(f"{self.name} has no two links to be an edge between")
+            self.as_edge(ends[0], ends[1])
+        elif term.role == "class" and self.role == "edge":
+            self.as_node()  # a class: the records become nodes
+        elif term.role != wanted:
             raise ValueError(f"{self.name} is a {self.role}: choose a {wanted}, not a {term.role}")
         for slot, value in qualifiers.items():
             known = p.target.term(slot)
@@ -566,19 +588,69 @@ class Proposal(_Shown):
         p._hint()
         return self
 
-    def as_edge(self) -> Proposal:
-        """Convert this kind's records as edges between their two ends instead of as nodes."""
-        if self.ends == (None, None):
-            raise ValueError(f"{self.name} has no two ends to be an edge between")
+    def as_edge(self, start: str | Link | None = None, end: str | Link | None = None) -> Proposal:
+        """Convert this kind's records as edges between two of their links' ends.
+
+        *start* and *end* are links of the kind (names as in kind.links, or Link objects); by
+        default the two ends the plan found. Then choose the relation: .use(predicate).
+        """
+        ends = list(self.ends)
+        for i, given in enumerate((start, end)):
+            if given is None:
+                continue
+            if isinstance(given, Link):
+                ends[i] = given
+                continue
+            found = [
+                x
+                for x in self.kind.links
+                if _attribute(x.label).lower() == _attribute(given).lower()
+            ]
+            if not found:
+                raise ValueError(
+                    f"{self.name} has no link {given!r}; its links: "
+                    + ", ".join(x.label for x in self.kind.links)
+                )
+            ends[i] = found[0]
+        if ends[0] is None or ends[1] is None:
+            raise ValueError(
+                f"{self.name} has no two ends the plan could find; name them: "
+                f"plan.{_attribute(self.name)}.as_edge(start='<link>', end='<link>') "
+                f"(its links: {', '.join(x.label for x in self.kind.links)})"
+            )
+        self.ends = (ends[0], ends[1])
+        self.ends_kinds = {link.label: link.targets for link in self.ends if link is not None}
         self.role, self.chosen, self.qualifiers = "edge", None, {}
         self.plan._repropose(self)
         logger.info(
-            "%s will be converted as edges <%s> → <%s>.",
+            "%s will be converted as edges <%s> → <%s>; choose the relation with "
+            "plan.%s.use(target.predicates.<name>).",
             self.name,
-            self.ends[0].label if self.ends[0] else "?",
-            self.ends[1].label if self.ends[1] else "?",
+            ends[0].label,
+            ends[1].label,
+            _attribute(self.name),
         )
         self.plan._hint()
+        return self
+
+    def as_node(self) -> Proposal:
+        """Convert this kind's records as nodes (with a class) instead of as edges."""
+        plan = self.plan
+        own = plan._iris_by_kind().get(self.kind.label, set())
+        edges = [o for o in self.options if (o.reading or self.role) == "edge"]
+        ends = self.ends
+        self.role, self.chosen, self.qualifiers, self.ends = "node", None, {}, (None, None)
+        self.options = plan._class_options(own, self.kind.label) + [
+            Option(o.term, o.support, o.why, "edge", o.ends if o.ends[0] else ends) for o in edges
+        ]
+        self.status = "choose"
+        plan._settle(self)
+        logger.info(
+            "%s will be converted as nodes; choose the class with plan.%s.use(target.classes.<Name>).",
+            self.name,
+            _attribute(self.name),
+        )
+        plan._hint()
         return self
 
     def leave_out(self) -> Proposal:
@@ -601,13 +673,104 @@ class Proposal(_Shown):
             [
                 {
                     "#": i,
+                    "as": o.reading or self.role,
                     "option": o.term.name,
                     "evidence": o.why,
-                    "what it would do": self.plan.consequence(self, o.term),
+                    "what it would do": self.plan.consequence(self, o.term, o.ends),
                 }
                 for i, o in enumerate(self.options[:8], 1)
             ]
         )
+
+    def reading_options(self, reading: str) -> list[Option]:
+        """Return the options that read this kind as *reading* ("node", "edge" or "process")."""
+        return [o for o in self.options if (o.reading or self.role) == reading]
+
+    def why_open(self) -> str:
+        """Return, in words, why the evidence does not decide this kind."""
+        if not self.options:
+            return "no term of the target fits; choose any, or leave it out"
+        own = self.reading_options(self.role)
+        if not own:
+            return "no term fits its own reading; another reading is offered"
+        best = own[0]
+        second = own[1] if len(own) > 1 else None
+        if self.role in ("node", "process"):
+            if best.support == 0 and "identifiers" in self.plan.target.model.capabilities:
+                return "matched by name only; its records have no identifiers the target names kinds by"
+            if second is not None and second.why == best.why:
+                return f"{best.term.name} and {second.term.name} fit equally"
+            return "the evidence is weak"
+        if best.why.startswith("name") and second is not None and second.why == best.why:
+            return f"{best.term.name} and {second.term.name} match its name equally"
+        return "no relation's name matches its name; the most general that fit its ends are offered"
+
+    def ends_evidence(self, ends: tuple[Link | None, Link | None]) -> str:
+        """Return how many of this kind's records follow each end in the tested paths, if read."""
+        shares = [self.plan.path_support(self.kind, e) if e else None for e in ends]
+        if all(s is None for s in shares):
+            return ""
+        return (
+            "; "
+            + " and ".join("?" if s is None else f"{s:.0%}" for s in shares)
+            + " of records have them"
+        )
+
+    def links_out(self) -> list[Link]:
+        """Return the links of this kind to other kinds of the plan: the ends it could have."""
+        kinds = set(self.plan.proposals)
+        contents = self.plan.contents
+        return [
+            link
+            for link in self.kind.links
+            if set(link.targets) & kinds
+            and not (contents is not None and link.property == contents.property)
+        ]
+
+    def ends_text(self) -> str:
+        """Return the ends of an edge or a process (start → end); for a node, how to make it an edge."""
+        if self.role in ("edge", "process") and self.ends != (None, None):
+            return " → ".join(e.label if e else "?" for e in self.ends)
+        line = self.edge_line()
+        return "as edges: " + line.removeprefix(f"plan.{_attribute(self.name)}") if line else ""
+
+    def edge_links(self) -> tuple[Link, Link] | None:
+        """Return the two links this kind's records would be edges between, or None.
+
+        The ends the data in scope supports (Plan._ends: links most records follow to other
+        records of the plan) come first; then a link to another kind of the plan named as a
+        start and one named as an end; else the two links most records of the whole source
+        follow (the tested paths, plan.add_paths). The evidence of each is in its options.
+        """
+        found = self.plan._ends(self.kind, set(self.plan.proposals))
+        if found[0] is not None and found[1] is not None:
+            return found[0], found[1]
+        links = self.links_out()
+        if len(links) < 2:
+            return None
+
+        def side(link: Link, words: tuple[str, ...]) -> bool:
+            """Return whether a link's name says it is this end."""
+            return bool(set(_tokens(link.label)) & {w[:5] for w in words})
+
+        first = next((x for x in links if side(x, FROM_WORDS)), None)
+        second = next((x for x in links if side(x, TO_WORDS) and x is not first), None)
+        if first is not None and second is not None:
+            return first, second
+        # No link named as a start and an end: the two most records of the whole source
+        # follow (tested paths), when most follow both.
+        followed = sorted(
+            (x for x in links if (self.plan.path_support(self.kind, x) or 0) >= 0.5),
+            key=lambda x: -(self.plan.path_support(self.kind, x) or 0),
+        )
+        return (followed[0], followed[1]) if len(followed) >= 2 else None
+
+    def edge_line(self) -> str:
+        """Return the one-liner that converts this node kind as edges, when it has edge links."""
+        found = self.edge_links() if self.role == "node" else None
+        if found is None:
+            return ""
+        return f"plan.{_attribute(self.name)}.as_edge('{found[0].label}', '{found[1].label}').use(<predicate>)"
 
     def _parts(self) -> list[Any]:
         lines = [f"{self.name} ({self.role}, {self.records} records): {self.status}"]
@@ -627,8 +790,16 @@ class Proposal(_Shown):
         if self.options and self.status != "chosen":
             parts += ["options:", self.options_table()]
         if self.status == "choose":
-            lines.append("  undecided: these records are not converted until one is chosen")
-            lines.append(f"  choose: plan.{_attribute(self.name)}.use(<term>)")
+            name = f"plan.{_attribute(self.name)}"
+            lines.append(f"  open: {self.why_open()}; its records are not converted until decided")
+            ends = self.edge_links() if self.role == "node" else self.ends
+            ways = [f"{name}.use(target.classes.<Name>) as nodes"]
+            if ends is not None and ends[0] is not None and ends[1] is not None:
+                ways.append(
+                    f"{name}.use(target.predicates.<name>) as edges {ends[0].label} → "
+                    f"{ends[1].label}{self.ends_evidence(ends)}"
+                )
+            lines.append("  decide: " + "; or ".join(ways) + f"; or {name}.leave_out()")
             if self.role == "process" and not self.plan.target.model.process_kinds():
                 lines.append(
                     "  the target has no process kinds: plan."
@@ -648,28 +819,40 @@ class Choices(_Shown, list):  # type: ignore[type-arg]
 
         if not self:
             return ["Nothing open: plan.run() converts the records."]
-        rows = [
-            {
-                "choose": f"plan.{_attribute(p.name)}",
-                "role": p.role,
-                "records": p.records,
-                "options": len(p.options),
-                "first options": (
-                    ", ".join(o.term.name for o in p.options[:3])
-                    + (", …" if len(p.options) > 3 else "")
+
+        def names(options: list[Option], n: int = 2) -> str:
+            """Return the first options' terms."""
+            shown = ", ".join(o.term.name for o in options[:n])
+            return shown + (f" (+{len(options) - n})" if len(options) > n else "")
+
+        rows = []
+        for p in self:
+            nodes = p.reading_options("node") + p.reading_options("process")
+            edges = p.reading_options("edge")
+            ends = edges[0].ends if edges and edges[0].ends[0] else p.ends
+            edge_text = ""
+            if edges and ends[0] is not None and ends[1] is not None:
+                edge_text = (
+                    f"{ends[0].label} → {ends[1].label}{p.ends_evidence(ends)}: {names(edges)}"
                 )
-                if p.options
-                else "none fits: choose any term, or leave it out",
-            }
-            for p in self
-        ]
-        first = rows[0]["choose"]
+            rows.append(
+                {
+                    "choose": f"plan.{_attribute(p.name)}",
+                    "records": p.records,
+                    "as nodes": names(nodes) if nodes else "",
+                    "as edges": edge_text,
+                    "why it is open": p.why_open(),
+                }
+            )
+        first = self[0]
+        name = f"plan.{_attribute(first.name)}"
         return [
             f"{len(self)} choices open; records of these kinds are not converted until decided.",
             pd.DataFrame(rows),
             (
-                f"Print one ({first}) to see every option and what it would do; "
-                f"{first}.use(<term>) or {first}.leave_out() decides it."
+                f"{name} lists every option with what it would do. Decide with "
+                f"{name}.use(target.classes.<Name>) for nodes, {name}.use(target.predicates.<name>) "
+                f"for edges, or {name}.leave_out()."
             ),
         ]
 
@@ -677,7 +860,13 @@ class Choices(_Shown, list):  # type: ignore[type-arg]
 class Plan(_Shown):
     """The proposed conversion of the records in a scope into a target model."""
 
-    def __init__(self, scope: Results, into: Target, *, contents: str | Link | None = None) -> None:
+    def __init__(
+        self,
+        scope: Results,
+        into: Target,
+        *,
+        contents: str | Link | None = None,
+    ) -> None:
         """Propose a conversion for *scope* (records) and, through *contents*, what they contain.
 
         *contents* is the link between the scope and what it contains, written as in
@@ -715,10 +904,131 @@ class Plan(_Shown):
                 ) from error
             records += list(inner.records)
         self.records = records
+        self.paths_file: Path | None = None  # tested paths, read with add_paths
+        self._path_support: dict[tuple[str, str], tuple[int, int]] = {}
         self.proposals: dict[str, Proposal] = {}
         self.identity: Identities | None = None
         self._propose()
         self._hint()
+
+    def _read_paths(self, paths: Path) -> None:
+        """Read how many records follow each link of the plan's kinds in the tested paths (the
+        paths themselves are read only when asked for: routes()).
+        """
+        from rdfsolve.schema_models.navigation import tested_step_support
+
+        labels = {self.client.type_name(type(r)) for r in self.records}
+        starts = {k.iri for k in self.kinds if k.label in labels}
+        self._path_support = tested_step_support(paths, start_classes=starts)
+        logger.info(
+            "Read how often %d links of the plan's %d kinds are followed in the tested paths; "
+            "plan.routes(<kind>) reads the paths of one kind.",
+            len(self._path_support),
+            len(starts),
+        )
+
+    def path_support(self, kind: Kind, link: Link) -> float | None:
+        """Return the share of a kind's records (source-wide) that follow *link* in the tested
+        paths, or None when no read path starts with it.
+        """
+        found = self._path_support.get((kind.iri, link.property))
+        return found[0] / found[1] if found and found[1] else None
+
+    def add_paths(self, paths: str | Path) -> Plan:
+        """Read tested paths (a mining run's schema JSON) for the plan's kinds, and propose again
+        the other readings of every kind with them; log the kinds whose options changed.
+        """
+        before = {
+            k: [(o.reading, o.term.name, o.why) for o in p.options]
+            for k, p in self.proposals.items()
+        }
+        self.paths_file = Path(paths)
+        self._read_paths(self.paths_file)
+        iris = self._iris_by_kind()
+        for p in self.proposals.values():
+            p.options = [o for o in p.options if not o.reading]
+            self._add_readings(p, iris)
+        changed = [
+            k
+            for k, p in self.proposals.items()
+            if [(o.reading, o.term.name, o.why) for o in p.options] != before[k]
+        ]
+        logger.info(
+            "Options changed with the tested paths: %s",
+            ", ".join(f"plan.{_attribute(k)}" for k in changed) or "none",
+        )
+        self._hint()
+        return self
+
+    def routes(self, kind: str, paths: bool = False) -> Any:
+        """Return how many of a kind's records follow each of its links in the tested paths, one
+        row per link (the ends the plan would use marked); with *paths*, the tested paths
+        themselves, most followed first.
+        """
+        if not paths:
+            import pandas as pd
+
+            if self.paths_file is None:
+                raise ValueError(
+                    "The plan has no tested paths: plan.add_paths(<a mining run's schema JSON>)"
+                )
+            found = getattr(self.kinds, _attribute(kind))
+            proposal = self.proposals.get(found.label)
+            ends: tuple[Link | None, Link | None] | None = (
+                proposal.edge_links() if proposal is not None and proposal.role == "node" else None
+            )
+            ends = ends or (proposal.ends if proposal is not None else (None, None))
+            rows = [
+                {
+                    "link": link.label,
+                    "reaches": ", ".join(link.targets[:3]),
+                    "share of records": None
+                    if (s := self.path_support(found, link)) is None
+                    else round(s, 2),
+                    "end": "start"
+                    if ends and link is ends[0]
+                    else "end"
+                    if ends and link is ends[1]
+                    else "",
+                }
+                for link in found.links
+            ]
+            frame = pd.DataFrame(rows, columns=["link", "reaches", "share of records", "end"])
+            frame = frame.sort_values("share of records", ascending=False, na_position="last")
+            return Table(
+                f"Links of {found.label}: the share of its records that follow each (tested paths)",
+                frame.reset_index(drop=True),
+                f"plan.routes({kind!r}, paths=True) lists the tested paths themselves.",
+            )
+        import pandas as pd
+
+        from rdfsolve.schema_models.navigation import read_tested_paths
+
+        found = getattr(self.kinds, _attribute(kind))
+        if self.paths_file is None:
+            raise ValueError(
+                "The plan has no tested paths: plan.add_paths(<a mining run's schema JSON>)"
+            )
+        tested = read_tested_paths(self.paths_file, start_classes=[found.iri])
+
+        def short(iri: str) -> str:
+            """Return the local name of an IRI."""
+            return iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+
+        rows = [
+            {
+                "path": " → ".join([found.label, *(short(s.property_uri) for s in r.steps)]),
+                "hops": len(r.steps),
+                "records": r.source_count,
+                "follow": r.matched_sources,
+                "share": round((r.matched_sources or 0) / r.source_count, 2)
+                if r.source_count
+                else None,
+            }
+            for r in tested
+        ]
+        frame = pd.DataFrame(rows, columns=["path", "hops", "records", "follow", "share"])
+        return frame.sort_values(["share", "hops"], ascending=[False, True]).reset_index(drop=True)
 
     def _scope_kinds(self) -> set[str]:
         """Return the record types of the scope."""
@@ -1029,14 +1339,57 @@ class Plan(_Shown):
                 p = Proposal(self, kind, "node", count, options, only_this_kind=generic)
                 if not identified[label]:
                     p.note = "its records have no identifiers of a registered namespace: proposed by name only"
+            self.proposals[label] = p
             if count == 0:
                 p.status, p.note = "left out", "every record is of a more specific kind"
             else:
                 self._settle(p)
             p.ends_kinds = {link.label: link.targets for link in p.ends if link is not None}
-            self.proposals[label] = p
+        for p in self.proposals.values():
+            self._add_readings(p, iris)
         if self.contents is not None:
             self._propose_container(present)
+
+    def _add_readings(self, p: Proposal, iris: Mapping[str, set[str]]) -> None:
+        """Add the other readings of a kind to its options, after its own: a node kind with two
+        links to other kinds can be edges between them; an edge or process kind can be nodes.
+        """
+        if p.status == "left out":
+            return
+        if p.role == "node":
+            ends = p.edge_links()
+            if ends is None:
+                return
+            supported = self._ends(p.kind, set(self.proposals))
+            shares = [self.path_support(p.kind, x) for x in ends]
+            how = (
+                "the data in scope"
+                if supported[0] is not None and supported[1] is not None
+                else "the schema"
+            )
+            if any(s is not None for s in shares):  # how many of its records follow each end
+                how += (
+                    "; followed by "
+                    + " and ".join("?" if s is None else f"{s:.0%}" for s in shares)
+                    + " of its records"
+                )
+            domain, range_ = self._kind_target_of(ends[0]), self._kind_target_of(ends[1])
+            p.options += [
+                Option(
+                    o.term,
+                    o.support,
+                    f"edges {ends[0].label} → {ends[1].label} ({how}); {o.why}",
+                    "edge",
+                    ends,
+                )
+                for o in self._predicate_options(p.name, "", domain, range_)[:4]
+            ]
+        else:
+            p.options += [
+                Option(o.term, o.support, f"nodes; {o.why}", "node")
+                for o in self._class_options(iris.get(p.kind.label, set()), p.kind.label)[:3]
+                if o.support or o.why.startswith("name")  # evidence for nodes, not any kind
+            ]
 
     def _propose_container(self, present: set[str]) -> None:
         """Propose the relation that says what the records are part of (the contents link)."""
@@ -1065,7 +1418,8 @@ class Plan(_Shown):
     def _repropose(self, p: Proposal) -> None:
         """Make the options of a relation again, from its ends' current target kinds."""
         domain, range_ = self._kind_target_of(p.ends[0]), self._kind_target_of(p.ends[1])
-        p.options = self._predicate_options(p.name, "", domain, range_)
+        others = [o for o in p.options if o.reading and o.reading != "edge"]
+        p.options = self._predicate_options(p.name, "", domain, range_) + others
         p.chosen, p.status = None, "choose"
         self._settle(p)
 
@@ -1150,14 +1504,18 @@ class Plan(_Shown):
         """Offer the kinds for completion."""
         return sorted(_attribute(k) for k in self.proposals)
 
-    def consequence(self, p: Proposal, term: Term) -> str:
+    def consequence(
+        self, p: Proposal, term: Term, ends: tuple[Link | None, Link | None] = (None, None)
+    ) -> str:
         """Return what using *term* for *p* would do: statements written, and what the target says."""
-        if p.role in ("node", "process"):
+        if term.role == "class":
             text = f"{p.records} records typed {term.name}"
             if term.id_prefixes:
                 text += f"; the target names them by {', '.join(term.id_prefixes[:3])}"
             return text
-        a, b = (e.label if e else "?" for e in p.ends)
+        if ends == (None, None):
+            ends = p.ends if p.ends != (None, None) else (p.edge_links() or (None, None))
+        a, b = (e.label if e else "?" for e in ends)
         fit = []
         if term.domain:
             fit.append(f"from must be {term.domain}")
@@ -1213,6 +1571,7 @@ class Plan(_Shown):
                             "role": p.role,
                             "records": p.records,
                             "becomes": p.target.name if p.target else "",
+                            "ends": p.ends_text() if p.role != "node" else "",
                             "how": p.status,
                             "why": _clip(p.chosen.why if p.chosen else "", 44),
                         }
@@ -1237,6 +1596,7 @@ class Plan(_Shown):
                             )
                             if p.options
                             else "none fits",
+                            "ends": _clip(p.ends_text(), 70),
                         }
                         for p in sorted(self.open, key=lambda p: (p.role, p.name))
                     ]
