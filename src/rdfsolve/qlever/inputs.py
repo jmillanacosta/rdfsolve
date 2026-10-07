@@ -229,6 +229,53 @@ def mapped_input_files(workdir: Path, graphs: list[str]) -> list[tuple[Path, str
     return inputs
 
 
+# The most bytes the qlever-index arguments may take: above it, line-based inputs share pipes.
+# (The kernel refuses a command line over its argument limit, a few MB at most.)
+ARG_BUDGET = 1 << 20
+# The most pipes the inputs that share pipes are spread over.
+SHARED_PIPES = 1000
+# Blank nodes of a file that shares a pipe are renamed with this prefix and the file's number.
+_BLANK_PREFIX = "f"
+# Renames the blank nodes of N-Triples or N-Quads read from stdin, in the subject, object and
+# graph positions (not in literals), by putting $1 before each label.
+_RELABEL = r"""set -o pipefail
+relabel() {
+  LC_ALL=C sed -E "/_:/{s/^_:/_:$1/;s/^((<[^>]*>|_:[^ \t]+)[ \t]+<[^>]*>[ \t]+)_:/\1_:$1/;s/^((<[^>]*>|_:[^ \t]+)[ \t]+<[^>]*>[ \t]+(<[^>]*>|_:[^ \t]+|\"([^\"\\\\]|\\\\.)*\"(@[A-Za-z0-9-]+|\^\^<[^>]*>)?)[ \t]+)_:/\1_:$1/}"
+}
+"""
+
+
+def _input_groups(inputs: list[tuple[str, str, str, Path]]) -> list[list[int]]:
+    """Group the inputs so that the qlever-index arguments stay under ARG_BUDGET.
+
+    Consecutive N-Triples or N-Quads inputs of one graph share a pipe, in order, spread over at
+    most SHARED_PIPES pipes; other inputs keep their own. Turtle cannot be joined (each file
+    has its own prefixes), so too many Turtle inputs raise a ValueError.
+    """
+    line_based = [i for i, (_, fmt, _, _) in enumerate(inputs) if fmt in {"nt", "nq"}]
+    rest = sum(len(r) + len(g) + 16 for r, fmt, g, _ in inputs if fmt not in {"nt", "nq"})
+    if rest > ARG_BUDGET // 2:
+        raise ValueError(
+            f"{len(inputs) - len(line_based)} Turtle inputs are too many to index in one "
+            "qlever-index call; convert them to N-Triples, which can share pipes"
+        )
+    per_pipe = max(1, -(-len(line_based) // SHARED_PIPES))
+    groups: list[list[int]] = []
+    for i, (_, fmt, graph, _) in enumerate(inputs):
+        last = groups[-1] if groups else None
+        if (
+            fmt in {"nt", "nq"}
+            and last
+            and len(last) < per_pipe
+            and inputs[last[0]][1:3] == (fmt, graph)
+            and last[-1] == i - 1
+        ):
+            last.append(i)
+        else:
+            groups.append([i])
+    return groups
+
+
 def index_command(
     image: Path,
     data_dir: Path,
@@ -246,7 +293,9 @@ def index_command(
     The inputs are given relative to the work folder, and the container runs the script, so the
     file list does not pass through the command line of Singularity, which refuses a long one.
     Each input stays its own file, so that blank nodes of different
-    documents stay apart.
+    documents stay apart. When the arguments would pass ARG_BUDGET (the kernel refuses a
+    command line over its argument limit), consecutive N-Triples or N-Quads inputs of one
+    graph share a pipe instead, each file's blank nodes renamed apart (_input_groups).
 
     qlever-index does not read gzip: given a .gz file it builds an empty index and reports
     success. A compressed input is given as a named pipe that one feeder fills with the
@@ -263,15 +312,24 @@ def index_command(
     import os
     import shlex
 
+    inputs = [
+        (os.path.relpath(path, workdir), qlever_format(path), graph, path) for path, graph in mapped
+    ]
+    size = sum(len(r) + len(g) + 16 for r, _, g, _ in inputs)
+    groups = _input_groups(inputs) if size > ARG_BUDGET else [[i] for i in range(len(inputs))]
     args = ["qlever-index", "-i", name, "-s", str(settings_path)]
-    feeds: list[tuple[str, str]] = []
-    for path, graph in mapped:
-        relative = os.path.relpath(path, workdir)
-        if path.suffix == ".gz" or (path.is_file() and _is_gzip(path)):
-            pipe = f"{PIPES}/{len(feeds)}.{qlever_format(path)}"
-            feeds.append((relative, pipe))
+    feeds: list[tuple[list[str], str]] = []
+    for group in groups:
+        relative, fmt, graph, path = inputs[group[0]]
+        if len(group) > 1:
+            pipe = f"{PIPES}/{len(feeds)}.{fmt}"
+            feeds.append(([inputs[i][0] for i in group], pipe))
             relative = pipe
-        args += ["-f", relative, "-F", qlever_format(path)]
+        elif path.suffix == ".gz" or (path.is_file() and _is_gzip(path)):
+            pipe = f"{PIPES}/{len(feeds)}.{fmt}"
+            feeds.append(([relative], pipe))
+            relative = pipe
+        args += ["-f", relative, "-F", fmt]
         if graph:
             args += ["-g", graph]
     args += ["-p", parallel, "-b", buffer, "-m", memory]
@@ -289,10 +347,23 @@ def index_command(
         (workdir / FEED).write_text(
             # A write that fails (qlever-index stopped reading a pipe) goes on to the next pipe:
             # every pipe that qlever-index opens gets a writer, so that it ends, with its error.
-            "".join(
-                f"gzip -dc {shlex.quote(src)} > {shlex.quote(pipe)} || "
-                f"echo {shlex.quote(src)} >> {FEED_FAILED}\n"
-                for src, pipe in feeds
+            # Files that share a pipe are written one after the other, each with its blank
+            # nodes renamed apart (gzip -dcf passes a plain file through).
+            (_RELABEL if any(len(srcs) > 1 for srcs, _ in feeds) else "")
+            + "".join(
+                (
+                    f"gzip -dc {shlex.quote(srcs[0])} > {shlex.quote(pipe)} || "
+                    f"echo {shlex.quote(srcs[0])} >> {FEED_FAILED}\n"
+                )
+                if len(srcs) == 1
+                else "{\n"
+                + "".join(
+                    f"gzip -dcf {shlex.quote(src)} | relabel {_BLANK_PREFIX}{n}_ || "
+                    f"echo {shlex.quote(src)} >> {FEED_FAILED}\n"
+                    for n, src in enumerate(srcs)
+                )
+                + f"}} > {shlex.quote(pipe)}\n"
+                for srcs, pipe in feeds
             )
         )
         lines += [

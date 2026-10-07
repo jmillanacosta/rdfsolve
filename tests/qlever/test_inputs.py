@@ -207,3 +207,54 @@ def test_census_reads_a_statement_over_the_parser_buffer(tmp_path):
     found = census_of_files([(path, "nt")])
     assert found["properties"]["http://e/n"] == {"http://www.w3.org/2001/XMLSchema#integer": 2}
     assert found["unread"]["lines"] == 0
+
+
+def test_too_many_inputs_share_pipes_with_their_blank_nodes_kept_apart(tmp_path, monkeypatch):
+    from rdfsolve.qlever import inputs
+
+    monkeypatch.setattr(inputs, "ARG_BUDGET", 60)
+    monkeypatch.setattr(inputs, "SHARED_PIPES", 2)
+    (tmp_path / "rdf").mkdir()
+    names = ["a.nt.gz", "b.nt", "c.nt.gz", "d.ttl"]
+    for n in names:
+        (tmp_path / "rdf" / n).write_text("")
+    index_command(
+        Path("/data/qlever.sif"),
+        tmp_path,
+        tmp_path,
+        "t",
+        tmp_path / "s.json",
+        [(tmp_path / "rdf" / n, "") for n in names],
+        parallel="false",
+        buffer="10M",
+        memory="1G",
+    )
+    script = (tmp_path / "index-command.sh").read_text()
+    assert "-f .index-pipes/0.nt -F nt -f .index-pipes/1.nt -F nt -f rdf/d.ttl -F ttl" in script
+    feed = (tmp_path / FEED).read_text()
+    assert "relabel() {" in feed
+    assert (
+        "{\ngzip -dcf rdf/a.nt.gz | relabel f0_ || echo rdf/a.nt.gz >> .index-feed.failed\n"
+        "gzip -dcf rdf/b.nt | relabel f1_ || echo rdf/b.nt >> .index-feed.failed\n"
+        "} > .index-pipes/0.nt\n"
+    ) in feed
+
+
+def test_too_many_turtle_inputs_are_refused(tmp_path, monkeypatch):
+    import pytest
+
+    from rdfsolve.qlever import inputs
+
+    monkeypatch.setattr(inputs, "ARG_BUDGET", 60)
+    with pytest.raises(ValueError, match="convert them to N-Triples"):
+        index_command(
+            Path("/data/qlever.sif"),
+            tmp_path,
+            tmp_path,
+            "t",
+            tmp_path / "s.json",
+            [(tmp_path / f"{i}.ttl", "") for i in range(3)],
+            parallel="false",
+            buffer="10M",
+            memory="1G",
+        )
