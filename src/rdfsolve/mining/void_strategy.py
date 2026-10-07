@@ -634,7 +634,8 @@ class VoidStrategy(MiningStrategy):
 
         For a count, each triple once; for a sample, starting from the members of the subject
         class. Without *datatype_filter*, a literal pattern matches every object of its edge
-        (see _sole_edges).
+        (see _sole_edges). A Resource pattern stands for the objects that are neither literals
+        nor typed (the partition without a class); its count matches only those.
         """
         edge = self._edge(graph_uris, p.property_uri)
         head = (
@@ -646,6 +647,8 @@ class VoidStrategy(MiningStrategy):
             return head + (
                 f" FILTER(DATATYPE(?o) = <{p.datatype}>)" if p.datatype and datatype_filter else ""
             )
+        if p.object_class == "Resource" and not sample:
+            return f"{head} FILTER(!isLiteral(?o)) {self._untyped('?o')}"
         if p.object_class in ("Resource", "BlankNode"):
             return head
         return f"{head} {self._typed('?o', p.object_class)}"

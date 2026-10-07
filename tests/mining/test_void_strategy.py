@@ -220,3 +220,45 @@ def test_a_literal_pattern_alone_on_its_edge_is_recounted_without_a_datatype_fil
     assert len([q for q in recounts if str(E.size) in q and "DATATYPE" in q]) == 2
     examples = [q for purpose, q in sent if purpose == "void/examples"]
     assert examples and all("DATATYPE" not in q for q in examples if str(E.code) in q)
+
+
+VOID_UNTYPED_OBJECTS = """
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix void-ext: <http://ldf.fi/void-ext#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <urn:ex:> .
+
+[] sd:namedGraph [ sd:name <urn:g1> ; sd:graph <urn:void:g1> ] .
+<urn:void:g1> void:classPartition <urn:cp:A> .
+<urn:cp:A> void:class ex:A ; void:entities 1 ; void:propertyPartition <urn:pp:link> .
+<urn:pp:link> void:property ex:link ; void:triples 3 ;
+    void-ext:objectClassPartition [ void:class ex:B ; void:triples 1 ] ,
+        [ void:triples 2 ] ;
+    void-ext:datatypePartition [ void-ext:datatype xsd:string ; void:triples 1 ] .
+"""
+
+
+def test_a_resource_pattern_is_recounted_over_its_untyped_objects_only():
+    """A VoID's object partition without a class holds the objects that have no class; the
+    re-count of its Resource pattern leaves out typed objects and literals of the same edge."""
+    data = Dataset(default_union=True)
+    g1 = data.graph(URIRef(G1))
+    g1.add((E.a1, RDF.type, E.A))
+    g1.add((E.b1, RDF.type, E.B))
+    g1.add((E.a1, E.link, E.b1))
+    g1.add((E.a1, E.link, E.u1))
+    g1.add((E.a1, E.link, Literal("x")))
+    void = Graph().parse(data=VOID_UNTYPED_OBJECTS, format="turtle")
+    scoped = scope_void_graph(void, void_datasets_of_graphs(void, [G1]))
+    strategy = VoidStrategy(scoped, void_graph="urn:void", drift_random=0)
+    miner = SchemaMiner.from_graph(data, graph_uris=[G1], strategy=strategy, delay=0)
+    try:
+        miner.mine(dataset_name="fixture")
+    finally:
+        miner.close()
+    drift = miner.last_report.config["void_source"]["drift"]["patterns"]
+    found = {(r["object"], r["void_count"], r["count_now"]) for r in drift}
+    assert ("Resource", 1, 1) in found, found
+    assert {r["object"] for r in drift} == {str(E.B), "Literal", "Resource"}
+    assert all(r["ratio"] == 1.0 for r in drift)
