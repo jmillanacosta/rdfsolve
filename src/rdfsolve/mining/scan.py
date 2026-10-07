@@ -1795,17 +1795,31 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
 
 BATCH_ROWS = 5_000_000
 # A predicate with more rows than this is counted in parts (count_patterns): the rows of one
-# part are held at once, with about 300 bytes a row at the peak of counting.
+# part are held at once, with about ROW_BYTES a row at the peak of counting when each node has
+# one class; a row of a node with k classes gives k classified rows at each end
+# (count_patterns scales the parts by the classes a node has).
 PARTITION_ROWS = 50_000_000
-# A type table with more rows than this is joined in parts (by id), each about 40 bytes a row.
+# A type table with more rows than this is joined in parts (by id). Up to three parts are held
+# at once (the subjects' part, an objects' part and the typed ids), each with the hash table of
+# its join: about TYPE_ROW_BYTES a row.
 TYPE_PARTITION_ROWS = 200_000_000
+ROW_BYTES = 300
+TYPE_ROW_BYTES = 100
+# The share of RDFSOLVE_SCAN_COUNT_GB that the parts of the type table take; the rows take the
+# rest.
+TYPE_SHARE = 1 / 3
 COUNTS = ("count", "distinct_subjects", "distinct_objects")
 
 
 def count_limits() -> tuple[int, int]:
     """Return the rows of a predicate and of the type table counted at once (PARTITION_ROWS,
     TYPE_PARTITION_ROWS), or both from RDFSOLVE_SCAN_COUNT_GB: the memory counting may use,
-    in GB, which a part of rows and a part of the type table share.
+    in GB. The type table takes TYPE_SHARE of it, in three parts held at once (TYPE_ROW_BYTES a
+    row); the rows of a part take the rest (ROW_BYTES a row when each node has one class).
+
+    Bgee (job 115704, 80 GB): the former split (half each, 40 bytes a type row) kept its 725 M
+    type rows in one part, built the hash table of the whole table for the objects of every
+    part, and counted 119 M rows a part: the job used 251.6 GB.
     """
     import os
 
@@ -1813,7 +1827,27 @@ def count_limits() -> tuple[int, int]:
     if not value:
         return PARTITION_ROWS, TYPE_PARTITION_ROWS
     budget = float(value) * 1e9
-    return max(1, int(budget / 2 / 300)), max(1, int(budget / 2 / 40))
+    rows = budget * (1 - TYPE_SHARE) / ROW_BYTES
+    types = budget * TYPE_SHARE / 3 / TYPE_ROW_BYTES
+    return max(1, int(rows)), max(1, int(types))
+
+
+def class_fanout(store: CountedStore) -> float:
+    """Return the classes a typed node has on average (at least 1), from the type table.
+
+    A row whose subject has k classes and object m gives k * m classified rows: the rows of a
+    part are scaled by it (count_patterns). The distinct nodes are estimated (HyperLogLog), so
+    the table is read in a stream, not held.
+    """
+    import polars as pl
+
+    found = (
+        store.base.graph_types()
+        .select(rows=pl.len(), nodes=pl.col("sid").approx_n_unique())
+        .collect(engine="streaming")
+    )
+    rows, nodes = int(found["rows"][0]), int(found["nodes"][0])
+    return max(1.0, rows / nodes) if nodes else 1.0
 
 
 def store_rows(store: CountedStore, predicate: str) -> int:
@@ -1970,6 +2004,10 @@ def count_patterns(
     blank_objects: list[pl.DataFrame] = []
     blank_outgoing: list[pl.DataFrame] = []
     partition_rows, type_rows = count_limits()
+    # A part of rows holds the classified rows of its nodes: k classes at each end give k * k
+    # rows (half of the bytes of a row are its classified copy).
+    fanout = class_fanout(store)
+    partition_rows = max(1, int(partition_rows / ((1 + fanout * fanout) / 2)))
     typed_ids = store.typed_ids() if hasattr(store, "typed_ids") else store.type_ids().select("sid")
     typed_ids = typed_ids.select("sid").unique()
     # The type rows of the whole index bound those of the scope (a view or a retyped table).
@@ -2088,11 +2126,13 @@ def count_patterns(
             # of type_parts), so the subjects of a part are in one part of the types.
             parts = type_parts * -(-row_parts // type_parts)
             logger.info(
-                "Scan count: %d rows of %d predicates in %d parts (types in %d)",
+                "Scan count: %d rows of %d predicates in %d parts (types in %d; %.1f classes a "
+                "typed node)",
                 size,
                 len(batch),
                 parts,
                 type_parts,
+                fanout,
             )
             frame = _batch_frame(store, batch, by_graph=by_graph)
             schema = frame.collect_schema()

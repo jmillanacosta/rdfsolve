@@ -73,4 +73,28 @@ def test_the_memory_budget_sets_the_parts(monkeypatch):
     assert scan.count_limits() == (scan.PARTITION_ROWS, scan.TYPE_PARTITION_ROWS)
     monkeypatch.setenv("RDFSOLVE_SCAN_COUNT_GB", "60")
     rows, types = scan.count_limits()
-    assert rows == 100_000_000 and types == 750_000_000
+    assert rows == 133_333_333 and types == 66_666_666
+
+
+def test_bgee_types_are_split_under_its_budget(monkeypatch):
+    """Bgee (job 115704, RDFSOLVE_SCAN_COUNT_GB=80): 725,494,945 type rows stayed in one part
+    (the old split allowed 1,000,000,000) and the job used 251.6 GB. Under 80 GB they are
+    joined in parts, and a smaller budget gives more and smaller parts of both."""
+    monkeypatch.setenv("RDFSOLVE_SCAN_COUNT_GB", "80")
+    rows, types = scan.count_limits()
+    assert -(-725_494_945 // types) >= 8
+    monkeypatch.setenv("RDFSOLVE_SCAN_COUNT_GB", "20")
+    smaller = scan.count_limits()
+    assert smaller[0] < rows and smaller[1] < types
+
+
+def test_parts_are_scaled_by_the_classes_of_a_node(store, monkeypatch):
+    """A row whose nodes have several classes gives several classified rows: the parts are
+    smaller when nodes have more classes, and the counts stay those of one pass."""
+    fanout = scan.class_fanout(store)
+    assert 1.0 < fanout < 2.0, "Some nodes of the fixture have two classes"
+    whole = _counts(store)
+    monkeypatch.setattr(scan, "class_fanout", lambda store: 5.0)
+    monkeypatch.setattr(scan, "PARTITION_ROWS", 100)
+    monkeypatch.setattr(scan, "BATCH_ROWS", 100)
+    assert _counts(store) == whole
