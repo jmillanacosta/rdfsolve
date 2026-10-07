@@ -88,13 +88,36 @@ def test_bgee_types_are_split_under_its_budget(monkeypatch):
     assert smaller[0] < rows and smaller[1] < types
 
 
-def test_parts_are_scaled_by_the_classes_of_a_node(store, monkeypatch):
-    """A row whose nodes have several classes gives several classified rows: the parts are
-    smaller when nodes have more classes, and the counts stay those of one pass."""
-    fanout = scan.class_fanout(store)
-    assert 1.0 < fanout < 2.0, "Some nodes of the fixture have two classes"
+def test_parts_are_scaled_by_the_classified_rows_of_a_batch(store, monkeypatch):
+    """A row whose subject has k classes and object m gives k * m classified rows: SAWGraph's
+    hasResultQualifier gives 364 a row, and 110 parts sized by rows ran out of memory (job
+    115895). The parts of a batch are sized by its classified rows, estimated from a sample;
+    the counts stay those of one pass."""
     whole = _counts(store)
-    monkeypatch.setattr(scan, "class_fanout", lambda store: 5.0)
-    monkeypatch.setattr(scan, "PARTITION_ROWS", 100)
-    monkeypatch.setattr(scan, "BATCH_ROWS", 100)
+    found = scan._batch_expansion(store, ["http://example.org/condition"], 10**6)
+    assert found > 1.0, "Expressions with two classes point to conditions with two classes"
+    sizes = []
+    original = scan._spill
+
+    def spill(frame, directory, parts, column):
+        sizes.append(parts)
+        return original(frame, directory, parts, column)
+
+    monkeypatch.setattr(scan, "_spill", spill)
+    monkeypatch.setattr(scan, "EXPANSION_MIN_ROWS", 1)
+    monkeypatch.setattr(scan, "_batch_expansion", lambda store, batch, size: 50.0)
+    monkeypatch.setattr(scan, "PARTITION_ROWS", 400)
+    monkeypatch.setattr(scan, "BATCH_ROWS", 400)
     assert _counts(store) == whole
+    assert sizes and max(sizes) > 1, "Batches of few rows are split by their classified rows"
+
+
+def test_a_scope_with_too_many_classes_is_refused_with_its_setting(store, monkeypatch):
+    """BioGateway has 65,884,730 classes and GO-CAM 1,718,529: a count gives a pattern for each
+    class and property, and its final table ran out of memory. Above the limit the count is
+    refused with a message that names the grouping setting."""
+    monkeypatch.setenv("RDFSOLVE_SCAN_MAX_CLASSES", "2")
+    with pytest.raises(scan.TooManyClassesError, match="ontology_group_before_mining"):
+        scan.count_patterns(store)
+    monkeypatch.delenv("RDFSOLVE_SCAN_MAX_CLASSES")
+    assert scan.count_patterns(store)

@@ -2105,22 +2105,65 @@ def count_limits() -> tuple[int, int]:
     return max(1, int(rows)), max(1, int(types))
 
 
-def class_fanout(store: CountedStore) -> float:
-    """Return the classes a typed node has on average (at least 1), from the type table.
+# Distinct classes in a count's scope above which count_patterns refuses (or
+# RDFSOLVE_SCAN_MAX_CLASSES): it gives a pattern for each class and property, and BioGateway's
+# 65,884,730 classes (GO-CAM: 1,718,529) ran out of memory in its final table. Such classes are
+# grouped under their ancestors before counting (ontology_group_before_mining).
+SCAN_MAX_CLASSES = 1_000_000
 
-    A row whose subject has k classes and object m gives k * m classified rows: the rows of a
-    part are scaled by it (count_patterns). The distinct nodes are estimated (HyperLogLog), so
-    the table is read in a stream, not held.
+
+class TooManyClassesError(ValueError):
+    """The scope of a count holds more classes than count_patterns takes (SCAN_MAX_CLASSES)."""
+
+
+def _max_classes() -> int:
+    """Return SCAN_MAX_CLASSES, or RDFSOLVE_SCAN_MAX_CLASSES when it is set."""
+    import os
+
+    value = os.environ.get("RDFSOLVE_SCAN_MAX_CLASSES")
+    return int(value) if value else SCAN_MAX_CLASSES
+
+
+# Rows of a batch read to estimate its classified rows (_batch_expansion), and the rows of a
+# batch from which it is estimated (a smaller batch is counted as is).
+EXPANSION_SAMPLE = 1_000_000
+EXPANSION_MIN_ROWS = 100_000
+
+
+def _batch_expansion(store: CountedStore, batch: list[str], size: int) -> float:
+    """Return the classified rows of a batch per row (at least 1), from a sample of its rows.
+
+    A row whose subject has k classes and object m becomes k * m classified rows, and the
+    joins of a part hold them: SAWGraph's coso:hasResultQualifier gives 364 per row, rdf:type
+    13 (2.8 M and 100.6 M rows; job 115895 ran out of memory in 110 parts sized by rows). The
+    sample is every n-th row (EXPANSION_SAMPLE in all); the classes of its nodes are read from
+    the type table in a stream, for those nodes only.
     """
     import polars as pl
 
-    found = (
-        store.base.graph_types()
-        .select(rows=pl.len(), nodes=pl.col("sid").approx_n_unique())
+    step = max(1, size // EXPANSION_SAMPLE)
+    rows = (
+        pl.concat([store.rows(p).select("sid", "oid") for p in batch])
+        .gather_every(step)
         .collect(engine="streaming")
     )
-    rows, nodes = int(found["rows"][0]), int(found["nodes"][0])
-    return max(1.0, rows / nodes) if nodes else 1.0
+    if not rows.height:
+        return 1.0
+    nodes = pl.concat([rows["sid"], rows["oid"]]).unique()
+    classes = (
+        store.type_ids()
+        .filter(pl.col("sid").is_in(nodes.implode()))
+        .group_by("sid")
+        .agg(k=pl.len())
+        .collect(engine="streaming")
+    )
+    found = (
+        rows.join(classes.rename({"k": "ks"}), on="sid", how="left")
+        .join(classes.rename({"sid": "oid", "k": "ko"}), on="oid", how="left")
+        .select((pl.col("ks").fill_null(1) * pl.col("ko").fill_null(1)).mean())
+        .item()
+    )
+    return max(1.0, float(found or 1.0))
 
 
 def store_rows(store: CountedStore, predicate: str) -> int:
@@ -2231,6 +2274,50 @@ def _pattern_term(term: str, *, sentinels: bool = False) -> bool:
     return term.startswith(_URI_SCHEMES) and not any(ord(c) < 32 for c in term)
 
 
+def _blank_outgoing(store: CountedStore) -> pl.DataFrame:
+    """Return the predicates of each blank node (oid, q: categories), rdf:type for one that has
+    a type in the data.
+
+    Read before counting (the subject column of each predicate in a stream), so that a
+    pattern's blank objects are joined with their predicates as they are found: keeping
+    the blank objects of every pattern until the end held SAWGraph's 33 M blank-object rows for
+    each of their subjects' classes (jobs 115895 and 116051 ran out of memory).
+    """
+    import polars as pl
+
+    blank = pl.col("s").str.starts_with("_:")
+    frames = [
+        store.rows(p).filter(blank).select("sid").unique().with_columns(q=pl.lit(p))
+        for p in store.predicates
+    ]
+    typed = (
+        store.data_types()
+        .filter(pl.col("s").str.starts_with("_:"))
+        .select("s")
+        .join(
+            store.base.graph_types().filter(blank).select("s", "sid").unique(),
+            on="s",
+        )
+        .select("sid", q=pl.lit(RDF_TYPE))
+    )
+    found = pl.concat([*frames, typed]).unique().collect(engine="streaming")
+    return found.select(oid="sid", q=pl.col("q").cast(pl.Categorical))
+
+
+def _compact(*lists: list[pl.DataFrame]) -> None:
+    """Replace the tables of each list by their distinct rows, in one table.
+
+    The blank-node tables of count_patterns grow with every part and cell; kept as categories
+    and made distinct as each part ends, they hold each row once (SAWGraph, job 116051: about
+    1 GB a minute over 130 parts).
+    """
+    import polars as pl
+
+    for tables in lists:
+        if len(tables) > 1:
+            tables[:] = [pl.concat(tables, how="vertical_relaxed").unique()]
+
+
 def count_patterns(
     store: CountedStore, invalid: dict[str, int] | None = None
 ) -> list[SchemaPattern]:
@@ -2276,19 +2363,28 @@ def count_patterns(
     by_graph = bool(scope)
     keys = ["p", *(["g"] if scope else []), "subject_class", "object_class", "datatype"]
     tables: list[pl.DataFrame] = []
-    blank_objects: list[pl.DataFrame] = []
-    blank_outgoing: list[pl.DataFrame] = []
+    # (subject class, predicate, predicate of the blank object): the blank-node predicates of
+    # the patterns, kept small as they are found (_blank_outgoing).
+    blank_fields: list[pl.DataFrame] = []
     partition_rows, type_rows = count_limits()
-    # A part of rows holds the classified rows of its nodes: k classes at each end give k * k
-    # rows (half of the bytes of a row are its classified copy).
-    fanout = class_fanout(store)
-    partition_rows = max(1, int(partition_rows / ((1 + fanout * fanout) / 2)))
+    limit = _max_classes()
+    classes = int(
+        store.type_ids().select(pl.col("c").approx_n_unique()).collect(engine="streaming").item()
+    )
+    if classes > limit:
+        raise TooManyClassesError(
+            f"The scope holds about {classes:,} classes, more than the {limit:,} that a scan "
+            "count takes (a pattern for each class and property): group the ontology terms "
+            "used as types before counting (ontology_group_before_mining), or raise "
+            "RDFSOLVE_SCAN_MAX_CLASSES"
+        )
     typed_ids = store.typed_ids() if hasattr(store, "typed_ids") else store.type_ids().select("sid")
     typed_ids = typed_ids.select("sid").unique()
     # The type rows of the whole index bound those of the scope (a view or a retyped table).
     type_count = int(store.base.graph_types().select(pl.len()).collect().item())
     type_parts = max(1, -(-type_count // type_rows))
     scratch: list[Path] = []
+    blank_out = _blank_outgoing(store)
 
     def directory() -> Path:
         """Return the scratch directory of this count (made when first needed)."""
@@ -2307,9 +2403,6 @@ def count_patterns(
         """
         # The predicates of a blank node are read in the RDF merge of the data graphs
         # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
-        blank_outgoing.append(
-            rows.filter(pl.col("sb")).select("sid", pl.col("p").cast(pl.String)).unique()
-        )
         typed = rows.join(subjects, on="sid", how="inner")
         # IRI subjects without a type, under one subject class of their own (UNTYPED).
         untyped_subjects = (
@@ -2339,10 +2432,12 @@ def count_patterns(
             pl.col("oc").is_null() & (pl.col("kind") == "iri")
         ).with_columns(object_class=pl.lit("Resource").cast(pl.Categorical))
         blank = nonliteral.filter(pl.col("kind") == "bnode")
-        blank_objects.append(
-            blank.select(
-                pl.col("subject_class").cast(pl.String), pl.col("p").cast(pl.String), "oid"
-            ).unique()
+        blank_fields.append(
+            blank.select(pl.col("subject_class").cast(pl.Categorical), "p", "oid")
+            .unique()
+            .join(blank_out, on="oid", how="inner")
+            .select("subject_class", "p", "q")
+            .unique()
         )
         blank = blank.with_columns(object_class=pl.lit("BlankNode").cast(pl.Categorical))
         return [
@@ -2393,40 +2488,64 @@ def count_patterns(
     try:
         for unit, batch in enumerate(_batches(store)):
             size = sum(store_rows(store, p) for p in batch)
-            row_parts = -(-size // partition_rows)
+            # Parts hold classified rows (rows times the classes at each end), not rows.
+            expansion = _batch_expansion(store, batch, size) if size >= EXPANSION_MIN_ROWS else 1.0
+            row_parts = -(-int(size * expansion) // partition_rows)
             if row_parts <= 1 and type_parts == 1:
                 rows = _batch_rows(store, batch, by_graph=by_graph)
                 cells = classify(
                     rows, types.rename({"c": "subject_class"}), typed_all, renamed(types)
                 )
                 tables.extend(_part_counts(cells, keys))
+                _compact(blank_fields)
                 continue
             # Parts by subject id; the parts of the type table divide them (parts is a multiple
             # of type_parts), so the subjects of a part are in one part of the types.
             parts = type_parts * -(-row_parts // type_parts)
             logger.info(
-                "Scan count: %d rows of %d predicates in %d parts (types in %d; %.1f classes a "
-                "typed node)",
+                "Scan count: %d rows of %d predicates in %d parts (types in %d; %.1f classified "
+                "rows a row)",
                 size,
                 len(batch),
                 parts,
                 type_parts,
-                fanout,
+                expansion,
             )
             frame = _batch_frame(store, batch, by_graph=by_graph)
             schema = frame.collect_schema()
             folder = directory() / f"unit-{unit}"
             _spill(frame, folder / "rows", parts, "sid")
+            # A batch with fewer rows than the type table reads the types of its own nodes
+            # only, once: each part joins its rows with every part of the type table, and
+            # reading those whole for each part made a batch of 5 M rows in 25 parts take 17
+            # minutes (SAWGraph).
+            own: dict[int, pl.DataFrame] = {}
+            if size * 2 < type_count:
+                nodes = pl.concat(
+                    [
+                        pl.scan_parquet(folder / "rows" / "*" / "*.parquet").select("sid"),
+                        pl.scan_parquet(folder / "rows" / "*" / "*.parquet").select(sid="oid"),
+                    ]
+                ).unique()
+                for type_number in range(type_parts):
+                    own[type_number] = (
+                        type_part(type_number).lazy().join(nodes, on="sid", how="semi").collect()
+                    )
+
+            def unit_types(type_number: int, own: dict[int, pl.DataFrame] = own) -> pl.DataFrame:
+                """Return a part of the type table, restricted to this batch's nodes if read."""
+                return own[type_number] if own else type_part(type_number)
+
             sums, subject_counts = [], []
             for part in range(parts):
                 rows = _part(folder / "rows", part, schema)
                 selected = pl.col("sid") % parts == part
-                subjects = type_part(part % type_parts).filter(selected)
+                subjects = unit_types(part % type_parts).filter(selected)
                 typed_subjects = typed_part(part % type_parts).filter(selected)
                 pairs = []
                 for object_part in range(type_parts):
                     cell = rows.filter(pl.col("oid") % type_parts == object_part)
-                    objects = renamed(type_part(object_part))
+                    objects = renamed(unit_types(object_part))
                     cells = classify(
                         cell,
                         subjects.rename({"c": "subject_class"}),
@@ -2450,6 +2569,14 @@ def count_patterns(
                 subject_counts.append(
                     pl.concat(pairs).unique().group_by(keys).agg(distinct_subjects=pl.len())
                 )
+                # The counts of the parts read so far are added up as each part ends, so that
+                # they take the rows of their keys, not of their keys in every part and cell
+                # (SAWGraph, job 115895: memory grew by about 2 GB a minute over 110 parts).
+                sums = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]
+                _compact(blank_fields)
+                subject_counts = [
+                    pl.concat(subject_counts).group_by(keys).agg(pl.col("distinct_subjects").sum())
+                ]
             object_counts = [
                 pl.read_parquet(sorted(target.glob("*.parquet")))
                 .unique()
@@ -2507,25 +2634,14 @@ def count_patterns(
     )
     # The predicates of the blank nodes each (subject class, predicate) points to, with
     # rdf:type when the blank node has a type in the data.
-    blank_typed = (
-        store.data_types()
-        .filter(pl.col("s").str.starts_with("_:"))
-        .select("s")
-        .join(
-            store.base.graph_types()
-            .filter(pl.col("s").str.starts_with("_:"))
-            .select("s", "sid")
-            .unique(),
-            on="s",
-        )
-        .select("sid", p=pl.lit(RDF_TYPE))
-        .unique()
-        .collect()
-    )
-    outgoing = pl.concat([*blank_outgoing, blank_typed]).rename({"sid": "oid", "p": "q"})
+    _compact(blank_fields)
     fields = (
-        pl.concat(blank_objects)
-        .join(outgoing, on="oid", how="inner")
+        pl.concat(blank_fields)
+        .select(
+            pl.col("subject_class").cast(pl.String),
+            pl.col("p").cast(pl.String),
+            pl.col("q").cast(pl.String),
+        )
         .group_by("subject_class", "p")
         .agg(pl.col("q").unique().sort())
         .with_columns(subject_class=_bare(pl.col("subject_class")))
