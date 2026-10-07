@@ -14,6 +14,7 @@ provenance). Joins across sources are not rules: they go through the SSSOM resol
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from collections import Counter, defaultdict
@@ -1201,6 +1202,19 @@ class Biolink:
         prefix = self._prefixes.get(found.prefix)
         return f"{prefix}:{found.local}" if prefix else None
 
+    def id_prefixes(self, term: str) -> list[str]:
+        """Return the identifier prefixes a class takes, in the model's order of preference, as
+        Bioregistry prefixes; a class that lists none takes those of its nearest ancestor that
+        does. The first one a node has names it (as Node Normalization picks a clique's id).
+        """
+        import bioregistry
+
+        for name in [self.name_of(term), *self.ancestors(self.name_of(term))]:
+            listed = self.classes.get(name, {}).get("id_prefixes") or []
+            if listed:
+                return [bioregistry.normalize_prefix(p) or p.lower() for p in listed]
+        return []
+
     def hierarchy(self) -> dict[str, set[str]]:
         """Return the ancestors (IRIs) of each class IRI, for the most specific category."""
         return {
@@ -1505,7 +1519,10 @@ def to_kgx(
 
     Node ids are CURIEs: with the prefixes Biolink writes (Biolink.curie), else Bioregistry's,
     else ``<local_prefix>_<last segment of the IRI's namespace>``; prefixes.json beside the
-    files expands those. A node's category is its Biolink classes (the model's root class when
+    files expands those. A node that names one entity under several identifiers (a merge, or
+    an identifier decided for it: PGNode.identifiers) is named by the one whose prefix its
+    Biolink category lists first (the category's id_prefixes, in the model's order), and
+    lists the others as ``xref``. A node's category is its Biolink classes (the model's root class when
     it has none). Each edge of a Biolink predicate is a row; a node that is an association
     (subject, predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
     (*knowledge_source*, an infores CURIE; knowledge_level and agent_type).
@@ -1532,9 +1549,13 @@ def to_kgx(
         }
     )
     minted = _local_prefixes(unregistered, local_prefix)
+    named: dict[str, str] = {}  # a node, or an IRI merged into one, to the identifier that names it
+    xrefs: dict[str, list[str]] = {}
 
     def short(iri: str) -> str:
         """Return a node id as a CURIE."""
+        if iri in named:
+            return named[iri]
         if found := biolink.curie(iri):
             return found
         if (registered := parse(iri)) is not None:
@@ -1551,6 +1572,27 @@ def to_kgx(
         return "biolink:" + iri[len(base) :] if iri.startswith(base) else iri
 
     from rdfsolve.property_graph import REFERENCE
+
+    for nid, node in graph.nodes.items():
+        merged = [*node.members, *getattr(node, "identifiers", [])]
+        if not merged:
+            continue
+        ids = list(dict.fromkeys(c for i in [nid, *merged] if (c := parse(i)) is not None))
+        order: list[str] = []
+        for label in node.labels:
+            if label.startswith(base):
+                with contextlib.suppress(ValueError):
+                    order += [p for p in biolink.id_prefixes(label) if p not in order]
+        rank = {p: i for i, p in enumerate(order)}
+        ids.sort(key=lambda c: rank.get(c.prefix, len(rank)))
+        if not ids:
+            continue
+        best = ids[0]
+        written = biolink.curie(best.curie) or best.curie
+        if best.iri():
+            short(best.iri() or "")  # records the prefix's expansion
+        named.update(dict.fromkeys([nid, *node.members], written))
+        xrefs[nid] = [biolink.curie(c.curie) or c.curie for c in ids[1:]]
 
     associations = _association_parts(graph, biolink)
     rows = []
@@ -1581,7 +1623,7 @@ def to_kgx(
     nodes_path, edges_path = folder / "nodes.tsv", folder / "edges.tsv"
     with nodes_path.open("w", newline="") as f:
         out = csv.writer(f, delimiter="\t")
-        out.writerow(["id", "category", "name"])
+        out.writerow(["id", "category", "name", "xref"])
         for nid, node in sorted(graph.nodes.items()):
             if nid in associations:
                 continue
@@ -1589,7 +1631,14 @@ def to_kgx(
                 dict.fromkeys(term(c) for c in node.labels if c.startswith(base))
             ) or ["biolink:NamedThing"]
             names = [v.lexical for v in node.properties.get(base + "name", [])]
-            out.writerow([short(nid), "|".join(categories), names[0] if names else ""])
+            out.writerow(
+                [
+                    short(nid),
+                    "|".join(categories),
+                    names[0] if names else "",
+                    "|".join(xrefs.get(nid, [])),
+                ]
+            )
     qualifiers = sorted({k for row in rows for k in row} - {"subject", "predicate", "object"})
     with edges_path.open("w", newline="") as f:
         out = csv.writer(f, delimiter="\t")

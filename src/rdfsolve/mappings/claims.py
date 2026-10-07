@@ -165,12 +165,15 @@ class Resolution:
     def pairs(self) -> list[tuple[str, str]]:
         """Return the accepted exact (subject, object) pairs, as the sources wrote them.
 
-        A pair is exact when its claims state identity, or when the cross-references of its
-        namespaces are taken as exact (decide's *exact*); only exact pairs join records.
+        A pair is exact when one of its accepted claims states identity, or when the
+        cross-references of its namespaces are taken as exact (decide's *exact*); a claim
+        found only through another identifier is exact when that link is too. Only exact pairs
+        join records. The variant pairs the decision accepted are included: two records decided
+        to be either variant are one entity, and Identity takes a pair within one namespace as
+        declared variants.
         """
-        return sorted(
-            {(subject_of(c), object_of(c)) for c in self.accepted if _is_exact(c, self.exact)}
-        )
+        exact = {(subject_of(c), object_of(c)) for c in self.accepted if _is_exact(c, self.exact)}
+        return sorted(exact | {tuple(sorted(pair)) for pair in self.variants})  # type: ignore[misc]
 
     def table(self) -> Any:
         """Return the outcome of each (subject, target namespace) group as a DataFrame."""
@@ -605,6 +608,11 @@ class Claims:
             )
             chosen = rank[0]
             mine = [c for c in claims if source_of(c) == chosen]
+            # What the source states of the identifier itself comes before what it states of
+            # another identifier the subject is linked to (a chain through a cross-reference,
+            # which can name another form): chained claims count only when nothing is direct.
+            direct = [c for c in mine if "through" not in _other(c)]
+            mine = direct or mine
             # One IRI per identifier: a source can write one target twice (bdbUniprot to
             # identifiers.org/uniprot/Q13510, owl:sameAs to purl.uniprot.org/uniprot/Q13510).
             targets = sorted(
@@ -632,7 +640,10 @@ class Claims:
             set_aside: set[str] = {_key(object_of(c)) for c in mine} - {_key(t) for t in targets}
             if outcome.startswith("accepted"):
                 keys = {_key(t) for t in targets}
-                accepted += [c for c in mine if _key(object_of(c)) in keys]
+                # The other sources that state an accepted target support it: a mapping is
+                # exact when one of its claims is, even when the deciding source states it only
+                # through another identifier.
+                accepted += [c for c in claims if _key(object_of(c)) in keys]
                 variant_pairs += pairs
             groups.append(
                 {

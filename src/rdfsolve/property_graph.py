@@ -166,6 +166,9 @@ class PGNode:
     # Identifiers of another kind that a source drew the node with (WikiPathways draws an
     # enzyme with its Ensembl gene id): listed in members for the round trip, shown apart.
     apart: list[str] = field(default_factory=list)
+    # Identifiers that a decision (Identity.same) says the node is, and that no node here has:
+    # the nodes decided to be one of them are one node. Not a member: no statement of the RDF names it.
+    identifiers: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -1430,16 +1433,17 @@ class PropertyGraph:
 # -- helpers ----------------------------------------------------------------------------------
 
 
-_RESERVED = ("type", "via", "labels", "ids", "derived", "category", "title")
+_RESERVED = ("type", "via", "labels", "ids", "decided_ids", "derived", "category", "title")
 
 
 def _ids(node: PGNode) -> dict[str, Any]:
     """Return the ids of a merged node, and the identifiers of another kind by prefix."""
     from rdfsolve.identifiers import parse
 
+    out: dict[str, Any] = {"decided_ids": list(node.identifiers)} if node.identifiers else {}
     if not node.members:
-        return {}
-    out: dict[str, Any] = {"ids": [m for m in node.members if m not in node.apart]}
+        return out
+    out["ids"] = [m for m in node.members if m not in node.apart]
     for iri in node.apart:
         read = parse(iri)
         key = read.prefix if read else "apart"
@@ -1914,19 +1918,60 @@ def _apply_identity(
         found = parse(iri)
         return by_identifier.get(found.curie) if found else canonical.get(iri)
 
+    # A decided identifier that no node has still joins the nodes decided to be it. Two such
+    # identifiers decided to be one (declared variants, given as a pair) join too.
+    decided: dict[str, set[str]] = defaultdict(set)
+    absent_root: dict[str, str] = {}
+
+    def absent_of(key: str) -> str:
+        """Return the identifier that stands for the absent identifiers joined with *key*."""
+        while absent_root.get(key, key) != key:
+            key = absent_root[key]
+        return key
+
     for left, right in identity.same:
         a, b = node_of(left), node_of(right)
-        if a is None or b is None or a == b:
+        if a is not None and b is not None:
+            if a != b:
+                same.append((a, b))  # two kinds: decided per cluster, by the records at hand
             continue
-        same.append((a, b))  # two kinds: decided per cluster, by the records at hand
+        if a is None and b is None:
+            if (left_id := parse(left)) and (right_id := parse(right)):
+                absent_root[absent_of(left_id.curie)] = absent_of(right_id.curie)
+            continue
+        held, absent = (a, parse(right)) if a is not None else (b, parse(left))
+        if held is not None and absent is not None:
+            decided[held].add(absent.curie)
+    through: dict[str, list[str]] = defaultdict(list)
+    for held_id, keys in decided.items():
+        for key in keys:
+            through[absent_of(key)].append(held_id)
+    joined_through_absent = 0
+    for _key, members in sorted(through.items()):
+        members = sorted(set(members))
+        same += [(members[0], m) for m in members[1:]]
+        joined_through_absent += len(members) > 1
     allowed = {
         frozenset((found_a.curie, found_b.curie))
         for a, b in identity.variants
         if (found_a := parse(a)) and (found_b := parse(b))
     }
+    # A pair decided directly between two identifiers of one namespace (an identifier and its
+    # versioned form) declares them variants: one namespace holds two names of the entity. Chains never do.
+    stated = {
+        frozenset((found_a.curie, found_b.curie))
+        for a, b in identity.same
+        if (found_a := parse(a))
+        and (found_b := parse(b))
+        and found_a.prefix == found_b.prefix
+        and found_a.curie != found_b.curie
+    }
+    allowed |= stated
     exact = 0
     refused = 0
+    refusals: list[dict[str, Any]] = []
     apart = 0
+    found_in: dict[str, str] = {}
     if same:
         root: dict[str, str] = {}
 
@@ -1941,15 +1986,28 @@ def _apply_identity(
         clusters: dict[str, list[str]] = defaultdict(list)
         for n in {n for pair in same for n in pair}:
             clusters[find(n)].append(n)
-        found_in: dict[str, str] = {}
         for members in clusters.values():
             iris = [iri for m in members for iri in (nodes[m].members or [m])]
             ids = {found.curie: found.prefix for iri in iris if (found := parse(iri))}
+            ids |= {key: key.split(":", 1)[0] for m in members for key in decided.get(m, ())}
             by_prefix: dict[str, list[str]] = defaultdict(list)
             for key, prefix in ids.items():
                 by_prefix[prefix].append(key)
-            if any(not _joined(keys, allowed) for keys in by_prefix.values() if len(keys) > 1):
+            apart_keys = sorted(
+                key
+                for keys in by_prefix.values()
+                if len(keys) > 1 and not _joined(keys, allowed)
+                for key in keys
+            )
+            if apart_keys:
                 refused += 1  # never two identifiers of one namespace, but declared variants
+                refusals.append(
+                    {
+                        "nodes": sorted(members),
+                        "identifiers": apart_keys,
+                        "reason": "two identifiers of one namespace, not declared variants",
+                    }
+                )
                 continue
             # The issuer's record names the node (UniProt's IRI for a protein that WikiPathways
             # draws with an Ensembl gene id), else the member with most data.
@@ -1962,6 +2020,13 @@ def _apply_identity(
             issuer_kinds = {frozenset(issued[cast(Any, parse(m)).prefix]) for m in issuers}
             if _disjoint(kinds_known) and len(issuer_kinds) != 1:
                 refused += 1  # two kinds, and not one record with an identifier of the other
+                refusals.append(
+                    {
+                        "nodes": sorted(members),
+                        "identifiers": sorted(ids),
+                        "reason": "identifiers of two kinds, and no record of one kind at hand",
+                    }
+                )
                 continue
             keep = min(issuers) if issuers else _keep(nodes, members, None)
             _merge_nodes(nodes, members, keep)
@@ -1978,6 +2043,10 @@ def _apply_identity(
                 apart += len(nodes[keep].apart)
             exact += 1
         internal += _retarget(nodes, edges, found_in)
+    for held_id, keys in decided.items():
+        owner = nodes.get(found_in.get(held_id, held_id))
+        if owner is not None:
+            owner.identifiers = sorted(set(owner.identifiers) | keys)
     beside = _issuer_speaks(nodes, issued)
     relabelled = _reconcile_labels(nodes, identity.labels, issued)
     unfolded = _unfold(nodes, edges, set(identity.unfold), issued)
@@ -2001,6 +2070,9 @@ def _apply_identity(
         "merged_examples": merged[:5],
         "merged_exact": exact,
         "exact_refused": refused,
+        "refused": refusals,
+        "joined_through_absent": joined_through_absent,
+        "same_namespace_pairs": len(stated),
         "statements_within_merged_nodes": internal,
         "kinds": {prefix: sorted(classes) for prefix, classes in sorted(issued.items())},
         "mappings": rows,
@@ -2274,6 +2346,43 @@ def _schema_labels(schema: MinedSchema) -> dict[str, str]:
             if label and iri not in labels:
                 labels[iri] = label
     return labels
+
+
+def identity_violations(refused: Iterable[Mapping[str, Any]]) -> ox.Dataset:
+    """Return the merges that identity refused (report()["identity"]["refused"]) as a SHACL
+    validation report: one sh:ValidationResult per refused cluster, its focus node each node
+    of the cluster, its values the identifiers that conflict, and the reason as its message.
+    A conflict is a violation to review, never a merge.
+    """
+    sh = "http://www.w3.org/ns/shacl#"
+    rdf_type = ox.NamedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+    report = ox.BlankNode()
+    out = ox.Dataset(
+        [
+            ox.Quad(report, rdf_type, ox.NamedNode(sh + "ValidationReport")),
+            ox.Quad(
+                report,
+                ox.NamedNode(sh + "conforms"),
+                ox.Literal(
+                    "false" if refused else "true",
+                    datatype=ox.NamedNode("http://www.w3.org/2001/XMLSchema#boolean"),
+                ),
+            ),
+        ]
+    )
+    for row in refused:
+        for node in row["nodes"]:
+            result = ox.BlankNode()
+            out.add(ox.Quad(report, ox.NamedNode(sh + "result"), result))
+            out.add(ox.Quad(result, rdf_type, ox.NamedNode(sh + "ValidationResult")))
+            out.add(ox.Quad(result, ox.NamedNode(sh + "focusNode"), _ox_node(node)))
+            out.add(
+                ox.Quad(result, ox.NamedNode(sh + "resultSeverity"), ox.NamedNode(sh + "Violation"))
+            )
+            out.add(ox.Quad(result, ox.NamedNode(sh + "resultMessage"), ox.Literal(row["reason"])))
+            for identifier in row["identifiers"]:
+                out.add(ox.Quad(result, ox.NamedNode(sh + "value"), ox.Literal(identifier)))
+    return out
 
 
 def suggest_folds(schema: MinedSchema) -> list[Fold]:

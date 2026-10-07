@@ -18,6 +18,11 @@ OBO = "http://purl.obolibrary.org/obo/"
         ("CHEBI:15377", ("chebi", "15377", True)),
         ("https://identifiers.org/chebi/72297", ("chebi", "72297", True)),
         ("http://identifiers.org/mgi/101757", ("mgi", "101757", True)),
+        # Bioregistry reads this IRI as kegg:C00002; the namespace it names is kept, as the
+        # sources that cite it write it (ChEBI: kegg.compound:C00002).
+        ("https://identifiers.org/kegg.compound/C00002", ("kegg.compound", "C00002", True)),
+        ("https://identifiers.org/kegg.compound:C00002", ("kegg.compound", "C00002", True)),
+        ("https://identifiers.org/chebi/CHEBI:15351", ("chebi", "15351", True)),
         ("http://purl.uniprot.org/uniprot/P53_HUMAN", ("uniprot", "P53_HUMAN", False)),
         ("vega:OTTHUMG1", ("vega", "OTTHUMG1", None)),
     ],

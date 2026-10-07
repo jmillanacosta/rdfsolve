@@ -36,6 +36,7 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
         "id": "NCBIGene:3156",
         "category": "biolink:Gene",
         "name": "HMGCR",
+        "xref": "",
     }
     assert "urn:i1" not in node_rows, "an association is an edge"
     edge_rows = list(csv.DictReader(edges.open(), delimiter="\t"))

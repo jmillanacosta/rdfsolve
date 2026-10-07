@@ -114,6 +114,8 @@ def test_the_issuer_decides_and_variants_join():
     assert rows.loc["lipidmaps:LMSP03010025", "outcome"].startswith("ambiguous")
     assert (IDO + "lipidmaps/LMSP03010023", O + "CHEBI_91146") in decision.pairs()
     assert not [p for p in decision.pairs() if "LMSP03010025" in p[0]]
+    # the accepted forms of one compound are a pair too, so records decided to be either join
+    assert (IDO + "chebi/CHEBI:17115", IDO + "chebi/CHEBI:33384") in decision.pairs()
     assert (
         rows.loc["lipidmaps:LMSP03010023", "assumption"]
         == "cross-references to chebi taken as exact"
