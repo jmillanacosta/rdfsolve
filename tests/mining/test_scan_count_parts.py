@@ -121,3 +121,18 @@ def test_a_scope_with_too_many_classes_is_refused_with_its_setting(store, monkey
         scan.count_patterns(store)
     monkeypatch.delenv("RDFSOLVE_SCAN_MAX_CLASSES")
     assert scan.count_patterns(store)
+
+
+@pytest.mark.parametrize("scope", [None, [G1, G2]])
+def test_the_per_term_rows_are_written_as_the_patterns_give_them(store, tmp_path, scope):
+    """The per-term layer of a source grouped before counting is written batch by batch, never
+    held whole: the rows are those of term_rows over the patterns of one count."""
+    import polars as pl
+
+    from rdfsolve.mining.term_release import term_rows
+
+    counted = store.view(scope) if scope else store
+    expected = term_rows(scan.count_patterns(counted))
+    assert scan.count_patterns(counted, rows_path=tmp_path / "rows.parquet") == []
+    written = pl.read_parquet(tmp_path / "rows.parquet").sort(expected.columns, nulls_last=True)
+    assert written.select(expected.columns).equals(expected.sort(expected.columns, nulls_last=True))

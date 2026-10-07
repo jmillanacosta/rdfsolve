@@ -190,7 +190,19 @@ def write_term_release(
     table, type_classes = _coded_types(
         grouping.base_types if grouping.base_types is not None else type_table(store)
     )
-    terms = term_rows(grouping.raw_patterns)
+    terms = (
+        term_rows(grouping.raw_patterns)
+        if grouping.raw_rows is None
+        else pl.read_parquet(grouping.raw_rows).sort(
+            "subject_class",
+            "property",
+            "object_class",
+            "datatype",
+            "graph",
+            "subject_binding",
+            nulls_last=True,
+        )
+    )
     edges = hierarchy_edges(
         store,
         type_classes,
@@ -282,7 +294,9 @@ def write_term_release(
         "dataset": dataset,
         "classes_file": classes_path.name,
         "types": "minimal" if settings.get("minimal_types") else "asserted",
-        "count_semantics": sorted({p.count_semantics for p in grouping.raw_patterns}),
+        "count_semantics": sorted(
+            {p.count_semantics for p in grouping.raw_patterns or grouping.patterns}
+        ),
         "graph_scope": getattr(store, "graph_uris", None),
         "default_grouping": settings,
         "rows": terms.height,

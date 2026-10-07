@@ -57,11 +57,13 @@ SLOT_BUDGET = 10
 
 __all__ = [
     "ClassExpressionFolding",
+    "GroupedBeforeCounting",
     "RetypedStore",
     "TermGrouping",
     "count_aware_cut",
     "fold_class_expressions",
     "foldable_expressions",
+    "group_before_counting",
     "group_terms",
     "hierarchy_edges",
     "minimal_types",
@@ -417,6 +419,10 @@ class TermGrouping:
     # raw_patterns count: the release of the exact layer reads it (term_release).
     base_types: pl.LazyFrame | None = None
     settings: dict[str, Any] = field(default_factory=dict)
+    # The per-term rows written to a file (count_patterns with rows_path) when the terms were
+    # grouped before counting: the release reads them instead of raw_patterns, which then
+    # count the grouped table.
+    raw_rows: Path | None = None
 
 
 def _members(representative: Mapping[str, str]) -> dict[str, list[str]]:
@@ -494,6 +500,112 @@ def _group_before_mining(
         "counts": "recounted from the rewritten type table",
     }
     return dict(chosen.representative), record
+
+
+@dataclass
+class GroupedBeforeCounting:
+    """The type table that a scan counts when its classes pass group_before_mining."""
+
+    # The rewritten type table (s, sid, c) and the store that reads it.
+    types: pl.LazyFrame
+    store: RetypedStore
+    # The record of the grouping (report config ontology_term_grouping).
+    record: dict[str, Any]
+    # Each grouped term and its representative (bare IRIs), for the generic choice; None for
+    # records as classes, whose terms are mapped to their kind by a join (too many to list).
+    representative: dict[str, str] | None
+
+
+def _record_kinds(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFrame:
+    """Return (c, kind) for each class of *table* with an rdfs:subClassOf parent in the data:
+    a record kept as a class, under its kind (classes_as_data). A class with several parents
+    takes the first by IRI, so that each record has one kind and counts stay exact.
+    """
+    import polars as pl
+
+    if SUBCLASS_OF not in store.base.predicates:
+        return pl.LazyFrame(schema={"c": pl.String, "kind": pl.String})
+    parents = (
+        store.base.rows(SUBCLASS_OF)
+        .filter(pl.col("s").str.starts_with("<") & (pl.col("kind") == "iri"))
+        .select(c="s", kind="o")
+        .filter(
+            (pl.col("c") != pl.col("kind"))
+            & ~pl.col("kind").is_in([f"<{t}>" for t in NOT_DATA_TYPES])
+        )
+    )
+    return (
+        parents.join(table.select("c").unique(), on="c", how="semi")
+        .group_by("c")
+        .agg(pl.col("kind").min())
+    )
+
+
+def group_before_counting(
+    store: RowStore | StoreView,
+    *,
+    limit: int | None,
+    budget: int = 300,
+    classes_as_data: bool = False,
+    ontology_graph_uris: Sequence[str] | None = None,
+    hierarchy_files: Sequence[str | Path] = (),
+) -> GroupedBeforeCounting | None:
+    """Group the terms used as types before a scan counts its patterns; None below *limit*.
+
+    rdfsolve groups the ontology terms used as types under their ancestors before mining when
+    a dataset has more than group_before_mining classes (two_phase_strategy._group_terms). A
+    scan counted every class first and grouped afterwards (group_terms), so BioGateway's
+    65,884,730 classes and GO-CAM's 1,718,325 ran out of memory while counting. Here the type
+    table is rewritten first and counted once:
+
+    - with *classes_as_data* (each record an rdfs:Class under its kind: BioGateway), each
+      class takes its rdfs:subClassOf parent in the data, by a join, as the SPARQL path groups
+      term rows under their ancestors; a table that still has more than *limit* classes is
+      then grouped as below;
+    - otherwise, _group_before_mining: rdfsolve's representatives under the ancestors, the
+      parentless terms grouped by shape, within *budget*.
+    """
+    import polars as pl
+
+    table = type_table(store)
+    if limit is None:
+        return None
+    count = int(
+        table.filter(pl.col("c").str.starts_with("<"))
+        .select(pl.col("c").n_unique())
+        .collect(engine="streaming")
+        .item()
+    )
+    if count <= limit:
+        return None
+    record: dict[str, Any] = {"before_mining": True, "before_counting": True, "limit": limit}
+    representative: dict[str, str] | None = None
+    if classes_as_data:
+        kinds = _record_kinds(store, table)
+        table = (
+            table.join(kinds, on="c", how="left")
+            .select(*_keys(table), c=pl.coalesce("kind", "c"))
+            .unique()
+        )
+        after = int(table.select(pl.col("c").n_unique()).collect(engine="streaming").item())
+        record.update(
+            classes_as_data=True,
+            classes_before=count,
+            records_as_classes=int(kinds.select(pl.len()).collect(engine="streaming").item()),
+            classes_after=after,
+        )
+        count = after
+    if count > limit:
+        classes = _type_classes(table)
+        chosen, found = _group_before_mining(
+            store, table, classes, budget, limit, ontology_graph_uris, hierarchy_files
+        )
+        representative = {t: r for t, r in chosen.items() if r != t}
+        table = retype(table, representative)
+        record = {**found, **{k: v for k, v in record.items() if k != "limit"}, "limit": limit}
+    return GroupedBeforeCounting(
+        types=table, store=RetypedStore(store, table), record=record, representative=representative
+    )
 
 
 def group_terms(

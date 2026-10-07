@@ -447,6 +447,8 @@ class SchemaMiner:
         )
 
         context.class_listing_limit = self.class_listing_limit
+        # A scan groups records kept as classes under their kind before counting.
+        context.classes_as_data = self.classes_as_data
         if self._resume is not None:
             context.resumed = self._resumed_batches(*self._resume)
         self._resumed: dict[tuple[str, ...], list[dict[str, Any]]] = context.resumed
@@ -615,11 +617,16 @@ class SchemaMiner:
                 # Without class expressions the type table is the store's: reuse its counts.
                 counted=None if expressions else patterns,
                 budget=budget,
-                group_before_mining=self._group_before_mining,
+                # A scan whose terms were grouped before counting (ScanStrategy.grouped) is not
+                # grouped before mining again: its type table is the grouped one.
+                group_before_mining=None
+                if getattr(self._strategy, "grouped", None) is not None
+                else self._group_before_mining,
                 ontology_graph_uris=self._ontology_graph_uris,
                 hierarchy_files=self._hierarchy_files,
             )
             patterns, raw_patterns, types = grouping.patterns, grouping.raw_patterns, grouping.types
+            self._exact_terms(grouping, expressions)
             self._scan_grouping = grouping
             config["ontology_term_subsumption"] = grouping.summary
             if grouping.before_mining:
@@ -642,6 +649,47 @@ class SchemaMiner:
         self._scan_types = RetypedStore(store, types)
         self._report.finish_phase(phase, items=len(patterns))
         return patterns, raw_patterns, term_patterns
+
+    def _exact_terms(self, grouping: Any, expressions: Any) -> None:
+        """Give a grouping made on a type table grouped before counting its exact terms.
+
+        When a scan grouped the terms used as types before counting (ScanStrategy.grouped),
+        the patterns count the grouped table; the release still ships the exact terms
+        (term_release), counted here from the store's own types, minimal as the release takes
+        them, and written batch by batch to a file (count_patterns with rows_path). Each term
+        takes the class its group is given. Records kept as classes (classes_as_data) are
+        released under their kinds, which are their terms there.
+        """
+        from rdfsolve.mining.scan import count_patterns
+        from rdfsolve.mining.scan_terms import (
+            RetypedStore,
+            minimal_types,
+            type_table,
+            without_classes,
+        )
+
+        before = getattr(self._strategy, "grouped", None)
+        if before is None:
+            return
+        if before.representative is None:
+            grouping.settings["records_as_classes"] = True
+            return
+        raw = before.store._store
+        types = minimal_types(
+            raw,
+            types=without_classes(type_table(raw), expressions),
+            ontology_graph_uris=self._ontology_graph_uris,
+            hierarchy_files=self._hierarchy_files,
+        )
+        path = Path(raw.base.path) / "term-rows.parquet"
+        count_patterns(RetypedStore(raw, types), rows_path=path)
+        after = dict(grouping.representative)
+        combined = {t: after.get(r, r) for t, r in before.representative.items()}
+        combined.update({t: r for t, r in after.items() if t not in combined})
+        grouping.representative = combined
+        grouping.base_types = types
+        grouping.raw_rows = path
+        grouping.settings["grouped_before_counting"] = True
 
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int

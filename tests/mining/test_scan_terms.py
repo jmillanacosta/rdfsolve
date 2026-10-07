@@ -158,3 +158,93 @@ def test_class_expressions_fold_into_edges_with_grouped_fillers(tmp_path):
     assert _rows(grouped.patterns) == {
         (str(E.Vessel), str(E.partOf), str(E.Organ), None): (3, 3, 2)
     }
+
+
+def _records_as_classes() -> Graph:
+    """BioGateway-like: each record is a class under its kind, with one instance."""
+    graph = Graph()
+    for kind, records in (("Gene", 3), ("Protein", 2)):
+        for i in range(records):
+            record = E[f"{kind.lower()}{i}"]
+            graph.add((record, RDFS.subClassOf, E[kind]))
+            instance = E[f"{kind.lower()}{i}_instance"]
+            graph.add((instance, RDF.type, record))
+            graph.add((instance, E.label, Literal(f"{kind} {i}")))
+            if kind == "Protein":
+                graph.add((instance, E.encodedBy, E[f"gene{i}_instance"]))
+    return graph
+
+
+def test_records_kept_as_classes_are_counted_under_their_kind(tmp_path):
+    """BioGateway (65,884,730 classes, all but 17 under 18 kinds) ran out of memory counting a
+    pattern for each class: with classes_as_data, each class takes its kind before counting,
+    and the counts of the kinds are exact."""
+    from rdfsolve.mining.scan_terms import group_before_counting
+
+    store = store_from_graph(_records_as_classes(), tmp_path / "store")
+    assert group_before_counting(store, limit=10, classes_as_data=True) is None, "Below the limit"
+    grouped = group_before_counting(store, limit=2, classes_as_data=True)
+    assert grouped is not None and grouped.record["classes_as_data"]
+    assert grouped.record["classes_before"] == 5 and grouped.record["classes_after"] == 2
+    rows = _rows(count_patterns(grouped.store))
+    assert (
+        rows[(EX + "Gene", EX + "label", "Literal", "http://www.w3.org/2001/XMLSchema#string")][0]
+        == 3
+    )
+    assert rows[(EX + "Protein", EX + "encodedBy", EX + "Gene", None)] == (2, 2, 2)
+    assert not any(c.startswith(EX + "gene") for c, *_ in rows), "No record class is counted"
+
+
+def test_terms_are_grouped_before_a_scan_counts_them(tmp_path):
+    """Above group_before_mining classes, a scan counts the grouped type table (the miner's
+    choice before mining), not every term first."""
+    from rdfsolve.mining.scan import ScanStrategy
+    from rdfsolve.mining.scan_terms import group_before_counting
+
+    graph = Graph().parse(data=FIXTURE, format="turtle")
+    store = store_from_graph(graph, tmp_path / "store")
+    grouped = group_before_counting(store, limit=1, budget=6)
+    expected = group_terms(store, budget=6, group_before_mining=1).before_mining
+    assert grouped is not None and expected is not None
+    assert grouped.record["representative_members"] == expected["representative_members"]
+    with SchemaMiner.from_graph(graph, delay=0, strategy=ScanStrategy(store=store)) as miner:
+        mine_with_ontology(
+            miner,
+            dataset_name="fixture",
+            ontology_as_data=True,
+            ontology_term_budget=6,
+            ontology_group_before_mining=1,
+        )
+        record = miner.last_report.config["ontology_term_grouping"]
+    assert record["before_counting"] and record["classes_after"] == expected["classes_after"]
+
+
+def test_the_release_keeps_the_exact_terms_of_a_scan_grouped_before_counting(tmp_path):
+    """The terms are grouped before the scan counts, and the release still ships the exact
+    terms: its rows are those of the store's own (minimal) types, each term with its class."""
+    import polars as pl
+
+    from rdfsolve.mining.scan import ScanStrategy
+    from rdfsolve.mining.term_release import term_rows, write_term_release
+
+    graph = Graph().parse(data=FIXTURE, format="turtle")
+    store = store_from_graph(graph, tmp_path / "store")
+    expected = term_rows(count_patterns(RetypedStore(store, minimal_types(store))))
+    strategy = ScanStrategy(store=store)
+    with SchemaMiner.from_graph(graph, delay=0, strategy=strategy) as miner:
+        mine_with_ontology(
+            miner,
+            dataset_name="fixture",
+            ontology_as_data=True,
+            ontology_term_budget=6,
+            ontology_group_before_mining=1,
+        )
+        grouping = miner._scan_grouping
+    assert grouping.raw_rows is not None and grouping.settings["grouped_before_counting"]
+    manifest = write_term_release(strategy.store, grouping, tmp_path / "fixture")
+    terms = pl.read_parquet(tmp_path / "fixture_terms.parquet")
+    assert manifest["rows"] == expected.height
+    assert terms.select(expected.columns).equals(expected)
+    classes = pl.read_parquet(tmp_path / "fixture_term_classes.parquet")
+    grouped = dict(classes.select("class", "representative").drop_nulls().iter_rows())
+    assert grouped.get(T + "ethanol") == grouping.representative[T + "ethanol"]

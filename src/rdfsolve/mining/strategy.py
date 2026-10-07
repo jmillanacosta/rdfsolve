@@ -83,6 +83,8 @@ class MiningContext:
         self.skipped_type_values = 0
         # Representative -> member terms, when terms were grouped before mining.
         self.grouped_members: dict[str, list[str]] = {}
+        # Records kept as classes under their kind (a scan groups them before counting).
+        self.classes_as_data = False
         # Class batches chosen by the strategy; the counts phase reuses them.
         self.class_batches: list[list[str]] | None = None
         self.structural_patterns: list[StructuralPattern] = []

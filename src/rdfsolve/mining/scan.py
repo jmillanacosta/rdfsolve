@@ -2318,8 +2318,61 @@ def _compact(*lists: list[pl.DataFrame]) -> None:
             tables[:] = [pl.concat(tables, how="vertical_relaxed").unique()]
 
 
+def _term_rows(table: pl.DataFrame, keys: list[str], scope: Sequence[str] | None) -> pl.DataFrame:
+    """Return counted rows (keys as categories, COUNTS) as the per-term rows of a release.
+
+    The rows of term_release.term_rows: text keys, the class of an untyped subject
+    rdfs:Resource with subject_binding "untyped", the same rows left out as count_patterns
+    leaves out.
+    """
+    import polars as pl
+
+    membership = list(MEMBERSHIP.get())
+    rows = table.select(
+        *(pl.col(k).cast(pl.String) for k in keys),
+        *(pl.col(c).cast(pl.UInt64) for c in COUNTS),
+    ).with_columns(
+        subject_class=_bare(pl.col("subject_class")), object_class=_bare(pl.col("object_class"))
+    )
+    rows = rows.filter(
+        ~pl.col("subject_class").str.starts_with("_:")
+        & ~pl.col("object_class").str.starts_with("_:")
+        & ~(pl.col("p").is_in(membership) & (pl.col("object_class") == "Resource"))
+    )
+    untyped = pl.col("subject_class") == UNTYPED
+    return rows.select(
+        subject_class=pl.when(untyped).then(pl.lit(UNTYPED_SUBJECT)).otherwise("subject_class"),
+        property="p",
+        object_class="object_class",
+        datatype="datatype",
+        graph=pl.col("g").str.strip_prefix("<").str.strip_suffix(">")
+        if scope
+        else pl.lit(None, pl.String),
+        triples="count",
+        distinct_subjects="distinct_subjects",
+        distinct_objects="distinct_objects",
+        subject_binding=pl.when(untyped).then(pl.lit("untyped")).otherwise(pl.lit("type")),
+    )
+
+
+def _flush_rows(
+    tables: list[pl.DataFrame], keys: list[str], scope: Sequence[str] | None, directory: Path
+) -> list[Path]:
+    """Write the counted tables as per-term rows (_term_rows) in *directory*; empty the list."""
+    paths = []
+    for table in tables:
+        path = directory / f"rows-{len(list(directory.glob('rows-*.parquet'))):06d}.parquet"
+        _term_rows(table, keys, scope).write_parquet(path)
+        paths.append(path)
+    tables.clear()
+    return paths
+
+
 def count_patterns(
-    store: CountedStore, invalid: dict[str, int] | None = None
+    store: CountedStore,
+    invalid: dict[str, int] | None = None,
+    *,
+    rows_path: Path | None = None,
 ) -> list[SchemaPattern]:
     """Return the patterns of the store with triples, distinct subjects and distinct objects.
 
@@ -2354,6 +2407,10 @@ def count_patterns(
 
     A row whose predicate or class is not a term a pattern can hold (_pattern_term) is left
     out; its triples are added to *invalid* by term (repr), so that the caller reports them.
+
+    With *rows_path*, the counts are written there as the per-term rows of a release
+    (_term_rows) as each batch ends, and no pattern is returned: the per-term layer of a
+    source whose terms are grouped before counting (millions of classes) is never held whole.
     """
     import tempfile
 
@@ -2371,7 +2428,7 @@ def count_patterns(
     classes = int(
         store.type_ids().select(pl.col("c").approx_n_unique()).collect(engine="streaming").item()
     )
-    if classes > limit:
+    if classes > limit and rows_path is None:
         raise TooManyClassesError(
             f"The scope holds about {classes:,} classes, more than the {limit:,} that a scan "
             "count takes (a pattern for each class and property): group the ontology terms "
@@ -2385,6 +2442,8 @@ def count_patterns(
     type_parts = max(1, -(-type_count // type_rows))
     scratch: list[Path] = []
     blank_out = _blank_outgoing(store)
+    # The files of per-term rows written so far (rows_path).
+    written: list[Path] = []
 
     def directory() -> Path:
         """Return the scratch directory of this count (made when first needed)."""
@@ -2497,6 +2556,8 @@ def count_patterns(
                     rows, types.rename({"c": "subject_class"}), typed_all, renamed(types)
                 )
                 tables.extend(_part_counts(cells, keys))
+                if rows_path is not None:
+                    written.extend(_flush_rows(tables, keys, scope, directory()))
                 _compact(blank_fields)
                 continue
             # Parts by subject id; the parts of the type table divide them (parts is a multiple
@@ -2605,11 +2666,29 @@ def count_patterns(
             else:
                 counted = counted.with_columns(distinct_objects=pl.lit(0))
             tables.append(counted)
+            if rows_path is not None:
+                written.extend(_flush_rows(tables, keys, scope, directory()))
             shutil.rmtree(folder)
+        if rows_path is not None:
+            # The rows of all batches, in one file, before the scratch directory is removed.
+            frames = [pl.scan_parquet(path) for path in written]
+            if frames:
+                pl.concat(frames).sink_parquet(rows_path)
+            else:
+                _term_rows(
+                    pl.DataFrame(
+                        schema={
+                            **dict.fromkeys(keys, pl.String),
+                            **dict.fromkeys(COUNTS, pl.Int64),
+                        }
+                    ),
+                    keys,
+                    scope,
+                ).write_parquet(rows_path)
     finally:
         if scratch:
             shutil.rmtree(scratch[0], ignore_errors=True)
-    if not tables:
+    if rows_path is not None or not tables:
         return []
     membership = list(MEMBERSHIP.get())
     # The keys were counted as categories; the patterns hold their text.
@@ -2755,6 +2834,7 @@ class ScanStrategy(MiningStrategy):
         self.graphs = list(graphs) if graphs else None
         self.row_store = store
         self.store: RowStore | StoreView | None = store
+        self.grouped: Any = None
 
     @property
     def name(self) -> str:
@@ -2798,6 +2878,27 @@ class ScanStrategy(MiningStrategy):
             context.report.report.config["scan_long_literals"] = long_text
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
+        from rdfsolve.mining.scan_terms import group_before_counting
+
+        # Above group_before_mining classes, the terms used as types are grouped first and the
+        # grouped type table is counted (scan_terms.group_before_counting); every later phase
+        # reads it through self.store.
+        self.grouped = group_before_counting(
+            self.store,
+            limit=context.group_before_mining if context.ontology_term_budget else None,
+            budget=context.ontology_term_budget or 300,
+            classes_as_data=bool(getattr(context, "classes_as_data", False)),
+            ontology_graph_uris=context.ontology_graph_uris,
+            hierarchy_files=context.ontology_hierarchy_files,
+        )
+        if self.grouped is not None:
+            self.store = self.grouped.store
+            context.report.report.config["ontology_term_grouping"] = self.grouped.record
+            if self.grouped.representative:
+                members: dict[str, list[str]] = {}
+                for term, rep in sorted(self.grouped.representative.items()):
+                    members.setdefault(rep, []).append(term)
+                context.grouped_members = members
         literal_types = self.row_store.literal_type_values()
         if literal_types:
             # The SPARQL strategies count them as literal_type_values too (record_dropped_uri).
