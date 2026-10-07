@@ -11,6 +11,11 @@ A local index may hold only a sample of some graphs (the registry's ``sampled_gr
 UniProt's /uniprot, Swiss-Prot only). The mined counts of those graphs are counts of the sample,
 not of the data the VoID describes: such patterns are left out of the count agreement and
 counted apart, and a pattern that only the VoID states is no evidence that the data lacks it.
+
+The members of each class (void:entities of a class partition, and the mined entity counts) are
+compared as the pattern counts are. A VoID that a catalog publishes of a dataset (okn-void)
+describes the dataset's data graph; a mined schema of more graphs (the dataset's own VoID graph
+beside its data) is cut to the described graphs first (restrict_to_graphs).
 """
 
 from __future__ import annotations
@@ -78,6 +83,8 @@ class VoidComparison(BaseModel):
     class_properties: SetComparison
     patterns: SetComparison
     counts: CountAgreement
+    # Members of the classes that both state with a count (None: not given).
+    class_counts: CountAgreement | None = None
     cost: dict[str, dict[str, Any]]
     # Graphs of the mined side whose data is a sample, with how they were sampled.
     sampled_graphs: dict[str, str] = Field(default_factory=dict)
@@ -87,6 +94,49 @@ class VoidComparison(BaseModel):
     void_only_absence_supported: bool = True
 
 
+def restrict_to_graphs(patterns: list[SchemaPattern], graphs: set[str]) -> list[SchemaPattern]:
+    """Return the patterns of a mined schema found in GRAPHS, counted in those graphs only.
+
+    A pattern without per-graph counts is kept as it is (its graphs are not known).
+    """
+    kept = []
+    for p in patterns:
+        if p.graphs is None:
+            kept.append(p)
+            continue
+        inside = {g: n for g, n in p.graphs.items() if g in graphs}
+        if not inside:
+            continue
+        if inside == p.graphs:
+            kept.append(p)
+            continue
+        kept.append(p.model_copy(update={"graphs": inside, "count": sum(inside.values())}))
+    return kept
+
+
+def _agreement(pairs: list[tuple[int, int, Any]], not_compared: int = 0) -> CountAgreement:
+    """Return how the counts (VoID, mined, key) of the items that both state agree."""
+    ratios = sorted(
+        ((v / m, key, v, m) for v, m, key in pairs), key=lambda r: abs(r[0] - 1), reverse=True
+    )
+    return CountAgreement(
+        compared=len(ratios),
+        sampled_not_compared=not_compared,
+        within_1_percent=sum(abs(r[0] - 1) <= 0.01 for r in ratios),
+        within_10_percent=sum(abs(r[0] - 1) <= 0.1 for r in ratios),
+        median_ratio=round(median(r[0] for r in ratios), 4) if ratios else None,
+        largest_differences=[
+            {
+                "pattern": list(k) if isinstance(k, tuple) else k,
+                "void": v,
+                "mined": m,
+                "ratio": round(r, 4),
+            }
+            for r, k, v, m in ratios[:10]
+        ],
+    )
+
+
 def compare_void_with_mined(
     void_patterns: list[SchemaPattern],
     mined_patterns: list[SchemaPattern],
@@ -94,6 +144,8 @@ def compare_void_with_mined(
     void_report: dict[str, Any] | None = None,
     mined_report: dict[str, Any] | None = None,
     sampled_graphs: dict[str, str] | None = None,
+    void_class_counts: dict[str, int] | None = None,
+    mined_class_counts: dict[str, int] | None = None,
 ) -> VoidComparison:
     """Compare the patterns read from a VoID with those mined from the same data.
 
@@ -119,7 +171,7 @@ def compare_void_with_mined(
 
     void_by_key = {_key(p): p for p in void_patterns}
     mined_by_key = {_key(p): p for p in mined_patterns}
-    ratios = []
+    pairs = []
     not_compared = 0
     for key in void_by_key.keys() & mined_by_key.keys():
         v, m = void_by_key[key].count, mined_by_key[key].count
@@ -127,8 +179,16 @@ def compare_void_with_mined(
             if from_sample(mined_by_key[key]):
                 not_compared += 1
                 continue
-            ratios.append((v / m, key, v, m))
-    ratios.sort(key=lambda r: abs(r[0] - 1), reverse=True)
+            pairs.append((v, m, key))
+    class_counts = None
+    if void_class_counts is not None and mined_class_counts is not None:
+        class_counts = _agreement(
+            [
+                (void_class_counts[c], mined_class_counts[c], c)
+                for c in sorted(void_class_counts.keys() & mined_class_counts.keys())
+                if void_class_counts[c] and mined_class_counts[c]
+            ]
+        )
 
     def cost(report: dict[str, Any] | None) -> dict[str, Any]:
         """Return what a mining report says the schema cost."""
@@ -152,17 +212,8 @@ def compare_void_with_mined(
             {(_subject(p), p.property_uri) for p in mined_patterns},
         ),
         patterns=SetComparison.of(set(void_by_key), set(mined_by_key)),
-        counts=CountAgreement(
-            compared=len(ratios),
-            sampled_not_compared=not_compared,
-            within_1_percent=sum(abs(r[0] - 1) <= 0.01 for r in ratios),
-            within_10_percent=sum(abs(r[0] - 1) <= 0.1 for r in ratios),
-            median_ratio=round(median(r[0] for r in ratios), 4) if ratios else None,
-            largest_differences=[
-                {"pattern": list(k), "void": v, "mined": m, "ratio": round(r, 4)}
-                for r, k, v, m in ratios[:10]
-            ],
-        ),
+        counts=_agreement(pairs, not_compared),
+        class_counts=class_counts,
         cost={"void": cost(void_report), "mined": cost(mined_report)},
         sampled_graphs=dict(sorted(sampled.items())),
         mined_count_basis="sample" if sampled else "full_data",

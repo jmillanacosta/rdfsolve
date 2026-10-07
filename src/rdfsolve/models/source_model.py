@@ -17,7 +17,11 @@ __all__ = [
     "SparqlExamples",
 ]
 
-DatasetKind = Literal["instance", "ontology", "unknown"]
+# "catalog": the entry's data are descriptions of other datasets (VoID or DCAT), such as
+# okn-void, which holds the VoID of the OKN knowledge graphs. A catalog is not mined for
+# patterns; its VoID is read per described dataset and given to the matching entries as their
+# published VoID (rdfsolve.mining.void_catalog).
+DatasetKind = Literal["instance", "ontology", "catalog", "unknown"]
 
 
 class PublicationRef(BaseModel):
@@ -102,13 +106,17 @@ class SourceModel(BaseModel):
     source_role:
         Dataset or access service.
     dataset_kind:
-        Curated instance or ontology resource classification; unknown until reviewed.
+        Curated instance or ontology resource classification; unknown until reviewed;
+        ``catalog`` for an entry whose data are VoID or DCAT descriptions of other datasets
+        (not mined; its VoID is given to the entries it describes).
     skip_mining:
         Exclude this entry from pipeline mining.
     endpoint:
         SPARQL endpoint URL.
     void_iri:
-        Optional VoID dataset IRI.
+        The IRI by which a published VoID (of an endpoint or of a VoID catalog) names this
+        dataset, when it is not one of the entry's graphs: it matches the entry to its
+        description in a catalog (rdfsolve.mining.void_catalog).
     graph_uris:
         Named graphs that hold data edges.
     type_context_graph_uris:
@@ -385,8 +393,12 @@ class SourceModel(BaseModel):
 
     @property
     def mining_enabled(self) -> bool:
-        """Return whether this entry permits pipeline mining."""
-        return self.source_role == "dataset" and not self.skip_mining
+        """Return whether this entry permits pipeline mining; a VoID catalog is read, not mined."""
+        return (
+            self.source_role == "dataset"
+            and not self.skip_mining
+            and self.dataset_kind != "catalog"
+        )
 
     @field_validator(
         "aliases",

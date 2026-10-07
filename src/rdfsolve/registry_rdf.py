@@ -198,7 +198,7 @@ FIELDS: dict[str, str] = {
     "has_void": _CACHED,
     "has_void_partitions": _CACHED,
     "has_void_patterns": _CACHED,
-    "void_iri": "left out: deprecated; its values are graph or VoID IRIs, not data dumps",
+    "void_iri": "left out: the IRI of the dataset in a published VoID, for matching (void_catalog)",
     "graph_uris": "sd:namedGraph [a sd:NamedGraph; sd:name G] (service: under sd:defaultDataset)",
     "type_context_graph_uris": "rdfsolve:typeContextGraph [a sd:NamedGraph; sd:name G]",
     "ontology_graph_uris": "rdfsolve:ontologyGraph [a sd:NamedGraph; sd:name G]",

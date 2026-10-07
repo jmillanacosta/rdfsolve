@@ -301,6 +301,13 @@ Examples:
         "with cheap counts, and mine only the endpoints that serve other data",
     )
     parser.add_argument(
+        "--void-catalogs",
+        type=Path,
+        default=None,
+        help="Folder written by scripts/void_catalogs.py: a remote source whose endpoint "
+        "publishes no VoID of it takes the VoID a registry catalog publishes of it (VoID-first)",
+    )
+    parser.add_argument(
         "--pinned-inputs",
         type=Path,
         default=None,
@@ -576,6 +583,7 @@ Examples:
     config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
     config.local_records = args.local_records
+    config.void_catalogs = args.void_catalogs
     config.pinned_inputs = args.pinned_inputs
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs

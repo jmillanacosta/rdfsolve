@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import re
+from typing import Any
 
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.query import ResultRow
@@ -20,8 +22,19 @@ VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
 
 SD = Namespace("http://www.w3.org/ns/sparql-service-description#")
-# The links from a VoID dataset to the parts that describe it.
-_PARTS = (VOID.classPartition, VOID.propertyPartition, VOID.subset, VOID_EXT.datatypePartition)
+# The links from a VoID dataset to the parts that describe it. void-ext's object class and
+# language partitions are those of the LDF VoID extension, as written by FRINK for the OKN graphs.
+_PARTS = (
+    VOID.classPartition,
+    VOID.propertyPartition,
+    VOID.subset,
+    VOID_EXT.datatypePartition,
+    VOID_EXT.objectClassPartition,
+    VOID_EXT.languagePartition,
+)
+# The partitions of a property partition by the class of its objects: nested class partitions
+# (void-ext's convention of void:classPartition) or void-ext:objectClassPartition (FRINK).
+_OBJECT_CLASS_PARTS = (VOID.classPartition, VOID_EXT.objectClassPartition)
 
 
 def service_description_graph_names(g: Graph) -> list[str]:
@@ -106,16 +119,54 @@ def void_class_populations(
 
 
 def void_datasets_of_graphs(g: Graph, graph_names: list[str]) -> list[URIRef]:
-    """Return the VoID datasets that a service description gives for the named graphs."""
-    return sorted(
-        {
+    """Return the VoID datasets that describe the named graphs.
+
+    A service description gives the dataset of each named graph (void-generator). A graph that
+    it does not name is its own dataset when the VoID describes the graph's IRI with partitions:
+    FRINK names each OKN graph's dataset by the graph (https://purl.org/okn/frink/kg/<kg>).
+    """
+    found: set[URIRef] = set()
+    for name in graph_names:
+        stated = {
             dataset
-            for name in graph_names
             for named in g.subjects(SD.name, URIRef(name))
             for dataset in g.objects(named, SD.graph)
             if isinstance(dataset, URIRef)
         }
+        if not stated and is_partitioned_dataset(g, URIRef(name)):
+            stated = {URIRef(name)}
+        found |= stated
+    return sorted(found)
+
+
+def described_datasets(g: Graph) -> list[URIRef]:
+    """Return the datasets a VoID describes at the top: partitioned and not part of another."""
+    parts = {o for link in _PARTS for o in g.objects(None, link)}
+    nodes = set(g.subjects(VOID.classPartition, None)) | set(
+        g.subjects(VOID.propertyPartition, None)
     )
+    return sorted(n for n in nodes if isinstance(n, URIRef) and n not in parts)
+
+
+def is_partitioned_dataset(g: Graph, node: URIRef) -> bool:
+    """Return whether the VoID describes NODE with class or property partitions."""
+    return any(g.objects(node, VOID.classPartition)) or any(g.objects(node, VOID.propertyPartition))
+
+
+def void_issued(g: Graph, dataset: URIRef | None = None) -> str | None:
+    """Return when a VoID description was issued or its data last updated, if it says so.
+
+    dcterms:issued (void-generator), else pav:lastUpdatedOn or dcterms:modified (FRINK); of
+    DATASET when given, else the latest stated anywhere in the description.
+    """
+    from rdflib.namespace import DCTERMS
+
+    pav_updated = URIRef("http://purl.org/pav/lastUpdatedOn")
+    for predicate in (DCTERMS.issued, pav_updated, DCTERMS.modified):
+        values = [str(o) for o in g.objects(dataset, predicate)]
+        if values:
+            return max(values)
+    return None
 
 
 def scope_void_graph(g: Graph, datasets: list[URIRef]) -> Graph:
@@ -174,9 +225,14 @@ def void_graph_to_minedschema(
     endpoint: str | None = None,
     report_untyped: bool = True,
     local_backend: LocalBackend = "oxigraph",
+    left_out: list[dict[str, Any]] | None = None,
 ) -> MinedSchema:
-    """Read VoID RDF without treating metadata predicates as patterns."""
-    patterns = _extract_patterns_from_void(g, local_backend=local_backend)
+    """Read VoID RDF without treating metadata predicates as patterns.
+
+    Partitions whose terms a pattern cannot hold are left out; LEFT_OUT, when given, receives
+    each with its reason and triples (_append).
+    """
+    patterns = _extract_patterns_from_void(g, local_backend=local_backend, left_out=left_out)
     if report_untyped:
         warn_untyped_partitions(g, patterns)
     about = _extract_metadata_from_void(g, endpoint=endpoint)
@@ -204,13 +260,54 @@ def void_graph_to_minedschema(
     return schema
 
 
+def _append(
+    patterns: list[SchemaPattern],
+    fields: dict[str, Any],
+    left_out: list[dict[str, Any]] | None = None,
+) -> None:
+    """Add a pattern read from a VoID, unless a term of it cannot be a pattern's term.
+
+    A VoID may state a term that the schema does not take as a class or property: FRINK's VoID
+    of geoconnex states the class <schema:GeoCoordinates>, an IRI of the scheme "schema" that
+    geoconnex's data use (833,051 members) beside <https://schema.org/GeoCoordinates> (2.8 M);
+    it is not a compact name to expand, since that would merge two terms of the data. Such a
+    partition is left out, logged and, when LEFT_OUT is given, recorded there with its reason
+    and its triples; the rest of the VoID is read.
+    """
+    from pydantic import ValidationError
+
+    try:
+        patterns.append(SchemaPattern(**fields))
+    except ValidationError as error:
+        problem = error.errors()[0]
+        field = str(problem["loc"][0]) if problem["loc"] else "pattern"
+        term = str(problem.get("input"))
+        unregistered = re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", term) is not None
+        item = {
+            "reason": f"{field}: IRI with an unregistered scheme"
+            if unregistered
+            else f"{field}: not an IRI",
+            "term": problem.get("input"),
+            "subject_class": fields.get("subject_class"),
+            "property": fields.get("property_uri"),
+            "object": fields.get("datatype") or fields.get("object_class"),
+            "triples": fields.get("count"),
+        }
+        logger.warning("VoID partition left out: %s (%s)", item["reason"], item["term"])
+        if left_out is not None:
+            left_out.append(item)
+
+
 def _extract_patterns_from_void(
-    g: Graph, *, local_backend: LocalBackend = "oxigraph"
+    g: Graph,
+    *,
+    local_backend: LocalBackend = "oxigraph",
+    left_out: list[dict[str, Any]] | None = None,
 ) -> list[SchemaPattern]:
     """Extract SchemaPattern list from VoID graph."""
     from rdflib.namespace import RDFS
 
-    patterns = []
+    patterns: list[SchemaPattern] = []
     engine = LocalRdf(g, backend=local_backend)
 
     # Extract all rdfs:label triples for URIs
@@ -235,7 +332,7 @@ def _extract_patterns_from_void(
 
         # Keep each object partition and its own count in a separate row.
         {
-            ?pp void:classPartition ?objCp .
+            ?pp void:classPartition|void-ext:objectClassPartition ?objCp .
             ?objCp void:class ?objectClass .
             OPTIONAL { ?objCp void:triples ?count }
         } UNION {
@@ -259,31 +356,35 @@ def _extract_patterns_from_void(
         if row.get("objectClass"):
             # Typed object pattern
             object_class = str(row.objectClass)
-            patterns.append(
-                SchemaPattern(
-                    subject_class=subject_class,
-                    property_uri=property_uri,
-                    object_class=object_class,
-                    count=count,
-                    evidence_source="void",
-                    subject_label=labels.get(subject_class),
-                    property_label=labels.get(property_uri),
-                    object_label=labels.get(object_class),
-                )
+            _append(
+                patterns,
+                left_out=left_out,
+                fields={
+                    "subject_class": subject_class,
+                    "property_uri": property_uri,
+                    "object_class": object_class,
+                    "count": count,
+                    "evidence_source": "void",
+                    "subject_label": labels.get(subject_class),
+                    "property_label": labels.get(property_uri),
+                    "object_label": labels.get(object_class),
+                },
             )
         elif row.get("datatype"):
             # Literal pattern with datatype
-            patterns.append(
-                SchemaPattern(
-                    subject_class=subject_class,
-                    property_uri=property_uri,
-                    object_class="Literal",
-                    datatype=str(row.datatype),
-                    count=count,
-                    evidence_source="void",
-                    subject_label=labels.get(subject_class),
-                    property_label=labels.get(property_uri),
-                )
+            _append(
+                patterns,
+                left_out=left_out,
+                fields={
+                    "subject_class": subject_class,
+                    "property_uri": property_uri,
+                    "object_class": "Literal",
+                    "datatype": str(row.datatype),
+                    "count": count,
+                    "evidence_source": "void",
+                    "subject_label": labels.get(subject_class),
+                    "property_label": labels.get(property_uri),
+                },
             )
 
     # Linksets give the class at each end of a link (void-generator, as published by IDSM, UniProt,
@@ -327,21 +428,77 @@ def _extract_patterns_from_void(
                 previous.distinct_objects = optional_count(row.get("objects"))
             continue
         subject_class, property_uri, object_class = key
-        linked[key] = SchemaPattern(
-            subject_class=subject_class,
-            property_uri=property_uri,
-            object_class=object_class,
-            count=count,
-            distinct_subjects=optional_count(row.get("subjects")),
-            distinct_objects=optional_count(row.get("objects")),
-            evidence_source="void",
-            subject_label=labels.get(subject_class),
-            property_label=labels.get(property_uri),
-            object_label=labels.get(object_class),
+        made: list[SchemaPattern] = []
+        _append(
+            made,
+            left_out=left_out,
+            fields={
+                "subject_class": subject_class,
+                "property_uri": property_uri,
+                "object_class": object_class,
+                "count": count,
+                "distinct_subjects": optional_count(row.get("subjects")),
+                "distinct_objects": optional_count(row.get("objects")),
+                "evidence_source": "void",
+                "subject_label": labels.get(subject_class),
+                "property_label": labels.get(property_uri),
+                "object_label": labels.get(object_class),
+            },
         )
+        if made:
+            linked[key] = made[0]
     patterns.extend(linked.values())
-
+    patterns.extend(_untyped_object_partitions(g, labels, left_out))
     return patterns
+
+
+def _untyped_object_partitions(
+    g: Graph, labels: dict[str, str], left_out: list[dict[str, Any]] | None = None
+) -> list[SchemaPattern]:
+    """Return the IRI objects that an object class partition without a class states.
+
+    FRINK partitions the objects of each class and property by their class, and puts the objects
+    without a class (literals among them) in a partition without void:class. Its triples beyond
+    those of the datatype partitions have objects that are neither literals nor typed: a
+    Resource pattern with that count. rdf:type is membership, not a link, and is left out.
+    """
+    found: list[SchemaPattern] = []
+    for cp in set(g.objects(None, VOID.classPartition)):
+        subject_class = g.value(cp, VOID["class"])
+        if subject_class is None:
+            continue
+        for pp in g.objects(cp, VOID.propertyPartition):
+            prop = g.value(pp, VOID.property)
+            if prop is None or prop == RDF.type:
+                continue
+            untyped = [
+                part
+                for part in g.objects(pp, VOID_EXT.objectClassPartition)
+                if g.value(part, VOID["class"]) is None
+            ]
+            if not untyped:
+                continue
+            triples = sum(optional_count(g.value(part, VOID.triples)) or 0 for part in untyped)
+            literals = sum(
+                optional_count(g.value(d, VOID.triples)) or 0
+                for d in g.objects(pp, VOID_EXT.datatypePartition)
+            )
+            if triples - literals <= 0:
+                continue
+            _append(
+                found,
+                left_out=left_out,
+                fields={
+                    "subject_class": str(subject_class),
+                    "property_uri": str(prop),
+                    "object_class": "Resource",
+                    "count": triples - literals,
+                    "evidence_source": "void",
+                    "subject_label": labels.get(str(subject_class)),
+                    "property_label": labels.get(str(prop)),
+                },
+            )
+    return found
 
 
 def _extract_metadata_from_void(g: Graph, *, endpoint: str | None = None) -> AboutMetadata:

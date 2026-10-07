@@ -160,6 +160,10 @@ class PipelineConfig:
     resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused
     # Local run output whose records remote endpoints are checked against; equal ones are not mined
     local_records: Path | None = None
+    # Folder of the VoID that registry catalogs (dataset_kind: catalog) publish of the entries
+    # they describe (scripts/void_catalogs.py); a remote source whose endpoint publishes no VoID
+    # of it is read from there VoID-first
+    void_catalogs: Path | None = None
     discover_ontology_graphs: bool = False
     ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False
@@ -251,7 +255,11 @@ class PipelineConfig:
             )
 
         excluded = {
-            s.name: "service record" if s.source_role == "service" else "skip_mining"
+            s.name: "service record"
+            if s.source_role == "service"
+            else "VoID catalog (read, not mined)"
+            if s.dataset_kind == "catalog"
+            else "skip_mining"
             for s in sources
             if not s.mining_enabled
         }

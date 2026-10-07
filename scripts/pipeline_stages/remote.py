@@ -141,15 +141,15 @@ class RemoteMiningStage(Stage):
                 cache[source.endpoint] = find_published_void(helper)
         published = cache[source.endpoint]
         if published is None:
-            return None
+            return self._catalog_void_strategy(source)
         scoped = void_for_source(published, graphs or source.graph_uris or None)
         if scoped is None:
             log.info(
-                "[%s] The VoID of %s does not describe its graphs; mined",
+                "[%s] The VoID of %s does not describe its graphs",
                 source.name,
                 published.graph,
             )
-            return None
+            return self._catalog_void_strategy(source)
         log.info(
             "[%s] Schema from the VoID in %s (issued %s)",
             source.name,
@@ -158,6 +158,37 @@ class RemoteMiningStage(Stage):
         )
         return VoidStrategy(
             scoped,
+            void_graph=published.graph,
+            issued=published.issued,
+            read_by=published.read_by,
+        )
+
+    def _catalog_void_strategy(self, source: Source) -> Any:
+        """Return a VoID-first strategy from the VoID that a catalog publishes of the source.
+
+        Used when the endpoint publishes no VoID of the source's graphs, with --void-catalogs:
+        the folder where scripts/void_catalogs.py wrote the VoID of each registry entry that a
+        catalog (dataset_kind: catalog, such as okn-void) describes. The schema is read from that
+        VoID; its gaps, samples and drift are measured on the source's own endpoint, as for an
+        endpoint's VoID. None when no catalog describes the source: it is mined.
+        """
+        if self.config.void_catalogs is None:
+            return None
+        from rdfsolve.mining.void_catalog import catalog_void_of
+        from rdfsolve.mining.void_strategy import VoidStrategy
+
+        published = catalog_void_of(self.config.void_catalogs, source.name)
+        if published is None:
+            log.info("[%s] No catalog publishes a VoID of it; mined", source.name)
+            return None
+        log.info(
+            "[%s] Schema from the VoID that %s (updated %s)",
+            source.name,
+            published.graph,
+            published.issued,
+        )
+        return VoidStrategy(
+            published.void,
             void_graph=published.graph,
             issued=published.issued,
             read_by=published.read_by,

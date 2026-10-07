@@ -71,7 +71,9 @@ def void_gaps(void: Graph) -> list[VoidGap]:
     """Find, from the counts of a scoped VoID description alone, what it leaves without a class.
 
     A class and property: its triples, less those of its linksets (the largest description of
-    each object class) and of its datatype partitions, have objects without a class; when its
+    each object class), of its partitions by object class (nested void:classPartition or
+    void-ext:objectClassPartition, FRINK) and of its datatype partitions, have objects without
+    a class; when its
     distinct objects exceed its distinct IRI objects and literals, some are blank nodes.
     A property of the dataset: its triples, less those of its class partitions, have subjects
     without a class (a lower bound: a subject of two classes is counted twice).
@@ -102,7 +104,14 @@ def void_gaps(void: Graph) -> list[VoidGap]:
                 optional_count(void.value(d, VOID.triples)) or 0
                 for d in void.objects(part, VOID_EXT.datatypePartition)
             )
-            links = sum(linked.get((str(cls), str(predicate)), {}).values())
+            ends = dict(linked.get((str(cls), str(predicate)), {}))
+            for by_class in (VOID.classPartition, VOID_EXT.objectClassPartition):
+                for target in void.objects(part, by_class):
+                    target_class = void.value(target, VOID["class"])
+                    if target_class is not None:
+                        count = optional_count(void.value(target, VOID.triples)) or 0
+                        ends[str(target_class)] = max(ends.get(str(target_class), 0), count)
+            links = sum(ends.values())
             rest = triples - literal - links
             if rest <= 0 or predicate == RDF.type:
                 continue
@@ -253,7 +262,8 @@ class VoidStrategy(MiningStrategy):
         )
 
         phase = context.report.start_phase("void")
-        schema = void_graph_to_minedschema(self.void, report_untyped=False)
+        dropped: list[dict[str, Any]] = []
+        schema = void_graph_to_minedschema(self.void, report_untyped=False, left_out=dropped)
         left_out = schema.source_metadata.iri_findings if schema.source_metadata else None
         if left_out:
             found = context.report.report.config.setdefault("iri_findings", {})
@@ -276,6 +286,9 @@ class VoidStrategy(MiningStrategy):
         }
         if contradicted:
             self.record["class_counts_contradicted"] = contradicted
+        if dropped:
+            # Partitions whose terms a pattern cannot hold, with their reasons and triples.
+            self.record["partitions_left_out"] = dropped
         context.report.finish_phase(phase, items=len(patterns))
         failures: list[QueryFailure] = []
         self.cuts = QueryCuts(client_timeouts=True)
@@ -743,9 +756,9 @@ def find_published_void(
         helper.max_response_bytes = saved
     if void is None:
         return None
-    from rdflib.namespace import DCTERMS
+    from rdfsolve.schema_models.readers.void import void_issued
 
-    issued = max((str(o) for o in void.objects(None, DCTERMS.issued)), default=None)
+    issued = void_issued(void)
     logger.info(
         "Published VoID in %s: %d triples, issued %s (read by %s)",
         graph,
@@ -815,11 +828,13 @@ def _read_void_graph(helper: SparqlHelper, graph: str) -> tuple[Graph | None, st
 def void_for_source(published: PublishedVoid, graph_uris: list[str] | None) -> Graph | None:
     """Return the part of a published VoID that describes the graphs of a source, or None.
 
-    A source with graphs takes the datasets that the service description gives for them; a
-    source without graphs takes the default dataset, or the only dataset described.
+    A source with graphs takes the datasets that the service description gives for them (or the
+    datasets named by the graphs); a source without graphs takes the default dataset, or, without
+    a service description, the only dataset described.
     """
     from rdfsolve.schema_models.readers.void import (
         SD,
+        described_datasets,
         scope_void_graph,
         void_datasets_of_graphs,
     )
@@ -851,6 +866,11 @@ def void_for_source(published: PublishedVoid, graph_uris: list[str] | None) -> G
             datasets = sorted(
                 g for n in named for g in void.objects(n, SD.graph) if isinstance(g, URIRef)
             )
+        if not datasets and not defaults:
+            # No service description: a VoID of one dataset is the endpoint's (FRINK publishes
+            # the VoID of each OKN graph in the graph's endpoint, without one).
+            described = described_datasets(void)
+            datasets = described if len(described) == 1 else []
         if not datasets:
             return None
     scoped = scope_void_graph(void, datasets)
