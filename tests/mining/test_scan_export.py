@@ -48,6 +48,8 @@ class Endpoint:
         # QLever), and the planning queries over all graphs (counts or DISTINCT with GRAPH ?g)
         # time out, as on PubChem (job 115703).
         self.quads = False
+        # Text that the server writes in Latin-1, not UTF-8 (Bio2RDF SIDER's "duricef\xae").
+        self.latin1 = False
         self.row_queries = 0
         endpoint = self
 
@@ -138,6 +140,8 @@ class Endpoint:
                     text = b"".join(
                         hashlib.blake2b(c, digest_size=8).digest() for row in cells for c in row
                     )
+                elif endpoint.latin1:
+                    text = text.replace("®".encode(), "®".encode("latin-1"))
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(text)
@@ -289,3 +293,24 @@ def test_known_graphs_are_not_listed_or_grouped(endpoint, tmp_path):
     assert store.manifest["graph_split"] == {"state": "by_graph", "graphs_from": "registry"}
     assert set(store.graphs) == {"urn:graph:one"}
     assert not any("GROUP BY ?g" in q or "DISTINCT ?g" in q for q in endpoint.queries)
+
+
+def test_rows_that_are_not_utf8_are_read_lossy_and_counted(endpoint, tmp_path):
+    """Bio2RDF SIDER (job 115724) holds Latin-1 bytes in 46 labels and titles
+    ("duricef\\xae"@en); Polars refused the block and the source failed. The bytes are read as
+    U+FFFD, the rows counted with samples by predicate, and a predicate whose own IRI is not
+    UTF-8 is a gap (it cannot be asked for by name)."""
+    endpoint.store.load(
+        b'<urn:d1> <http://purl.org/dc/terms/title> "duricef\xc2\xae"@en .\n'
+        b'<urn:d1> <http://purl.org/dc/terms/title> "plain"@en .\n'
+        b'<urn:d1> <urn:brand\xc2\xae> "x" .\n',
+        format=ox.RdfFormat.N_TRIPLES,
+    )
+    endpoint.latin1 = True
+    store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=1)
+    titles = store.rows("http://purl.org/dc/terms/title").collect()["o"].to_list()
+    assert '"duricef\ufffd"@en' in titles and '"plain"@en' in titles
+    found = store.manifest["invalid_utf8"]["http://purl.org/dc/terms/title"]
+    assert found["rows"] == 1 and "duricef\\xae" in found["samples"][0]
+    assert store.manifest["gaps"] == {"urn:brand\ufffd": "the predicate IRI is not valid UTF-8"}
+    assert "urn:link" in store.predicates, "The other predicates are read"

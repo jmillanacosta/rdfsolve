@@ -623,7 +623,15 @@ def _tsv_to_parquet(endpoint: str, query: str, path: Path, *, timeout: float | N
             _check_trailer(tail + chunk, query, lambda: response.read(4096))
             tail = chunk[-len(QLEVER_ERROR_TRAILER) :]
             out.write(chunk)
-    frame = pl.scan_csv(tsv, separator="\t", quote_char=None, has_header=True, infer_schema=False)
+    # A term that is not UTF-8 (a predicate or graph name) is read with U+FFFD for its bytes.
+    frame = pl.scan_csv(
+        tsv,
+        separator="\t",
+        quote_char=None,
+        has_header=True,
+        infer_schema=False,
+        encoding="utf8-lossy",
+    )
     partial = path.with_name(path.name + ".partial")
     frame.rename(lambda c: c.lstrip("?")).sink_parquet(partial)
     _durable(partial, path)
@@ -659,6 +667,64 @@ def _trim_literals(column: str) -> pl.Expr:
         .otherwise(o)
         .alias(column)
     )
+
+
+# Rows whose bytes are not valid UTF-8, by the file they are written to (the name of the whole
+# file, not of a slice): the export moves them into progress.jsonl and the manifest
+# (invalid_utf8). Bio2RDF SIDER holds Latin-1 bytes in 46 labels and titles ("duricef\xae",
+# job 115724); Polars refuses a block with one of them and failed the source.
+_INVALID_UTF8: dict[str, dict[str, Any]] = {}
+# The rows of the type table that were not UTF-8, kept beside it for a resumed export.
+TYPES_INVALID_UTF8 = "types.invalid_utf8.json"
+_INVALID_LOCK = threading.Lock()
+INVALID_UTF8_SAMPLES = 5
+
+
+def _store_file(path: Path) -> str:
+    """Return the name of the store file that *path* (a slice or a partial of it) is part of."""
+    return path.name.split(".slice-")[0].split(".partial")[0]
+
+
+def _valid_utf8(lines: bytes, path: Path) -> bytes:
+    """Return *lines* (TSV rows) with each byte sequence that is not UTF-8 replaced (U+FFFD).
+
+    The rows changed are counted for the store file of *path*, with a few of them as escaped
+    bytes; valid input is returned as it is (one decode of the block).
+    """
+    try:
+        lines.decode("utf-8")
+        return lines
+    except UnicodeDecodeError:
+        pass
+    written = []
+    changed = 0
+    samples: list[str] = []
+    for line in lines.split(b"\n"):
+        try:
+            line.decode("utf-8")
+            written.append(line)
+        except UnicodeDecodeError:
+            changed += 1
+            if len(samples) < INVALID_UTF8_SAMPLES:
+                samples.append(repr(line[:300])[2:-1])
+            written.append(line.decode("utf-8", errors="replace").encode("utf-8"))
+    with _INVALID_LOCK:
+        found = _INVALID_UTF8.setdefault(_store_file(path), {"rows": 0, "samples": []})
+        found["rows"] += changed
+        found["samples"] = (found["samples"] + samples)[:INVALID_UTF8_SAMPLES]
+    return b"\n".join(written)
+
+
+def _take_invalid_utf8(*paths: Path) -> dict[str, Any] | None:
+    """Return and forget the rows that were not UTF-8 in the store files *paths*."""
+    taken: dict[str, Any] = {"rows": 0, "samples": []}
+    with _INVALID_LOCK:
+        for path in paths:
+            found = _INVALID_UTF8.pop(_store_file(path), None)
+            if found:
+                taken["rows"] += found["rows"]
+                taken["samples"] = (taken["samples"] + found["samples"])[:INVALID_UTF8_SAMPLES]
+    return taken if taken["rows"] else None
 
 
 def _stream_rows(
@@ -712,6 +778,8 @@ def _stream_rows(
                     lines, rest = data[:cut], data[cut:]
                 count = lines.count(b"\n")
                 if count:
+                    # Bytes that are not UTF-8 are replaced, and the rows counted (_valid_utf8).
+                    lines = _valid_utf8(lines, path)
                     raw = binary.read(8 * width * count)
                     if len(raw) != 8 * width * count:
                         raise RuntimeError(
@@ -1166,6 +1234,7 @@ def export_index(
     (path / "rows").mkdir(parents=True, exist_ok=True)
     _write_text(plan_file, json.dumps(plan) + "\n")
     done: dict[str, tuple[str, int]] = {}
+    invalid_utf8: dict[str, dict[str, Any]] = {}
     if resumable and progress.is_file():
         rejected: list[str] = []
         for line in progress.read_text(errors="replace").splitlines():
@@ -1177,6 +1246,8 @@ def export_index(
             problem = store_file_problem(path / "rows" / name, rows)
             if problem is None:
                 done[predicate] = (name, rows)
+                if entry.get("invalid_utf8"):
+                    invalid_utf8[predicate] = entry["invalid_utf8"]
             else:
                 rejected.append(f"<{predicate}> ({name}: {problem})")
                 done.pop(predicate, None)
@@ -1285,9 +1356,17 @@ def export_index(
             pl.concat(types).sink_parquet(joined)
         else:
             pl.concat(types).unique().sink_parquet(joined)
+        type_parts = [path / f"types-{n}.parquet" for n in range(len(membership))]
+        type_parts += [path / f"types-{n}-unnamed.parquet" for n in range(len(membership))]
+        invalid_types = _take_invalid_utf8(*type_parts)
+        _write_text(path / TYPES_INVALID_UTF8, json.dumps(invalid_types or {}) + "\n")
         _durable(joined, path / "types.parquet")
         for part in path.glob("types-*.parquet"):
             part.unlink()
+    if (path / TYPES_INVALID_UTF8).is_file():
+        found = json.loads((path / TYPES_INVALID_UTF8).read_text() or "{}")
+        if found:
+            invalid_utf8["membership (types.parquet)"] = found
     text = _text_predicates()
     lock = threading.Lock()
 
@@ -1363,13 +1442,26 @@ def export_index(
                 _durable(file.with_name(file.name + ".all"), file)
                 rest.unlink()
         # A predicate is marked read only after its file is whole on disk (_durable).
+        entry: dict[str, Any] = {"predicate": predicate, "file": file.name, "rows": rows}
+        invalid = _take_invalid_utf8(file, file.with_name(file.stem + "-unnamed.parquet"))
+        if invalid:
+            entry["invalid_utf8"] = invalid
         with lock, progress.open("a") as log:
-            log.write(json.dumps({"predicate": predicate, "file": file.name, "rows": rows}) + "\n")
+            log.write(json.dumps(entry) + "\n")
             log.flush()
             os.fsync(log.fileno())
         return predicate, file.name, (predicate, size, rows) if rows != size else None
 
     gaps: dict[str, str] = {}
+    # A predicate whose IRI is not UTF-8 was read with U+FFFD for its bytes (_tsv_to_parquet):
+    # it cannot be asked for by name, so its rows are a gap of the store.
+    for predicate in [p for p in sizes if "\ufffd" in p]:
+        logger.warning(
+            "Scan: the IRI of predicate <%s> is not UTF-8; its rows are a gap", predicate
+        )
+        gaps[predicate] = "the predicate IRI is not valid UTF-8"
+        del sizes[predicate]
+        expected.pop(predicate, None)
     order = sorted(sizes.items(), key=lambda x: (-x[1], x[0]))
     jobs = [(n, p, expected[p]) for n, (p, _) in enumerate(order)]
     # The predicates are read at once in their own threads, which wait for their queries in
@@ -1389,6 +1481,20 @@ def export_index(
     for stale in (path / "rows").glob("*.slice-*"):
         stale.unlink()
     files = {predicate: name for predicate, name, _ in finished if name is not None}
+    for line in progress.read_text(errors="replace").splitlines():
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        if entry.get("invalid_utf8") and files.get(entry.get("predicate")) == entry.get("file"):
+            invalid_utf8[entry["predicate"]] = entry["invalid_utf8"]
+    if invalid_utf8:
+        logger.warning(
+            "Scan: %d rows hold bytes that are not UTF-8 (%s); they are read with U+FFFD for "
+            "those bytes (manifest: invalid_utf8)",
+            sum(int(found["rows"]) for found in invalid_utf8.values()),
+            ", ".join(f"<{p}>" if "://" in p else p for p in list(invalid_utf8)[:5]),
+        )
     mismatches = [m for _, _, m in finished if m]
     if mismatches:
         raise RuntimeError(f"Rows read differ from the predicate counts: {mismatches[:5]}")
@@ -1407,6 +1513,8 @@ def export_index(
         # triples and rows, not in predicates).
         "gaps": dict(sorted(gaps.items())),
         "graph_split": split,
+        # The rows whose bytes were not UTF-8, read with U+FFFD for those bytes.
+        "invalid_utf8": dict(sorted(invalid_utf8.items())),
     }
     _write_text(manifest, json.dumps(record, indent=1) + "\n")
     return RowStore(path)
@@ -2232,6 +2340,13 @@ class ScanStrategy(MiningStrategy):
                 "seconds": self.row_store.manifest.get("seconds"),
                 "gaps": self.row_store.manifest.get("gaps") or {},
                 "graph_split": self.row_store.manifest.get("graph_split"),
+            }
+        invalid_utf8 = self.row_store.manifest.get("invalid_utf8") or {}
+        if invalid_utf8:
+            # Rows read with U+FFFD for bytes that are not UTF-8: a finding of the source.
+            context.report.report.config["scan_invalid_utf8"] = {
+                "rows": sum(int(found["rows"]) for found in invalid_utf8.values()),
+                "by_predicate": invalid_utf8,
             }
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
