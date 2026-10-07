@@ -466,6 +466,10 @@ class QueryTimeoutError(RuntimeError):
     """The server stopped the query at its time limit (QLever answers 429 with "timed out")."""
 
 
+class HalvingStoppedError(QueryTimeoutError):
+    """A half of a read timed out like the read it was cut from (_read_query)."""
+
+
 # The queries this process has open on a local server: at most two per export stream
 # (2 * export_workers()), below the slots the server is started with
 # (qlever.lifecycle.simultaneous_queries: 2 * export_workers() + 2), so that the client never
@@ -1051,10 +1055,24 @@ def _read_query(
     """
     import pyarrow.parquet as pq
 
-    def read(part: Path, offset: int | None, limit: int | None, size: int) -> int:
+    def read(
+        part: Path,
+        offset: int | None,
+        limit: int | None,
+        size: int,
+        *,
+        parent: float | None = None,
+    ) -> int:
         """Write the whole result (*offset* None), or one slice of it, to *part*; return its
         rows. A read the server times out on is read again in two halves, joined in order.
+
+        A half that times out after as long as the read it was cut from (*parent*: the
+        seconds that read ran; HALVING_RATIO of them, when they were HALVING_MIN_SECONDS or
+        more) costs as much as its parent: the cost is not in the rows read, and halving goes
+        no further (HalvingStoppedError). rdfportal.pubmed (job 115718) halved dc:title from
+        10 M rows to 78,125 for 2 h, every slice at 600 s.
         """
+        started = time.monotonic()
         try:
             if offset is None:
                 return _stream_rows(
@@ -1069,16 +1087,29 @@ def _read_query(
                 extra=extra,
                 id_query=_sliced(id_query, offset, limit) if id_query else None,
             )
-        except QueryTimeoutError:
+        except QueryTimeoutError as error:
+            ran = time.monotonic() - started
+            if (
+                parent is not None
+                and parent >= HALVING_MIN_SECONDS
+                and ran >= HALVING_RATIO * parent
+            ):
+                raise HalvingStoppedError(
+                    f"a half of {size} rows timed out like the read it was cut from: {error}"
+                ) from error
             if size <= max(SPLIT_ROWS, 1):
                 raise
         offset = offset or 0
-        half = size // 2
+        cut = size // 2
         logger.info("Scan: the server timed out on %d rows; reading them in halves", size)
         halves = [part.with_name(part.name + ".a"), part.with_name(part.name + ".b")]
-        count = read(halves[0], offset, half, half)
+        count = read(halves[0], offset, cut, cut, parent=ran)
         count += read(
-            halves[1], offset + half, None if limit is None else limit - half, size - half
+            halves[1],
+            offset + cut,
+            None if limit is None else limit - cut,
+            size - cut,
+            parent=ran,
         )
         _join_parts(halves, part)
         return count
@@ -1105,6 +1136,145 @@ def _read_query(
     count = sum(future.result() for future in futures)
     _join_parts(parts, path)
     return count
+
+
+# Rows of a predicate whose literal text is read when the text of all of them cannot be: their
+# datatype and language stand for the predicate's literals (_read_long_literals).
+LONG_TEXT_SAMPLE = 2000
+
+
+def _read_ids(endpoint: str, query: str, width: int) -> Any:
+    """Return the ids of the rows of *query* (application/octet-stream), *width* a row."""
+    import numpy as np
+
+    chunks = []
+    with _post(endpoint, query, "application/octet-stream") as response:
+        while chunk := response.read(1 << 24):
+            chunks.append(chunk)
+    data = b"".join(chunks)
+    if len(data) % (8 * width):
+        raise RuntimeError(f"{len(data) // 8} ids for rows of {width}: {query}")
+    return np.frombuffer(data, dtype="<u8").reshape(-1, width)
+
+
+def _read_long_literals(
+    endpoint: str,
+    path: Path,
+    where: str,
+    *,
+    graph: bool,
+    keep_text: bool,
+    extra: dict[str, Any] | None = None,
+) -> tuple[int, dict[str, Any]]:
+    """Write the rows of one predicate (*where*: its triple pattern) whose literal text cannot
+    be read in time; return the rows and how its literals were read.
+
+    rdfportal.pubmed (job 115868): QLever writes the text of dc:title's 39 M literals at about
+    100 rows a second, while their ids come in 13 s, the subjects' text in 90 s, and
+    ``isLiteral`` is answered from the ids (0.5 s). So the rows whose object is not a literal
+    are read as usual, and the literal rows as ids (exact triples, subjects and distinct
+    objects) with the subjects' text and the text of LONG_TEXT_SAMPLE of them. The most
+    frequent datatype and language of the sample stand for the other literals of QLever's
+    vocabulary, which are written ``"…"`` with that suffix; a value that QLever keeps in its id
+    (a number, a boolean) has the datatype of its id (_ID_DATATYPES). The profile is
+    sample-based, and recorded (long_text).
+    """
+    import polars as pl
+
+    work = path.with_name(path.name + ".long")
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir()
+    g = "?g " if graph else ""
+    other = f"SELECT {g}?s ?o WHERE {{ {where} FILTER(!isLiteral(?o)) }}"
+    literal = f"SELECT {g}?s ?o WHERE {{ {where} FILTER(isLiteral(?o)) }}"
+    columns = {"gid": 0, "sid": 1, "oid": 2} if graph else {"sid": 0, "oid": 1}
+    try:
+        rows = _stream_rows(
+            endpoint,
+            other,
+            work / "other.parquet",
+            columns,
+            keep_text=keep_text,
+            extra=extra,
+            id_query=other,
+        )
+        cells = _read_ids(endpoint, literal, len(columns))
+        ids = pl.DataFrame(
+            [pl.Series(name, cells[:, at], dtype=pl.UInt64) for name, at in columns.items()]
+        )
+        subjects = f"SELECT DISTINCT ?s WHERE {{ {where} FILTER(isLiteral(?o)) }}"
+        _stream_rows(endpoint, subjects, work / "s.parquet", {"sid": 0}, id_query=subjects)
+        names = pl.read_parquet(work / "s.parquet").select("s", "sid")
+        sampled = literal + f" LIMIT {LONG_TEXT_SAMPLE}"
+        _stream_rows(
+            endpoint,
+            sampled,
+            work / "sample.parquet",
+            columns,
+            keep_text=keep_text,
+            id_query=sampled,
+        )
+        sample = pl.read_parquet(work / "sample.parquet")
+        vocabulary = sample.filter(pl.col("oid") // (2**60) == 4)
+        profile = vocabulary.group_by("d").agg(n=pl.len()).sort("n", "d", descending=[True, False])
+        languages = (
+            vocabulary.select(lang=pl.col("o").str.extract(r'"@([A-Za-z0-9-]+)$', 1))
+            .drop_nulls()
+            .group_by("lang")
+            .agg(n=pl.len())
+            .sort("n", "lang", descending=[True, False])
+        )
+        string = f"<{_XSD}string>"
+        datatype = str(profile["d"][0]) if profile.height else string
+        language = str(languages["lang"][0]) if languages.height else None
+        if datatype.endswith("#langString>") and language:
+            suffix = f"@{language}"
+        elif datatype == string:
+            suffix = ""
+        else:
+            suffix = f"^^{datatype}"
+        bits = pl.col("oid") // (2**60)
+        d = pl.lit(datatype)
+        for code, name in _ID_DATATYPES.items():
+            d = pl.when(bits == code).then(pl.lit(f"<{_XSD}{name}>")).otherwise(d)
+        known = sample.select("oid", known_o="o", known_d="d").unique("oid")
+        rest = (
+            ids.join(names, on="sid", how="left")
+            .join(known, on="oid", how="left")
+            .with_columns(
+                o=pl.coalesce("known_o", pl.lit('"…"' + suffix)), d=pl.coalesce("known_d", d)
+            )
+            .drop("known_o", "known_d")
+        )
+        if graph:
+            graphs = f"SELECT DISTINCT ?g WHERE {{ {where} FILTER(isLiteral(?o)) }}"
+            _stream_rows(endpoint, graphs, work / "g.parquet", {"gid": 0}, id_query=graphs)
+            rest = rest.join(
+                pl.read_parquet(work / "g.parquet").select("g", "gid"), on="gid", how="left"
+            )
+        for key, value in (extra or {}).items():
+            rest = rest.with_columns(pl.lit(value).alias(key))
+        written = pl.read_parquet(work / "other.parquet")
+        joined = path.with_name(path.name + ".partial")
+        pl.concat([written, rest.select(written.columns)], how="vertical_relaxed").write_parquet(
+            joined
+        )
+        _durable(joined, path)
+        rows += ids.height
+        share = float(profile["n"][0]) / vocabulary.height if profile.height else 1.0
+        info = {
+            "literal_rows": ids.height,
+            "sampled_rows": sample.height,
+            "datatype": datatype[1:-1],
+            "language": language,
+            # The share of the sample's literals with that datatype; the others of the
+            # predicate are given it too.
+            "sample_share": round(share, 4),
+            "datatypes_in_sample": sorted(str(v)[1:-1] for v in profile["d"].to_list()),
+        }
+        return rows, info
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
 
 
 def _count(value: str) -> int:
@@ -1186,6 +1356,10 @@ def _graph_counts(
 # A read that the server stops at its time limit is read again in two halves (LIMIT, OFFSET),
 # down to slices of SPLIT_ROWS rows.
 SPLIT_ROWS = 100_000
+# A half of a read that timed out after HALVING_RATIO of the time the read ran, when it ran
+# HALVING_MIN_SECONDS or more, is not halved again (_read_query): its cost does not shrink.
+HALVING_RATIO = 0.9
+HALVING_MIN_SECONDS = 60.0
 
 
 def _predicate_graph_counts(
@@ -1451,6 +1625,25 @@ def export_index(
                 gaps[job[1]] = f"HTTP 400: {body[:500]}"
             return job[1], None, None
 
+    def _long_literals(
+        predicate: str, file: Path, error: QueryTimeoutError, *, graph: bool, keep: bool
+    ) -> tuple[int, dict[str, Any]]:
+        """Read a predicate whose rows timed out as the ids of its literals with a sample.
+
+        _read_long_literals reads them; it is logged once.
+        """
+        logger.warning(
+            "Scan: the rows of <%s> could not be read in time (%s); its literals are read as "
+            "ids with the text of a sample of %d",
+            predicate,
+            str(error)[:160],
+            LONG_TEXT_SAMPLE,
+        )
+        where = f"GRAPH ?g {{ ?s <{predicate}> ?o }}" if graph else f"?s <{predicate}> ?o"
+        rows, info = _read_long_literals(endpoint, file, where, graph=graph, keep_text=keep)
+        info["reason"] = str(error)[:300]
+        return rows, info
+
     def read_predicate(
         job: tuple[int, str, int],
     ) -> tuple[str, str | None, tuple[str, int, int] | None]:
@@ -1461,28 +1654,35 @@ def export_index(
             return predicate, name, (predicate, size, rows) if rows != size else None
         file = path / "rows" / f"{number:05d}.parquet"
         keep = predicate in text
+        long_text: dict[str, Any] | None = None
         if not named:
-            rows = _read_query(
-                streams,
-                endpoint,
-                _row_query(predicate, datatype=False),
-                file,
-                {"sid": 0, "oid": 1},
-                size,
-                id_query=_row_query(predicate, datatype=False),
-                keep_text=keep,
-            )
+            try:
+                rows = _read_query(
+                    streams,
+                    endpoint,
+                    _row_query(predicate, datatype=False),
+                    file,
+                    {"sid": 0, "oid": 1},
+                    size,
+                    id_query=_row_query(predicate, datatype=False),
+                    keep_text=keep,
+                )
+            except QueryTimeoutError as error:
+                rows, long_text = _long_literals(predicate, file, error, graph=False, keep=keep)
         else:
-            rows = _read_query(
-                streams,
-                endpoint,
-                _graph_row_query(predicate, datatype=False),
-                file,
-                {"gid": 0, "sid": 1, "oid": 2},
-                size - unnamed.get(predicate, 0),
-                id_query=_graph_row_query(predicate, datatype=False),
-                keep_text=keep,
-            )
+            try:
+                rows = _read_query(
+                    streams,
+                    endpoint,
+                    _graph_row_query(predicate, datatype=False),
+                    file,
+                    {"gid": 0, "sid": 1, "oid": 2},
+                    size - unnamed.get(predicate, 0),
+                    id_query=_graph_row_query(predicate, datatype=False),
+                    keep_text=keep,
+                )
+            except QueryTimeoutError as error:
+                rows, long_text = _long_literals(predicate, file, error, graph=True, keep=keep)
             if unnamed.get(predicate):
                 rest = file.with_name(file.stem + "-unnamed.parquet")
                 rows += _read_query(
@@ -1507,6 +1707,8 @@ def export_index(
                 rest.unlink()
         # A predicate is marked read only after its file is whole on disk (_durable).
         entry: dict[str, Any] = {"predicate": predicate, "file": file.name, "rows": rows}
+        if long_text:
+            entry["long_text"] = long_text
         invalid = _take_invalid_utf8(file, file.with_name(file.stem + "-unnamed.parquet"))
         if invalid:
             entry["invalid_utf8"] = invalid
@@ -1545,13 +1747,18 @@ def export_index(
     for stale in (path / "rows").glob("*.slice-*"):
         stale.unlink()
     files = {predicate: name for predicate, name, _ in finished if name is not None}
+    long_text: dict[str, dict[str, Any]] = {}
     for line in progress.read_text(errors="replace").splitlines():
         try:
             entry = json.loads(line)
         except ValueError:
             continue
-        if entry.get("invalid_utf8") and files.get(entry.get("predicate")) == entry.get("file"):
+        if files.get(entry.get("predicate")) != entry.get("file"):
+            continue
+        if entry.get("invalid_utf8"):
             invalid_utf8[entry["predicate"]] = entry["invalid_utf8"]
+        if entry.get("long_text"):
+            long_text[entry["predicate"]] = entry["long_text"]
     if invalid_utf8:
         logger.warning(
             "Scan: %d rows hold bytes that are not UTF-8 (%s); they are read with U+FFFD for "
@@ -1577,6 +1784,8 @@ def export_index(
         # triples and rows, not in predicates).
         "gaps": dict(sorted(gaps.items())),
         "graph_split": split,
+        # The predicates whose literals were read as ids with a sample of their text.
+        "long_text": dict(sorted(long_text.items())),
         # The rows whose bytes were not UTF-8, read with U+FFFD for those bytes.
         "invalid_utf8": dict(sorted(invalid_utf8.items())),
     }
@@ -2465,6 +2674,12 @@ class ScanStrategy(MiningStrategy):
                 "rows": sum(int(found["rows"]) for found in invalid_utf8.values()),
                 "by_predicate": invalid_utf8,
             }
+        from rdfsolve.mining.sampling import flag
+
+        long_text = self.row_store.manifest.get("long_text") or {}
+        if long_text:
+            # Literals read as ids, with the datatype and language of a sample of their text.
+            context.report.report.config["scan_long_literals"] = long_text
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
         literal_types = self.row_store.literal_type_values()
@@ -2483,6 +2698,19 @@ class ScanStrategy(MiningStrategy):
             context.report.report.config["class_expressions"] = expressions
         invalid = {repr(p[:200]): n for p, n in self.row_store.left_out_predicates.items()}
         patterns = count_patterns(self.store, invalid)
+        for pattern in patterns:
+            found = long_text.get(pattern.property_uri)
+            if found and pattern.object_class == "Literal":
+                # Exact counts (from the ids); the datatype is that of a sample of the text.
+                flag(
+                    pattern,
+                    {
+                        "size": found["sampled_rows"],
+                        "unit": "rows",
+                        "reason": "timeout: the literal text was read for a sample of the rows",
+                    },
+                    ["patterns"],
+                )
         if invalid:
             # Not a pattern's term: left out and reported, the source goes on.
             context.report.report.config["scan_invalid_terms"] = {

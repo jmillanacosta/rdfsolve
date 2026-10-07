@@ -7,6 +7,9 @@ import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import re
+
+import polars as pl
 import pyoxigraph as ox
 import pytest
 
@@ -52,6 +55,10 @@ class Endpoint:
         # The predicates whose row queries the server refuses (400, as a query it cannot parse).
         self.refuse: set[str] = set()
         self.queries: list[str] = []
+        # Predicates whose literal text the server writes too slowly: a text query of their
+        # objects times out whatever its LIMIT, unless it reads a sample (LIMIT 2000 or less)
+        # or no literal (rdfportal.pubmed's dc:title, job 115868).
+        self.slow_text: set[str] = set()
         # Whether a query with DATATYPE times out whatever its LIMIT (rdfportal.pubmed).
         self.datatype_times_out = False
         # The form fields of each request (the per-query timeout of a planning query).
@@ -82,6 +89,18 @@ class Endpoint:
                 form = urllib.parse.parse_qs(body)
                 query = form["query"][0]
                 endpoint.queries.append(query)
+                limit = re.search(r"LIMIT (\d+)", query)
+                if (
+                    any(f"<{p}>" in query for p in endpoint.slow_text)
+                    and self.headers["Accept"] != "application/octet-stream"
+                    and "?o" in query.split("WHERE")[0]
+                    and "!isLiteral" not in query
+                    and not (limit and int(limit.group(1)) <= 2000 and "OFFSET" not in query)
+                ):
+                    self.send_response(429)
+                    self.end_headers()
+                    self.wfile.write(b'{"exception": "Operation timed out."}')
+                    return
                 endpoint.forms.append(form)
                 planning = "COUNT" in query or "DISTINCT" in query
                 if endpoint.quads and "GRAPH ?g" in query and planning:
@@ -383,3 +402,41 @@ def test_the_datatype_of_a_literal_comes_from_its_form_and_id():
         schema={"o": pl.String, "oid": pl.UInt64},
     )
     assert frame.select(scan._literal_datatype())["d"].to_list() == [r[2] for r in rows]
+
+
+def test_literals_whose_text_times_out_are_read_as_ids_with_a_sample(
+    endpoint, tmp_path, monkeypatch
+):
+    """rdfportal.pubmed (jobs 115718, 115868): the text of dc:title's literals came at about
+    100 rows a second, so every slice timed out and halving never converged. Halving stops when
+    a half times out like its parent; the literals are then read as ids (exact counts), with the
+    subjects' text and the text of a sample, whose datatype and language stand for the others,
+    and the profile is recorded as sampled."""
+    endpoint.store.load(
+        b'<urn:a2> <urn:note> "another long note"@en .\n'
+        b'<urn:b1> <urn:note> "a third note"@en .\n'
+        b"<urn:b1> <urn:note> <urn:a1> .\n",
+        format=ox.RdfFormat.N_TRIPLES,
+    )
+    endpoint.slow_text = {"urn:note"}
+    monkeypatch.setattr(scan, "LONG_TEXT_SAMPLE", 1)
+    monkeypatch.setattr(scan, "SLICE_ROWS", 1)
+    monkeypatch.setattr(scan, "SPLIT_ROWS", 0)
+    # Every timeout here is instant: a half that times out costs as much as its parent.
+    monkeypatch.setattr(scan, "HALVING_MIN_SECONDS", 0.0)
+    monkeypatch.setattr(scan, "HALVING_RATIO", 0.0)
+    store = scan.export_index(endpoint.url, tmp_path / "store", index={"name": "t"}, workers=2)
+    notes = store.rows("urn:note").collect()
+    assert notes.height == 4 and notes["oid"].n_unique() == 4, "Exact rows and objects"
+    assert set(notes["s"]) == {"<urn:a1>", "<urn:a2>", "<urn:b1>"}
+    literals = notes.filter(pl.col("kind") == "literal")
+    assert literals.height == 3
+    assert set(literals["d"]) == {"http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"}
+    assert (literals["o"] == '"…"@en').sum() == 2, "Not in the sample: the profile's form"
+    assert notes.filter(pl.col("kind") == "iri")["o"].to_list() == ["<urn:a1>"]
+    found = store.manifest["long_text"]["urn:note"]
+    assert found["literal_rows"] == 3 and found["sampled_rows"] == 1
+    assert found["datatype"].endswith("#langString") and found["language"] == "en"
+    halvings = [q for q in endpoint.queries if "<urn:note>" in q and "OFFSET" in q]
+    assert len(halvings) <= 4, "One level of halves, then no further"
+    assert store.rows("urn:link").collect().height == 3, "The other predicates are read as usual"
