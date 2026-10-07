@@ -60,6 +60,11 @@ __all__ = [
 ]
 
 BUCKETS = 8
+# Shapes (distinct subject and object property sets) of one property above which its uncovered
+# edges are described by their kind, datatype and language alone (shape_semantics
+# "property_profile"), with exact counts: Oregano (job 115896) has no class, and its nodes'
+# property sets gave 1,714,912 structural patterns, which the outputs could not hold in 64 GB.
+STRUCTURAL_SHAPES_PER_PROPERTY = 200
 _KIND = {"iri": "IRI", "bnode": "BlankNode", "literal": "Literal"}
 
 
@@ -513,8 +518,9 @@ def _census_graph(
         ).unique()
         sets = _property_sets(store, nodes, work, buckets)
         candidates: dict[str, StructuralPattern] = {}
+        profiled: dict[str, int] = {}
         for predicate, path in files.items():
-            group = (
+            edges = (
                 pl.scan_parquet(path)
                 .join(sets.rename({"ps": "ss"}), on="s", how="left")
                 .join(sets.rename({"s": "o", "ps": "os"}), on="o", how="left")
@@ -528,16 +534,36 @@ def _census_graph(
                     dt=pl.when(pl.col("kind") == "literal").then(pl.col("d")),
                     lang=_language(),
                 )
-                .group_by("ss", "os", "sk", "kind", "dt", "lang")
-                .agg(
-                    n=pl.len(),
-                    subjects=pl.col("s").n_unique(),
-                    objects=pl.col("oid").n_unique(),
-                    ws=pl.col("s").first(),
-                    wo=pl.col("o").first(),
-                )
+            )
+            measures = {
+                "n": pl.len(),
+                "subjects": pl.col("s").n_unique(),
+                "objects": pl.col("oid").n_unique(),
+                "ws": pl.col("s").first(),
+                "wo": pl.col("o").first(),
+            }
+            group = (
+                edges.group_by("ss", "os", "sk", "kind", "dt", "lang")
+                .agg(**measures)
                 .collect(engine="streaming")
             )
+            semantics = "exact_property_sets"
+            if group.height > STRUCTURAL_SHAPES_PER_PROPERTY:
+                # Too many shapes: one row per kind, datatype and language, with exact counts,
+                # and the properties that every node of the row has (_shared_properties).
+                profiled[predicate] = group.height
+                semantics = "property_profile"
+                shared = _shared_properties(group)
+                group = (
+                    edges.group_by("sk", "kind", "dt", "lang")
+                    .agg(**measures)
+                    .collect(engine="streaming")
+                )
+                keys_of = [_profile_key(row) for row in group.iter_rows(named=True)]
+                group = group.with_columns(
+                    ss=pl.Series([shared[k][0] for k in keys_of], dtype=pl.String),
+                    os=pl.Series([shared[k][1] for k in keys_of], dtype=pl.String),
+                )
             n = census[predicate]
             selection = "untyped" if n["untypedTriples"] == n["uncoveredTriples"] else "uncovered"
             for row in group.iter_rows(named=True):
@@ -554,6 +580,7 @@ def _census_graph(
                     object_type_graph_uris=context,
                     covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
                     subject_selection=selection,
+                    shape_semantics=semantics,
                     count=0,
                     distinct_subjects=0,
                     distinct_objects=0,
@@ -576,12 +603,40 @@ def _census_graph(
             undiscovered_triples=0,
             state="complete",
             pattern_count=len(structural),
-            representation="exact_property_sets",
+            representation="property_profile" if profiled else "exact_property_sets",
         )
+        if profiled:
+            # The properties described by kind, datatype and language, with their shapes.
+            entry["profiled_properties"] = dict(sorted(profiled.items()))
         return entry, structural
     finally:
         if owned:
             shutil.rmtree(owned, ignore_errors=True)
+
+
+def _profile_key(key: dict[str, Any]) -> tuple[Any, ...]:
+    """Return the key of a profile row (subject kind, object kind, datatype, language)."""
+    return (key["sk"], key["kind"], key["dt"], key["lang"])
+
+
+def _shared_properties(group: Any) -> dict[tuple[Any, ...], tuple[str, str]]:
+    """Return, for each profile row, the subject and object properties of all its shapes.
+
+    *group* has one row per shape (ss, os: property sets joined by ">"); a profile row
+    (_profile_key) keeps the properties that each of its shapes has, so that they hold for
+    every subject and object it counts.
+    """
+    shared: dict[tuple[Any, ...], list[set[str]]] = {}
+    for row in group.iter_rows(named=True):
+        key = _profile_key(row)
+        subject = {p for p in (row["ss"] or "").split(">") if p}
+        objects = {p for p in (row["os"] or "").split(">") if p}
+        if key in shared:
+            shared[key][0] &= subject
+            shared[key][1] &= objects
+        else:
+            shared[key] = [subject, objects]
+    return {key: (">".join(sorted(s)), ">".join(sorted(o))) for key, (s, o) in shared.items()}
 
 
 # Property usage evidence

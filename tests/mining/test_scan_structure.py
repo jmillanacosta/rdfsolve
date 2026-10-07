@@ -191,3 +191,36 @@ def test_data_iri_findings_lists_terms_with_excluded_characters(tmp_path):
     # U+00A0 is allowed in IRIs (RFC 3987); the space is not
     spaced = {"http://x.org/a b": 1}
     assert found == {"property": {}, "subject": spaced, "object": spaced}
+
+
+def test_too_many_shapes_are_counted_by_kind_with_exact_counts(mined, tmp_path, monkeypatch):
+    """Oregano (job 115896) has no class: its nodes' property sets gave 1,714,912 structural
+    patterns, and the outputs ran out of 64 GB. A property with more shapes than
+    STRUCTURAL_SHAPES_PER_PROPERTY is described by kind, datatype and language, with the same
+    edges, and its recount query (property_profile) counts them."""
+    from collections import Counter
+
+    from rdfsolve.mining import scan_structure
+
+    _, schema, _, store = mined
+    _, exact = structural_census(store, schema.patterns, buckets=3, work_dir=tmp_path / "a")
+    monkeypatch.setattr(scan_structure, "STRUCTURAL_SHAPES_PER_PROPERTY", 1)
+    entry, profiled = structural_census(store, schema.patterns, buckets=3, work_dir=tmp_path / "b")
+
+    def by_kind(patterns):
+        found: Counter = Counter()
+        for p in patterns:
+            found[(p.property_uri, p.subject_kind, p.object_kind, p.datatype, p.language)] += (
+                p.count
+            )
+        return found
+
+    assert by_kind(profiled) == by_kind(exact), "The same edges, by kind"
+    assert len(profiled) < len(exact)
+    assert entry["representation"] == "property_profile" and entry["profiled_properties"]
+    shaped = [p for p in profiled if p.property_uri in entry["profiled_properties"]]
+    assert shaped and all(p.shape_semantics == "property_profile" for p in shaped)
+    graph = _graph()
+    for p in shaped:
+        (row,) = graph.query(p.recount_query)
+        assert int(row[0]) == p.count, p.property_uri
