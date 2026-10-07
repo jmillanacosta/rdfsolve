@@ -6518,7 +6518,7 @@
   terminology_nomenclature:
   - phenotype
   - topics
-  sparql_engine: blazegraph
+  sparql_engine: virtuoso
   sparql_strategy: get+json
   supports_graph: true
   science_area: life sciences
@@ -6555,8 +6555,37 @@
   terminology_nomenclature:
   - phenotype
   - topics
-  sparql_engine: blazegraph
+  sparql_engine: virtuoso
   sparql_strategy: get+json
+  supports_graph: true
+  science_area: life sciences
+- name: mesh.nlm.cumulative.endpoint
+  dataset_kind: instance
+  endpoint: https://id.nlm.nih.gov/mesh/sparql
+  graph_uris:
+  - http://id.nlm.nih.gov/mesh
+  notes: Remote pass over NLM's cumulative MeSH graph http://id.nlm.nih.gov/mesh as the endpoint
+    serves it now (MeSH 2026, 18,348,391 triples, checked 2026-10-06), for the record-lifecycle
+    statements that no dump holds at this release (meshv:active, meshv:lastActiveYear; 93,998
+    lastActiveYear triples in this graph, 0 in http://id.nlm.nih.gov/mesh/2026, checked
+    2026-10-07). mesh.nlm stays the local 2026 dump and mesh.nlm.cumulative the local 2024
+    cumulative dump. The endpoint's graph list (2026-10-07) holds the yearly graphs 2015-2026,
+    http://id.nlm.nih.gov/mesh, /mesh/vocab and /mesh/void; /mesh/void is dataset metadata only
+    (no class or property partitions), so this entry is mined remotely, not VoID-first. The
+    endpoint lists Virtuoso system graphs (virtrdf#, DAV/), so it answers as Virtuoso.
+  bioregistry_prefix: mesh
+  keywords:
+  - bioinformatics
+  - biomedical science
+  - classification
+  - data retrieval
+  - life science
+  - literature curation
+  - metascience
+  terminology_nomenclature:
+  - phenotype
+  - topics
+  sparql_engine: virtuoso
   supports_graph: true
   science_area: life sciences
 - name: glycosmos
