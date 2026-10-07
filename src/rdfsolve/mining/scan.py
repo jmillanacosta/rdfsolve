@@ -1944,14 +1944,16 @@ def _batches(store: CountedStore) -> list[list[str]]:
 def _counted_columns(frame: pl.LazyFrame, predicate: str, *, by_graph: bool) -> pl.LazyFrame:
     import polars as pl
 
+    # The text columns are categories (a code a row): a row of a large predicate is counted
+    # with its ids and codes, not its text (Bgee, job 115831: 1.6 KB a row with text keys).
     return frame.select(
         "sid",
         "oid",
-        "kind",
-        "d",
-        *(["g"] if by_graph else []),
+        pl.col("kind").cast(pl.Categorical),
+        pl.col("d").cast(pl.Categorical),
+        *([pl.col("g").cast(pl.Categorical)] if by_graph else []),
         sb=pl.col("s").str.starts_with("_:"),
-        p=pl.lit(predicate),
+        p=pl.lit(predicate).cast(pl.Categorical),
     )
 
 
@@ -2096,7 +2098,9 @@ def count_patterns(
         """
         # The predicates of a blank node are read in the RDF merge of the data graphs
         # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
-        blank_outgoing.append(rows.filter(pl.col("sb")).select("sid", "p").unique())
+        blank_outgoing.append(
+            rows.filter(pl.col("sb")).select("sid", pl.col("p").cast(pl.String)).unique()
+        )
         typed = rows.join(subjects, on="sid", how="inner")
         # IRI subjects without a type, under one subject class of their own (UNTYPED).
         untyped_subjects = (
@@ -2107,31 +2111,33 @@ def count_patterns(
         if untyped_subjects.height:
             typed = pl.concat(
                 [
-                    typed.with_columns(pl.col("subject_class").cast(pl.String)),
-                    untyped_subjects.with_columns(pl.col("subject_class").cast(pl.String)),
+                    typed.with_columns(pl.col("subject_class").cast(pl.Categorical)),
+                    untyped_subjects.with_columns(pl.col("subject_class").cast(pl.Categorical)),
                 ],
                 how="vertical_relaxed",
             )
         literal = typed.filter(pl.col("kind") == "literal").with_columns(
-            object_class=pl.lit("Literal"), datatype=pl.col("d")
+            object_class=pl.lit("Literal").cast(pl.Categorical), datatype=pl.col("d")
         )
         nonliteral = typed.filter(pl.col("kind") != "literal").with_columns(
-            datatype=pl.lit(None, pl.String)
+            datatype=pl.lit(None, pl.Categorical)
         )
         with_types = nonliteral.join(objects, on="oid", how="left")
         typed_object = with_types.filter(pl.col("oc").is_not_null()).with_columns(
-            object_class=pl.col("oc").cast(pl.String)
+            object_class=pl.col("oc").cast(pl.Categorical)
         )
         untyped = with_types.filter(
             pl.col("oc").is_null() & (pl.col("kind") == "iri")
-        ).with_columns(object_class=pl.lit("Resource"))
+        ).with_columns(object_class=pl.lit("Resource").cast(pl.Categorical))
         blank = nonliteral.filter(pl.col("kind") == "bnode")
         blank_objects.append(
-            blank.select(pl.col("subject_class").cast(pl.String), "p", "oid").unique()
+            blank.select(
+                pl.col("subject_class").cast(pl.String), pl.col("p").cast(pl.String), "oid"
+            ).unique()
         )
-        blank = blank.with_columns(object_class=pl.lit("BlankNode"))
+        blank = blank.with_columns(object_class=pl.lit("BlankNode").cast(pl.Categorical))
         return [
-            f.with_columns(pl.col("subject_class").cast(pl.String)).select(*keys, "sid", "oid")
+            f.with_columns(pl.col("subject_class").cast(pl.Categorical)).select(*keys, "sid", "oid")
             for f in (literal, typed_object, untyped, blank)
         ]
 
@@ -2270,8 +2276,15 @@ def count_patterns(
     if not tables:
         return []
     membership = list(MEMBERSHIP.get())
+    # The keys were counted as categories; the patterns hold their text.
     table = pl.concat(
-        [t.select(*keys, *(pl.col(c).cast(pl.Int64) for c in COUNTS)) for t in tables]
+        [
+            t.select(
+                *(pl.col(k).cast(pl.String) for k in keys),
+                *(pl.col(c).cast(pl.Int64) for c in COUNTS),
+            )
+            for t in tables
+        ]
     ).with_columns(
         subject_class=_bare(pl.col("subject_class")), object_class=_bare(pl.col("object_class"))
     )
