@@ -8,7 +8,7 @@ import yaml
 from click.testing import CliRunner
 from rdflib import OWL, RDF, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
-from rdflib.namespace import DCTERMS
+from rdflib.namespace import DCTERMS, PROV
 
 from rdfsolve.cli import main
 from rdfsolve.dataset_identity import read_registry
@@ -142,7 +142,12 @@ def _registry(tmp_path: Path) -> tuple[Path, Path]:
                     "relation": "distribution_of",
                     "note": "m",
                 },
-                {"left": "demo", "right": "old.release", "relation": "version_of"},
+                {
+                    "left": "demo",
+                    "right": "old.release",
+                    "relation": "version_of",
+                    "newer": "demo",
+                },
                 {"left": "conversion", "right": "demo", "relation": "same_upstream"},
                 {"left": "other", "right": "twin", "relation": "same_dataset"},
             ]
@@ -248,8 +253,9 @@ def test_distributions_formats_checksums_and_licenses(tmp_path):
 def test_identity_relations_are_asserted_only_when_decided(tmp_path):
     graph = _graph(tmp_path)
     assert (_node("demo"), RDFSOLVE.distributionOf, _node("demo.mirror")) in graph
-    assert (_node("demo"), RDFSOLVE.versionOf, _node("old.release")) in graph
-    assert (_node("conversion"), RDFSOLVE.sameUpstream, _node("demo")) in graph
+    assert (_node("demo"), DCAT.previousVersion, _node("old.release")) in graph, "newer, older"
+    assert (_node("old.release"), DCAT.previousVersion, _node("demo")) not in graph
+    assert (_node("conversion"), PROV.alternateOf, _node("demo")) in graph
     assert (_node("other"), RDFSOLVE.sameDataset, _node("twin")) in graph
     assert (_node("demo.part"), DCTERMS.isPartOf, _node("demo")) in graph, "graph_scope_of rule"
     assert (_node("demo"), OWL.differentFrom, _node("other")) in graph, "distinct rule"
@@ -260,6 +266,8 @@ def test_identity_relations_are_asserted_only_when_decided(tmp_path):
     override = statements[(_node("demo"), _node("demo.mirror"))]
     assert graph.value(override, RDFSOLVE.decidedBy) == Literal("override")
     assert graph.value(override, RDFSOLVE.basis) == Literal("curated override")
+    version = statements[(_node("demo"), _node("old.release"))]
+    assert graph.value(version, RDF.predicate) == DCAT.previousVersion, "Statement as asserted"
     rule = statements[(_node("demo.part"), _node("demo"))]
     assert graph.value(rule, RDFSOLVE.decidedBy) == Literal("rule")
     candidate = statements[(_node("twin"), _node("twin.copy"))]

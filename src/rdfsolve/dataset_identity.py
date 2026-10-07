@@ -9,8 +9,10 @@ overrides decide candidates and take precedence over rules.
 same_dataset and distribution_of join entries into one canonical dataset:
 the same published RDF dataset under two names, or reached through another
 endpoint or dump. same_upstream relates different RDF datasets built from one
-upstream resource, such as independent RDF conversions. version_of,
-graph_scope_of and distinct keep entries apart. Candidates never join entries.
+upstream resource, such as independent RDF conversions. version_of relates two
+releases of one resource; its override names the newer release, so the pair has
+a fixed direction. version_of, graph_scope_of and distinct keep entries apart.
+Candidates never join entries.
 """
 
 from __future__ import annotations
@@ -92,8 +94,9 @@ class DatasetIdentity(BaseModel):
 class IdentityRelation(BaseModel):
     """A relation between two registry entries and how it was decided.
 
-    graph_scope_of reads as left is a graph scope of right. Other relations are
-    stored with their names in sorted order.
+    graph_scope_of reads as left is a graph scope of right, and version_of as left
+    is an older release of right. Other relations are stored with their names in
+    sorted order.
     """
 
     left: str
@@ -155,6 +158,33 @@ def _service(url: str) -> tuple[str, tuple[str, ...]]:
     return parts.hostname or "", path
 
 
+def _override(item: Mapping[str, Any]) -> IdentityRelation:
+    """Read one curated relation; a version_of pair is stored older first, newer second.
+
+    A version_of override must name its newer release in ``newer`` (one of the two
+    entries); no other relation takes ``newer``.
+    """
+    left, right, relation = item["left"], item["right"], item["relation"]
+    newer = item.get("newer")
+    if relation == "version_of":
+        if newer not in (left, right):
+            raise ValueError(
+                f"version_of {left} / {right}: 'newer' must name one of the two entries, "
+                f"got {newer!r}"
+            )
+        left, right = (right, left) if newer == left else (left, right)
+    elif newer is not None:
+        raise ValueError(f"{relation} {left} / {right}: 'newer' applies to version_of only")
+    return IdentityRelation(
+        left=left,
+        right=right,
+        relation=relation,
+        basis="curated override",
+        decided_by="override",
+        note=str(item.get("note", "")),
+    )
+
+
 def read_overrides(path: str | Path | None) -> list[IdentityRelation]:
     """Read curated relations; a missing file means no overrides."""
     if path is None or not Path(path).exists():
@@ -162,17 +192,7 @@ def read_overrides(path: str | Path | None) -> list[IdentityRelation]:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or []
     if not isinstance(raw, list):
         raise ValueError(f"Expected a YAML list of relations in {path}")
-    return [
-        IdentityRelation(
-            left=item["left"],
-            right=item["right"],
-            relation=item["relation"],
-            basis="curated override",
-            decided_by="override",
-            note=str(item.get("note", "")),
-        )
-        for item in raw
-    ]
+    return [_override(item) for item in raw]
 
 
 def relate(left: DatasetIdentity, right: DatasetIdentity) -> IdentityRelation | None:

@@ -24,7 +24,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from rdflib import OWL, RDF, RDFS, SH, XSD, Graph, Literal, Namespace, URIRef
-from rdflib.namespace import DCTERMS, FOAF
+from rdflib.namespace import DCTERMS, FOAF, PROV
 
 from rdfsolve.config import DEFAULT_BASE_URI, get_base_uri, mint_from_base
 from rdfsolve.dataset_identity import (
@@ -75,22 +75,6 @@ TERMS: dict[str, tuple[URIRef, str, str]] = {
             "One entry is another endpoint, mirror or dump of the same published RDF dataset as the "
             "other. The registry does not record which of the two is the original, so the relation "
             "is read in both directions."
-        ),
-    ),
-    "sameUpstream": (
-        RDF.Property,
-        "same upstream",
-        (
-            "The two entries are different RDF datasets built from one upstream resource, such as "
-            "two independent RDF conversions. Neither is derived from the other."
-        ),
-    ),
-    "versionOf": (
-        RDF.Property,
-        "version of",
-        (
-            "The two entries are different releases of the same resource. The registry does not "
-            "record which release is earlier, so the relation is read in both directions."
         ),
     ),
     "basis": (
@@ -298,12 +282,18 @@ _SPDX_ID = re.compile(r"^(?=.*[A-Z0-9])[A-Za-z0-9][A-Za-z0-9.+-]*$")
 _PREDICATES: dict[str, URIRef] = {
     "same_dataset": RDFSOLVE.sameDataset,
     "distribution_of": RDFSOLVE.distributionOf,
-    "same_upstream": RDFSOLVE.sameUpstream,
-    "version_of": RDFSOLVE.versionOf,
+    # Two RDF datasets built from one upstream resource: alternates of the same thing. The
+    # registry has no node for the upstream resource, so dcterms:source cannot name it.
+    "same_upstream": PROV.alternateOf,
+    # Stored older (left) to newer (right); written as newer dcat:previousVersion older.
+    "version_of": DCAT.previousVersion,
     # Left is a graph subset of right on the same endpoint: logically included in it.
     "graph_scope_of": DCTERMS.isPartOf,
     "distinct": OWL.differentFrom,
 }
+
+# Relations stored in the opposite direction of their predicate: the subject is the right entry.
+_INVERSE = frozenset({"version_of"})
 
 
 def _iri(value: str, where: str) -> URIRef:
@@ -584,6 +574,8 @@ def _relation(graph: Graph, base: str, nodes: Mapping[str, URIRef], item: Identi
     """Add one identity relation: asserted when decided, and described with its basis."""
     left, right = nodes[item.left], nodes[item.right]
     predicate = _PREDICATES[item.relation]
+    if item.relation in _INVERSE:
+        left, right = right, left
     if item.decided_by != "candidate":
         graph.add((left, predicate, right))
     statement = URIRef(mint_from_base(base, "identity", item.left, item.right))
@@ -663,6 +655,7 @@ def registry_to_rdf(
         "spdx": SPDX,
         "foaf": FOAF,
         "owl": OWL,
+        "prov": PROV,
         "sh": SH,
         "iana": IANA,
         "bioregistry": BIOREGISTRY,

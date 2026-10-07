@@ -5,7 +5,9 @@
 #   same_dataset     one published RDF dataset under two registry names
 #   distribution_of  another endpoint or dump of the same published RDF dataset
 #   same_upstream    a different RDF dataset built from the same upstream resource
-#   version_of       another release of the same resource
+#   version_of       another release of the same resource; 'newer' names the newer
+#                    release (one of left, right) and is required: the registry RDF
+#                    writes newer dcat:previousVersion older
 #   graph_scope_of   left is a graph subset of right on the same endpoint
 #   distinct         different datasets
 # same_dataset and distribution_of join entries into one canonical dataset.
@@ -37,6 +39,7 @@
 - left: rdfportal.ensembl
   right: rdfportal.ensembl_grch37
   relation: version_of
+  newer: rdfportal.ensembl
   note: >-
     Owner decision, 2026-09-22: retain the release 115 and GRCh37 release 75
     distinction. Verify extraction scopes before extraction; their identical
@@ -281,6 +284,7 @@
 - left: glytoucan
   right: rdfportal.glytoucan
   relation: version_of
+  newer: glytoucan
   note: >-
     RDF Portal's GlyTouCan files are a 2015 release (graph rdf.glycoinfo.org/glytoucan, 1.63 M
     triples); ts.glytoucan.org serves the current one (rdf.glytoucan.org/* graphs, 4.1 M triples,

@@ -70,3 +70,34 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
     assert not unannotated.candidates, (
         "Provider-looking names must not create implicit identity evidence"
     )
+
+
+def _write(tmp_path, items):
+    path = tmp_path / "overrides.yaml"
+    path.write_text(yaml.safe_dump(items))
+    return path
+
+
+def test_version_of_override_is_stored_older_first(tmp_path):
+    path = _write(
+        tmp_path,
+        [
+            {"left": "new", "right": "old", "relation": "version_of", "newer": "new"},
+            {"left": "early", "right": "late", "relation": "version_of", "newer": "late"},
+        ],
+    )
+    pairs = [(item.left, item.right) for item in read_overrides(path)]
+    assert pairs == [("old", "new"), ("early", "late")]
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        {"left": "a", "right": "b", "relation": "version_of"},
+        {"left": "a", "right": "b", "relation": "version_of", "newer": "c"},
+        {"left": "a", "right": "b", "relation": "same_upstream", "newer": "a"},
+    ],
+)
+def test_newer_is_required_for_version_of_and_refused_elsewhere(tmp_path, item):
+    with pytest.raises(ValueError, match="newer"):
+        read_overrides(_write(tmp_path, [item]))

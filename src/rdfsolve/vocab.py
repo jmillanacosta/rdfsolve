@@ -24,6 +24,7 @@ VOCABULARIES: dict[str, str] = {
     "https://schema.org/": "https://schema.org/docs/schemas.html",
     "http://www.w3.org/ns/dcat#": "https://www.w3.org/TR/vocab-dcat-3/",
     "http://spdx.org/rdf/terms#": "https://spdx.github.io/spdx-spec/v2.3/",
+    "http://www.w3.org/ns/prov#": "https://www.w3.org/TR/prov-o/",
 }
 
 _TERMS = {
@@ -64,9 +65,10 @@ _TERMS = {
     "http://www.w3.org/ns/dcat#": (
         "Catalog CatalogRecord DataService Dataset Distribution compressFormat dataset "
         "distribution downloadURL endpointURL keyword landingPage mediaType packageFormat "
-        "record service"
+        "previousVersion record service"
     ),
     "http://spdx.org/rdf/terms#": "Checksum algorithm checksum checksumValue",
+    "http://www.w3.org/ns/prov#": "alternateOf",
 }
 
 GENERATED_TERMS: frozenset[str] = frozenset(
