@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from polars.exceptions import PanicException
+
 from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
@@ -521,7 +523,9 @@ class RemoteMiningStage(Stage):
                     "data": {"name": source.name, "endpoint": source.endpoint},
                 }
 
-        except Exception as e:
+        except (Exception, PanicException) as e:
+            # A Rust panic of Polars ends this source, not the job (PanicException is a
+            # BaseException).
             if isinstance(e, PartialMiningError):
                 log.warning("[%s] -> PARTIAL: %s", source.name, e)
                 return {"status": "partial", "data": {"name": source.name, "error": str(e)}}

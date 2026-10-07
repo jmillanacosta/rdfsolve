@@ -474,9 +474,11 @@ def _census_graph(
             covered = _covered(rows, types, own)
             path = uncovered_dir / f"{number:05d}.parquet"
             rows.join(covered, on=["s", "o"], how="anti").sink_parquet(path)
-            triples, untyped = pl.collect_all(
-                [rows.select(pl.len()), rows.join(members, on="s", how="anti").select(pl.len())]
-            )
+            # Two plans, not one collect_all over a shared scan: collect_all panicked in Polars'
+            # plan formatting on rdfportal.chembl (job 115861, "index out of bounds: the len
+            # is 0 but the index is 0" in polars-plan ir/format.rs) and ended the job.
+            triples = rows.select(pl.len()).collect()
+            untyped = rows.join(members, on="s", how="anti").select(pl.len()).collect()
             missing = pl.scan_parquet(path).select(pl.len()).collect().item()
             census[predicate] = {
                 "triples": int(triples.item()),

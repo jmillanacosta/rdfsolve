@@ -12,6 +12,8 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
+from polars.exceptions import PanicException
+
 from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.qlever import QleverConfig, build_qleverfile
 from rdfsolve.qlever.converters import PYTHON_VARIABLE
@@ -187,7 +189,9 @@ class LocalMiningStage(Stage):
                         {"name": source.name, "error": "Server failed to start"}
                     )
 
-            except Exception as e:
+            except (Exception, PanicException) as e:
+                # A Rust panic of Polars (pyo3's PanicException is a BaseException) ends this
+                # source, not the job (rdfportal.chembl, job 115861: the next source never ran).
                 state = "partial" if isinstance(e, PartialMiningError) else "failed"
                 log.warning("  -> %s: %s", state.upper(), e)
                 results[state].append({"name": source.name, "error": str(e)})

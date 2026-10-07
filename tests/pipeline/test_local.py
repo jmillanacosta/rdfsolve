@@ -594,3 +594,45 @@ def test_a_graph_mapped_folder_is_reused_on_a_rerun(tmp_path):
     downloads.write_record(workdir, [*urls[:2], "https://example.org/old.ttl"], lambda url: None)
     stage._set_aside_when_differs(workdir, source)
     assert any(".set-aside-" in p.name for p in tmp_path.iterdir()), "Other downloads differ"
+
+
+def test_a_polars_panic_ends_the_source_not_the_job(tmp_path, monkeypatch):
+    """rdfportal.chembl (job 115861): a Polars panic (pyo3's PanicException, a BaseException)
+    in the structural census ended the whole job, and the next source never ran. It now ends
+    that source as failed, and the next one is mined."""
+    from polars.exceptions import PanicException
+
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("[]\n")
+    config = PipelineConfig(
+        base_dir=tmp_path, repo_dir=tmp_path, sources_file=registry, output_dir=tmp_path / "run"
+    )
+    sources = [
+        Source.from_dict({"name": n, "download_nt": [f"https://example.org/{n}.nt"]})
+        for n in ("panics", "after")
+    ]
+    monkeypatch.setattr(config, "get_local_sources", lambda: sources)
+    stage = LocalMiningStage(config)
+    mined = []
+
+    def mine(source, workdir, port, pid):
+        if source.name == "panics":
+            raise PanicException("index out of bounds: the len is 0 but the index is 0")
+        mined.append(source.name)
+
+    for name, value in {
+        "_ensure_qlever_image": lambda: None,
+        "_check_converters": lambda: None,
+        "_set_aside_when_differs": lambda *args: None,
+        "_set_aside_when_updated": lambda *args: None,
+        "_has_usable_index": lambda *args: True,
+        "_carry_inputs": lambda *args: None,
+        "_qlever_start": lambda *args: 1,
+        "_qlever_stop": lambda *args: None,
+        "_mine_with_restarts": mine,
+    }.items():
+        monkeypatch.setattr(stage, name, value)
+    results = stage._execute()
+    assert mined == ["after"]
+    assert [f["name"] for f in results["failed"]] == ["panics"]
+    assert "index out of bounds" in results["failed"][0]["error"]
