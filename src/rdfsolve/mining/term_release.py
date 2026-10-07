@@ -186,6 +186,8 @@ def write_term_release(
 
     from rdfsolve.mining.scan_terms import hierarchy_edges, type_table
 
+    if grouping.record_kinds is not None:
+        return _write_record_release(store, grouping, stem, dataset=dataset)
     settings = dict(grouping.settings)
     table, type_classes = _coded_types(
         grouping.base_types if grouping.base_types is not None else type_table(store)
@@ -316,6 +318,216 @@ def write_term_release(
     terms_path.parent.mkdir(parents=True, exist_ok=True)
     _write(terms, terms_path, manifest)
     _write(classes, classes_path)
+    manifest["files"] = {
+        terms_path.name: terms_path.stat().st_size,
+        classes_path.name: classes_path.stat().st_size,
+    }
+    return manifest
+
+
+def _bare_column(name: str) -> pl.Expr:
+    """Return column *name* with the angle brackets of its IRIs removed."""
+    import polars as pl
+
+    return pl.col(name).str.strip_prefix("<").str.strip_suffix(">")
+
+
+def _write_record_release(
+    store: RowStore | StoreView,
+    grouping: TermGrouping,
+    stem: str | Path,
+    *,
+    dataset: str | None = None,
+) -> dict[str, Any]:
+    """write_term_release for records kept as classes (grouping.record_kinds), streamed.
+
+    The same two files and columns, made from lazy tables and written by sinks: BioGateway has
+    65.9 million record classes, too many to hold as Python lists or SchemaPattern objects.
+    Each record class has its rdfs:subClassOf parents in the data as parents (source "data")
+    and its kind's representative as representative; the other classes (the kinds and the
+    classes without a parent, few) go through hierarchy_edges as in write_term_release. Rows
+    are written in the order they were counted, not sorted (``row_order`` in the manifest).
+    """
+    import polars as pl
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    from rdfsolve.mining.scan_terms import _record_parents, hierarchy_edges
+
+    if grouping.record_kinds is None or grouping.raw_rows is None or grouping.base_types is None:
+        msg = "A release of records as classes needs the record kinds, rows and type table"
+        raise ValueError(msg)
+    settings = dict(grouping.settings)
+    types = grouping.base_types
+    record = "sid" if "sid" in types.collect_schema().names() else "s"
+    table = (
+        types.filter(pl.col("c").str.starts_with("<"))
+        .select(r=record, c=_bare_column("c"))
+        .unique()
+    )
+    kinds = grouping.record_kinds.select(c=_bare_column("c"), kind=_bare_column("kind"))
+    records = kinds.select("c")
+    # The parents in the data of each record class (all of them; its kind is the first).
+    data_edges = (
+        _record_parents(store, grouping.base_types)
+        .select(child=_bare_column("c"), parent=_bare_column("kind"))
+        .join(records.rename({"c": "child"}), on="child", how="semi")
+        .with_columns(source=pl.lit("data"))
+    )
+    # The other classes of the table and the parents of the records: few, read as for any
+    # source (followed to the roots, hierarchy files).
+    others = (
+        pl.concat(
+            [
+                table.select("c").join(records, on="c", how="anti"),
+                data_edges.select(c="parent"),
+            ]
+        )
+        .unique()
+        .collect(engine="streaming")["c"]
+        .to_list()
+    )
+    small = hierarchy_edges(
+        store,
+        others,
+        ontology_graph_uris=settings.get("ontology_graph_uris"),
+        hierarchy_files=settings.get("hierarchy_files") or (),
+    )
+    edges = pl.concat([data_edges, small.lazy()]).unique()
+    representative = pl.DataFrame(
+        {
+            "class": list(grouping.representative),
+            "representative": list(grouping.representative.values()),
+        },
+        schema={"class": pl.String, "representative": pl.String},
+    ).lazy()
+    # A record class takes the representative of its kind (its kind when it has none).
+    record_representative = kinds.join(
+        representative.rename({"class": "kind"}), on="kind", how="left"
+    ).select(**{"class": pl.col("c"), "representative": pl.coalesce("representative", "kind")})
+    representatives = pl.concat(
+        [
+            record_representative,
+            representative.join(records.rename({"c": "class"}), on="class", how="anti"),
+        ]
+    )
+    sentinels = sorted(_SENTINEL_OBJECTS)
+    groupable = (
+        pl.concat(
+            [
+                edges.select(c="child"),
+                edges.select(c="parent"),
+                representative.select(c="class"),
+                records,
+            ]
+        )
+        .unique()
+        .filter(~pl.col("c").is_in(sentinels))
+    )
+    typed = table.join(groupable, on="c", how="semi")
+    multiple = typed.group_by("r").agg(n=pl.len()).filter(pl.col("n") > 1).select("r")
+    shared = typed.join(multiple, on="r", how="semi").collect(engine="streaming")
+    several = shared["r"].n_unique()
+    pairs = (
+        shared.join(shared.rename({"c": "other"}), on="r")
+        .filter(pl.col("c") != pl.col("other"))
+        .group_by("c", "other")
+        .agg(records=pl.len())
+        .sort("c", "other")
+    )
+    del shared
+    overlaps = pairs.group_by("c").agg(
+        overlaps=pl.col("other"), overlap_records=pl.col("records").cast(pl.UInt64)
+    )
+    terms = pl.scan_parquet(grouping.raw_rows)
+    names = (
+        pl.concat(
+            [
+                table.select("c"),
+                edges.select(c="child"),
+                edges.select(c="parent"),
+                representatives.select(c="representative"),
+                # Untyped subjects have no class: rdfs:Resource is not listed for them.
+                terms.filter(pl.col("subject_binding") != "untyped").select(c="subject_class"),
+                terms.select(c="object_class"),
+            ]
+        )
+        .unique()
+        .filter(~pl.col("c").is_in(sentinels))
+        .rename({"c": "class"})
+    )
+    parents = edges.group_by("child").agg(
+        parents=pl.col("parent").sort_by("parent"),
+        parent_sources=pl.col("source").sort_by("parent"),
+    )
+    classes = (
+        names.join(
+            table.group_by("c").agg(instances=pl.len()).rename({"c": "class"}),
+            on="class",
+            how="left",
+        )
+        .join(parents.rename({"child": "class"}), on="class", how="left")
+        .join(representatives, on="class", how="left")
+        .join(overlaps.lazy().rename({"c": "class"}), on="class", how="left")
+        .join(
+            groupable.select(**{"class": pl.col("c"), "groupable": pl.lit(True)}),
+            on="class",
+            how="left",
+        )
+        .select(
+            "class",
+            instances=pl.col("instances").fill_null(0).cast(pl.UInt64),
+            parents="parents",
+            parent_sources="parent_sources",
+            representative="representative",
+            groupable=pl.col("groupable").fill_null(False),
+            overlaps="overlaps",
+            overlap_records="overlap_records",
+        )
+    )
+    stem = Path(stem)
+    terms_path = stem.with_name(stem.name + TERMS_SUFFIX)
+    classes_path = stem.with_name(stem.name + CLASSES_SUFFIX)
+    terms_path.parent.mkdir(parents=True, exist_ok=True)
+    classes.sink_parquet(classes_path, compression="zstd")
+
+    def count(frame: pl.LazyFrame) -> int:
+        """Return the rows of *frame*, counted by a stream."""
+        return int(frame.select(pl.len()).collect(engine="streaming").item())
+
+    source = pq.ParquetFile(grouping.raw_rows)
+    manifest: dict[str, Any] = {
+        "format": FORMAT,
+        "version": VERSION,
+        "dataset": dataset,
+        "classes_file": classes_path.name,
+        "types": "minimal",
+        "count_semantics": sorted(
+            {p.count_semantics for p in grouping.raw_patterns or grouping.patterns}
+        ),
+        "graph_scope": getattr(store, "graph_uris", None),
+        "default_grouping": settings,
+        "rows": source.metadata.num_rows,
+        "row_order": "as counted",
+        "records_as_classes": count(records),
+        "classes": pq.ParquetFile(classes_path).metadata.num_rows,
+        "type_classes": count(table.select("c").unique()),
+        "typed_records": count(table.select("r").unique()),
+        "groupable_classes": count(groupable),
+        "records_with_several_groupable_types": several,
+        "groupable_pairs_sharing_records": pairs.height // 2,
+        "condition": CONDITION,
+        "condition_holds": several == 0,
+        "hierarchy_edges": {
+            name: count(edges.filter(pl.col("source") == name)) for name in ("data", "file")
+        },
+    }
+    schema = source.schema_arrow.with_metadata(
+        {**(source.schema_arrow.metadata or {}), METADATA_KEY: json.dumps(manifest).encode()}
+    )
+    with pq.ParquetWriter(terms_path, schema, compression="zstd", use_dictionary=True) as out:
+        for batch in source.iter_batches(batch_size=1 << 20):
+            out.write_table(pa.Table.from_batches([batch], schema=schema))
     manifest["files"] = {
         terms_path.name: terms_path.stat().st_size,
         classes_path.name: classes_path.stat().st_size,

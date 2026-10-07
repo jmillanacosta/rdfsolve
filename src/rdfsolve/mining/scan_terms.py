@@ -31,7 +31,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from rdfsolve.mining.ontology_as_data import (
     NAMESPACE_GROUP_MIN_TERMS,
@@ -61,12 +61,14 @@ __all__ = [
     "RetypedStore",
     "TermGrouping",
     "count_aware_cut",
+    "exact_term_rows",
     "fold_class_expressions",
     "foldable_expressions",
     "group_before_counting",
     "group_terms",
     "hierarchy_edges",
     "minimal_types",
+    "record_types",
     "retype",
     "superclasses",
     "type_table",
@@ -423,6 +425,9 @@ class TermGrouping:
     # grouped before counting: the release reads them instead of raw_patterns, which then
     # count the grouped table.
     raw_rows: Path | None = None
+    # Records kept as classes released as their own terms (classes_as_data): each record class
+    # and its kind (c, kind, as <iri>), a lazy table; term_release then streams the classes.
+    record_kinds: pl.LazyFrame | None = None
 
 
 def _members(representative: Mapping[str, str]) -> dict[str, list[str]]:
@@ -514,12 +519,15 @@ class GroupedBeforeCounting:
     # Each grouped term and its representative (bare IRIs), for the generic choice; None for
     # records as classes, whose terms are mapped to their kind by a join (too many to list).
     representative: dict[str, str] | None
+    # Records kept as classes (classes_as_data): each record class and its kind (c, kind, as
+    # <iri>), a lazy table, never a list: BioGateway has 65.9 million.
+    kinds: pl.LazyFrame | None = None
 
 
-def _record_kinds(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFrame:
-    """Return (c, kind) for each class of *table* with an rdfs:subClassOf parent in the data:
-    a record kept as a class, under its kind (classes_as_data). A class with several parents
-    takes the first by IRI, so that each record has one kind and counts stay exact.
+def _record_parents(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFrame:
+    """Return (c, kind) for each rdfs:subClassOf parent in the data of a class of *table*.
+
+    Parents in NOT_DATA_TYPES and the class itself are left out; terms are written <iri>.
     """
     import polars as pl
 
@@ -534,11 +542,30 @@ def _record_kinds(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFr
             & ~pl.col("kind").is_in([f"<{t}>" for t in NOT_DATA_TYPES])
         )
     )
-    return (
-        parents.join(table.select("c").unique(), on="c", how="semi")
-        .group_by("c")
-        .agg(pl.col("kind").min())
-    )
+    return parents.join(table.select("c").unique(), on="c", how="semi").unique()
+
+
+def _record_kinds(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFrame:
+    """Return (c, kind) for each class of *table* with an rdfs:subClassOf parent in the data:
+    a record kept as a class, under its kind (classes_as_data). A class with several parents
+    takes the first by IRI, so that each record has one kind and counts stay exact.
+    """
+    import polars as pl
+
+    return _record_parents(store, table).group_by("c").agg(pl.col("kind").min())
+
+
+def record_types(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFrame:
+    """Return the per-record type table of records kept as classes (classes_as_data).
+
+    The minimal types (minimal_types) under the data's rdfs:subClassOf rows, one level: a
+    record typed with a record class and with that class's parent keeps the record class.
+    Computed by joins on the rows, without listing the classes (BioGateway: 65.9 million).
+    """
+    keys = _keys(table)
+    table = table.select(*keys, "c").unique()
+    redundant = table.join(_record_parents(store, table), on="c").select(*keys, c="kind")
+    return table.join(redundant.unique(), on=[*keys, "c"], how="anti")
 
 
 def group_before_counting(
@@ -580,6 +607,7 @@ def group_before_counting(
         return None
     record: dict[str, Any] = {"before_mining": True, "before_counting": True, "limit": limit}
     representative: dict[str, str] | None = None
+    kinds = None
     if classes_as_data:
         kinds = _record_kinds(store, table)
         table = (
@@ -604,8 +632,57 @@ def group_before_counting(
         table = retype(table, representative)
         record = {**found, **{k: v for k, v in record.items() if k != "limit"}, "limit": limit}
     return GroupedBeforeCounting(
-        types=table, store=RetypedStore(store, table), record=record, representative=representative
+        types=table,
+        store=RetypedStore(store, table),
+        record=record,
+        representative=representative,
+        kinds=kinds,
     )
+
+
+def exact_term_rows(
+    before: GroupedBeforeCounting,
+    grouping: TermGrouping,
+    path: Path,
+    *,
+    expressions: Iterable[str] = (),
+    ontology_graph_uris: Sequence[str] | None = None,
+    hierarchy_files: Sequence[str | Path] = (),
+) -> None:
+    """Count the exact terms of a scan grouped before counting into *path*; update *grouping*.
+
+    The patterns count the grouped table; the release (term_release) still ships the exact
+    terms: counted here from the store's own types, written batch by batch (count_patterns with
+    rows_path), with no patterns held. The types are the minimal ones (minimal_types); records
+    kept as classes (classes_as_data) take record_types, by joins, and their kinds stay a lazy
+    table (grouping.record_kinds), so that 65.9 million record classes are never listed. Each
+    term takes the class its group is given: its first representative (or kind), then
+    *grouping*'s.
+    """
+    from rdfsolve.mining.scan import count_patterns
+
+    raw = cast("RowStore | StoreView", before.store._store)
+    table = without_classes(type_table(raw), expressions)
+    if before.kinds is not None:
+        types = record_types(raw, table)
+    else:
+        types = minimal_types(
+            raw,
+            types=table,
+            ontology_graph_uris=ontology_graph_uris,
+            hierarchy_files=hierarchy_files,
+        )
+    count_patterns(RetypedStore(raw, types), rows_path=path)
+    after = dict(grouping.representative)
+    combined = {t: after.get(r, r) for t, r in (before.representative or {}).items()}
+    combined.update({t: r for t, r in after.items() if t not in combined})
+    grouping.representative = combined
+    grouping.base_types = types
+    grouping.raw_rows = path
+    grouping.settings["grouped_before_counting"] = True
+    if before.kinds is not None:
+        grouping.record_kinds = before.kinds
+        grouping.settings["records_as_classes"] = True
 
 
 def group_terms(

@@ -136,3 +136,15 @@ def test_the_per_term_rows_are_written_as_the_patterns_give_them(store, tmp_path
     assert scan.count_patterns(counted, rows_path=tmp_path / "rows.parquet") == []
     written = pl.read_parquet(tmp_path / "rows.parquet").sort(expected.columns, nulls_last=True)
     assert written.select(expected.columns).equals(expected.sort(expected.columns, nulls_last=True))
+
+
+def test_a_predicate_without_rows_is_batched():
+    """A store whose smallest predicate has no rows (a slice of a store) is counted."""
+    from types import SimpleNamespace
+
+    from rdfsolve.mining.scan import _batches
+
+    store = SimpleNamespace(
+        predicates={"a": "a.parquet", "b": "b.parquet"}, manifest={"rows": {"a": 0, "b": 5}}
+    )
+    assert _batches(store) == [["a", "b"]]

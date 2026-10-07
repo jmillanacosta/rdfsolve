@@ -2182,7 +2182,8 @@ def _batches(store: CountedStore) -> list[list[str]]:
     batches: list[list[str]] = []
     rows = BATCH_ROWS
     for predicate in sorted(sizes, key=lambda p: sizes[p]):
-        if rows + sizes[predicate] > BATCH_ROWS:
+        # A store whose smallest predicate has no rows (a slice, a graph scope) starts a batch.
+        if not batches or rows + sizes[predicate] > BATCH_ROWS:
             batches.append([])
             rows = 0
         batches[-1].append(predicate)

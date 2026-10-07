@@ -195,6 +195,59 @@ def test_records_kept_as_classes_are_counted_under_their_kind(tmp_path):
     assert not any(c.startswith(EX + "gene") for c, *_ in rows), "No record class is counted"
 
 
+def test_records_kept_as_classes_are_released_as_their_own_terms(tmp_path):
+    """The schema counts the kinds (BioGateway: 18), and the release still ships one term per
+    record class, each with its kind's class, written by streams (no list of the 65.9 million
+    record classes): the same rows and classes as the release of any source."""
+    from dataclasses import replace
+
+    import polars as pl
+
+    from rdfsolve.mining.scan import ScanStrategy
+    from rdfsolve.mining.term_release import term_rows, write_term_release
+
+    graph = _records_as_classes()
+    # A record typed with its record class and its kind keeps the record class (minimal types).
+    graph.add((E.gene0_instance, RDF.type, E.Gene))
+    store = store_from_graph(graph, tmp_path / "store")
+    expected = term_rows(count_patterns(RetypedStore(store, minimal_types(store))))
+    strategy = ScanStrategy(store=store)
+    with SchemaMiner.from_graph(
+        graph, delay=0, strategy=strategy, classes_as_data=True
+    ) as miner:
+        mine_with_ontology(
+            miner,
+            dataset_name="records",
+            ontology_as_data=True,
+            ontology_term_budget=300,
+            ontology_group_before_mining=2,
+        )
+        grouping = miner._scan_grouping
+        record = miner.last_report.config["ontology_term_grouping"]
+    assert record["classes_as_data"] and record["classes_after"] == 2
+    assert grouping.record_kinds is not None and grouping.settings["records_as_classes"]
+    manifest = write_term_release(strategy.store, grouping, tmp_path / "records")
+    terms = pl.read_parquet(tmp_path / "records_terms.parquet")
+    assert manifest["rows"] == expected.height and manifest["records_as_classes"] == 5
+    assert terms.select(expected.columns).sort(expected.columns, nulls_last=True).equals(expected)
+    assert (EX + "gene1", EX + "label") in set(terms.select("subject_class", "property").rows())
+    # The release of any source, given each record's representative, writes the same classes.
+    kinds = {EX + f"{k.lower()}{i}": EX + k for k, n in (("Gene", 3), ("Protein", 2)) for i in range(n)}
+    listed = replace(
+        grouping,
+        record_kinds=None,
+        representative={**grouping.representative, **{c: k for c, k in kinds.items()}},
+    )
+    general = write_term_release(strategy.store, listed, tmp_path / "general")
+    classes = pl.read_parquet(tmp_path / "records_term_classes.parquet").sort("class")
+    assert classes.equals(pl.read_parquet(tmp_path / "general_term_classes.parquet"))
+    assert dict(classes.select("class", "representative").drop_nulls().iter_rows())[
+        EX + "protein1"
+    ] == (EX + "Protein")
+    for key in ("typed_records", "type_classes", "groupable_classes", "classes"):
+        assert manifest[key] == general[key], key
+
+
 def test_terms_are_grouped_before_a_scan_counts_them(tmp_path):
     """Above group_before_mining classes, a scan counts the grouped type table (the miner's
     choice before mining), not every term first."""
