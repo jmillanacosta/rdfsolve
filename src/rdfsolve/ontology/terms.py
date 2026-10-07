@@ -38,7 +38,7 @@ def namespace_expression(variable: str) -> str:
 
 
 def obo_prefix(iri: str) -> str | None:
-    """Return the OBO prefix of a term (MONDO for obo/MONDO_0000001), or None."""
+    """Return the OBO prefix of a term (the part before ``_`` of its OBO PURL), or None."""
     space = namespace(iri)
     if space.startswith(OBO) and space.endswith("_"):
         return space[len(OBO) : -1]

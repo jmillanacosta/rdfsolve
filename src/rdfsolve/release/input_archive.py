@@ -2,7 +2,7 @@
 
 The pins (rdfsolve.qlever.downloads.record_inputs, ``<run>/<source>/<source>*_inputs.json``)
 tell whether a rebuild had the same bytes; they cannot rebuild once a provider replaces a file
-(UniProt's current_release, Expasy, RDF Portal's latest/). This module keeps the downloaded files
+(a "current" or "latest" download location). This module keeps the downloaded files
 themselves (not the converted copies, which the pinned converter rebuilds from them) in a bag:
 
 - BagIt 1.0 (RFC 8493), the packaging format of digital preservation: ``data/<source>/<path>``

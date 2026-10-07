@@ -1,7 +1,7 @@
 """Ontologies in rdfsolve: one place for the ontology model and the choices about it.
 
 rdfsolve mines data graphs, including how they use ontology terms; an ontology itself is read,
-not mined (the owner, 2026-10-02). This package holds:
+not mined. This package holds:
 
 - vocabulary: the IRIs that ontologies are written in (class and property types, structure,
   annotation and infrastructure namespaces, versions);

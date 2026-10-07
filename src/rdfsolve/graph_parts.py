@@ -1,7 +1,7 @@
 """Per-graph parts of a source that is mined across several named graphs.
 
-A source whose files are mapped to the named graphs of its endpoint (``graph_sources``: UniProt,
-PubChem's FTP release), or whose graphs need settings of their own (``graph_settings``), is mined
+A source whose files are mapped to the named graphs of its endpoint (``graph_sources``), or
+whose graphs need settings of their own (``graph_settings``), is mined
 as a whole. Each of its data graphs also gets a schema of its own, its part, so that the graph
 can be compared with the same graph elsewhere: the endpoint's VoID scoped to that graph, or a
 registry entry that describes that graph alone.
@@ -11,10 +11,9 @@ A part is named, in this order:
 1. by ``graph_settings[graph].name``;
 2. by the registry entry that is a graph scope of the source for that graph: a dataset entry on
    the same endpoint whose only data graph is that graph (the structural rule of
-   rdfsolve.dataset_identity for ``graph_scope_of``), such as uniprot.citations;
-3. as ``<source>.<last segment of the graph IRI>``, such as pubchem.ftp.anatomy or
-   uniprot.journal. The graph-scope entries of rule 2 follow the same form (uniprot.citations
-   is http://sparql.uniprot.org/citations), so every part of a source is named the same way,
+   rdfsolve.dataset_identity for ``graph_scope_of``);
+3. as ``<source>.<last segment of the graph IRI>``. The graph-scope entries of rule 2 follow
+   the same form, so every part of a source is named the same way,
    whether or not the registry has an entry for its graph.
 
 The outputs of a part are written to ``<run>/<source>/graphs/<part>/<part><suffix>_*``, next to

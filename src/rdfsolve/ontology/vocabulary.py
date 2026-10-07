@@ -49,7 +49,7 @@ OWL_CONSTRUCT_TYPES = frozenset(
 )
 
 # Relations between two terms that name one compound in another form: tautomers, and
-# conjugate acid and base (RO, as ChEBI states them). Enantiomers are different compounds.
+# conjugate acid and base (RO relations). Enantiomers are different compounds.
 CHEMICAL_VARIANT_PREDICATES = (
     OBO + "RO_0018036",  # is tautomer of
     OBO + "RO_0018033",  # is conjugate base of

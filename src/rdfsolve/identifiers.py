@@ -90,12 +90,12 @@ def _valid_iri(text: str) -> str | None:
 def parse(value: Any) -> Identifier | None:
     """Read an identifier written as a registered IRI or a CURIE; None for anything else.
 
-    An identifiers.org IRI that Bioregistry reads as idot (http://identifiers.org/mgi/101757) is
+    An identifiers.org IRI that Bioregistry reads as idot (identifiers.org/<namespace>/<id>) is
     read as namespace/identifier. An identifiers.org or n2t.net IRI names its namespace, and
     that namespace is kept when it is registered and the identifier is valid in it, even where
     Bioregistry would read the IRI under another prefix, so that the identifier matches the
-    CURIEs that other sources write for it. The local identifier is standardized
-    (CHEBI:15377 is chebi 15377).
+    CURIEs that other sources write for it. The local identifier is standardized (Bioregistry's
+    standard form, without a redundant prefix).
     """
     import bioregistry
 

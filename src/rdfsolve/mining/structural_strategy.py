@@ -70,8 +70,7 @@ def _discovery_query(
     The property sets are grouped only for the subjects and objects of the uncovered edges
     (the edge pattern with *residual*): an engine that does not push the join into the
     subqueries (QLever) grouped every subject and object of the graph, or of the property,
-    for each property (UberGraph: 47 properties refused after 10 min each; IAO_0000115 with
-    720,078 edges and 5 uncovered took 263 s grouped by property, structural-discovery-20261002).
+    for each property.
 
     With *sample*, only the first *sample* uncovered edges, and the property sets of their nodes,
     are read (a refused discovery, rdfsolve.mining.sampling).
@@ -133,7 +132,7 @@ def structural_queries(pattern: StructuralPattern) -> tuple[str, str]:
     if pattern.datatype:
         clauses.append(f"FILTER(DATATYPE(?o) = <{pattern.datatype}>)")
     # A literal with a datatype other than rdf:langString has no language tag. Virtuoso answers
-    # 0 for DATATYPE(?o) = xsd:integer with LANG(?o) = "" (SIBiLS dc:extent; 771 for either).
+    # 0 for DATATYPE(?o) = xsd:integer with LANG(?o) = "", though either filter alone matches.
     if pattern.language is not None and (pattern.language or not pattern.datatype):
         clauses.append(f"FILTER(LANG(?o) = {Literal(pattern.language).n3()})")
     named = list(dict.fromkeys(pattern.type_graph_uris + pattern.object_type_graph_uris))
@@ -236,8 +235,7 @@ def _patterns_census(
 
     QLever stores the set of properties of each subject; ?s ql:has-predicate rdf:type tells a
     typed subject without reading the type triples. The triples and the untyped triples of every
-    property are two grouped queries (Bgee: 106 s and 148 s, against about 10 h for the test of
-    each edge). When typed mining mined every discovered class and skipped no type value, every
+    property are two grouped queries, far cheaper than the test of each edge. When typed mining mined every discovered class and skipped no type value, every
     edge of a typed subject is in a typed profile, so the uncovered edges are the edges of
     untyped subjects. The patterns cover the whole index, so the scope must hold every graph of
     it. Otherwise None, and the exact census runs.
@@ -305,11 +303,10 @@ def _patterns_query(
     is in *part* (clauses on the subject's properties, see _split_property).
 
     The property set of a subject is grouped from one row for each of its properties, not for
-    each of its edges: MedGen dcterms:references (95,419,320 edges of 125,005 subjects) took
-    338 s grouped by edge and 3.5 s by subject (corpus-local-4a3affdf-2).
+    each of its edges, which is much cheaper when subjects have many edges of one property.
 
     Without *witness*, the rows have no sampled edge: the text of the edge is built for each
-    edge before it is sampled, which took the MedGen query past 600 s (273 s without it).
+    edge before it is sampled, which can dominate the cost of the query.
     With *sample*, only the first *sample* edges of the part are grouped (a refused discovery,
     rdfsolve.mining.sampling): the counts of the rows are lower bounds.
     """
@@ -391,8 +388,8 @@ def _discover_part(
     """Discover the patterns of a part, splitting it by a property of its subjects when the
     endpoint refuses it. A part that cannot be split is asked again without witnesses, which
     are then read for each pattern (structural_queries); one still refused is added to
-    *refused* with its triples. MedGen dcterms:references cannot be split: its 125,005 subjects
-    have one property set (corpus-local-4a3affdf-2).
+    *refused* with its triples. A part whose subjects all have one property set cannot be
+    split.
     """
     try:
         return _select(
@@ -432,14 +429,12 @@ def _patterns_discovery(
     The property sets come from ql:has-predicate, which reads one row per property of a node
     instead of every triple of it. The answer has one row for each pattern of a property, with
     its triples, distinct subjects and distinct objects: one row for each edge, with the
-    property sets of both nodes, exceeded the response budget of 64 MiB for WikiPathways
-    gpml:hasDataNode (137,699 edges), and a query with GROUP_CONCAT is not paged. The witness
+    property sets of both nodes, can exceed the response budget, and a query with
+    GROUP_CONCAT is not paged. The witness
     of a pattern is one edge of its group: the kinds, datatype and language of the object are
     keys of the group, so the text of the subject and object gives the edge.
 
-    A refused property is split by the properties of its subjects (_split_property): OMA
-    dcterms:identifier, with 49,916,389 edges of untyped subjects, timed out after 600 s in
-    the final GROUP BY (corpus-local-4a3affdf-8). The parts that cannot be split further are
+    A refused property is split by the properties of its subjects (_split_property). The parts that cannot be split further are
     asked over a sample of their edges (the property is then discovery_sampled), and recorded
     with their triples when the samples are refused too.
     """
@@ -495,8 +490,7 @@ def _refused(
     """Record a property whose discovery was refused, for all its uncovered triples or for
     *triples* of them; the source is then partial.
 
-    The discovery query groups with GROUP_CONCAT and cannot be read in pages (UberGraph:
-    IAO_0000115).
+    The discovery query groups with GROUP_CONCAT and cannot be read in pages.
     """
     logger.warning("Discovery: %s not discovered: %s", predicate, str(error)[:200])
     n["discovery_refused"] = str(error)[:500]
@@ -522,8 +516,8 @@ def _property_discovery(
     Each query has the one-property test of the census and the recount (see _census). When
     the uncovered edges of a property are as many as the edges of its untyped subjects, they
     are the same edges (an untyped subject has no typed profile), and the test of an untyped
-    subject is used without the typed keys, whose filter Virtuoso refused (SIBiLS
-    pattern#contains: SQ200, stack overflow in cost model). A property whose discovery stays
+    subject is used without the typed keys, whose filter Virtuoso can refuse (SQ200, stack
+    overflow in cost model). A property whose discovery stays
     refused is discovered over a sample of its edges (discovery_sampled; the rows hold the
     edges, which give the counts when the recount is refused too).
     """
@@ -595,8 +589,7 @@ def _discover_pairs(
     (node, property) pairs are read with queries without aggregates, which the helper can read
     in pages in a fixed order (ORDER BY of every projected variable); the property sets are
     built from the pairs (sorted, as StructuralPattern keeps them). GROUP_CONCAT has no fixed
-    order, so the helper does not page a query with it (IDEAL author and WikiPathways
-    gpml:hasDataNode, jobs 115329 and 115327: subjects refused one by one at the time limit).
+    order, so the helper does not page a query with it.
     A blank node has no name that holds from one request to the next, so the edges whose subject
     or object is a blank node are discovered with the grouped query, as before. Raise
     SparqlHelperError or ValueError when a query is refused.
@@ -655,8 +648,7 @@ def _discover_pairs(
 
 
 # Subjects of one discovery query when the discovery of a property is refused as a whole. The
-# cost grows faster than the batch (WikiPathways dc:creator: 50 subjects 6.4 s, 100 23.6 s, 200
-# refused at the ANYTIME limit).
+# cost grows faster than the batch.
 DISCOVERY_SUBJECT_BATCH = 50
 
 
@@ -676,8 +668,7 @@ def _discover_by_subjects(
     each batch of them, FILTER(?s IN ...) inside each of its subqueries, then for the blank-node
     subjects together. A refused batch is split in two. Return the rows and the uncovered
     triples of the subjects that were still refused; None when the subjects cannot be listed or
-    those triples cannot be counted, and the whole property stays undiscovered (WikiPathways
-    dc:creator, 8,095 edges: "estimated execution time 1115 s exceeds the limit of 400 s").
+    those triples cannot be counted, and the whole property stays undiscovered.
     A subject refused alone is discovered from its edges and the pairs of its nodes and their
     properties (_discover_pairs), which need no GROUP_CONCAT. The refusals are added to
     *errors*, when given.
@@ -814,7 +805,7 @@ def _witness(row: dict[str, Any]) -> dict[str, Any]:
 # Triples of one property in one census batch, when the census of the property is refused.
 CENSUS_BATCH_TRIPLES = 20_000_000
 # Fewest triples per object for a census in batches of objects: with fewer, a batch names about
-# as many objects as it has triples (SIBiLS pattern#contains: one triple per object).
+# as many objects as it has triples.
 CENSUS_MIN_TRIPLES_PER_OBJECT = 10
 # Properties counted in one census request through an endpoint (see _census_batch), and the
 # longest such request. A refused or too slow request is split in halves; one property is counted
@@ -823,9 +814,8 @@ CENSUS_PROPERTIES_PER_QUERY = 16
 CENSUS_QUERY_CHARS = 100_000
 # Censuses of 2 properties (the smallest batched form) in a row that the parser of an endpoint
 # refuses (QueryParserLimitError: Virtuoso SQ200, SQ074), after which the census of that endpoint
-# counts one property at a time for the rest of the source. Job 115589: Virtuoso refused the
-# batches of 8, 4 and 2 properties with "SQ200: Stack Overflow in cost model" before the single
-# properties answered, so every batch of 16 cost 4 refused requests. Refusals of larger batches
+# counts one property at a time for the rest of the source, instead of paying several refused
+# requests for every batch. Refusals of larger batches
 # do not count: an endpoint that answers batches of 4 keeps batching. The count is kept on the
 # helper of the endpoint (SparqlHelper.census_parser_refusals); an answered batch resets it.
 CENSUS_PARSER_REFUSALS_BEFORE_SINGLE = 2
@@ -858,20 +848,19 @@ def _census_queries(
     (a refused census, rdfsolve.mining.sampling): the tests apply to each edge of the sample.
 
     Each count filters the edges. No count is grouped by a value that BIND(EXISTS ...) sets:
-    Virtuoso gives wrong counts for that form (AOP-Wiki prov:used: 1 of 2 edges covered),
-    whereas the same test in a FILTER counts 2 of 2, as a query of each edge confirms. For one
+    Virtuoso gives wrong counts for that form, whereas the same test in a FILTER counts as a
+    query of each edge does. For one
     property, the typed test repeats the edge and its restriction: QLever evaluates the group
     of EXISTS on its own before the join, and a group of only ``?s a ?_type`` reads every type
-    triple of the graph for every batch (Bgee: 455.7 GB for each batch of RO_0002206).
+    triple of the graph for every batch.
     """
     edge = f"?s <{predicate}> ?o . {restriction}" if predicate else "?s ?p ?o ."
     typed = f"{edge} {_types(named)}" if predicate else _types(named)
     tests = {"triples": "", "untypedTriples": f"FILTER NOT EXISTS {{ {typed} }}"}
     # The uncovered edges are counted with the negated test, the filter of the discovery, and the
-    # covered edges follow by subtraction: Rhea counts 550,753 covered rdf:type edges of 550,634
-    # with FILTER(test) (duplicates), and 0 uncovered with FILTER(!test). Without typed profiles
-    # every edge is uncovered and no filter is sent, because Rhea answers COUNT(*) with
-    # FILTER(false) with no row.
+    # covered edges follow by subtraction: an endpoint can count duplicates with FILTER(test).
+    # Without typed profiles every edge is uncovered and no filter is sent, because an endpoint
+    # can answer COUNT(*) with FILTER(false) with no row.
     if not local:
         tests["uncoveredTriples"] = "" if match == "false" else f"FILTER(!{match})"
     source = edge
@@ -889,7 +878,7 @@ def _census_key(context: MiningContext, queries: list[str]) -> tuple[str]:
 
     # The graphs that the helper leaves out are part of the queries that it sends.
     # The key names the pragma (default graph only), so that counts read with
-    # input:named-graph-exclude as well (dbpedia: emptied) are not resumed.
+    # input:named-graph-exclude as well (which can empty the answer) are not resumed.
     excluded = list(getattr(getattr(context, "helper", None), "excluded_graphs", None) or [])
     sent = [*(["exclude-default " + " ".join(excluded)] if excluded else []), *queries]
     return ("census|" + hashlib.sha256("\n".join(sent).encode()).hexdigest(),)
@@ -947,7 +936,8 @@ def _census_batch(
     that runs past its limits, is split in halves; a property left alone is not sent here, and
     _property_census counts it as before (with batches of its objects when refused). A request
     whose answer misses a count leaves its properties to _property_census too, so every count is
-    the count of the query of one property (Rhea answers some empty counts with no row). An
+    the count of the query of one property (an endpoint can answer an empty count with no
+    row). An
     endpoint that rejects the batched form turns batching off for the rest of the census. The
     counts of each property are kept in the checkpoint under the key of its own queries, so a
     resumed run, batched or not, takes them again.
@@ -1060,7 +1050,7 @@ def _count(context: MiningContext, queries: list[str]) -> Counter[str]:
     """Run the census queries; each returns one count.
 
     The counts are kept in the checkpoint of the run, keyed by the queries, and a resumed run
-    takes them from there (the census of Bgee RO_0002206 takes about 6.5 h).
+    takes them from there (the census of one large property can take hours).
     """
     key = _census_key(context, queries)
     resumed = getattr(context, "resumed", None) or {}
@@ -1087,10 +1077,8 @@ def _census(
 
     Through an endpoint only the one-property test is used, the form that was checked against a
     query of each edge (Virtuoso) and against the earlier nested form (QLever). Virtuoso evaluates
-    the whole-graph test, with ?p a variable, wrongly and without an error (AOP-Wiki: the
-    whole-graph discovery gave 9 rows for 8 properties, the discovery of virtrdf:item alone 41),
-    and the whole-graph test of a large graph joins every triple with every typed profile (Bgee:
-    no answer in 2 h). The counts of each property are recorded; the discovery of uncovered
+    the whole-graph test, with ?p a variable, wrongly and without an error, and the whole-graph
+    test of a large graph joins every triple with every typed profile. The counts of each property are recorded; the discovery of uncovered
     edges uses them. A census is not paged: each query returns one count.
     """
     if local:
@@ -1128,8 +1116,7 @@ def _census(
     # After the endpoint has refused the test of each edge of one property, and when typed
     # mining mined every discovered class and skipped no type value, the test is not sent for
     # the next properties: their uncovered edges are the edges of their untyped subjects, the
-    # counts that a refused test falls back to (pharmgkb: 600 s refused for each of 7
-    # properties). The skipped properties are recorded. A graph whose tests are all answered is
+    # counts that a refused test falls back to. The skipped properties are recorded. A graph whose tests are all answered is
     # counted by the test of each edge, which also finds typed profiles that cover no edge.
     skipped: dict[str, Any] | None = None
     for number, predicate in enumerate(predicates, start=1):
@@ -1279,10 +1266,9 @@ def _property_census(
 
     The objects are grouped into batches of about CENSUS_BATCH_TRIPLES triples, and a batch
     that the endpoint refuses is split in two. FILTER(?o IN ...) restricts the query and its
-    coverage group, so that each reads only the edges of the batch (Bgee RO_0002206:
-    813,735,712 triples, 127,021 objects; one query needs more memory than a node has). The
-    batch is not a VALUES: QLever evaluates an EXISTS group with a VALUES of 768 objects wrongly
-    (all 19,999,769 edges untyped; 0 with FILTER IN). Blank-node objects cannot be listed and
+    coverage group, so that each reads only the edges of the batch, where one query for the
+    whole property could need more memory than the server has. The batch is not a VALUES:
+    QLever evaluates an EXISTS group with a large VALUES wrongly. Blank-node objects cannot be listed and
     are counted together. The counts of the batches add up to the counts of the property.
     """
 
@@ -1372,11 +1358,9 @@ def _structural_gap(
     The structural layer adds evidence for edges that no typed profile covers; the typed
     patterns, mined before it, do not depend on it. So a refusal leaves this graph unchecked,
     recorded as a measurement gap (the source ends partial), and the source keeps its typed
-    patterns (GlyCoNAVI, job 115329: one census query refused with Virtuoso SQ074 failed the
-    whole source after 1025 s). A host that stayed busy through the waits of the helper
-    (EndpointRateLimitError) is the same: the endpoint answered the typed mining before, so the
-    graph is left unchecked and the source goes on (STRING, job 115591: one census query
-    failed the whole source after its busy-host waits).
+    patterns, instead of one refused query failing the whole source. A host that stayed busy
+    through the waits of the helper (EndpointRateLimitError) is the same: the endpoint answered
+    the typed mining before, so the graph is left unchecked and the source goes on.
     """
     graph = entry.get("graph_uri")
     logger.warning("Structural %s of %s not completed: %s", purpose, graph or "the data", error)
@@ -1704,8 +1688,7 @@ class StructuralStrategy(MiningStrategy):
         redo = sorted({i["property"] for i in inconsistent if i["property"] in residuals})
         if redo:
             # Virtuoso can give a subject a wrong property set in a grouped discovery of many
-            # subjects (PlantMetWiki rdfs:seeAlso, 2,478 subjects: PC857 grouped with 5 of its 8
-            # properties, alone with all of them; job 115327, 681 patterns that recount to 0).
+            # subjects, which gives patterns that recount to 0.
             # The properties with unconfirmed patterns are discovered again from their edges and
             # the (node, property) pairs, without GROUP_CONCAT (_discover_pairs).
             again: dict[str, dict[str, int]] = {}
@@ -1756,8 +1739,7 @@ class StructuralStrategy(MiningStrategy):
                 )
             )
         # A recount counts every edge of its pattern, also the edges of subjects whose discovery
-        # was refused when they have a discovered pattern (PlantMetWiki, job 115327: 1,855,293
-        # recounted of 1,855,296 uncovered, 354 of them not discovered). So the recounts are
+        # was refused when they have a discovered pattern. So the recounts are
         # consistent between the discovered triples and all uncovered triples.
         total = expected + undiscovered
         if undiscovered:

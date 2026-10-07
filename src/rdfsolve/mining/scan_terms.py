@@ -4,9 +4,8 @@ A scan run (rdfsolve.mining.scan) has every row on disk, so the grouping of onto
 rewrite of the type table (term -> representative), applied to subjects and objects alike, and
 the patterns are counted again with count_patterns: every count is exact. Summing the rows of the
 member terms (ontology_as_data.subsume_patterns) is an upper bound: a record typed with two
-members of one representative is counted twice (TERA: NCBI taxa typed with their taxon term and
-their division, 6.2 M triples counted twice in 133 rows), and the distinct counts cannot be
-summed at all. Experiment: article/experiments/scan-summary-20261006/terms/FINDINGS.md.
+members of one representative is counted twice, and the distinct counts cannot be summed at
+all.
 
 - superclasses(): the hierarchy as ontology.hierarchy.fetch_superclasses reads it, from the
   rdfs:subClassOf rows (and hierarchy files, as two_phase_strategy._group_terms reads them);
@@ -211,7 +210,7 @@ def superclasses(
             .select("s", "o")
         )
     # Only the rows of the terms and of their ancestors are read, one level at a time: the
-    # rdfs:subClassOf rows of a whole index can be millions (bio2rdf.chembl: 1.4 million).
+    # rdfs:subClassOf rows of a whole index can be millions.
     parents: dict[str, set[str]] = {}
     frontier = sorted(set(terms))
     while frontier:
@@ -265,8 +264,7 @@ def minimal_types(
     another of its types. Two types that are ancestors of each other (equivalent by cycles) are
     both kept. Types outside the hierarchy are kept. Untyped records stay untyped (ABSTAT gives
     them owl:Thing; rdfsolve gives their IRI subjects the untyped patterns of rdfs:Resource). Where no record asserts an
-    ancestor of its own type the table is unchanged (HRA-KG, lifesciencedict); TERA's NCBI taxa
-    lose their division (1,829,829 rows).
+    ancestor of its own type the table is unchanged.
     """
     import polars as pl
 
@@ -312,10 +310,10 @@ def count_aware_cut(
     """Merge the class with the fewest instances into a parent until at most *budget* remain.
 
     An option to choose_representatives's level-by-level lifting, which overshoots where
-    hierarchies converge (HRA-KG: 839 classes after 22 levels, 35 after 23, budget 300). The
+    hierarchies converge (one more level can drop far below the budget). The
     weight of a representative is the sum of its members' instances (used only to rank). The
     parent chosen is one already kept, else the heaviest, then by IRI. A class without a parent
-    stays. Untuned: with several parents it can climb across ontologies (CL to UBERON, BFO);
+    stays. Untuned: with several parents it can climb across ontologies;
     *fixed* classes (for example shape groups) count toward the budget and are never moved.
     """
     fixed_set = set(fixed)
@@ -520,7 +518,7 @@ class GroupedBeforeCounting:
     # records as classes, whose terms are mapped to their kind by a join (too many to list).
     representative: dict[str, str] | None
     # Records kept as classes (classes_as_data): each record class and its kind (c, kind, as
-    # <iri>), a lazy table, never a list: BioGateway has 65.9 million.
+    # <iri>), a lazy table, never a list: there can be tens of millions.
     kinds: pl.LazyFrame | None = None
 
 
@@ -560,7 +558,7 @@ def record_types(store: RowStore | StoreView, table: pl.LazyFrame) -> pl.LazyFra
 
     The minimal types (minimal_types) under the data's rdfs:subClassOf rows, one level: a
     record typed with a record class and with that class's parent keeps the record class.
-    Computed by joins on the rows, without listing the classes (BioGateway: 65.9 million).
+    Computed by joins on the rows, without listing the classes.
     """
     keys = _keys(table)
     table = table.select(*keys, "c").unique()
@@ -580,12 +578,11 @@ def group_before_counting(
     """Group the terms used as types before a scan counts its patterns; None below *limit*.
 
     rdfsolve groups the ontology terms used as types under their ancestors before mining when
-    a dataset has more than group_before_mining classes (two_phase_strategy._group_terms). A
-    scan counted every class first and grouped afterwards (group_terms), so BioGateway's
-    65,884,730 classes and GO-CAM's 1,718,325 ran out of memory while counting. Here the type
-    table is rewritten first and counted once:
+    a dataset has more than group_before_mining classes (two_phase_strategy._group_terms).
+    Counting every class first and grouping afterwards does not fit in memory with millions of
+    classes. Here the type table is rewritten first and counted once:
 
-    - with *classes_as_data* (each record an rdfs:Class under its kind: BioGateway), each
+    - with *classes_as_data* (each record an rdfs:Class under its kind), each
       class takes its rdfs:subClassOf parent in the data, by a join, as the SPARQL path groups
       term rows under their ancestors; a table that still has more than *limit* classes is
       then grouped as below;
@@ -874,13 +871,11 @@ def fold_class_expressions(
 ) -> ClassExpressionFolding:
     """Fold the members of ``p some F`` classes into edge rows (C, p, F), F grouped per slot.
 
-    The owner's decision of 2026-10-06 (A + B): each member x of a named class C (from
+    Each member x of a named class C (from
     *types*, for example the grouped type table, without the expression classes) typed by
     ``p some F`` gives the row (C, p, F), counted over members; then the fillers of each slot
     (C, p) are grouped with choose_representatives to at most *slot_budget* classes over the
     rdfs:subClassOf hierarchy, and counted again (a member once per slot and representative).
-    WikiPathways: 199 members of PCL_0010001 typed by ``RO_0015002 some CL_x`` (177 fillers)
-    give 177 rows of one member each; with a slot budget of 10, 10 CL classes.
     """
     import polars as pl
 

@@ -1,8 +1,7 @@
 """Read HDT downloads: the shell steps that write each HDT file as gzip N-Triples before indexing.
 
 QLever reads N-Triples, N-Quads and Turtle, not HDT (Header Dictionary Triples). Some publishers
-release only HDT: the FRINK / Proto-OKN fabric serves every graph from HDT, and BioBricks
-publishes its graphs as HDT files in a public DVC remote.
+release only HDT.
 
 The converter is hdt-java's ``hdt2rdf`` (rdfhdt/hdt-java, LGPL), fetched as a pinned release and
 checked against its SHA-256 before use, as the OBO steps fetch ROBOT: it needs only Java

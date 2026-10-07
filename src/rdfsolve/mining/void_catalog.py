@@ -1,6 +1,6 @@
 """VoID catalogs: sources whose data are VoID descriptions of other datasets.
 
-A catalog (registry ``dataset_kind: catalog``) such as okn-void holds, for each dataset it
+A catalog (registry ``dataset_kind: catalog``) holds, for each dataset it
 describes, the class partitions, property partitions, object class and datatype partitions and
 counts of that dataset. Mining a catalog as data gives the schema of VoID itself, which says
 nothing about the datasets. Instead its VoID is read once, split by described dataset, and each
@@ -192,8 +192,8 @@ class CatalogVoid:
         of which must be described: a graph the catalog does not describe leaves the entry
         without a VoID from the catalog (it is then mined), as for an endpoint's own VoID.
         With REQUIRE_ALL false, the described graphs are taken and the others left out: the
-        scope of the agreement with a mined schema cut to the same graphs (an OKN entry's own
-        VoID graph, <kg>#void, beside its data graph), never of VoID-first mining.
+        scope of the agreement with a mined schema cut to the same graphs (an entry's own VoID
+        graph beside its data graph), never of VoID-first mining.
         """
         matched = self.matched(source.name)
         if not matched:
@@ -311,7 +311,7 @@ def read_catalog_void(
     export of the endpoint's graphs). From the endpoint, each of the catalog's graphs (or, when
     it names none, the graph that holds the most class partitions) is read whole, as the
     VoID-first reader reads an endpoint's own VoID, with a larger response allowed: a catalog
-    is metadata, and okn-void's is 1.15 GB of N-Triples.
+    is metadata, and can be large.
     """
     files = catalog_files(source)
     void = Graph()

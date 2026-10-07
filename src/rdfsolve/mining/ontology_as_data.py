@@ -332,13 +332,13 @@ def probe_term_patterns(
 
     Each pattern carries its triple count. With the *typed* patterns, and no separate ontology
     graphs, the terms that are values are read only for the (class, property) pairs whose
-    object class is owl:Class or rdfs:Class (Bgee: none; the filter over every triple asked for
-    54 GB); *classes* gives the class objects (groups of ontology terms) by name. Results are
+    object class is owl:Class or rdfs:Class (the filter over every triple can need more memory
+    than the server has); *classes* gives the class objects (groups of ontology terms) by name. Results are
     paged to completion.
 
     The counts are enrichment of the typed schema, so a refusal never fails the source: the
-    subject counts of every term, when refused (med2rdf's gateway cuts them at 120 s, DGIdb),
-    are read for batches of the declared terms; a refused query is read over a sample, whose
+    subject counts of every term, when refused (a gateway can cut them at its time limit), are
+    read for batches of the declared terms; a refused query is read over a sample, whose
     rows are flagged sampled with lower-bound counts (rdfsolve.mining.sampling); what no sample
     answers is a measurement gap. Samples and gaps are added to *outcome*.
     """
@@ -571,8 +571,8 @@ def parentless_candidates(
 
     A term is a candidate when it has no parent and stands only for itself; a representative
     with members keeps its place. Only namespaces with at least *min_terms* such terms count: a
-    namespace with few is more likely the vocabulary of the data (PubChem: 55 classes of its own
-    vocabulary) than an ontology used for typing.
+    namespace with few is more likely the vocabulary of the data than an ontology used for
+    typing.
     """
     if not chosen.over_budget:
         return []
@@ -618,7 +618,7 @@ def fetch_shapes(
     On QLever the properties come from the property set of each instance (ql:has-predicate),
     which holds its properties in the whole index; elsewhere from the triples of the scope. A
     batch that the endpoint refuses is halved, and a term refused alone is returned as
-    unreadable (PubChem, shapes-3: 9 of 31,675 terms).
+    unreadable.
     """
     from rdfsolve.sparql_helper import EndpointError
 
@@ -714,10 +714,10 @@ def group_by_shape(
 
 # Most terms without a parent whose shapes are read through an endpoint (fetch_shapes: two
 # queries for every 100 terms). Above it the terms are grouped by namespace, which needs no
-# query: GO-CAM types its individuals with 1.7 M gene-product IRIs, about 34,000 queries.
+# query: a source can type its records with millions of identifier IRIs.
 SHAPE_READ_MAX_TERMS = 20_000
 # Member terms of a namespace group named in the queries that mine it: the queries name every
-# member (VALUES (?_member ?class)), and a GO-CAM namespace holds up to some 10^5 terms. A larger
+# member (VALUES (?_member ?class)), and a namespace can hold very many terms. A larger
 # group is mined over evenly spaced members and its rows are marked sampled.
 NAMESPACE_GROUP_MINED_MEMBERS = 1000
 
@@ -751,7 +751,7 @@ def group_by_namespace(
     Used before mining instead of group_by_shape when the candidates are too many to read
     their shapes through an endpoint (SHAPE_READ_MAX_TERMS). The terms of one namespace
     (ontology.terms.namespace) form a group, and namespaces that Bioregistry gives the same
-    prefix are one group (identifiers.org/uniprot/ and UniProtKB: are both uniprot). A group is
+    prefix are one group (two URI forms of one prefix). A group is
     named by its key, not by its members, so it is the same group in every run; a namespace
     with one term keeps it as its own class. Each group lists its namespaces and its prefix;
     the members are recorded by the caller. *chosen* is changed in place.

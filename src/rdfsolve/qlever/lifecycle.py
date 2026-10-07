@@ -83,7 +83,7 @@ def _query_memory(value: str) -> str:
     """Return the query memory of the Qleverfile, at most a share of the SLURM allocation.
 
     The share is 0.6, or RDFSOLVE_QLEVER_MEMORY_SHARE (above 0, below 1) for a job whose
-    queries need more (Bgee: one census query needs more than 455 GB of a 740 GB job).
+    queries need more.
     """
     match = re.fullmatch(r"(\d+(?:\.\d+)?)\s*([KMGT])B?", value.upper())
     if not match:

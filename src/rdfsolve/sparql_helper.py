@@ -112,8 +112,7 @@ class _Deadline:
     """End one request at a wall-clock deadline, whatever the server sends.
 
     A read timeout bounds one silence only: a server or proxy that sends a few bytes now and
-    then holds the read for ever (rehearsal 114981: two remote queries, one on QLever and one
-    at IDSM, ran for 16.8 h). At the deadline a watcher shuts the socket of the request down,
+    then holds the read for ever. At the deadline a watcher shuts the socket of the request down,
     which ends a blocked read in the requesting thread; the request then raises a timeout
     (SparqlHelper._request_serial). The connection pools tell the watcher which connection the
     request uses (_WatchedHTTPConnectionPool).
@@ -257,10 +256,8 @@ class QueryCut:
     """A request that a limit on the way to the data ended: the server, a proxy or a gateway.
 
     *kind* is how it ended ("HTTP 524", "connection closed without a response"); *seconds* is
-    how long the request ran. A fixed limit ends every query that exceeds it at the same time:
-    the rehearsal of 2026-10-05 saw Bgee's gateway answer HTTP 524 after 127.0 to 128.2 s, and
-    the cluster's proxy close UniProt's connections after 899.9 to 903.0 s. Two cuts are at
-    the same limit within 2 s or 2 %, which holds both spreads with a margin.
+    how long the request ran. A fixed limit ends every query that exceeds it at about the same
+    time. Two cuts are at the same limit within 2 s or 2 %.
     """
 
     kind: str
@@ -274,18 +271,15 @@ class QueryCut:
 
 # Consecutive cuts at the same limit after which a step stops sending queries of a purpose.
 # One cut is one slow query, and two can be two neighbouring queries of one heavy class (steps
-# send their queries class by class). Three in a row, with no answer between, show the limit:
-# Bgee's path testing (rehearsal 2026-10-05) answered one query, then had 13 in a row cut at
-# 128 s until its budget ended; no step that sends its queries unchanged answered after three
-# such cuts. Timeouts of the client's own limit do not count (QueryCut): there, runs of three
-# timeouts followed by an answer were seen (VoID gap queries, 60 s).
+# send their queries class by class). Three in a row, with no answer between, show the limit.
+# Timeouts of the client's own limit do not count (QueryCut): there, runs of three timeouts
+# can be followed by an answer.
 CUTS_BEFORE_STOP = 3
 
 # Consecutive timeouts at the client's own limit after which a light step (QueryCuts with
-# client_timeouts) stops a purpose. Runs of three such timeouts followed by an answer were seen
-# (VoID gap queries at 60 s, rehearsal 2026-10-05), so the stop waits for five: a purpose whose
-# five queries in a row each ran past the limit has its remaining queries recorded as not sent
-# (IDSM, rehearsal 2026-10-06: drift re-counts of a 347 M-triple partition each cost 62 s).
+# client_timeouts) stops a purpose. Runs of three such timeouts can be followed by an answer,
+# so the stop waits for five: a purpose whose five queries in a row each ran past the limit has
+# its remaining queries recorded as not sent.
 TIMEOUTS_BEFORE_STOP = 5
 CLIENT_TIME_LIMIT = "client time limit"
 
@@ -512,7 +506,7 @@ class SparqlHelper:
             or 504 with Retry-After). A longer cooldown raises EndpointRateLimitError.
 
     Example:
-        >>> helper = SparqlHelper("https://sparql.swisslipids.org/")
+        >>> helper = SparqlHelper("https://example.org/sparql")
         >>> results = helper.select("SELECT ?g { GRAPH ?g { ?s ?p ?o } }")
         >>> for binding in results["results"]["bindings"]:
         ...     print(binding["g"]["value"])
@@ -547,18 +541,16 @@ class SparqlHelper:
         # Virtuoso: "Query did not complete due to ANYTIME timeout" (S1TAT).
         "anytime timeout",
         # Virtuoso refusals that repeat for the same query, so the caller makes it smaller:
-        # "S1T00 Error SR171: Transaction timed out" (IDEAL: 3 tries of 63 s each before the
-        # batched fallback answered in 3 s) and "SR319 Max row length is exceeded" (GlyTouCan;
-        # a GROUP_CONCAT over too many values), rehearsal 2026-10-06.
+        # "S1T00 Error SR171: Transaction timed out" and "SR319 Max row length is exceeded" (a
+        # GROUP_CONCAT over too many values).
         "transaction timed out",
         "sr171",
         "sr319",
         "max row length is exceeded",
         "sorted top clause",
         # Virtuoso refuses these for the query, not for the moment: "42000 Error D1CTX: Hash
-        # dictionary is full, exceeded 2000000 entries" (a CONSTRUCT of RIKEN BRC's VoID graph:
-        # 3 tries for each of 2 fallbacks, job 115326) and "SQ200 Stack Overflow in cost model"
-        # (SIBiLS). The caller's fallback runs at once.
+        # dictionary is full, exceeded 2000000 entries" (a large CONSTRUCT) and "SQ200 Stack
+        # Overflow in cost model". The caller's fallback runs at once.
         "d1ctx",
         "hash dictionary is full",
         "sq200",
@@ -571,8 +563,7 @@ class SparqlHelper:
     # Limits of the query parser: the same query is refused again, and a smaller one (fewer
     # properties, terms or alternatives in one expression) is answered. Virtuoso answers a
     # FILTER with more than about 170 alternatives joined by || with "SQ074: Too many opened
-    # parentheses" and HTTP 500 (GlyCoNAVI, job 115329: 195 alternatives refused, 165 answered;
-    # checked 2026-10-06); a Java engine overflows its stack on a deep expression.
+    # parentheses" and HTTP 500; a Java engine overflows its stack on a deep expression.
     PARSER_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
         "sq074",
         "too many opened parentheses",
@@ -583,8 +574,7 @@ class SparqlHelper:
     )
 
     # A 503 (or a remote 429) whose body says that the server is busy, not that the query is
-    # too costly: SwissLipids answers "Too many concurrent queries. Please try again later."
-    # (rehearsal 2026-10-06, job 115300). A 502 or 504 from a proxy or gateway that says so, or
+    # too costly ("Too many concurrent queries. Please try again later."). A 502 or 504 from a proxy or gateway that says so, or
     # sends Retry-After, is the same. The request is repeated after OVERLOAD_BACKOFF_S,
     # doubled at each try, or after the Retry-After that the server sends, up to
     # OVERLOAD_RETRIES times, whatever the retries of the step: one busy moment must not lose a
@@ -598,8 +588,8 @@ class SparqlHelper:
         "overloaded",
     )
     # Row counts at which an engine cuts an unpaged result without saying so: Virtuoso's
-    # ResultSetMaxRows (FANAVI answers 1000 of its 33,358 classes, even under LIMIT 5000, with
-    # HTTP 200 and no header; rehearsal 2026-10-06), and the defaults of other engines. An
+    # ResultSetMaxRows (a cut result, even under a larger LIMIT, with HTTP 200 and no header),
+    # and the defaults of other engines. An
     # unpaged listing with exactly this many rows is read again in pages of that size.
     SUSPECTED_ROW_CAPS: ClassVar[frozenset[int]] = frozenset(
         {1000, 2000, 5000, 10000, 50000, 100000, 1000000}
@@ -615,8 +605,8 @@ class SparqlHelper:
 
     # Statuses with which a proxy or gateway answers for the server. A busy one (Retry-After or
     # OVERLOAD_PATTERNS) is waited out; any one is marked gateway_overload unless its body says
-    # that the proxy could not reach the server at all (bio2rdf's squid: "The requested URL
-    # could not be retrieved", ERR_DNS_FAIL), which no wait mends.
+    # that the proxy could not reach the server at all ("The requested URL could not be
+    # retrieved", ERR_DNS_FAIL), which no wait mends.
     GATEWAY_ERROR_STATUS: ClassVar[tuple[int, ...]] = (502, 503, 504, 522, 524)
     PROXY_CONNECT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
         "could not be retrieved",
@@ -635,10 +625,9 @@ class SparqlHelper:
     GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
 
     # A gateway answer that says the server is busy but comes only after a long wait is the
-    # gateway's timer, not a busy server: STRING (job 115591) answered one census query with
-    # Cloudflare's "502 Bad gateway ... the origin is overloaded" after 61 to 62 s, five times
-    # in a row (8 min of busy-host waits), while its other queries answered in seconds. A busy
-    # server answers at once. Two such answers in a row to the same query, or one at the time
+    # gateway's timer, not a busy server: a gateway can answer "502 Bad gateway ... the origin
+    # is overloaded" for one heavy query, each time after its own fixed time, while other
+    # queries answer in seconds. A busy server answers at once. Two such answers in a row to the same query, or one at the time
     # of a gateway timeout already seen on the endpoint (QueryCut.same_limit), are a timeout
     # of the query: the caller makes it smaller or samples it (_gateway_timed_out).
     GATEWAY_CUT_AFTER_S: ClassVar[float] = 45.0
@@ -757,8 +746,8 @@ class SparqlHelper:
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints.
 
-        user_agent identifies the client to endpoints; some, such as Wikidata, ask for
-        contact information in it. Defaults to $RDFSOLVE_USER_AGENT, else rdfsolve/<version>.
+        user_agent identifies the client to endpoints; some ask for contact information in
+        it. Defaults to $RDFSOLVE_USER_AGENT, else rdfsolve/<version>.
         """
         if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
             raise ValueError("Use positive response/retry limits and nonnegative request delay")
@@ -997,9 +986,7 @@ class SparqlHelper:
         """Send the queries of the block without the graph exclusion prologue.
 
         For a query whose answer can be cleaned of the excluded graphs after it is read (a class
-        listing, with engine_only_classes): the prologue can make it much slower (forum,
-        2026-10-06: the class listing answered 155,649 classes in 175 s without it, and a 502
-        after 315 s with input:default-graph-exclude for its 5 engine graphs).
+        listing, with engine_only_classes): the prologue can make it much slower.
         """
         token = _exclusion_suspended.set(True)
         try:
@@ -1168,7 +1155,7 @@ class SparqlHelper:
                 ):
                     raise EndpointError(f"HTTP {status_code}: query rejected: {detail}") from e
                 # A cost or memory limit is a limit with any client status: QLever behind a web
-                # server answers "Tried to allocate 397.1 GB" with HTTP 400 and an HTML page.
+                # server can answer "Tried to allocate …" with HTTP 400 and an HTML page.
                 # The caller makes the query smaller; the same query by POST is refused again.
                 if (
                     400 <= status_code < 500
@@ -1393,8 +1380,8 @@ class SparqlHelper:
             except json.JSONDecodeError as e:
                 # A body that does not parse (empty, cut off, or with invalid characters) is
                 # not repeated unchanged: an empty or cut-off answer to a heavy query is a cut
-                # (FANAVI answers its heavy queries with an empty HTTP 200, rehearsal
-                # 2026-10-06), so the caller makes the query smaller, as for a timeout.
+                # (some endpoints answer heavy queries with an empty HTTP 200), so the caller
+                # makes the query smaller, as for a timeout.
                 tag = f"{query_type}[{purpose}]" if purpose else query_type
                 logger.warning(
                     "%s response from %s does not parse - not retrying the unchanged query: %s",
@@ -1573,10 +1560,9 @@ class SparqlHelper:
             self._follow_redirect(location)
         raise EndpointError(f"More than {self.MAX_REDIRECTS} redirects from the endpoint")
 
-    # A redirect of the endpoint (http to https: AgroLD's sparql.southgreen.fr answers a POST
-    # with 302) is followed by sending the same request, with its method and body, to the new
+    # A redirect of the endpoint (http to https, answered to a POST with 302) is followed by sending the same request, with its method and body, to the new
     # URL, which is kept for every later query. requests turns a POST that it follows after a
-    # 302 into a GET without the query (AgroLD: HTTP 406, rehearsal 2026-10-06).
+    # 302 into a GET without the query, which the endpoint then refuses.
     REDIRECT_STATUS: ClassVar[tuple[int, ...]] = (301, 302, 303, 307, 308)
     MAX_REDIRECTS: ClassVar[int] = 5
 
@@ -1998,7 +1984,7 @@ class SparqlHelper:
             except PaginationTruncatedError as error:
                 # Virtuoso sorts at most 10,000 rows for a page (SR353). Rows of SELECT DISTINCT,
                 # and of a GROUP BY on projected variables, are unique on those variables, so
-                # the pages continue with a cursor on them (SIBiLS: the objects of a property).
+                # the pages continue with a cursor on them.
                 distinct = dict.get(parsed, "modifier") == "DISTINCT"
                 conditions = parsed["groupby"]["condition"] if "groupby" in parsed else []
                 group_keys = sorted(str(c) for c in conditions if isinstance(c, Variable))
@@ -2317,7 +2303,7 @@ class SparqlHelper:
                 and self.row_cap_suspected(chunk_count)
             ):
                 # A short page of a common server cap may be cut, not the end: the next page is
-                # asked for, in pages of the cap (FANAVI: 1000 rows whatever the LIMIT).
+                # asked for, in pages of the cap.
                 logger.warning(
                     "Chunked %s: %d rows of %d asked, a common server cap; paging by %d",
                     purpose or "query",
@@ -2437,21 +2423,16 @@ def graph_exclusion_prologue(graphs: list[str]) -> str:
     """Return the Virtuoso pragmas that leave *graphs* out of the default graph of a query.
 
     Without a dataset clause, Virtuoso's default graph is the union of every graph, its system
-    graphs included (virtrdf#, the WebDAV graph): the census of AOP-Wiki counted 340,949 triples
-    of which 2,479 are virtrdf# and 23 the service description. The pragmas are sent only with a
+    graphs included (virtrdf#, the WebDAV graph), which a census would count as data. The
+    pragmas are sent only with a
     query that has no FROM or FROM NAMED: Virtuoso drops a FROM that names an excluded graph and
     reads every other graph instead.
 
     Only input:default-graph-exclude is sent, never input:named-graph-exclude:
 
     - on some Virtuoso versions input:named-graph-exclude empties the default graph of the
-      query, silently (dbpedia.org, 2026-10-06: SELECT DISTINCT ?class WHERE { ?s a ?class }
-      answered 1099 classes without pragmas, 1086 with input:default-graph-exclude <virtrdf#>
-      alone, and 0 rows, HTTP 200, no error, with input:named-graph-exclude);
-    - it makes a query that binds a graph slow (sparql.string-db.org, 2026-10-06: SELECT
-      DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } } took 0.2 s without it, 0.24 s with
-      input:default-graph-exclude and 37.7 s with input:named-graph-exclude, past the 60 s cut
-      of its proxy under load).
+      query, silently (0 rows, HTTP 200, no error);
+    - it can make a query that binds a graph many times slower.
 
     A query that binds a graph (?g in GRAPH ?g) is cleaned of the engine graphs by the caller
     instead: the graph listings drop the graphs with an excluded prefix.
@@ -2467,8 +2448,7 @@ def _error_detail(body: str) -> str:
 
     A JSON body (QLever) carries the reason in "exception", which itself may start with
     "Invalid SPARQL query:"; other bodies are cut where the echoed query begins. An HTML page is
-    read as its text, which may hold such a JSON body (sparql.uniprot.org, HTTP 400: "Query
-    evaluation exception. { "exception": "Tried to allocate 397.1 GB ..." }").
+    read as its text, which may hold such a JSON body.
     """
     try:
         reason = json.loads(body).get("exception")

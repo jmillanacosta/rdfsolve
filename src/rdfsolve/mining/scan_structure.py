@@ -69,8 +69,8 @@ __all__ = [
 BUCKETS = 8
 # Shapes (distinct subject and object property sets) of one property above which its uncovered
 # edges are described by their kind, datatype and language alone (shape_semantics
-# "property_profile"), with exact counts: Oregano (job 115896) has no class, and its nodes'
-# property sets gave 1,714,912 structural patterns, which the outputs could not hold in 64 GB.
+# "property_profile"), with exact counts: a source without classes can give millions of
+# property-set patterns, which the outputs cannot hold.
 STRUCTURAL_SHAPES_PER_PROPERTY = 200
 _KIND = {"iri": "IRI", "bnode": "BlankNode", "literal": "Literal"}
 
@@ -486,9 +486,8 @@ def _census_graph(
             covered = _covered(rows, types, own)
             path = uncovered_dir / f"{number:05d}.parquet"
             rows.join(covered, on=["s", "o"], how="anti").sink_parquet(path)
-            # Two plans, not one collect_all over a shared scan: collect_all panicked in Polars'
-            # plan formatting on rdfportal.chembl (job 115861, "index out of bounds: the len
-            # is 0 but the index is 0" in polars-plan ir/format.rs) and ended the job.
+            # Two plans, not one collect_all over a shared scan: collect_all can panic in Polars'
+            # plan formatting ("index out of bounds: the len is 0 but the index is 0").
             triples = rows.select(pl.len()).collect()
             untyped = rows.join(members, on="s", how="anti").select(pl.len()).collect()
             missing = pl.scan_parquet(path).select(pl.len()).collect().item()
@@ -579,8 +578,7 @@ def _census_graph(
                 terms = [p for p in f"{row['ss'] or ''}>{row['os'] or ''}".split(">") if p]
                 if row["kind"] not in _KIND or not all(_pattern_term(t) for t in terms):
                     # A row whose kind or property is not a term (an empty or NUL-filled
-                    # string): left out and reported, not a KeyError that fails the source
-                    # (rdfportal.oma, job 115902: "KeyError: ''").
+                    # string): left out and reported, not a KeyError that fails the source.
                     shown = repr(f"{predicate} {row['kind']} {row['ss']} {row['os']}"[:200])
                     left_out[shown] = left_out.get(shown, 0) + int(row["n"])
                     continue
@@ -723,8 +721,8 @@ def property_usage_evidence(
     # One pass over each predicate for all measured classes; the rows are then split into the
     # batches of classes whose states the miner records. The records are joined and counted by
     # id (sid), the classes as an enum, and the values of a subject as its rows: by text and a
-    # set of values per subject, the value counts of allie's 186 million rows of one predicate
-    # took 64 GB, by id 13.5 GB (jobs 115892, 116004; agent-findings/term-release-memory.md).
+    # set of values per subject, the value counts of a large predicate take several times the
+    # memory.
     members = (
         store.type_ids()
         .select("sid", c=_bare(pl.col("c")))

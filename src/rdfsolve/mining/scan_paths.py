@@ -44,8 +44,8 @@ __all__ = ["find_tested_paths_in_store"]
 # reaches instead (find_tested_paths_in_store.extend).
 PAIR_LIMIT = 20_000_000
 # Paths of one length from one start class that are kept (find_tested_paths_in_store); the
-# others are counted (omitted_by_class) and not extended. onco (job 115871) kept 18.9 M
-# matched paths in its 1800 s budget, a 4.96 GB schema, and its outputs ran out of memory.
+# others are counted (omitted_by_class) and not extended: without a cap, millions of matched
+# paths can fill the schema and run its outputs out of memory.
 PATHS_PER_CLASS = 1000
 
 

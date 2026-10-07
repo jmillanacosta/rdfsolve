@@ -58,7 +58,7 @@ NAMES = (
     "http://www.w3.org/2004/02/skos/core#prefLabel",
 )
 LOCAL = "-"  # the namespace of a node with no registered identifier
-# A version suffix: WP78_r141553, P12345.2, ENSG00000139618.17, name_v2.
+# A version suffix: _r<n>, .<n>, _v<n> or -v<n> after the identifier.
 _VERSION = re.compile(r"^(?P<base>.+?)(?:_r|_v|\.|-v)\d+$")
 
 
@@ -223,7 +223,7 @@ def _variant_keys(variants: Iterable[tuple[str, str]]) -> set[frozenset[str]]:
 
 
 def _versions(keys: Iterable[str]) -> set[frozenset[str]]:
-    """Return the pairs of an identifier and a version of it (WP78, WP78_r141553): one entity,
+    """Return the pairs of an identifier and a version of it (_VERSION): one entity,
     by the policy (a version is a property of one node).
     """
     present = set(keys)

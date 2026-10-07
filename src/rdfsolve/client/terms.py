@@ -5,7 +5,7 @@ per-term patterns with their counts, and a manifest) and ``<stem>_term_classes.p
 classes, their instances, parents, default representative and overlaps). These functions need
 nothing else: no data, no endpoint.
 
-    release = read_term_release("hra-kg_local_terms.parquet")
+    release = read_term_release("<source>_local_terms.parquet")
     table = regroup(release, representatives(release, budget=50))
     patterns = to_patterns(table)
 

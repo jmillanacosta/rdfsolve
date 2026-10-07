@@ -66,7 +66,7 @@ DEFAULT_CAP = 50_000_000
 MANIFEST = "manifest.json"
 # Formats asked for, best first; N-Triples streams and parses fastest.
 # N-Triples alone first: given a list with q-values, QLever answers Turtle, which it writes
-# 50-75 times slower (OKN: about 4 k triples/s against 220-300 k/s for N-Triples, 2026-10-06).
+# many times slower than N-Triples.
 ACCEPT = "application/n-triples"
 # Asked for when an endpoint refuses ACCEPT with HTTP 406, then FALLBACK_ACCEPT.
 ACCEPT_ANY = (
@@ -84,12 +84,11 @@ _FORMATS: dict[str, tuple[str, str]] = {
     "application/rdf+xml": ("rdf", "RDF_XML"),
 }
 # Graphs that hold a W3C vocabulary as the engine ships it, not a source's data: Virtuoso loads
-# the OWL vocabulary into <http://www.w3.org/2002/07/owl#> (160 triples; ATTED-II's endpoint
-# holds nothing else, 2026-10-06).
+# the OWL vocabulary into <http://www.w3.org/2002/07/owl#>.
 VOCABULARY_GRAPHS = ("http://www.w3.org/2002/07/owl#",)
 # Texts with which a server ends an HTTP 200 body that it could not finish: QLever writes
 # "!!!!>># An error has occurred while exporting the query result. ... Operation timed out."
-# after a half-written triple (apps.okn.us/federation: 426,389 of 774,743 triples, 2026-10-06).
+# after a half-written triple.
 ERROR_TRAILERS = (b"!!!!>># An error has occurred",)
 _TAIL_BYTES = 8192
 # Engines whose default graph, without a dataset clause, is the union of the named graphs: an
@@ -182,8 +181,7 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
 
     Return (triples, triples with a blank node, first syntax error, statements that do not
     parse). After a syntax error the file is read leniently, as a lenient loader would. When
-    even the lenient parser stops (a literal as subject: IDSM's MolMeDB; a literal as
-    predicate: GO-CAM), an N-Triples file is read line by line, and each line that does not
+    even the lenient parser stops (a literal as subject or as predicate), an N-Triples file is read line by line, and each line that does not
     parse is counted; in a Turtle file the statements after the error are not known, and
     the count of those that do not parse is given as -1.
     """
@@ -206,7 +204,7 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
                 blanks += blank(quad)
         return triples, blanks
 
-    # pyoxigraph raises MemoryError for a statement longer than its 16 MiB buffer (era-kg).
+    # pyoxigraph raises MemoryError for a statement longer than its 16 MiB buffer.
     try:
         triples, blanks = scan(False)
         return triples, blanks, None, 0
@@ -555,7 +553,7 @@ class GraphExporter:
             first = next(chunks, b"")
             if _media(piece.content_type) not in _FORMATS:
                 start = first.lstrip()[:2048]
-                # QLever (the OKN Frink endpoints) sends N-Triples without a Content-Type: a body
+                # QLever can send N-Triples without a Content-Type: a body
                 # that starts as Turtle or N-Triples does (or is empty) is read as Turtle, of
                 # which N-Triples is a subset.
                 if piece.content_type or not (
@@ -681,9 +679,9 @@ class GraphExporter:
     def _unreadable(self, outcome: GraphOutcome, where: str, prologue: str) -> bool:
         """Mark a graph that the endpoint counts but whose triples no query reads.
 
-        STRING's Virtuoso counts 6 to 1,480 triples in 11 vocabulary graphs that it ships
-        (http://purl.org/dc/terms/, http://rdfs.org/sioc/ns#, ...) while CONSTRUCT and SELECT
-        of them answer nothing (2026-10-06): nothing can be exported or mined from them.
+        An endpoint can count triples in graphs (vocabulary graphs it ships, private graphs)
+        while CONSTRUCT and SELECT of them answer nothing: nothing can be exported or mined from
+        them.
         """
         from rdfsolve.sparql_helper import SparqlHelperError
 
@@ -814,7 +812,7 @@ class GraphExporter:
     def _page_size(self) -> int:
         """Return the page size: the server's row cap seen on a cut result, else the cap.
 
-        Virtuoso answers ResultSetMaxRows + 1 rows (10,001 at NanoSafety), so the size is taken
+        Virtuoso can answer ResultSetMaxRows + 1 rows, so the size is taken
         down to the known cap below it.
         """
         from rdfsolve.sparql_helper import SparqlHelper
@@ -867,7 +865,7 @@ class GraphExporter:
                     outcome.pieces.append(Piece(label=label, query=query, error=str(error)))
                     if size > MIN_PAGE:
                         # A refused or cut page is asked again, smaller: Virtuoso refuses a
-                        # CONSTRUCT whose triples overflow its hash dictionary (2,000,000).
+                        # CONSTRUCT whose triples overflow its hash dictionary.
                         size = max(MIN_PAGE, size // 4)
                         page -= 1
                         continue
@@ -990,14 +988,14 @@ class GraphExporter:
             if count == 0:
                 return None, "the default graph holds no triple"
             if count is not None and len(counts) == len(graphs) and count == sum(counts.values()):
-                # Fuseki with a union default graph (AGROVOC: 10,131,452 in both, 2026-10-06).
+                # Fuseki with a union default graph.
                 return None, f"the default graph counts {count}, as many as the named graphs"
             return "undetermined", f"not answered: {str(error)[:200]}; default count {count}"
         if extra:
             # RDF4J and GraphDB keep the triples loaded without a graph in a null context that
-            # GRAPH ?g does not match but that can be named: exported whole, it is countable
-            # (ENPKG: COUNT over FILTER NOT EXISTS refused; 510,353 of the 15,359,405 null-context
-            # triples are also in named graphs, 2026-10-06).
+            # GRAPH ?g does not match but that can be named: exported whole, it is countable (a
+            # count of its triples outside every named graph can be refused, and some of them
+            # are also in named graphs).
             null, _ = self._count(f"GRAPH <{self.NULL_CONTEXT}> {{ ?s ?p ?o }}")
             if null:
                 return (
@@ -1107,8 +1105,8 @@ class GraphExporter:
     def source_versions(self) -> list[dict[str, str]] | str:
         """Return the versions and dates that the endpoint states of its datasets, or why not.
 
-        An endpoint may serve another release than its description elsewhere (OKN: wildlifekn
-        and nikg differ between SPARQL, TPF and okn-void, 2026-10-06); the export records what
+        An endpoint may serve another release than its description elsewhere; the export
+        records what
         the endpoint itself says when it was exported.
         """
         from rdfsolve.sparql_helper import SparqlHelperError
@@ -1324,8 +1322,8 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
         raise ValueError(f"Export not complete: {path}")
     graphs = manifest["graphs"]
     named = [g for g in graphs if g["graph"] is not None and _kept_files(g)]
-    # A graph named by a relative IRI (the OKN Frink endpoints' "void", which holds their VoID
-    # description) cannot be a registry graph; its files stay in the export and are listed.
+    # A graph named by a relative IRI (such as one that holds the endpoint's VoID description)
+    # cannot be a registry graph; its files stay in the export and are listed.
     left_out = [g["graph"] for g in named if not _ABSOLUTE.match(g["graph"])]
     named = [g for g in named if _ABSOLUTE.match(g["graph"])]
     default = [g for g in graphs if g["graph"] is None and _kept_files(g)]
@@ -1337,7 +1335,7 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
         named.append({**null[0], "graph": remainder})
     if named and default:
         # The default-graph triples that no named graph holds get a graph of their own, named
-        # after the endpoint (owner, 2026-10-06: kg-enp).
+        # after the endpoint.
         remainder = str(manifest["endpoint"]).rstrip("/") + "#default"
         default[0] = {**default[0], "graph": remainder}
         named = [*named, default[0]]

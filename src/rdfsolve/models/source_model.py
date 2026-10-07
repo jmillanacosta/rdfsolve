@@ -17,8 +17,8 @@ __all__ = [
     "SparqlExamples",
 ]
 
-# "catalog": the entry's data are descriptions of other datasets (VoID or DCAT), such as
-# okn-void, which holds the VoID of the OKN knowledge graphs. A catalog is not mined for
+# "catalog": the entry's data are descriptions of other datasets (VoID or DCAT). A catalog is
+# not mined for
 # patterns; its VoID is read per described dataset and given to the matching entries as their
 # published VoID (rdfsolve.mining.void_catalog).
 DatasetKind = Literal["instance", "ontology", "catalog", "unknown"]
@@ -48,8 +48,8 @@ class PublicationRef(BaseModel):
 class GraphSettings(BaseModel):
     """Settings of one data graph of a source that differ from the source's own.
 
-    A source whose graphs hold different kinds of data (UniProt's endpoint holds Rhea, whose
-    reactions are classes) states the settings of such a graph here. The graph is then mined on
+    A source whose graphs hold different kinds of data (one graph keeping its records as
+    classes) states the settings of such a graph here. The graph is then mined on
     its own with these settings for its per-graph schema; the other graphs keep the source's
     settings. ``name`` sets the name of the graph's per-graph schema when the derived name does
     not fit (rdfsolve.graph_parts).
@@ -169,7 +169,7 @@ class SourceModel(BaseModel):
         archive. They are kept in the download folder's left_out/ and not indexed.
     checksum_files:
         Hash kinds (md5, sha1, sha256) for which the publisher puts a checksum file beside each
-        download, named after it with the kind as suffix (mesh.nt.gz.sha1), in the format of
+        download, named after it with the kind as suffix (NAME.sha1), in the format of
         sha1sum. The hash is recorded with the download and checked against the file.
     checksums:
         Hashes that the publisher gives for a download elsewhere than in a checksum file

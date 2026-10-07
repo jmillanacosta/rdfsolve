@@ -301,7 +301,7 @@ def _match(
             matched[name] = by_key[_key(name)]
         elif "." not in name and _key(entry.get("bioregistry_prefix", "")) in by_key:
             matched[name] = by_key[_key(entry["bioregistry_prefix"])]
-    # Names may differ (monarch-kg, kg-monarch): an entry with the same file or the same named
+    # Names may differ: an entry with the same file or the same named
     # endpoint path as a resource's own product is that resource.
     by_place: dict[str, str] = {}
     for resource in resources:

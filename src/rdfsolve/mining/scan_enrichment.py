@@ -17,7 +17,7 @@ BY; restriction examples: SAMPLE), these functions take the smallest term, so th
 the same on every run. Where the miner chooses by a rule (labels), the rule is the same.
 
 Literal text: a store exported from QLever holds the text as QLever's TSV writes it, and the TSV
-writes a tab inside a literal as a space (WikiPathways RO_0002120 rdfs:comment). Newlines and
+writes a tab inside a literal as a space. Newlines and
 other characters are kept. ``enrichment`` takes an optional *select* (a SPARQL SELECT function,
 such as SparqlHelper.select on the index's endpoint): the definitions and labels, the only
 long texts, are then read by the miner's own definition_query, in batches of 50 terms, and the
@@ -561,8 +561,7 @@ def ontology_structure(
     the miner's queries define them. One difference, on purpose: the miner's queries for
     owl:equivalentClass, owl:disjointWith, owl:equivalentProperty and owl:inverseOf bind the
     selected term inside a UNION branch, where SPARQL evaluates it before the outer VALUES, so
-    they return every such pair of the dataset (WikiPathways: 354 disjoint pairs where none
-    touches a schema class; the report counted them once per batch, 1416). Here these pairs are
+    they return every such pair of the dataset, once per batch. Here these pairs are
     those that touch a selected term, as the queries intend.
     """
     from rdfsolve.ontology.structure import (

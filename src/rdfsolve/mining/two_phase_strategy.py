@@ -163,7 +163,7 @@ class TwoPhaseStrategy(MiningStrategy):
         """Group ontology terms under their ancestors before per-class mining.
 
         Only when ontology-as-data is on and there are more classes than the configured limit
-        (for example about 181,000 ChEBI types in PubChem, which cannot be mined one by one).
+        (classes that are too many to mine one by one).
         The representatives are chosen as after mining (choose_representatives) and recorded
         with their members for review; the rows of each representative are then mined over all
         its member terms at once.
@@ -175,8 +175,8 @@ class TwoPhaseStrategy(MiningStrategy):
         try:
             return self._group_terms_now(classes, context, phase)
         except SparqlHelperError as error:
-            # Grouping is an optimisation, but these classes are too many to mine one by one
-            # (GO-CAM: 1.7 M; at 15 classes a batch and a few queries a batch, weeks). The
+            # Grouping is an optimisation, but these classes are too many to mine one by one.
+            # The
             # source is not failed: it ends partial, with the reason and the class count.
             logger.warning("Grouping before mining failed (%s); classes not mined", error)
             context.report.finish_phase(phase, error=str(error)[:300])
@@ -232,10 +232,9 @@ class TwoPhaseStrategy(MiningStrategy):
         files = {path: read_hierarchy([path]) for path in context.ontology_hierarchy_files}
         with_loaded = fill_parents(parents, list(files.values()), classes)
         chosen = choose_representatives(classes, parents, budget)
-        # Terms that no ancestor can take are grouped by the shape of their instances (the owner
-        # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later. When
-        # they are too many to read their shapes through the endpoint, they are grouped by
-        # namespace (owner decision of 2026-10-06, GO-CAM).
+        # Terms that no ancestor can take are grouped by the shape of their instances: a group
+        # is a shared unknown type, named later. When they are too many to read their shapes
+        # through the endpoint, they are grouped by namespace.
         candidates = parentless_candidates(chosen, parents)
         namespace_groups: dict[str, dict[str, Any]] = {}
         shapes: dict[str, Any] = {}
@@ -307,8 +306,7 @@ class TwoPhaseStrategy(MiningStrategy):
             "grouping_of_terms_without_parent": "namespace" if namespace_groups else "shape",
             "terms_without_parent_candidates": len(candidates),
             "shape_read_max_terms": ontology_as_data.SHAPE_READ_MAX_TERMS,
-            # Only when the terms without a parent were grouped by namespace (the shape groups,
-            # the owner decision of 2026-09-30, replaced the earlier namespace groups).
+            # Only when the terms without a parent were grouped by namespace.
             **({"namespace_groups": namespace_groups} if namespace_groups else {}),
             "namespace_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
             "shape_groups": {
@@ -342,8 +340,8 @@ class TwoPhaseStrategy(MiningStrategy):
         """Keep the completed batches of an earlier run and plan only the other classes.
 
         A pattern row belongs to one subject class, so a completed batch is reused when all its
-        classes are classes of this run, also under another plan (PubChem run 6 was planned in
-        fixed batches after its weight count was refused).
+        classes are classes of this run, also under another plan (fixed batches, when the
+        weight count was refused).
         """
         by_name = {str(c): c for c in classes}
         kept = [
@@ -373,8 +371,7 @@ class TwoPhaseStrategy(MiningStrategy):
         ):
             # The rdf:type triples of each class in the whole index bound its subjects in the
             # scope. The weights only plan batches, and _same_members confirms a match with a
-            # count of the scope (PubChem: COUNT(DISTINCT) with 26 FROM clauses asked 68.8 GB;
-            # the bound took 1.6 s).
+            # count of the scope (a COUNT(DISTINCT) over many FROM clauses can be far costlier).
             counts["upper_bound"] = _build_class_weight_query(None)
         rows = None
         for state, query in counts.items():
@@ -425,8 +422,8 @@ class TwoPhaseStrategy(MiningStrategy):
 
         When the classes typed only in the excluded engine graphs are known
         (SparqlHelper.engine_only_classes), the listing is read without the exclusion prologue,
-        which can make it much slower (forum, 2026-10-06: 175 s without it, a 502 after 315 s
-        with it), and those classes are dropped from it: the same classes.
+        which can make it much slower, and those classes are dropped from it: the same
+        classes.
         """
         try:
             return self._discover_classes_within_limit(context)
@@ -454,8 +451,7 @@ class TwoPhaseStrategy(MiningStrategy):
 
         Two small queries describe a spread of 200 listed classes: their instances, and their
         named parents. Classes with about one instance each, under a few parents, are records
-        or per-record types (BioGateway: SO_0000727 cis-regulatory modules, one evidence
-        individual each). The run goes on with a spread of CLASS_SAMPLE listed classes, grouped
+        or per-record types. The run goes on with a spread of CLASS_SAMPLE listed classes, grouped
         before mining as any other list of classes when ontology terms are grouped; the rows are
         marked sampled (a "sampled" failure), and the listing is the sorted start of all
         classes, so classes after it are not in the sample.
@@ -525,7 +521,7 @@ class TwoPhaseStrategy(MiningStrategy):
         """Discover named classes in the current scope.
 
         Every later result depends on this listing, so a gateway that answers for an
-        overloaded host (pdbj.bmrb: Apache "Proxy Error" 502, job 115329) is waited out before
+        overloaded host (a proxy's 502) is waited out before
         the listing is given up (graph_selection.wait_out_gateway).
         """
         listed = True
@@ -589,10 +585,9 @@ class TwoPhaseStrategy(MiningStrategy):
     ) -> list[dict[str, Any]]:
         """List the classes of a sample of the type statements when the whole listing failed.
 
-        pdbj.bmrb (job 115591): every form of ``SELECT DISTINCT ?class WHERE { ?s a ?class }``
-        (one query, then pages from offset 0) was cut by the proxy with HTTP 502 at about
-        122 s, while a trivial query answered at once, and the source ended FAILED after
-        1295 s. The listing is asked again over the first N type statements
+        A proxy can cut every form of ``SELECT DISTINCT ?class WHERE { ?s a ?class }`` (one
+        query, then pages from offset 0) at its time limit, while a trivial query answers at
+        once. The listing is asked again over the first N type statements
         (rdfsolve.mining.sampling: N, N/10, N/100). The classes of the sample are mined as
         any others; classes outside it are not, so the listing is recorded as sampled (a lower
         bound, config class_listing) and the source ends partial. When the samples are refused
@@ -675,7 +670,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 )
         except EndpointTimeoutError as error:
             # A response limit, a time limit, or an answer cut off at the time limit of
-            # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
+            # the engine.
             logger.warning("Class listing refused (%s); paging it", error)
             class_bindings = self._page_classes(
                 context,
@@ -689,14 +684,12 @@ class TwoPhaseStrategy(MiningStrategy):
     ) -> list[dict[str, Any]]:
         """Read the class listing in pages; on a deep OFFSET failure, read it by key.
 
-        forum (job 115328) read 89,375 classes in OFFSET pages of 0.2-0.7 s, then each page
-        from offset 80,000 took about 5 min and ended in a 502: an engine that skips OFFSET
-        rows pays for every row skipped. When an OFFSET page fails after the first, the
+        An engine that skips OFFSET rows pays for every row skipped, so deep pages can end in a
+        timeout or a 502 after shallow ones answered quickly. When an OFFSET page fails after the first, the
         listing is read again by key (keyset paging: ORDER BY the class's key and FILTER past
         the last key read, SparqlHelper.select_chunked with pagination="cursor"), which costs
         the same at any depth. The OFFSET pages stay the first choice: a key page sorts the
-        whole listing (forum: more than its proxy's 300 s), while a shallow OFFSET page does
-        not. When the key pages fail too, the classes read by both are kept and mined: the
+        whole listing (which can exceed a proxy's limit), while a shallow OFFSET page does not. When the key pages fail too, the classes read by both are kept and mined: the
         listing is recorded as truncated (an unresolved failure, so the source ends PARTIAL,
         and config.class_listing, whose class count is a lower bound). A failure before any
         row is read is raised as before.

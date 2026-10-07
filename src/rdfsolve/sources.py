@@ -33,8 +33,8 @@ _EXTRA_PROVIDER_INDEX: dict[str, list[str]] | None = None
 def _build_extra_provider_index() -> dict[str, list[str]]:
     """Build a mapping from provider code -> [bioregistry prefix, ...].
 
-    This allows resolving names like ``"bio2rdf.uniprot"`` to ``"uniprot"``
-    by looking up which resource has ``bio2rdf`` as an extra provider.
+    This allows resolving names like ``"<provider>.<prefix>"`` to ``"<prefix>"``
+    by looking up which resource has ``<provider>`` as an extra provider.
     The index is computed once and cached in :data:`_EXTRA_PROVIDER_INDEX`.
     """
     try:

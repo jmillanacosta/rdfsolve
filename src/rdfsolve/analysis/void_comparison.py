@@ -7,14 +7,13 @@ property pairs and whole patterns, what both state and what only one states; for
 both state with a count, how the counts agree; and what each cost (queries and seconds, from the
 mining reports).
 
-A local index may hold only a sample of some graphs (the registry's ``sampled_graphs``, such as
-UniProt's /uniprot, Swiss-Prot only). The mined counts of those graphs are counts of the sample,
+A local index may hold only a sample of some graphs (the registry's ``sampled_graphs``). The
+mined counts of those graphs are counts of the sample,
 not of the data the VoID describes: such patterns are left out of the count agreement and
 counted apart, and a pattern that only the VoID states is no evidence that the data lacks it.
 
 The members of each class (void:entities of a class partition, and the mined entity counts) are
-compared as the pattern counts are. A VoID that a catalog publishes of a dataset (okn-void)
-describes the dataset's data graph; a mined schema of more graphs (the dataset's own VoID graph
+compared as the pattern counts are. A VoID that a catalog publishes of a dataset describes the dataset's data graph; a mined schema of more graphs (the dataset's own VoID graph
 beside its data) is cut to the described graphs first (restrict_to_graphs).
 """
 

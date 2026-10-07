@@ -46,7 +46,7 @@ class SchemaArgs(Args):
 
 
 class FindArgs(Args):
-    """Find resources in the data by name, words of their text, IRI, or identifier (for example CAS number or hgnc:5). Gives IRIs with their classes."""
+    """Find resources in the data by name, words of their text, IRI, or identifier (a CURIE or a key value). Gives IRIs with their classes."""
 
     text: str = Field(min_length=1, max_length=200)
     in_class: str | None = Field(default=None, description="Optional class to search in.")

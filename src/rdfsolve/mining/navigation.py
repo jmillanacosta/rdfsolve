@@ -494,11 +494,10 @@ def find_tested_paths(
     Only matched paths are kept, with their number of matched start instances. The search stops
     when the time budget is spent; a length is complete when every path of the shorter length
     was extended without a failed query. Each query has the rest of the budget, one try and no
-    page recovery: a query that does not answer in that time is a failed query (Bgee run 13
-    waited for one extension query 2 h at a time, in ever smaller pages, until the job ended). *members* gives the member terms of each group of
+    page recovery: a query that does not answer in that time is a failed query. *members* gives the member terms of each group of
     ontology terms (the report of the mining), which the data use as types instead of the group.
-    The search also stops when the endpoint cuts its queries at a fixed limit (QueryCuts: Bgee's
-    gateway cut 13 extension queries in a row at 128 s, until the budget ended); the summary
+    The search also stops when the endpoint cuts its queries at a fixed limit (QueryCuts); the
+    summary
     says so (stop_reason "endpoint_cuts", cuts) and counts the queries not sent.
     """
     from datetime import datetime, timezone

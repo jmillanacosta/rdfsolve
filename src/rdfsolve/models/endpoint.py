@@ -91,9 +91,9 @@ class Endpoint(BaseModel):
     Example
     -------
     >>> endpoint = Endpoint(
-    ...     name="uniprot",
-    ...     url="https://sparql.uniprot.org/sparql",
-    ...     description="UniProt protein database",
+    ...     name="example",
+    ...     url="https://example.org/sparql",
+    ...     description="An example endpoint",
     ... )
     """
 

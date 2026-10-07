@@ -304,7 +304,7 @@ def enumerate_properties_for_class(
 
     A timeout is reported, not paged: the grouped result is small, so every page
     would repeat the whole join. On QLever the property sets of the subjects are read first
-    (PubChem run 6: the listing of pubchem:Compound by its triples failed three times).
+    (listing a large class by its triples can fail).
     """
     if str(getattr(helper, "sparql_engine", "")).lower() == "qlever":
         sets = select_outcome(

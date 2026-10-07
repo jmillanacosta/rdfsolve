@@ -129,9 +129,7 @@ class FormatSpec:
 
 # Each input decompressed when it holds gzip data and read as it is otherwise (gzip -f). The
 # former "( zcat FILES || cat FILES )" wrote every file raw, gzip data too, after the part that
-# zcat had decompressed when one file was not gzip: the indexes of rdfportal.bacdive and
-# rdfportal.glytoucan (2026-04-21) stopped at the raw bytes and kept 10,000,000 of 16,593,980
-# triples.
+# zcat had decompressed when one file was not gzip, and an index stopped at the raw bytes.
 DECOMPRESS_EACH = "gzip -dcf ${INPUT_FILES} | grep -v '^$'"
 
 # Order matters: first match wins when multiple download_* keys exist.
@@ -199,7 +197,7 @@ FORMAT_REGISTRY: dict[str, FormatSpec] = {
         cat="cat ${INPUT_FILES}",
         needs_conversion=True,
     ),
-    # A Blazegraph journal (GO-CAM publishes its production store only as one), exported to
+    # A Blazegraph journal (a store published only as a journal), exported to
     # compressed N-Quads with the graph of each statement.
     "jnl": FormatSpec(
         qlever_format="nq",
@@ -427,7 +425,7 @@ def urls_from_field(entry: dict[str, Any], field_name: str) -> list[str]:
 
 
 def graph_uri_to_tar_folder(uri: str) -> str:
-    """Convert a named-graph URI to the IDSM-style tar folder name."""
+    """Convert a named-graph URI to its folder name in a tar of one folder per graph."""
     no_scheme = re.sub(r"^https?://", "", uri)
     return "http_" + no_scheme.replace("/", "_")
 
@@ -463,11 +461,10 @@ def _folder_cmd(url: str, suffix: str) -> str:
     """Return a wget command that fetches the SUFFIX files of a published folder (a URL ending
     in /) and of its subfolders, kept in a folder named after it.
 
-    RDF Portal publishes PDB as about 220,000 files in 1,080 folders under one folder. The listing
-    pages are read and not kept; a fetch that stops resumes its files. The folders are followed
-    to any depth (-l inf): wget -r stops at 5 levels by default, and RDF Portal's MassBank files
-    are 6 levels down (MassBank-RDF/draft_ttl/MassBank_RDF_ttl/CC0/UFZ/*.nt.gz), so a fetch
-    without it gets only empty folders.
+    A provider can publish one dataset as hundreds of thousands of files in nested folders. The
+    listing pages are read and not kept; a fetch that stops resumes its files. The folders are
+    followed to any depth (-l inf): wget -r stops at 5 levels by default, so deeper files would
+    leave only empty folders.
     """
     from urllib.parse import urlparse
 
@@ -482,12 +479,11 @@ def _folder_cmd(url: str, suffix: str) -> str:
 def _saved_names(urls_by_suffix: dict[str, list[str]]) -> dict[str, str]:
     """Return the name a download is saved under when its own name does not serve.
 
-    - A file whose name has no RDF extension is named by the format of its download field:
-      ALLIE publishes N-Triples as pubmed_rdf_nt_latest.gz, saved as pubmed_rdf_nt_latest.nt.gz,
-      so that it is decompressed and indexed.
-    - Zenodo serves each record's file at .../files/dataset.nq (NanoSolveIT: three records); under
-      one name, wget -c would take the second as the first, complete, and not fetch it. Each such
-      download is saved as N__NAME.
+    - A file whose name has no RDF extension is named by the format of its download field
+      (NAME.gz from download_nt is saved as NAME.nt.gz), so that it is decompressed and indexed.
+    - Several downloads can share a file name (records of one repository whose files have the
+      same name); under one name, wget -c would take the second as the first, complete, and not
+      fetch it. Each such download is saved as N__NAME.
     """
     names: list[tuple[str, str | None]] = []
     for suffix, urls in urls_by_suffix.items():
@@ -587,8 +583,8 @@ def _collect_from_subdirs_step(*, include_archives: bool = False) -> str:
 def _drop_empty_members_step() -> str:
     """Shell fragment: leave out the empty files that archives hold, and name each.
 
-    An archive can hold an empty member (CORDIS publishes EURIO's Person.nq empty); it has no
-    statements, and the index refuses an empty input. A download that is empty is not affected.
+    An archive can hold an empty member; it has no statements, and the index refuses an empty
+    input. A download that is empty is not affected.
     """
     return (
         "find . -mindepth 2 -type f -empty \\( -name '*.ttl' -o -name '*.nt' -o -name '*.nq' "
@@ -669,8 +665,8 @@ def _extract_archives_steps() -> list[str]:
 def _leave_out_steps(patterns: list[str]) -> list[str]:
     """Shell steps: move the files that the entry leaves out of the index to left_out/.
 
-    A provider can publish files that are not its data beside it: Cellosaurus's RDF archive
-    holds its SPARQL query examples (SHACL) and a VoID description of its endpoint. They are
+    A provider can publish files that are not its data beside it (SPARQL query examples, a
+    VoID description of its endpoint). They are
     kept, named in the log, and not indexed: the index reads the download folder only, not its
     subfolders.
     """
@@ -716,7 +712,7 @@ def _convert_rdfxml_steps() -> list[str]:
     return [
         f"echo 'Converting RDF/XML -> N-Quads ({CONVERTER}) ...'",
         (
-            # An empty file (UniProt publishes enzyme-hierarchy.rdf empty) has no statements.
+            # An empty file has no statements.
             'for f in *.rdf *.owl *.xml; do [ -s "$f" ] || continue; '
             'nq=$(echo "$f" | sed "s/\\.[^.]*$/.nq/"); '
             '[ -f "$nq" ] && continue; '
@@ -820,7 +816,7 @@ def tar_source_qleverfile_parts(
     rdf_subdir: str,
 ) -> tuple[str, str, str, str]:
     """Return (get_data_cmd, rdf_format, input_files, cat_input_files)
-    for a source whose data lives inside an IDSM-style remote tar.
+    for a source whose data lives inside a remote tar of one folder per graph.
     """
     steps: list[str] = [
         f"mkdir -p {src_data_dir}",
@@ -989,7 +985,7 @@ def build_qleverfile(
 ) -> str:
     """Build a Qleverfile for a single sources.yaml entry.
 
-    Handles every download_* flavour, IDSM-style bulk tars
+    Handles every download_* flavour, bulk tars of one folder per graph
     (local_tar_url), archives, and format conversions.
     """
     cfg = cfg or QleverConfig()
@@ -1026,8 +1022,8 @@ def build_qleverfile(
                     cat = ""
                     if suffix in {"rdf", "owl"}:
                         # RDF/XML is converted to N-Triples, which take the graph of the mapping.
-                        # A file published empty (UniProt's enzyme-hierarchy.rdf.xz) has no
-                        # statements and would stop the converter: it is marked, not converted.
+                        # A file published empty has no statements and would stop the
+                        # converter: it is marked, not converted.
                         target = filename.rsplit(".", 1)[0] + ".nt"
                         marker = f"{target}{EMPTY}"
                         commands.append(

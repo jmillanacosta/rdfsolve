@@ -1,7 +1,7 @@
 """Schema from the VoID that an endpoint publishes, with light mining of what it leaves out.
 
-An endpoint that publishes a full VoID description (void-generator: IDSM, UniProt, Rhea, Bgee,
-SwissLipids) states its classes, the properties of each class with their datatypes, and the
+An endpoint that publishes a full VoID description (as void-generator writes it) states its
+classes, the properties of each class with their datatypes, and the
 links between classes (linksets), with counts. The schema is read from that description,
 scoped to the graphs of the source (rdfsolve.schema_models.readers.void). Mining the endpoint
 for the same patterns is long and is cut by proxies and time limits.
@@ -19,10 +19,9 @@ were cut and not sent.
 Also asked: the language tags of language-tagged literals (from a sample), five subjects of
 every class (their IRI namespaces), one example of the largest patterns, and a re-count of the
 largest and of randomly chosen patterns, which measures how the endpoint drifted from its VoID
-since the VoID was issued. The drift is reported; the VoID is used (the owner's decision).
+since the VoID was issued. The drift is reported; the VoID is used.
 
-Light means light: each query has query_seconds (30 s; 99 % of the answered void/* queries of
-the rehearsal of 2026-10-06 took under 20 s, most of them 2 s), and a purpose whose queries run
+Light means light: each query has query_seconds (30 s), and a purpose whose queries run
 past that limit five times in a row is stopped (QueryCuts with client_timeouts): the queries it
 does not send are each recorded as a measurement gap, with the reason. The class members that
 the VoID states are checked against its own property partitions (void_class_populations): a
@@ -72,7 +71,7 @@ def void_gaps(void: Graph) -> list[VoidGap]:
 
     A class and property: its triples, less those of its linksets (the largest description of
     each object class), of its partitions by object class (nested void:classPartition or
-    void-ext:objectClassPartition, FRINK) and of its datatype partitions, have objects without
+    void-ext:objectClassPartition) and of its datatype partitions, have objects without
     a class; when its
     distinct objects exceed its distinct IRI objects and literals, some are blank nodes.
     A property of the dataset: its triples, less those of its class partitions, have subjects
@@ -324,8 +323,8 @@ class VoidStrategy(MiningStrategy):
         """Return the triples of a property in the graphs of the source.
 
         The types of their subjects and objects are matched anywhere (_typed): void-generator
-        types the ends of a link in the union of the graphs (ISDB's compounds are typed in
-        PubChem's graph), and a query limited with FROM would see no named graph.
+        types the ends of a link in the union of the graphs (an end can be typed in another
+        graph), and a query limited with FROM would see no named graph.
         """
         from rdfsolve.mining.query_builders import _graph_clause
 
@@ -342,7 +341,7 @@ class VoidStrategy(MiningStrategy):
         """Return the members of a class, typed in the default graph or in a named graph.
 
         Samples start from the class (the type index): starting from all the triples of a
-        property and filtering their subjects does not end when the class is rare (Bgee). A
+        property and filtering their subjects does not end when the class is rare. A
         member typed in two places is matched twice; samples are DISTINCT or LIMITed.
         """
         return f"{{ {{ {variable} a <{cls}> }} UNION {{ GRAPH ?_m {{ {variable} a <{cls}> }} }} }}"
@@ -504,9 +503,8 @@ class VoidStrategy(MiningStrategy):
     ) -> list[SchemaPattern]:
         """Read the classes of a sample of the IRI objects that the VoID gives no class for.
 
-        A VoID with few linksets (Bgee's of 2023: 22) leaves most links without an object class;
-        searching the whole property for an object without a class does not end in time (Bgee:
-        814 M triples). A sample of the objects says which classes they have and how many have
+        A VoID with few linksets leaves most links without an object class; searching the whole
+        property for an object without a class may not end in time. A sample of the objects says which classes they have and how many have
         none; each class not in the VoID becomes a pattern, without a count (the sample is not
         one), and the sample is recorded.
         """
@@ -608,7 +606,7 @@ class VoidStrategy(MiningStrategy):
 
             opening, closing = _graph_clause(graph_uris)
             # Members of the class (from the type index), with a statement in the graphs of the
-            # source when it has graphs; starting from all statements does not end (Bgee).
+            # source when it has graphs; starting from all statements may not end.
             in_graphs = (
                 f"FILTER EXISTS {{ {opening} ?s ?_p ?_o . {closing} }}" if graph_uris else ""
             )
@@ -728,9 +726,8 @@ def find_published_void(
     """Return the full VoID description that the endpoint publishes, or None.
 
     Full: class partitions that have property partitions (void-generator). A graph with only a
-    description of the dataset and a few linksets to other datasets (WikiPathways states 9 in its
-    data graph) is not one. The graph is fetched whole: it is metadata (IDSM: 473,000 triples,
-    80 MB), so a larger response is allowed than for data.
+    description of the dataset and a few linksets to other datasets is not one. The graph is
+    fetched whole: it is metadata, so a larger response is allowed than for data.
     """
     from rdfsolve.sparql_helper import EndpointError
 
@@ -772,9 +769,8 @@ def find_published_void(
 def _read_void_graph(helper: SparqlHelper, graph: str) -> tuple[Graph | None, str]:
     """Read a VoID graph: whole, else only its VoID terms, else in pages of SELECT.
 
-    Virtuoso refuses a CONSTRUCT of a large graph ("D1CTX: Hash dictionary is full, exceeded
-    1000000/2000000 entries": SIBiLS, RIKEN BRC, rehearsal 2026-10-06). The triples of the
-    VoID, void-ext and service-description terms (and rdf:type, dcterms:issued) are then asked
+    Virtuoso refuses a CONSTRUCT of a large graph ("D1CTX: Hash dictionary is full, …"). The
+    triples of the VoID, void-ext and service-description terms (and rdf:type, dcterms:issued) are then asked
     for alone; when that is refused too, the graph is read in ordered pages of SELECT and
     rebuilt here, unless it has blank nodes (their names do not hold across pages).
     """
@@ -867,8 +863,8 @@ def void_for_source(published: PublishedVoid, graph_uris: list[str] | None) -> G
                 g for n in named for g in void.objects(n, SD.graph) if isinstance(g, URIRef)
             )
         if not datasets and not defaults:
-            # No service description: a VoID of one dataset is the endpoint's (FRINK publishes
-            # the VoID of each OKN graph in the graph's endpoint, without one).
+            # No service description: a VoID of one dataset is the endpoint's (an endpoint can
+            # publish the VoID of its one graph without a service description).
             described = described_datasets(void)
             datasets = described if len(described) == 1 else []
         if not datasets:

@@ -84,8 +84,7 @@ def example_query(
     With *sample*, a value condition that is a filter (a literal's datatype, an untyped
     resource, a blank node) is applied to the first *sample* subject-value pairs of the
     property, not to all of them: QLever evaluates the filter over the whole join before the
-    limit (ChEMBL chembl#Activity chemblId, 24 M values: over 300 s, against 0.1 s on a sample
-    of 1,000; article/experiments/example-queries-20261002). A sample with no such value gives
+    limit, which on a large property costs far more than a sample. A sample with no such value gives
     no row; the caller asks again without one.
     """
     if not 1 <= limit <= 20:
@@ -230,8 +229,7 @@ def query_enrichment(
         """Group example queries and retain each result slot.
 
         A batch that does not complete is asked again one query at a time, so that only the
-        query that is too costly fails (ChEMBL: one string-valued pattern of chembl#Activity
-        failed 13 batches of 10, 2026-09-30).
+        query that is too costly fails.
         """
         for offset in range(0, len(queries), 10):
             group = list(enumerate(queries[offset : offset + 10], offset))

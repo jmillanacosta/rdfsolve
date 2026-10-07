@@ -38,8 +38,8 @@ Metalinks = Callable[[list[str], dict[str, Any]], dict[str, dict[str, Any]]]
 # The fields of a server's answer that tell an update (updated_urls).
 COMPARED = ("last_modified", "content_length")
 # Metalinks (RFC 5854, and version 3 of metalinker.org) that providers publish beside their
-# files, looked for in the folder of each download: UniProt publishes RELEASE.meta4 and
-# RELEASE.metalink with the release number and the size and MD5 of each file. A metalink that
+# files, looked for in the folder of each download (a release number and the size and MD5 of
+# each file). A metalink that
 # the server names in a Link header (rel=describedby, RFC 6249) is read as well.
 METALINK_NAMES = ("RELEASE.meta4", "RELEASE.metalink")
 # The hash types of a metalink, by the names of hashlib.
@@ -60,9 +60,9 @@ def server_state(url: str) -> dict[str, str | None] | None:
     Last-Modified and Content-Length tell an update; the final URL after redirects, the ETag,
     a Digest or Repr-Digest (RFC 3230, RFC 9530) and a Link header pin the file.
 
-    The request asks for the file as it is (Accept-Encoding: identity): raw.githubusercontent.com
-    otherwise gives the Content-Length of a gzip transfer, which is not the file's size and
-    made unchanged GitHub files look changed (PubChem's ontologies, 2026-10-06). A server that
+    The request asks for the file as it is (Accept-Encoding: identity): a server can otherwise
+    give the Content-Length of a gzip transfer, which is not the file's size and makes an
+    unchanged file look changed. A server that
     still answers with a Content-Encoding gives no file size: content_length is None, and the
     transfer's size and encoding are kept apart (updated_urls then compares the ETag).
     """
@@ -185,7 +185,7 @@ def entry_download_urls(entry: dict[str, Any]) -> list[str]:
     downloads of a source by this list. An entry with graph_sources downloads the URLs of its
     graphs, not top-level download fields: the pipeline wrote downloads.json with no URL for
     such an entry, then pinned the graphs' URLs, and the next run saw other downloads and set
-    the folder aside (PubChem's pin, 2026-10-06).
+    the folder aside.
     """
 
     def listed(value: Any) -> list[str]:
@@ -265,7 +265,7 @@ def _described_by(link: str | None) -> list[str]:
 
 def _fetch_text(url: str, *, decode: bool = True) -> bytes | None:
     """Return a small file, or None. A server that labels a file by each of its suffixes
-    (Apache: mesh.nt.gz.sha1 sent with Content-Encoding gzip) is read again as sent.
+    (a .gz.sha1 file sent with Content-Encoding gzip) is read again as sent.
     """
     import requests
 
@@ -669,8 +669,8 @@ def downloads_differ(
     are those of the download record when it has a download time) or from the download record
     (downloads.json); they must be the entry's *urls* (in any order: the order does not change
     the index). Then an index input that comes from none of the entry's downloads
-    (unlisted_inputs) is a file the registry does not list: ALLIE's folder held every ALLIE
-    file, HPA's held a v19 TriG without a download record where the entry names v24. *inputs*
+    (unlisted_inputs) is a file the registry does not list (other files of the provider, or an
+    older release without a download record). *inputs*
     are the files the index would be built from; the pinned index inputs are used instead when
     the pin lists them. Return None when nothing differs, or when it cannot be told.
     """
@@ -693,8 +693,8 @@ def downloads_differ(
     names = download_names(entry)
     if recorded is None and inputs:
         # Without a record, a folder that keeps its inputs but lacks one of the entry's
-        # downloads, as published, decompressed or converted, was made from other downloads
-        # (OpenBioDiv's index of the ontology alone). A folder whose inputs were deleted after
+        # downloads, as published, decompressed or converted, was made from other downloads. A
+        # folder whose inputs were deleted after
         # indexing tells nothing.
         stems = {_stem(path.name) for path in inputs}
         found = download_paths(workdir, entry)

@@ -69,9 +69,8 @@ def discover_data_graphs(
 ) -> list[str]:
     """List the endpoint's named graphs without the excluded prefixes.
 
-    The listing reads every quad. When a gateway answers for an overloaded host (STRING:
-    HTTP 502 at 62 s, job 115325, while the same listing answers in 18 s when the host is
-    quiet), the host is waited out with the busy-host backoff (30, 60, 120, 240 s, shared by
+    The listing reads every quad. When a gateway answers for an overloaded host (a 502, while
+    the same listing answers when the host is quiet), the host is waited out with the busy-host backoff (30, 60, 120, 240 s, shared by
     every request to the host) and the listing is sent again: for a source whose data is only
     in named graphs, this listing decides everything. When it is still refused or cut, the
     graphs that the endpoint's service description names (sd:name) are taken instead, read
@@ -142,12 +141,10 @@ def wait_out_gateway[T](helper: SparqlHelper, call: Callable[[], T], what: str) 
     times; a wait beyond the helper's rate_limit_wait is not taken. A proxy that could not
     reach the server is not an overload and is raised at once.
 
-    The first repeat is always made (STRING: the graph listing got HTTP 502 at 62 s and
-    answered in 18 s later). Before each later one the host is asked a trivial query
+    The first repeat is always made. Before each later one the host is asked a trivial query
     (host_answers): a host that answers it at once is not overloaded, and the listing is cut
-    by the gateway's own timer because it costs more than the timer allows (pdbj.bmrb: Apache
-    "Proxy Error" at 121-126 s on every try, while ASK answers in 1 s, job 115329), which no
-    wait mends; the error is then raised.
+    by the gateway's own timer because it costs more than the timer allows, which no wait
+    mends; the error is then raised.
     """
     from urllib.parse import urlsplit
 

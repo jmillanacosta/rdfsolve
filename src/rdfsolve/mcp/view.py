@@ -58,7 +58,7 @@ def _local(iri: str) -> str:
     return re.split(r"[#/]", iri.rstrip("/#"))[-1]
 
 
-# The local name of an ontology code, such as SO_0000704 or NCIT_C14250.
+# The local name of an ontology code (PREFIX_digits).
 _CODE = re.compile(r"[A-Za-z]+_[A-Za-z]?\d+|\d+")
 
 

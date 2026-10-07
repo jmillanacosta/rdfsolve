@@ -112,7 +112,7 @@ def identifier_type(value: str, ignore: Iterable[str] = VOCABULARIES) -> str | N
     """Return the Bioregistry prefix of a valid identifier IRI or CURIE, or None.
 
     Read by rdfsolve.identifiers.parse; an identifier that fails the pattern of its prefix
-    (purl.uniprot.org/uniprot/P53_HUMAN, an entry name) has no type.
+    (another kind of name in the same namespace) has no type.
     """
     from rdfsolve.identifiers import parse
 
@@ -236,7 +236,7 @@ def _local(value: str) -> tuple[str, str] | None:
     """Return the Bioregistry prefix and the standard local identifier of an IRI or CURIE.
 
     A local identifier that is not valid for the prefix gives None: a namespace can also name
-    other things (purl.uniprot.org/uniprot/P53_HUMAN is an entry name, not an accession).
+    other things (an entry name beside its accessions).
     """
     from rdfsolve.identifiers import parse
 
@@ -354,8 +354,7 @@ def _term_key(
 def _read_all(client: Client, query: str, expected: int | None) -> list[dict[str, Any]]:
     """Read a whole result in one response when its rows match the count, else page to the end.
 
-    Paging sorts the whole result for every page (a local target of 45,000 terms: about 350 s);
-    a local QLever index answers in one response.
+    Paging sorts the whole result for every page; a local QLever index answers in one response.
     """
     rows = client._select(query)
     if expected is None or len(rows) != expected:
@@ -608,7 +607,7 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
     """Read a table of verified links. A row without a sample (a failed lookup) is skipped.
 
     The examples of an exact link hold every found pair, which can exceed the default field
-    limit of the csv module (HGNC to AOP-Wiki: 136,477 characters).
+    limit of the csv module.
     """
     csv.field_size_limit(max(csv.field_size_limit(), 1 << 30))
     with Path(path).open(newline="") as handle:

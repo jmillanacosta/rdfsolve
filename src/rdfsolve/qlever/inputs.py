@@ -9,7 +9,7 @@ from typing import IO, cast
 
 RDF_SUFFIXES = ("ttl", "nt", "nq", "trig", "n3")
 
-# An .n3 download is read as Turtle: published .n3 dumps are Turtle or N-Triples (GtoPdb).
+# An .n3 download is read as Turtle: published .n3 dumps are Turtle or N-Triples.
 _QLEVER_FORMATS = {"ttl": "ttl", "nt": "nt", "nq": "nq", "trig": "ttl", "n3": "ttl"}
 
 _GZIP_MAGIC = b"\x1f\x8b"
@@ -24,7 +24,7 @@ FEED_FAILED = ".index-feed.failed"
 # The log of qlever-index, the name that the qlever command line gives it.
 INDEX_LOG = "{name}.index-log.txt"
 # Beside a converted input that was published empty: the download is accounted for and holds no
-# statement (UniProt publishes enzyme-hierarchy.rdf.xz empty), so there is no file to index.
+# statement, so there is no file to index.
 EMPTY = ".empty"
 
 
@@ -45,8 +45,8 @@ def qlever_format(path: Path) -> str:
 def _holds_quads(path: Path, size: int = 8 << 20) -> bool:
     """Whether a statement in the first SIZE bytes of a line-based file names a graph.
 
-    RDF Portal's proteinatlas.0.nt.gz opens with 2,501 triples and then holds quads, so the first
-    100 lines (the former window) said N-Triples and qlever-index refused the file. A head that
+    A file can open with thousands of triples and only then hold quads, so a window of a few
+    lines would say N-Triples and qlever-index would refuse the file. A head that
     the parser refuses is read line by line, so that one bad line does not hide the quads.
     """
     from pyoxigraph import DefaultGraph, RdfFormat, parse
@@ -116,7 +116,7 @@ def convert_trig(workdir: Path) -> list[Path]:
     """Write each TriG input as N-Quads beside it. Return the files created.
 
     QLever reads Turtle and N-Quads, not TriG: a TriG file read as Turtle fails at its first
-    graph block (HPA's nanopublications, 2.3 GB).
+    graph block.
     """
     from pyoxigraph import RdfFormat, parse, serialize
 
@@ -184,7 +184,7 @@ def index_inputs(workdir: Path) -> list[Path]:
     """Return the inputs to index: the plain files, and the compressed ones without a plain copy.
 
     A compressed input is streamed to the index (index_command), not decompressed beside it:
-    RDF Portal's DDBJ is 508 GB compressed, several TB plain.
+    a plain copy of a large source can take terabytes.
     """
     plain = rdf_input_files(workdir)
     names = {path.name for path in plain}
@@ -244,8 +244,8 @@ def index_command(
     """Write the qlever-index command to WORKDIR/index-command.sh and return the command that runs it.
 
     The inputs are given relative to the work folder, and the container runs the script, so the
-    file list does not pass through the command line of Singularity, which refuses a long one
-    (WikiPathways: 12,543 files). Each input stays its own file, so that blank nodes of different
+    file list does not pass through the command line of Singularity, which refuses a long one.
+    Each input stays its own file, so that blank nodes of different
     documents stay apart.
 
     qlever-index does not read gzip: given a .gz file it builds an empty index and reports
@@ -284,7 +284,7 @@ def index_command(
         f"cd {shlex.quote(str(workdir))}",
     ]
     if feeds:
-        # The feed is a script of its own: one argument cannot hold it (PDB: 220,000 files).
+        # The feed is a script of its own: one argument cannot hold it for many files.
         (workdir / FEED_PIPES).write_text("".join(f"{pipe}\n" for _, pipe in feeds))
         (workdir / FEED).write_text(
             # A write that fails (qlever-index stopped reading a pipe) goes on to the next pipe:

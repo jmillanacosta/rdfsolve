@@ -10,9 +10,8 @@ from rdfsolve.mining.query_builders import _context_pattern, membership_path
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 
 # Alternatives joined by || in one expression, and IRIs in one IN list. Virtuoso refuses an
-# expression of about 170 alternatives joined by || ("SQ074: Too many opened parentheses";
-# GlyCoNAVI GlycoSample#Date, 195 subject classes, job 115329), and answers 165; IN lists of
-# 400 IRIs are answered (checked 2026-10-06). Longer lists are nested in groups of this size, so
+# expression of about 170 alternatives joined by || ("SQ074: Too many opened parentheses"), and
+# answers fewer; IN lists of 400 IRIs are answered. Longer lists are nested in groups of this size, so
 # the depth of an expression grows with the logarithm of its length.
 ALTERNATIVES_PER_GROUP = 32
 IRIS_PER_IN = 256
@@ -51,8 +50,8 @@ def typed_match(
 
     With *predicate*, the test is for edges of that one property: its group reads only that
     property. QLever evaluates the group of EXISTS on its own before the join, so a group that
-    reads ?s ?p ?o reads the whole graph for each property (Bgee RO_0002162: 217 s, and 20 s
-    with the constant property; the same counts). *restriction* (for example FILTER(?o IN
+    reads ?s ?p ?o reads the whole graph for each property, many times slower than with the
+    property constant. *restriction* (for example FILTER(?o IN
     ...)) follows the edge, so that the group reads only the edges of one census batch.
     """
     keys = [key for key in keys if predicate is None or key[1] == predicate]
@@ -129,14 +128,13 @@ def typed_match(
         groups.append(f"EXISTS {{ {edge} {subject_type}\nFILTER(\n  {joined}\n) }}")
     # The types are compared with IRIs, grouped by property and subject class; no VALUES list
     # of profiles is joined with them. QLever joins such a list with every type triple of the
-    # graph before the edge (Bgee RO_0002206: 455.7 GB for every batch; HGNC
-    # has-approved-symbol: over 6.5 GB) and evaluates an EXISTS group with a large VALUES
-    # wrongly (768 objects: every edge untyped). The tests already require a subject type, so
+    # graph before the edge, which can need hundreds of GB, and evaluates an EXISTS group with a
+    # large VALUES wrongly. The tests already require a subject type, so
     # no IF(EXISTS ...) wraps them (Virtuoso rejects that form, error SQ156). A typed object is
     # tested in one EXISTS; literals, untyped IRIs and blank nodes in the other. The inner
     # EXISTS of the untyped case repeats the edge and its restriction, because QLever evaluates
     # the group on its own and ?o a ?_anyObjectType alone reads every type triple. Virtuoso
-    # gives wrong counts for an OPTIONAL inside the EXISTS (1 of 2 prov:used edges), and RDFLib
+    # gives wrong counts for an OPTIONAL inside the EXISTS, and RDFLib
     # evaluates a UNION inside an EXISTS as false.
     return f"({' || '.join(groups)})"
 

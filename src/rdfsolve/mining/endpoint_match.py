@@ -2,7 +2,7 @@
 
 Where an endpoint serves the same data as the local index of a source, the costly work (mining,
 exact statistics, declared identities, paths) is done on the local index only, and the endpoint
-is checked against the local record (the owner decision of 2026-09-30). The local record of a
+is checked against the local record. The local record of a
 QLever index holds the exact triple count of each property (about.property_partitions). The
 endpoint is asked for the triple count of each of its properties in one grouped query; when it
 refuses that query, for the count of each local property alone, and then properties that only

@@ -201,7 +201,7 @@ def _values_block(class_uris: list[str], property_uri: str | None = None) -> str
 class Window:
     """A bounded slice of one class's members, for when a whole-class query exceeds its budget.
 
-    run_first asks Blazegraph (Wikidata's engine) to evaluate the slice before joining it.
+    run_first asks Blazegraph to evaluate the slice before joining it.
     """
 
     limit: int
@@ -572,7 +572,7 @@ def _build_class_overlap_query(
     """Count the members of a class that are members of each class, the class itself included.
 
     The (member, class) pairs are made distinct before the count: a grouped COUNT(DISTINCT) of
-    genex:Expression (709,482,280 members) reached 600 s on QLever, the distinct pairs 133 s.
+    a large class is much slower on QLever than counting the distinct pairs.
     """
     dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
     both = (

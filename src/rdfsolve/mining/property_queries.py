@@ -86,9 +86,9 @@ def _subjects_from_total(
 
     A group whose edges are all the edges of (class, property) in its graph has an object of the
     group on every edge, so its distinct subjects are those of (class, property): exact. The
-    edges and distinct subjects of (class, property) are one merge join on QLever (Bgee: 13 s for
-    813,735,712 edges), where the distinct subjects of each group reached the time limit. A group
-    with part of the edges is counted alone (Bgee ExpressionCondition: 709,482,280 edges, 93 s).
+    edges and distinct subjects of (class, property) are one merge join on QLever, where the
+    distinct subjects of each group can reach the time limit. A group with part of the edges is
+    counted alone.
     None when a query is refused or a group cannot be counted alone; the count of each group
     then runs.
     """

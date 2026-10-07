@@ -6,8 +6,8 @@ An RDF graph becomes a property graph by rules that can be undone:
   label; its ``rdf:type`` values are its labels;
 - a literal value is a node property; its lexical form, datatype and language are kept;
 - a link to another resource is an edge, whose type is the predicate, when the RDF describes that
-  resource (it has a class or a value); a resource the RDF only cites (a UniProt cross-reference
-  to InterPro, a superclass) is a reference value of the node that cites it, not a node;
+  resource (it has a class or a value); a resource the RDF only cites (a cross-reference, a
+  superclass) is a reference value of the node that cites it, not a node;
 - a :class:`Fold` turns the instances of a class (a catalysis, an axiom) into edges between the
   two resources each instance links, with the instance's other values as edge properties. An
   instance without exactly one source and one target, or that something else links to, stays a
@@ -26,8 +26,8 @@ An :class:`Identity` merges the IRIs of one registered identifier into one node 
 IRIs) and decides each mapping between identifiers: an attribute when both are known to be of
 one kind and the link is one to one, an edge otherwise; the report lists the undecided ones.
 On a merged node the record of the source that issues the identifier speaks for it: where it
-states a key (the name of ChEBI 15377 is "water"), the values of the other sources are kept
-beside it under the key and the source (``label_wikipathways``: "2 H2O", "oxidized thioredoxin").
+states a key, the values of the other sources are kept beside it under the key and the
+source (``label_<source>``).
 
 The gates of :meth:`PropertyGraph.report` check an export: :meth:`PropertyGraph.to_oxigraph` gives
 back the input (nothing is lost silently), names are unique, literals keep their types, keys that
@@ -163,8 +163,8 @@ class PGNode:
     members: list[str] = field(default_factory=list)
     origins: dict[str, list[str]] = field(default_factory=dict)
     label_origins: list[str] = field(default_factory=list)
-    # Identifiers of another kind that a source drew the node with (WikiPathways draws an
-    # enzyme with its Ensembl gene id): listed in members for the round trip, shown apart.
+    # Identifiers of another kind that a source drew the node with (a protein drawn with a gene
+    # id): listed in members for the round trip, shown apart.
     apart: list[str] = field(default_factory=list)
     # Identifiers that a decision (Identity.same) says the node is, and that no node here has:
     # the nodes decided to be one of them are one node. Not a member: no statement of the RDF names it.
@@ -448,7 +448,7 @@ NAME_PROPERTIES = (
 
 def _normal(name: str) -> str:
     """Return a name for comparison: compatibility form, lower case, no leading count, no
-    punctuation ("2 H₂O" and "h2o" agree).
+    punctuation, so that names differing only in these agree.
     """
     import unicodedata
 
@@ -483,8 +483,8 @@ class Identity:
     """Which nodes name one entity, and how a mapping between two identifiers is shown.
 
     - Nodes whose IRIs are one registered identifier (rdfsolve.identifiers.parse: the same
-      prefix and local identifier, as identifiers.org/uniprot/Q13510 and
-      purl.uniprot.org/uniprot/Q13510) are merged into one node that lists its IRIs.
+      prefix and local identifier, written under different URI forms) are merged into one node
+      that lists its IRIs.
     - A link to an identifier that has no data of its own becomes a reference property of the
       node (an attribute) when both identifiers are known to be of the same kind and the link
       is one to one; otherwise it stays an edge. A link between two kinds (a gene to its
@@ -493,35 +493,31 @@ class Identity:
       identifiers (Client.issued_kinds). A prefix without kinds is unknown: its links stay
       edges and the report lists them as undecided, with what would decide them.
     - *mappings* are the predicates that can state that two identifiers are one entity (by
-      default the declared identities: owl:sameAs, skos:exactMatch and Bio2RDF cross-references);
-      other links (part of a pathway) are never judged.
+      default the declared identity properties, rdfsolve.mappings.declared.is_declared_property);
+      other links (part-of relations) are never judged.
     - *exact* merges two different identifiers of one kind that are linked one to one both ways
-      and both have data (a WikiPathways metabolite and its ChEBI class), into one node listing
-      both; without it they stay linked by an edge.
+      and both have data, into one node listing both; without it they stay linked by an edge.
     - *same* are pairs of IRIs decided to name one entity (Decision.pairs: the claims that a
       decision accepted); they are merged, unless their kinds are known and differ.
       *variants* are pairs of identifiers of one namespace that name one entity in another
-      form (tautomers in ChEBI); only these may share a node with each other.
-    - *labels*: a merged node has the classes of each of its sources (wp:Metabolite from
-      WikiPathways, owl:Class from ChEBI), which would split one kind of entity into two node
-      types. With "issuer" (the default) a node whose identifier's issuer gives a kind of
+      form; only these may share a node with each other.
+    - *labels*: a merged node has the classes of each of its sources, which would split one
+      kind of entity into two node types. With "issuer" (the default) a node whose identifier's issuer gives a kind of
       entity has that kind as its node type, however each source drew it, and the sources'
       classes become its ``type``; where the issuer's class names no kind (a generic class
       such as owl:Class) it is "role". With "role" it
       keeps the classes its sources give it other than the issuer kinds of *kinds*: the
-      issuer's classes decide identity, the data's own classes are its node type, so a
-      metabolite is a Metabolite whether it was merged or not. "majority"
-      keeps the classes of the source that most nodes share (fragile: WP4726 has 70 ChEBI
-      classes and 67 metabolites); a sequence of class IRIs keeps the first class it holds;
+      issuer's classes decide identity, the data's own classes are its node type, whether it
+      was merged or not. "majority" keeps the classes of the source that most nodes share
+      (fragile when two sources are about equal in number); a sequence of class IRIs keeps the first class it holds;
       "all" keeps every class. The other classes become its ``type`` property (references),
       so the RDF is given back.
-    - A decided pair of two known kinds (an Ensembl gene id and a UniProt accession, once
-      *kinds* says Ensembl ids name genes) is one node only when the record of one kind is at
+    - A decided pair of two known kinds (a gene identifier and a protein identifier, once
+      *kinds* says which kind each prefix names) is one node only when the record of one kind is at
       hand and the other is an identifier a source drew it with: the node is the issuer's
-      (the protein) and the other identifier is kept apart, as an attribute named by its
-      prefix (``ensembl``), not as one of its ids. *unfold* names prefixes whose identifiers
-      kept apart become nodes again, with what their source states about them (the gene, its
-      NCBI Gene id, and the link to the protein); their classes are their kinds.
+      and the other identifier is kept apart, as an attribute named by its prefix, not as one
+      of its ids. *unfold* names prefixes whose identifiers kept apart become nodes again, with
+      what their source states about them; their classes are their kinds.
       A merge across a prefix of unknown kind is made and reported, with what would decide it.
     """
 
@@ -623,7 +619,7 @@ class PropertyGraph:
                 sizes[key] = max(sizes[key], len(values))
         for edge in edges:
             for key, values in edge.attached.items():
-                sizes[key] = max(sizes[key], len(values), 2)  # several enzymes are common
+                sizes[key] = max(sizes[key], len(values), 2)  # several values are common
         # A key is a list when the schema measured several values or the data has several.
         self.lists = {
             k for k, n in sizes.items() if n > 1 or (self.single and k not in self.single)
@@ -655,13 +651,13 @@ class PropertyGraph:
         (:class:`Identity`); the report records every decision and what stays undecided.
         *as_attributes* are predicates whose IRI values are node attributes (references), not
         edges: by default the class and property hierarchy (rdfs:subClassOf, subPropertyOf), so
-        a ChEBI class lists its superclasses; a blank-node value (an OWL restriction) stays an
+        a class lists its superclasses; a blank-node value (an OWL restriction) stays an
         edge. Whatever the predicate, a resource the RDF only cites is a reference value.
         *schema* is the mined schema, or the schemas of each source of the RDF.
 
         *hierarchy* gives the superclasses of classes (Client.superclasses): a node's labels are
-        then its most specific stated classes (wp:Protein, not also wp:GeneProduct and
-        wp:DataNode), whatever superclasses a record happens to state; the others go to its
+        then its most specific stated classes, whatever superclasses a record happens to
+        state; the others go to its
         ``type`` property, so the RDF is given back.
 
         *types* overrides :data:`DEFAULT_TYPES` per datatype IRI (None keeps the lexical form);
@@ -705,7 +701,7 @@ class PropertyGraph:
             elif (
                 isinstance(o, ox.Literal)
                 or (p in attribute_predicates and isinstance(o, ox.NamedNode))
-                or o == s  # a statement about itself (a ChEBI id mapped to itself) is a value
+                or o == s  # a statement about itself (an id mapped to itself) is a value
             ):
                 subject.properties.setdefault(p, []).append(Value.of(o))
             elif isinstance(o, (ox.NamedNode, ox.BlankNode)):
@@ -1039,12 +1035,9 @@ class PropertyGraph:
 
         On a merged node, each name the source gives (``label`` beside the issuer's, see
         Identity) is compared with the issuer's names and synonyms; a name that agrees with none
-        is a finding: an enzyme that WikiPathways draws as a metabolite with a ChEBI id is named
-        "Esterase" by WikiPathways and "arecoline hydrobromide" by ChEBI. A name equal to one of
-        the node's own identifiers agrees (a gene symbol, hgnc.symbol:HMGCR). When the node is
-        an end of a folded edge in a place the source rarely uses for its class (the mined
-        schema: 31 metabolites against 3,484 gene products as source of a catalysis; under
-        :data:`RARE`), the finding carries the SHACL shape and the SPARQL query that find every
+        is a finding. A name equal to one of the node's own identifiers agrees (a symbol that
+        is itself an identifier). When the node is an end of a folded edge in a place the source
+        rarely uses for its class (by the mined schema, under :data:`RARE`), the finding carries the SHACL shape and the SPARQL query that find every
         node in that place with that class in the source. With *warn*, each finding is also issued as an UpstreamWarning.
         """
         import warnings
@@ -1058,7 +1051,7 @@ class PropertyGraph:
                 from rdfsolve.identifiers import parse
 
                 names = [v.lexical for k in NAME_PROPERTIES for v in node.properties.get(k, [])]
-                # A name that is one of the node's own identifiers agrees (hgnc.symbol:HMGCR).
+                # A name that is one of the node's own identifiers agrees.
                 names += [
                     read.local
                     for values in node.properties.values()
@@ -1566,7 +1559,7 @@ def _apply_attach(
 
 
 def _attached_to_nodes(nodes: dict[str, PGNode], edges: list[PGEdge]) -> None:
-    """Point attached values at the nodes they became (a merged enzyme's UniProt IRI)."""
+    """Point attached values at the nodes they became (the IRI of a merged node)."""
     node_of = {member: n.id for n in nodes.values() for member in (n.members or [n.id])}
     for edge in edges:
         for key, values in edge.attached.items():
@@ -1690,7 +1683,7 @@ def _cited_as_values(nodes: dict[str, PGNode], edges: list[PGEdge]) -> dict[str,
     """Make each resource that the RDF only cites a reference value of the node citing it.
 
     A resource is described when it has a class, a value, or a link of its own; one that is
-    only the object of links (an InterPro entry that a UniProt record cites) is not a node.
+    only the object of links (a record cited by another) is not a node.
     The value keeps the IRI as written, so the statement is given back.
     """
     starts = {e.source for e in edges}
@@ -1903,8 +1896,8 @@ def _apply_identity(
         )
         row["links"] += 1
     edges[:] = [e for e in edges if id(e) not in removed]
-    # A decided pair names identifiers as a source wrote them (identifiers.org/chebi/...); its
-    # node is the node of that identifier, whatever IRI the node has.
+    # A decided pair names identifiers as a source wrote them; its node is the node of that
+    # identifier, whatever IRI the node has.
     by_identifier: dict[str, str] = {}
     for nid, node in nodes.items():
         for iri in node.members or [nid]:
@@ -2009,8 +2002,8 @@ def _apply_identity(
                     }
                 )
                 continue
-            # The issuer's record names the node (UniProt's IRI for a protein that WikiPathways
-            # draws with an Ensembl gene id), else the member with most data.
+            # The issuer's record names the node (the issuer's IRI for an entity another source
+            # drew with an identifier of another kind), else the member with most data.
             issuers = [
                 m
                 for m in members
@@ -2111,7 +2104,7 @@ def _unfold(
     """Make the identifiers kept apart of *prefixes* nodes again, with what is stated of them.
 
     The values their IRI states move to the new node; a link from it to the node it was kept
-    apart from (BridgeDb's gene to protein link) becomes an edge; the classes the IRI states
+    apart from becomes an edge; the classes the IRI states
     stay with the node it was drawn as (their role), and the new node has its kind.
     """
     from rdfsolve.identifiers import parse
@@ -2160,9 +2153,8 @@ def _issuer_speaks(nodes: dict[str, PGNode], issued: Mapping[str, set[str]]) -> 
     """On a merged node, let the issuer's record speak for each key it states.
 
     The issuer's record is the member whose classes are those its source gives the identifiers
-    it issues (the ChEBI class of chebi:15377). Where it states a key, the values of the other
-    members move beside it, to the key and their source (WikiPathways' labels of water: "2
-    H2O", "oxidized thioredoxin"), so the node has the issuer's name and nothing is lost.
+    it issues. Where it states a key, the values of the other members move beside it, to the
+    key and their source, so the node has the issuer's name and nothing is lost.
     """
     from rdfsolve.identifiers import parse
 
@@ -2242,8 +2234,8 @@ def _reconcile_labels(
         if len(candidates) < 2:
             continue
         if policy in ("issuer", "role"):
-            # The issuer kinds of this node's own identifiers (CAS and ChEBI for a metabolite),
-            # not those of every source (WikiPathways issues its DataNode).
+            # The issuer kinds of this node's own identifiers, not those of every source (a
+            # source also issues identifiers for its own drawing elements).
             from rdfsolve.identifiers import parse
 
             own = {found.prefix for iri in node.members if (found := parse(iri))}

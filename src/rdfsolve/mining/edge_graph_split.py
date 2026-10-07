@@ -1,8 +1,8 @@
 """Per-dataset schemas from one schema mined across several named graphs.
 
-Providers such as PubChem split one knowledge graph into many downloadable
-datasets whose entities point at each other: a substance links to a compound
-typed in the compound dataset. Mining each dataset graph alone loses those
+A provider can split one knowledge graph into many downloadable datasets whose
+entities point at each other: a record links to a record typed in another
+dataset. Mining each dataset graph alone loses those
 object types. The grouped pipeline therefore mines all graphs of a provider
 together, which resolves types over their RDF merge while the counts phase
 attributes every edge to the graph that holds it. This module cuts that group

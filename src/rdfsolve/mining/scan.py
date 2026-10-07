@@ -1,9 +1,8 @@
 """Scan mining: QLever only reads its index; every count is made by Polars on the rows it reads.
 
 The grouped SPARQL queries of the other strategies join and group inside the server, within
-its memory limit (QLever does not spill to disk: Bgee's census asked for more than 455 GB).
-Here the server is asked only for the rows of one predicate at a time,
-``SELECT ?s ?o (DATATYPE(?o) AS ?d) WHERE { ?s <p> ?o }``, a scan of one range of a sorted
+its memory limit, and QLever does not spill to disk. Here the server is asked only for the
+rows of one predicate at a time, ``SELECT ?s ?o WHERE { ?s <p> ?o }``, a scan of one range of a sorted
 permutation that QLever streams without holding it, and for the members of the classes. The
 rows are saved as Parquet (the row store); patterns, their counts and the rest are computed
 from the store, one predicate at a time, so memory is bound by the largest predicate.
@@ -11,7 +10,7 @@ from the store, one predicate at a time, so memory is bound by the largest predi
 Each value is saved twice: as the term QLever writes in TSV, and as QLever's 64-bit id of the
 value (the same query with ``Accept: application/octet-stream``). The ids count distinct
 values exactly: the TSV writes doubles with 13 significant digits, so values that differ further
-print the same (WikiPathways gpml:relY: 2,160 values, 2,021 printed).
+print the same.
 
 The patterns follow the definitions of the count queries of the two-phase strategy
 (query_builders: typed objects, untyped IRIs, blank nodes, literals), so that the two
@@ -140,8 +139,8 @@ class RowStore:
     def predicates(self) -> dict[str, Path]:
         """The file of the rows of each predicate that can be a pattern's property.
 
-        A predicate that cannot (_pattern_term: a string of NUL bytes, rdfportal.oma job
-        115716) is left out of every scan phase; left_out_predicates names it.
+        A predicate that cannot (_pattern_term, such as a string of NUL bytes) is left out of
+        every scan phase; left_out_predicates names it.
         """
         return {
             p: self.path / "rows" / f
@@ -208,14 +207,13 @@ class RowStore:
 
         name_class_expressions writes types-named.parquet, where a type value that is a blank
         node (an OWL class expression) is replaced by the IRI of its expression. A type value
-        that is neither an IRI nor a blank node (a literal: monarch-kg's ``?s rdf:type
-        "strain"``, job 115614) names no class and is left out, so that a node typed only so is
-        an untyped subject (literal_type_values reports them).
+        that is neither an IRI nor a blank node (a literal) names no class and is left out, so
+        that a node typed only so is an untyped subject (literal_type_values reports them).
         """
         import polars as pl
 
         types = self._type_rows().filter(_class_term(pl.col("c")))
-        # An index without any type (STRING's main graph): the empty table is held in memory,
+        # An index without any type: the empty table is held in memory,
         # since Polars 2.0 panics on a join with unique() of an empty Parquet scan ("min > max").
         if not types.select(pl.len()).collect().item():
             return pl.DataFrame(schema=types.collect_schema()).lazy()
@@ -440,7 +438,7 @@ def _durable(partial: Path, path: Path) -> None:
 
     A job killed (OOM, time limit) or a node that fails while a store file is written leaves a
     file named ``.partial`` at most, never a short or zero-filled file under the final name that
-    a resumed export would reuse (rdfportal.oma, job 115716).
+    a resumed export would reuse.
     """
     with partial.open("rb") as stream:
         os.fsync(stream.fileno())
@@ -556,7 +554,7 @@ def _post(endpoint: str, query: str, accept: str, *, timeout: float | None = Non
     from rdfsolve.sparql_terms import writable_query
 
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    # A term that is not an RDF IRI (Bio2RDF: <...statistic  n>) is written with IRI("...").
+    # A term that is not an RDF IRI (one with a space) is written with IRI("...").
     form = {"query": writable_query(query)}
     if timeout is not None:
         form["timeout"] = f"{timeout:g}s"
@@ -658,8 +656,7 @@ def _text_predicates() -> frozenset[str]:
 
 # QLever's datatype of an id, in its top four bits, for the values it keeps in the id (written
 # bare in TSV): 1 bool, 2 int, 3 double, 7 a date. DATATYPE(?o) gives xsd:boolean, xsd:int,
-# xsd:double, and xsd:date, xsd:dateTime, xsd:gYearMonth or xsd:gYear by the lexical form
-# (checked on the stores of WikiPathways, HRA-KG and Bgee: the same datatype for every row).
+# xsd:double, and xsd:date, xsd:dateTime, xsd:gYearMonth or xsd:gYear by the lexical form.
 _XSD = "http://www.w3.org/2001/XMLSchema#"
 _ID_DATATYPES = {1: "boolean", 2: "int", 3: "double"}
 _DATE_ID = 7
@@ -673,9 +670,8 @@ def _literal_datatype(term: str = "o", ids: str = "oid") -> pl.Expr:
     A quoted literal names its datatype (``"x"^^<dt>``), its language (rdf:langString) or none
     (xsd:string); a bare value is one that QLever keeps in its id, whose top bits say which
     (_ID_DATATYPES). DATATYPE(?o) in the export query made QLever read the text of every
-    literal of the predicate before LIMIT and OFFSET (rdfportal.pubmed dc:title, 39 M rows:
-    LIMIT 100000 OFFSET 0 timed out at 600 s, job 115868; rdfportal.clinvar comment, job
-    115722), so a slice cost as much as the whole predicate.
+    literal of the predicate before LIMIT and OFFSET, so a slice cost as much as the whole
+    predicate.
     """
     import polars as pl
 
@@ -732,8 +728,7 @@ def _trim_literals(column: str) -> pl.Expr:
 
 # Rows whose bytes are not valid UTF-8, by the file they are written to (the name of the whole
 # file, not of a slice): the export moves them into progress.jsonl and the manifest
-# (invalid_utf8). Bio2RDF SIDER holds Latin-1 bytes in 46 labels and titles ("duricef\xae",
-# job 115724); Polars refuses a block with one of them and failed the source.
+# (invalid_utf8). Polars refuses a block with one such row, which would fail the source.
 _INVALID_UTF8: dict[str, dict[str, Any]] = {}
 # The rows of the type table that were not UTF-8, kept beside it for a resumed export.
 TYPES_INVALID_UTF8 = "types.invalid_utf8.json"
@@ -940,10 +935,9 @@ def _unnamed_row_query(predicate: str, *, datatype: bool = True) -> str:
 
 
 # A query with more rows than SLICE_ROWS is read in slices (LIMIT and OFFSET), several at once:
-# QLever streams one query from one thread. On GOA rdf:type (11.8 M rows) the last 1 M rows came
-# as fast as the first, and 8 slices read it 6.4 times as fast as one query. Skipping rows is not
-# free in every index (PubChem, GRAPH ?g: about 13 s for 4.3 G rows), so a query has at most
-# MAX_SLICES slices, of SLICE_ROWS rows or more.
+# QLever streams one query from one thread, so several slices read faster than one query.
+# Skipping rows is not free in every index, so a query has at most MAX_SLICES slices, of
+# SLICE_ROWS rows or more.
 SLICE_ROWS = 10_000_000
 MAX_SLICES = 64
 
@@ -1001,8 +995,7 @@ def store_file_problem(path: Path, rows: int | None = None) -> str | None:
 
     It must open, hold *rows* rows when they are known, and its term columns (s, o, c) must
     hold no empty term and no NUL byte in its first and last row groups: a file that a
-    killed job or a failed node left short or zero-filled (rdfportal.oma, job 115716) is read
-    again, not trusted. The check reads two row groups, not the whole file.
+    killed job or a failed node left short or zero-filled is read again, not trusted. The check reads two row groups, not the whole file.
     """
     import pyarrow.compute as pc
     import pyarrow.parquet as pq
@@ -1069,8 +1062,7 @@ def _read_query(
         A half that times out after as long as the read it was cut from (*parent*: the
         seconds that read ran; HALVING_RATIO of them, when they were HALVING_MIN_SECONDS or
         more) costs as much as its parent: the cost is not in the rows read, and halving goes
-        no further (HalvingStoppedError). rdfportal.pubmed (job 115718) halved dc:title from
-        10 M rows to 78,125 for 2 h, every slice at 600 s.
+        no further (HalvingStoppedError).
         """
         started = time.monotonic()
         try:
@@ -1169,9 +1161,8 @@ def _read_long_literals(
     """Write the rows of one predicate (*where*: its triple pattern) whose literal text cannot
     be read in time; return the rows and how its literals were read.
 
-    rdfportal.pubmed (job 115868): QLever writes the text of dc:title's 39 M literals at about
-    100 rows a second, while their ids come in 13 s, the subjects' text in 90 s, and
-    ``isLiteral`` is answered from the ids (0.5 s). So the rows whose object is not a literal
+    QLever can write the text of long literals far more slowly than their ids, while
+    ``isLiteral`` is answered from the ids. So the rows whose object is not a literal
     are read as usual, and the literal rows as ids (exact triples, subjects and distinct
     objects) with the subjects' text and the text of LONG_TEXT_SAMPLE of them. The most
     frequent datatype and language of the sample stand for the other literals of QLever's
@@ -1295,7 +1286,7 @@ def _counts(
 
 
 # The time a planning query of the export (the count by graph and predicate) is given before
-# the export counts another way: on PubChem (29.8 B triples) it ran to QLever's 600 s.
+# the export counts another way: on a very large index it can run to QLever's time limit.
 PLAN_SECONDS = 120.0
 
 
@@ -1312,11 +1303,11 @@ def _graph_counts(
     each input file), they are not listed: one graph that holds every triple has the counts of
     GROUP BY ?p (*sizes*), and several are counted graph by graph (GROUP BY ?p in one graph,
     which reads that graph alone). Otherwise one grouped query (GROUP BY ?g ?p), given
-    PLAN_SECONDS, answers it; on a large index QLever sorts every triple by graph and predicate
-    (PubChem: timed out after ten minutes, where GROUP BY ?p takes a second), and then each
+    PLAN_SECONDS, answers it; on a large index QLever sorts every triple by graph and predicate,
+    and then each
     predicate is counted by graph with the predicate bound, which also lists the graphs. The
-    graphs are not listed with DISTINCT ?g, which reads every triple (PubChem, job 115703: it
-    timed out too and failed the source). A count that still times out raises
+    graphs are not listed with DISTINCT ?g, which reads every triple. A count that still times
+    out raises
     QueryTimeoutError: the caller reads the rows without their graphs.
     """
     graphs: dict[str, dict[str, int]] = {}
@@ -1976,7 +1967,7 @@ def name_class_expressions(store: RowStore) -> dict[str, dict[str, Any]]:
 
     for stale in ("types-named.parquet", "class-expressions.json"):
         (store.path / stale).unlink(missing_ok=True)
-    # The type table is read lazily: on a large index (Bgee: 725 M rows) its text does not fit.
+    # The type table is read lazily: on a large index its text does not fit in memory.
     types = pl.scan_parquet(store.path / "types.parquet")
     anonymous = (
         types.filter(pl.col("c").str.starts_with("_:"))
@@ -2089,10 +2080,6 @@ def count_limits() -> tuple[int, int]:
     TYPE_PARTITION_ROWS), or both from RDFSOLVE_SCAN_COUNT_GB: the memory counting may use,
     in GB. The type table takes TYPE_SHARE of it, in three parts held at once (TYPE_ROW_BYTES a
     row); the rows of a part take the rest (ROW_BYTES a row when each node has one class).
-
-    Bgee (job 115704, 80 GB): the former split (half each, 40 bytes a type row) kept its 725 M
-    type rows in one part, built the hash table of the whole table for the objects of every
-    part, and counted 119 M rows a part: the job used 251.6 GB.
     """
     import os
 
@@ -2106,9 +2093,9 @@ def count_limits() -> tuple[int, int]:
 
 
 # Distinct classes in a count's scope above which count_patterns refuses (or
-# RDFSOLVE_SCAN_MAX_CLASSES): it gives a pattern for each class and property, and BioGateway's
-# 65,884,730 classes (GO-CAM: 1,718,529) ran out of memory in its final table. Such classes are
-# grouped under their ancestors before counting (ontology_group_before_mining).
+# RDFSOLVE_SCAN_MAX_CLASSES): it gives a pattern for each class and property, so millions of
+# classes do not fit in its final table. Such classes are grouped under their ancestors before
+# counting (ontology_group_before_mining).
 SCAN_MAX_CLASSES = 1_000_000
 
 
@@ -2134,8 +2121,7 @@ def _batch_expansion(store: CountedStore, batch: list[str], size: int) -> float:
     """Return the classified rows of a batch per row (at least 1), from a sample of its rows.
 
     A row whose subject has k classes and object m becomes k * m classified rows, and the
-    joins of a part hold them: SAWGraph's coso:hasResultQualifier gives 364 per row, rdf:type
-    13 (2.8 M and 100.6 M rows; job 115895 ran out of memory in 110 parts sized by rows). The
+    joins of a part hold them, so parts sized by rows alone can exceed the memory budget. The
     sample is every n-th row (EXPANSION_SAMPLE in all); the classes of its nodes are read from
     the type table in a stream, for those nodes only.
     """
@@ -2198,7 +2184,7 @@ def _counted_columns(frame: pl.LazyFrame, predicate: str, *, by_graph: bool) -> 
     import polars as pl
 
     # The text columns are categories (a code a row): a row of a large predicate is counted
-    # with its ids and codes, not its text (Bgee, job 115831: 1.6 KB a row with text keys).
+    # with its ids and codes, not its text.
     return frame.select(
         "sid",
         "oid",
@@ -2267,8 +2253,7 @@ def _pattern_term(term: str, *, sentinels: bool = False) -> bool:
 
     It is an IRI (an IRI that is not an RDF IRI, with a space, is kept: iri_findings reports
     it) without control characters; an object may also be a sentinel (Literal, Resource,
-    BlankNode). A term of NUL bytes, as a damaged count read (rdfportal.oma, job 115716), is
-    not.
+    BlankNode). A term of NUL bytes, as a damaged count read can give, is not.
     """
     if sentinels and term in _SENTINEL_OBJECTS:
         return True
@@ -2281,8 +2266,8 @@ def _blank_outgoing(store: CountedStore) -> pl.DataFrame:
 
     Read before counting (the subject column of each predicate in a stream), so that a
     pattern's blank objects are joined with their predicates as they are found: keeping
-    the blank objects of every pattern until the end held SAWGraph's 33 M blank-object rows for
-    each of their subjects' classes (jobs 115895 and 116051 ran out of memory).
+    the blank objects of every pattern until the end held each blank-object row once for each
+    class of its subject.
     """
     import polars as pl
 
@@ -2309,8 +2294,7 @@ def _compact(*lists: list[pl.DataFrame]) -> None:
     """Replace the tables of each list by their distinct rows, in one table.
 
     The blank-node tables of count_patterns grow with every part and cell; kept as categories
-    and made distinct as each part ends, they hold each row once (SAWGraph, job 116051: about
-    1 GB a minute over 130 parts).
+    and made distinct as each part ends, they hold each row once.
     """
     import polars as pl
 
@@ -2579,8 +2563,7 @@ def count_patterns(
             _spill(frame, folder / "rows", parts, "sid")
             # A batch with fewer rows than the type table reads the types of its own nodes
             # only, once: each part joins its rows with every part of the type table, and
-            # reading those whole for each part made a batch of 5 M rows in 25 parts take 17
-            # minutes (SAWGraph).
+            # reading those whole for each part made a batch many times slower.
             own: dict[int, pl.DataFrame] = {}
             if size * 2 < type_count:
                 nodes = pl.concat(
@@ -2632,8 +2615,7 @@ def count_patterns(
                     pl.concat(pairs).unique().group_by(keys).agg(distinct_subjects=pl.len())
                 )
                 # The counts of the parts read so far are added up as each part ends, so that
-                # they take the rows of their keys, not of their keys in every part and cell
-                # (SAWGraph, job 115895: memory grew by about 2 GB a minute over 110 parts).
+                # they take the rows of their keys, not of their keys in every part and cell.
                 sums = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]
                 _compact(blank_fields)
                 subject_counts = [

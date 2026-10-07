@@ -10,8 +10,7 @@ from rdfsolve.qlever.inputs import INDEX_LOG
 from rdfsolve.qlever.lifecycle import index_name
 
 # qlever-index (parallel = false) skips the rest of an input after a statement it cannot read,
-# logs this at INFO level and succeeds: rdfportal.clinvar lost 128,436,885 bytes after an IRI
-# holding > (a QLever build of 2026-03-30, 9ec88a).
+# logs this at INFO level and succeeds, so the rest of the file is lost without an error.
 _UNPARSED = re.compile(r"Parsing of line has Failed.*?Remaining bytes: ([0-9,]+)")
 
 

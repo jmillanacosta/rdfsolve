@@ -46,8 +46,7 @@ def mine_with_ontology(
             ancestors before per-class mining when more classes than this are discovered
             (for sources with too many term types to mine one by one). None groups after.
         ontology_hierarchy_files: Tab-separated (child, parent) IRI files that give parents,
-            before grouping, to terms without a parent in the data (for example the NCIt
-            flat file for PubChem). The files and their pair counts are recorded.
+            before grouping, to terms without a parent in the data. The files and their pair counts are recorded.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
             Named graphs must hold triples. None keeps extraction in the data
@@ -152,7 +151,7 @@ def _mine_with_ontology(
             if miner._store is not None:
                 from rdfsolve.mining.scan_enrichment import ontology_structure
 
-                # Read from the rows; the pair axioms are scoped to the terms (L50).
+                # Read from the rows; the pair axioms are scoped to the terms.
                 ontology = ontology_structure(miner._store, classes, properties)
             else:
                 ontology = OntologyMiner(

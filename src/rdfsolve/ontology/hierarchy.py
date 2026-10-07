@@ -106,8 +106,7 @@ def fetch_superclasses(
     """Return named ``rdfs:subClassOf`` parents for *terms* and all their ancestors.
 
     Read the RDF merge of the selected graphs, or the endpoint default dataset. A batch whose
-    answer is too large or too slow is split in halves (GO-CAM: the first 500 of its 1.7 M
-    classes gave more than 64 MiB, 2026-10-06); a single term that still cannot be read gets no
+    answer is too large or too slow is split in halves; a single term that still cannot be read gets no
     parents and is added to *unreadable*, when given.
     """
     from rdfsolve.sparql_helper import EndpointTimeoutError
@@ -158,8 +157,8 @@ def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
     """Read (child, parent) IRI pairs from tab-separated files, plain or gzip-compressed.
 
     Lines that start with # are comments. The files give parents to terms whose ontology is not
-    in the data: PubChem types records with NCIt and PR terms, but the index holds no hierarchy
-    for them. A term is not its own parent.
+    in the data (a source that types its records with terms of ontologies it does not hold).
+    A term is not its own parent.
     """
     parents: dict[str, set[str]] = defaultdict(set)
     for path in paths:

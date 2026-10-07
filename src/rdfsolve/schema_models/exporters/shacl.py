@@ -382,7 +382,7 @@ def _complete_shapes(
         )
     for route in schema.navigation.paths:
         # A tested path is given above with its counts; a nested profile for each of thousands
-        # of paths made the file too large (AOP-Wiki: 53 MB).
+        # of paths makes the file too large.
         if tested or route.instance_support != "matched":
             continue
         child = None

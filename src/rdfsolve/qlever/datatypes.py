@@ -1,9 +1,8 @@
 """Literal datatypes that a QLever index does not keep, counted from the source files.
 
 QLever stores numbers as values: it returns every integer type as xsd:int, and DATATYPE() gives
-xsd:double for a decimal (a documented deviation from SPARQL 1.1). AOP-Wiki void:triples is
-xsd:integer and Disease Ontology owl:qualifiedCardinality is xsd:nonNegativeInteger in the source,
-xsd:int in the index. The source files are read once when the index is built; the numeric
+xsd:double for a decimal (a documented deviation from SPARQL 1.1), so an xsd:integer or
+xsd:nonNegativeInteger of the source is xsd:int in the index. The source files are read once when the index is built; the numeric
 literals of each property are counted by datatype, and mining restores the datatype of the
 source when the property has one datatype of the group that QLever reports.
 """
@@ -62,8 +61,8 @@ def _format(name: str) -> Any:
     formats = {
         "ttl": RdfFormat.TURTLE,
         "n3": RdfFormat.TURTLE,
-        # N-Quads, a superset: RDF Portal publishes quads in .nt.gz files (proteinatlas), which
-        # are indexed as N-Quads (rdfsolve.qlever.inputs.qlever_format).
+        # N-Quads, a superset: quads can be published in .nt.gz files, which are indexed as
+        # N-Quads (rdfsolve.qlever.inputs.qlever_format).
         "nt": RdfFormat.N_QUADS,
         "nq": RdfFormat.N_QUADS,
     }
@@ -192,11 +191,10 @@ def census_of_files(files: Iterable[tuple[Path, str]]) -> dict[str, Any]:
     """Count the numeric literals of each property by datatype; record what was not read.
 
     *files* are (path, QLever input format) pairs; a path may be gzip-compressed or a member of a
-    zip archive (zip_members). The parser is lenient, as QLever is (AOP-Wiki has IRIs without a
-    scheme). The census is a statistic beside an index that is already built, so a statement
+    zip archive (zip_members). The parser is lenient, as QLever is (IRIs without a scheme). The
+    census is a statistic beside an index that is already built, so a statement
     that its parser refuses never fails the build: an N-Triples or N-Quads file is read again
-    line by line and each refused line is left out and recorded (rdfportal.clinvar has an IRI
-    holding >); another format is counted up to the error, and the file is recorded.
+    line by line and each refused line is left out and recorded; another format is counted up to the error, and the file is recorded.
     Returns {"properties": counts, "unread": record} (unread_record).
     """
     from contextlib import ExitStack

@@ -615,7 +615,7 @@ def _bound_contradicted_populations(
     """Replace a class population that its own records contradict by their lower bound.
 
     The subjects of a class that carry a property are members of the class: a population
-    below them is wrong (IDSM's VoID: 1 member of a class with 347 M subjects of one property).
+    below them is wrong.
     """
     most: dict[str, int] = {}
     for record in records:

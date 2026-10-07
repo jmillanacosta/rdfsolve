@@ -104,9 +104,8 @@ class ClassListingLimitError(Exception):
     """Class discovery listed more type values than the run's limit, and stopped listing.
 
     A source whose records are classes, or whose individuals are typed by per-record IRIs,
-    has millions of type values (BioGateway: 10.8 M, about one instance each; GO-CAM: 1.7 M
-    gene products). Listing them all took hours (BioGateway, job 115328: 1,084 pages of about
-    5 s and still listing), and per-class mining of such a list is not feasible remotely.
+    can have millions of type values, about one instance each. Listing them all through an
+    endpoint takes hours, and per-class mining of such a list is not feasible remotely.
     """
 
     def __init__(self, rows: list[dict[str, Any]], limit: int) -> None:

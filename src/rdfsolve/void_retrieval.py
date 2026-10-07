@@ -28,8 +28,8 @@ def discover_graph_names(helper: SparqlHelper, *, batch_size: int, max_pages: in
     """List graph names without counting their triples.
 
     The unordered listing is sent first, in one query: on Virtuoso the ORDER BY of the paged
-    form reads every quad (STRING: 18 s when quiet and cut by its gateway at 60 s when busy,
-    job 115333, while the unordered DISTINCT answers in 0.25 s). The ordered pages are read
+    form reads every quad, while the unordered DISTINCT can answer far faster. The ordered
+    pages are read
     only when that answer may have been cut at a server cap (SparqlHelper.row_cap_suspected)
     or was too large for one response. More than batch_size * max_pages graphs raise
     PaginationTruncatedError, as the paged listing does at its page limit.
@@ -64,7 +64,7 @@ def discover_graph_names(helper: SparqlHelper, *, batch_size: int, max_pages: in
             max_pages=max_pages,
             purpose="void/graph-discovery",
             # DISTINCT and ORDER BY read every quad whatever the LIMIT: a smaller page costs
-            # the same, so a timeout is not retried with one (UniProt: 4 cuts of 15 min).
+            # the same, so a timeout is not retried with one.
             max_page_retries=0,
         )
         for row in page

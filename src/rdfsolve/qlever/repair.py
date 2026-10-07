@@ -4,31 +4,25 @@ QLever refuses a whole file for one term it cannot read. Three kinds are written
 changed line is recorded with its original text as a data-quality finding beside the index
 (REPAIRS_FILE); no triple is left out.
 
-- An IRI holding <, > or ": QLever ends an IRI at the first of them. ONCO cites Wiley DOIs with
-  the angle brackets of their SICI form
-  (<https://doi.org/10.1002/1097-0142(197601)37:1<141::AID-CNCR2820370121>3.0.CO;2-Y>), and
-  rdfportal.clinvar links dbSNP with an HGVS change (<http://ncbi.nlm.nih.gov/snp/rsc.2899A>C>);
-  for the second, qlever-index keeps <http://ncbi.nlm.nih.gov/snp/rsc.2899A>, skips the rest of
-  the file and succeeds (rdfsolve.qlever.index_check.unparsed_input). In a
+- An IRI holding <, > or ": QLever ends an IRI at the first of them (DOIs in SICI form hold
+  angle brackets); qlever-index can then keep the IRI up to the >, skip the rest of the file
+  and succeed (rdfsolve.qlever.index_check.unparsed_input). In a
   line-based format a term still ends unambiguously: an IRI ends at the > that whitespace (or
-  the closing dot) follows. The characters are written %3C, %3E and %22, the IRI's valid form
-  (doi.org resolves it to the same DOI).
+  the closing dot) follows. The characters are written %3C, %3E and %22, the IRI's valid form.
 - An ill-typed literal of a datatype that QLever reads as a value: xsd:integer, xsd:decimal,
-  xsd:float, xsd:double and xsd:boolean (NanoSolveIT has 12,050 ""^^xsd:float). It is still RDF,
+  xsd:float, xsd:double and xsd:boolean (such as ""^^xsd:float). It is still RDF,
   but QLever refuses it; it is written as a plain string with the same lexical form. QLever reads
   other ill-typed literals (""^^xsd:int, "x"^^xsd:dateTime) and they are kept.
-- An xsd:float or xsd:double whose magnitude is below the smallest double (GWAS Catalog has
-  "8E-610"^^xsd:double): QLever (9ec88a) refuses it ("could not be parsed as a floating point
-  value"), and has no setting for it (its parser-integer-overflow-behavior covers integers).
+- An xsd:float or xsd:double whose magnitude is below the smallest double: QLever refuses it
+  ("could not be parsed as a floating point value"), and has no setting for it (its parser-integer-overflow-behavior covers integers).
   It is a valid literal whose XSD 1.1 value is the zero of its sign, so it is written as
   "0E0" or "-0E0" of the same datatype: the value and the datatype are kept, the lexical form
   is recorded. A subnormal double (1E-320) is read by QLever and kept.
 - A backslash that starts no N-Triples escape. In a literal, N-Triples allows a backslash only
   before t, b, n, r, f, a quote, an apostrophe, a backslash, or u and 4 or U and 8 hex digits;
-  in an IRI only before the last two. BioGateway writes FlyBase symbols with a bare backslash
-  (job 115623): in an IRI (<http://rdf.biogateway.eu/gene/7227/Dmel%5CCG10011> as written
-  here) qlever-index stops reading the file and skips the rest of it, and in a literal (the
-  symbol Dmel, backslash, CG6650) it fails the index ("Unsupported escape sequence"). In a
+  in an IRI only before the last two. In an IRI, qlever-index stops reading the file at a bare
+  backslash and skips the rest of it; in a literal it fails the index ("Unsupported escape
+  sequence"). In a
   literal the backslash is escaped (doubled), which keeps the text as published (an "escape"
   change); in an IRI it is written %5C, its valid form (an "iri" change).
 """

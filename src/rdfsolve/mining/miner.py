@@ -197,9 +197,9 @@ class SchemaMiner:
         self._ontology_term_budget: int | None = None
         self._group_before_mining: int | None = None
         # Seconds for each query of the ontology-term probe of a VoID-first source, which then
-        # gives up at the first query that does not answer in time (no page recovery): UniProt
-        # spent 1337 s in four paged attempts of ontology-terms/object, each at the 330 s
-        # deadline, and the probe found nothing (job 115330). None: the probe is not limited.
+        # gives up at the first query that does not answer in time (no page recovery): paged
+        # attempts at the deadline cost much and can find nothing. None: the probe is not
+        # limited.
         self.light_probe_seconds: float | None = None
         # Most type values that class discovery lists (None: all); the remote stage sets it.
         self.class_listing_limit: int | None = None
@@ -694,8 +694,7 @@ class SchemaMiner:
         phase = self._report.start_phase("ontology-terms")
         try:
             # Term counts are enrichment: a refused query is read in batches of terms or over
-            # a sample, and what stays refused is a measurement gap, never a failure (DGIdb on
-            # med2rdf: the subject counts are cut at 120 s by its gateway).
+            # a sample, and what stays refused is a measurement gap, never a failure.
             probed: list[SchemaPattern] | None
             probe = QueryOutcome()
             budget_of = getattr(self._helper, "budget", None)
@@ -757,8 +756,7 @@ class SchemaMiner:
                     for p in probed
                 ]
             # The objects typed by terms grouped before mining are counted per term; their rows
-            # join the group, as the subjects did (lifesciencedict: 33,030 MeSH terms as objects
-            # in 158,056 rows, one shape group each as subjects).
+            # join the group, as the subjects did.
             grouped = {m: rep for rep, terms in self._grouped_members.items() for m in terms}
             objects_before = len({p.object_class for p in patterns})
             if grouped:
@@ -1082,17 +1080,16 @@ class SchemaMiner:
         self._report.flush()
 
     # Seconds for listing the endpoint's graphs before the system graphs are left out. The
-    # listing reads every quad (DISTINCT ?g); where it does not end in 30 s it did not end in
-    # 120 s either (colil.dbcls.jp, sparql.orthodb.org: 120 s each, rehearsal 2026-10-06), and
-    # the source is then mined without the exclusion, which is recorded.
+    # listing reads every quad (DISTINCT ?g); where it does not end in 30 s it rarely ends at all,
+    # and the source is then mined without the exclusion, which is recorded.
     GRAPH_LISTING_BUDGET_S = 30.0
 
     def _exclude_engine_graphs(self) -> None:
         """Leave the engine's own graphs out of every query of a source mined without graphs.
 
         Without FROM, Virtuoso reads every graph, its system graphs included (virtrdf#, the
-        WebDAV graph, ...): their predicates and edges entered the census and the structural
-        patterns (WikiPathways: virtrdf# properties counted as properties 208/348 of the census).
+        WebDAV graph, ...): their predicates and edges would enter the census and the structural
+        patterns.
         The graphs whose IRIs start with *excluded_graph_prefixes* (the prefixes that graph
         discovery already leaves out) are excluded from the default graph of each query without
         a dataset clause with Virtuoso's input:default-graph-exclude (graph_exclusion_prologue,
@@ -1148,8 +1145,7 @@ class SchemaMiner:
     # The self-check of the exclusion: one row of the default graph, without and with the
     # prologue. With the prologue it must answer a row, and not take more than
     # EXCLUSION_SLOW_FACTOR times as long nor more than EXCLUSION_SLOW_S beyond the answer
-    # without it (sparql.string-db.org answered a graph listing in 0.2 s without a pragma and
-    # in 37.7 s with input:named-graph-exclude, 2026-10-06).
+    # without it.
     EXCLUSION_CHECK = "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1"
     EXCLUSION_SLOW_FACTOR = 10.0
     EXCLUSION_SLOW_S = 5.0
@@ -1158,8 +1154,7 @@ class SchemaMiner:
         """Return whether the exclusion pragma leaves a one-row answer non-empty and fast.
 
         Some Virtuoso versions answer an empty result, with HTTP 200 and no error, to a query
-        with an exclusion pragma (dbpedia.org, 2026-10-06, input:named-graph-exclude: 0 classes
-        where 1099 without it), and an ASK can still answer true there, so the check uses
+        with an exclusion pragma (input:named-graph-exclude), and an ASK can still answer true there, so the check uses
         SELECT. A pragma that empties a non-empty answer, or that makes the query slow, is an
         endpoint quirk, recorded in *record* under ``quirks``. SparqlHelperError is raised for
         a refused pragma.
@@ -1200,8 +1195,8 @@ class SchemaMiner:
     def _find_engine_only_classes(self, excluded: list[str], record: dict[str, Any]) -> None:
         """Find the classes typed only in the engine graphs, for a cheaper class listing.
 
-        A class listing with the exclusion prologue can be much slower than without it (forum,
-        2026-10-06: 155,649 classes in 175 s without it, a 502 after 315 s with it). The classes
+        A class listing with the exclusion prologue can be much slower than without it. The
+        classes
         typed in the engine graphs are listed graph by graph with FROM, which reads those small
         graphs only (before the prologue is set: Virtuoso drops a FROM that names an excluded
         graph), and each is asked for once in the rest of the endpoint (LIMIT 1, with the prologue). The
@@ -1217,8 +1212,8 @@ class SchemaMiner:
         try:
             with helper.budget(self.GRAPH_LISTING_BUDGET_S):
                 found: set[str] = set()
-                # One graph per query: several FROM in one query did not answer in 60 s on
-                # forum, where each graph alone answered in under 1 s (2026-10-06).
+                # One graph per query: several FROM in one query can be far slower than each
+                # graph alone.
                 for graph in excluded:
                     listing = helper.select(
                         f"SELECT DISTINCT ?c FROM {URIRef(graph).n3()} "  # noqa: S608 (SPARQL)

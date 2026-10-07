@@ -33,7 +33,7 @@ IDENTITY_PROPERTIES = (
     "http://www.w3.org/2004/02/skos/core#exactMatch",
     "http://www.w3.org/2002/07/owl#sameAs",
 )
-# Bio2RDF cross-references: <prefix>_vocabulary:x-<namespace>.
+# Cross-reference properties of the form <prefix>_vocabulary:x-<namespace>.
 XREF_MARKER = "_vocabulary:x-"
 
 

@@ -348,7 +348,8 @@ def to_pydantic(
         ):
             _, prefix, _ = curie(prop)
             local = re.split(r"[/#:]", prop)[-1]
-            # A code (P580, GO_0008150, data_1025) is named by the label of its property.
+            # A code (a property or term IRI whose local name is an identifier) is named by the
+            # label of its property.
             named = sorted(english[prop] or labels[prop] - {prop, local})
             coded = bool(named) and bool(_CODE.fullmatch(local))
             field = _identifier(named[0] if coded else local, label=coded)

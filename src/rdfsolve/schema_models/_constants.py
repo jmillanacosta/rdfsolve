@@ -34,9 +34,8 @@ implicitly. Extend the list per endpoint instead of editing it.
 """
 
 # Virtuoso's own graphs under its default host name: the WebDAV store, the ODS dataspace and the
-# SPARQL endpoint's graph, on the ports that public endpoints showed (8890; SIBiLS: 8891). Other
-# graphs on localhost may be data: STRING names graphs http://localhost:8890/human and
-# http://localhost:8890/511145info (2026-10-07), so the host as a whole is not a prefix.
+# SPARQL endpoint's graph, on the ports Virtuoso uses (8890, 8891). Other graphs on localhost
+# may be data, so the host as a whole is not a prefix.
 VIRTUOSO_SYSTEM_PATHS: tuple[str, ...] = ("DAV", "dataspace", "sparql")
 VIRTUOSO_LOCAL_PORTS: tuple[int, ...] = (8890, 8891)
 
@@ -50,10 +49,9 @@ SUGGESTED_SERVICE_GRAPHS: tuple[str, ...] = (
     ),
     "urn:core:services:sparql",
     "urn:activitystreams-owl:",
-    # Virtuoso's service description graph, named with a relative IRI (AOP-Wiki, WikiPathways).
+    # Virtuoso's service description graph, named with a relative IRI.
     "servicedescription",
-    # The OWL vocabulary that Virtuoso loads into a graph of its own (160 triples; ATTED-II's
-    # endpoint holds nothing else, 2026-10-06): not a source's data.
+    # The OWL vocabulary that Virtuoso loads into a graph of its own: not a source's data.
     "http://www.w3.org/2002/07/owl#",
 )
 """Graph IRI prefixes that hold engine metadata rather than source data.
@@ -72,8 +70,7 @@ KNOWN_ENGINE_GRAPHS: tuple[str, ...] = (
     "urn:activitystreams-owl:map",
     "http://www.w3.org/2002/07/owl#",
 )
-"""Graphs that a Virtuoso endpoint holds of its own (rehearsal 2026-10-06: AOP-Wiki, AOPDB,
-WikiPathways, NanoSafety). Asked for by name when the endpoint does not list its graphs in time.
+"""Graphs that a Virtuoso endpoint holds of its own. Asked for by name when the endpoint does not list its graphs in time.
 """
 
 _RESOURCE_URIS = frozenset(

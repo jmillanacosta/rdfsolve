@@ -315,8 +315,7 @@ class Client(DatasetClient):
         """Return the records that the identifiers (IRIs or CURIEs) name here, with their values.
 
         Each is resolved to the IRI this source writes (resolve_many). *kind* is by default the
-        class this source gives the identifiers it issues (issued_kinds: owl:Class for ChEBI,
-        up:Protein for UniProt). *fields* are by default the record's literal values and its
+        class this source gives the identifiers it issues (issued_kinds). *fields* are by default the record's literal values and its
         cross-references (see cross_references), so that to_oxigraph gives them.
         """
         if kind is None:
@@ -390,12 +389,11 @@ class Client(DatasetClient):
         """Return the properties of this source that cite identifiers of one other source.
 
         From the mined schema: every identifier value of the property is in one registered
-        namespace that this source does not issue (WikiPathways' bdbChEBI, bdbUniprot), and some
-        of its values are resources the source does not describe (object class Resource). An
-        invalid identifier counts in its namespace (lipidmaps/LMSP02 is a LIPID MAPS id that
-        fails the pattern). Not cross-references: properties whose values span namespaces
-        (dcterms:isPartOf, rdfs:seeAlso), or whose values the source describes itself
-        (dcterms:references to its PublicationReference records).
+        namespace that this source does not issue, and some of its values are resources the
+        source does not describe (object class Resource). An invalid identifier counts in its
+        namespace (an identifier that fails the namespace's pattern). Not cross-references:
+        properties whose values span namespaces (dcterms:isPartOf, rdfs:seeAlso), or whose
+        values the source describes itself.
         """
         from rdfsolve.identifiers import parse
         from rdfsolve.mappings.signatures import RDF_TYPE, VOCABULARIES
@@ -705,8 +703,7 @@ class Client(DatasetClient):
     def superclasses(self, classes: Iterable[str]) -> dict[str, set[str]]:
         """Return all named superclasses of each class, as this source's endpoint states them.
 
-        Read from the source's own vocabulary (rdfs:subClassOf, by levels): WikiPathways states
-        wp:Protein under wp:GeneProduct under wp:DataNode. A class the endpoint says nothing
+        Read from the source's own vocabulary (rdfs:subClassOf, by levels). A class the endpoint says nothing
         about has none.
         """
         from rdfsolve.ontology.hierarchy import fetch_superclasses
@@ -1550,7 +1547,7 @@ class Client(DatasetClient):
         A source issues the identifiers of its own registered prefix (Bioregistry, from the
         dataset name of the schema); their classes are the schema classes whose example subjects
         carry that prefix (rdfsolve.mappings.signatures). An identifier the source only cites
-        (WikiPathways and Ensembl genes) is not its own.
+        is not its own.
         """
         import bioregistry
 
@@ -1690,7 +1687,7 @@ class Results:
         return self
 
     def where(self, field: str, value: Any) -> Results:
-        """Keep the records whose *field* has *value* (UniProt entries with reviewed true)."""
+        """Keep the records whose *field* has *value*."""
         self._load(field)
         kept = []
         for record in self.records:
@@ -1992,7 +1989,7 @@ class Results:
     ) -> list[BaseModel]:
         """Read the records of *iris*; a batch over the value budget is split in two and retried.
 
-        A UniProt entry can carry thousands of citations, so a batch may exceed the budget that
+        One record can carry thousands of values, so a batch may exceed the budget that
         one entry does not. When one entry alone exceeds it, the fields whose values alone
         exceed it are left out for that entry, and the coverage of the set says so (partial).
         """

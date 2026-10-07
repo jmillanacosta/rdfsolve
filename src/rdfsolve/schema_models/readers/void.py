@@ -23,7 +23,7 @@ VOID_EXT = Namespace("http://ldf.fi/void-ext#")
 
 SD = Namespace("http://www.w3.org/ns/sparql-service-description#")
 # The links from a VoID dataset to the parts that describe it. void-ext's object class and
-# language partitions are those of the LDF VoID extension, as written by FRINK for the OKN graphs.
+# language partitions are those of the LDF VoID extension.
 _PARTS = (
     VOID.classPartition,
     VOID.propertyPartition,
@@ -33,7 +33,7 @@ _PARTS = (
     VOID_EXT.languagePartition,
 )
 # The partitions of a property partition by the class of its objects: nested class partitions
-# (void-ext's convention of void:classPartition) or void-ext:objectClassPartition (FRINK).
+# (void-ext's convention of void:classPartition) or void-ext:objectClassPartition.
 _OBJECT_CLASS_PARTS = (VOID.classPartition, VOID_EXT.objectClassPartition)
 
 
@@ -57,9 +57,7 @@ def void_class_populations(
     A class partition states its members with void:entities (with *subjects_fallback*, also
     with void:distinctSubjects). Each of its property partitions bounds them from below: its
     distinct subjects are members, and its triples need at least triples / distinctObjects
-    subjects. A stated count below that bound is wrong; IDSM's VoID of 2026-09-28 states 1
-    distinct subject for PubChem's SubstanceVersion, whose has-value partition has 347 M
-    distinct subjects (and 220 distinct objects). Such a class gets the bound, with the state
+    subjects. A stated count below that bound is wrong. Such a class gets the bound, with the state
     "partial" (a lower bound), and the contradiction is returned; a class with no stated count
     has none. A class described by two partitions with different counts
     (two graphs) has at least the larger: "partial".
@@ -122,8 +120,8 @@ def void_datasets_of_graphs(g: Graph, graph_names: list[str]) -> list[URIRef]:
     """Return the VoID datasets that describe the named graphs.
 
     A service description gives the dataset of each named graph (void-generator). A graph that
-    it does not name is its own dataset when the VoID describes the graph's IRI with partitions:
-    FRINK names each OKN graph's dataset by the graph (https://purl.org/okn/frink/kg/<kg>).
+    it does not name is its own dataset when the VoID describes the graph's IRI with partitions
+    (a VoID that names each graph's dataset by the graph).
     """
     found: set[URIRef] = set()
     for name in graph_names:
@@ -156,7 +154,7 @@ def is_partitioned_dataset(g: Graph, node: URIRef) -> bool:
 def void_issued(g: Graph, dataset: URIRef | None = None) -> str | None:
     """Return when a VoID description was issued or its data last updated, if it says so.
 
-    dcterms:issued (void-generator), else pav:lastUpdatedOn or dcterms:modified (FRINK); of
+    dcterms:issued, else pav:lastUpdatedOn or dcterms:modified; of
     DATASET when given, else the latest stated anywhere in the description.
     """
     from rdflib.namespace import DCTERMS
@@ -172,8 +170,8 @@ def void_issued(g: Graph, dataset: URIRef | None = None) -> str | None:
 def scope_void_graph(g: Graph, datasets: list[URIRef]) -> Graph:
     """Return the part of a VoID description that describes DATASETS.
 
-    A description of a whole endpoint (void-generator: IDSM describes 39 graphs and their union)
-    holds every graph's partitions. From each dataset its partitions, subsets and linksets are
+    A description of a whole endpoint (each graph and their union) holds every graph's
+    partitions. From each dataset its partitions, subsets and linksets are
     followed; the end of a linkset that another dataset describes contributes its class only.
     """
     scoped = Graph()
@@ -211,8 +209,8 @@ def void_to_minedschema(void_ttl: str, *, local_backend: LocalBackend = "oxigrap
     Example:
         >>> void_ttl = Path("dataset_void.ttl").read_text()
         >>> schema = void_to_minedschema(void_ttl)
-        >>> print(len(schema.patterns))
-        435
+        >>> len(schema.patterns) > 0
+        True
     """
     g = Graph()
     g.parse(data=void_ttl, format="turtle")
@@ -267,10 +265,9 @@ def _append(
 ) -> None:
     """Add a pattern read from a VoID, unless a term of it cannot be a pattern's term.
 
-    A VoID may state a term that the schema does not take as a class or property: FRINK's VoID
-    of geoconnex states the class <schema:GeoCoordinates>, an IRI of the scheme "schema" that
-    geoconnex's data use (833,051 members) beside <https://schema.org/GeoCoordinates> (2.8 M);
-    it is not a compact name to expand, since that would merge two terms of the data. Such a
+    A VoID may state a term that the schema does not take as a class or property, such as an
+    IRI whose scheme is not registered. It is not a compact name to expand: a source can use it
+    beside the registered IRI it resembles, and expanding it would merge two terms. Such a
     partition is left out, logged and, when LEFT_OUT is given, recorded there with its reason
     and its triples; the rest of the VoID is read.
     """
@@ -387,8 +384,7 @@ def _extract_patterns_from_void(
                 },
             )
 
-    # Linksets give the class at each end of a link (void-generator, as published by IDSM, UniProt,
-    # Rhea, Bgee, SwissLipids). Read with the nested partitions: a description with datatype
+    # Linksets give the class at each end of a link (as void-generator writes them). Read with the nested partitions: a description with datatype
     # partitions states its links between classes only as linksets. A link that a nested
     # partition already states is not read twice.
     linkset_query = """
@@ -421,7 +417,7 @@ def _extract_patterns_from_void(
         previous = linked.get(key)
         if previous is not None:
             # The same links described twice, with their ends typed in the graph and in the union
-            # of graphs (IDSM): the larger description holds the other.
+            # of graphs: the larger description holds the other.
             if count is not None and (previous.count is None or count > previous.count):
                 previous.count = count
                 previous.distinct_subjects = optional_count(row.get("subjects"))
@@ -457,7 +453,7 @@ def _untyped_object_partitions(
 ) -> list[SchemaPattern]:
     """Return the IRI objects that an object class partition without a class states.
 
-    FRINK partitions the objects of each class and property by their class, and puts the objects
+    A VoID can partition the objects of each class and property by their class, and put the objects
     without a class (literals among them) in a partition without void:class. Its triples beyond
     those of the datatype partitions have objects that are neither literals nor typed: a
     Resource pattern with that count. rdf:type is membership, not a link, and is left out.

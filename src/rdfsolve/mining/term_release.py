@@ -1,6 +1,6 @@
 """The exact per-term layer of a scan run, written as release files for client-side grouping.
 
-The release ships exact terms (owner decision, 2026-10-06): the JSON schema keeps the default
+The release ships exact terms: the JSON schema keeps the default
 grouping (rdfsolve's representatives, counted exactly), and two Parquet files per source let a
 client group the terms again at any budget or under chosen ancestors without the data
 (rdfsolve.client.terms):
@@ -22,7 +22,6 @@ client group the terms again at any budget or under chosen ancestors without the
 Parquet, not gzip TSV: the IRIs repeat in every row and Parquet's dictionary encoding stores
 each once per column chunk (with zstd on top), the counts stay typed integers, the parents are a
 list column instead of a second file, and polars, pyarrow, DuckDB and pandas read it directly.
-Sizes measured in article/experiments/scan-summary-20261006/terms/ (FINDINGS.md, release sizes).
 
 Exactness of a regrouping from these files: summing the rows of member terms counts a triple
 twice when its subject (or object) has two types grouped into one class. With minimal types,
@@ -129,9 +128,8 @@ def _coded_types(types: pl.LazyFrame) -> tuple[pl.DataFrame, list[str]]:
 
     The table has one row per (record, class): r is the record (QLever's id sid when the
     table has it, else the term s), k the index of its class in the list. Only the classes
-    written as <iri> are kept. The text of the records is never held: on allie (58 million
-    membership rows) the table by text took 4.4 GB and the self-join of its records 10 GB more
-    (article/corpus/agent-findings/term-release-memory.md).
+    written as <iri> are kept. The text of the records is never held: by text, the table and
+    the self-join of its records take several times the memory.
     """
     import polars as pl
 
@@ -341,8 +339,9 @@ def _write_record_release(
 ) -> dict[str, Any]:
     """write_term_release for records kept as classes (grouping.record_kinds), streamed.
 
-    The same two files and columns, made from lazy tables and written by sinks: BioGateway has
-    65.9 million record classes, too many to hold as Python lists or SchemaPattern objects.
+    The same two files and columns, made from lazy tables and written by sinks: there can be
+    tens of millions of record classes, too many to hold as Python lists or SchemaPattern
+    objects.
     Each record class has its rdfs:subClassOf parents in the data as parents (source "data")
     and its kind's representative as representative; the other classes (the kinds and the
     classes without a parent, few) go through hierarchy_edges as in write_term_release. Rows
