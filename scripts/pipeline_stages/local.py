@@ -596,19 +596,23 @@ class LocalMiningStage(Stage):
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
         index_name = config.get("data", "NAME", fallback=source.name)
-        cmd = index_command(
-            self.config.data_dir / "qlever.sif",
-            self.config.data_dir,
-            workdir,
-            index_name,
-            settings_path,
-            mapped,
-            parallel=config.get("index", "PARALLEL_PARSING"),
-            buffer=config.get(
-                "index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size
-            ),
-            memory=config.get("index", "STXXL_MEMORY", fallback="16GB"),
-        )
+        buffer = config.get("index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size)
+
+        def command(buffer: str) -> list[str]:
+            """Write the index command with this parser buffer; return what runs it."""
+            return index_command(
+                self.config.data_dir / "qlever.sif",
+                self.config.data_dir,
+                workdir,
+                index_name,
+                settings_path,
+                mapped,
+                parallel=config.get("index", "PARALLEL_PARSING"),
+                buffer=buffer,
+                memory=config.get("index", "STXXL_MEMORY", fallback="16GB"),
+            )
+
+        cmd = command(buffer)
 
         # QLever returns every integer type as xsd:int and a decimal as xsd:double; the numeric
         # datatypes of the source are counted from the input files, beside the index, while
@@ -622,7 +626,12 @@ class LocalMiningStage(Stage):
             merge_census,
             write_census,
         )
-        from rdfsolve.qlever.index_check import TruncatedIndexError, unparsed_input
+        from rdfsolve.qlever.index_check import (
+            TruncatedIndexError,
+            larger_buffer,
+            statement_over_buffer,
+            unparsed_input,
+        )
         from rdfsolve.qlever.inputs import INDEX_LOG
         from rdfsolve.qlever.repair import REPAIRS_FILE, repair_inputs
 
@@ -638,8 +647,25 @@ class LocalMiningStage(Stage):
         build_log = workdir / INDEX_LOG.format(name=index_name)
 
         def build() -> None:
-            """Run qlever-index; refuse an index of inputs that it stopped reading."""
-            subprocess.run(cmd, cwd=workdir, check=True)
+            """Run qlever-index; refuse an index of inputs that it stopped reading.
+
+            A statement longer than the parser buffer fails the build; it is run again with
+            a buffer eight times larger, up to MAX_PARSER_BUFFER_MB.
+            """
+            nonlocal buffer, cmd
+            while True:
+                try:
+                    subprocess.run(cmd, cwd=workdir, check=True)
+                    break
+                except subprocess.CalledProcessError:
+                    larger = larger_buffer(buffer)
+                    if larger is None or not statement_over_buffer(build_log):
+                        raise
+                    log.warning(
+                        f"    A statement is longer than the parser buffer {buffer}; "
+                        f"indexing again with {larger}"
+                    )
+                    buffer, cmd = larger, command(larger)
             unparsed = unparsed_input(build_log)
             if unparsed:
                 raise TruncatedIndexError(

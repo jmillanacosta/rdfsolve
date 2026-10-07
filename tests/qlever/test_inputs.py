@@ -42,7 +42,12 @@ def test_many_inputs_go_through_a_script(tmp_path):
     assert len(" ".join(cmd)) < 1000
     script = (workdir / "index-command.sh").read_text()
     words = shlex.split(script.splitlines()[-1])
-    assert words[:1] == ["qlever-index"] and words[-4:] == ["2>&1", "|", "tee", "wikipathways.index-log.txt"]
+    assert words[:1] == ["qlever-index"] and words[-4:] == [
+        "2>&1",
+        "|",
+        "tee",
+        "wikipathways.index-log.txt",
+    ]
     assert words.count("-f") == 12544 and "rdf/WP0.ttl" in words and "rdf/WP12542.ttl" in words
     assert words[words.index("rdf/graph.nt") + 1 : words.index("rdf/graph.nt") + 5] == [
         "-F",
@@ -102,7 +107,9 @@ def test_compressed_inputs_are_streamed_through_pipes(tmp_path):
     assert (
         (tmp_path / FEED)
         .read_text()
-        .endswith("gzip -dc rdf/a.nt.gz > .index-pipes/0.nt || echo rdf/a.nt.gz >> .index-feed.failed\n")
+        .endswith(
+            "gzip -dc rdf/a.nt.gz > .index-pipes/0.nt || echo rdf/a.nt.gz >> .index-feed.failed\n"
+        )
     ), "A failed write goes on to the next pipe, and is recorded"
 
 
@@ -162,3 +169,41 @@ def test_quads_after_a_long_run_of_triples_make_an_n_quads_input(tmp_path):
         stream.write("<urn:a> <urn:p> <bad iri> .\n")
         stream.write("<urn:a> <urn:p> <urn:o> <urn:g> .\n")
     assert qlever_format(data) == "nq", "Quads begin at line 2,502 (RDF Portal HPA)"
+
+
+def test_a_statement_over_the_parser_buffer_is_found_and_the_buffer_grows(tmp_path):
+    """qlever-index fails on a statement longer than its parser buffer; the log tells, and the buffer is asked eight times larger."""
+    from rdfsolve.qlever.index_check import larger_buffer, statement_over_buffer
+
+    log = tmp_path / "build.log"
+    assert not statement_over_buffer(log)
+    log.write_text(
+        "2026-10-07 14:58:49.027 - ERROR: Creating the index for QLever failed with the "
+        "following exception: The regex ([\\r\\n]+) which marks the end of a statement was not "
+        "found in the current input batch (that was not the last one) of size 10,000,000\n"
+    )
+    assert statement_over_buffer(log)
+    assert larger_buffer("10M") == "80M" and larger_buffer("1G") == "2048M"
+    assert larger_buffer("2048M") is None and larger_buffer("lots") is None
+
+
+def test_census_reads_a_statement_over_the_parser_buffer(tmp_path):
+    """The datatype census reads a statement longer than pyoxigraph's buffer and
+    counts its literal's datatype, instead of failing."""
+    import gzip
+
+    from rdfsolve.graph_export import OXIGRAPH_BUFFER
+    from rdfsolve.qlever.datatypes import census_of_files
+
+    path = tmp_path / "x.nt.gz"
+    with gzip.open(path, "wt") as stream:
+        stream.write(
+            '<http://e/a> <http://e/n> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .\n'
+        )
+        stream.write(
+            f'<http://e/a> <http://e/n> "{"9" * OXIGRAPH_BUFFER}"'
+            "^^<http://www.w3.org/2001/XMLSchema#integer> .\n"
+        )
+    found = census_of_files([(path, "nt")])
+    assert found["properties"]["http://e/n"] == {"http://www.w3.org/2001/XMLSchema#integer": 2}
+    assert found["unread"]["lines"] == 0

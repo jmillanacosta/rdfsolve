@@ -4,10 +4,20 @@ For a registry entry, the exporter lists the graphs that hold the source's data,
 triples of each where the endpoint answers the count, and fetches each graph with
 ``CONSTRUCT { ?s ?p ?o } WHERE { GRAPH <g> { ?s ?p ?o } } LIMIT <cap>``, streamed to a gzip
 file on disk. A graph counts as retrieved when its files parse and hold as many triples as the
-endpoint counts (verified), or, when the endpoint refuses the count, when the transfer ended
+endpoint counts (verified, with the statements left out below), or, when the endpoint refuses the count, when the transfer ended
 cleanly with fewer triples than the cap and than a known server row cap (unverified). A graph
 that is larger than the cap, or whose CONSTRUCT is refused or cut, is fetched by predicate,
 and a predicate that is still too large in pages of a stable order (ORDER BY ?s ?o).
+
+A body that does not end with a whole statement was cut by the server (a server may end the
+body of a query past its time limit mid-statement, or write a message after the last whole
+triple): it is not kept, and the graph is asked for in smaller parts. In an N-Triples body, a
+line that the parser does not read is read again alone: a statement longer than the parser's
+buffer is read by a line reader, a term that can be written validly is repaired as the index
+input repair does (rdfsolve.qlever.repair), and a statement that RDF cannot hold (a literal as
+subject or predicate) is left out of the file. Each repaired or left-out line is recorded with
+its original text beside the file (<piece>.statements.json), and the graph is verified when the
+triples in the files and the statements left out add up to the endpoint's count.
 
 Which graphs: the entry's graph_uris when it names them; otherwise every named graph of the
 endpoint except the engine's own (SUGGESTED_SERVICE_GRAPHS), listed with one GROUP BY (which
@@ -57,7 +67,9 @@ __all__ = [
     "entries_on_host",
     "export_source",
     "exported_entry",
+    "long_statement",
     "prepare_workdir",
+    "read_statements",
     "source_complete",
 ]
 
@@ -97,6 +109,26 @@ _TAIL_BYTES = 8192
 UNION_DEFAULT_ENGINES = ("virtuoso", "blazegraph")
 # The smallest page asked for before a predicate is given up.
 MIN_PAGE = 10_000
+# Lines parsed together before a batch that fails is read line by line.
+_BATCH_LINES = 10_000
+# pyoxigraph refuses a statement longer than its parser buffer (MemoryError).
+OXIGRAPH_BUFFER = 16 * 1024 * 1024
+# The record of the lines of a piece that were repaired or left out, beside its file.
+STATEMENTS_SUFFIX = ".statements.json"
+# What the kinds of left-out statements and of other recorded lines mean.
+STATEMENT_KINDS = {
+    "literal-subject": "a literal as subject: not RDF, left out",
+    "literal-predicate": "a literal as predicate: not RDF, left out",
+    "blank-predicate": "a blank node as predicate: not RDF, left out",
+    "invalid-term": "a statement with a term that no parser reads and that cannot be "
+    "written validly, left out",
+    "not-a-statement": "a line that is not a statement: not counted, the graph is not verified",
+    "repaired": "terms written validly (rdfsolve.qlever.repair): an IRI percent-encoded, a "
+    "backslash escaped; the same triple",
+    "long": "a statement longer than the parser buffer, read by the line reader; kept as is",
+}
+# Kinds of left-out lines that are statements, counted by the endpoint's COUNT.
+LEFT_OUT_KINDS = ("literal-subject", "literal-predicate", "blank-predicate", "invalid-term")
 _RETRYABLE = (429, 502, 503, 504, 520, 522, 524)
 
 
@@ -105,7 +137,15 @@ class ExportBudgetError(RuntimeError):
 
 
 class _FetchError(RuntimeError):
-    """One CONSTRUCT was refused, cut or returned something that is not RDF."""
+    """One CONSTRUCT was refused, cut or returned something that is not RDF.
+
+    received is the number of lines the body held before it was cut (None: not cut).
+    """
+
+    def __init__(self, message: str, received: int | None = None) -> None:
+        """Keep the message and the lines received before a cut."""
+        super().__init__(message)
+        self.received = received
 
 
 @dataclass
@@ -126,6 +166,13 @@ class Piece:
     # Statements that a strict parser refuses but a lenient one reads (N-Triples only).
     invalid_count: int | None = None
     invalid_samples: list[str] = field(default_factory=list)
+    # Lines written validly, statements left out by kind, statements longer than the parser
+    # buffer, and the record of those lines (STATEMENTS_SUFFIX) with its SHA-256.
+    repaired: int = 0
+    left_out: dict[str, int] = field(default_factory=dict)
+    long_statements: int = 0
+    statements_file: str = ""
+    statements_sha256: str = ""
     seconds: float = 0.0
     error: str | None = None
     pages: int = 1
@@ -142,6 +189,9 @@ class GraphOutcome:
     count_method: str = "COUNT"
     method: str = ""
     triples: int = 0
+    # Statements repaired, and left out by kind, in the kept files (see Piece).
+    repaired: int = 0
+    left_out: dict[str, int] = field(default_factory=dict)
     pieces: list[Piece] = field(default_factory=list)
     outcome: str = "pending"
     reason: str = ""
@@ -176,14 +226,103 @@ def _media(content_type: str) -> str:
     return (content_type.split(";", 1)[0].split() or [""])[0].lower()
 
 
-def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]:
-    """Parse a gzip RDF file as a stream.
+@dataclass
+class StatementRead:
+    """What reading an RDF file found: see read_statements."""
 
-    Return (triples, triples with a blank node, first syntax error, statements that do not
-    parse). After a syntax error the file is read leniently, as a lenient loader would. When
-    even the lenient parser stops (a literal as subject or as predicate), an N-Triples file is read line by line, and each line that does not
-    parse is counted; in a Turtle file the statements after the error are not known, and
-    the count of those that do not parse is given as -1.
+    triples: int = 0
+    blank_nodes: int = 0
+    parse_error: str | None = None
+    unparsed: int = 0
+    repaired: int = 0
+    long_statements: int = 0
+    left_out: dict[str, int] = field(default_factory=dict)
+    records: list[dict[str, Any]] = field(default_factory=list)
+
+
+def accounted(piece: Piece) -> int:
+    """Return the statements of a piece: the triples in its file and those left out."""
+    return (piece.triples or 0) + sum(piece.left_out.values())
+
+
+# A literal, unrolled (fast on a statement of many megabytes).
+_LONG_LITERAL = re.compile(rb'"[^"\\]*(?:\\.[^"\\]*)*"')
+# A backslash and the escape it starts (group 1), or a bare one; a raw line break.
+_LITERAL_ESCAPE = re.compile(rb"\\(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|[tbnrf\"'\\])?|[\r\n]")
+
+
+def long_statement(line: bytes, rdf_format: Any) -> Any:
+    """Read a statement longer than pyoxigraph's buffer; return its quad, or None.
+
+    The longest literal (whose text is what makes a statement this long) is checked alone:
+    valid UTF-8 and only the escapes N-Triples allows; the statement with that literal
+    written empty is then parsed as any other line.
+    """
+    import pyoxigraph
+
+    literals = list(_LONG_LITERAL.finditer(line))
+    if not literals:
+        return None
+    longest = max(literals, key=lambda m: m.end() - m.start())
+    text = longest.group()[1:-1]
+    try:
+        text.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+    if any(m.group(1) is None for m in _LITERAL_ESCAPE.finditer(text)):
+        return None
+    short = line[: longest.start()] + b'""' + line[longest.end() :]
+    if len(short) >= OXIGRAPH_BUFFER:
+        return None
+    try:
+        quads = list(pyoxigraph.parse(short, rdf_format, lenient=True))
+    except (SyntaxError, MemoryError):
+        return None
+    return quads[0] if len(quads) == 1 else None
+
+
+def _statement_kind(line: str) -> str:
+    """Name what a line that no parser reads is (a key of STATEMENT_KINDS)."""
+    from rdfsolve.qlever.repair import _BLANK, _IRI_END, _SPACE
+
+    text = line.strip()
+    if not text.endswith(".") or not text.startswith(("<", "_:", '"')):
+        return "not-a-statement"
+    if text.startswith('"'):
+        return "literal-subject"
+    if text.startswith("<"):
+        end = _IRI_END.search(text, 1)
+        position = end.end() if end else -1
+    else:
+        match = _BLANK.match(text)
+        position = match.end() if match else -1
+    if position < 0:
+        return "not-a-statement"
+    position = _SPACE.match(text, position).end()  # type: ignore[union-attr]
+    if text.startswith('"', position):
+        return "literal-predicate"
+    if text.startswith("_:", position):
+        return "blank-predicate"
+    return "invalid-term" if text.startswith("<", position) else "not-a-statement"
+
+
+def read_statements(path: Path, fmt: str, rewrite: bool = False) -> StatementRead:
+    """Parse a gzip RDF file as a stream; return its triples and what could not be read.
+
+    The file is parsed strictly, else leniently, as a lenient loader would (an IRI with a
+    space). When even the lenient parser stops, an N-Triples file is read in batches of
+    lines, and a batch that does not parse line by line:
+
+    - a statement longer than pyoxigraph's 16 MiB buffer (a long literal) is read by long_statement and counted as a triple;
+    - a line that rdfsolve.qlever.repair writes so that it parses (an IRI with <, > or ", a
+      backslash that starts no escape) is a repaired triple;
+    - a statement RDF cannot hold (a literal as subject or predicate) is left out, by kind;
+    - a line that is not a statement is counted in unparsed.
+
+    With rewrite, a file with a repaired or left-out line is written again with the repairs
+    and without the left-out lines; records lists each such line with its original text (a
+    long statement by its line and length). In a Turtle or RDF/XML file the statements after
+    the error are not known, and unparsed is -1.
     """
     import pyoxigraph
 
@@ -207,29 +346,165 @@ def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]
     # pyoxigraph raises MemoryError for a statement longer than its 16 MiB buffer.
     try:
         triples, blanks = scan(False)
-        return triples, blanks, None, 0
+        return StatementRead(triples, blanks)
     except (SyntaxError, MemoryError) as error:
         message = f"{type(error).__name__}: {error}"[:500]
     try:
         triples, blanks = scan(True)
-        return triples, blanks, message, 0
+        return StatementRead(triples, blanks, message)
     except (SyntaxError, MemoryError):
         pass
     if fmt != "N_TRIPLES":
-        return 0, 0, message, -1
-    triples = blanks = invalid = 0
-    with gzip.open(path, "rb") as stream:
-        for line in stream:
-            if not line.strip() or line.lstrip().startswith(b"#"):
-                continue
-            try:
-                quads = list(pyoxigraph.parse(line, rdf_format, lenient=True))
-            except (SyntaxError, MemoryError):
-                invalid += 1
-                continue
-            triples += len(quads)
-            blanks += sum(blank(q) for q in quads)
-    return triples, blanks, message, invalid
+        return StatementRead(0, 0, message, -1)
+    return _read_lines(path, rdf_format, message, rewrite, blank)
+
+
+def _read_lines(
+    path: Path, rdf_format: Any, message: str, rewrite: bool, blank: Callable[[Any], bool]
+) -> StatementRead:
+    """Read an N-Triples file in batches of lines; see read_statements."""
+    import pyoxigraph
+
+    from rdfsolve.qlever.repair import repair_line
+
+    found = StatementRead(parse_error=message)
+    partial = path.with_name(f".{path.name}.rewrite")
+    changed = False
+
+    def parse(line: bytes) -> tuple[list[Any], bool] | None:
+        """Parse one line alone: its quads and whether it was long; None if it does not parse."""
+        try:
+            return list(pyoxigraph.parse(line, rdf_format, lenient=True)), False
+        except MemoryError:
+            quad = long_statement(line, rdf_format)
+            return None if quad is None else ([quad], True)
+        except SyntaxError:
+            return None
+
+    def take(number: int, line: bytes, quads: list[Any], long: bool) -> None:
+        """Count the triples of a line that was read."""
+        found.triples += len(quads)
+        found.blank_nodes += sum(blank(q) for q in quads)
+        if long:
+            found.long_statements += 1
+            found.records.append({"line": number, "kind": "long", "bytes": len(line)})
+
+    def one(number: int, line: bytes) -> bytes:
+        """Read one line alone; return what is written for it (b"" to leave it out)."""
+        nonlocal changed
+        read = parse(line)
+        if read is not None:
+            take(number, line, *read)
+            return line
+        text = line.decode("utf-8", "replace")
+        written, kinds = repair_line(text)
+        read = parse(written.encode()) if kinds else None
+        if read is not None and len(read[0]) == 1:
+            take(number, written.encode(), *read)
+            found.repaired += 1
+            found.records.append(
+                {
+                    "line": number,
+                    "kind": "repaired",
+                    "changes": sorted(set(kinds)),
+                    "original": text.rstrip("\r\n"),
+                    "written": written.rstrip("\n"),
+                }
+            )
+            changed = True
+            return written.encode()
+        kind = _statement_kind(text)
+        if kind == "not-a-statement":
+            found.unparsed += 1
+        else:
+            found.left_out[kind] = found.left_out.get(kind, 0) + 1
+        found.records.append({"line": number, "kind": kind, "original": text.rstrip("\r\n")})
+        changed = True
+        return b""
+
+    def flush(first: int, batch: list[bytes], out: gzip.GzipFile | None) -> None:
+        """Parse a batch at once; when it fails, read its lines one by one."""
+        try:
+            quads = list(pyoxigraph.parse(b"".join(batch), rdf_format, lenient=True))
+        except (SyntaxError, MemoryError):
+            written = [one(first + k, line) for k, line in enumerate(batch)]
+        else:
+            found.triples += len(quads)
+            found.blank_nodes += sum(blank(q) for q in quads)
+            written = batch
+        if out is not None:
+            out.writelines(written)
+
+    with (
+        gzip.open(path, "rb") as stream,
+        gzip.open(partial, "wb", compresslevel=3) if rewrite else _Discard() as sink,
+    ):
+        out = sink if rewrite else None
+        batch: list[bytes] = []
+        first = 1
+        for number, line in enumerate(stream, 1):
+            if not batch:
+                first = number
+            if not line.endswith(b"\n"):
+                line += b"\n"
+            batch.append(line)
+            if len(batch) >= _BATCH_LINES:
+                flush(first, batch, out)
+                batch = []
+        if batch:
+            flush(first, batch, out)
+    if rewrite and changed:
+        partial.replace(path)
+    else:
+        partial.unlink(missing_ok=True)
+    return found
+
+
+class _Discard:
+    """A context that stands in for no output file."""
+
+    def __enter__(self) -> None:
+        """Give no file."""
+
+    def __exit__(self, *args: object) -> None:
+        """Nothing to close."""
+
+
+def cut_body(tail: bytes, fmt: str) -> str | None:
+    """Return how a response body whose last bytes are TAIL was cut, or None if it ends whole.
+
+    A whole N-Triples or Turtle body ends with the dot of a statement (or with a comment or,
+    in Turtle, a prefix line); an RDF/XML body with a closing tag. A server may end the body
+    of a query past its time limit mid-statement, with HTTP 200, or write a message after
+    the last whole triple.
+    """
+    text = tail.rstrip()
+    if not text:
+        return None
+    last = text.rsplit(b"\n", 1)[-1].strip()
+    if fmt == "RDF_XML":
+        whole = text.endswith(b">")
+    else:
+        heads = (b"#",) if fmt == "N_TRIPLES" else (b"#", b"@prefix", b"@base", b"prefix", b"base")
+        whole = text.endswith(b".") or last.lower().startswith(heads)
+    if whole:
+        return None
+    return f"the body ends with {last[-80:].decode('utf-8', 'replace')!r}, not a whole statement"
+
+
+def count_file_triples(path: Path, fmt: str) -> tuple[int, int, str | None, int]:
+    """Parse a gzip RDF file as a stream, without changing it.
+
+    Return (triples, triples with a blank node, first syntax error, statements that are not
+    read as triples): the triples include the lines read_statements would repair and the
+    long statements; the last number counts the statements it would leave out and the lines
+    that are not statements (-1: not known, in a Turtle or RDF/XML file).
+    """
+    found = read_statements(path, fmt)
+    missing = (
+        found.unparsed if found.unparsed < 0 else found.unparsed + sum(found.left_out.values())
+    )
+    return found.triples, found.blank_nodes, found.parse_error, missing
 
 
 def strict_failures(path: Path, samples: int = 20) -> tuple[int, list[str]]:
@@ -320,6 +595,8 @@ class GraphExporter:
         self._observed_cap: int | None = None
         # The COUNT of each named graph, for counting a default-graph remainder by difference.
         self._named_counts: dict[str, int | None] = {}
+        # The lines a cut body of the current graph held: larger parts are asked in pages.
+        self._cut_rows: int | None = None
 
     # Small queries go through SparqlHelper: host gate, spacing, busy-host waits.
 
@@ -511,12 +788,8 @@ class GraphExporter:
         final = self.output / f"{label}.{suffix}.gz"
         partial.replace(final)
         piece.file = final.name
-        piece.bytes = final.stat().st_size
+        self._read(piece, final, fmt)
         self.bytes += piece.bytes
-        piece.sha256 = _sha256(final)
-        piece.triples, piece.blank_nodes, piece.parse_error, piece.unparsed = count_file_triples(
-            final, fmt
-        )
         if piece.unparsed:
             # The file is kept, but its triples cannot be checked against the count.
             raise _UnparsableError(piece)
@@ -526,6 +799,45 @@ class GraphExporter:
             "%s: %s triples, %s bytes in %.0f s", label, piece.triples, piece.bytes, piece.seconds
         )
         return piece
+
+    def _read(
+        self, piece: Piece, path: Path, fmt: str, records: list[dict[str, Any]] | None = None
+    ) -> None:
+        """Read the piece's file (rewritten with its repairs), fill its counts and digests.
+
+        The repaired and left-out lines (and RECORDS, those of merged pages) are written to
+        the piece's statements record.
+        """
+        found = read_statements(path, fmt, rewrite=True)
+        piece.bytes = path.stat().st_size
+        piece.sha256 = _sha256(path)
+        piece.triples, piece.blank_nodes = found.triples, found.blank_nodes
+        piece.parse_error, piece.unparsed = found.parse_error, found.unparsed
+        piece.long_statements = found.long_statements
+        kept = list(records or [])
+        if found.records:
+            kept += [{"file": path.name, **record} for record in found.records]
+        piece.repaired = found.repaired + sum(1 for r in records or [] if r["kind"] == "repaired")
+        left_out: dict[str, int] = dict(found.left_out)
+        for record in records or []:
+            if record["kind"] in LEFT_OUT_KINDS:
+                left_out[record["kind"]] = left_out.get(record["kind"], 0) + 1
+        piece.left_out = left_out
+        if kept:
+            target = self.output / f"{piece.label}{STATEMENTS_SUFFIX}"
+            body = {"kinds": STATEMENT_KINDS, "file": path.name, "lines": kept}
+            target.write_text(json.dumps(body, indent=1, ensure_ascii=False) + "\n", "utf-8")
+            piece.statements_file = target.name
+            piece.statements_sha256 = _sha256(target)
+
+    def _discard(self, piece: Piece) -> None:
+        """Delete a piece's file and its statements record; take its bytes off the budget."""
+        if piece.file:
+            (self.output / piece.file).unlink(missing_ok=True)
+            self.bytes -= piece.bytes
+        if piece.statements_file:
+            (self.output / piece.statements_file).unlink(missing_ok=True)
+        piece.file = piece.statements_file = ""
 
     def _stream(
         self, method: str, query: str, partial: Path, piece: Piece, accept: str = ""
@@ -571,18 +883,24 @@ class GraphExporter:
                 piece.content_type = f"{asked} (no Content-Type sent)"
             if answer.get("X-SQL-State") == "S1TAT":
                 raise _FetchError("Virtuoso ANYTIME partial result (X-SQL-State S1TAT)")
-            size = 0
+            size = lines = 0
             tail = b""
             with gzip.open(partial, "wb", compresslevel=3) as sink:
                 for chunk in _chain(first, chunks):
                     sink.write(chunk)
                     size += len(chunk)
+                    lines += chunk.count(b"\n")
                     tail = (tail + chunk)[-_TAIL_BYTES:]
                     if any(marker in tail for marker in ERROR_TRAILERS):
-                        raise _FetchError("the server ended the body with an error trailer")
+                        raise _FetchError(
+                            "the server ended the body with an error trailer", received=lines
+                        )
                     if size // 4 > self.max_bytes - self.bytes:
                         raise ExportBudgetError("source would exceed its byte budget")
             piece.uncompressed_bytes = size
+            cut = cut_body(tail, _FORMATS[_media(piece.content_type)][1])
+            if cut:
+                raise _FetchError(f"cut: {cut} after {lines} lines", received=lines)
             if size and size < 4096:
                 with gzip.open(partial, "rb") as check:
                     start = check.read(512).lstrip().lower()
@@ -613,6 +931,7 @@ class GraphExporter:
         where, prologue = self._graph_terms(outcome.graph, outcome.role)
         outcome.started = _now()
         began = time.monotonic()
+        self._cut_rows = None
         if outcome.count is None and outcome.count_error is None:
             outcome.count, outcome.count_error = self._count(where, prologue)
         try:
@@ -626,12 +945,12 @@ class GraphExporter:
                 self._by_predicate(outcome, where, prologue, label)
         except _UnparsableError as error:
             piece = error.piece
-            piece.error = f"{piece.unparsed} statements do not parse"
+            what = "statements do not parse" if piece.unparsed < 0 else "lines are not statements"
+            piece.error = f"{piece.unparsed} {what}"
             outcome.pieces.append(piece)
             outcome.outcome = "failed"
             outcome.reason = (
-                f"{piece.file}: {piece.unparsed} statements do not parse "
-                f"(first: {piece.parse_error})"
+                f"{piece.file}: {piece.unparsed} {what} (first: {piece.parse_error})"
             )[:500]
         except ExportBudgetError as error:
             outcome.outcome, outcome.reason = "failed", f"budget: {error}"
@@ -639,7 +958,13 @@ class GraphExporter:
         finally:
             outcome.finished = _now()
             outcome.seconds = round(time.monotonic() - began, 1)
-            outcome.triples = sum(p.triples or 0 for p in outcome.pieces if p.error is None)
+            kept = [p for p in outcome.pieces if p.error is None]
+            outcome.triples = sum(p.triples or 0 for p in kept)
+            outcome.repaired = sum(p.repaired for p in kept)
+            outcome.left_out = {}
+            for piece in kept:
+                for kind, number in piece.left_out.items():
+                    outcome.left_out[kind] = outcome.left_out.get(kind, 0) + number
         if outcome.outcome == "retrieved/unverified" and outcome.role == "default-extra":
             self._verify_remainder(outcome)
 
@@ -722,14 +1047,13 @@ class GraphExporter:
         except _FetchError as error:
             outcome.pieces.append(Piece(label=f"{label}.whole", query=query, error=str(error)))
             outcome.reason = f"whole graph: {error}"[:300]
+            self._cut_rows = error.received or self._cut_rows
             return False
-        verdict = self._verdict(piece.triples or 0, outcome.count)
+        verdict = self._verdict(accounted(piece), outcome.count)
         if verdict is None:
             # Kept for the record, but not as a piece of the graph.
-            (self.output / piece.file).unlink(missing_ok=True)
-            self.bytes -= piece.bytes
-            piece.error = f"incomplete: {piece.triples} triples, count {outcome.count}"
-            piece.file = ""
+            self._discard(piece)
+            piece.error = f"incomplete: {accounted(piece)} statements, count {outcome.count}"
             outcome.pieces.append(piece)
             outcome.reason = f"whole graph incomplete ({piece.triples} of {outcome.count})"
             self._observed_cap = piece.triples or None
@@ -778,21 +1102,21 @@ class GraphExporter:
                 expected, _ = self._count(sub, prologue)
             stem = f"{label}.p{index:04d}"
             verdict: str | None = None
-            ceiling = min(self.cap, self._observed_cap or self.cap)
+            # A predicate larger than a cut body goes to pages at once.
+            ceiling = min(self.cap, self._observed_cap or self.cap, self._cut_rows or self.cap)
             if expected is None or expected <= ceiling:
                 query = f"{prologue}CONSTRUCT {{ ?s {p} ?o }} WHERE {{ {sub} }} LIMIT {self.cap}"
                 try:
                     piece = self.fetch(query, stem)
-                    verdict = self._verdict(piece.triples or 0, expected)
+                    verdict = self._verdict(accounted(piece), expected)
                     if verdict is None:
-                        (self.output / piece.file).unlink(missing_ok=True)
-                        self.bytes -= piece.bytes
-                        piece.error = f"incomplete: {piece.triples} triples, count {expected}"
-                        piece.file = ""
+                        self._discard(piece)
+                        piece.error = f"incomplete: {accounted(piece)} statements, count {expected}"
                         self._observed_cap = piece.triples or self._observed_cap
                     outcome.pieces.append(piece)
                 except _FetchError as error:
                     outcome.pieces.append(Piece(label=stem, query=query, error=str(error)))
+                    self._cut_rows = error.received or self._cut_rows
             if verdict is None:
                 verdict = self._paged(outcome, sub, p, prologue, expected, stem)
             if verdict is None:
@@ -800,10 +1124,12 @@ class GraphExporter:
                 outcome.reason = f"predicate {predicate} not retrieved whole"[:500]
                 return
             verdicts.append(verdict)
-        total = sum(p.triples or 0 for p in outcome.pieces if p.error is None)
+        total = sum(accounted(p) for p in outcome.pieces if p.error is None)
         if outcome.count is not None and total != outcome.count:
             outcome.outcome = "failed"
-            outcome.reason = f"predicate pieces hold {total} triples, graph count {outcome.count}"
+            outcome.reason = (
+                f"predicate pieces hold {total} statements, graph count {outcome.count}"
+            )
             return
         exact = outcome.count is not None and "unverified" not in verdicts
         outcome.outcome = "retrieved/verified" if exact else "retrieved/unverified"
@@ -845,6 +1171,9 @@ class GraphExporter:
             outcome.reason = f"{outcome.reason}; {p}: no count, pages cannot be verified"
             return None
         size = self._page_size()
+        if self._cut_rows:
+            # Half of what came before a cut, so that a page ends in time.
+            size = min(size, max(MIN_PAGE, self._cut_rows // 2))
         for ordered in (False, True):
             pages: list[Piece] = []
             offset = page = 0
@@ -865,15 +1194,18 @@ class GraphExporter:
                     outcome.pieces.append(Piece(label=label, query=query, error=str(error)))
                     if size > MIN_PAGE:
                         # A refused or cut page is asked again, smaller: Virtuoso refuses a
-                        # CONSTRUCT whose triples overflow its hash dictionary.
-                        size = max(MIN_PAGE, size // 4)
+                        # CONSTRUCT whose triples overflow its hash dictionary ; a
+                        # page cut after some lines is asked at half of them.
+                        got = error.received or 0
+                        size = max(MIN_PAGE, got // 2 if 0 < got < size else size // 4)
+                        self._cut_rows = got or self._cut_rows
                         page -= 1
                         continue
                     outcome.reason = f"{outcome.reason}; {p} page {page}: {error}"[:500]
                     failed = True
                     break
                 pages.append(piece)
-                got = piece.triples or 0
+                got = accounted(piece)
                 offset += got
                 if got < size:
                     break
@@ -883,18 +1215,16 @@ class GraphExporter:
                 else self._merge(pages, f"{stem}.{'o' if ordered else 'u'}")
             )
             for piece in pages:
-                (self.output / piece.file).unlink(missing_ok=True)
-                self.bytes -= piece.bytes
+                self._discard(piece)
             if merged is not None:
                 outcome.pieces.append(merged)
-                if merged.triples == expected:
+                if accounted(merged) == expected:
                     return "verified"
                 merged.error = (
-                    f"{merged.triples} distinct triples in {merged.pages} pages, count {expected}"
+                    f"{accounted(merged)} distinct statements in {merged.pages} pages, "
+                    f"count {expected}"
                 )
-                (self.output / merged.file).unlink(missing_ok=True)
-                self.bytes -= merged.bytes
-                merged.file = ""
+                self._discard(merged)
                 outcome.reason = f"{outcome.reason}; {p}: {merged.error}"[:500]
         return None
 
@@ -952,13 +1282,29 @@ class GraphExporter:
             seconds=round(sum(p.seconds for p in pages), 1),
             pages=len(pages),
         )
-        merged.bytes = target.stat().st_size
+        self._read(merged, target, "N_TRIPLES", self._page_records(pages))
         self.bytes += merged.bytes
-        merged.sha256 = _sha256(target)
-        merged.triples, merged.blank_nodes, merged.parse_error, merged.unparsed = (
-            count_file_triples(target, "N_TRIPLES")
-        )
         return merged
+
+    def _page_records(self, pages: list[Piece]) -> list[dict[str, Any]]:
+        """Return the repaired and left-out lines of pages, each distinct statement once.
+
+        Unordered pages may overlap: a statement in two pages is one statement of the merged
+        file, as sort -u keeps one of its lines. Long statements are found again in the
+        merged file.
+        """
+        seen: set[tuple[str, str]] = set()
+        records: list[dict[str, Any]] = []
+        for piece in pages:
+            if not piece.statements_file:
+                continue
+            body = json.loads((self.output / piece.statements_file).read_text("utf-8"))
+            for record in body["lines"]:
+                key = (record["kind"], str(record.get("written") or record.get("original")))
+                if record["kind"] != "long" and key not in seen:
+                    seen.add(key)
+                    records.append({**record, "page": piece.label})
+        return records
 
     # The source.
 
@@ -990,6 +1336,15 @@ class GraphExporter:
             if count is not None and len(counts) == len(graphs) and count == sum(counts.values()):
                 # Fuseki with a union default graph.
                 return None, f"the default graph counts {count}, as many as the named graphs"
+            # RDF4J and GraphDB: the default graph is the named graphs and the null context; a
+            # null context that holds triples is exported as a graph (also when the store refuses
+            # the default-graph check as too long).
+            null, _ = self._count(f"GRAPH <{self.NULL_CONTEXT}> {{ ?s ?p ?o }}")
+            if null:
+                return (
+                    "null-context",
+                    f"check not answered; the null context <{self.NULL_CONTEXT}> holds {null} triples",
+                )
             return "undetermined", f"not answered: {str(error)[:200]}; default count {count}"
         if extra:
             # RDF4J and GraphDB keep the triples loaded without a graph in a null context that
@@ -1019,6 +1374,12 @@ class GraphExporter:
             if item.get("graph") != graph or item.get("role") != role:
                 continue
             if not str(item.get("outcome", "")).startswith("retrieved"):
+                # The files of a graph that was not retrieved (a cut body kept for the record)
+                # are not part of the new export.
+                for piece in item.get("pieces", []):
+                    for name in (piece.get("file"), piece.get("statements_file")):
+                        if name:
+                            (self.output / name).unlink(missing_ok=True)
                 return None
             pieces = [Piece(**p) for p in item.get("pieces", [])]
             if not all(not p.file or (self.output / p.file).is_file() for p in pieces):
@@ -1044,7 +1405,7 @@ class GraphExporter:
             outcome.count_error = error
             return
         outcome.count = count
-        if count == outcome.triples:
+        if count == outcome.triples + sum(outcome.left_out.values()):
             outcome.outcome = "retrieved/verified"
         else:
             outcome.outcome = "failed"
@@ -1131,8 +1492,13 @@ class GraphExporter:
         self.manifest["default_graph"] = {"role": role, "why": why}
         todo: list[tuple[str | None, str]] = [(g, "named") for g in graphs]
         if role == "undetermined":
+            # Not exported by the retry rounds (_transient): a later run decides it again.
             self.manifest["graphs"].append(
-                asdict(GraphOutcome(None, "default", outcome="failed", reason=why))
+                asdict(
+                    GraphOutcome(
+                        None, "default", method="undetermined", outcome="failed", reason=why
+                    )
+                )
             )
         elif role == "null-context":
             todo.append((self.NULL_CONTEXT, "named"))
@@ -1143,8 +1509,7 @@ class GraphExporter:
             outcome = self._resumable(graph, kind)
             if outcome is not None and outcome.outcome == "failed":
                 for piece in outcome.pieces:
-                    if piece.file:
-                        (self.output / piece.file).unlink(missing_ok=True)
+                    self._discard(piece)
                 outcome = None
             if outcome is None:
                 outcome = GraphOutcome(graph, kind, count=counts.get(graph or ""))
@@ -1184,6 +1549,8 @@ class GraphExporter:
             for p in g["pieces"]
             if p.get("file") and p.get("parse_error") and not p.get("error")
         ]
+        # Lines repaired or left out, and long statements, by file (records beside each file).
+        self.manifest["statements"] = statement_summary(graphs)
         self._write_manifest()
 
     def _retry_transient(self, todo: list[tuple[str | None, str]]) -> None:
@@ -1212,8 +1579,9 @@ class GraphExporter:
             for i, item in failed:
                 self._check_budget()
                 for piece in item["pieces"]:
-                    if piece.get("file"):
-                        (self.output / piece["file"]).unlink(missing_ok=True)
+                    for name in (piece.get("file"), piece.get("statements_file")):
+                        if name:
+                            (self.output / name).unlink(missing_ok=True)
                 outcome = GraphOutcome(item["graph"], item["role"], count=item.get("count"))
                 index = 1 + next(
                     (
@@ -1242,8 +1610,47 @@ _TRANSIENT = (
 )
 
 
+def statement_summary(graphs: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Return the repaired, left-out and long statements of the kept files of an export.
+
+    left_out counts by kind the statements that the endpoint counts but that RDF cannot hold
+    (STATEMENT_KINDS); they are the gap between the files and the endpoint.
+    """
+    files = []
+    left_out: dict[str, int] = {}
+    repaired = long = 0
+    for graph in graphs:
+        for piece in graph.get("pieces", []):
+            if not piece.get("file") or piece.get("error"):
+                continue
+            kinds = piece.get("left_out") or {}
+            if not (kinds or piece.get("repaired") or piece.get("long_statements")):
+                continue
+            files.append(
+                {
+                    "graph": graph["graph"],
+                    "file": piece["file"],
+                    "repaired": piece.get("repaired", 0),
+                    "left_out": kinds,
+                    "long_statements": piece.get("long_statements", 0),
+                    "record": piece.get("statements_file", ""),
+                }
+            )
+            repaired += int(piece.get("repaired") or 0)
+            long += int(piece.get("long_statements") or 0)
+            for kind, number in kinds.items():
+                left_out[kind] = left_out.get(kind, 0) + int(number)
+    return {"repaired": repaired, "left_out": left_out, "long": long, "files": files}
+
+
 def _transient(graph: dict[str, Any]) -> bool:
-    """Return whether a failed graph failed on a busy host or a cut connection."""
+    """Return whether a failed graph failed on a busy host or a cut connection.
+
+    A default graph whose role was not decided is not: exporting it whole would export the
+    union of the named graphs where the default graph is their union.
+    """
+    if graph.get("method") == "undetermined":
+        return False
     texts = [str(graph.get("reason") or "")] + [str(p.get("error") or "") for p in graph["pieces"]]
     return any(word in text.lower() for text in texts for word in _TRANSIENT)
 
@@ -1366,6 +1773,12 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
     }
     if left_out:
         fields["endpoint_export"]["left_out_relative_graphs"] = left_out
+    statements = statement_summary(graphs)
+    if statements["left_out"]:
+        # The statements the endpoint counts that are not in the files (not RDF), by kind.
+        fields["endpoint_export"]["left_out_statements"] = statements["left_out"]
+    if statements["repaired"]:
+        fields["endpoint_export"]["repaired_statements"] = statements["repaired"]
     if remainder:
         fields["endpoint_export"]["default_graph_remainder_as"] = remainder
     return fields

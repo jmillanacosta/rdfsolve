@@ -14,6 +14,35 @@ from rdfsolve.qlever.lifecycle import index_name
 _UNPARSED = re.compile(r"Parsing of line has Failed.*?Remaining bytes: ([0-9,]+)")
 
 
+# qlever-index fails when one statement is longer than its parser buffer (-b, 10M by default):
+# the build log then says that the end of a statement "was not found in the current input batch".
+_BUFFER = re.compile(r"marks the end of a statement was not found in the current input batch")
+# The largest parser buffer asked for, in MB.
+MAX_PARSER_BUFFER_MB = 2048
+
+
+def statement_over_buffer(log: Path) -> bool:
+    """Return whether a build log reports a statement longer than the parser buffer."""
+    if not log.is_file():
+        return False
+    with log.open(encoding="utf-8", errors="replace") as stream:
+        return any(_BUFFER.search(line) for line in stream)
+
+
+def larger_buffer(size: str) -> str | None:
+    """Return a parser buffer eight times SIZE (such as 10M), or None past the largest."""
+    match = re.fullmatch(r"([0-9]+)\s*([KMG]?)B?", size.strip(), re.IGNORECASE)
+    if match is None:
+        return None
+    megabytes = (
+        int(match.group(1))
+        * {"K": 1 / 1024, "": 1 / 2**20, "M": 1, "G": 1024}[match.group(2).upper()]
+    )
+    if megabytes >= MAX_PARSER_BUFFER_MB:
+        return None
+    return f"{min(MAX_PARSER_BUFFER_MB, max(1, int(megabytes * 8)))}M"
+
+
 class TruncatedIndexError(ValueError):
     """An index whose build log reports input that qlever-index did not parse."""
 

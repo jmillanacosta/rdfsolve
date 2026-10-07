@@ -167,11 +167,19 @@ def _count_lines(
         """Count LINES (from line START); split a block the parser refuses down to its lines."""
         try:
             statements = list(parse(b"".join(lines), _format(name), lenient=True))
-        except SyntaxError as error:
+        except (SyntaxError, MemoryError) as error:
             if len(lines) > 1:
                 for offset, line in enumerate(lines):
                     read([line], start + offset)
                 return
+            if isinstance(error, MemoryError):
+                # A statement longer than pyoxigraph's buffer (a long literal): read with its longest literal written empty, its datatype kept.
+                from rdfsolve.graph_export import long_statement
+
+                quad = long_statement(lines[0], _format(name))
+                if quad is not None:
+                    _count([quad], counts)
+                    return
             text = lines[0].decode("utf-8", "replace").rstrip("\r\n")[:SAMPLE_CHARS]
             unread.append({"file": file, "line": start, "error": str(error), "text": text})
             return
@@ -210,7 +218,7 @@ def census_of_files(files: Iterable[tuple[Path, str]]) -> dict[str, Any]:
         try:
             with ExitStack() as stack:
                 _count(parse(_open(path, stack), _format(name), lenient=True), read)
-        except SyntaxError as error:
+        except (SyntaxError, MemoryError) as error:
             if name in LINE_FORMATS:
                 read = defaultdict(Counter)
                 with ExitStack() as stack:

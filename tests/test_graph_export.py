@@ -32,6 +32,12 @@ class _Endpoint(BaseHTTPRequestHandler):
     refuse_accept: ClassVar[str] = ""
     refuse: ClassVar[tuple[str, ...]] = ()
     queries: ClassVar[list[str]] = []
+    # Text of a CONSTRUCT body written otherwise (an engine's serialization of a value).
+    substitute: ClassVar[tuple[bytes, bytes]] = (b"", b"")
+    # A CONSTRUCT that holds this text is cut halfway: after a whole line, with TRAILER
+    # (a server's message), or, without a trailer, mid-statement.
+    cut_on: ClassVar[str] = ""
+    trailer: ClassVar[bytes] = b""
 
     def log_message(self, *args: Any) -> None:
         """Keep the test output quiet."""
@@ -61,7 +67,13 @@ class _Endpoint(BaseHTTPRequestHandler):
             body = io.BytesIO()
             pyoxigraph.serialize(triples, body, pyoxigraph.RdfFormat.N_TRIPLES)
             garbage = self.garbage if "g1" in query else b""
-            self._send(200, self.content_type, body.getvalue() + garbage)
+            data = body.getvalue()
+            if self.substitute[0]:
+                data = data.replace(*self.substitute)
+            if self.cut_on and self.cut_on in query:
+                half = data.rfind(b"\n", 0, len(data) // 2) + 1
+                data = data[:half] + self.trailer if self.trailer else data[: half + 12]
+            self._send(200, self.content_type, data + garbage)
             return
         if isinstance(result, pyoxigraph.QueryBoolean):
             self._send(
@@ -306,17 +318,110 @@ def test_busy_host_is_retried_in_a_later_round(endpoint: type[_Endpoint], tmp_pa
     assert source_complete(manifest), [g["reason"] for g in manifest["graphs"]]
 
 
-def test_unparsable_statements_fail_the_graph_only(
+def test_a_line_that_is_no_statement_fails_the_graph_only(
     endpoint: type[_Endpoint], tmp_path: Path
 ) -> None:
-    """A response with a statement no parser reads fails its graph; the others are kept."""
-    endpoint.garbage = b'"literal" <http://example.org/p> <http://example.org/o> .\n'
+    """A response with a line that is not a statement fails its graph; the others are kept."""
+    endpoint.garbage = (
+        b"<http://example.org/x> what is this\n<http://e/a> <http://e/p> <http://e/o> .\n"
+    )
     manifest = _export(endpoint, tmp_path)
     graphs = _by_graph(manifest)
     assert graphs[EX + "g1"]["outcome"] == "failed"
-    assert "1 statements do not parse" in graphs[EX + "g1"]["reason"]
+    assert "1 lines are not statements" in graphs[EX + "g1"]["reason"]
     assert graphs[EX + "g2"]["outcome"] == "retrieved/verified"
     assert manifest["outcome"] == "partial"
+
+
+_LINE = f'<{EX}g1/s0> <{EX}p> "0" .\n'.encode()
+
+
+def test_literal_subject_is_left_out_recorded_and_accounted(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """A statement with a literal subject, which the endpoint counts, is left out of the file
+    and recorded with its text; the files and it add up to the COUNT, so the graph is
+    verified and the export complete, with the gap stated."""
+    from rdfsolve.graph_export import exported_entry
+
+    endpoint.substitute = (_LINE, f'"0" <{EX}p> <{EX}g1/s0> .\n'.encode())
+    manifest = _export(endpoint, tmp_path)
+    g1 = _by_graph(manifest)[EX + "g1"]
+    assert g1["outcome"] == "retrieved/verified" and g1["method"] == "whole"
+    assert (g1["count"], g1["triples"], g1["left_out"]) == (18, 17, {"literal-subject": 1})
+    piece = g1["pieces"][0]
+    record = json.loads((tmp_path / "toy" / piece["statements_file"]).read_text())
+    assert record["lines"][0]["kind"] == "literal-subject"
+    assert record["lines"][0]["original"] == f'"0" <{EX}p> <{EX}g1/s0> .'
+    with gzip.open(tmp_path / "toy" / piece["file"], "rt") as stream:
+        assert len(stream.read().splitlines()) == 17
+    assert manifest["statements"]["left_out"] == {"literal-subject": 1}
+    assert source_complete(manifest)
+    fields = exported_entry(tmp_path / "toy")
+    assert fields["endpoint_export"]["left_out_statements"] == {"literal-subject": 1}
+    assert fields["endpoint_export"]["verified"]
+
+
+def test_left_out_statements_of_merged_pages_are_counted_once(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """In pages merged into one file, a left-out statement still makes up the count."""
+    endpoint.substitute = (_LINE, f'"0" <{EX}p> <{EX}g1/s0> .\n'.encode())
+    endpoint.row_cap = 5
+    manifest = _export(endpoint, tmp_path)
+    g1 = _by_graph(manifest)[EX + "g1"]
+    assert g1["outcome"] == "retrieved/verified", g1["reason"]
+    assert g1["left_out"] == {"literal-subject": 1} and g1["triples"] == 17
+    merged = [p for p in g1["pieces"] if p["error"] is None and p["pages"] > 1]
+    assert merged and merged[0]["left_out"] == {"literal-subject": 1}
+    on_disk = {p.name for p in (tmp_path / "toy").glob("*.json")} - {"manifest.json"}
+    assert on_disk == {p["statements_file"] for p in merged}
+
+
+def test_term_written_invalidly_is_repaired(endpoint: type[_Endpoint], tmp_path: Path) -> None:
+    """An IRI that an engine writes with a raw < and > is percent-encoded, as the index input
+    repair does; the triple is kept and counted."""
+    endpoint.substitute = (f"<{EX}o>".encode(), f"<{EX}o<1>>".encode())
+    manifest = _export(endpoint, tmp_path)
+    g1 = _by_graph(manifest)[EX + "g1"]
+    assert g1["outcome"] == "retrieved/verified"
+    assert (g1["triples"], g1["repaired"], g1["left_out"]) == (18, 6, {})
+    piece = g1["pieces"][0]
+    with gzip.open(tmp_path / "toy" / piece["file"], "rt") as stream:
+        assert f"<{EX}o%3C1%3E>" in stream.read()
+    record = json.loads((tmp_path / "toy" / piece["statements_file"]).read_text())
+    assert {r["kind"] for r in record["lines"]} == {"repaired"}
+
+
+@pytest.mark.parametrize("trailer", [b"request timeout\n", b""])
+def test_cut_body_is_asked_again_in_parts(
+    endpoint: type[_Endpoint], tmp_path: Path, trailer: bytes
+) -> None:
+    """A 200 body that ends with a text after the last triple or mid-statement
+    was cut: it is not kept, and the graph is fetched by predicate."""
+    endpoint.cut_on = f"GRAPH <{EX}g1> {{ ?s ?p ?o }} }} LIMIT"
+    endpoint.trailer = trailer
+    manifest = _export(endpoint, tmp_path, retry_rounds=0)
+    g1 = _by_graph(manifest)[EX + "g1"]
+    assert g1["outcome"] == "retrieved/verified" and g1["method"] == "by-predicate"
+    whole = g1["pieces"][0]
+    assert whole["error"].startswith("cut: the body ends with") and not whole["file"]
+    assert source_complete(manifest)
+
+
+def test_cut_body() -> None:
+    """Whole bodies end with a statement's dot (or a closing tag); others were cut."""
+    from rdfsolve.graph_export import cut_body
+
+    assert cut_body(b"<a> <b> <c> .\n", "N_TRIPLES") is None
+    assert cut_body(b"", "N_TRIPLES") is None
+    assert cut_body(b"<a> <b> <c> .\nrequest timeout\n", "N_TRIPLES")
+    assert cut_body(b"<a> <b> <c> .\n<http://data", "N_TRIPLES")
+    assert cut_body(b"@prefix ex: <http://e/> .\nex:a ex:b ex:c .\n", "TURTLE") is None
+    assert cut_body(b"PREFIX ex: <http://e/>\n", "TURTLE") is None
+    assert cut_body(b"ex:a ex:b ex:c ;\n", "TURTLE")
+    assert cut_body(b"<rdf:RDF>\n</rdf:RDF>\n", "RDF_XML") is None
+    assert cut_body(b"<rdf:RDF>\n<rdf:Descr", "RDF_XML")
 
 
 def test_refused_ntriples_accept_falls_back(endpoint: type[_Endpoint], tmp_path: Path) -> None:
@@ -401,22 +506,64 @@ def test_null_context_becomes_the_endpoint_default_graph(
     assert fields["graph_uris"] == [EX + "g1", graph]
 
 
-def test_statement_over_the_parser_buffer_does_not_parse(tmp_path: Path, monkeypatch) -> None:
-    """pyoxigraph raises MemoryError past its 16 MiB buffer (era-kg); the line is counted as a
-    statement that does not parse, not raised."""
+def test_statement_over_the_parser_buffer_is_read(tmp_path: Path) -> None:
+    """pyoxigraph raises MemoryError past its 16 MiB buffer (a long literal); the line reader reads the statement, which counts and is kept as it is."""
+    from rdfsolve.graph_export import OXIGRAPH_BUFFER, read_statements
+
+    path = tmp_path / "x.nt.gz"
+    huge = "1 2, " * (OXIGRAPH_BUFFER // 4 + 10)
+    with gzip.open(path, "wt") as stream:
+        stream.write('<http://e/a> <http://e/p> "ok" .\n')
+        stream.write(f'_:b <http://e/p> "LINESTRING ({huge})\\n"^^<http://e/wkt> .\n')
+    before = path.read_bytes()
+    found = read_statements(path, "N_TRIPLES", rewrite=True)
+    assert (found.triples, found.long_statements, found.unparsed) == (2, 1, 0)
+    assert found.blank_nodes == 1 and found.parse_error.startswith("MemoryError")
+    assert path.read_bytes() == before
+    assert count_file_triples(path, "N_TRIPLES")[0::3] == (2, 0)
+
+
+def test_long_statement_with_an_invalid_escape_is_repaired(tmp_path: Path) -> None:
+    """The line reader checks the long literal's escapes as N-Triples allows them; a bare
+    backslash is escaped as the index input repair does."""
+    from rdfsolve.graph_export import OXIGRAPH_BUFFER, read_statements
+
     path = tmp_path / "x.nt.gz"
     with gzip.open(path, "wt") as stream:
-        stream.write('<http://e/a> <http://e/p> "ok" .\n<http://e/a> <http://e/p> "HUGE" .\n')
-    real = pyoxigraph.parse
+        stream.write(f'<http://e/a> <http://e/p> "{"x" * OXIGRAPH_BUFFER}\\q" .\n')
+    found = read_statements(path, "N_TRIPLES", rewrite=True)
+    # Written with the backslash escaped (the index input repair), then read as long.
+    assert (found.triples, found.repaired, found.long_statements) == (1, 1, 1)
+    with gzip.open(path, "rb") as stream:
+        assert stream.read().endswith(b'\\\\q" .\n')
 
-    def parse(source: Any, *args: Any, **kwargs: Any) -> Any:
-        if not isinstance(source, bytes) or b"HUGE" in source:
-            raise MemoryError("Reached the buffer maximal size of 16777216")
-        return real(source, *args, **kwargs)
 
-    monkeypatch.setattr(pyoxigraph, "parse", parse)
-    triples, _, error, unparsed = count_file_triples(path, "N_TRIPLES")
-    assert (triples, unparsed) == (1, 1) and error.startswith("MemoryError")
+def test_null_context_is_exported_when_the_default_check_is_refused(tmp_path: Path) -> None:
+    """A store refuses the default-graph check; a null context that holds triples is then
+    exported as a graph, as when the check answers."""
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    exporter = GraphExporter({"name": "x", "endpoint": "http://127.0.0.1:9/sparql"}, tmp_path)
+
+    def ask(query: str, purpose: str, seconds: float | None = None) -> bool:
+        raise SparqlHelperError("HTTP 503: Query evaluation took too long")
+
+    def count(where: str, prologue: str = "") -> tuple[int | None, str | None]:
+        return (5, None) if "sesame#nil" in where else (100, None)
+
+    exporter._ask = ask  # type: ignore[method-assign]
+    exporter._count = count  # type: ignore[method-assign]
+    role, why = exporter._default_graph_role([EX + "g1", EX + "g2"], {EX + "g1": 60, EX + "g2": 60})
+    assert role == "null-context" and "holds 5 triples" in why
+
+
+def test_undetermined_default_graph_is_not_exported_by_a_retry_round() -> None:
+    """A default graph whose role was not decided is not exported whole by a retry round."""
+    from rdfsolve.graph_export import _transient
+
+    item = {"graph": None, "method": "undetermined", "reason": "HTTP 503", "pieces": []}
+    assert not _transient(item)
+    assert _transient({**item, "method": ""})
 
 
 def test_complete_export_is_not_rewritten(endpoint: type[_Endpoint], tmp_path: Path) -> None:
@@ -433,3 +580,22 @@ def test_complete_export_is_not_rewritten(endpoint: type[_Endpoint], tmp_path: P
     export_source(entry, tmp_path, "s", delay=0.0, min_free_bytes=0)
     assert hashlib.sha256(path.read_bytes()).hexdigest() == before
     assert not endpoint.queries
+
+
+def test_files_of_a_failed_graph_are_removed_when_it_is_exported_again(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """A later run exports a failed graph again; the files of the failed attempt go."""
+    endpoint.garbage = (
+        b"<http://example.org/x> what is this\n<http://e/a> <http://e/p> <http://e/o> .\n"
+    )
+    _export(endpoint, tmp_path)
+    assert (tmp_path / "toy" / "g0001.whole.nt.gz").is_file()
+    endpoint.garbage = b""
+    # Asked whole again, the graph is cut; its earlier whole file must not stay.
+    endpoint.cut_on = f"GRAPH <{EX}g1> {{ ?s ?p ?o }} }} LIMIT"
+    manifest = _export(endpoint, tmp_path)
+    assert source_complete(manifest)
+    on_disk = {p.name for p in (tmp_path / "toy").glob("*.gz")}
+    listed = {p["file"] for g in manifest["graphs"] for p in g["pieces"] if p["file"]}
+    assert on_disk == listed
