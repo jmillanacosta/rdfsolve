@@ -23,10 +23,12 @@ if TYPE_CHECKING:
 
 
 def words(text: str) -> set[str]:
-    """Normalize schema labels for deterministic lexical retrieval."""
-    text = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", text)
-    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
-    return {word.lower().rstrip("s") for word in re.findall(r"[^\W_]+", text)}
+    """Normalize schema labels for deterministic lexical retrieval (rdfsolve.naming.words)."""
+    from rdfsolve.naming import words as split
+
+    return {
+        word.lower().rstrip("s") for part in re.findall(r"[^\W_]+", text) for word in split(part)
+    }
 
 
 def same_name(text: str, name: str) -> bool:
@@ -34,10 +36,10 @@ def same_name(text: str, name: str) -> bool:
 
     def tokens(value: str) -> list[str]:
         """Split camel case and punctuation into casefolded words."""
+        from rdfsolve.naming import words as split
+
         value = unicodedata.normalize("NFKC", value)
-        value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", value)
-        value = re.sub(r"([a-z])([A-Z])", r"\1 \2", value)
-        return re.findall(r"[^\W_]+", value.casefold())
+        return [w.casefold() for part in re.findall(r"[^\W_]+", value) for w in split(part)]
 
     return bool(tokens(name)) and tokens(text) == tokens(name)
 

@@ -23,6 +23,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from rdfsolve.target_model import Model
+from rdfsolve.targets.biolink import Biolink
+
 if TYPE_CHECKING:
     import pyoxigraph as ox
     from rdflib import Graph
@@ -33,6 +36,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Biolink",
+    "Model",
     "Profile",
     "Query",
     "Rule",
@@ -50,7 +54,7 @@ logger = logging.getLogger(__name__)
 
 def _expand(text: str, client: Client | None = None) -> str:
     """Return the IRI of "a" (rdf:type), of a CURIE or of an IRI: the prefixes of the client's
-    mined schema first, then the Biolink Model's own prefix, then Bioregistry.
+    mined schema first, then those of the registered target models' own terms, then Bioregistry.
     """
     import bioregistry
 
@@ -62,8 +66,11 @@ def _expand(text: str, client: Client | None = None) -> str:
     if not sep:
         raise ValueError(f"{text!r}: write an IRI, a CURIE or 'a'")
     known = client.schema.get_prefixes() if client is not None else {}
-    base = known.get(prefix) or (Biolink.BASE if prefix == "biolink" else None)
-    base = base or bioregistry.get_uri_prefix(prefix)
+    from rdfsolve.target_model import registered_prefixes
+
+    base = (
+        known.get(prefix) or registered_prefixes().get(prefix) or bioregistry.get_uri_prefix(prefix)
+    )
     if not base:
         raise ValueError(f"{text!r}: unknown prefix {prefix!r}")
     return base + local
@@ -1066,186 +1073,7 @@ def _paths(focus: Any, links: list[tuple[Any, str, Any]]) -> dict[Any, str]:
     return paths
 
 
-@dataclass
-class Biolink:
-    """The Biolink Model at one version, read from its LinkML YAML: classes and slots."""
-
-    version: str
-    classes: dict[str, dict[str, Any]]
-    slots: dict[str, dict[str, Any]]
-
-    BASE = "https://w3id.org/biolink/vocab/"
-
-    @classmethod
-    def read(cls, path: str | Path) -> Biolink:
-        """Read biolink-model.yaml (a pinned copy)."""
-        import yaml
-
-        data = yaml.safe_load(Path(path).read_text())
-        return cls(str(data.get("version", "")), data.get("classes", {}), data.get("slots", {}))
-
-    def class_iri(self, name: str) -> str:
-        """Return the IRI of a class, from its name in the model."""
-        return self.BASE + "".join(w[:1].upper() + w[1:] for w in name.split(" "))
-
-    def slot_iri(self, name: str) -> str:
-        """Return the IRI of a slot, from its name in the model."""
-        return self.BASE + name.replace(" ", "_")
-
-    def ancestors(self, name: str, mixins: bool = False) -> list[str]:
-        """Return a class's ancestors along is_a, nearest first.
-
-        With *mixins*, also the mixins of the class and of its ancestors, with their own
-        parents: the categories the model says a node should carry.
-        """
-        out: list[str] = []
-        todo = [name]
-        while todo:
-            current = self.classes.get(todo.pop(0), {})
-            parents = [current.get("is_a"), *((current.get("mixins") or []) if mixins else [])]
-            for parent in parents:
-                if parent and parent != name and parent not in out:
-                    out.append(parent)
-                    todo.append(parent)
-        return out
-
-    def name_of(self, term: str) -> str:
-        """Return the model's name of a term given as a CURIE, an IRI or a name."""
-        local = term.rsplit(":", 1)[-1].rsplit("/", 1)[-1]
-        for name in (*self.classes, *self.slots):
-            if (
-                name == local
-                or self.class_iri(name).endswith("/" + local)
-                or self.slot_iri(name).endswith("/" + local)
-            ):
-                return name
-        raise ValueError(f"{term!r} is not a class or slot of Biolink {self.version}")
-
-    def diagram(self, *names: str, terms: Sequence[str] = (), fenced: bool = True) -> str:
-        """Draw the part of the model that *terms* use (Mermaid): a class with its parents (is_a),
-        its mixins and the identifier prefixes it takes; a slot as an edge from its domain to
-        its range, with the slot it specializes.
-        """
-        from rdfsolve.client.diagram import _md, _node
-
-        nodes: dict[str, str] = {}
-        lines, edges = [], []
-
-        def node(name: str, detail: str = "", style: str = "") -> str:
-            """Return the node of a class, drawn once."""
-            if name not in nodes:
-                nodes[name] = f"B{len(nodes)}"
-                lines.append(_node(nodes[name], name, detail))
-                if style:
-                    lines.append(f"style {nodes[name]} {style}")
-            return nodes[name]
-
-        for term in [*names, *terms]:
-            name = self.name_of(term)
-            if name in self.classes:
-                c = self.classes[name]
-                prefixes = ", ".join((c.get("id_prefixes") or [])[:6])
-                child = node(
-                    name,
-                    f"ids: {prefixes}" if prefixes else "",
-                    "fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px",
-                )
-                current = name
-                for parent in self.ancestors(name)[:2]:
-                    edges.append(f'{nodes[current]} -->|"is a"| {node(parent)}')
-                    current = parent
-                for mixin in c.get("mixins") or []:
-                    edges.append(
-                        f'{child} -.->|"mixin"| {node(mixin, "mixin", "fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")}'
-                    )
-                    # a mixin's own parents, where it meets the other classes drawn
-                    current = mixin
-                    for parent in self.ancestors(mixin)[:2]:
-                        edge = f'{nodes[current]} -->|"is a"| {node(parent)}'
-                        if edge not in edges:
-                            edges.append(edge)
-                        current = parent
-            else:
-                slot = self.slots[name]
-                domain = node(slot.get("domain") or "any class")
-                range_ = node(slot.get("range") or "any class")
-                parent = f" (is a {slot['is_a']})" if slot.get("is_a") else ""
-                edges.append(f'{domain} ==>|"{_md(name + parent)}"| {range_}')
-        body = "\n".join(
-            [
-                "flowchart LR",
-                *lines,
-                *edges,
-                "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
-            ]
-        )
-        return f"```mermaid\n{body}\n```" if fenced else body
-
-    def curie(self, iri: str) -> str | None:
-        """Return an identifier as a CURIE with the prefix the model writes (its spelling of the
-        prefix, as its classes list them in id_prefixes), compared as
-        Bioregistry prefixes. None when the model takes no prefix for it.
-        """
-        import bioregistry
-
-        from rdfsolve.identifiers import parse
-
-        found = parse(iri)
-        if found is None:
-            return None
-        if not hasattr(self, "_prefixes"):
-            self._prefixes = {
-                (bioregistry.normalize_prefix(p) or p.lower()): p
-                for c in self.classes.values()
-                for p in c.get("id_prefixes") or []
-            }
-        prefix = self._prefixes.get(found.prefix)
-        return f"{prefix}:{found.local}" if prefix else None
-
-    def id_prefixes(self, term: str) -> list[str]:
-        """Return the identifier prefixes a class takes, in the model's order of preference, as
-        Bioregistry prefixes; a class that lists none takes those of its nearest ancestor that
-        does. The first one a node has names it (as Node Normalization picks a clique's id).
-        """
-        import bioregistry
-
-        for name in [self.name_of(term), *self.ancestors(self.name_of(term))]:
-            listed = self.classes.get(name, {}).get("id_prefixes") or []
-            if listed:
-                return [bioregistry.normalize_prefix(p) or p.lower() for p in listed]
-        return []
-
-    def hierarchy(self) -> dict[str, set[str]]:
-        """Return the ancestors (IRIs) of each class IRI, for the most specific category."""
-        return {
-            self.class_iri(n): {self.class_iri(a) for a in self.ancestors(n)} for n in self.classes
-        }
-
-    def categories(self, prefix: str) -> list[str]:
-        """Return the categories (class IRIs, not mixins) where an identifier prefix belongs:
-        those that list it (compared as Bioregistry prefixes) while none of their ancestors
-        does. The model repeats a prefix on narrower classes; the prefix belongs to the
-        broadest class that lists it.
-        """
-        import bioregistry
-
-        wanted = bioregistry.normalize_prefix(prefix) or prefix.lower()
-        found = [
-            name
-            for name, c in self.classes.items()
-            if not c.get("mixin")
-            and any(
-                (bioregistry.normalize_prefix(p) or p.lower()) == wanted
-                for p in c.get("id_prefixes") or []
-            )
-        ]
-        listed = set(found)
-        return sorted(self.class_iri(n) for n in found if not listed & set(self.ancestors(n)))
-
-
-def categorize(
-    graph: Any, biolink: Biolink, pairs: Iterable[tuple[str, str]] = ()
-) -> dict[str, Any]:
+def categorize(graph: Any, biolink: Model, pairs: Iterable[tuple[str, str]] = ()) -> dict[str, Any]:
     """Give each node of *graph* (PropertyGraph) without a Biolink category the one its
     identifiers allow: the categories Biolink lists for the prefix of each of its identifiers,
     and of the identifiers decided to name the same entity (*pairs*, Resolution.pairs), shared
@@ -1346,9 +1174,9 @@ def write_query(
         made_with = str(described.get("generated with") or "")
         known = {**source.schema.get_prefixes(), **known}
         source = source.schema.about.dataset_name or ""
-    if isinstance(target, Biolink):
-        known.setdefault("biolink", Biolink.BASE)
-        target = f"biolink {target.version}"
+    if hasattr(target, "kinds"):  # a target model: its prefix, namespace and version
+        known.setdefault(target.prefix, target.base)
+        target = f"{target.prefix} {target.version}".strip()
 
     def term(iri: str) -> str:
         """Return an IRI as a prefixed name where a prefix fits it, else <iri>."""
@@ -1509,7 +1337,7 @@ def _local_prefixes(iris: Iterable[str], base: str) -> dict[str, str]:
 
 def to_kgx(
     graph: Any,
-    biolink: Biolink,
+    biolink: Model,
     folder: str | Path,
     knowledge_source: str,
     local_prefix: str = "local",
@@ -1568,8 +1396,8 @@ def to_kgx(
         return iri
 
     def term(iri: str) -> str:
-        """Return a Biolink term as biolink:<local>."""
-        return "biolink:" + iri[len(base) :] if iri.startswith(base) else iri
+        """Return a term of the model as <prefix>:<local>."""
+        return biolink.term(iri)
 
     from rdfsolve.property_graph import REFERENCE
 
@@ -1629,7 +1457,7 @@ def to_kgx(
                 continue
             categories = list(
                 dict.fromkeys(term(c) for c in node.labels if c.startswith(base))
-            ) or ["biolink:NamedThing"]
+            ) or [biolink.term(biolink.class_iri(biolink.root() or "named thing"))]
             names = [v.lexical for v in node.properties.get(base + "name", [])]
             out.writerow(
                 [
@@ -1668,63 +1496,38 @@ def to_kgx(
     return nodes_path, edges_path
 
 
-def derive_conversions(client: Client, statements: ox.Dataset, biolink: Biolink) -> dict[str, int]:
-    """State the associations that Biolink's process nodes imply; return how many of each kind.
+def derive_conversions(client: Client, statements: ox.Dataset, biolink: Model) -> dict[str, int]:
+    """State what the target model's conventions imply from the converted statements; return how
+    many statements of each class were added.
 
-    Biolink's chemical-to-chemical derivation association states the rule: a molecular
-    activity (or a kind below it) that has input C1, has output C2 and is catalyzed by P gives
-    C1 derives_into C2, with P as its catalyst_qualifier. A process of no more specific kind
-    gives only related_to, Biolink's root predicate, from each input to each output (an
-    Association), so nothing is claimed that the source does not state; its catalysts are
-    qualifiers the same way. The associations are added to *statements* by a CONSTRUCT recorded
-    in *client*'s session (step "Conversions"); derive_associations makes each one an edge.
+    The queries come from the model (Model.implied): a general model implies nothing; a model
+    with conventions of its own (a registered subclass) gives them as CONSTRUCT queries. The
+    statements are added to *statements*, each query recorded in *client*'s session (step
+    "Conversions"); derive_associations makes each reified statement an edge.
     """
     import pyoxigraph as ox
 
-    from rdfsolve.config import mint
-
-    base = biolink.BASE
-    activity = biolink.name_of("MolecularActivity")
-    reactions = " ".join(
-        f"<{biolink.class_iri(n)}>"
-        for n in biolink.classes
-        if n == activity or activity in biolink.ancestors(n)
-    )
-    derivation = biolink.class_iri(biolink.name_of("ChemicalEntityToChemicalDerivationAssociation"))
-    query = f"""PREFIX biolink: <{base}>
-CONSTRUCT {{
-  ?association a ?kind ; biolink:subject ?input ; biolink:predicate ?predicate ;
-    biolink:object ?output ; biolink:catalyst_qualifier ?catalyst .
-}} WHERE {{
-  ?process biolink:has_input ?input ; biolink:has_output ?output .
-  OPTIONAL {{ ?catalyst biolink:catalyzes ?process }}
-  BIND(EXISTS {{ VALUES ?reaction {{ {reactions} }} ?process a ?reaction }} AS ?is_reaction)
-  FILTER(!?is_reaction || ?input != ?output)
-  BIND(IF(?is_reaction, <{derivation}>, biolink:Association) AS ?kind)
-  BIND(IF(?is_reaction, biolink:derives_into, biolink:related_to) AS ?predicate)
-  BIND(IRI(CONCAT({_literal(mint("association") + "/")},
-    MD5(CONCAT(STR(?process), " ", STR(?input), " ", STR(?output))))) AS ?association)
-}}"""
+    found = []
     with client.step("Conversions"):
-        found = list(client.construct(query, data=statements))
+        for query in biolink.implied():
+            found += list(client.construct(query, data=statements))
     for q in found:
         statements.add(ox.Quad(q.subject, q.predicate, q.object))
     counts = Counter(biolink.name_of(q.object.value) for q in found if q.predicate.value == _TYPE)
-    catalysed = {q.subject for q in found if q.predicate.value == base + "catalyst_qualifier"}
+    catalysed = {
+        q.subject for q in found if q.predicate.value == biolink.BASE + "catalyst_qualifier"
+    }
     return {**counts, "with catalyst": len(catalysed)}
 
 
-def _association_parts(graph: Any, biolink: Biolink) -> dict[str, dict[str, Any]]:
-    """Return the association nodes of *graph* (an Association or a kind below it), each with its
+def _association_parts(graph: Any, biolink: Model) -> dict[str, dict[str, Any]]:
+    """Return the nodes of *graph* that reify a statement (Model.statement_classes), each with its
     subject, predicate and object, and its qualifiers (key: values), from its edges and values.
     """
     from rdfsolve.property_graph import REFERENCE, Value
 
     base = biolink.BASE
-    root = biolink.name_of("Association")
-    kinds = {
-        biolink.class_iri(n) for n in biolink.classes if n == root or root in biolink.ancestors(n)
-    }
+    kinds = {biolink.class_iri(n) for n in biolink.statement_classes()}
     parts: dict[str, dict[str, Any]] = {
         n: {"qualifiers": defaultdict(list)}
         for n, node in graph.nodes.items()
@@ -1750,8 +1553,8 @@ def _association_parts(graph: Any, biolink: Biolink) -> dict[str, dict[str, Any]
     return parts
 
 
-def derive_associations(graph: Any, biolink: Biolink) -> int:
-    """Add a direct edge for each association node of *graph* (PropertyGraph); return how many.
+def derive_associations(graph: Any, biolink: Model) -> int:
+    """Add a direct edge for each reified statement of *graph* (PropertyGraph); return how many.
 
     A Biolink association states one edge: its subject, predicate and object, with its
     qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
@@ -1787,7 +1590,7 @@ def derive_associations(graph: Any, biolink: Biolink) -> int:
 def kind_conflicts(
     client: Client,
     statements: ox.Dataset,
-    biolink: Biolink,
+    biolink: Model,
     same: Iterable[tuple[str, str]] = (),
 ) -> Any:
     """Return the nodes with two Biolink kinds of which neither is under the other (mixins too).
@@ -1858,7 +1661,7 @@ def kind_conflicts(
 
 
 def keep_kinds(
-    client: Client, statements: ox.Dataset, biolink: Biolink, kept: Mapping[str, str]
+    client: Client, statements: ox.Dataset, biolink: Model, kept: Mapping[str, str]
 ) -> int:
     """Keep one Biolink kind of each node in *kept* (node: Biolink name); return how many type
     statements were taken out of *statements*.

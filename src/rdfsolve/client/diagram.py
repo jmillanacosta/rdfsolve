@@ -17,6 +17,161 @@ if TYPE_CHECKING:
     from rdfsolve.client.api import Client
 
 
+class Diagram(str):
+    """A Mermaid diagram: the text as it was, drawn when shown.
+
+    It is the Mermaid source (fenced or not), usable as any string. A notebook renders it as
+    Mermaid; a terminal prints it as a tree of text, with any note before the diagram.
+    """
+
+    def _repr_markdown_(self) -> str:
+        """Render in a notebook: the fenced Mermaid source."""
+        return str(self) if "```mermaid" in self else f"```mermaid\n{self}\n```"
+
+    def __repr__(self) -> str:
+        """Draw the diagram as a tree of text; a note instead when it is too large to read."""
+        text = str(self)
+        note, _, rest = text.rpartition("```mermaid\n") if "```mermaid" in text else ("", "", text)
+        names, edges = _parse_mermaid(rest.removesuffix("\n```").removesuffix("```"))
+        head = note.strip() + "\n\n" if note.strip() else ""
+        drawn = _tree(names, edges)
+        if drawn.count("\n") > _TEXT_LINES:
+            return (
+                f"{head}A diagram of {len(names)} boxes and {len(edges)} links: too large to "
+                "read as text. Draw fewer (diagram('Kind', 'Other kind')); str(diagram) is its "
+                "Mermaid, which a notebook or mermaid.live draws."
+            )
+        return head + drawn
+
+
+# Above this many lines, a diagram drawn as text is not readable.
+_TEXT_LINES = 400
+
+# A node with its label (id("`label`"), id["label"] and other shapes), and a link between two
+# node ids, possibly dashed, possibly with a label.
+_NODE = r'(\w+)\s*[\(\[\{]+"`?(.*?)`?"[\)\]\}]+'
+_EDGE = r'^\s*(\w+)(?::::\w+)?\s*-\.?->\s*(?:\|"`?([^"]*?)`?"\|)?\s*(\w+)'
+
+# The arrowheads of a bundle of links, by direction from the kind it hangs from: at its end (to
+# the other kind), at its start (to the kind it hangs from), or both.
+_HEADS = {"out": ("─", "▸"), "in": ("◂", "─"), "both": ("◂", "▸")}
+
+
+def _unescape(text: str) -> str:
+    """Return a Mermaid label as plain text: entity codes decoded, no bold, no line breaks."""
+    text = re.sub(r"#(\d+);", lambda m: chr(int(m[1])), text.replace("**", ""))
+    return text.replace("<br/>", "\n")
+
+
+def _parse_mermaid(body: str) -> tuple[dict[str, str], list[tuple[str, list[str], str]]]:
+    """Return the nodes (id to one-line label) and links (from, link names, to) of a flowchart."""
+    body = "\n".join(
+        line
+        for line in body.splitlines()
+        if not re.match(r"\s*(flowchart|graph|subgraph|end|classDef|class|style|linkStyle)\b", line)
+    )
+    names: dict[str, str] = {}
+    for match in re.finditer(_NODE, body, flags=re.DOTALL):
+        parts = [p.strip() for p in _unescape(match[2]).split("\n") if p.strip()]
+        shown = parts[0] + (f" ({', '.join(parts[1:])})" if len(parts) > 1 else "") if parts else ""
+        names.setdefault(match[1], shown or match[1])
+    bare = re.sub(_NODE, lambda m: m[1], body, flags=re.DOTALL)
+    edges = [
+        (a, [p.strip() for p in _unescape(label or "").split("\n") if p.strip()], b)
+        for a, label, b in re.findall(_EDGE, bare, flags=re.MULTILINE)
+    ]
+    return names, edges
+
+
+def _tree(names: dict[str, str], edges: list[tuple[str, list[str], str]]) -> str:
+    """Draw a flowchart as trees of text: the first kind at the top, the kinds it links to below
+    it, each with the names of the links on the edges (▶ a link from the kind above, ◀ a link to
+    it); a kind reached first through another is drawn under it, one level deeper. Each link is
+    drawn once.
+    """
+    order = list(dict.fromkeys([*names, *(n for a, _, b in edges for n in (a, b))]))
+    # Per kind, the kinds it shares links with, and each link name with its direction.
+    groups: dict[str, dict[str, dict[str, str]]] = {}
+    owner: dict[str, str] = {}  # the kind under which each kind is drawn
+    shown: set[int] = set()
+    roots: list[str] = []
+    for start in order:
+        if start in owner or start in roots:
+            continue
+        roots.append(start)
+        queue = [start]
+        while queue:
+            node = queue.pop(0)
+            around = groups.setdefault(node, {})
+            for i, (a, labels, b) in enumerate(edges):
+                if i in shown or node not in (a, b):
+                    continue
+                shown.add(i)
+                other = b if a == node else a
+                way = "out" if a == node else "in"
+                links = around.setdefault(other, {})
+                for label in labels or ["(link)"]:
+                    links[label] = "both" if links.get(label, way) != way else way
+                if other != node and other not in owner and other not in roots:
+                    owner[other] = node
+                    queue.append(other)
+    width = max((len(label) for a in groups.values() for g in a.values() for label in g), default=0)
+    lines: list[str] = []
+
+    def draw(node: str, prefix: str) -> None:
+        """Append the links of a kind, and under each kind it reaches first, that kind's own."""
+        # A kind's links to itself first, then the others as they come; the links with another
+        # kind in bundles by direction, each with one arrowhead next to the kind it points to.
+        around = sorted(groups.get(node, {}).items(), key=lambda item: item[0] != node)
+        for g, (other, links) in enumerate(around):
+            bundles = [
+                (way, sorted((k for k, v in links.items() if v == way), key=str.lower))
+                for way in ("out", "both", "in")
+            ]
+            bundles = [(way, rows) for way, rows in bundles if rows]
+            last = g == len(around) - 1
+            target = "itself" if other == node else names.get(other, other)
+            deeper = owner.get(other) == node and other != node and bool(groups.get(other))
+            col = 0
+            for k, (way, rows) in enumerate(bundles):
+                end = last and k == len(bundles) - 1
+                stem = prefix + ("└" if end else "├")
+                below = prefix + (" " if end else "│")
+                left, right = _HEADS[way]
+                for j, label in enumerate(rows):
+                    edge = f"── {label} {'─' * (width - len(label))}─"
+                    if j == 0:
+                        fork = "┬" if len(rows) > 1 else "─"
+                        line = f"{stem}{left}{fork}{edge}{fork}{right} "
+                        col = len(line)
+                        line += target
+                    else:
+                        line = f"{below} {'└' if j == len(rows) - 1 else '├'}{edge}"
+                        line += "┘" if j == len(rows) - 1 else "┤"
+                        if deeper and k == len(bundles) - 1:
+                            line = line.ljust(col) + "│"
+                    lines.append(line)
+            if deeper:
+                draw(other, (prefix + (" " if last else "│")).ljust(col))
+            if not last:
+                lines.append(prefix + "│")
+
+    for root in roots:
+        if lines:
+            lines.append("")
+        lines.append(names.get(root, root))
+        if groups.get(root):
+            lines.append("│")
+            draw(root, "")
+    if any(way != "out" for a in groups.values() for g in a.values() for way in g.values()):
+        lines += [
+            "",
+            "─▸ a link from the kind a branch hangs from to the kind on its right;",
+            "◂─ a link the other way (related(kind, via='^link')); ◂─▸ both ways.",
+        ]
+    return "\n".join(lines)
+
+
 def model_diagram(
     client: Client,
     kinds: tuple[str, ...],
@@ -28,6 +183,8 @@ def model_diagram(
 ) -> str:
     """Draw generated models and their links without source requests.
 
+    One kind is drawn with its neighbourhood: the kinds it links to, the kinds that link to it,
+    and its links to itself. Several kinds are drawn with the links between them.
     namespaces keeps the classes in these namespaces (IRIs or prefixes of the schema).
     iris shows the class IRI as "curie", "full" or "none". merge draws one edge per pair of
     classes, with the names of all links between them.
@@ -45,6 +202,24 @@ def model_diagram(
         )
         if not wanted or class_iri(model).startswith(tuple(wanted))
     ]
+    focus = class_iri(models[0]) if len(kinds) == 1 and models else None
+    if focus is not None:
+        around = [
+            model
+            for model in client.models.values()
+            if model is not models[0]
+            and (
+                any(
+                    class_iri(client.models[str(r.target)]) == class_iri(model)
+                    for r in client.links(models[0]).itertuples(index=False)
+                )
+                or any(
+                    class_iri(client.models[str(r.target)]) == focus
+                    for r in client.links(model).itertuples(index=False)
+                )
+            )
+        ]
+        models = [models[0], *around]
     ids = {class_iri(model): f"C{i}" for i, model in enumerate(models)}
     lines = ["flowchart LR"]
     for model in models:
@@ -56,6 +231,8 @@ def model_diagram(
     for model in models:
         for row in client.links(model).itertuples(index=False):
             target = class_iri(client.models[str(row.target)])
+            if focus is not None and focus not in (class_iri(model), target):
+                continue  # around one kind: only the links that touch it
             if target in ids:
                 label = _md(client.link_name(model, str(row.field)))
                 pair = edges.setdefault((ids[class_iri(model)], ids[target]), [])

@@ -57,7 +57,10 @@ def _namespace(iri: str) -> str:
 
 
 def _name(name: str) -> str:
-    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", name).replace("_", " ").capitalize()
+    """Return a readable label for a local name (rdfsolve.naming.label)."""
+    from rdfsolve.naming import label
+
+    return label(name)
 
 
 def _name_fields(model: type[BaseModel]) -> list[str]:
@@ -969,22 +972,22 @@ class Client(DatasetClient):
         iris shows class IRIs as "curie", "full" or "none"; merge draws one edge per pair
         of classes with the names of all their links.
         """
-        from rdfsolve.client.diagram import link_diagram, model_diagram, path_diagram
+        from rdfsolve.client.diagram import Diagram, link_diagram, model_diagram, path_diagram
 
         if kind is not None:
             kinds = (*kinds, kind)
         if links is not None:
             if len(kinds) != 1:
                 raise ValueError("Draw the links of one record type")
-            return link_diagram(self, kinds[0], links, fenced=fenced)
+            return Diagram(link_diagram(self, kinds[0], links, fenced=fenced))
         if paths is not None:
             if kinds:
                 raise ValueError("Choose model names or a paths table, not both")
-            return path_diagram(self, paths, path=path, instances=instances, fenced=fenced)
+            return Diagram(path_diagram(self, paths, path=path, instances=instances, fenced=fenced))
         if path is not None:
             raise ValueError("Supply a paths table to choose a path")
-        return model_diagram(
-            self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge
+        return Diagram(
+            model_diagram(self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge)
         )
 
     def _uses(self, cls: str, links: Iterable[str], to: str | None) -> bool:
@@ -1129,7 +1132,9 @@ class Client(DatasetClient):
             and item.predicate in LABEL_PREDICATES
         ]
         if labels:
-            return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", min(labels))
+            from rdfsolve.naming import words
+
+            return " ".join(words(min(labels))) or min(labels)
         local = re.split(r"[/#:]", iri)[-1]
         return local if re.search(r"\d", local) else _name(local)
 
@@ -1367,6 +1372,16 @@ class Client(DatasetClient):
                 raise ValueError(f"row {position} (index {index!r}): {error}") from error
         return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
+    @property
+    def kinds(self) -> Any:
+        """The kinds of record of this source, as objects: client.kinds.<Name> (Tab completes).
+
+        Each kind prints its links and what they reach; kind.<link> is a link object.
+        """
+        from rdfsolve.plan import kinds_of
+
+        return kinds_of(self)
+
     def types(self) -> pd.DataFrame:
         """List available record types without sending a query.
 
@@ -1595,6 +1610,17 @@ class Results:
     def __getitem__(self, index: int) -> BaseModel:
         """Read a generated object, with its usual field completion."""
         return self.records[index]
+
+    def __add__(self, other: Results) -> Results:
+        """Return the records of both sets, each once (in order of first appearance)."""
+        if other.client is not self.client:
+            raise ValueError("Records of different clients cannot be one set")
+        seen: dict[str, BaseModel] = {}
+        for record in [*self.records, *other.records]:
+            seen.setdefault(str(vars(record).get("uri")), record)
+        partial = "partial" in (self.coverage.get("status"), other.coverage.get("status"))
+        coverage = {"status": "partial" if partial else "complete", "basis": "Records of both sets"}
+        return Results(self.client, list(seen.values()), coverage=coverage)
 
     def __repr__(self) -> str:
         """Preview names without fetching more fields."""
@@ -1906,15 +1932,15 @@ class Results:
         for source, field in routes:
             by_source[source].add(field)
         if value is None and any(len(fields) > 1 for fields in by_source.values()):
-            choices = sorted(
-                {
-                    self.client.link_name(target if incoming else source, field)
-                    for source, field in routes
-                }
+            raise ValueError(
+                f"These records reach {self.client.type_name(target)} by more than one link; "
+                f"choose one with via=:\n{self._link_choices(target)}"
             )
-            raise ValueError(f"Choose one link with via= from: {choices}")
         if self.records and not routes:
-            raise ValueError("No matching link. Use paths() to see where these records can lead.")
+            raise ValueError(
+                f"No such link to {self.client.type_name(target)}. The links that reach it:\n"
+                f"{self._link_choices(target)}\nUse paths() to see longer routes."
+            )
         found: dict[str, BaseModel] = {}
         with self.client.step(
             f"Read related {self.client.type_name(target)}"
@@ -1947,6 +1973,38 @@ class Results:
                 "via": via,
                 "query_ids": self.client._steps[-1]["query_ids"],
             },
+        )
+
+    def _link_choices(self, target: type[BaseModel]) -> str:
+        """List every link between these records and *target*, both ways, as via= values."""
+        import pandas as pd
+
+        from rdfsolve.plan import _text_table
+
+        there = self.client.type_name(target)
+        rows = []
+        for backwards in (False, True):
+            names = sorted(
+                {
+                    self.client.link_name(target if backwards else source, field)
+                    for source, field, dest in self._routes(backwards)
+                    if dest is target
+                }
+            )
+            rows += [
+                {
+                    "via=": f'"{"^" if backwards else ""}{name}"',
+                    "reads": f"{there} --{name}--> these"
+                    if backwards
+                    else f"these --{name}--> {there}",
+                }
+                for name in names
+            ]
+        if not rows:
+            return "  (none)"
+        return (
+            _text_table(pd.DataFrame(rows))
+            + '\n("^" follows a link backwards: the records that point to these)'
         )
 
     def _load(self, *fields: str) -> None:
@@ -2179,7 +2237,8 @@ def _add_release(schema: MinedSchema, path: Path) -> None:
     candidates = sorted(set(data.subjects(RDF.type, void.Dataset)), key=shared, reverse=True)
     if not candidates or shared(candidates[0]) == 0:
         return
-    helper = LocalGraphHelper(found.resolve().as_uri(), data)
+    # A small description, read as written (its literal forms are the release's own).
+    helper = LocalGraphHelper(found.resolve().as_uri(), data, backend="rdflib")
     described = query_endpoint_metadata(helper, subject_iri=str(candidates[0]))
     for field_name in _RELEASE_FIELDS:
         if described.get(field_name) and not getattr(about, field_name, None):

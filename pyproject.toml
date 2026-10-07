@@ -180,7 +180,7 @@ plugins = [
 
 [[tool.mypy.overrides]]
 # These upstream packages do not publish type information.
-module = ["linkml.*", "linkml_runtime.*", "pyarrow.*"]
+module = ["linkml.*", "linkml_runtime.*", "pyarrow.*", "IPython.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
