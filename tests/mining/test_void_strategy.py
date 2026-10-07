@@ -262,3 +262,71 @@ def test_a_resource_pattern_is_recounted_over_its_untyped_objects_only():
     assert ("Resource", 1, 1) in found, found
     assert {r["object"] for r in drift} == {str(E.B), "Literal", "Resource"}
     assert all(r["ratio"] == 1.0 for r in drift)
+
+
+def _mine_untyped_objects(monkeypatch, data: Dataset, void: Graph | None = None):
+    """Mine *data* with a VoID (VOID_UNTYPED_OBJECTS by default); return the sent (purpose,
+    query), the schema and the time limit of each light query with its purpose."""
+    void = void or Graph().parse(data=VOID_UNTYPED_OBJECTS, format="turtle")
+    scoped = scope_void_graph(void, void_datasets_of_graphs(void, [G1]))
+    strategy = VoidStrategy(scoped, void_graph="urn:void", drift_random=0)
+    sent: list[tuple[str, str]] = []
+    ask = VoidStrategy._ask
+
+    def recording(self, helper, query, purpose, *args, **kwargs):
+        sent.append((purpose, query))
+        return ask(self, helper, query, purpose, *args, **kwargs)
+
+    monkeypatch.setattr(VoidStrategy, "_ask", recording)
+    miner = SchemaMiner.from_graph(data, graph_uris=[G1], strategy=strategy, delay=0)
+    budgets: list[tuple[float, str]] = []
+    budget = miner.helper.budget
+
+    def recorded_budget(seconds, *args, **kwargs):
+        budgets.append((seconds, sent[-1][0] if sent else ""))
+        return budget(seconds, *args, **kwargs)
+
+    monkeypatch.setattr(miner.helper, "budget", recorded_budget)
+    try:
+        schema = miner.mine(dataset_name="fixture")
+    finally:
+        miner.close()
+    return sent, schema, budgets
+
+
+def _untyped_objects_data() -> Dataset:
+    data = Dataset(default_union=True)
+    g1 = data.graph(URIRef(G1))
+    g1.add((E.a1, RDF.type, E.A))
+    for i in range(5):
+        g1.add((E[f"b{i}"], RDF.type, E.B))
+        g1.add((E.a1, E.link, E[f"b{i}"]))
+    g1.add((E.a1, E.link, E.u1))
+    g1.add((E.a1, E.link, Literal("x")))
+    return data
+
+
+def test_drift_recounts_have_a_longer_time_limit_than_other_light_queries(monkeypatch):
+    """A re-count is one count over a whole edge: it has drift_seconds, the rest query_seconds."""
+    _, _, budgets = _mine_untyped_objects(monkeypatch, _untyped_objects_data())
+    by_purpose: dict[str, set[float]] = {}
+    for seconds, purpose in budgets:
+        by_purpose.setdefault(purpose, set()).add(seconds)
+    assert by_purpose["void/drift"] == {120.0}
+    assert {s for p, v in by_purpose.items() if p != "void/drift" for s in v} == {30.0}
+
+
+def test_the_example_of_a_resource_pattern_is_an_object_without_a_class(monkeypatch):
+    """The example of a Resource pattern is chosen as its count is: not a literal, no class."""
+    data = _untyped_objects_data()
+    void = Graph().parse(data=VOID_UNTYPED_OBJECTS, format="turtle")
+    # Only the Resource pattern on the edge, so the example is asked for it.
+    void.remove((None, URIRef("http://ldf.fi/void-ext#datatypePartition"), None))
+    for part in list(void.objects(None, URIRef("http://ldf.fi/void-ext#objectClassPartition"))):
+        if (part, URIRef("http://rdfs.org/ns/void#class"), E.B) in void:
+            void.remove((None, None, part))
+    sent, schema, _ = _mine_untyped_objects(monkeypatch, data, void)
+    (query,) = [q for purpose, q in sent if purpose == "void/examples" and str(E.link) in q]
+    assert "isLiteral(?o)" in query and "FILTER NOT EXISTS" in query
+    (example,) = [e for e in schema.enrichment.examples if e.property_uri == str(E.link)]
+    assert example.value.value == str(E.u1)

@@ -22,8 +22,10 @@ largest and of randomly chosen patterns, which measures how the endpoint drifted
 since the VoID was issued. The drift is reported; the VoID is used.
 
 Light means light: each query has query_seconds (30 s), and a purpose whose queries run
-past that limit five times in a row is stopped (QueryCuts with client_timeouts): the queries it
-does not send are each recorded as a measurement gap, with the reason. The class members that
+past its limit five times in a row is stopped (QueryCuts with client_timeouts): the queries it
+does not send are each recorded as a measurement gap, with the reason. A drift re-count has
+drift_seconds (120 s) instead: one count over a whole edge, which a filtered pattern can make
+slower than a light query, and a measure lost to the shorter limit says nothing. The class members that
 the VoID states are checked against its own property partitions (void_class_populations): a
 count that they contradict is kept as a lower bound, never as an exact number.
 """
@@ -214,6 +216,7 @@ class VoidStrategy(MiningStrategy):
         issued: str | None = None,
         read_by: str = "construct",
         query_seconds: float = 30.0,
+        drift_seconds: float = 120.0,
         class_samples: int = 5,
         example_patterns: int = 200,
         drift_largest: int = 20,
@@ -228,6 +231,7 @@ class VoidStrategy(MiningStrategy):
         self.issued = issued
         self.read_by = read_by
         self.query_seconds = query_seconds
+        self.drift_seconds = drift_seconds
         self.class_samples = class_samples
         self.example_patterns = example_patterns
         self.drift_largest = drift_largest
@@ -363,8 +367,12 @@ class VoidStrategy(MiningStrategy):
         failures: list[QueryFailure],
         graph_uris: list[str] | None,
         classes: list[str],
+        *,
+        seconds: float | None = None,
     ) -> list[dict[str, Any]] | None:
         """Send one light query under the time limit; record a refusal as a gap.
+
+        The limit is *seconds* when given, else query_seconds.
 
         A query of a purpose that the endpoint cuts at a fixed limit, or that ran past the time
         limit of the step five times in a row, is not sent (self.cuts): it is recorded as a gap.
@@ -387,7 +395,7 @@ class VoidStrategy(MiningStrategy):
             )
             return None
         try:
-            with helper.budget(self.query_seconds):
+            with helper.budget(self.query_seconds if seconds is None else seconds):
                 rows: list[dict[str, Any]] = helper.select(query, purpose=purpose)["results"][
                     "bindings"
                 ]
@@ -635,7 +643,7 @@ class VoidStrategy(MiningStrategy):
         For a count, each triple once; for a sample, starting from the members of the subject
         class. Without *datatype_filter*, a literal pattern matches every object of its edge
         (see _sole_edges). A Resource pattern stands for the objects that are neither literals
-        nor typed (the partition without a class); its count matches only those.
+        nor typed (the partition without a class); its count and its sample match only those.
         """
         edge = self._edge(graph_uris, p.property_uri)
         head = (
@@ -647,7 +655,7 @@ class VoidStrategy(MiningStrategy):
             return head + (
                 f" FILTER(DATATYPE(?o) = <{p.datatype}>)" if p.datatype and datatype_filter else ""
             )
-        if p.object_class == "Resource" and not sample:
+        if p.object_class == "Resource":
             return f"{head} FILTER(!isLiteral(?o)) {self._untyped('?o')}"
         if p.object_class in ("Resource", "BlankNode"):
             return head
@@ -709,7 +717,15 @@ class VoidStrategy(MiningStrategy):
             filtered = (p.subject_class, p.property_uri) not in sole
             match = self._match(p, graph_uris, datatype_filter=filtered)
             query = f"SELECT (COUNT(*) AS ?n) WHERE {{ {match} }}"
-            rows = self._ask(helper, query, "void/drift", failures, graph_uris, [p.subject_class])
+            rows = self._ask(
+                helper,
+                query,
+                "void/drift",
+                failures,
+                graph_uris,
+                [p.subject_class],
+                seconds=self.drift_seconds,
+            )
             now = int(rows[0]["n"]["value"]) if rows else None
             rows_out.append(
                 {
