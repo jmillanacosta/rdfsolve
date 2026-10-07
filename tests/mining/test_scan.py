@@ -167,3 +167,29 @@ def test_a_predicate_of_nul_bytes_is_left_out_and_reported(tmp_path):
     assert any(p.property_uri == "urn:x:name" for p in schema.patterns)
     [term] = report.config["scan_invalid_terms"]["terms"]
     assert term["term"] == repr("\x00" * 16)
+
+
+def test_row_navigation_keeps_a_bounded_number_of_paths_per_class_and_length(tmp_path):
+    """onco (job 115871): row navigation kept 18.9 M matched paths in its time budget, a 4.96
+    GB schema whose outputs ran out of memory. At most max_paths_per_class paths of each length
+    are kept for each start class; the others are counted, by length and class, and the
+    lengths are marked truncated. The matched counts are those of the whole search."""
+    from collections import Counter
+
+    from rdfsolve.mining.scan_paths import find_tested_paths_in_store
+
+    graph = _graph()
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine(dataset_name="fixture")
+    store = store_from_graph(graph, tmp_path / "store")
+    whole = find_tested_paths_in_store(schema, store, max_hops=3)
+    capped = find_tested_paths_in_store(schema, store, max_hops=3, max_paths_per_class=1)
+    per_class = Counter((len(p.steps), p.steps[0].subject_class) for p in capped.paths)
+    assert per_class and max(per_class.values()) == 1
+    assert len(capped.paths) < len(whole.paths)
+    omitted = sum(n for by_class in capped.omitted_by_class.values() for n in by_class.values())
+    assert len(capped.paths) + omitted <= len(whole.paths)
+    assert capped.truncated_lengths and capped.max_paths_per_length == 1
+    kept = {tuple(s.property_uri for s in p.steps) for p in capped.paths}
+    assert kept <= {tuple(s.property_uri for s in p.steps) for p in whole.paths}
+    assert not whole.truncated_lengths and not whole.omitted_by_class

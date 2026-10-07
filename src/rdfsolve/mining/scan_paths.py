@@ -43,6 +43,10 @@ __all__ = ["find_tested_paths_in_store"]
 # A branch whose next (start, end) pairs would pass this many rows carries the set of nodes it
 # reaches instead (find_tested_paths_in_store.extend).
 PAIR_LIMIT = 20_000_000
+# Paths of one length from one start class that are kept (find_tested_paths_in_store); the
+# others are counted (omitted_by_class) and not extended. onco (job 115871) kept 18.9 M
+# matched paths in its 1800 s budget, a 4.96 GB schema, and its outputs ran out of memory.
+PATHS_PER_CLASS = 1000
 
 
 def find_tested_paths_in_store(
@@ -53,16 +57,21 @@ def find_tested_paths_in_store(
     budget_s: float = 1800.0,
     members: Mapping[str, Sequence[str]] | None = None,
     clock: Callable[[], float] = time.monotonic,
+    max_paths_per_class: int | None = None,
 ) -> NavigationSummary:
     """Find the paths of two to *max_hops* steps that instances of the data follow.
 
     *members* gives the member terms of each group of ontology terms, which the data use as
-    types instead of the group.
+    types instead of the group. At most *max_paths_per_class* (PATHS_PER_CLASS) matched paths
+    of each length are kept for each start class, the first in the search's order; the others
+    are counted by length and class (omitted_by_class, truncated_lengths) and not extended, so
+    that the schema, its outputs and the search stay bounded whatever the time budget.
     """
     import polars as pl
 
-    if not 2 <= max_hops <= 6 or budget_s < 0:
-        raise ValueError("Use 2..6 hops and a nonnegative budget")
+    cap = PATHS_PER_CLASS if max_paths_per_class is None else max_paths_per_class
+    if not 2 <= max_hops <= 6 or budget_s < 0 or cap < 1:
+        raise ValueError("Use 2..6 hops, a nonnegative budget and at least one path a class")
     members = members or {}
     unique, _outgoing, suffix = _schema_graph(schema, max_hops)
     keys = sorted(unique)
@@ -138,6 +147,8 @@ def find_tested_paths_in_store(
     tested: Counter[int] = Counter()
     matched: Counter[int] = Counter()
     found: dict[tuple[int, ...], int] = {}
+    kept: Counter[tuple[int, str]] = Counter()
+    omitted: dict[int, Counter[str]] = {}
     stopped = len(keys) < len(index)
 
     def followed(route: tuple[int, ...]) -> int:
@@ -188,6 +199,11 @@ def find_tested_paths_in_store(
             route = (*path, e)
             if hops == limit:
                 matched[hops] += 1
+                start = keys[route[0]][0]
+                if kept[(hops, start)] >= cap:
+                    omitted.setdefault(hops, Counter())[start] += 1
+                    continue
+                kept[(hops, start)] += 1
                 found[route] = hits[e] if hits[e] is not None else followed(route)
             elif route in found:
                 rows = joined.filter(pl.col("e") == e)
@@ -228,10 +244,12 @@ def find_tested_paths_in_store(
     return NavigationSummary(
         member_terms={c: list(members[c]) for c in sorted(through) if c in members},
         max_hops=max_hops,
-        max_paths_per_length=0,
+        max_paths_per_length=cap,
         edge_count=len(unique),
         walk_counts={hops: sum(suffix[hops].values()) for hops in range(1, max_hops + 1)},
         paths=paths,
+        truncated_lengths=sorted(omitted),
+        omitted_by_class={h: dict(sorted(c.items())) for h, c in sorted(omitted.items())},
         strategy="tested",
         tested_by_length=dict(tested),
         matched_by_length=dict(matched),
