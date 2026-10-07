@@ -124,6 +124,51 @@ def _write(frame: pl.DataFrame, path: Path, metadata: dict[str, Any] | None = No
     pq.write_table(table, path, compression="zstd", use_dictionary=True)
 
 
+def _coded_types(types: pl.LazyFrame) -> tuple[pl.DataFrame, list[str]]:
+    """Return the type table by integer codes, and its IRI classes (bare, sorted).
+
+    The table has one row per (record, class): r is the record (QLever's id sid when the
+    table has it, else the term s), k the index of its class in the list. Only the classes
+    written as <iri> are kept. The text of the records is never held: on allie (58 million
+    membership rows) the table by text took 4.4 GB and the self-join of its records 10 GB more
+    (article/corpus/agent-findings/term-release-memory.md).
+    """
+    import polars as pl
+
+    record = "sid" if "sid" in types.collect_schema().names() else "s"
+    found = (
+        types.select("c")
+        .filter(pl.col("c").str.starts_with("<"))
+        .unique()
+        .with_columns(bare=pl.col("c").str.strip_prefix("<").str.strip_suffix(">"))
+        .collect(engine="streaming")
+    )
+    classes = sorted(set(found["bare"]))
+    index = {c: k for k, c in enumerate(classes)}
+    codes = pl.LazyFrame(
+        {"c": found["c"], "k": [index[c] for c in found["bare"]]},
+        schema={"c": pl.String, "k": pl.UInt32},
+    )
+    table = (
+        types.select(record, "c")
+        .join(codes, on="c")
+        .select(r=record, k="k")
+        .unique()
+        .collect(engine="streaming")
+    )
+    return table, classes
+
+
+def _named(frame: pl.DataFrame, classes: list[str], **columns: str) -> pl.DataFrame:
+    """Replace the class codes of *frame* (column: new name) by the classes' IRIs."""
+    import polars as pl
+
+    names = pl.Series(classes, dtype=pl.String)
+    return frame.with_columns([names.gather(frame[code]).alias(code) for code in columns]).rename(
+        columns
+    )
+
+
 def write_term_release(
     store: RowStore | StoreView,
     grouping: TermGrouping,
@@ -142,16 +187,10 @@ def write_term_release(
     from rdfsolve.mining.scan_terms import hierarchy_edges, type_table
 
     settings = dict(grouping.settings)
-    table = (
-        (grouping.base_types if grouping.base_types is not None else type_table(store))
-        .select("s", "c")
-        .unique()
-        .filter(pl.col("c").str.starts_with("<"))
-        .with_columns(c=pl.col("c").str.strip_prefix("<").str.strip_suffix(">"))
-        .collect()
+    table, type_classes = _coded_types(
+        grouping.base_types if grouping.base_types is not None else type_table(store)
     )
     terms = term_rows(grouping.raw_patterns)
-    type_classes = sorted(set(table["c"]))
     edges = hierarchy_edges(
         store,
         type_classes,
@@ -162,16 +201,28 @@ def write_term_release(
     # of the default grouping (shape groups have no parent).
     groupable = set(edges["child"]) | set(edges["parent"]) | set(grouping.representative)
     groupable -= set(_SENTINEL_OBJECTS)
-    typed = table.filter(pl.col("c").is_in(sorted(groupable)))
-    pairs = (
-        typed.join(typed.rename({"c": "other"}), on="s")
-        .filter(pl.col("c") != pl.col("other"))
-        .group_by("c", "other")
-        .agg(records=pl.col("s").n_unique())
-        .sort("c", "other")
+    typed = table.filter(
+        pl.col("k").is_in([k for k, c in enumerate(type_classes) if c in groupable])
     )
-    several = typed.group_by("s").agg(n=pl.len()).filter(pl.col("n") > 1).height
-    instances = table.group_by("c").agg(instances=pl.col("s").n_unique())
+    # Only the records with several groupable types make pairs: the others are not joined.
+    multiple = typed.group_by("r").agg(n=pl.len()).filter(pl.col("n") > 1).select("r")
+    several = multiple.height
+    shared = typed.join(multiple, on="r", how="semi")
+    del typed, multiple
+    # One row per (record, class): the rows of a pair are its distinct records.
+    pairs = _named(
+        shared.join(shared.rename({"k": "other"}), on="r")
+        .filter(pl.col("k") != pl.col("other"))
+        .group_by("k", "other")
+        .agg(records=pl.len()),
+        type_classes,
+        k="c",
+        other="other",
+    ).sort("c", "other")
+    del shared
+    instances = _named(table.group_by("k").agg(instances=pl.len()), type_classes, k="c")
+    typed_records = table["r"].n_unique()
+    del table
     parents = edges.group_by("child").agg(
         parents=pl.col("parent").sort_by("parent"),
         parent_sources=pl.col("source").sort_by("parent"),
@@ -237,7 +288,7 @@ def write_term_release(
         "rows": terms.height,
         "classes": classes.height,
         "type_classes": len(type_classes),
-        "typed_records": table["s"].n_unique(),
+        "typed_records": typed_records,
         "groupable_classes": len(groupable),
         "records_with_several_groupable_types": several,
         "groupable_pairs_sharing_records": pairs.height // 2,

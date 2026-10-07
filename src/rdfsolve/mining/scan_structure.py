@@ -716,39 +716,47 @@ def property_usage_evidence(
     ]
     shared = {k: v for k, v in (shared_extensions or {}).items() if v in classes}
     measured = [c for c in classes if c not in shared]
-    types = _types(store)
     data = [p for p in store.predicates if p not in MEMBERSHIP.get()]
     records: list[PropertyUsageEvidence] = []
     states: list[MeasurementState] = []
     size = max(1, batch_size)
     # One pass over each predicate for all measured classes; the rows are then split into the
-    # batches of classes whose states the miner records.
-    members = types.filter(pl.col("c").is_in(measured))
+    # batches of classes whose states the miner records. The records are joined and counted by
+    # id (sid), the classes as an enum, and the values of a subject as its rows: by text and a
+    # set of values per subject, the value counts of allie's 186 million rows of one predicate
+    # took 64 GB, by id 13.5 GB (jobs 115892, 116004; agent-findings/term-release-memory.md).
+    members = (
+        store.type_ids()
+        .select("sid", c=_bare(pl.col("c")))
+        .filter(pl.col("c").is_in(measured))
+        .unique()
+        .with_columns(c=pl.col("c").cast(pl.Enum(sorted(set(measured)))))
+    )
     found: list[list[tuple[Any, ...]]] = [[], [], [], []]
     for predicate in data:
-        edges = (
-            store.rows(predicate)
-            .join(members, on="s")
-            .with_columns(p=pl.lit(predicate), lang=_language())
-        )
+        edges = store.rows(predicate).join(members, on="sid").with_columns(lang=_language())
         frames = pl.collect_all(
             [
-                edges.group_by("c", "p").agg(
+                edges.group_by("c").agg(
                     triples=pl.len(),
-                    subjects=pl.col("s").n_unique(),
+                    subjects=pl.col("sid").n_unique(),
                     objects=pl.col("oid").n_unique(),
                 ),
-                edges.group_by("c", "p", "kind").agg(n=pl.len()),
+                edges.group_by("c", "kind").agg(n=pl.len()),
                 edges.filter(pl.col("kind") == "literal")
-                .group_by("c", "p", "d", "lang")
+                .group_by("c", "d", "lang")
                 .agg(n=pl.len()),
-                edges.group_by("c", "p", "s")
-                .agg(v=pl.col("oid").n_unique())
-                .group_by("c", "p", "v")
-                .agg(n=pl.len()),
+                # rows() gives each triple once: a subject's rows are its distinct values.
+                edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
             ],
             engine="streaming",
         )
+        frames = [
+            frame.with_columns(pl.col("c").cast(pl.String), p=pl.lit(predicate)).select(
+                "c", "p", *frame.columns[1:]
+            )
+            for frame in frames
+        ]
         for out, frame in zip(found, frames, strict=True):
             out.extend(frame.iter_rows())
     for offset in range(0, len(measured), size):

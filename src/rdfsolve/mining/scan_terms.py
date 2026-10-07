@@ -199,24 +199,27 @@ def superclasses(
     from rdfsolve.ontology.hierarchy import fill_parents, read_hierarchy
 
     source = _hierarchy_store(store, ontology_graph_uris)
-    edges: dict[str, set[str]] = defaultdict(set)
+    rows = None
     if SUBCLASS_OF in source.predicates:
         rows = (
             source.rows(SUBCLASS_OF)
             .filter(pl.col("s").str.starts_with("<") & (pl.col("kind") == "iri"))
             .select("s", "o")
-            .unique()
-            .collect()
         )
-        for s, o in rows.iter_rows():
-            child, parent = _bare(s), _bare(o)
-            if parent != child and parent not in NOT_DATA_TYPES:
-                edges[child].add(parent)
+    # Only the rows of the terms and of their ancestors are read, one level at a time: the
+    # rdfs:subClassOf rows of a whole index can be millions (bio2rdf.chembl: 1.4 million).
     parents: dict[str, set[str]] = {}
     frontier = sorted(set(terms))
     while frontier:
+        found: dict[str, set[str]] = defaultdict(set)
+        if rows is not None:
+            wanted = [f"<{t}>" for t in frontier] + [t for t in frontier if t.startswith("<")]
+            for s, o in rows.filter(pl.col("s").is_in(wanted)).unique().collect().iter_rows():
+                child, parent = _bare(s), _bare(o)
+                if parent != child and parent not in NOT_DATA_TYPES:
+                    found[child].add(parent)
         for term in frontier:
-            parents[term] = set(edges.get(term, ()))
+            parents[term] = found.get(term, set())
         frontier = sorted({p for ps in parents.values() for p in ps} - parents.keys())
     if hierarchy_files:
         tables = [read_hierarchy([path]) for path in hierarchy_files]
@@ -281,13 +284,15 @@ def minimal_types(
     if not pairs:
         return table
     below = pl.LazyFrame(pairs, schema={"t": pl.String, "c": pl.String}, orient="row")
+    # The records are joined by QLever's id when the table has it, not by their text.
+    record = _keys(table)[-1]
     redundant = (
-        table.join(table.select("s", t="c"), on="s")
+        table.join(table.select(record, t="c"), on=record)
         .join(below, on=["t", "c"], how="semi")
-        .select("s", "c")
+        .select(record, "c")
         .unique()
     )
-    return table.join(redundant, on=["s", "c"], how="anti")
+    return table.join(redundant, on=[record, "c"], how="anti")
 
 
 # Grouping

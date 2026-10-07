@@ -106,3 +106,95 @@ def test_two_grouped_types_on_one_record_are_marked(tmp_path):
         if p.subject_class == str(N.root) and p.property_uri == str(E.name)
     ]
     assert pattern.count_semantics == "upper_bound" and pattern.distinct_subjects is None
+
+
+_LARGE_RELEASE = """
+import json, resource, sys
+from pathlib import Path
+
+import polars as pl
+
+from rdfsolve.mining.scan import RowStore
+from rdfsolve.mining.scan_terms import TermGrouping
+from rdfsolve.mining.term_release import write_term_release
+
+path = Path(sys.argv[1])
+records = 1_500_000
+iri = pl.lit("http://example.org/a/rather/long/path/of/a/record/as/in/real/data/") + pl.int_range(
+    records, eager=False
+).cast(pl.String).str.zfill(60)
+base = pl.select(s=pl.lit("<") + iri + pl.lit(">")).with_columns(sid=pl.col("s").hash())
+leaves = [f"<{sys.argv[2]}{leaf}>" for leaf in ("a", "b")]
+pl.concat([base.with_columns(c=pl.lit(c)) for c in leaves]).select("s", "c", "sid").write_parquet(
+    path / "store" / "types.parquet"
+)
+del base
+store = RowStore(path / "store")
+grouping = TermGrouping(
+    patterns=[], raw_patterns=[], representative={}, members={}, summary={},
+    before_mining=None, types=store.graph_types(), base_types=store.graph_types(),
+)
+before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+manifest = write_term_release(store, grouping, path / "out" / "large")
+after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+print(json.dumps({"grown_mb": (after - before) // 1024, "manifest": manifest}))
+"""
+
+
+def test_the_release_does_not_hold_the_type_table_by_text(tmp_path):
+    """Two groupable types on each of 1.5 million records with long IRIs: the pairs of types
+    are counted from integer codes, without the text of the records (allie job 115892 was
+    killed at 61.5 GB in this step; agent-findings/term-release-memory.md)."""
+    import json
+    import os
+    import subprocess
+    import sys
+
+    graph = Graph()
+    for leaf in ("a", "b"):
+        graph.add((N[leaf], RDFS.subClassOf, N.root))
+    store_from_graph(graph, tmp_path / "store")
+    script = tmp_path / "large.py"
+    script.write_text(_LARGE_RELEASE)
+    done = subprocess.run(
+        [sys.executable, str(script), str(tmp_path), T],
+        capture_output=True,
+        text=True,
+        check=True,
+        env={**os.environ, "POLARS_MAX_THREADS": "4"},
+    )
+    result = json.loads(done.stdout.splitlines()[-1])
+    manifest = result["manifest"]
+    assert manifest["typed_records"] == 1_500_000
+    assert manifest["records_with_several_groupable_types"] == 1_500_000
+    assert manifest["groupable_pairs_sharing_records"] == 1
+    # By text the table and the self-join of its records took 0.9 GB here (4 threads), by codes 0.3 GB.
+    assert result["grown_mb"] < 600, result["grown_mb"]
+
+
+def test_superclasses_reads_only_the_rows_of_the_terms_and_their_ancestors(tmp_path):
+    """An index with many rdfs:subClassOf rows outside the hierarchy of the asked terms: they are
+    not held in Python (bio2rdf.chembl, 1.4 million such rows, failed in this function)."""
+    import tracemalloc
+
+    from rdfsolve.mining.scan_terms import superclasses
+
+    graph = Graph()
+    graph.add((N.leaf, RDFS.subClassOf, N.middle))
+    graph.add((N.middle, RDFS.subClassOf, N.root))
+    graph.add((N.middle, RDFS.subClassOf, N.middle))
+    for number in range(40_000):
+        graph.add((N[f"other{number}"], RDFS.subClassOf, N[f"parent{number}"]))
+    store = store_from_graph(graph, tmp_path / "store")
+    tracemalloc.start()
+    try:
+        parents = superclasses(store, [str(N.leaf)])
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    assert parents == {
+        str(N.leaf): {str(N.middle)},
+        str(N.middle): {str(N.root)},
+        str(N.root): set(),
+    }
+    assert peak < 2_000_000, peak
