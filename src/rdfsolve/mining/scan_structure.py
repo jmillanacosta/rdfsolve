@@ -87,11 +87,14 @@ def _types(store: RowStore | StoreView) -> pl.LazyFrame:
     blank-node class keeps _:), read from the data and type context graphs of the scope.
 
     The census joins the rows with it by QLever's ids, not by their text: a type table and a
-    property of hundreds of millions of rows each are held as integers and categories.
+    property of hundreds of millions of rows each are held as integers and categories. The
+    rows are not made distinct (a node typed in several graphs repeats): every use reads them
+    as a set (covered edges, typed nodes and classes are made distinct), and making the whole
+    table distinct in each plan that reads it held it several times over.
     """
     import polars as pl
 
-    return store.type_ids().select("sid", c=_bare(pl.col("c")).cast(pl.Categorical)).unique()
+    return store.graph_types().select("sid", c=_bare(pl.col("c")).cast(pl.Categorical))
 
 
 def _members(store: RowStore | StoreView) -> pl.LazyFrame:
@@ -270,23 +273,29 @@ def _membership_keys(
     """
     import polars as pl
 
-    classes = types.filter(~pl.col("c").cast(pl.String).str.starts_with("_:")).select("c").unique()
+    # IRI classes; the membership rows are read in parts by subject id (CENSUS_PART_ROWS), each
+    # joined with its own share of the types, so that one part of the type table is held.
+    classes = types.filter(~pl.col("c").cast(pl.String).str.starts_with("_:"))
     added = set(keys)
     typed_objects = types.select(oid="sid").unique()
+    rows = int(types.select(pl.len()).collect(engine="streaming").item())
+    parts = max(1, -(-rows // CENSUS_PART_ROWS))
     for prop in MEMBERSHIP.get():
         if prop not in store.predicates:
             continue
-        found = (
-            store.rows(prop)
-            .filter(pl.col("kind") == "iri")
-            .select("sid", "oid")
-            .join(typed_objects, on="oid", how="anti")
-            .join(types.join(classes, on="c", how="semi"), on="sid")
-            .select(pl.col("c").cast(pl.String))
-            .unique()
-            .collect(engine="streaming")
-        )
-        added |= {(c, prop, "Resource", None) for (c,) in found.iter_rows()}
+        for part in range(parts):
+            selected = pl.col("sid") % parts == part
+            found = (
+                store.rows(prop)
+                .filter((pl.col("kind") == "iri") & selected)
+                .select("sid", "oid")
+                .join(typed_objects, on="oid", how="anti")
+                .join(classes.filter(selected), on="sid")
+                .select(pl.col("c").cast(pl.String))
+                .unique()
+                .collect(engine="streaming")
+            )
+            added |= {(c, prop, "Resource", None) for (c,) in found.iter_rows()}
     return sorted(added, key=str)
 
 
