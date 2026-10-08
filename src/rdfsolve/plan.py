@@ -1762,6 +1762,18 @@ class Plan(_Shown):
             if p.reading == "edge" and p.status != "chosen":
                 self._repropose(p)
 
+    def _not_nodes(self) -> list[str]:
+        """Return the kinds of the plan's records that the run does not write as nodes."""
+        kinds = {self.client.type_name(type(r)) for r in self.records}
+        return sorted(
+            k
+            for k in kinds
+            if (q := self.proposals.get(k)) is None
+            or q.reading not in ("node", "process")
+            or q.status not in ("proposed", "chosen")
+            or q.target is None
+        )
+
     def _kind_target_of(self, link: Link | None) -> str | None:
         """Return the target class of the records a link reaches, when they are of one class."""
         if link is None:
@@ -2070,6 +2082,9 @@ class Plan(_Shown):
                         predicate=p.target.iri,
                         subject=("^" if self.contents_incoming else "") + p.ends[1].name,
                         subject_as="member",
+                        # only members that become nodes: a kind read as edges or left out has
+                        # no node to be part of anything
+                        subject_unless_kinds=self._not_nodes(),
                     )
                 ]
                 out.append(

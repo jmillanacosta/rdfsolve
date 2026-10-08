@@ -147,8 +147,12 @@ def test_a_node_kind_can_be_converted_as_edges_between_named_links(plan, tmp_pat
     assert plan.Catalysis.reading == "edge" and plan.Catalysis.target.name == "related to"
     with pytest.raises(ValueError, match="has no link 'Nowhere'"):
         plan.Catalysis.as_edge("Nowhere", "Target")
-    counts = plan.run(tmp_path / "queries").counts()
-    assert counts["relations"]["related to"] == 1
+    network = plan.run(tmp_path / "queries")
+    assert network.counts()["relations"]["related to"] == 1
+    # a record converted as an edge (or left out) is no node, so it is part of nothing
+    typed = {q.subject.value for q in network.statements if q.predicate.value.endswith("#type")}
+    part_of = [q for q in network.statements if q.predicate.value.endswith("part_of")]
+    assert part_of and all(q.subject.value in typed for q in part_of)
 
 
 def test_the_printouts_show_the_ends_and_how_to_convert_a_kind_as_edges(plan):
