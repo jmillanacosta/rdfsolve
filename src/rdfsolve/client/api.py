@@ -1907,6 +1907,8 @@ class Results:
         until nothing new is reached; every record reached is returned, with the evidence of
         every hop. links() then gives each start record the records its path reaches.
         """
+        if isinstance(via, str) and via.startswith("^"):  # "^link": the link read backwards
+            via, incoming = via[1:], not incoming
         if (
             depth > 1
             or not (via is None or isinstance(via, str))

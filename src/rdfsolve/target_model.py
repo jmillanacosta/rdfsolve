@@ -18,7 +18,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-__all__ = ["KindInfo", "Model", "RelationInfo", "TargetModel", "ValueInfo", "register"]
+__all__ = [
+    "KindInfo",
+    "Model",
+    "RelationInfo",
+    "TargetModel",
+    "ValueInfo",
+    "read_model",
+    "register",
+]
 
 # Capabilities a target model can declare; the plan uses only those its target has.
 CAPABILITIES = (
@@ -127,6 +135,44 @@ class TargetModel:
 
 
 _MODELS: dict[str, type[Model]] = {}
+
+
+def read_model(source: Any) -> TargetModel:
+    """Return the target model in a file, by its kind: LinkML YAML (.yaml, .yml), a metagraph
+    (.json with metanode_kinds), or a SHACL shapes graph (any other RDF file, or an rdflib Graph).
+    """
+    import json
+
+    from rdfsolve.plan import PlanError
+
+    if hasattr(source, "triples"):  # an rdflib graph of shapes
+        from rdfsolve.targets.shacl import Shacl
+
+        return Shacl(source)
+    path = Path(source)
+    if not path.exists():
+        raise PlanError(
+            f"No target model file at {path}",
+            code="no_such_file",
+            hint="Target('<a LinkML .yaml, a metagraph .json or a SHACL file>')",
+        )
+    suffix = "".join(path.suffixes[-2:]).lower()
+    if suffix.endswith((".yaml", ".yml")):
+        return Model.read(path)
+    if suffix.endswith(".json"):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if "metanode_kinds" in data:
+            from rdfsolve.targets.metagraph import Metagraph
+
+            return Metagraph.read(path)
+        raise PlanError(
+            f"{path.name} is JSON but not a metagraph (no metanode_kinds)",
+            code="unknown_model_format",
+            hint="a LinkML .yaml, a metagraph .json or a SHACL file",
+        )
+    from rdfsolve.targets.shacl import Shacl
+
+    return Shacl.read(path)
 
 
 def registered_prefixes() -> dict[str, str]:
@@ -268,61 +314,49 @@ class Model(TargetModel):
         its mixins and the identifier prefixes it takes; a slot as an edge from its domain to
         its range, with the slot it specializes.
         """
-        from rdfsolve.client.diagram import _md, _node
+        from rdfsolve.client.diagram import flowchart
 
-        nodes: dict[str, str] = {}
-        lines, edges = [], []
+        ids: dict[str, str] = {}
+        nodes: list[tuple[str, str, str, str]] = []
+        edges: list[tuple[str, str, str, str]] = []
 
         def node(name: str, detail: str = "", style: str = "") -> str:
-            """Return the node of a class, drawn once."""
-            if name not in nodes:
-                nodes[name] = f"B{len(nodes)}"
-                lines.append(_node(nodes[name], name, detail))
-                if style:
-                    lines.append(f"style {nodes[name]} {style}")
-            return nodes[name]
+            """Return the box of a class, drawn once."""
+            if name not in ids:
+                ids[name] = f"B{len(ids)}"
+                nodes.append((ids[name], name, detail, style))
+            return ids[name]
+
+        def edge(a: str, label: str, b: str, line: str = "") -> None:
+            """Add an arrow once."""
+            if (a, label, b, line) not in edges:
+                edges.append((a, label, b, line))
 
         for term in [*names, *terms]:
             name = self.name_of(term)
             if name in self.classes:
                 c = self.classes[name]
                 prefixes = ", ".join((c.get("id_prefixes") or [])[:6])
-                child = node(
-                    name,
-                    f"ids: {prefixes}" if prefixes else "",
-                    "fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px",
-                )
+                child = node(name, f"ids: {prefixes}" if prefixes else "", "focus")
                 current = name
                 for parent in self.ancestors(name)[:2]:
-                    edges.append(f'{nodes[current]} -->|"is a"| {node(parent)}')
+                    edge(ids[current], "is a", node(parent))
                     current = parent
                 for mixin in c.get("mixins") or []:
-                    edges.append(
-                        f'{child} -.->|"mixin"| {node(mixin, "mixin", "fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")}'
-                    )
+                    edge(child, "mixin", node(mixin, "mixin", "mixin"), "dashed")
                     current = mixin
                     for parent in self.ancestors(mixin)[:2]:
-                        edge = f'{nodes[current]} -->|"is a"| {node(parent)}'
-                        if edge not in edges:
-                            edges.append(edge)
+                        edge(ids[current], "is a", node(parent))
                         current = parent
             else:
                 slot = self.slots[name]
-                domain = node(slot.get("domain") or "any class")
-                range_ = node(slot.get("range") or "any class")
                 parent = f" (is a {slot['is_a']})" if slot.get("is_a") else ""
-                edges.append(f'{domain} ==>|"{_md(name + parent)}"| {range_}')
-        body = "\n".join(
-            [
-                "flowchart LR",
-                *lines,
-                *edges,
-                "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
-            ]
-        )
-        from rdfsolve.client.diagram import Diagram
-
-        return Diagram(f"```mermaid\n{body}\n```" if fenced else body)
+                edge(
+                    node(slot.get("domain") or "any class"),
+                    name + parent,
+                    node(slot.get("range") or "any class"),
+                )
+        return flowchart(nodes, edges, fenced=fenced)
 
     def _normalized_prefixes(self) -> dict[str, str]:
         """Return the model's identifier prefixes by their Bioregistry prefix."""

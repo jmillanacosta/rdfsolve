@@ -221,12 +221,12 @@ def model_diagram(
         ]
         models = [models[0], *around]
     ids = {class_iri(model): f"C{i}" for i, model in enumerate(models)}
-    lines = ["flowchart LR"]
+    nodes = []
     for model in models:
         iri = class_iri(model)
         found = curie_from_prefixes(iri, prefixes) if iris == "curie" else None
         shown = {"full": iri, "curie": found[0] if found else iri, "none": ""}[iris]
-        lines.append(_node(ids[iri], client.type_name(model), shown))
+        nodes.append((ids[iri], client.type_name(model), shown, "focus" if iri == focus else ""))
     edges: dict[tuple[str, str], list[str]] = {}
     for model in models:
         for row in client.links(model).itertuples(index=False):
@@ -234,18 +234,15 @@ def model_diagram(
             if focus is not None and focus not in (class_iri(model), target):
                 continue  # around one kind: only the links that touch it
             if target in ids:
-                label = _md(client.link_name(model, str(row.field)))
+                label = client.link_name(model, str(row.field))
                 pair = edges.setdefault((ids[class_iri(model)], ids[target]), [])
                 if label not in pair:
                     pair.append(label)
-    drawn = sorted(
-        f'{a} -->|"`{chr(10).join(sorted(labels))}`"| {b}'
-        if merge
-        else "\n".join(f'{a} -->|"`{label}`"| {b}' for label in sorted(labels))
-        for (a, b), labels in edges.items()
-    )
-    body = "\n".join([*lines, *drawn, *_STYLE[: 1 + bool(drawn)]])
-    return "```mermaid\n" + body + "\n```" if fenced else body
+    if merge:  # one arrow per pair of kinds, with the names of all its links
+        arrows = [(a, "\n".join(sorted(labels)), b, "") for (a, b), labels in edges.items()]
+    else:
+        arrows = [(a, label, b, "") for (a, b), labels in edges.items() for label in sorted(labels)]
+    return flowchart(nodes, sorted(arrows), fenced=fenced)
 
 
 def path_diagram(
@@ -479,6 +476,44 @@ _STYLE = (
     "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
     "linkStyle default stroke:#7a8aa0,stroke-width:1.5px",
 )
+
+
+# Styles a node can take in flowchart(), besides the default.
+_CLASSES = {
+    "open": "classDef open fill:#fff3cd,stroke:#b8860b,color:#5c4400",
+    "out": "classDef out fill:#eeeeee,stroke:#999999,color:#777777",
+    "focus": "classDef focus fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px",
+    "mixin": "classDef mixin fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3",
+}
+
+
+def flowchart(
+    nodes: Iterable[tuple[str, str, str, str]],
+    edges: Iterable[tuple[str, str, str, str]],
+    *,
+    fenced: bool = True,
+) -> Diagram:
+    """Return a diagram of boxes and arrows, drawn the same way for every part of rdfsolve.
+
+    *nodes* are (id, title, detail, style): the title in bold, the detail below it, the style
+    "" or one of "open", "out", "focus", "mixin". *edges* are (from id, label, to id, line): the
+    label's lines are the names of the links an arrow stands for; line is "" (solid) or
+    "dashed". In a notebook it renders as Mermaid; in a terminal it prints as a text tree.
+    """
+    lines = ["flowchart LR"]
+    styles: set[str] = set()
+    for nid, title, detail, style in nodes:
+        lines.append(_node(nid, title, detail) + (f":::{style}" if style else ""))
+        styles.add(style)
+    drawn = []
+    for a, label, b, line in edges:
+        arrow = "-.->" if line == "dashed" else "-->"
+        text = "\n".join(_md(part) for part in label.split("\n") if part)
+        drawn.append(f'{a} {arrow}|"`{text}`"| {b}' if text else f"{a} {arrow} {b}")
+    body = "\n".join(
+        [*lines, *drawn, *_STYLE[: 1 + bool(drawn)], *(_CLASSES[s] for s in sorted(styles) if s)]
+    )
+    return Diagram("```mermaid\n" + body + "\n```" if fenced else body)
 
 
 def _node(name: str, title: str, detail: str = "") -> str:

@@ -59,7 +59,7 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
         "an IRI no registry knows: a CURIE of a named namespace, expanded by prefixes.json"
     )
     drawn = biolink.diagram("biolink:Gene", "biolink:has_input")
-    assert "**gene**" in drawn and '-->|"is a"|' in drawn and "ids: NCBIGene, ENSEMBL" in drawn
+    assert "**gene**" in drawn and '-->|"`is a`"|' in drawn and "ids: NCBIGene, ENSEMBL" in drawn
     assert "has input (is a has participant)" in drawn
 
 

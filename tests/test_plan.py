@@ -73,7 +73,7 @@ def plan(tmp_path):
     path.write_text(MODEL)
     client = _client()
     scope = client.from_table("Pathway", [EX + "pw1"])
-    return Plan(scope, into=Target(path), contents=client.kinds.Protein.IsPartOf)
+    return Plan(scope, into=Target(path), contents=client.kinds.Protein.is_part_of)
 
 
 def test_kinds_are_proposed_from_the_records_identifiers(plan):
@@ -83,8 +83,8 @@ def test_kinds_are_proposed_from_the_records_identifiers(plan):
 
 
 def test_a_relation_is_proposed_by_its_name_and_its_ends(plan):
-    assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "catalyzes"
-    assert plan.IsPartOf.role == "container" and plan.IsPartOf.target.name == "part of"
+    assert plan.Catalysis.reading == "edge" and plan.Catalysis.target.name == "catalyzes"
+    assert plan.is_part_of.reading == "container" and plan.is_part_of.target.name == "part of"
 
 
 def test_a_name_alone_does_not_decide_where_the_target_names_kinds_by_identifiers(plan):
@@ -93,7 +93,7 @@ def test_a_name_alone_does_not_decide_where_the_target_names_kinds_by_identifier
 
 
 def test_a_process_without_process_kinds_in_the_target_is_a_choice(plan):
-    assert plan.Reaction.role == "process" and plan.Reaction.status == "choose"
+    assert plan.Reaction.reading == "process" and plan.Reaction.status == "choose"
     assert plan.Reaction in plan.open
     assert "as_edge()" in repr(plan.Reaction)
 
@@ -102,7 +102,7 @@ def test_choices_print_as_tables_with_what_they_would_do(plan):
     text = repr(plan)
     assert "Decided" in text and "To choose" in text and "plan.Reaction" in repr(plan.open)
     plan.Reaction.as_edge()
-    assert plan.Reaction.role == "edge"
+    assert plan.Reaction.reading == "edge"
     plan.Reaction.use(plan.target.relations.related_to)
     assert plan.Reaction.status == "chosen" and plan.Pathway in plan.open
     plan.Pathway.use(plan.target.kinds.pathway)
@@ -120,9 +120,9 @@ def test_contents_are_written_as_in_related_from_either_side(tmp_path):
     scope = client.from_table("Pathway", [EX + "pw1"])
     by_text = Plan(scope, into=Target(path), contents="^Is part of")
     assert by_text.contents_incoming and len(by_text.records) == len(scope) + 7
-    by_link = Plan(scope, into=Target(path), contents=client.kinds.Protein.IsPartOf)
+    by_link = Plan(scope, into=Target(path), contents=client.kinds.Protein.is_part_of)
     assert by_link.contents_incoming and len(by_link.records) == len(by_text.records)
-    with pytest.raises(ValueError, match='contents="\\^Is part of"'):
+    with pytest.raises(ValueError, match="choices: \\^Is part of"):
         Plan(scope, into=Target(path), contents="Has part")
 
 
@@ -134,6 +134,7 @@ def test_following_links_reads_large_sets_in_batches():
     scope = client.from_table("Pathway", [EX + "pw1"])
     members = scope.related(via="Is part of", incoming=True)
     assert len(members) == 7
+    assert len(scope.related(via="^Is part of")) == 7, '"^link" reads the link backwards'
     client.max_rows = 1
     with pytest.raises(HydrationLimitError, match="max_rows=1"):
         scope.related(via="Is part of", incoming=True)
@@ -143,7 +144,7 @@ def test_a_node_kind_can_be_converted_as_edges_between_named_links(plan, tmp_pat
     plan.Reaction.leave_out()
     plan.Pathway.use(plan.target.kinds.pathway)
     plan.Catalysis.as_edge("source", "TARGET").use(plan.target.relations.related_to)
-    assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "related to"
+    assert plan.Catalysis.reading == "edge" and plan.Catalysis.target.name == "related to"
     with pytest.raises(ValueError, match="has no link 'Nowhere'"):
         plan.Catalysis.as_edge("Nowhere", "Target")
     counts = plan.run(tmp_path / "queries").counts()
@@ -163,19 +164,19 @@ def test_the_printouts_show_the_ends_and_how_to_convert_a_kind_as_edges(plan):
 
 def test_a_kind_switches_reading_with_the_term_chosen(plan):
     plan.Catalysis.use(plan.target.kinds.thing)  # a class: its records become nodes
-    assert plan.Catalysis.role == "node" and plan.Catalysis.ends == (None, None)
+    assert plan.Catalysis.reading == "node" and plan.Catalysis.ends == (None, None)
     assert any(o.reading == "edge" for o in plan.Catalysis.options), (
         "the edge reading stays offered"
     )
     plan.Catalysis.use(plan.target.relations.catalyzes)  # a relation: edges between its links
-    assert plan.Catalysis.role == "edge" and plan.Catalysis.target.name == "catalyzes"
-    assert [e.label for e in plan.Catalysis.ends] == ["Source", "Target"]
+    assert plan.Catalysis.reading == "edge" and plan.Catalysis.target.name == "catalyzes"
+    assert [e.name for e in plan.Catalysis.ends] == ["Source", "Target"]
     plan.Catalysis.as_node()
-    assert plan.Catalysis.role == "node"
+    assert plan.Catalysis.reading == "node"
 
 
 def test_options_show_every_reading_of_a_kind(plan):
-    readings = {o.reading or plan.Catalysis.role for o in plan.Catalysis.options}
+    readings = {o.reading or plan.Catalysis.reading for o in plan.Catalysis.options}
     assert readings == {"edge", "node"}
     table = plan.Catalysis.options_table()
     assert set(table["as"]) == {"edge", "node"}
@@ -227,7 +228,7 @@ def test_a_metagraph_target_states_less_and_the_plan_says_so(tmp_path):
     plan = Plan(
         client.from_table("Pathway", [EX + "pw1"]),
         into=target,
-        contents=client.kinds.Protein.IsPartOf,
+        contents=client.kinds.Protein.is_part_of,
     )
     assert "does not state" in repr(plan)
     assert plan.Protein.target.name == "Protein" and plan.Pathway.target.name == "Pathway"
@@ -282,8 +283,8 @@ def test_tested_paths_are_read_for_the_plans_kinds_only_and_give_evidence(plan, 
     }
     with_paths = plan.add_paths(path)  # into the client; the plan proposes again
     catalysis = with_paths.kinds.Catalysis
-    assert with_paths.client.link_support(catalysis.iri, catalysis.Source.property) == 0.8
-    assert with_paths.path_support(catalysis, catalysis.Target) == 0.9
+    assert with_paths.client.link_support(catalysis.iri, catalysis.source.iri) == 0.8
+    assert with_paths.path_support(catalysis, catalysis.target) == 0.9
     assert list(catalysis.paths.frame["follow"]) == [9, 8]
     assert "80%" in repr(catalysis.links), "the links show the share of records that follow them"
 
@@ -294,7 +295,7 @@ def test_a_group_kind_can_be_edges_between_each_pair_of_its_members(plan, tmp_pa
     )
     assert "pairs over Member" in repr(plan.open)
     plan.Group.use(plan.target.relations.related_to)  # a relation: pairs of its members
-    assert plan.Group.role == "pairs" and plan.Group.ends[0].label == "Member"
+    assert plan.Group.reading == "pairs" and plan.Group.ends[0].name == "Member"
     assert "3 edges, each pair" in plan.consequence(plan.Group, plan.target.relations.related_to)
     plan.Reaction.leave_out()
     plan.Pathway.use(plan.target.kinds.pathway)
@@ -321,3 +322,32 @@ def test_run_says_where_it_cannot_write(plan, tmp_path):
     blocked.write_text("")
     with pytest.raises(ValueError, match="cannot be written to"):
         plan.run(blocked / "queries")
+
+
+def test_everything_the_plan_shows_is_also_data(plan, tmp_path):
+    import json
+
+    from rdfsolve.plan import NotFoundError, PlanError
+
+    data = plan.to_dict()
+    json.dumps(data)  # JSON-safe, for tools and interfaces
+    assert data["open"] and data["next"] and data["proposals"][0]["options"]
+    opened = next(p for p in data["proposals"] if p["status"] == "choose")
+    assert opened["why_open"] and opened["decide"][-1].endswith(".leave_out()")
+    json.dumps(plan.target.kinds.to_dict())
+    json.dumps(plan.kinds.Catalysis.to_dict())
+    with pytest.raises(NotFoundError) as caught:
+        plan.Nowhere  # noqa: B018
+    assert isinstance(caught.value, AttributeError) and isinstance(caught.value, KeyError)
+    assert (
+        caught.value.to_dict()["error"]["code"] == "unknown_kind"
+        and "Catalysis" in caught.value.choices
+    )
+    with pytest.raises(PlanError) as wrong:
+        plan.Catalysis.as_edge("Nowhere", "Target")
+    assert wrong.value.to_dict()["error"]["choices"]
+    plan.Reaction.leave_out()
+    plan.Pathway.use("pathway")
+    plan.Group.leave_out()
+    network = plan.run(tmp_path / "queries")
+    json.dumps(network.to_dict())
