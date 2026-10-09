@@ -226,3 +226,34 @@ def test_shacl_blank_shape_and_zero_cardinality():
     assert restored.uri is None
     assert restored.min_count == restored.max_count == 0
     assert (node, Namespace("http://www.w3.org/ns/shacl#").maxCount, Literal(0)) in graph
+
+
+def test_node_shapes_name_the_namespaces_of_their_class_iris():
+    from rdfsolve.schema_models.enrichment import RdfTerm
+    from rdfsolve.targets.shacl import Shacl
+
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="fixture"),
+        patterns=[
+            SchemaPattern(subject_class="urn:Gene", property_uri="urn:p", object_class="urn:Chem"),
+            SchemaPattern(subject_class="urn:Chem", property_uri="urn:q", object_class="urn:Gene"),
+        ],
+    )
+    schema.enrichment.class_examples = {
+        "urn:Gene": [RdfTerm(kind="uri", value="https://identifiers.org/ncbigene/1017")],
+        "urn:Chem": [
+            RdfTerm(kind="uri", value="https://identifiers.org/chebi/CHEBI:15377"),
+            RdfTerm(kind="uri", value="http://purl.obolibrary.org/obo/CHEBI_16236"),
+        ],
+    }
+    graph = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    patterns = {
+        str(graph.value(shape, SH.targetClass)): str(pattern)
+        for shape, pattern in graph.subject_objects(SH.pattern)
+    }
+    assert patterns["urn:Gene"] == r"^(https://identifiers\.org/ncbigene/)"
+    assert patterns["urn:Chem"] == (
+        r"^(http://purl\.obolibrary\.org/obo/CHEBI_|https://identifiers\.org/chebi/CHEBI:)"
+    )
+    kinds = {k.iri: k.identifiers for k in Shacl(graph).kinds()}
+    assert kinds["urn:Gene"] == ("ncbigene",) and kinds["urn:Chem"] == ("chebi",)

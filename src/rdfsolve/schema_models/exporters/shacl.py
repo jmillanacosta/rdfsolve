@@ -288,6 +288,52 @@ def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
     )
 
 
+def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str) -> None:
+    """Give each node shape the namespaces of its class's example IRIs as sh:pattern.
+
+    The namespaces of each class are also declared with their prefixes (sh:declare) on a
+    declarations resource of that class, so that a reader can tell which registered identifiers
+    the class's IRIs are, also where a prefix names another namespace elsewhere in the graph.
+    """
+    from hashlib import sha256
+
+    from rdfsolve._uri import uri_to_curie
+    from rdfsolve.identifiers import parse
+
+    examples: dict[str, set[str]] = defaultdict(set)
+    for class_iri, terms in schema.enrichment.class_examples.items():
+        examples[class_iri].update(t.value for t in terms if t.kind == "uri")
+    for example in schema.enrichment.examples:
+        if not example.untyped_subject and example.subject.kind == "uri":
+            examples[example.subject_class].add(example.subject.value)
+    namespaces: dict[str, dict[str, str]] = {}  # class -> namespace -> prefix
+    for class_iri, iris in examples.items():
+        for iri in iris:
+            found = parse(iri)  # a registered identifier: its namespace as written in the IRI
+            if found is not None and iri.endswith(found.local):
+                prefix, namespace = found.prefix, iri[: len(iri) - len(found.local)]
+            else:
+                _, prefix, namespace = uri_to_curie(iri)
+            if namespace and namespace != iri:
+                namespaces.setdefault(class_iri, {})[namespace] = prefix
+    special = set("\\.?*+(){}|[]^$")
+    for class_iri, found_namespaces in sorted(namespaces.items()):
+        by_prefix: dict[str, str] = {}
+        for namespace, prefix in sorted(found_namespaces.items()):
+            if prefix:
+                by_prefix.setdefault(prefix, namespace)
+        if by_prefix:
+            identity = sha256(class_iri.encode()).hexdigest()[:16]
+            shapes.declare_prefixes(by_prefix, resource=f"{base_uri}identifiers-{identity}")
+    for shape in shapes.node_shapes:
+        if shape.pattern is None and shape.target_class in namespaces:
+            escaped = (
+                "".join("\\" + c if c in special else c for c in namespace)
+                for namespace in sorted(namespaces[shape.target_class])
+            )
+            shape.pattern = "^(" + "|".join(escaped) + ")"
+
+
 def _complete_shapes(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
@@ -307,6 +353,7 @@ def _complete_shapes(
             inactive,
         )
     shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
+    _add_iri_patterns(schema, shapes, base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
     tested = schema.navigation.strategy == "tested"

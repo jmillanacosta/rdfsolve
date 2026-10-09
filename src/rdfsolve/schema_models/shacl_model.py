@@ -274,6 +274,7 @@ class ShaclNodeShape(BaseModel):
         description="Shapes combined with sh:or on the node: it conforms to one of them",
     )
     closed: bool = Field(False, description="sh:closed")
+    pattern: str | None = Field(None, description="sh:pattern: the IRIs of the focus nodes")
     deactivated: bool = False
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
@@ -309,6 +310,8 @@ class ShaclNodeShape(BaseModel):
             graph.add((uri, sh["or"], head))
         if self.deactivated:
             graph.add((uri, sh.deactivated, RdfLiteral(True)))
+        if self.pattern is not None:
+            graph.add((uri, sh.pattern, RdfLiteral(self.pattern)))
         if self.closed:
             graph.add((uri, sh.closed, RdfLiteral(True)))
         if self.name is not None:
@@ -365,6 +368,7 @@ class ShaclNodeShape(BaseModel):
             target_subjects_of=target_subjects_of,
             alternatives=alternatives,
             closed=_boolean(graph, uri, sh.closed),
+            pattern=str(pattern) if (pattern := graph.value(uri, sh.pattern, any=False)) else None,
             deactivated=_boolean(graph, uri, sh.deactivated),
             ignored_properties=[
                 str(item)

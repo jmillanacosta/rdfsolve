@@ -6,13 +6,16 @@ named by its label (rdfs:label, of the shape or the class) or its local name. A 
 (sh:path an IRI) is a relation from the shape's kind to the kinds it allows (sh:class, sh:node,
 alone or in sh:or); one whose values are literals (sh:datatype, sh:nodeKind sh:Literal) relates no
 two kinds, and one on a naming property names its node. sh:in lists are value lists. Classes
-related by rdfs:subClassOf in the graph give the hierarchy. Shapes marked sh:deactivated still
+related by rdfs:subClassOf in the graph give the hierarchy. A node shape's sh:pattern names the
+namespaces of its class's IRIs; the prefixes declared (sh:declare) for the namespaces it matches
+are the identifiers of that kind. Shapes marked sh:deactivated still
 describe the model (a mined schema's shapes are observations, not constraints), so they count.
 Paths other than one IRI are not relations; they are counted in skipped.
 """
 
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
@@ -84,10 +87,22 @@ class Shacl(TargetModel):
                 shapes[shape] = targets
         names: dict[str, str] = {}
         definitions: dict[str, str] = {}
+        of_class: dict[str, list[Any]] = defaultdict(list)
         for shape, classes in shapes.items():
             for c in classes:
-                names.setdefault(c, word_name(c, URIRef(c), shape))
+                of_class[c].append(shape)
                 definitions.setdefault(c, text(URIRef(c), DEFINITIONS) or text(shape, DEFINITIONS))
+        for c, held in of_class.items():
+            # The class's own label, else the shortest of its shapes' labels: shapes made for
+            # the class's paths or profiles are labelled with words built on the class's label.
+            named = [
+                word_name(c, shape) for shape in held if text(shape, (RDFS + "label", SH + "name"))
+            ]
+            names[c] = (
+                word_name(c, URIRef(c))
+                if text(URIRef(c), (RDFS + "label", SH + "name")) or not named
+                else min(named, key=len)
+            )
         node_classes = {str(s): cs for s, cs in shapes.items()}  # sh:node targets
 
         def allowed(node: Any) -> tuple[list[str], bool]:
@@ -138,6 +153,23 @@ class Shacl(TargetModel):
                         str(v).rsplit("#", 1)[-1].rsplit("/", 1)[-1] for v in Collection(g, listed)
                     ]
         self._names = names
+        # A shape's sh:pattern gives the namespaces of its class's IRIs; the prefixes declared
+        # (sh:declare) for namespaces it matches are the identifiers the kind uses.
+        declared = {
+            str(ns): str(prefix)
+            for d in g.objects(None, sh("declare"))
+            for prefix in g.objects(d, sh("prefix"))
+            for ns in g.objects(d, sh("namespace"))
+        }
+        identifiers: dict[str, set[str]] = defaultdict(set)
+        for shape, classes in shapes.items():
+            for pattern in g.objects(shape, sh("pattern")):
+                try:
+                    match = re.compile(str(pattern)).match
+                except re.error:
+                    continue
+                for c in classes:
+                    identifiers[c].update(p for ns, p in declared.items() if match(ns))
         parents = {
             c: tuple(
                 names[str(p)]
@@ -147,7 +179,13 @@ class Shacl(TargetModel):
             for c in names
         }
         self._kinds = [
-            KindInfo(names[c], c, parents=parents[c], definition=definitions.get(c, ""))
+            KindInfo(
+                names[c],
+                c,
+                parents=parents[c],
+                definition=definitions.get(c, ""),
+                identifiers=tuple(sorted(identifiers.get(c, ()))),
+            )
             for c in sorted(names, key=lambda c: names[c])
         ]
         self._relations = []
@@ -178,6 +216,8 @@ class Shacl(TargetModel):
             caps.add("hierarchy")
         if any(k.definition for k in self._kinds) or any(r.definition for r in self._relations):
             caps.add("definitions")
+        if any(k.identifiers for k in self._kinds):
+            caps.add("identifiers")
         self.capabilities = frozenset(caps)
         namespaces = Counter(
             c.rsplit("#", 1)[0] + "#" if "#" in c else c.rsplit("/", 1)[0] + "/" for c in names
