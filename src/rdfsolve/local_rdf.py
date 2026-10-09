@@ -64,9 +64,19 @@ def load_store(path: str | Path | Iterable[str | Path]) -> ox.Store:
 
     The format comes from the extension; a format Oxigraph does not read is parsed by RDFLib.
     """
+    import time
+
     store = ox.Store()
     for one in [path] if isinstance(path, (str, Path)) else path:
+        started, size = time.monotonic(), Path(one).stat().st_size / 1e6
+        logger.info("Loading %s (%.1f MB)", Path(one).name, size)
         _load_file(Path(one), store)
+        logger.info(
+            "Loaded %s: %d statements in the store after %.0f s",
+            Path(one).name,
+            len(store),
+            time.monotonic() - started,
+        )
     return store
 
 
@@ -123,11 +133,24 @@ def registry_files(name: str) -> list[Path]:
         kinds = [s.lstrip(".") for s in path.suffixes if s != ".gz"]
         if not kinds or kinds[-1] not in _RDF_EXTENSIONS | {"zip"}:
             continue
-        if not path.exists():
+        files.append(path)
+    missing = [path for path in files if not path.exists()]
+    if missing:
+        # A first download can take minutes; say so, since nothing else is shown meanwhile.
+        logger.warning(
+            "Downloading %d files of %s into %s (once; later runs reuse them)",
+            len(missing),
+            name,
+            folder,
+        )
+    for url in urls:
+        path = folder / Path(url.split("?")[0]).name
+        if path in missing:
             partial = path.with_name(path.name + ".part")
+            logger.warning("Downloading %s", url)
             urllib.request.urlretrieve(url, partial)  # noqa: S310 (registry URLs)
             partial.replace(path)
-        files.append(path)
+            logger.info("Downloaded %s (%.1f MB)", path.name, path.stat().st_size / 1e6)
     return files
 
 
