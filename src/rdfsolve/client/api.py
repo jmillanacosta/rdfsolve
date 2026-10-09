@@ -204,8 +204,9 @@ class Client(DatasetClient):
         JSON uses the canonical or VoID JSON-LD reader. For Turtle, choose
         format="shacl" or "void". RDF imports retain only supported fields.
         The source defaults to the schema endpoint. data_file selects local RDF: one file or
-        several (the dumps of one release), read into one store; or the name of a registry
-        entry, whose RDF downloads are fetched once (local_rdf.registry_files) and read together.
+        several (the dumps of one release), or a folder of them, read into one store; or the name of
+        a registry entry, whose RDF downloads are fetched once into $RDFSOLVE_DOWNLOADS/<name>
+        (default ~/.cache/rdfsolve; local_rdf.registry_files) and read together.
         """
         if isinstance(schema, MinedSchema):
             if format is not None:
@@ -235,8 +236,17 @@ class Client(DatasetClient):
                 raise ValueError("Choose source or data_file, not both")
             from rdfsolve.local_rdf import load_store, registry_files
 
-            if isinstance(data_file, str) and not Path(data_file).exists():
-                data_file = registry_files(data_file)
+            if isinstance(data_file, str) and not Path(data_file).is_file():
+                # A name of the registry is that entry, even where a folder of that name is in
+                # the working directory; another folder stands for the RDF files in it.
+                from rdfsolve.sources import load_sources
+
+                if any(s.name == data_file for s in load_sources()):
+                    data_file = registry_files(data_file)
+                elif not Path(data_file).is_dir():
+                    raise FileNotFoundError(
+                        f"data_file {data_file!r} is not a file, a folder or a registry entry"
+                    )
             store = load_store(data_file)
             if next(iter(store.named_graphs()), None) is None:
                 if kwargs.get("graph_uris"):

@@ -217,3 +217,56 @@ def test_the_patterns_are_kept_in_the_schema_file():
         ).restriction_patterns
         is None
     )
+
+
+def test_a_folder_of_rdf_files_loads_every_file(tmp_path):
+    from rdfsolve.local_rdf import load_store
+
+    (tmp_path / "a.ttl").write_text("<urn:a> <urn:p> <urn:b> .\n")
+    (tmp_path / "b.nt").write_text("<urn:b> <urn:p> <urn:c> .\n")
+    (tmp_path / "notes.txt").write_text("not RDF")
+    assert len(load_store(tmp_path)) == 2
+
+
+class _Entry:
+    name = "fixture.source"
+    download_ttl = ["http://unreachable.invalid/data.ttl"]
+    model_extra: dict = {}
+
+
+def test_an_unreachable_download_fails_with_its_url(tmp_path, monkeypatch):
+    import urllib.request
+
+    from rdfsolve import local_rdf
+
+    monkeypatch.setenv("RDFSOLVE_DOWNLOADS", str(tmp_path))
+    monkeypatch.setattr("rdfsolve.sources.load_sources", lambda: [_Entry()])
+
+    def refuse(url, timeout):
+        assert timeout == local_rdf.DOWNLOAD_TIMEOUT
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(urllib.request, "urlopen", refuse)
+    with pytest.raises(ConnectionError, match="unreachable.invalid/data.ttl"):
+        local_rdf.registry_files("fixture.source")
+    assert not list((tmp_path / "fixture.source").iterdir()), "no partial file is left"
+
+
+def test_a_registry_name_is_the_entry_even_beside_a_folder_of_that_name(tmp_path, monkeypatch):
+    from rdfsolve import local_rdf
+
+    (tmp_path / "fixture.source").mkdir()  # e.g. the downloads folder in the working directory
+    monkeypatch.chdir(tmp_path)
+    data = tmp_path / "downloaded.ttl"
+    data.write_text("<urn:a> <urn:p> <urn:b> .\n")
+    monkeypatch.setattr("rdfsolve.sources.load_sources", lambda: [_Entry()])
+    asked = []
+    monkeypatch.setattr(local_rdf, "registry_files", lambda name: asked.append(name) or [data])
+    from rdfsolve.schema_models import SchemaPattern
+
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="fixture"),
+        patterns=[SchemaPattern(subject_class="urn:C", property_uri="urn:p", object_class="urn:D")],
+    )
+    Client.open(schema, data_file="fixture.source")
+    assert asked == ["fixture.source"]
