@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import Field
@@ -65,6 +65,7 @@ class Source(SourceModel):
             "local_tar_url": self.local_tar_url,
             "graph_uris": self.graph_uris,
             "graph_sources": self.graph_sources,
+            "archive_members_left_out": self.archive_members_left_out,
         }
 
 
@@ -84,6 +85,9 @@ class PipelineConfig:
     creator_id: str | None = None  # Written as the SSSOM creator; never assumed.
     creator_label: str | None = None
     sources: list[Source] = field(default_factory=list)
+    # Every entry of the registry, also those not mined: the per-graph schemas of a source are
+    # named after the entries that are its graph scopes (rdfsolve.graph_parts).
+    registry: list[Source] = field(default_factory=list)
 
     get_graphs_from_store: bool = False
     graph_store_urls: dict[str, str] = field(default_factory=dict)
@@ -101,14 +105,39 @@ class PipelineConfig:
     navigation_hops: int = 5
     # Seconds for testing paths on the data; only paths that instances follow are written
     navigation_budget: float = 1800.0
+    # Seconds for testing paths of a source mined VoID-first (decided per source at run time);
+    # None uses navigation_budget. Path testing of IDSM's molmedb and isdb ran out of its 1800 s
+    # without finishing, the largest cost left in their VoID-first runs (2026-10-06).
+    void_first_navigation_budget: float | None = None
+    # How the miner pages its listings: "offset" (LIMIT/OFFSET) or "cursor" (keyset: ORDER BY
+    # the projected keys and FILTER past the last row). Class listings switch to keys by
+    # themselves when an OFFSET page fails beyond the first.
+    pagination: Literal["offset", "cursor"] = "offset"
+    # Local indexes: "scan" reads the rows of the index and counts them outside the server
+    # (rdfsolve.mining.scan); "sparql" sends the grouped queries of the two-phase strategy.
+    local_mining: str = "scan"
+    # Seconds for each evidence and ontology-discovery query of a source read from its VoID
+    # (VoID-first): what the VoID states is not queried, and the rest is probed, not mined.
+    void_first_probe_seconds: float = 60.0
 
     qlever_image: str = "docker://docker.io/adfreiburg/qlever:latest"
     base_port: int = 7019
     qlever_startup_timeout: int = 600  # Seconds to load the index.
+    # Restarts of a local server that dies while its source is mined; each resumes from the
+    # run's checkpoint.
+    qlever_restarts: int = 1
     no_download: bool = False
     # Ask the server for updates of the files of a local source; download and index again
     update_downloads: bool = False
+    # Run directory (or inputs manifest) whose pinned input files a local source must have to be
+    # indexed and mined (rebuild a frozen run exactly)
+    pinned_inputs: Path | None = None
     no_index: bool = False
+    # Download and index local sources only (prepare their indexes for a later mining run).
+    index_only: bool = False
+    # Read a remote source's schema from the full VoID its endpoint publishes (void-generator),
+    # mining only what the VoID leaves out; off: mine every remote source.
+    void_first: bool = True
 
     skip_remote: bool = False
     skip_local: bool = False
@@ -123,11 +152,18 @@ class PipelineConfig:
     ontology_as_data: bool = False
     ontology_term_budget: int = 300
     ontology_group_before_mining: int | None = 5000
+    # Most type values that class discovery lists through an endpoint; None lists all. GO-CAM
+    # (1.72 M type values) stays within it; BioGateway (10.8 M, one instance each) does not.
+    class_listing_limit: int | None = 2_000_000
     # Tab-separated (child, parent) IRI files for terms whose hierarchy is not in the data
     ontology_hierarchy_files: list[Path] = field(default_factory=list)
     resume_from: Path | None = None  # Earlier run output whose class-batch checkpoints are reused
     # Local run output whose records remote endpoints are checked against; equal ones are not mined
     local_records: Path | None = None
+    # Folder of the VoID that registry catalogs (dataset_kind: catalog) publish of the entries
+    # they describe (scripts/void_catalogs.py); a remote source whose endpoint publishes no VoID
+    # of it is read from there VoID-first
+    void_catalogs: Path | None = None
     discover_ontology_graphs: bool = False
     ontology_discovery_max_graphs: int = 500
     extract_metadata: bool = False
@@ -188,6 +224,7 @@ class PipelineConfig:
             raw = yaml.safe_load(f) or []
 
         sources = [Source.from_dict(d) for d in raw]
+        self.registry = list(sources)
 
         if names:
             missing = sorted(set(names) - {s.name for s in sources})
@@ -218,7 +255,11 @@ class PipelineConfig:
             )
 
         excluded = {
-            s.name: "service record" if s.source_role == "service" else "skip_mining"
+            s.name: "service record"
+            if s.source_role == "service"
+            else "VoID catalog (read, not mined)"
+            if s.dataset_kind == "catalog"
+            else "skip_mining"
             for s in sources
             if not s.mining_enabled
         }
@@ -270,7 +311,7 @@ class PipelineConfig:
 
         result: dict[str, Any] = {}
         for item in fields(self):
-            if item.name == "sources":
+            if item.name in {"sources", "registry"}:
                 continue
             result[item.name] = clean(getattr(self, item.name))
         result["selected_sources"] = [source.name for source in self.sources]
@@ -356,14 +397,18 @@ class PipelineConfig:
 
     def get_local_sources(self) -> list[Source]:
         """Select eligible sources with local inputs or a cached index."""
-        from rdfsolve.qlever.index_check import has_cached_index
+        from rdfsolve.qlever.index_check import TruncatedIndexError, has_cached_index
+
+        def cached(source: Source) -> bool:
+            # A truncated index of a remote source does not make it a local one.
+            try:
+                return has_cached_index(self.data_dir / "qlever_workdirs" / source.name, source.name)
+            except TruncatedIndexError:
+                return False
 
         return [
             s
             for s in self.sources
             if s.mining_enabled
-            and (
-                s.mode in (SourceMode.LOCAL, SourceMode.BOTH)
-                or has_cached_index(self.data_dir / "qlever_workdirs" / s.name, s.name)
-            )
+            and (s.mode in (SourceMode.LOCAL, SourceMode.BOTH) or cached(s))
         ]

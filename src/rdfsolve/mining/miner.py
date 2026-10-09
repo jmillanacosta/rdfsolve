@@ -6,14 +6,13 @@ import logging
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import contextmanager
-from datetime import datetime, timezone
+from contextlib import contextmanager, nullcontext
+from datetime import UTC, datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import pyoxigraph as ox
-from rdflib import Graph
-from typing_extensions import Self
+from rdflib import Graph, URIRef
 
 from rdfsolve._outcomes import QueryFailure, QueryOutcome, QueryState
 from rdfsolve.local_rdf import LocalBackend
@@ -23,9 +22,11 @@ from rdfsolve.mining.pattern_enrichment import (
     enrich_patterns_with_labels,
 )
 from rdfsolve.mining.query_builders import (
+    MEMBERSHIP,
     _build_declared_classes_query,
 )
 from rdfsolve.mining.report_tracking import ReportCollector
+from rdfsolve.mining.sampling import DEFAULT_SAMPLE_SIZE, SAMPLE_SIZE
 from rdfsolve.mining.single_pass_strategy import SinglePassStrategy
 from rdfsolve.mining.strategy import MiningContext, MiningStrategy
 from rdfsolve.mining.structural_strategy import StructuralStrategy
@@ -99,6 +100,7 @@ class SchemaMiner:
         sparql_strategy: str = "",
         enrich: bool = False,
         classes_as_data: bool = False,
+        membership_properties: list[str] | None = None,
         examples_per_pattern: int = 2,
         max_response_bytes: int = 64 * 1024 * 1024,
         get_graphs_from_store: bool = False,
@@ -110,15 +112,32 @@ class SchemaMiner:
         type_context_graph_uris: list[str] | None = None,
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
+        untyped_subjects: bool = True,
+        sample_size: int = DEFAULT_SAMPLE_SIZE,
     ) -> None:
         """Initialize a SchemaMiner.
 
         *classes_as_data* is for a source that keeps its records as classes (each entity an
         rdfs:Class under its kind): with ontology-as-data,
         the rows of these terms join the typed patterns and are grouped under their ancestors.
+        *membership_properties* are the properties that place a record in its class when the
+        source does not use rdf:type alone (rdf:type and a category, for example).
+        With *untyped_subjects*, the IRI subjects that have no type get property-level
+        patterns (subject_binding "untyped"; rdfsolve.mining.untyped_subjects), so that data
+        without classes has a schema; a scan run counts them from its rows.
+        *sample_size* is the first sample (edges or members) of a query that the endpoint
+        refuses after every other fallback: its rows are kept, flagged sampled, with counts
+        that are lower bounds (rdfsolve.mining.sampling); 0 turns sampling off.
         """
         self.endpoint_url = endpoint_url
+        self.untyped_subjects = untyped_subjects
+        # How a caller scoped a local index other than the source's endpoint settings, recorded
+        # in the report (config local_graph_scope): an index of files without named graphs is
+        # mined whole, without the endpoint's data, type context and ontology graphs.
+        self.local_graph_scope: dict[str, Any] | None = None
+        self.sample_size = sample_size
         self.classes_as_data = classes_as_data
+        self.membership_properties = list(membership_properties or [])
         self.local_backend = local_backend
         if pagination not in {"offset", "cursor"}:
             raise ValueError("pagination must be offset or cursor")
@@ -177,11 +196,21 @@ class SchemaMiner:
         self._ontology_classes: list[str] | None = None
         self._ontology_term_budget: int | None = None
         self._group_before_mining: int | None = None
+        # Seconds for each query of the ontology-term probe of a VoID-first source, which then
+        # gives up at the first query that does not answer in time (no page recovery): paged
+        # attempts at the deadline cost much and can find nothing. None: the probe is not
+        # limited.
+        self.light_probe_seconds: float | None = None
+        # Most type values that class discovery lists (None: all); the remote stage sets it.
+        self.class_listing_limit: int | None = None
         self._hierarchy_files: list[str] = []
         self._ontology_graph_uris: list[str] | None = None
         self._class_batches: list[list[str]] | None = None
         self._shared_extensions: dict[str, str] = {}
         self._subsumed_classes: set[str] = set()
+        self._grouped_members: dict[str, list[str]] = {}
+        self._scan_types: Any = None
+        self._scan_grouping: Any = None
         self._declared_classes: set[str] = set()
         self.last_report: MiningReport | None = None
         self._structural_patterns: list[StructuralPattern] | None = None
@@ -374,12 +403,16 @@ class SchemaMiner:
                 "counts": self.counts,
                 "strategy": self._strategy.name,
                 "untyped_as_classes": self.untyped_as_classes,
+                "untyped_subject_patterns": self.untyped_subjects,
+                "sample_size": self.sample_size,
                 "unsafe_paging": self.unsafe_paging,
                 "filter_service_namespaces": self.filter_service_namespaces,
                 "enrich": self.enrich,
                 "examples_per_pattern": self.examples_per_pattern,
             },
         )
+        if self.local_graph_scope:
+            report.config["local_graph_scope"] = dict(self.local_graph_scope)
         from rdfsolve.mining.local_graph import LocalGraphHelper
 
         if isinstance(self._helper, LocalGraphHelper):
@@ -410,19 +443,35 @@ class SchemaMiner:
             ontology_term_budget=self._ontology_term_budget,
             group_before_mining=self._group_before_mining,
             ontology_hierarchy_files=self._hierarchy_files,
+            pagination=self.pagination,
         )
 
+        context.class_listing_limit = self.class_listing_limit
+        # A scan groups records kept as classes under their kind before counting.
+        context.classes_as_data = self.classes_as_data
         if self._resume is not None:
             context.resumed = self._resumed_batches(*self._resume)
+        self._resumed: dict[tuple[str, ...], list[dict[str, Any]]] = context.resumed
         # Run strategy
         patterns = self._strategy.mine(context)
-        if not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
+        if self._store is not None:
+            self._scan_structure(context, patterns)
+        elif not isinstance(self._strategy, StructuralStrategy) and not self._own_view:
             StructuralStrategy(patterns).mine(context)
+        if self._store is None and not self._own_view and self.untyped_subjects:
+            from rdfsolve.mining.untyped_subjects import mine_untyped_subjects
+
+            # After the structural census, whose counts of untyped triples choose the
+            # properties to count; a scan run counts untyped subjects with its patterns.
+            patterns = [*patterns, *mine_untyped_subjects(context)]
+        elif not self.untyped_subjects:
+            patterns = [p for p in patterns if not p.untyped_subject]
         self._class_batches = context.class_batches
         if context.grouped_members:
             # A row of a representative is a grouping of its members' rows, not an observation
             # of the representative itself, and its direct instances do not describe it.
             self._subsumed_classes |= set(context.grouped_members)
+            self._grouped_members = dict(context.grouped_members)
             for pattern in patterns:
                 if pattern.subject_class in context.grouped_members:
                     pattern.evidence_source = "inferred"
@@ -446,6 +495,25 @@ class SchemaMiner:
 
         return patterns, one_shot_results
 
+    @property
+    def _store(self) -> Any:
+        """The row store of a scan run (rdfsolve.mining.scan), whose phases count rows."""
+        return getattr(self._strategy, "store", None)
+
+    def _scan_structure(self, context: MiningContext, patterns: list[SchemaPattern]) -> None:
+        """Count the structural census and patterns from the rows (rdfsolve.mining.scan_structure)."""
+        from rdfsolve.mining.scan_structure import structural_coverage
+
+        phase = self._report.start_phase("structural-patterns")
+        config = self._report.report.config
+        config["structural_execution"] = "scan"
+        # One census for each data graph of a graph scope, as StructuralStrategy.mine.
+        entries, structural = structural_coverage(self._store, patterns)
+        config["structural_coverage"] = entries
+        context.structural_patterns = structural
+        config["structural_pattern_count"] = len(structural)
+        self._report.finish_phase(phase, items=len(structural))
+
     def _resumed_batches(self, path: str, text: str) -> dict[tuple[str, ...], list[dict[str, Any]]]:
         """Reuse completed class batches and census counts from an earlier checkpoint.
 
@@ -458,7 +526,7 @@ class SchemaMiner:
         batches = {}
         skipped = []
         for line in map(json.loads, text.splitlines()):
-            if line.get("phase") not in ("patterns", "census"):
+            if line.get("phase") not in ("patterns", "census", "counts"):
                 continue
             state = line.get("state")
             if state is None and self._resume_failed & set(line["classes"]):
@@ -496,12 +564,113 @@ class SchemaMiner:
                 class_batches=self._class_batches,
                 type_context_graph_uris=self.type_context_graph_uris,
                 shared_extensions=self._shared_extensions,
+                resumed=self._resumed,
             )
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:
             self._report.finish_phase(phase, error=str(exc))
             raise
         return patterns
+
+    def _scan_terms(
+        self, patterns: list[SchemaPattern]
+    ) -> tuple[list[SchemaPattern], list[SchemaPattern] | None, list[SchemaPattern] | None]:
+        """Fold class expressions and group ontology terms on the rows (rdfsolve.mining.scan_terms).
+
+        Anonymous classes typed ``p some F`` become edges (C, p, F) of their members' named
+        classes, the fillers grouped per (C, p) slot. With ontology terms as data, the terms are
+        grouped as _run_term_subsumption_phase chooses them (before and after mining), by one
+        rewrite of the type table on both ends and a recount: the counts are exact, not sums.
+        The term patterns are read from the rows, as probe_term_patterns defines them. Returns
+        patterns, raw patterns, term patterns.
+        """
+        from rdfsolve.mining.scan import count_patterns
+        from rdfsolve.mining.scan_terms import (
+            RetypedStore,
+            fold_class_expressions,
+            foldable_expressions,
+            group_terms,
+            type_table,
+            without_classes,
+        )
+
+        store = self._store
+        config = self._report.report.config
+        expressions = foldable_expressions(store)
+        types = without_classes(type_table(store), expressions)
+        raw_patterns = term_patterns = None
+        budget = self._ontology_term_budget
+        phase = self._report.start_phase("ontology-terms")
+        if budget is not None:
+            from rdfsolve.mining.scan_enrichment import term_patterns as read_term_patterns
+
+            # The exact term observations, read from the rows (the probe's definitions).
+            term_patterns = read_term_patterns(
+                store, patterns, ontology_graph_uris=self._ontology_graph_uris
+            )
+            grouping = group_terms(
+                store,
+                # Minimal types (ABSTAT): a record's types never include their own ancestors,
+                # so that a client can merge the released per-term rows exactly.
+                minimal=True,
+                types=types,
+                # Without class expressions the type table is the store's: reuse its counts.
+                counted=None if expressions else patterns,
+                budget=budget,
+                # A scan whose terms were grouped before counting (ScanStrategy.grouped) is not
+                # grouped before mining again: its type table is the grouped one.
+                group_before_mining=None
+                if getattr(self._strategy, "grouped", None) is not None
+                else self._group_before_mining,
+                ontology_graph_uris=self._ontology_graph_uris,
+                hierarchy_files=self._hierarchy_files,
+            )
+            patterns, raw_patterns, types = grouping.patterns, grouping.raw_patterns, grouping.types
+            self._exact_terms(grouping, expressions)
+            self._scan_grouping = grouping
+            config["ontology_term_subsumption"] = grouping.summary
+            if grouping.before_mining:
+                config["ontology_term_grouping"] = grouping.before_mining
+                self._grouped_members = dict(grouping.members)
+            self._subsumed_classes |= set(grouping.subsumed_classes)
+        elif expressions:
+            patterns = count_patterns(RetypedStore(store, types))
+        if expressions:
+            folding = fold_class_expressions(
+                store,
+                expressions,
+                types=types,
+                ontology_graph_uris=self._ontology_graph_uris,
+                hierarchy_files=self._hierarchy_files,
+            )
+            patterns = patterns + folding.patterns
+            config["class_expression_folding"] = folding.record
+        # Class counts and extensions read the rewritten type table (representatives counted).
+        self._scan_types = RetypedStore(store, types)
+        self._report.finish_phase(phase, items=len(patterns))
+        return patterns, raw_patterns, term_patterns
+
+    def _exact_terms(self, grouping: Any, expressions: Any) -> None:
+        """Give a grouping made on a type table grouped before counting its exact terms.
+
+        When a scan grouped the terms used as types before counting (ScanStrategy.grouped),
+        the patterns count the grouped table; the release still ships the exact terms
+        (scan_terms.exact_term_rows), written to a file next to the store. Records kept as
+        classes (classes_as_data) are released as their own terms, each with its kind.
+        """
+        from rdfsolve.mining.scan_terms import exact_term_rows
+
+        before = getattr(self._strategy, "grouped", None)
+        if before is None:
+            return
+        exact_term_rows(
+            before,
+            grouping,
+            Path(before.store._store.base.path) / "term-rows.parquet",
+            expressions=expressions,
+            ontology_graph_uris=self._ontology_graph_uris,
+            hierarchy_files=self._hierarchy_files,
+        )
 
     def _run_term_subsumption_phase(
         self, patterns: list[SchemaPattern], budget: int
@@ -524,27 +693,45 @@ class SchemaMiner:
 
         phase = self._report.start_phase("ontology-terms")
         try:
-            # A refused probe leaves the term patterns not probed; the typed patterns stay.
+            # Term counts are enrichment: a refused query is read in batches of terms or over
+            # a sample, and what stays refused is a measurement gap, never a failure.
             probed: list[SchemaPattern] | None
+            probe = QueryOutcome()
+            budget_of = getattr(self._helper, "budget", None)
+            light = (
+                budget_of(self.light_probe_seconds)
+                if self.light_probe_seconds is not None and budget_of is not None
+                else nullcontext()
+            )
             try:
-                probed = probe_term_patterns(
-                    self._helper,
-                    self.graph_uris,
-                    self._collect_bindings,
-                    self.chunk_size,
-                    ontology_graph_uris=self._ontology_graph_uris,
-                    type_context_graph_uris=self.type_context_graph_uris,
-                    typed=patterns,
-                    classes={str(c): c for batch in self._class_batches or [] for c in batch},
-                )
+                with light:
+                    probed = probe_term_patterns(
+                        self._helper,
+                        self.graph_uris,
+                        self._collect_bindings,
+                        self.chunk_size,
+                        ontology_graph_uris=self._ontology_graph_uris,
+                        type_context_graph_uris=self.type_context_graph_uris,
+                        typed=patterns,
+                        classes={str(c): c for batch in self._class_batches or [] for c in batch},
+                        outcome=probe,
+                    )
             except EndpointError as error:
                 failure = QueryFailure("timeout", str(error)[:500], "ontology-terms")
-                self._report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
+                self._report.record_outcome(QueryOutcome(gaps=[failure]))
                 self._report.report.config["ontology_term_probe"] = {
                     "state": "not_probed",
                     "reason": str(error)[:500],
+                    "seconds_per_query": self.light_probe_seconds,
                 }
                 probed = None
+            else:
+                self._report.record_outcome(probe)
+                self._report.report.config["ontology_term_probe"] = {
+                    "state": "gaps" if probe.gaps else "sampled" if probe.samples else "complete",
+                    "sampled_queries": len(probe.samples),
+                    "gaps": len(probe.gaps),
+                }
             if self.classes_as_data and probed:
                 covered = {(p.subject_class, p.property_uri) for p in probed}
                 patterns = [
@@ -568,6 +755,12 @@ class SchemaMiner:
                     )
                     for p in probed
                 ]
+            # The objects typed by terms grouped before mining are counted per term; their rows
+            # join the group, as the subjects did.
+            grouped = {m: rep for rep, terms in self._grouped_members.items() for m in terms}
+            objects_before = len({p.object_class for p in patterns})
+            if grouped:
+                patterns = subsume_patterns(patterns, grouped)
             classes = pattern_classes(patterns)
             summary: dict[str, Any] = {
                 "budget": budget,
@@ -577,6 +770,10 @@ class SchemaMiner:
                 "subsumed": False,
                 "representative_members": {},
                 "classes_as_data": self.classes_as_data,
+                "object_classes_grouped_before_mining": {
+                    "before": objects_before,
+                    "after": len({p.object_class for p in patterns}),
+                },
             }
             if len(classes) > budget:
                 t0 = time.monotonic()
@@ -587,7 +784,7 @@ class SchemaMiner:
                 chosen = choose_representatives(classes, parents, budget)
                 patterns = subsume_patterns(patterns, chosen.representative)
                 members = chosen.members()
-                self._subsumed_classes = set(members)
+                self._subsumed_classes |= set(members)
                 summary.update(
                     {
                         "classes_after": chosen.classes_after,
@@ -639,6 +836,12 @@ class SchemaMiner:
         phase = self._report.start_phase("labels")
         logger.info("Fetching labels …")
         uris_before = self._unique_uris(patterns)
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import pattern_labels
+
+            patterns = pattern_labels(self._store, patterns)
+            self._report.finish_phase(phase, items=len(uris_before))
+            return patterns, uris_before
         patterns = enrich_patterns_with_labels(
             patterns,
             self._helper,
@@ -656,7 +859,8 @@ class SchemaMiner:
         classes: set[str] = set()
         properties: set[str] = set()
         for p in patterns:
-            classes.add(p.subject_class)
+            if not p.untyped_subject:
+                classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
             properties.add(p.property_uri)
@@ -676,6 +880,16 @@ class SchemaMiner:
             try:
                 raw = self._helper.select(query, purpose="declared_classes")
                 bindings = raw.get("results", {}).get("bindings", [])
+                if SparqlHelper.row_cap_suspected(len(bindings)):
+                    logger.warning(
+                        "Declared classes: exactly %d rows, a common server cap; paging them",
+                        len(bindings),
+                    )
+                    bindings = self._collect_bindings(
+                        SparqlHelper.prepare_paginated_query(query),
+                        "declared_classes",
+                        len(bindings),
+                    )
             except ResponseLimitError:
                 logger.warning("Declared classes exceeded the response limit; paging the query")
                 bindings = self._collect_bindings(
@@ -726,7 +940,12 @@ class SchemaMiner:
         from rdfsolve.mining.dataset_statistics import count_dataset
 
         phase = self._report.start_phase("dataset-statistics")
-        statistics = count_dataset(self._helper, self.graph_uris, self._report.record_query)
+        if self._store is not None:
+            from rdfsolve.mining.scan_structure import dataset_statistics
+
+            statistics = dataset_statistics(self._store)
+        else:
+            statistics = count_dataset(self._helper, self.graph_uris, self._report.record_query)
         self._report.report.config["dataset_statistics"] = statistics
         self._report.flush()
         self._report.finish_phase(phase, items=len(statistics.get("property_partitions", ())))
@@ -860,6 +1079,199 @@ class SchemaMiner:
         context["state"] = "nonempty"
         self._report.flush()
 
+    # Seconds for listing the endpoint's graphs before the system graphs are left out. The
+    # listing reads every quad (DISTINCT ?g); where it does not end in 30 s it rarely ends at all,
+    # and the source is then mined without the exclusion, which is recorded.
+    GRAPH_LISTING_BUDGET_S = 30.0
+
+    def _exclude_engine_graphs(self) -> None:
+        """Leave the engine's own graphs out of every query of a source mined without graphs.
+
+        Without FROM, Virtuoso reads every graph, its system graphs included (virtrdf#, the
+        WebDAV graph, ...): their predicates and edges would enter the census and the structural
+        patterns.
+        The graphs whose IRIs start with *excluded_graph_prefixes* (the prefixes that graph
+        discovery already leaves out) are excluded from the default graph of each query without
+        a dataset clause with Virtuoso's input:default-graph-exclude (graph_exclusion_prologue,
+        which says why input:named-graph-exclude is never sent), which keeps the default graph
+        of the endpoint otherwise unchanged. The pragma is first checked on the endpoint
+        (_check_exclusion): a pragma that empties a non-empty answer, or that makes a one-row
+        query slow, is recorded as an endpoint quirk and nothing is excluded. An engine that
+        refuses the pragma is recorded and nothing is excluded. When the listing is refused or
+        does not end in GRAPH_LISTING_BUDGET_S, the engine graphs known by name
+        (KNOWN_ENGINE_GRAPHS) that match the prefixes are asked for by name, which needs no scan
+        of the quads.
+        """
+        from rdfsolve.mining.local_graph import LocalGraphHelper
+        from rdfsolve.sparql_helper import SparqlHelperError
+        from rdfsolve.void_retrieval import discover_graph_names
+
+        helper = self._helper
+        if self.graph_uris or not self.excluded_graph_prefixes:
+            return
+        if isinstance(helper, LocalGraphHelper):
+            return
+        record: dict[str, Any] = {"prefixes": list(self.excluded_graph_prefixes)}
+        self._report.report.config["excluded_graphs"] = record
+        try:
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                graphs = discover_graph_names(helper, batch_size=1000, max_pages=100)
+        except (SparqlHelperError, ValueError) as error:
+            logger.warning("Graph exclusion: graphs not listed: %s", str(error)[:200])
+            record.update(state="graph_listing_refused", error=str(error)[:500])
+            graphs = self._known_engine_graphs(record)
+            if not graphs:
+                return
+        excluded = sorted(g for g in graphs if g.startswith(self.excluded_graph_prefixes))
+        record.setdefault("listed_graphs", len(graphs))
+        if not excluded:
+            record["state"] = "none_found"
+            return
+        record["graph_uris"] = excluded
+        try:
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                usable = self._check_exclusion(excluded, record)
+        except SparqlHelperError as error:
+            logger.warning("Graph exclusion: the endpoint refuses it: %s", str(error)[:200])
+            record.update(state="not_supported", error=str(error)[:500])
+            return
+        if not usable:
+            return
+        self._find_engine_only_classes(excluded, record)
+        helper.excluded_graphs = excluded
+        record.update(state="excluded", method="virtuoso_define_default_graph_exclude")
+        logger.info("Graph exclusion: %d engine graphs left out: %s", len(excluded), excluded)
+
+    # The self-check of the exclusion: one row of the default graph, without and with the
+    # prologue. With the prologue it must answer a row, and not take more than
+    # EXCLUSION_SLOW_FACTOR times as long nor more than EXCLUSION_SLOW_S beyond the answer
+    # without it.
+    EXCLUSION_CHECK = "SELECT ?s WHERE { ?s ?p ?o } LIMIT 1"
+    EXCLUSION_SLOW_FACTOR = 10.0
+    EXCLUSION_SLOW_S = 5.0
+
+    def _check_exclusion(self, excluded: list[str], record: dict[str, Any]) -> bool:
+        """Return whether the exclusion pragma leaves a one-row answer non-empty and fast.
+
+        Some Virtuoso versions answer an empty result, with HTTP 200 and no error, to a query
+        with an exclusion pragma (input:named-graph-exclude), and an ASK can still answer true there, so the check uses
+        SELECT. A pragma that empties a non-empty answer, or that makes the query slow, is an
+        endpoint quirk, recorded in *record* under ``quirks``. SparqlHelperError is raised for
+        a refused pragma.
+        """
+        import time
+
+        from rdfsolve.sparql_helper import graph_exclusion_prologue
+
+        helper = self._helper
+
+        def rows(query: str) -> tuple[int, float]:
+            """Return the number of rows of *query* and the seconds it took."""
+            started = time.monotonic()
+            bindings = helper.select(query).get("results", {}).get("bindings", [])
+            return len(bindings), time.monotonic() - started
+
+        quirks: list[dict[str, Any]] = []
+        record["quirks"] = quirks
+        plain, plain_s = rows(self.EXCLUSION_CHECK)
+        if not plain:
+            record["state"] = "check_inconclusive"
+            logger.warning("Graph exclusion: not used; the endpoint answers no triple to check it")
+            return False
+        found, found_s = rows(graph_exclusion_prologue(excluded) + self.EXCLUSION_CHECK)
+        record["check"] = {"query": self.EXCLUSION_CHECK, "seconds": [plain_s, found_s]}
+        slow = found_s > max(plain_s * self.EXCLUSION_SLOW_FACTOR, plain_s + self.EXCLUSION_SLOW_S)
+        if found and not slow:
+            return True
+        effect = "empties a non-empty answer" if not found else "makes a one-row query slow"
+        quirks.append({"pragma": "input:default-graph-exclude", "effect": effect})
+        record["state"] = "emptied_by_pragma" if not found else "slowed_by_pragma"
+        logger.warning("Graph exclusion: not used; the pragma %s (%.1f s)", effect, found_s)
+        return False
+
+    # At most this many classes typed in the engine graphs are checked one by one (forum: 12).
+    ENGINE_CLASS_CHECK_LIMIT = 200
+
+    def _find_engine_only_classes(self, excluded: list[str], record: dict[str, Any]) -> None:
+        """Find the classes typed only in the engine graphs, for a cheaper class listing.
+
+        A class listing with the exclusion prologue can be much slower than without it. The
+        classes
+        typed in the engine graphs are listed graph by graph with FROM, which reads those small
+        graphs only (before the prologue is set: Virtuoso drops a FROM that names an excluded
+        graph), and each is asked for once in the rest of the endpoint (LIMIT 1, with the prologue). The
+        classes found nowhere else are dropped from a class listing read without the prologue
+        (SparqlHelper.graph_exclusion_suspended), which gives the same classes. When the classes
+        cannot be checked, the listing keeps the prologue.
+        """
+        from rdfsolve.sparql_helper import SparqlHelperError, graph_exclusion_prologue
+
+        helper = self._helper
+        limit = self.ENGINE_CLASS_CHECK_LIMIT
+        prologue = graph_exclusion_prologue(excluded)
+        try:
+            with helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                found: set[str] = set()
+                # One graph per query: several FROM in one query can be far slower than each
+                # graph alone.
+                for graph in excluded:
+                    listing = helper.select(
+                        f"SELECT DISTINCT ?c FROM {URIRef(graph).n3()} "  # noqa: S608 (SPARQL)
+                        f"WHERE {{ ?s a ?c }} LIMIT {limit + 1}"
+                    )
+                    found.update(
+                        b["c"]["value"]
+                        for b in listing.get("results", {}).get("bindings", [])
+                        if b.get("c", {}).get("type") == "uri"
+                    )
+                    if len(found) > limit:
+                        break
+                typed = sorted(found)
+                if len(typed) > limit:
+                    record["engine_classes"] = {"state": f"more than {limit}; not checked"}
+                    return
+                only = []
+                for cls in typed:
+                    query = f"SELECT ?s WHERE {{ ?s a {URIRef(cls).n3()} }} LIMIT 1"
+                    rows = helper.select(prologue + query).get("results", {}).get("bindings", [])
+                    if not rows:
+                        only.append(cls)
+        except (SparqlHelperError, ValueError) as error:
+            record["engine_classes"] = {"state": "failed", "error": str(error)[:300]}
+            logger.warning("Graph exclusion: engine classes not checked: %s", str(error)[:200])
+            return
+        helper.engine_only_classes = frozenset(only)
+        record["engine_classes"] = {"state": "checked", "typed": len(typed), "engine_only": only}
+        logger.info(
+            "Graph exclusion: %d classes typed only in engine graphs; class listings are read "
+            "without the prologue and cleaned of them",
+            len(only),
+        )
+
+    def _known_engine_graphs(self, record: dict[str, Any]) -> list[str]:
+        """Return the engine graphs known by name that the endpoint holds; record the probe."""
+        from rdfsolve.schema_models._constants import KNOWN_ENGINE_GRAPHS
+        from rdfsolve.sparql_helper import SparqlHelperError
+
+        names = [g for g in KNOWN_ENGINE_GRAPHS if g.startswith(self.excluded_graph_prefixes)]
+        if not names:
+            return []
+        from rdfsolve.mining.graph_selection import missing_graphs
+
+        try:
+            # One ASK per graph: it stops at the first triple (missing_graphs).
+            with self._helper.budget(self.GRAPH_LISTING_BUDGET_S):
+                absent = set(missing_graphs(self._helper, names))
+        except (SparqlHelperError, ValueError) as error:
+            record["known_graphs_probe"] = {"state": "failed", "error": str(error)[:300]}
+            return []
+        found = [g for g in names if g not in absent]
+        record["known_graphs_probe"] = {"state": "complete", "asked": names, "found": found}
+        logger.info(
+            "Graph exclusion: %d of %d known engine graphs found by name", len(found), len(names)
+        )
+        return found
+
     @contextmanager
     def _session(
         self, dataset_name: str | None, ontology_graph_uris: list[str] | None = None
@@ -872,14 +1284,18 @@ class SchemaMiner:
         self._subsumed_classes = set()
         self._ontology_graph_uris = ontology_graph_uris
         self._class_batches = None
+        self._resumed = {}
         self._structural_patterns = None
         self._subsumed_classes = set()
+        self._grouped_members = {}
         self._declared_classes = set()
         self._init_report(
-            dataset_name, self._build_strategy_string(), datetime.now(timezone.utc).isoformat()
+            dataset_name, self._build_strategy_string(), datetime.now(UTC).isoformat()
         )
         self.last_report = self._report.report
         remote_helper = self._helper
+        member = MEMBERSHIP.set(tuple(self.membership_properties or [RDF_TYPE]))
+        sampling = SAMPLE_SIZE.set(self.sample_size)
         try:
             if self.get_graphs_from_store:
                 from dataclasses import asdict
@@ -913,6 +1329,7 @@ class SchemaMiner:
                 self._report.report.config["local_backend"] = self._helper.local.metadata()
                 self._report.report.config["sparql_engine"] = self._helper.sparql_engine
             self._verify_context_graphs("type_context", self.type_context_graph_uris)
+            self._exclude_engine_graphs()
             yield
         except BaseException as exc:
             reason = f"{type(exc).__name__}: {exc}"
@@ -929,6 +1346,10 @@ class SchemaMiner:
             )
             raise
         finally:
+            MEMBERSHIP.reset(member)
+            SAMPLE_SIZE.reset(sampling)
+            remote_helper.excluded_graphs = []
+            remote_helper.engine_only_classes = None
             if self._helper is not remote_helper:
                 self._helper.close()
                 self._helper = remote_helper
@@ -954,13 +1375,32 @@ class SchemaMiner:
                 state="partial",
                 labels=getattr(self._strategy, "labels", []),
                 examples=getattr(self._strategy, "examples", []),
+                class_examples=getattr(self._strategy, "class_examples", {}),
             )
         elif self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
-        entity_counts = {}
-        entity_count_states: dict[str, QueryState] = {}
-        if self.counts and not self._own_view:
+        # A strategy with its own view may state the members of its classes (VoID).
+        entity_counts = dict(getattr(self._strategy, "entity_counts", {})) if self._own_view else {}
+        # A count that the strategy holds for a lower bound (VoID: contradicted by its own
+        # property partitions) keeps the state "partial".
+        entity_count_states: dict[str, QueryState] = (
+            dict(getattr(self._strategy, "entity_count_states", {})) if self._own_view else {}
+        )
+        if self.counts and self._store is not None:
+            from rdfsolve.mining import scan_structure
+
+            phase = self._report.start_phase("class-entity-counts")
+            counted = sorted(classes - self._subsumed_classes)
+            members = getattr(self, "_scan_types", None) or self._store
+            entity_counts, entity_count_states = scan_structure.class_entity_counts(
+                members, counted
+            )
+            self._report.finish_phase(phase, items=len(entity_counts))
+            phase = self._report.start_phase("class-extensions")
+            schema.class_extensions = scan_structure.class_extensions(members, counted)
+            self._report.finish_phase(phase, items=len(schema.class_extensions.members))
+        elif self.counts and not self._own_view:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 
             # Subsumed representatives stand for many terms; their direct instance
@@ -987,12 +1427,22 @@ class SchemaMiner:
         kept = [
             p
             for p in schema.patterns
-            if not (p.property_uri == RDF_TYPE and p.object_class == "Resource")
+            if not (p.property_uri in MEMBERSHIP.get() and p.object_class == "Resource")
         ]
         self._report.report.config["membership_rows_left_out"] = len(schema.patterns) - len(kept)
         schema.patterns = kept
         dataset = getattr(self._helper, "dataset", None)
-        if isinstance(dataset, Graph):
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import collections
+
+            phase = self._report.start_phase("collections")
+            schema.collections = collections(self._store)
+            self._report.report.config["collection_profile_count"] = len(schema.collections)
+            self._report.report.config["invalid_collection_count"] = sum(
+                p.invalid_count for p in schema.collections
+            )
+            self._report.finish_phase(phase, items=len(schema.collections))
+        elif isinstance(dataset, Graph):
             phase = self._report.start_phase("collections")
             try:
                 profiles = schema.discover_collections(
@@ -1029,7 +1479,9 @@ class SchemaMiner:
             discovered_metadata=report.discovered_metadata,
         )
         schema.about.type_context_graph_uris = self.type_context_graph_uris or None
-        schema.about.membership_property = self._membership
+        schema.about.membership_property = self._membership or (
+            self.membership_properties if len(self.membership_properties) > 1 else None
+        )
         schema.about.ontology_graph_uris = self._ontology_graph_uris
         schema.about.class_entity_counts = entity_counts
         schema.about.class_entity_count_states = entity_count_states
@@ -1039,12 +1491,66 @@ class SchemaMiner:
                 {prefix: str(namespace) for prefix, namespace in dataset.namespaces()}
             )
         schema.prefixes = schema.get_prefixes()
+        from rdfsolve.schema_models.iri_quality import findings
+
+        rows = [*schema.patterns, *(schema.structural_patterns or [])]
+        report.config["count_coverage"] = {
+            "patterns": len(rows),
+            "with_triples": sum(getattr(p, "count", None) is not None for p in rows),
+            "with_distinct_subjects": sum(
+                getattr(p, "distinct_subjects", None) is not None for p in rows
+            ),
+            "with_distinct_objects": sum(
+                getattr(p, "distinct_objects", None) is not None for p in rows
+            ),
+            "measurement_gaps": len(report.measurement_gaps),
+            "sampled_queries": len(report.sampled_queries),
+            "sampled_patterns": sum(getattr(p, "sampled", None) is not None for p in rows),
+            "lower_bound_counts": sum(
+                getattr(p, "count_bound", None) == "lower_bound" for p in rows
+            ),
+        }
+        if report.sampled_queries:
+            logger.warning(
+                "%d refused queries answered over a sample: their rows are flagged sampled, with "
+                "lower-bound counts (report: sampled_queries)",
+                len(report.sampled_queries),
+            )
+        if report.measurement_gaps:
+            logger.warning(
+                "%d measures refused for rows that stand (report: measurement_gaps)",
+                len(report.measurement_gaps),
+            )
+        found = findings(schema, report.config.get("dataset_statistics"))
+        graphs = (report.config.get("iri_findings") or {}).get("graphs")
+        if graphs:  # recorded while mining (the published VoID)
+            found["graphs"] = graphs
+        report.config["iri_findings"] = found
+        self._report.flush()
+        if found["terms"]:
+            logger.warning(
+                "%d terms are not RDF IRIs: queried with IRI(), kept in the JSON schema and left "
+                "out of the RDF outputs (report: iri_findings)",
+                len(found["terms"]),
+            )
         return schema
 
     def query_enrichment(
         self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
     ) -> SchemaEnrichment:
-        """Query definitions and observed examples with this miner's settings."""
+        """Query definitions and observed examples with this miner's settings.
+
+        A scan run reads them from its rows (rdfsolve.mining.scan_enrichment).
+        """
+        if self._store is not None:
+            from rdfsolve.mining.scan_enrichment import enrichment
+
+            return enrichment(
+                self._store,
+                schema,
+                examples_per_pattern=self.examples_per_pattern,
+                annotation_iris=annotation_iris,
+            )
         from rdfsolve.mining.enrichment import query_enrichment
 
         return query_enrichment(
@@ -1069,12 +1575,15 @@ class SchemaMiner:
             strategy += "+structural"
         self._report.report.pattern_count = len(patterns)
 
-        if self.counts and not self._own_view:
+        # A strategy that counts its patterns itself (scan) needs no counts phase.
+        if self.counts and not self._own_view and not getattr(self._strategy, "counted", False):
             patterns = self._run_counts_phase(patterns)
 
         raw_patterns = None
         term_patterns = None
-        if self._ontology_term_budget is not None:
+        if self._store is not None:
+            patterns, raw_patterns, term_patterns = self._scan_terms(patterns)
+        elif self._ontology_term_budget is not None:
             raw_patterns = [pattern.model_copy(deep=True) for pattern in patterns]
             patterns, term_patterns = self._run_term_subsumption_phase(
                 patterns, self._ontology_term_budget
@@ -1168,8 +1677,14 @@ class SchemaMiner:
         query_template: str,
         purpose: str = "",
         chunk_size: int | None = None,
+        *,
+        max_rows: int | None = None,
     ) -> list[dict[str, Any]]:
-        """Paginate through a SELECT query and collect all bindings."""
+        """Paginate through a SELECT query and collect all bindings.
+
+        With *max_rows*, raise ClassListingLimitError (with the rows so far) once more rows
+        than that are read.
+        """
         effective = chunk_size if chunk_size is not None else self.chunk_size
         all_bindings: list[dict[str, Any]] = []
         has_rc = self._rc is not None
@@ -1191,6 +1706,10 @@ class SchemaMiner:
             ):
                 page += 1
                 all_bindings.extend(chunk)
+                if max_rows is not None and len(all_bindings) > max_rows:
+                    from rdfsolve.mining.strategy import ClassListingLimitError
+
+                    raise ClassListingLimitError(all_bindings, max_rows)
                 if has_rc:
                     self._report.record_query(purpose, 0.0)
                 logger.info(

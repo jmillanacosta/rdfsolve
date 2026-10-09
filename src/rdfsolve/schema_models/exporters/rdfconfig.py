@@ -36,6 +36,8 @@ def to_rdfconfig(
     Bare blank nodes need a nested model, which these patterns do not
     supply; reject them instead of emitting an empty, unusable branch.
     Definitions and release identity use YAML comments, not new RDF-config keys.
+    The subjects without a type (untyped patterns) are one subject, UntypedSubject, without an
+    ``a`` (rdf:type) line: they have no class.
     """
     if schema.shapes is not None or schema.navigation is not None:
         import logging
@@ -52,7 +54,7 @@ def to_rdfconfig(
     labels: dict[str, str] = {}
     for p in schema.patterns:
         for iri, label in (
-            (p.subject_class, p.subject_label),
+            (p.subject_class, None if p.untyped_subject else p.subject_label),
             (p.property_uri, p.property_label),
             (p.object_class, p.object_label),
         ):
@@ -81,8 +83,51 @@ def to_rdfconfig(
         graph.bind(prefix, namespace)
 
     groups: dict[str, dict[str, list[SchemaPattern]]] = defaultdict(lambda: defaultdict(list))
+    untyped: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pattern in schema.patterns:
-        groups[pattern.subject_class][pattern.property_uri].append(pattern)
+        if pattern.untyped_subject:
+            untyped[pattern.property_uri].append(pattern)
+        else:
+            groups[pattern.subject_class][pattern.property_uri].append(pattern)
+
+    def property_lines(
+        owner: str, by_property: dict[str, list[SchemaPattern]], untyped_owner: bool
+    ) -> list[str]:
+        """Write the properties of one subject, with their value classes and examples."""
+        out = []
+        for property_iri, patterns in sorted(by_property.items()):
+            description = schema.enrichment.description(property_iri)
+            if description:
+                out.append("  # " + json.dumps(description, ensure_ascii=False))
+            out.append(f"  - {json.dumps(f'<{property_iri}>*')}:")
+            values: list[str | None] = []
+            for pattern in patterns:
+                if pattern.object_class not in ("Resource", "Literal"):
+                    values.append(names[pattern.object_class])
+            for example in schema.enrichment.examples:
+                if (
+                    example.untyped_subject != untyped_owner
+                    or (not untyped_owner and example.subject_class != owner)
+                    or example.property_uri != property_iri
+                ):
+                    continue
+                term = example.value
+                if term.kind == "uri":
+                    values.append(f"<{term.value}>")
+                elif term.kind == "literal":
+                    literal = term.to_rdf()
+                    if not term.datatype and not term.language:
+                        literal = Literal(term.value, datatype=XSD.string, normalize=False)
+                    values.append(literal.n3(namespace_manager=graph.namespace_manager))
+            # RDF-config permits an object name without an example.
+            if not values:
+                values.append(None)
+            for index, value in enumerate(dict.fromkeys(values), 1):
+                variable = f"{subject_names[owner]}_{names[property_iri]}_{index}".lower()
+                out.append(f"    - {variable}: {json.dumps(value, ensure_ascii=False)}")
+        return out
+
+    subject_names = dict(names)
 
     lines = ["# Observed patterns; examples are convenience samples."]
     if schema.about.schema_version:
@@ -98,32 +143,23 @@ def to_rdfconfig(
         ]
         subject = " ".join([names[class_iri], *dict.fromkeys(examples)])
         lines.extend([f"- {json.dumps(subject)}:", f"  - a: {json.dumps(f'<{class_iri}>')}"])
-        for property_iri, patterns in sorted(groups[class_iri].items()):
-            description = schema.enrichment.description(property_iri)
-            if description:
-                lines.append("  # " + json.dumps(description, ensure_ascii=False))
-            lines.append(f"  - {json.dumps(f'<{property_iri}>*')}:")
-            values: list[str | None] = []
-            for pattern in patterns:
-                if pattern.object_class not in ("Resource", "Literal"):
-                    values.append(names[pattern.object_class])
-            for example in schema.enrichment.examples:
-                if example.subject_class != class_iri or example.property_uri != property_iri:
-                    continue
-                term = example.value
-                if term.kind == "uri":
-                    values.append(f"<{term.value}>")
-                elif term.kind == "literal":
-                    literal = term.to_rdf()
-                    if not term.datatype and not term.language:
-                        literal = Literal(term.value, datatype=XSD.string, normalize=False)
-                    values.append(literal.n3(namespace_manager=graph.namespace_manager))
-            # RDF-config permits an object name without an example.
-            if not values:
-                values.append(None)
-            for index, value in enumerate(dict.fromkeys(values), 1):
-                variable = f"{names[class_iri]}_{names[property_iri]}_{index}".lower()
-                lines.append(f"    - {variable}: {json.dumps(value, ensure_ascii=False)}")
+        lines.extend(property_lines(class_iri, groups[class_iri], False))
+    if untyped:
+        name = "UntypedSubject"
+        while name in used:
+            name += "_"
+        used.add(name)
+        subject_names[""] = name
+        examples = [
+            f"<{e.subject.value}>"
+            for e in schema.enrichment.examples
+            if e.untyped_subject and e.subject.kind == "uri"
+        ][:1]
+        lines.append(
+            "# Subjects without rdf:type (rdfsolve untyped patterns): not a class, no a: line."
+        )
+        lines.append(f"- {json.dumps(' '.join([name, *examples]))}:")
+        lines.extend(property_lines("", untyped, True))
 
     endpoint_url = endpoint_url or schema.about.endpoint
     endpoint: dict[str, list[object]] = {}

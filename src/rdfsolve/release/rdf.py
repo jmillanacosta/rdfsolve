@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import email.utils
 import hashlib
 
 from rdflib import RDF, XSD, BNode, Graph, Literal, Namespace, URIRef
@@ -9,7 +10,7 @@ from rdflib.namespace import DCTERMS
 
 from rdfsolve.config import mint_from_base
 
-from .model import ReleaseManifest
+from .model import InputDownloadRecord, ReleaseManifest
 
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
 PROV = Namespace("http://www.w3.org/ns/prov#")
@@ -20,6 +21,54 @@ SPDX = Namespace("http://spdx.org/rdf/terms#")
 def _artifact_uri(base: str, artifact_id: str) -> URIRef:
     digest = hashlib.sha256(artifact_id.encode()).hexdigest()[:24]
     return URIRef(mint_from_base(base, "distribution", digest))
+
+
+def _add_input(
+    graph: Graph,
+    base: str,
+    snapshot: URIRef,
+    item: InputDownloadRecord,
+    archive: str | None = None,
+) -> None:
+    """Describe one pinned input file as a DCAT distribution the snapshot was derived from.
+
+    *archive* is the URL of the run's input archive, when it is published (an archive kept on
+    a file system is named in release.json only): the archived copy is another access URL.
+    """
+    if not item.sha256:
+        return
+    distribution = _artifact_uri(base, f"input:{item.url}:{item.sha256}")
+    graph.add((distribution, RDF.type, DCAT.Distribution))
+    graph.add((snapshot, PROV.wasDerivedFrom, distribution))
+    graph.add((distribution, DCAT.downloadURL, URIRef(item.url)))
+    if item.final_url:
+        graph.add((distribution, DCAT.accessURL, URIRef(item.final_url)))
+    if archive and item.archive_path:
+        graph.add((distribution, DCAT.accessURL, URIRef(f"{archive}/{item.archive_path}")))
+    if item.byte_size is not None:
+        graph.add(
+            (distribution, DCAT.byteSize, Literal(item.byte_size, datatype=XSD.nonNegativeInteger))
+        )
+    if item.release_version:
+        graph.add((distribution, DCAT.version, Literal(item.release_version)))
+    if item.last_modified:
+        try:
+            modified = email.utils.parsedate_to_datetime(item.last_modified)
+        except (TypeError, ValueError):
+            modified = None
+        if modified is not None:
+            graph.add(
+                (
+                    distribution,
+                    DCTERMS.modified,
+                    Literal(modified.isoformat(), datatype=XSD.dateTime),
+                )
+            )
+    checksum = BNode()
+    graph.add((distribution, SPDX.checksum, checksum))
+    graph.add((checksum, RDF.type, SPDX.Checksum))
+    graph.add((checksum, SPDX.algorithm, SPDX.checksumAlgorithm_sha256))
+    graph.add((checksum, SPDX.checksumValue, Literal(item.sha256, datatype=XSD.hexBinary)))
 
 
 def release_to_rdf(
@@ -65,6 +114,8 @@ def release_to_rdf(
         )
 
     artifact_by_id = manifest.artifact_by_id()
+    location = manifest.input_archive.location if manifest.input_archive else ""
+    archive = location.rstrip("/") if location.startswith(("http://", "https://")) else None
     for dataset in manifest.datasets:
         snapshot = URIRef(
             dataset.snapshot_id or mint_from_base(base, "dataset", dataset.dataset_id)
@@ -85,6 +136,8 @@ def release_to_rdf(
             graph.add((snapshot, DCAT.version, Literal(dataset.source_version)))
         if dataset.source_version_iri:
             graph.add((snapshot, PROV.wasDerivedFrom, URIRef(dataset.source_version_iri)))
+        for item in dataset.input_downloads:
+            _add_input(graph, base, snapshot, item, archive)
 
         for extraction in dataset.extractions:
             if extraction.snapshot_id:

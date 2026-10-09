@@ -1,5 +1,6 @@
 import pytest
 import yaml
+
 from rdfsolve.dataset_identity import read_overrides, resolve_identity
 
 EP = "https://example.org/sparql"
@@ -31,7 +32,7 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
         overrides,
     )
     assert result.datasets == {"a": ["a", "b", "c"], "d": ["d"]}
-    assert all((item.decided_by == "override" for item in result.relations))
+    assert all(item.decided_by == "override" for item in result.relations)
     assert result.entries[-1].source_role == "service", "Service provenance"
     assert result.candidates == []
     assert result.review_complete is True
@@ -42,14 +43,61 @@ def test_overrides_decide_pairs_and_group_aliases(tmp_path):
     )
     with pytest.raises(ValueError, match="more than once"):
         resolve_identity([entry("a"), entry("b")], [overrides[0], overrides[0]])
-    catalogs = resolve_identity([
-        entry("first.record", "https://one.example/sparql", catalogs=["custom"], catalog_local_name="shared"),
-        entry("second.record", "https://two.example/sparql", catalogs=["another"], catalog_local_name="shared"),
-    ])
+    catalogs = resolve_identity(
+        [
+            entry(
+                "first.record",
+                "https://one.example/sparql",
+                catalogs=["custom"],
+                catalog_local_name="shared",
+            ),
+            entry(
+                "second.record",
+                "https://two.example/sparql",
+                catalogs=["another"],
+                catalog_local_name="shared",
+            ),
+        ]
+    )
     assert len(catalogs.candidates) == 1, "Explicit catalogue identities work for any provider"
     assert catalogs.entries[0].catalogs == ["custom"]
-    unannotated = resolve_identity([
-        entry("rdfportal.shared", "https://one.example/sparql"),
-        entry("shared", "https://two.example/sparql"),
-    ])
-    assert not unannotated.candidates, "Provider-looking names must not create implicit identity evidence"
+    unannotated = resolve_identity(
+        [
+            entry("rdfportal.shared", "https://one.example/sparql"),
+            entry("shared", "https://two.example/sparql"),
+        ]
+    )
+    assert not unannotated.candidates, (
+        "Provider-looking names must not create implicit identity evidence"
+    )
+
+
+def _write(tmp_path, items):
+    path = tmp_path / "overrides.yaml"
+    path.write_text(yaml.safe_dump(items))
+    return path
+
+
+def test_version_of_override_is_stored_older_first(tmp_path):
+    path = _write(
+        tmp_path,
+        [
+            {"left": "new", "right": "old", "relation": "version_of", "newer": "new"},
+            {"left": "early", "right": "late", "relation": "version_of", "newer": "late"},
+        ],
+    )
+    pairs = [(item.left, item.right) for item in read_overrides(path)]
+    assert pairs == [("old", "new"), ("early", "late")]
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        {"left": "a", "right": "b", "relation": "version_of"},
+        {"left": "a", "right": "b", "relation": "version_of", "newer": "c"},
+        {"left": "a", "right": "b", "relation": "same_upstream", "newer": "a"},
+    ],
+)
+def test_newer_is_required_for_version_of_and_refused_elsewhere(tmp_path, item):
+    with pytest.raises(ValueError, match="newer"):
+        read_overrides(_write(tmp_path, [item]))

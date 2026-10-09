@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing_extensions import Self
 
-__all__ = ["DatasetKind", "PublicationRef", "SourceModel", "SourcesRegistry", "SparqlExamples"]
+__all__ = [
+    "DatasetKind",
+    "GraphSettings",
+    "PublicationRef",
+    "SourceModel",
+    "SourcesRegistry",
+    "SparqlExamples",
+]
 
-DatasetKind = Literal["instance", "ontology", "unknown"]
+# "catalog": the entry's data are descriptions of other datasets (VoID or DCAT). A catalog is
+# not mined for
+# patterns; its VoID is read per described dataset and given to the matching entries as their
+# published VoID (rdfsolve.mining.void_catalog).
+DatasetKind = Literal["instance", "ontology", "catalog", "unknown"]
 
 
 class PublicationRef(BaseModel):
@@ -33,6 +43,23 @@ class PublicationRef(BaseModel):
     doi: str | None = None
     pmc: str | None = None
     title: str | None = None
+
+
+class GraphSettings(BaseModel):
+    """Settings of one data graph of a source that differ from the source's own.
+
+    A source whose graphs hold different kinds of data (one graph keeping its records as
+    classes) states the settings of such a graph here. The graph is then mined on
+    its own with these settings for its per-graph schema; the other graphs keep the source's
+    settings. ``name`` sets the name of the graph's per-graph schema when the derived name does
+    not fit (rdfsolve.graph_parts).
+    """
+
+    model_config = {"extra": "forbid"}
+
+    name: str = ""
+    classes_as_data: bool | None = None
+    membership_properties: list[str] | None = None
 
 
 class SparqlExamples(BaseModel):
@@ -79,13 +106,17 @@ class SourceModel(BaseModel):
     source_role:
         Dataset or access service.
     dataset_kind:
-        Curated instance or ontology resource classification; unknown until reviewed.
+        Curated instance or ontology resource classification; unknown until reviewed;
+        ``catalog`` for an entry whose data are VoID or DCAT descriptions of other datasets
+        (not mined; its VoID is given to the entries it describes).
     skip_mining:
         Exclude this entry from pipeline mining.
     endpoint:
         SPARQL endpoint URL.
     void_iri:
-        Optional VoID dataset IRI.
+        The IRI by which a published VoID (of an endpoint or of a VoID catalog) names this
+        dataset, when it is not one of the entry's graphs: it matches the entry to its
+        description in a catalog (rdfsolve.mining.void_catalog).
     graph_uris:
         Named graphs that hold data edges.
     type_context_graph_uris:
@@ -94,6 +125,13 @@ class SourceModel(BaseModel):
         Named graphs for ontology interpretation and extraction.
     graph_sources:
         Download fields keyed by the named graph that receives their triples.
+    sampled_graphs:
+        Graphs of graph_sources whose inputs are a sample of the graph that the endpoint
+        holds, each with how it was sampled. Counts of these graphs in the local index
+        are counts of the sample, not of the dataset.
+    graph_settings:
+        Settings of single data graphs that differ from the entry's (classes_as_data,
+        membership_properties) and the name of a graph's per-graph schema, keyed by graph.
     chunk_size:
         Mining chunk size (None = default).
     class_batch_size:
@@ -116,12 +154,28 @@ class SourceModel(BaseModel):
         The source keeps its records as classes (each entity an rdfs:Class under its
         kind): with ontology-as-data, their rows are grouped
         under their kinds in the typed schema.
+    membership_properties:
+        The properties that place a record in its class, when the source does not use
+        rdf:type alone (for example rdf:type and a category property).
     notes:
         Free-text notes about the source.
     local_provider:
         Optional Bioregistry provider code for prefix resolution.
     download_ttl:
         Optional list of TTL download URLs for local loading.
+    archive_members_left_out:
+        File name patterns (shell globs, no paths) of downloaded or extracted files that are not
+        the dataset's data, such as query examples or a VoID description in a provider's
+        archive. They are kept in the download folder's left_out/ and not indexed.
+    checksum_files:
+        Hash kinds (md5, sha1, sha256) for which the publisher puts a checksum file beside each
+        download, named after it with the kind as suffix (NAME.sha1), in the format of
+        sha1sum. The hash is recorded with the download and checked against the file.
+    checksums:
+        Hashes that the publisher gives for a download elsewhere than in a checksum file
+        beside it, per download URL and hash kind (md5, sha1, sha256), such as the MD5 that
+        names a file in a DVC remote. They are recorded with the download and checked against
+        the file, as the hashes of checksum files.
     bioregistry_prefix:
         Canonical Bioregistry prefix.
     bioregistry_name:
@@ -152,6 +206,12 @@ class SourceModel(BaseModel):
         Additional provider entries from Bioregistry.
     kg_registry_id:
         Resource identifier in the KG-Registry.
+    kg_registry_category, kg_registry_domains, kg_registry_products:
+        KG-Registry's category, domains and own products of the resource (generated, in the
+        metadata sidecar; rdfsolve.kg_registry).
+    science_area:
+        ``life sciences`` or ``other``, from the KG-Registry domains (rdfsolve.kg_registry);
+        analyses of life-science linked data keep the life-science sources.
     in_kamdar:
         Whether the resource is in the Kamdar et al. LSLOD analysis.
     terminology_nomenclature:
@@ -181,6 +241,8 @@ class SourceModel(BaseModel):
     type_context_graph_uris: list[str] = Field(default_factory=list)
     ontology_graph_uris: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    sampled_graphs: dict[str, str] = Field(default_factory=dict)
+    graph_settings: dict[str, GraphSettings] = Field(default_factory=dict)
     skip_remote: bool = False
     chunk_size: int | None = None
     class_batch_size: int | None = None
@@ -190,10 +252,14 @@ class SourceModel(BaseModel):
     counts: bool = False
     unsafe_paging: bool = False
     classes_as_data: bool = False
+    membership_properties: list[str] = Field(default_factory=list)
     uri_formats: list[str] = Field(default_factory=list)
     notes: str = ""
     local_provider: str = ""
     download_ttl: list[str] = Field(default_factory=list)
+    archive_members_left_out: list[str] = Field(default_factory=list)
+    checksum_files: list[str] = Field(default_factory=list)
+    checksums: dict[str, dict[str, str]] = Field(default_factory=dict)
 
     # Endpoint metadata (populated by probe/discovery scripts)
     sparql_engine: str = ""
@@ -229,6 +295,10 @@ class SourceModel(BaseModel):
     bioregistry_package_version: str = ""
 
     kg_registry_id: str = ""
+    kg_registry_category: str = ""
+    kg_registry_domains: list[str] = Field(default_factory=list)
+    kg_registry_products: list[dict[str, str]] = Field(default_factory=list)
+    science_area: Literal["life sciences", "other", ""] = ""
     in_kamdar: bool = False
     terminology_nomenclature: list[str] = Field(default_factory=list)
 
@@ -268,10 +338,67 @@ class SourceModel(BaseModel):
                     raise ValueError(f"Empty input locations for {graph}")
         return self
 
+    @model_validator(mode="after")
+    def validate_checksum_files(self) -> Self:
+        """Accept only the hash kinds whose checksum files are read."""
+        unknown = sorted(set(self.checksum_files) - {"md5", "sha1", "sha256"})
+        if unknown:
+            raise ValueError(f"checksum_files takes md5, sha1 or sha256, not {unknown}")
+        import re
+
+        lengths = {"md5": 32, "sha1": 40, "sha256": 64}
+        for url, hashes in self.checksums.items():
+            for kind, value in hashes.items():
+                if kind not in lengths:
+                    raise ValueError(f"checksums takes md5, sha1 or sha256, not {kind}")
+                if not re.fullmatch(rf"[0-9a-f]{{{lengths[kind]}}}", value):
+                    raise ValueError(f"checksums: {kind} of {url} is not a hex digest")
+        return self
+
+    @model_validator(mode="after")
+    def validate_archive_members_left_out(self) -> Self:
+        """Require file name patterns, not paths, for the files left out of the index."""
+        from rdfsolve.qlever.utils import left_out_patterns
+
+        left_out_patterns({"archive_members_left_out": self.archive_members_left_out})
+        return self
+
+    @model_validator(mode="after")
+    def validate_sampled_graphs(self) -> Self:
+        """Require that each sampled graph is a mapped graph and says how it was sampled."""
+        unmapped = sorted(set(self.sampled_graphs) - set(self.graph_sources))
+        if unmapped:
+            raise ValueError(f"sampled_graphs names graphs without graph_sources: {unmapped}")
+        for graph, how in self.sampled_graphs.items():
+            if not how.strip():
+                raise ValueError(f"sampled_graphs does not say how {graph} was sampled")
+        return self
+
+    @model_validator(mode="after")
+    def validate_graph_settings(self) -> Self:
+        """Require that each graph with settings is a data graph and that it sets something."""
+        unknown = sorted(set(self.graph_settings) - set(self.graph_uris))
+        if unknown:
+            raise ValueError(f"graph_settings names graphs that are not data graphs: {unknown}")
+        for graph, settings in self.graph_settings.items():
+            if (
+                not settings.name
+                and settings.classes_as_data is None
+                and settings.membership_properties is None
+            ):
+                raise ValueError(f"graph_settings states nothing for {graph}")
+            if settings.name != settings.name.strip() or "/" in settings.name:
+                raise ValueError(f"graph_settings gives {graph} an unusable name")
+        return self
+
     @property
     def mining_enabled(self) -> bool:
-        """Return whether this entry permits pipeline mining."""
-        return self.source_role == "dataset" and not self.skip_mining
+        """Return whether this entry permits pipeline mining; a VoID catalog is read, not mined."""
+        return (
+            self.source_role == "dataset"
+            and not self.skip_mining
+            and self.dataset_kind != "catalog"
+        )
 
     @field_validator(
         "aliases",

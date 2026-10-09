@@ -30,6 +30,9 @@ class ReleaseValidation(BaseModel):
 
 
 def _validate_role_json(path: Path, role: str | None) -> None:
+    if role is not None:
+        # The outputs of a per-graph part are validated as the outputs they are.
+        role = role.removeprefix("graph_part_")
     if role == "scientific_validation_results":
         from rdfsolve.release.scientific_execution import ScientificValidationResults
 

@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.qlever.index_check import TruncatedIndexError
 from rdfsolve.qlever.inputs import unusable_inputs
 
 from .analysis import AnalysisStage, SSSOMSeedingStage
@@ -116,12 +117,22 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
                 log.info("Cached group %s: %s", name, workdir)
     missing: list[str] = []
     unusable: list[str] = []
+    rebuilt: list[str] = []
     for source in sources:
         if source.name in covered:
             continue
         workdir = config.data_dir / "qlever_workdirs" / source.name
         try:
             cached = stage._has_qlever_index(workdir, source.name)
+        except TruncatedIndexError as error:
+            # The local stage sets a truncated index aside and builds it again from its inputs
+            # (LocalMiningStage._has_usable_index); a run that does not index, or the grouped
+            # stage, cannot.
+            if config.no_index or grouped:
+                rejected.append(f"{source.name}: {error}")
+            else:
+                rebuilt.append(f"{source.name}: {error}")
+            cached = False
         except ValueError as error:
             rejected.append(f"{source.name}: {error}")
             cached = False
@@ -138,6 +149,8 @@ def preflight(config: PipelineConfig, *, grouped: bool, remote: bool) -> None:
         log.error("Unusable index: %s", entry)
     for entry in unusable:
         log.error("Unusable input: %s", entry)
+    for entry in rebuilt:
+        log.warning("Index to set aside and build again: %s", entry)
     if missing:
         log.warning("No cached index for %d sources: %s", len(missing), missing)
     problems = []
@@ -288,6 +301,20 @@ Examples:
         "with cheap counts, and mine only the endpoints that serve other data",
     )
     parser.add_argument(
+        "--void-catalogs",
+        type=Path,
+        default=None,
+        help="Folder written by scripts/void_catalogs.py: a remote source whose endpoint "
+        "publishes no VoID of it takes the VoID a registry catalog publishes of it (VoID-first)",
+    )
+    parser.add_argument(
+        "--pinned-inputs",
+        type=Path,
+        default=None,
+        help="Run directory (or one inputs manifest) of an earlier run: index a local source "
+        "only when its files have the SHA-256 pinned there (rebuild that run exactly)",
+    )
+    parser.add_argument(
         "--get-graphs-from-store",
         action="store_true",
         help="Mine explicitly configured small Graph Store downloads locally; fail on retrieval errors",
@@ -367,10 +394,32 @@ Examples:
         help="Longest path tested on the data, in steps; 0 disables",
     )
     parser.add_argument(
+        "--local-mining",
+        choices=["scan", "sparql"],
+        default="scan",
+        help="Local indexes: count the rows the index streams (scan) or send grouped SPARQL "
+        "queries to it (sparql); sources scoped to named graphs are mined with SPARQL",
+    )
+    parser.add_argument(
         "--navigation-budget",
         type=float,
         default=1800.0,
         help="Seconds for testing paths on the data, per dataset (default: 1800)",
+    )
+    parser.add_argument(
+        "--pagination",
+        choices=("offset", "cursor"),
+        default="offset",
+        help="How listings are paged: LIMIT/OFFSET, or by key (cursor: ORDER BY the projected "
+        "keys and FILTER past the last row read) (default: offset)",
+    )
+    parser.add_argument(
+        "--void-first-navigation-budget",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="Seconds for testing paths of a source read from its published VoID "
+        "(default: the --navigation-budget)",
     )
     parser.add_argument(
         "--examples-per-pattern",
@@ -412,11 +461,28 @@ Examples:
         default=600,
         help="Seconds to wait for an index to load",
     )
+    parser.add_argument(
+        "--qlever-restarts",
+        type=int,
+        default=1,
+        help="Restarts of a local QLever server that dies while its source is mined "
+        "(each resumes from the run's checkpoint)",
+    )
     parser.add_argument("--data-dir", type=Path, help="Data-directory")
     parser.add_argument(
         "--no-download",
         action="store_true",
         help="Use existing RDF and indices; do not fetch source data",
+    )
+    parser.add_argument(
+        "--no-void-first",
+        action="store_true",
+        help="Mine remote sources even when their endpoint publishes a full VoID description",
+    )
+    parser.add_argument(
+        "--index-only",
+        action="store_true",
+        help="Download and index local sources, and do not mine them",
     )
     parser.add_argument(
         "--parallelism", type=int, default=4, help="Maximum concurrent remote hosts"
@@ -465,6 +531,9 @@ Examples:
         parser.error("--qlever-startup-timeout must be positive")
     config.base_port = args.base_port
     config.qlever_startup_timeout = args.qlever_startup_timeout
+    if args.qlever_restarts < 0:
+        parser.error("--qlever-restarts must not be negative")
+    config.qlever_restarts = args.qlever_restarts
     if min(args.parallelism, args.chunk_size, args.class_batch_size, args.max_response_mb) < 1:
         parser.error("Request and concurrency limits must be positive")
     if args.timeout is not None and args.timeout <= 0:
@@ -490,6 +559,8 @@ Examples:
     config.no_download = args.no_download
     config.update_downloads = args.update_downloads
     config.no_index = args.no_index
+    config.index_only = args.index_only
+    config.void_first = not args.no_void_first
     config.output_suffix = args.output_suffix
     config.output_formats = args.output_formats
     config.endpoint_status_file = args.endpoint_status_file
@@ -512,6 +583,8 @@ Examples:
     config.ontology_hierarchy_files = args.ontology_hierarchy
     config.resume_from = args.resume_from
     config.local_records = args.local_records
+    config.void_catalogs = args.void_catalogs
+    config.pinned_inputs = args.pinned_inputs
     config.discover_ontology_graphs = args.discover_ontology_graphs
     config.ontology_discovery_max_graphs = args.ontology_discovery_max_graphs
     if config.ontology_discovery_max_graphs < 1:
@@ -528,8 +601,13 @@ Examples:
         parser.error("--trim-descriptions must be nonnegative")
     config.navigation_hops = args.navigation_hops
     config.navigation_budget = args.navigation_budget
+    config.local_mining = args.local_mining
     if config.navigation_budget < 0:
         parser.error("--navigation-budget must be nonnegative")
+    config.void_first_navigation_budget = args.void_first_navigation_budget
+    config.pagination = "cursor" if args.pagination == "cursor" else "offset"
+    if config.void_first_navigation_budget is not None and config.void_first_navigation_budget < 0:
+        parser.error("--void-first-navigation-budget must be nonnegative")
 
     config.load_sources(args.sources, skip_providers=args.skip_providers)
 

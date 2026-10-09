@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from rdfsolve.models.source_model import SourceModel
 from rdfsolve.sparql_helper import (
@@ -42,15 +42,15 @@ DEFAULT_DELAYS = {
 # Timeout for health checks (shorter than mining timeout)
 HEALTH_CHECK_TIMEOUT = 1.0
 
-# Simple ASK query for health check
-HEALTH_CHECK_QUERY = "ASK WHERE { ?s ?p ?o }"
+# A one-row SELECT: every engine answers it (QLever refuses ASK), also with no triples
+HEALTH_CHECK_QUERY = "SELECT * WHERE { ?s ?p ?o } LIMIT 1"
 
 
 def check_endpoint_health(
     endpoint_url: str,
     timeout: float = HEALTH_CHECK_TIMEOUT,
 ) -> EndpointHealthCheck:
-    """Check SPARQL endpoint health with simple ASK query.
+    """Check SPARQL endpoint health with a one-row SELECT.
 
     Args:
         endpoint_url: SPARQL endpoint URL.
@@ -65,12 +65,11 @@ def check_endpoint_health(
         max_retries=1,  # Single attempt for health check
     )
 
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     start_time = time.time()
 
     try:
-        # Try a simple ASK query
-        helper.ask(HEALTH_CHECK_QUERY)
+        helper.select(HEALTH_CHECK_QUERY, purpose="health")
         response_time = time.time() - start_time
 
         return EndpointHealthCheck(

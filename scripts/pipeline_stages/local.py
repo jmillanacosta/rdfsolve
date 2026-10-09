@@ -4,24 +4,40 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
+import sys
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any
 
+from polars.exceptions import PanicException
+
+from rdfsolve.graph_parts import has_graph_parts
 from rdfsolve.qlever import QleverConfig, build_qleverfile
-from rdfsolve.qlever.downloads import MARKER, needs_download, server_state, write_record
+from rdfsolve.qlever.converters import PYTHON_VARIABLE
+from rdfsolve.qlever.downloads import (
+    MARKER,
+    entry_download_urls,
+    find_metalinks,
+    needs_download,
+    server_state,
+    write_record,
+)
 from rdfsolve.qlever.inputs import (
-    expand_inputs,
+    convert_trig,
+    empty_inputs,
     graph_input_directory,
     index_command,
+    index_inputs,
     mapped_input_files,
-    rdf_input_files,
 )
+from rdfsolve.qlever.lifecycle import exit_status
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
 
-from .base import PartialMiningError, Stage
-from .config import Source
+from .base import PartialMiningError, Stage, write_rdf
+from .config import PipelineConfig, Source
 
 log = logging.getLogger(__name__)
 
@@ -42,17 +58,61 @@ def local_graph_scope(
     files that can hold graphs (N-Quads, archives), for files mapped to graphs, and when no
     file is known; the miner then reports a graph that the index does not hold.
     """
-    if not graph_uris:
-        return None
-    if download_fields and not graph_sources and set(download_fields) <= FILES_WITHOUT_GRAPHS:
+    if not graph_uris or files_without_graphs(download_fields, graph_sources):
         return None
     return graph_uris
+
+
+def files_without_graphs(download_fields: dict, graph_sources: dict) -> bool:
+    """Return whether the local index of a source is built only from files without graphs.
+
+    Such an index holds no named graph: no graph that the registry names for the endpoint
+    (data, type context or ontology graphs) is in it.
+    """
+    return bool(
+        download_fields and not graph_sources and set(download_fields) <= FILES_WITHOUT_GRAPHS
+    )
+
+
+# External programs that a Qleverfile's GET_DATA_CMD may call, besides the shell's own: a
+# Qleverfile written before the RDF/XML converter was pyoxigraph still calls rapper.
+_EXTERNAL_TOOLS = ("rapper", "java", "wget", "xz", "gunzip", "unzip", "tar")
+
+
+def _check_tools(get_data_cmd: str, qleverfile: Path) -> None:
+    """Refuse a download command that calls a program this job does not have, before it runs.
+
+    Without the check the command fails half-way with exit 127 (index-uniprot 115047: rapper).
+    """
+    import re
+    import shutil
+
+    missing = [
+        tool
+        for tool in _EXTERNAL_TOOLS
+        if re.search(rf"(^|[\s;&|(]){tool}\s", get_data_cmd) and shutil.which(tool) is None
+    ]
+    if missing:
+        hint = (
+            "; rapper is called by a Qleverfile written before the RDF/XML converter was "
+            "pyoxigraph: delete the Qleverfile so that it is written again"
+            if "rapper" in missing
+            else ""
+        )
+        raise RuntimeError(
+            f"{qleverfile} calls {', '.join(missing)}, not found on this job's PATH{hint}"
+        )
 
 
 class LocalMiningStage(Stage):
     """Mine schemas from local RDF dumps using QLever."""
 
     name = "local_mining"
+
+    def __init__(self, config: PipelineConfig):
+        super().__init__(config)
+        # The SHA-256 and labels of each QLever image, read once per run.
+        self._images: dict[str, tuple[str | None, dict[str, str]]] = {}
 
     def _execute(self) -> dict[str, Any]:
         sources = self.config.get_local_sources()
@@ -61,6 +121,7 @@ class LocalMiningStage(Stage):
         results = {"indexed": [], "mined": [], "partial": [], "failed": [], "skipped": []}
 
         self._ensure_qlever_image()
+        self._check_converters()
 
         qlever_workdir = self.config.data_dir / "qlever_workdirs"
         qlever_workdir.mkdir(parents=True, exist_ok=True)
@@ -82,8 +143,9 @@ class LocalMiningStage(Stage):
                 continue
 
             try:
+                self._set_aside_when_differs(workdir, source)
                 self._set_aside_when_updated(workdir, source)
-                has_index = self._has_qlever_index(workdir, source.name)
+                has_index = self._has_usable_index(workdir, source)
                 if not has_index and source.download_error and not self.config.no_download:
                     self._record_skip(source, source.download_error)
                     results["skipped"].append(source.name)
@@ -113,28 +175,135 @@ class LocalMiningStage(Stage):
                         )
                         continue
 
+                self._carry_inputs(workdir, source)
+                self._carry_index_recipe(workdir, source)
+
+                if self.config.index_only:
+                    log.info("  Index only: %s is not mined", source.name)
+                    continue
+
                 log.info(f"  Starting QLever on port {port}...")
                 server_pid = self._qlever_start(workdir, source.name, port)
 
                 if server_pid:
-                    try:
-                        log.info("  Mining schema...")
-                        self._mine_local(source, port)
-                        results["mined"].append(source.name)
-                    finally:
-                        self._qlever_stop(server_pid)
+                    log.info("  Mining schema...")
+                    self._mine_with_restarts(source, workdir, port, server_pid)
+                    results["mined"].append(source.name)
                 else:
                     log.warning(f"  -> Server failed to start, skipping {source.name}")
                     results["failed"].append(
                         {"name": source.name, "error": "Server failed to start"}
                     )
 
-            except Exception as e:
+            except (Exception, PanicException) as e:
+                # A Rust panic of Polars (pyo3's PanicException is a BaseException) ends this
+                # source, not the job (rdfportal.chembl, job 115861: the next source never ran).
                 state = "partial" if isinstance(e, PartialMiningError) else "failed"
-                log.warning("  -> %s: %s", state.upper(), e)
+                # The traceback is logged with a failure: a bare message ("KeyError: ''",
+                # rdfportal.oma, job 115902) does not say where it came from.
+                log.warning("  -> %s: %s", state.upper(), e, exc_info=state == "failed")
                 results[state].append({"name": source.name, "error": str(e)})
 
         return results
+
+    def _check_converters(self) -> None:
+        """Name the RDF/XML converter of this run and stop before any source when it fails.
+
+        RDF/XML (.rdf, .owl, .xml) is converted to N-Triples before indexing; the converter is
+        pyoxigraph, a dependency of rdfsolve, run by this interpreter (rdfsolve.qlever.rdfxml).
+        """
+        from rdfsolve.qlever.converters import preflight
+
+        if self.config.no_download or self.config.no_index:
+            return
+        log.info("RDF/XML converter: %s", preflight())
+
+    def _mine_with_restarts(
+        self, source: Source, workdir: Path, port: int, server_pid: int
+    ) -> None:
+        """Mine *source*; when its server dies, start it again and resume from this run.
+
+        A server that stops answering ends every later query of the source (Bgee: the server
+        exited without a message 13 h into the census, and the source failed). When the mining
+        fails and the server process has exited, its exit status is logged, the server is
+        started again on the same port, and the source is mined again with the checkpoint that
+        this run wrote: the finished class batches and census counts are reused. At most
+        --qlever-restarts restarts are made for a source; an error while the server still runs
+        is not retried.
+        """
+        restarts = self.config.qlever_restarts
+        resume: Path | None = None
+        try:
+            while True:
+                try:
+                    self._mine_local(source, port, resume_checkpoint=resume)
+                    return
+                except Exception as error:
+                    process = self._servers.get(server_pid)
+                    status = exit_status(process) if process is not None else None
+                    if status is None:
+                        raise
+                    log.warning(
+                        "  QLever server of %s %s; see its log in %s", source.name, status, workdir
+                    )
+                    if restarts <= 0:
+                        if isinstance(error, PartialMiningError):
+                            raise
+                        raise RuntimeError(f"{error} (QLever server {status})") from error
+                    restarts -= 1
+                    suffix = self.config.output_suffix
+                    own = (
+                        self.config.output_dir
+                        / source.name
+                        / f"{source.name}{suffix}_report.checkpoint.jsonl"
+                    )
+                    # Without a checkpoint of this run, the --resume-from checkpoint is used.
+                    resume = own if own.is_file() else resume
+                    self._qlever_stop(server_pid)
+                    log.info("  Starting QLever again on port %s; resuming from %s", port, resume)
+                    server_pid = self._qlever_start(workdir, source.name, port, port_wait=300)
+        finally:
+            self._qlever_stop(server_pid)
+
+    def _set_aside_when_differs(self, workdir: Path, source: Source) -> None:
+        """Set aside a work folder whose files are not the downloads of the registry entry.
+
+        An index built from other downloads was reused, and files that the entry no longer
+        lists were indexed with the others (rdfsolve.qlever.downloads.downloads_differ reads
+        what the pin of the index and the download record hold). Such a folder is renamed
+        (kept) and an empty one made, so that the source is downloaded and indexed again; a run
+        that neither downloads nor indexes refuses the source instead of mining such an index.
+        """
+        from rdfsolve.qlever.downloads import downloads_differ
+
+        if not (source.download_urls or source.graph_sources) or not any(workdir.iterdir()):
+            return
+        try:
+            if source.graph_sources:
+                inputs = [p for p, _ in mapped_input_files(workdir, list(source.graph_sources))]
+            else:
+                inputs = index_inputs(workdir)
+        except ValueError:
+            inputs = []
+        reason = downloads_differ(
+            workdir, entry_download_urls(source.qlever_entry()), source.qlever_entry(), inputs
+        )
+        if reason is None:
+            return
+        if self.config.no_download or self.config.no_index:
+            raise ValueError(
+                f"{reason}; this run does not download or index, so {workdir} is not used"
+            )
+        self._set_aside(workdir, source, reason, "set-aside")
+
+    def _set_aside(self, workdir: Path, source: Source, reason: str, label: str) -> None:
+        """Rename the work folder of a source (kept, with the reason) and make an empty one."""
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        kept = workdir.with_name(f"{workdir.name}.{label}-{stamp}")
+        workdir.rename(kept)
+        (kept / "SET-ASIDE.txt").write_text(f"{reason}\n", encoding="utf-8")
+        workdir.mkdir()
+        log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
 
     def _set_aside_when_updated(self, workdir: Path, source: Source) -> None:
         """With --update-downloads, keep the folder of a source only when it has no update.
@@ -143,16 +312,17 @@ class LocalMiningStage(Stage):
         registry entry than were downloaded, is renamed (kept), and an empty folder is made, so
         that the source is downloaded and indexed again.
         """
-        from rdfsolve.qlever.downloads import read_record, updated_urls
+        from rdfsolve.qlever.downloads import read_record, recorded_urls, updated_urls
 
-        urls = list(source.download_urls)
+        urls = entry_download_urls(source.qlever_entry())
         if not self.config.update_downloads or self.config.no_download or not urls:
             return
         if not any(workdir.iterdir()):
             return
         record = read_record(workdir)
         built = max((p.stat().st_mtime for p in workdir.glob("*.meta-data.json")), default=0.0)
-        if record is not None and list(record.get("urls", [])) != urls:
+        listed = recorded_urls(record)
+        if listed is not None and set(listed) != set(urls):
             reason = "the registry entry has other URLs than were downloaded"
         else:
             changed = updated_urls(urls, record, built_at=built)
@@ -160,11 +330,154 @@ class LocalMiningStage(Stage):
                 log.info("  No update on the server for %s", source.name)
                 return
             reason = f"{len(changed)} of {len(urls)} files changed on the server"
+        self._set_aside(workdir, source, reason, "before-update")
+
+    def _pin_inputs(
+        self, workdir: Path, source: Source, index_files: list[Path], *, stage: str
+    ) -> dict[str, Any]:
+        """Pin the downloads and index inputs of a source (inputs.json); with --pinned-inputs,
+        refuse files whose SHA-256 is not the pinned one.
+        """
+        from rdfsolve.qlever.downloads import download_paths, record_inputs
+
+        downloads = download_paths(workdir, source.qlever_entry())
+        manifest = record_inputs(workdir, downloads, index_files, source=source.name, stage=stage)
+        self._check_pins(source, manifest)
+        return manifest
+
+    def _check_pins(self, source: Source, manifest: dict[str, Any] | None) -> None:
+        """With --pinned-inputs, refuse a source whose inputs are not the pinned ones."""
+        from rdfsolve.qlever.downloads import read_pins, unpinned_inputs
+
+        pins = self.config.pinned_inputs
+        if pins is None:
+            return
+        pinned = read_pins(pins, source.name)
+        if manifest is None:
+            problems = ["its input files are not there to check"]
+        elif pinned is None:
+            problems = ["no pinned inputs for this source"]
+        else:
+            problems = unpinned_inputs(manifest, pinned)
+        if problems:
+            shown = "; ".join(problems[:10]) + ("; ..." if len(problems) > 10 else "")
+            raise ValueError(f"The inputs of {source.name} are not those pinned in {pins}: {shown}")
+        if manifest is not None:
+            count = len(manifest["files"])
+            log.info("  The %d input files of %s are those pinned", count, source.name)
+
+    def _carry_inputs(self, workdir: Path, source: Source) -> None:
+        """Copy the pin of a source's inputs into the run, beside its schema.
+
+        An index built before inputs were pinned is pinned from the files that are there
+        (recorded after_index); without them, nothing is pinned.
+        """
+        from rdfsolve.qlever.downloads import INPUTS, read_inputs
+        from rdfsolve.qlever.inputs import index_inputs, mapped_input_files
+
+        manifest = read_inputs(workdir)
+        if manifest is None:
+            try:
+                if source.graph_sources:
+                    files = [p for p, _ in mapped_input_files(workdir, list(source.graph_sources))]
+                else:
+                    files = index_inputs(workdir)
+            except ValueError:
+                files = []
+            if not files:
+                self._check_pins(source, None)
+                log.warning("  The inputs of %s are not there; they are not pinned", source.name)
+                return
+            manifest = self._pin_inputs(workdir, source, files, stage="after_index")
+        else:
+            # The pin of the files the index was built from.
+            self._check_pins(source, manifest)
+        output_dir = self.config.output_dir / source.name
+        output_dir.mkdir(parents=True, exist_ok=True)
+        target = output_dir / f"{source.name}{self.config.output_suffix}_inputs.json"
+        target.write_text((workdir / INPUTS).read_text(encoding="utf-8"), encoding="utf-8")
+
+    def _carry_index_recipe(self, workdir: Path, source: Source) -> None:
+        """Write the recipe of a source's index into the run, beside its schema.
+
+        The Qleverfile, the index command, the settings, the census of literal datatypes, the
+        download record, the repaired input lines and the manifest of an endpoint export go to
+        <source>_local_index_recipe, made portable (rdfsolve.qlever.recipe); a work folder
+        without a Qleverfile has none.
+        """
+        from rdfsolve.qlever.lifecycle import index_name
+        from rdfsolve.qlever.recipe import RECIPE_DIR, engine_details, write_index_recipe
+
+        if not (workdir / "Qleverfile").is_file():
+            return
+        name = index_name(workdir, source.name)
+        engine, labels = self._engine_record(workdir, name)
+        suffix = self.config.output_suffix
+        folder = RECIPE_DIR.format(name=source.name, suffix=suffix)
+        target = self.config.output_dir / source.name / folder
+        recipe = write_index_recipe(
+            workdir, target, name=name, engine=engine_details(engine, labels),
+            data_dir=self.config.data_dir,
+        )
+        if recipe and recipe["absolute_paths_left"]:
+            log.warning("  The index recipe of %s keeps absolute paths: %s", source.name,
+                        recipe["absolute_paths_left"])
+
+    def _engine_record(self, workdir: Path, name: str) -> tuple[dict[str, Any], dict[str, str]]:
+        """Return the engine record of an index (its image, the image's SHA-256, its QLever
+        build) and the labels of the image; an image is read once per run.
+        """
+        import hashlib
+
+        from rdfsolve.qlever.lifecycle import image_for_index, index_build
+        from rdfsolve.qlever.recipe import image_labels
+
+        image = image_for_index(self.config.data_dir, workdir, name)
+        key = str(image.resolve())
+        if key not in self._images:
+            sha256, labels = None, {}
+            if image.is_file():
+                digest = hashlib.sha256()
+                with image.open("rb") as stream:
+                    for chunk in iter(lambda: stream.read(1 << 20), b""):
+                        digest.update(chunk)
+                sha256, labels = digest.hexdigest(), image_labels(image)
+            self._images[key] = (sha256, labels)
+        sha256, labels = self._images[key]
+        engine = {"image": key, "image_sha256": sha256, "index_build": index_build(workdir, name)}
+        return engine, labels
+
+    def _has_usable_index(self, workdir: Path, source: Source) -> bool:
+        """Whether the work folder has an index to reuse; set aside a truncated one.
+
+        A truncated index (its build log reports input that qlever-index did not parse) is
+        moved into a folder of its own, kept, and the source is indexed again from its files;
+        a run that does not index refuses the source instead.
+        """
+        from rdfsolve.qlever.index_check import TruncatedIndexError
+
+        try:
+            return self._has_qlever_index(workdir, source.name)
+        except TruncatedIndexError as error:
+            if self.config.no_index:
+                raise
+            self._set_aside_index(workdir, source.name, str(error))
+            return False
+
+    def _set_aside_index(self, workdir: Path, source_name: str, reason: str) -> Path:
+        """Move the files of an index (not its inputs) into a folder of their own, with the reason."""
+        from rdfsolve.qlever.lifecycle import index_name
+
+        name = index_name(workdir, source_name)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        kept = workdir.with_name(f"{workdir.name}.before-update-{stamp}")
-        workdir.rename(kept)
-        workdir.mkdir()
-        log.info("  %s: %s; downloaded and indexed again (old folder: %s)", source.name, reason, kept)
+        kept = workdir / f"set-aside-index-{stamp}"
+        kept.mkdir()
+        for path in [*workdir.glob(f"{name}.*"), workdir / ".index.done"]:
+            if path.is_file() and not path.name.endswith(".settings.json"):
+                path.rename(kept / path.name)
+        (kept / "SET-ASIDE.txt").write_text(f"{reason}\n", encoding="utf-8")
+        log.warning("  %s; the index is set aside (%s) and built again", reason, kept)
+        return kept
 
     def _has_qlever_index(self, workdir: Path, source_name: str) -> bool:
         """Reuse existing indices; do not overwrite partial index files."""
@@ -214,32 +527,67 @@ class LocalMiningStage(Stage):
         settings_json = config.get("index", "SETTINGS_JSON")
 
         directories = [graph_input_directory(workdir, graph) for graph in source.graph_sources] or [workdir]
-        expanded = [path for directory in directories for path in expand_inputs(directory)]
+        # Compressed inputs are streamed to the index, not decompressed; TriG is converted.
+        expanded = [path for directory in directories for path in convert_trig(directory)]
         try:
-            has_inputs = all(rdf_input_files(directory) for directory in directories)
-            urls = list(source.download_urls)
+            has_inputs = all(
+                index_inputs(directory) or empty_inputs(directory) for directory in directories
+            )
+            urls = entry_download_urls(source.qlever_entry())
             if needs_download(workdir, urls, has_inputs=has_inputs):
                 if not skip_download and not self.config.no_download:
                     get_data_cmd = config.get("data", "GET_DATA_CMD")
                     # The marker stays when the download does not end, so the next run
                     # downloads again and does not index a part of the files.
+                    _check_tools(get_data_cmd, qleverfile_path)
                     (workdir / MARKER).touch()
-                    subprocess.run(["bash"], input=get_data_cmd, text=True, check=True, cwd=workdir)
-                    # The server is asked about the files only in a run that asks for updates.
-                    head = server_state if self.config.update_downloads else (lambda url: None)
-                    write_record(workdir, urls, head)
-                    expanded.extend(path for directory in directories for path in expand_inputs(directory))
+                    subprocess.run(
+                        ["bash"],
+                        input=get_data_cmd,
+                        text=True,
+                        check=True,
+                        cwd=workdir,
+                        env={**os.environ, PYTHON_VARIABLE: sys.executable},
+                    )
+                    # What the server says of each file, and the release its metalink names,
+                    # pin the download (one request per file, and one per folder); checksum
+                    # files that the entry names add one request per file and kind.
+                    write_record(
+                        workdir, urls, server_state,
+                        partial(
+                            find_metalinks,
+                            checksum_files=source.checksum_files,
+                            declared=source.checksums,
+                        ),
+                    )
+                    expanded.extend(path for directory in directories for path in convert_trig(directory))
             if source.graph_sources:
                 mapped = mapped_input_files(workdir, list(source.graph_sources))
                 for graph, fields in source.graph_sources.items():
                     expected = sum(len(urls) for urls in fields.values())
-                    found = sum(mapped_graph == graph for _, mapped_graph in mapped)
+                    # A file published empty is accounted for by its marker; it has no input.
+                    found = sum(mapped_graph == graph for _, mapped_graph in mapped) + len(
+                        empty_inputs(graph_input_directory(workdir, graph))
+                    )
                     if found != expected:
                         raise ValueError(f"Graph {graph} has {found} input files; expected {expected}")
             else:
-                mapped = [(path, "") for path in rdf_input_files(workdir)]
+                mapped = [(path, "") for path in index_inputs(workdir)]
             if not mapped:
                 raise ValueError(f"No prepared RDF inputs in {workdir}")
+            from rdfsolve.qlever.downloads import download_names, unlisted_inputs
+
+            unlisted = unlisted_inputs(
+                download_names(source.qlever_entry()), [path for path, _ in mapped]
+            )
+            if unlisted:
+                names = ", ".join(path.name for path in unlisted[:5])
+                raise ValueError(
+                    f"{len(unlisted)} files in {workdir} come from no download of the registry "
+                    f"entry and are not indexed with it ({names}); set them aside"
+                )
+            # The files are pinned as published, before the index (or a repair) reads them.
+            self._pin_inputs(workdir, source, [path for path, _ in mapped], stage="before_index")
         except BaseException:
             for path in expanded:
                 path.unlink(missing_ok=True)
@@ -247,42 +595,130 @@ class LocalMiningStage(Stage):
 
         settings_path = workdir / f"{source.name}.settings.json"
         settings_path.write_text(settings_json)
-        cmd = index_command(
-            self.config.data_dir / "qlever.sif",
-            self.config.data_dir,
-            workdir,
-            config.get("data", "NAME", fallback=source.name),
-            settings_path,
-            mapped,
-            parallel=config.get("index", "PARALLEL_PARSING"),
-            buffer=config.get(
-                "index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size
-            ),
-            memory=config.get("index", "STXXL_MEMORY", fallback="16GB"),
-        )
+        index_name = config.get("data", "NAME", fallback=source.name)
+        buffer = config.get("index", "PARSER_BUFFER_SIZE", fallback=QleverConfig().parser_buffer_size)
+
+        def command(buffer: str) -> list[str]:
+            """Write the index command with this parser buffer; return what runs it."""
+            return index_command(
+                self.config.data_dir / "qlever.sif",
+                self.config.data_dir,
+                workdir,
+                index_name,
+                settings_path,
+                mapped,
+                parallel=config.get("index", "PARALLEL_PARSING"),
+                buffer=buffer,
+                memory=config.get("index", "STXXL_MEMORY", fallback="16GB"),
+            )
+
+        cmd = command(buffer)
 
         # QLever returns every integer type as xsd:int and a decimal as xsd:double; the numeric
         # datatypes of the source are counted from the input files, beside the index, while
         # it is built (rdfsolve.qlever.datatypes).
-        import os
-        from concurrent.futures import ProcessPoolExecutor
+        from concurrent.futures import ProcessPoolExecutor, wait
 
         from rdfsolve.qlever.datatypes import (
             CENSUS_FILE,
-            count_literal_datatypes,
+            census_of_files,
             input_format,
-            merge_counts,
+            merge_census,
             write_census,
         )
+        from rdfsolve.qlever.index_check import (
+            TruncatedIndexError,
+            larger_buffer,
+            statement_over_buffer,
+            unparsed_input,
+        )
+        from rdfsolve.qlever.inputs import INDEX_LOG
+        from rdfsolve.qlever.repair import REPAIRS_FILE, repair_inputs
 
         files = [(path, input_format(path)) for path, _ in mapped]
         census = ProcessPoolExecutor(max(1, min(len(files), (os.cpu_count() or 2) // 2)))
+
+        def count() -> dict:
+            return merge_census(
+                future.result()
+                for future in [census.submit(census_of_files, [item]) for item in files]
+            )
+
+        build_log = workdir / INDEX_LOG.format(name=index_name)
+
+        def build() -> None:
+            """Run qlever-index; refuse an index of inputs that it stopped reading.
+
+            A statement longer than the parser buffer fails the build; it is run again with
+            a buffer eight times larger, up to MAX_PARSER_BUFFER_MB.
+            """
+            nonlocal buffer, cmd
+            while True:
+                try:
+                    subprocess.run(cmd, cwd=workdir, check=True)
+                    break
+                except subprocess.CalledProcessError:
+                    larger = larger_buffer(buffer)
+                    if larger is None or not statement_over_buffer(build_log):
+                        raise
+                    log.warning(
+                        f"    A statement is longer than the parser buffer {buffer}; "
+                        f"indexing again with {larger}"
+                    )
+                    buffer, cmd = larger, command(larger)
+            unparsed = unparsed_input(build_log)
+            if unparsed:
+                raise TruncatedIndexError(
+                    f"qlever-index stopped reading {len(unparsed)} inputs "
+                    f"({sum(unparsed):,} bytes not parsed; {build_log.name})"
+                )
+
         log.info(f"    Indexing {len(mapped)} files...")
+        changes: list = []
         try:
-            counting = [census.submit(count_literal_datatypes, [item]) for item in files]
-            subprocess.run(cmd, cwd=workdir, check=True)
-            counts = merge_counts(future.result() for future in counting)
-            write_census(workdir / CENSUS_FILE, counts, [path for path, _ in files])
+            counting = [census.submit(census_of_files, [item]) for item in files]
+            try:
+                build()
+            except (subprocess.CalledProcessError, TruncatedIndexError) as error:
+                # QLever refuses a whole file for one term it cannot read (an IRI holding < > or
+                # ", an ill-typed number or boolean), or skips the rest of the file after it and
+                # succeeds; such terms of a line-based input are written anew, recorded, and
+                # indexed again. The census is of the files as published.
+                wait(counting)
+                changes = repair_inputs(workdir, [path for path, _ in mapped])
+                if not changes:
+                    raise
+                log.warning(
+                    f"    {error}; {len(changes)} input lines hold terms that QLever cannot "
+                    f"read; written anew ({REPAIRS_FILE}); indexing again"
+                )
+                build()
+            try:
+                counted = merge_census(future.result() for future in counting)
+            except Exception as error:
+                if not changes:
+                    raise
+                log.warning(f"    Counting the repaired files: {error}")
+                counted = count()
+            # A statement that the census parser refuses is left out of the counts and recorded
+            # in the census (unread); it never fails the index that QLever built.
+            unread = counted["unread"]
+            if unread["lines"] or unread["files_counted_up_to_an_error"]:
+                log.warning(
+                    f"    The datatype census could not read {unread['lines']} input lines and "
+                    f"{len(unread['files_counted_up_to_an_error'])} files to the end; recorded "
+                    f"in {CENSUS_FILE} (unread)"
+                )
+            write_census(
+                workdir / CENSUS_FILE,
+                counted["properties"],
+                [path for path, _ in files],
+                unread=unread,
+            )
+            built = json.loads((workdir / f"{index_name}.meta-data.json").read_text(encoding="utf-8"))
+            if not built["num-triples"]["normal"]:
+                # qlever-index builds an empty index from input it cannot read (gzip) and succeeds.
+                raise ValueError(f"The index of {index_name} holds no triple")
         finally:
             census.shutdown(cancel_futures=True)
             for path in expanded:
@@ -295,8 +731,13 @@ class LocalMiningStage(Stage):
         *,
         graph_uris: list[str] | None = None,
         mining_context: str = "local_distribution",
+        resume_checkpoint: Path | None = None,
     ):
-        """Mine one dataset from a local QLever instance."""
+        """Mine one dataset from a local QLever instance.
+
+        *resume_checkpoint* overrides the checkpoint of --resume-from (a restart after the
+        server died resumes from the checkpoint of its own run).
+        """
         output_dir = self.config.output_dir / source.name
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.config.output_suffix
@@ -306,35 +747,167 @@ class LocalMiningStage(Stage):
             if self.config.resume_from
             else None
         )
+        if resume_checkpoint is not None:
+            previous = resume_checkpoint
         if previous and not previous.is_file():
             log.warning("  --resume-from: no checkpoint %s; %s is mined from the start", previous, source.name)
         scope = graph_uris if graph_uris is not None else source.graph_uris or None
-        if graph_uris is None and scope:
-            applied = local_graph_scope(scope, source.download_fields, source.graph_sources)
-            if applied is None:
+        type_context = source.type_context_graph_uris
+        ontology_graphs = source.ontology_graph_uris or None
+        # What the endpoint's graph settings name and a graphless index cannot hold.
+        whole_index: dict[str, Any] | None = None
+        if graph_uris is None and files_without_graphs(
+            source.download_fields, source.graph_sources
+        ):
+            dropped = {
+                "graph_uris": scope or [],
+                "type_context_graph_uris": list(type_context or []),
+                "ontology_graph_uris": list(ontology_graphs or []),
+            }
+            if any(dropped.values()):
+                # rdfportal.mbgd (job 115609): its dump has no graphs, and the type context
+                # graph of its endpoint (a taxonomy graph) failed the source as missing.
                 log.info(
                     "  The files of %s have no graphs; the graph scope of its endpoint is not "
-                    "applied and the whole index is mined", source.name,
+                    "applied and the whole index is mined, its type context and ontology terms "
+                    "included (%s)",
+                    source.name,
+                    ", ".join(f"{len(v)} {k}" for k, v in dropped.items() if v),
                 )
-            scope = applied
+                whole_index = {
+                    "state": "whole_index",
+                    "reason": "the files of the source hold no named graphs",
+                    "endpoint_graphs_not_applied": {k: v for k, v in dropped.items() if v},
+                }
+            scope, type_context, ontology_graphs = None, [], None
+        strategy = None
+        # Scan mining follows the graph scope of the run (data graphs, type context graphs) and
+        # gives per-graph counts, so graph-scoped sources and sources with per-graph schemas
+        # are scanned too; --local-mining sparql mines them with the SPARQL strategies.
+        if self.config.local_mining == "scan":
+            from rdfsolve.mining.scan import ScanStrategy, index_description
+            from rdfsolve.qlever.lifecycle import index_name
+
+            workdir = self.config.data_dir / "qlever_workdirs" / source.name
+            strategy = ScanStrategy(
+                workdir / "scan-store",
+                index=index_description(workdir, index_name(workdir, source.name)),
+                # A graph-mapped entry names the graphs of its index: they are not listed.
+                graphs=list(source.graph_sources) or None,
+            )
         miner = self._local_miner(
             port, scope,
-            report_path, type_context_graph_uris=source.type_context_graph_uris,
+            report_path, type_context_graph_uris=type_context,
             resume_checkpoint=previous if previous and previous.is_file() else None,
+            **({"strategy": strategy} if strategy is not None else {}),
         )
         miner.classes_as_data = source.classes_as_data
+        miner.membership_properties = list(source.membership_properties)
+        if whole_index is not None:
+            miner.local_graph_scope = whole_index
         schema = self._mine_schema(miner, source.name, output_dir,
-                                   ontology_graph_uris=source.ontology_graph_uris or None)
+                                   ontology_graph_uris=ontology_graphs)
+        # Paths are tested on the rows that scan mining read, not by probes.
+        self._scan_store = getattr(strategy, "store", None)
+        self._scan_grouping = getattr(miner, "_scan_grouping", None)
         with self._output_phase(miner, report_path):
             self._save_dataset_outputs(
                 source, schema, output_dir, miner.helper, mining_context,
                 members=self._group_members(miner),
             )
+            if graph_uris is None and has_graph_parts(source):
+                self._save_graph_parts(source, schema, miner, port)
         self._require_complete(miner)
+
+    def _save_graph_parts(self, source: Source, schema, miner, port: int) -> None:
+        """Write one schema per data graph of a source mined across its graphs.
+
+        The schema of the source is cut by the graph of each edge (split_by_edge_graph): the
+        classes at both ends stay as resolved over all graphs, so links between graphs stay in
+        the part of the graph that holds the edge. Entities are counted in each graph. A graph
+        whose settings differ from the source's (graph_settings) is mined on its own with them,
+        its types resolved over the other graphs too. Each part is named after the registry
+        entry that is that graph of the source, if any (rdfsolve.graph_parts).
+        """
+        from rdfsolve.graph_parts import (
+            GRAPHS_DIR,
+            graph_part_dir,
+            graph_parts,
+            write_graph_parts_index,
+        )
+        from rdfsolve.mining.edge_graph_split import split_by_edge_graph, unattributed_patterns
+        from rdfsolve.mining.ontology_as_data import pattern_classes
+
+        suffix = self.config.output_suffix
+        schema = self._without_service_data(schema)
+        missing = unattributed_patterns(schema)
+        if missing:
+            log.warning(
+                "  %d patterns have no per-graph count and are in no per-graph schema", len(missing)
+            )
+        rows: list[dict[str, Any]] = []
+        incomplete: list[str] = []
+        for part in graph_parts(source, self.config.registry):
+            part_dir = graph_part_dir(self.config.output_dir, source.name, part.name)
+            part_dir.mkdir(parents=True, exist_ok=True)
+            if part.own_settings:
+                log.info("  [%s] %s: mined alone with its graph settings", part.name, part.graph)
+                piece, part_miner = self._mine_graph_part(source, part, port, part_dir)
+                derivation = "mined_with_graph_settings"
+                report = part_miner.last_report
+                if report is None or report.completion_state != "complete":
+                    incomplete.append(part.name)
+            else:
+                piece = split_by_edge_graph(
+                    schema, part.graph, part.name, declared_classes=miner.declared_classes
+                )
+                classes = sorted(pattern_classes(piece.patterns) - miner.subsumed_classes)
+                counts, states = miner.count_class_entities(classes, [part.graph])
+                piece.about.class_entity_counts = counts
+                piece.about.class_entity_count_states = states
+                derivation = "edge_graph_split"
+            log.info("  [%s] %d patterns in %s", part.name, len(piece.patterns), part.graph)
+            self._save_schema_outputs(piece, part_dir, part.name, suffix)
+            rows.append(
+                {
+                    **part.record(),
+                    "derivation": derivation,
+                    "patterns": len(piece.patterns),
+                    "schema": f"{GRAPHS_DIR}/{part.name}/{part.name}{suffix}_schema.json",
+                }
+            )
+        write_graph_parts_index(
+            self.config.output_dir, source.name, suffix, "local", rows,
+            unattributed_patterns=len(missing),
+        )
+        if miner.last_report is not None:
+            miner.last_report.config["graph_parts"] = {
+                "parts": [row["name"] for row in rows],
+                "unattributed_patterns": len(missing),
+            }
+        if incomplete:
+            raise RuntimeError(f"Per-graph mining incomplete: {incomplete}")
+
+    def _mine_graph_part(self, source: Source, part, port: int, part_dir: Path):
+        """Mine one data graph of a source on its own, with the settings of that graph."""
+        suffix = self.config.output_suffix
+        report_path = part_dir / f"{part.name}{suffix}_report.json"
+        context = [g for g in source.graph_uris if g != part.graph] + source.type_context_graph_uris
+        miner = self._local_miner(
+            port, [part.graph], report_path,
+            type_context_graph_uris=list(dict.fromkeys(context)),
+        )
+        miner.classes_as_data = part.classes_as_data
+        miner.membership_properties = list(part.membership_properties)
+        schema = self._mine_schema(
+            miner, part.name, part_dir,
+            ontology_graph_uris=source.ontology_graph_uris or None, index_name=source.name,
+        )
+        return self._without_service_data(schema), miner
 
     def _local_miner(self, port: int, graph_uris: list[str] | None, report_path: Path,
                      *, type_context_graph_uris: list[str] | None = None,
-                     resume_checkpoint: Path | None = None):
+                     resume_checkpoint: Path | None = None, strategy=None):
         """Create a miner for a local QLever instance."""
         from rdfsolve import SchemaMiner
 
@@ -356,13 +929,20 @@ class LocalMiningStage(Stage):
             max_response_bytes=self.config.max_response_bytes,
             report_path=str(report_path),
             resume_checkpoint=resume_checkpoint,
+            strategy=strategy,
+            pagination=self.config.pagination,
         )
 
         return miner
 
     def _mine_schema(self, miner, name: str, output_dir: Path,
-                     *, ontology_graph_uris: list[str] | None = None):
-        """Mine *name* with the configured optional phases and write their RDF files."""
+                     *, ontology_graph_uris: list[str] | None = None,
+                     index_name: str | None = None):
+        """Mine *name* with the configured optional phases and write their RDF files.
+
+        *index_name* is the source whose index is mined, when it is not *name* (a graph of a
+        source mined on its own): the numeric datatypes are restored from its census.
+        """
         suffix = self.config.output_suffix
         if self.config.extract_ontology or self.config.extract_metadata or self.config.ontology_as_data:
             from rdfsolve.mining import mine_with_ontology
@@ -380,7 +960,7 @@ class LocalMiningStage(Stage):
                 dataset_name=name,
             )
             schema = result.data_schema
-            self._restore_literal_datatypes(miner, schema, name)
+            self._restore_literal_datatypes(miner, schema, index_name or name)
             report_path = output_dir / f"{name}{suffix}_report.json"
             with self._output_phase(miner, report_path):
                 schema_path = output_dir / f"{name}{suffix}_schema.json"
@@ -397,8 +977,7 @@ class LocalMiningStage(Stage):
                                 include_examples=False,
                                 trim_descriptions=self.config.trim_descriptions,
                             )
-                            ont_ttl = ontology_graph.serialize(format="turtle")
-                            ontology_path.write_text(ont_ttl, encoding="utf-8")
+                            write_rdf(ontology_graph, ontology_path, "ontology", miner.last_report)
                     except Exception as e:
                         raise RuntimeError(f"  Could not generate ontology.ttl: {e}") from e
                 if result.metadata:
@@ -408,25 +987,40 @@ class LocalMiningStage(Stage):
                             result.metadata, self.config.trim_descriptions
                         ).to_rdf_graph()
                         if metadata_graph:
-                            meta_ttl = metadata_graph.serialize(format="turtle")
-                            metadata_path.write_text(meta_ttl, encoding="utf-8")
+                            write_rdf(metadata_graph, metadata_path, "metadata", miner.last_report)
                     except Exception as e:
                         raise RuntimeError(f"  Could not generate metadata.ttl: {e}") from e
         else:
             schema = miner.mine(dataset_name=name)
-            self._restore_literal_datatypes(miner, schema, name)
+            self._restore_literal_datatypes(miner, schema, index_name or name)
 
         return schema
 
     def _restore_literal_datatypes(self, miner, schema, name: str) -> None:
-        """Restore the numeric datatypes that the index folds, from the census of its sources."""
-        from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census, restore_datatypes
+        """Restore the numeric datatypes that the index folds, from the census of its sources.
+
+        The input lines written percent-encoded before indexing are recorded (input_repairs).
+        """
+        from rdfsolve.qlever.datatypes import (
+            CENSUS_FILE,
+            read_census,
+            read_unread,
+            restore_datatypes,
+        )
+        from rdfsolve.qlever.repair import REPAIRS_FILE
 
         census = self.config.data_dir / "qlever_workdirs" / name / CENSUS_FILE
         if census.is_file():
             patterns = [*schema.patterns, *(schema.structural_patterns or [])]
             record = {"state": "restored", "census": str(census)}
             record.update(restore_datatypes(patterns, read_census(census)))
+            unread = read_unread(census)
+            if unread is not None:
+                # The statements of the files that the census could not read (not counted).
+                record["unread_lines"] = unread["lines"]
+                record["files_counted_up_to_an_error"] = len(
+                    unread["files_counted_up_to_an_error"]
+                )
         else:
             record = {
                 "state": "not_restored",
@@ -435,6 +1029,10 @@ class LocalMiningStage(Stage):
             }
         if miner.last_report is not None:
             miner.last_report.config["literal_datatypes"] = record
+            repairs = census.with_name(REPAIRS_FILE)
+            if repairs.is_file():
+                repaired = json.loads(repairs.read_text(encoding="utf-8"))
+                miner.last_report.config["input_repairs"] = repaired
 
     def _save_dataset_outputs(
         self,
@@ -491,17 +1089,11 @@ class LocalMiningStage(Stage):
         if not image.is_file():
             raise FileNotFoundError(f"Prepare the QLever image before mining: {image}")
 
-    def _qlever_start(self, workdir: Path, name: str, port: int) -> int:
-        import hashlib
-
-        from rdfsolve.qlever.lifecycle import image_for_index, index_build, start_server
+    def _qlever_start(self, workdir: Path, name: str, port: int, *, port_wait: float = 0) -> int:
+        from rdfsolve.qlever.lifecycle import image_for_index, start_server
 
         image = image_for_index(self.config.data_dir, workdir, name)
-        engine = {
-            "image": str(image.resolve()),
-            "image_sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
-            "index_build": index_build(workdir, name),
-        }
+        engine, _ = self._engine_record(workdir, name)
         output_dir = self.config.output_dir / name
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"{name}{self.config.output_suffix}_engine.json").write_text(
@@ -514,6 +1106,7 @@ class LocalMiningStage(Stage):
             name,
             port,
             startup_timeout=self.config.qlever_startup_timeout,
+            port_wait=port_wait,
         )
         self._servers[process.pid] = process
         return process.pid

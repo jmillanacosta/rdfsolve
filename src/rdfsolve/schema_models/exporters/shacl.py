@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
@@ -30,6 +31,18 @@ def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
 
     base = mint("dataset", dataset or "unnamed") + "/shapes/"
     return f"{base}ns-{short(cls)}" if prop is None else f"{base}ps-{short(cls)}-{short(prop)}"
+
+
+def untyped_shape_iri(dataset: str, prop: str) -> str:
+    """Return the IRI of the node shape of the subjects of *prop* without a type in *dataset*
+    (with the default base IRI of minedschema_to_shacl).
+    """
+    from hashlib import md5
+
+    from rdfsolve.config import mint
+
+    short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+    return mint("dataset", dataset or "unnamed") + f"/shapes/ns-untyped-{short}"
 
 
 def minedschema_to_shacl(
@@ -64,8 +77,12 @@ def minedschema_to_shacl(
     )
     if lost_counts:
         logging.getLogger(__name__).warning(
-            "SHACL plus VoID metadata cannot retain %d pattern counts with unspecified "
-            "classes or datatypes. Keep canonical JSON; these are not sh:minCount values.",
+            "%d pattern rows describe objects without a class (IRIs without a type, blank "
+            "nodes, literals without a datatype). Their triples and distinct subjects, the "
+            "counts of each such kind for its class and property, are kept only in the JSON "
+            "schema; VoID gives the distinct blank-node and literal objects of each class and "
+            "property, and its distinct IRIs and triples only where no object has a class. "
+            "These counts are not sh:minCount values.",
             lost_counts,
         )
     if schema.shapes is not None:
@@ -73,10 +90,14 @@ def minedschema_to_shacl(
 
     from hashlib import md5
 
-    # Group patterns by subject class
+    # Group patterns by subject class; the patterns of untyped subjects by property.
     by_subject: dict[str, list[SchemaPattern]] = defaultdict(list)
+    untyped: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pat in schema.patterns:
-        by_subject[pat.subject_class].append(pat)
+        if pat.untyped_subject:
+            untyped[pat.property_uri].append(pat)
+        else:
+            by_subject[pat.subject_class].append(pat)
 
     lists: dict[tuple[str, str], list[CollectionProfile]] = defaultdict(list)
     for profile in schema.collections or []:
@@ -95,32 +116,12 @@ def minedschema_to_shacl(
             if prop == RDF_TYPE:
                 continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
-            options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
-            for pattern in patterns:
-                option = ShaclPropertyShape(path="")
-                if pattern.object_class == "Literal":
-                    option.node_kind = "Literal"
-                    option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
-                elif pattern.object_class == "Resource":
-                    option.node_kind = "IRI"
-                elif pattern.object_class == "BlankNode":
-                    option.node_kind = "BlankNode"
-                else:
-                    option.node_kind = "BlankNodeOrIRI"
-                    option.class_constraint = pattern.object_class
-                options[(pattern.object_class, pattern.datatype)] = option
-            for profile in lists.get((subject_class, prop), []):
-                options[("List", None)] = _list_option(profile)
-            alternatives = list(options.values())
-            shape = (
-                alternatives[0]
-                if len(alternatives) == 1
-                else ShaclPropertyShape(path="", alternatives=alternatives)
-            )
+            shape = _value_shape(patterns, lists.get((subject_class, prop), []))
             shape.path = prop
             shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
             shape.name = patterns[0].property_label
             shape.description = schema.enrichment.description(prop)
+            _mark_sampled(shape, patterns)
             property_shapes.append(shape)
         node_shapes.append(
             ShaclNodeShape(
@@ -144,9 +145,118 @@ def minedschema_to_shacl(
             )
         )
 
+    node_shapes += _untyped_shapes(schema, untyped, base_uri, activate_observed)
     return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
     )
+
+
+def _value_shape(
+    patterns: list[SchemaPattern], profiles: list[CollectionProfile]
+) -> ShaclPropertyShape:
+    """Return the value constraint of the patterns of one property: one option, or sh:or."""
+    options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
+    for pattern in patterns:
+        option = ShaclPropertyShape(path="")
+        if pattern.object_class == "Literal":
+            option.node_kind = "Literal"
+            option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
+        elif pattern.object_class == "Resource":
+            option.node_kind = "IRI"
+        elif pattern.object_class == "BlankNode":
+            option.node_kind = "BlankNode"
+        else:
+            option.node_kind = "BlankNodeOrIRI"
+            option.class_constraint = pattern.object_class
+        options[(pattern.object_class, pattern.datatype)] = option
+    for profile in profiles:
+        options[("List", None)] = _list_option(profile)
+    alternatives = list(options.values())
+    return (
+        alternatives[0]
+        if len(alternatives) == 1
+        else ShaclPropertyShape(path="", alternatives=alternatives)
+    )
+
+
+def _mark_sampled(shape: ShaclPropertyShape, patterns: list[SchemaPattern]) -> bool:
+    """Deactivate a value shape whose kinds come in part from a sample of a refused query.
+
+    The sample shows kinds that occur, not every kind: an active shape would flag values of a
+    kind the sample missed. Counts of samples are never sh:minCount or sh:maxCount (no observed
+    shape states them). Return whether the shape was deactivated.
+    """
+    samples = [p.sampled for p in patterns if p.sampled and "patterns" in p.sampled.covers]
+    if not samples:
+        return False
+    first = samples[0]
+    shape.deactivated = True
+    note = (
+        f"Value kinds observed in a sample of {first.size} {first.unit} of a query that the "
+        "endpoint refused; other kinds may occur, so the shape is deactivated."
+    )
+    shape.description = f"{shape.description} {note}" if shape.description else note
+    return True
+
+
+def _membership_path(schema: MinedSchema) -> str | PropertyPath:
+    """Return the path of class membership: rdf:type, or the membership properties."""
+    membership = schema.about.membership_property
+    if not membership:
+        return RDF_TYPE
+    if isinstance(membership, str):
+        return membership
+    if len(membership) == 1:
+        return membership[0]
+    return PropertyPath(
+        operator="alternative",
+        items=[PropertyPath(operator="predicate", iri=p) for p in membership],
+    )
+
+
+def _untyped_shapes(
+    schema: MinedSchema,
+    untyped: dict[str, list[SchemaPattern]],
+    base_uri: str,
+    activate_observed: bool,
+) -> list[ShaclNodeShape]:
+    """Return a node shape for the untyped subjects of each property.
+
+    SHACL has no target for "the nodes without a type": the shape targets the subjects of the
+    property (sh:targetSubjectsOf) and holds when the node has a type (its class shapes
+    describe it) or when its values have the observed kinds: sh:or ([sh:path rdf:type;
+    sh:minCount 1] [sh:path p; values]). A typed subject is never held to the untyped values.
+    """
+    from hashlib import md5
+
+    shapes = []
+    typed = ShaclPropertyShape(path=_membership_path(schema), min_count=1)
+    for prop, patterns in sorted(untyped.items()):
+        short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+        values = _value_shape(patterns, [])
+        values.path = prop
+        values.uri = f"{base_uri}ps-untyped-{short}"
+        values.name = patterns[0].property_label
+        values.description = schema.enrichment.description(prop)
+        label = patterns[0].property_label or prop
+        incomplete = _mark_sampled(values, patterns)
+        shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}ns-untyped-{short}",
+                target_subjects_of=[prop],
+                alternatives=[typed.model_copy(deep=True), values],
+                deactivated=not activate_observed or incomplete,
+                name=f"Subjects of {label} without a type",
+                description=(
+                    "Observed values of the IRI subjects of this property that have no type "
+                    "(rdfsolve patterns with subject_binding 'untyped'). A subject with a type "
+                    "conforms through the first alternative; its class shapes describe it. "
+                    "Observed value-type template, not a source constraint. No required fields "
+                    "or per-entity cardinalities were inferred."
+                ),
+            )
+        )
+    return shapes
 
 
 LIST_MEMBERS = "rdf:rest*/rdf:first"
@@ -178,6 +288,52 @@ def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
     )
 
 
+def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str) -> None:
+    """Give each node shape the namespaces of its class's example IRIs as sh:pattern.
+
+    The namespaces of each class are also declared with their prefixes (sh:declare) on a
+    declarations resource of that class, so that a reader can tell which registered identifiers
+    the class's IRIs are, also where a prefix names another namespace elsewhere in the graph.
+    """
+    from hashlib import sha256
+
+    from rdfsolve._uri import uri_to_curie
+    from rdfsolve.identifiers import parse
+
+    examples: dict[str, set[str]] = defaultdict(set)
+    for class_iri, terms in schema.enrichment.class_examples.items():
+        examples[class_iri].update(t.value for t in terms if t.kind == "uri")
+    for example in schema.enrichment.examples:
+        if not example.untyped_subject and example.subject.kind == "uri":
+            examples[example.subject_class].add(example.subject.value)
+    namespaces: dict[str, dict[str, str]] = {}  # class -> namespace -> prefix
+    for class_iri, iris in examples.items():
+        for iri in iris:
+            found = parse(iri)  # a registered identifier: its namespace as written in the IRI
+            if found is not None and iri.endswith(found.local):
+                prefix, namespace = found.prefix, iri[: len(iri) - len(found.local)]
+            else:
+                _, prefix, namespace = uri_to_curie(iri)
+            if namespace and namespace != iri:
+                namespaces.setdefault(class_iri, {})[namespace] = prefix
+    special = set("\\.?*+(){}|[]^$")
+    for class_iri, found_namespaces in sorted(namespaces.items()):
+        by_prefix: dict[str, str] = {}
+        for namespace, prefix in sorted(found_namespaces.items()):
+            if prefix:
+                by_prefix.setdefault(prefix, namespace)
+        if by_prefix:
+            identity = sha256(class_iri.encode()).hexdigest()[:16]
+            shapes.declare_prefixes(by_prefix, resource=f"{base_uri}identifiers-{identity}")
+    for shape in shapes.node_shapes:
+        if shape.pattern is None and shape.target_class in namespaces:
+            escaped = (
+                "".join("\\" + c if c in special else c for c in namespace)
+                for namespace in sorted(namespaces[shape.target_class])
+            )
+            shape.pattern = "^(" + "|".join(escaped) + ")"
+
+
 def _complete_shapes(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
@@ -197,6 +353,7 @@ def _complete_shapes(
             inactive,
         )
     shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
+    _add_iri_patterns(schema, shapes, base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
     tested = schema.navigation.strategy == "tested"
@@ -272,7 +429,7 @@ def _complete_shapes(
         )
     for route in schema.navigation.paths:
         # A tested path is given above with its counts; a nested profile for each of thousands
-        # of paths made the file too large (AOP-Wiki: 53 MB).
+        # of paths makes the file too large.
         if tested or route.instance_support != "matched":
             continue
         child = None

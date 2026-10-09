@@ -13,7 +13,9 @@ from rdfsolve.ontology.vocabulary import OBO
 
 # An OBO term (obo/MONDO_0000001) belongs to its prefix (obo/MONDO_), as written: FBbt, not FBBT.
 _OBO_TERM = r"/obo/[A-Za-z][A-Za-z0-9]*_"
-_LAST_PART = r"[^/#:]*$"
+# One character at least: Virtuoso refuses a REPLACE pattern that matches the empty string
+# (error 22023), and an empty last part leaves the IRI as it is either way.
+_LAST_PART = r"[^/#:]+$"
 
 
 def namespace(iri: str) -> str:
@@ -36,7 +38,7 @@ def namespace_expression(variable: str) -> str:
 
 
 def obo_prefix(iri: str) -> str | None:
-    """Return the OBO prefix of a term (MONDO for obo/MONDO_0000001), or None."""
+    """Return the OBO prefix of a term (the part before ``_`` of its OBO PURL), or None."""
     space = namespace(iri)
     if space.startswith(OBO) and space.endswith("_"):
         return space[len(OBO) : -1]

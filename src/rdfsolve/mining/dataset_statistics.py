@@ -1,11 +1,10 @@
 """Exact dataset statistics from a QLever index.
 
 A QLever index keeps the number of distinct subjects and of distinct objects of all its
-triples: COUNT(DISTINCT ?s) and COUNT(DISTINCT ?o) answer from the metadata (Bgee, 715,849,799
-subjects and 155,731,759 objects: under 0.1 s each, job 114239). The triples of each property
-are one grouped query (Bgee: 80 s), and the distinct subjects and objects of one property read
-one relation of the index (Bgee RO_0002206, 813,735,712 triples: 9 s each); a grouped query of
-distinct objects for all properties was refused (54 GB, job 114239). The counts cover the whole index, so they are given
+triples: COUNT(DISTINCT ?s) and COUNT(DISTINCT ?o) answer from the metadata at once. The
+triples of each property are one grouped query, and the distinct subjects and objects of one
+property read one relation of the index; a grouped query of distinct objects for all properties
+can need more memory than the server has. The counts cover the whole index, so they are given
 only when the graph scope holds every graph of it. Other engines read every triple for these
 counts, so they are not counted there.
 """
@@ -20,8 +19,7 @@ from rdflib import URIRef
 
 from rdfsolve.sparql_helper import EndpointError
 
-# Seconds for the distinct subjects and objects of the properties (Bgee: 2,197 s for 48
-# properties). The properties are counted from the smallest; those left after the budget keep
+# Seconds for the distinct subjects and objects of the properties. The properties are counted from the smallest; those left after the budget keep
 # their triples and are recorded as not counted.
 PARTITION_BUDGET_S = 7200.0
 
@@ -89,10 +87,8 @@ def count_dataset(
             refused[prop] = f"not counted: time budget of {PARTITION_BUDGET_S:.0f} s"
             continue
         for name, variable in (("distinct_subjects", "?s"), ("distinct_objects", "?o")):
-            query = (
-                f"SELECT (COUNT(DISTINCT {variable}) AS ?n) WHERE {{ ?s {URIRef(prop).n3()} ?o }}"
-            )
             try:
+                query = f"SELECT (COUNT(DISTINCT {variable}) AS ?n) WHERE {{ ?s <{prop}> ?o }}"
                 partitions[prop][name] = number(query)
             except (EndpointError, ValueError) as error:
                 refused[prop] = f"{name}: {error}"

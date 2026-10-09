@@ -46,8 +46,7 @@ def mine_with_ontology(
             ancestors before per-class mining when more classes than this are discovered
             (for sources with too many term types to mine one by one). None groups after.
         ontology_hierarchy_files: Tab-separated (child, parent) IRI files that give parents,
-            before grouping, to terms without a parent in the data (for example the NCIt
-            flat file for PubChem). The files and their pair counts are recorded.
+            before grouping, to terms without a parent in the data. The files and their pair counts are recorded.
         dataset_name: Optional dataset name to attach to schema metadata
         ontology_graph_uris: Graphs for ontology extraction and superclass lookup.
             Named graphs must hold triples. None keeps extraction in the data
@@ -82,7 +81,17 @@ def mine_with_ontology(
         ontology_iris = result.ontology.term_iris() if result.ontology else []
         annotations = None
         shared_scope = ontology_graph_uris is None or ontology_graph_uris == miner.graph_uris
-        if ontology_iris and (not miner.enrich or not shared_scope):
+        if ontology_iris and (not miner.enrich or not shared_scope) and miner._store is not None:
+            from rdfsolve.mining.scan_enrichment import enrichment
+            from rdfsolve.schema_models.core import MinedSchema
+
+            annotations = enrichment(
+                miner._store,
+                MinedSchema(patterns=[], about=result.data_schema.about),
+                examples_per_pattern=0,
+                annotation_iris=ontology_iris,
+            )
+        elif ontology_iris and (not miner.enrich or not shared_scope):
             from rdfsolve.mining.enrichment import query_enrichment
             from rdfsolve.schema_models.core import MinedSchema
 
@@ -137,14 +146,22 @@ def _mine_with_ontology(
                 visible = visible.filter_service_namespaces()
             scope = ontology_graph_uris if ontology_graph_uris is not None else miner.graph_uris
             logger.info("Querying %s-scoped ontology axioms", ontology_scope)
-            ontology = OntologyMiner(
-                miner._helper,
-                scope,
-                class_iris=visible.get_classes() if ontology_scope == "schema" else None,
-                property_iris=visible.get_properties() if ontology_scope == "schema" else None,
-                batch_size=min(miner.class_batch_size, 50),
-                delay=miner.delay,
-            ).mine()
+            classes = visible.get_classes() if ontology_scope == "schema" else None
+            properties = visible.get_properties() if ontology_scope == "schema" else None
+            if miner._store is not None:
+                from rdfsolve.mining.scan_enrichment import ontology_structure
+
+                # Read from the rows; the pair axioms are scoped to the terms.
+                ontology = ontology_structure(miner._store, classes, properties)
+            else:
+                ontology = OntologyMiner(
+                    miner._helper,
+                    scope,
+                    class_iris=classes,
+                    property_iris=properties,
+                    batch_size=min(miner.class_batch_size, 50),
+                    delay=miner.delay,
+                ).mine()
             miner._report.report.ontology_extraction = {
                 "scope": ontology_scope,
                 "graphs_mined": scope or [],
@@ -171,8 +188,17 @@ def _mine_with_ontology(
         phase = miner._report.start_phase("infrastructure-metadata")
         logger.info("Extracting infrastructure metadata")
         try:
-            metadata_miner = MetadataMiner(miner._helper, miner.graph_uris)
-            metadata = metadata_miner.mine()
+            if miner._store is not None:
+                from rdfsolve.mining.scan_enrichment import metadata_document
+                from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census
+
+                # The census of the index's files sits beside its row store.
+                census = miner._store.path.parent / CENSUS_FILE
+                metadata = metadata_document(
+                    miner._store, read_census(census) if census.is_file() else None
+                )
+            else:
+                metadata = MetadataMiner(miner._helper, miner.graph_uris).mine()
         except Exception as error:
             miner._report.finish_phase(phase, error=str(error))
         else:

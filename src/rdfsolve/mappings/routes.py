@@ -27,6 +27,8 @@ from rdfsolve.mappings.signatures import (
     _lookup,
     _read_all,
     _read_target,
+    is_untyped,
+    untyped_test,
 )
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
 from rdfsolve.schema_models.core import MinedSchema
@@ -112,6 +114,9 @@ def propose_segments(
     link. After: each schema step and each tested path of the target that starts at the class
     that the link reaches (the term, when the link reaches an OWL construct) and ends at a
     class. A path with an rdf:type step is left out: it is not a relation between entities.
+    A step of subjects without a type (an untyped pattern) is left out too: it has no class to
+    start from or to join at, so rdfs:Resource is never a hub; a link whose end is the
+    untyped subjects is tested on its own (the empty paths).
     """
 
     def paths(schema: MinedSchema) -> Iterable[Segment]:
@@ -123,7 +128,11 @@ def propose_segments(
                 for path in schema.navigation.paths
                 if path.instance_support == "matched"
             ]
-        return [p for p in found if all(step.property_uri != RDF_TYPE for step in p)]
+        return [
+            p
+            for p in found
+            if all(step.property_uri != RDF_TYPE and not step.untyped_subject for step in p)
+        ]
 
     def distinct(found: Iterable[Segment]) -> list[Segment]:
         """Return the empty path and each path once, in their order."""
@@ -169,7 +178,10 @@ def _target_pattern(route: Route) -> str:
 def _source_pattern(route: Route) -> str:
     """Return the pattern of the start instances ?n0 and their link values ?v."""
     path, last = _walk(route.before, "?n0", "n")
-    typed = f"?n0 a <{route.start_class}> . {path} "
+    start = (
+        untyped_test("?n0") if is_untyped(route.start_class) else f"?n0 a <{route.start_class}> ."
+    )
+    typed = f"{start} {path} "
     if route.before:
         typed += f"{last} a <{route.link.source_class}> . "
     return f"{typed}{last} <{route.link.property}> ?v ."
@@ -286,7 +298,10 @@ def federated_query(
     after = _target_pattern(route)
     if route.link.kind == "join":
         after = after.replace("?x ", "?t ")
-    start = f"?n0 a <{route.start_class}> . {before} ".replace("  ", " ")
+    first = (
+        untyped_test("?n0") if is_untyped(route.start_class) else f"?n0 a <{route.start_class}> ."
+    )
+    start = f"{first} {before} ".replace("  ", " ")
     if value == term:
         rewrite, held = "", "?t"
     else:
@@ -294,9 +309,18 @@ def federated_query(
         rewrite = f'  BIND(IRI(CONCAT("{new}", STRAFTER(STR(?v), "{old}"))) AS ?t)\n'
         held = "?v"
     if route.link.kind == "join":
-        reached = f"?t a <{route.link.target_class}> ."
+        reached = (
+            f"?t ?_tP ?_tO . {untyped_test('?t')}"
+            if is_untyped(route.link.target_class)
+            else f"?t a <{route.link.target_class}> ."
+        )
     else:
-        reached = f"?x <{route.link.target_property}> ?t . ?x a <{route.link.target_class}> ."
+        end = (
+            untyped_test("?x")
+            if is_untyped(route.link.target_class)
+            else f"?x a <{route.link.target_class}> ."
+        )
+        reached = f"?x <{route.link.target_property}> ?t . {end}"
     return (
         "# Generated from a tested route of the registry; not executed.\n"
         "SELECT DISTINCT * WHERE {\n"

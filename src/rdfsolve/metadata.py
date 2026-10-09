@@ -29,14 +29,12 @@ def build_metadata_query(
     if subject_iris is not None:
         if not subject_iris:
             raise ValueError("subject_iris must not be empty")
-        selector = "VALUES ?root { " + " ".join(URIRef(i).n3() for i in subject_iris) + " }"
+        selector = "VALUES ?root { " + " ".join(f"<{i}>" for i in subject_iris) + " }"
     else:
         if not resource_types:
             raise ValueError("resource_types must not be empty")
         selector = (
-            "VALUES ?kind { "
-            + " ".join(URIRef(i).n3() for i in resource_types)
-            + " } ?root a ?kind ."
+            "VALUES ?kind { " + " ".join(f"<{i}>" for i in resource_types) + " } ?root a ?kind ."
         )
     return (
         """

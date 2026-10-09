@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
@@ -9,6 +10,8 @@ from pydantic import BaseModel, Field, computed_field
 from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_fallbacks import query_with_bisect
 from rdfsolve.sparql_helper import SparqlHelper
+
+logger = logging.getLogger(__name__)
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
@@ -32,6 +35,14 @@ class ClassPopulationEvidence(BaseModel):
     subject_count: int | None = Field(default=None, ge=0)
     count_status: CompletionState
     source_method: str = "class_entity_counts"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def count_bound(self) -> Literal["exact", "lower_bound"] | None:
+        """Return whether subject_count is exact or only a lower bound (an incomplete count)."""
+        if self.subject_count is None:
+            return None
+        return "exact" if self.count_status == "complete" else "lower_bound"
 
 
 class PropertyUsageEvidence(BaseModel):
@@ -66,8 +77,16 @@ class PropertyUsageEvidence(BaseModel):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def support_fraction(self) -> float | None:
-        """Return subjects with the property over eligible subjects, or None when unknown."""
-        if self.eligible_subjects in (None, 0) or self.subjects_with_property is None:
+        """Return subjects with the property over eligible subjects, or None when unknown.
+
+        A denominator that is only a lower bound (denominator_state not complete) gives no
+        fraction: the fraction over it would be too large.
+        """
+        if (
+            self.eligible_subjects in (None, 0)
+            or self.subjects_with_property is None
+            or self.denominator_state != "complete"
+        ):
             return None
         return self.subjects_with_property / self.eligible_subjects
 
@@ -85,13 +104,14 @@ class PropertyUsageCollection(BaseModel):
 
 def _edges(classes: list[str], property_uri: str | None, context: list[str] | None) -> str:
     """Match class members' edges other than rdf:type, with constants where possible."""
-    from rdfsolve.mining.query_builders import _bound
+    from rdfsolve.mining.query_builders import MEMBERSHIP, _bound, membership_path
 
     if context:
         raise ValueError("Property evidence reads types from the selected data only")
     values, cls, prop, binds = _bound(classes, property_uri)
-    rest = "" if property_uri else f" FILTER(?p != <{RDF_TYPE}>)"
-    return f"{values} ?s a {cls} . ?s {prop} ?o .{rest}{binds}"
+    members = ", ".join(f"<{p}>" for p in MEMBERSHIP.get())
+    rest = "" if property_uri else f" FILTER(?p NOT IN ({members}))"
+    return f"{values} ?s {membership_path()} {cls} . ?s {prop} ?o .{rest}{binds}"
 
 
 def _dataset_clause(graph_uris: list[str] | None) -> str:
@@ -280,11 +300,21 @@ def collect_property_usage_evidence(
     collect_datatypes: bool = True,
     collect_histograms: bool = False,
     shared_extensions: dict[str, str] | None = None,
+    stated: dict[tuple[str, str], dict[str, Any]] | None = None,
+    stated_by: str = "",
 ) -> PropertyUsageCollection:
     """Collect subject-level class/property support with bounded query fallback.
 
     shared_extensions maps a class to one verified to have the same members; its
     records are copied from that class instead of measured again.
+
+    stated holds, for (class, property), the measures that a published description states
+    (rdfsolve.mining.void_strategy.void_property_usage: triples, subjects, objects,
+    literals, datatypes); the classes it holds are not queried, and their records say so
+    (purpose "stated/<stated_by>", and a reason for each measure it does not give).
+
+    A class whose measured subjects with a property exceed its stated population has a wrong
+    population: it is replaced by that lower bound, with the state "partial".
     """
     graph_scope = list(graph_uris or [])
     semantics: Literal["endpoint_default_graph", "rdf_merge_selected_graphs"] = (
@@ -308,9 +338,34 @@ def collect_property_usage_evidence(
     states: list[MeasurementState] = []
 
     shared = {k: v for k, v in (shared_extensions or {}).items() if v in classes}
-    measured = [c for c in classes if c not in shared]
-    for offset in range(0, len(measured), max(1, batch_size)):
-        batch = measured[offset : offset + max(1, batch_size)]
+    stated = stated or {}
+    stated_classes = {cls for cls, _ in stated} & set(classes)
+    for (class_iri, prop_iri), measures in sorted(stated.items()):
+        if class_iri in stated_classes and class_iri not in shared:
+            records.append(
+                _stated_record(
+                    class_iri,
+                    prop_iri,
+                    measures,
+                    stated_by,
+                    graph_scope,
+                    semantics,
+                    denominator.get(class_iri),
+                    denominator_states.get(
+                        class_iri, "complete" if class_iri in denominator else "not_run"
+                    ),
+                )
+            )
+    measured = [c for c in classes if c not in shared and c not in stated_classes]
+    size = max(1, batch_size)
+    for offset in range(0, len(measured), size):
+        batch = measured[offset : offset + size]
+        logger.info(
+            "Property usage evidence: batch %d/%d (%d classes)",
+            offset // size + 1,
+            -(-len(measured) // size),
+            len(batch),
+        )
         outcome = query_with_bisect(
             batch,
             graph_scope or None,
@@ -457,7 +512,11 @@ def collect_property_usage_evidence(
             for key, record in batch_records.items():
                 record.histogram_state = detail_state.model_copy(deep=True)
                 histogram = dict(exact.get(key, {}))
-                if detail_state.status == "complete" and record.eligible_subjects is not None:
+                if (
+                    detail_state.status == "complete"
+                    and record.eligible_subjects is not None
+                    and record.denominator_state == "complete"
+                ):
                     zero = record.eligible_subjects - nonzero_subjects.get(key, 0)
                     if zero >= 0:
                         histogram["0"] = zero
@@ -477,6 +536,7 @@ def collect_property_usage_evidence(
             if r.subject_class == source
         )
     records.sort(key=lambda row: (row.subject_class, row.property_uri))
+    _bound_contradicted_populations(class_populations, records)
     return PropertyUsageCollection(
         dataset_id=dataset_id,
         graph_scope=graph_scope,
@@ -485,6 +545,99 @@ def collect_property_usage_evidence(
         records=records,
         batch_states=states,
     )
+
+
+def _stated_record(
+    class_iri: str,
+    prop_iri: str,
+    measures: dict[str, Any],
+    stated_by: str,
+    graph_scope: list[str],
+    semantics: Literal["endpoint_default_graph", "rdf_merge_selected_graphs"],
+    eligible: int | None,
+    denominator_state: str,
+) -> PropertyUsageEvidence:
+    """Return the record of a class and property from the measures that a description states."""
+    purpose = f"stated/{stated_by}" if stated_by else "stated"
+    not_given = "not_queried: the description does not state it"
+    triples, subjects, objects = (
+        measures.get("triples"),
+        measures.get("subjects"),
+        measures.get("objects"),
+    )
+    summary_missing = [
+        f"{name} {not_given}"
+        for name, value in (("triples", triples), ("subjects", subjects), ("objects", objects))
+        if value is None
+    ]
+    datatypes: dict[str, int] = dict(measures.get("datatypes") or {})
+    literal_triples = sum(datatypes.values())
+    if triples is not None and literal_triples == triples:
+        node_kinds = {"Literal": triples} if triples else {}
+        node_state = MeasurementState(status="complete", purpose=purpose)
+    else:
+        node_kinds = {"Literal": literal_triples} if literal_triples else {}
+        node_state = MeasurementState(
+            status="partial" if literal_triples else "not_run",
+            purpose=purpose,
+            failures=[f"IRI and blank-node objects {not_given}"],
+        )
+    datatype_state = MeasurementState(
+        status="complete" if triples is not None else "partial",
+        purpose=purpose,
+        failures=[] if triples is not None else [f"literal triples {not_given}"],
+    )
+    return PropertyUsageEvidence(
+        subject_class=class_iri,
+        property_uri=prop_iri,
+        graph_scope=graph_scope,
+        scope_semantics=semantics,
+        eligible_subjects=eligible,
+        denominator_state=denominator_state,
+        subjects_with_property=subjects,
+        triple_count=triples,
+        distinct_objects=objects,
+        summary_state=MeasurementState(
+            status="partial" if summary_missing else "complete",
+            purpose=purpose,
+            failures=summary_missing,
+        ),
+        node_kind_counts=node_kinds,
+        node_kind_state=node_state,
+        datatype_counts=datatypes,
+        datatype_state=datatype_state,
+    )
+
+
+def _bound_contradicted_populations(
+    populations: list[ClassPopulationEvidence], records: list[PropertyUsageEvidence]
+) -> None:
+    """Replace a class population that its own records contradict by their lower bound.
+
+    The subjects of a class that carry a property are members of the class: a population
+    below them is wrong.
+    """
+    most: dict[str, int] = {}
+    for record in records:
+        if record.subjects_with_property is not None:
+            most[record.subject_class] = max(
+                most.get(record.subject_class, 0), record.subjects_with_property
+            )
+    for population in populations:
+        bound = most.get(population.class_iri)
+        if bound is None or population.subject_count is None or population.subject_count >= bound:
+            continue
+        logger.warning(
+            "Class %s: %d members recorded, but %d subjects carry one of its properties; "
+            "the population is kept as a lower bound",
+            population.class_iri,
+            population.subject_count,
+            bound,
+        )
+        population.subject_count, population.count_status = bound, "partial"
+        for record in records:
+            if record.subject_class == population.class_iri:
+                record.eligible_subjects, record.denominator_state = bound, "partial"
 
 
 __all__ = [

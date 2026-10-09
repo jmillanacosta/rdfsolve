@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdfsolve"
-version = "0.1.0"
+version = "0.2.0-dev"
 description = "Wraps several RDF schema solver tools"
 readme = "README.md"
 authors = [
@@ -30,8 +30,6 @@ classifiers = [
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
-   "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
@@ -51,7 +49,7 @@ keywords = [
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
 license = { file = "LICENSE" }
 
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.0",
     "requests>=2.0",
@@ -81,6 +79,7 @@ dependencies = [
     "tqdm", # progress bars
     "pyyaml>=6.0", # YAML source registry
     "pyarrow>=23.0.1", # Parquet support for DataFrames; 22.0.0 has a security advisory
+    "polars[rt64]>=2.0", # scan mining: counts over the rows a local index streams (64-bit row indexes, for tables past 2^32 rows)
     # CLI and web framework
     "click",
     "more_click",
@@ -94,8 +93,10 @@ agents = [
     "python-dotenv==1.2.3",
 ]
 mcp = ["mcp==2.2.0"]
+reconciliation = ["nanopub>=2.2,<3"]
 tests = [
     "pyshacl>=0.27,<1",
+    "nanopub>=2.2,<3",
     "psutil>=5.9",
     "pydantic-ai-slim[openai]==2.0.0",
     "mcp==2.2.0",
@@ -179,7 +180,7 @@ plugins = [
 
 [[tool.mypy.overrides]]
 # These upstream packages do not publish type information.
-module = ["linkml.*", "linkml_runtime.*"]
+module = ["linkml.*", "linkml_runtime.*", "pyarrow.*", "IPython.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -320,7 +321,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.1.0"
+current_version = "0.2.0-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

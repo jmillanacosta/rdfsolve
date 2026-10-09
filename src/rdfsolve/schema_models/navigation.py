@@ -74,9 +74,13 @@ class NavigationSummary(BaseModel):
     matched_by_length: dict[int, int] = Field(default_factory=dict)
     complete_lengths: list[int] = Field(default_factory=list)
     budget_s: float | None = Field(default=None, ge=0)
-    stop_reason: Literal["budget"] | None = None
+    # "budget": the time budget was spent; "endpoint_cuts": the endpoint cut the queries of a
+    # purpose at a fixed limit, and the search sent no more queries (cuts says which, why, and
+    # how many queries were cut and not sent; rdfsolve.sparql_helper.QueryCuts).
+    stop_reason: Literal["budget", "endpoint_cuts"] | None = None
     query_count: int = Field(default=0, ge=0)
     failed_queries: int = Field(default=0, ge=0)
+    cuts: dict[str, dict[str, Any]] = Field(default_factory=dict)
     # Member terms of the groups of ontology terms that kept paths go through (for their queries)
     member_terms: dict[str, list[str]] = Field(default_factory=dict)
 
@@ -145,3 +149,99 @@ class NavigationSummary(BaseModel):
             "type_context_graph_uris": list(first.type_context_graph_uris) if first else [],
         }
         return data
+
+
+def read_tested_paths(
+    path: Any, start_classes: Any = None, max_hops: int | None = None
+) -> list[NavigationPath]:
+    """Read the tested paths of a saved schema, only those that start at *start_classes*.
+
+    *path* is a schema JSON file (MinedSchema.to_json) whose navigation was tested on the data.
+    The paths are kept packed in the file (each step once, each path as step numbers); only the
+    paths whose first step starts at one of *start_classes* (class IRIs; all when None) and that
+    have at most *max_hops* steps become NavigationPath objects, so a few classes' paths can be
+    read without building all of them.
+    """
+    import json
+    from pathlib import Path
+
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    navigation = (data.get("schema", data) or {}).get("navigation") or {}
+    packed = navigation.get("paths")
+    if not isinstance(packed, dict):
+        return []
+    edges = packed.get("edges", [])
+    wanted = None if start_classes is None else set(start_classes)
+    shared = {
+        "evidence": "instance_tested",
+        "instance_support": "matched",
+        "graph_uris": packed.get("graph_uris", []),
+        "type_context_graph_uris": packed.get("type_context_graph_uris", []),
+    }
+    found = []
+    for row in packed.get("rows", []):
+        ids = row["edges"]
+        if (max_hops is not None and len(ids) > max_hops) or (
+            wanted is not None and edges[ids[0]].get("subject_class") not in wanted
+        ):
+            continue
+        found.append(
+            NavigationPath.model_validate(
+                {
+                    **shared,
+                    "steps": [edges[i] for i in ids],
+                    "matched_sources": row.get("matched"),
+                    "source_count": row.get("sources"),
+                    "observed_at": row.get("at"),
+                }
+            )
+        )
+    return found
+
+
+def tested_step_support(
+    path: Any, start_classes: Any = None
+) -> dict[tuple[str, str], tuple[int, int]]:
+    """Return, for each first step (class, property) of the tested paths of a saved schema, the
+    most matched records of the paths that start with it, and their start records.
+
+    Read from the packed paths without building them (read_tested_paths builds them); only
+    paths that start at *start_classes* (all when None) count.
+    """
+    import json
+    from pathlib import Path
+
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    packed = ((data.get("schema", data) or {}).get("navigation") or {}).get("paths")
+    if not isinstance(packed, dict):
+        return {}
+    edges = packed.get("edges", [])
+    wanted = None if start_classes is None else set(start_classes)
+    support: dict[tuple[str, str], tuple[int, int]] = {}
+    for row in packed.get("rows", []):
+        first = edges[row["edges"][0]]
+        key = (str(first.get("subject_class")), str(first.get("property_uri")))
+        if wanted is not None and key[0] not in wanted:
+            continue
+        matched, sources = row.get("matched") or 0, row.get("sources") or 0
+        seen = support.get(key, (0, 0))
+        if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
+            support[key] = (matched, sources)
+    return support
+
+
+def step_support(paths: Any) -> dict[tuple[str, str], tuple[int, int]]:
+    """Return, for each first step (class, property) of tested paths, the most matched records of
+    the paths that start with it, and their start records (as tested_step_support, from paths).
+    """
+    support: dict[tuple[str, str], tuple[int, int]] = {}
+    for route in paths:
+        if route.instance_support != "matched" or not route.steps:
+            continue
+        step = route.steps[0]
+        key = (step.subject_class, step.property_uri)
+        matched, sources = route.matched_sources or 0, route.source_count or 0
+        seen = support.get(key, (0, 0))
+        if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
+            support[key] = (matched, sources)
+    return support

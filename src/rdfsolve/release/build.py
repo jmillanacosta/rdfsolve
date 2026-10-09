@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import mimetypes
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +17,10 @@ from rdfsolve.models.source_model import SourceModel
 from .model import (
     DatasetReleaseRecord,
     ExtractionReleaseRecord,
+    GraphPartExtraction,
+    GraphPartReleaseRecord,
+    InputArchiveRecord,
+    InputDownloadRecord,
     OntologyReleaseRef,
     OntologyUsageReleaseRecord,
     ReleaseArtifact,
@@ -29,6 +33,14 @@ _SELF_FILES = {
     "summary.json",
     "summary.tsv",
     "validation_release.json",
+}
+# The folder of the recipe of a local index (rdfsolve.qlever.recipe.RECIPE_DIR) and the roles of
+# its files that are not the recipe itself.
+INDEX_RECIPE_SUFFIX = "_index_recipe"
+INDEX_RECIPE_ROLES = {
+    "input-repairs.json": "input_repairs",
+    "export-manifest.json": "export_manifest",
+    "export-manifest-notes.json": "export_manifest_notes",
 }
 
 
@@ -58,6 +70,7 @@ def _media_type(path: Path) -> str | None:
         ".tsv": "text/tab-separated-values",
         ".tsv.gz": "application/gzip",
         ".txt": "text/plain",
+        ".parquet": "application/vnd.apache.parquet",
     }
     if suffixes in overrides:
         return overrides[suffixes]
@@ -68,11 +81,17 @@ def _media_type(path: Path) -> str | None:
 
 def _role(path: Path) -> str | None:
     name = path.name
+    if path.parent.name.endswith(INDEX_RECIPE_SUFFIX):
+        # The recipe of a local index (rdfsolve.qlever.recipe): its files have generic names.
+        return INDEX_RECIPE_ROLES.get(name, "index_recipe")
+    if name.endswith("_engine.json"):
+        return "engine_record"
     if name == "scientific_checks.json":
         return "scientific_validation_plan"
     if name.endswith("scientific_check_results.json"):
         return "scientific_validation_results"
     for marker, role in (
+        ("_graph_parts.json", "graph_parts_index"),
         ("_schema.json", "canonical_schema"),
         ("_schema.jsonld", "schema_jsonld"),
         ("_report.json", "mining_report"),
@@ -81,6 +100,10 @@ def _role(path: Path) -> str | None:
         ("_property_usage.json", "property_usage_evidence"),
         ("_declared_artifacts.json", "declared_artifact_index"),
         ("_paths.shacl.ttl", "generated_path_shapes"),
+        ("_observed_shapes.ttl", "observed_shapes"),
+        ("_observed_profiles.json", "observed_profiles"),
+        ("_term_classes.parquet", "term_classes"),
+        ("_terms.parquet", "term_patterns"),
         ("_endpoint_match.json", "endpoint_match"),
         ("_declared_identities.sssom.tsv", "declared_identities"),
         ("_declared_identities.json", "declared_identities_summary"),
@@ -88,11 +111,14 @@ def _role(path: Path) -> str | None:
         ("_ontology.ttl", "generated_ontology_slice"),
         ("_void.ttl", "generated_void"),
         ("_dataset.trig", "retrieved_dataset_description"),
+        ("_inputs.json", "input_manifest"),
     ):
         if name.endswith(marker):
             return role
     if name == "sources.yaml":
         return "source_registry"
+    if name in {"registry.ttl", "registry.jsonld"}:
+        return "source_registry_rdf"
     if name == "environment.txt":
         return "environment"
     if name.endswith(("config.yaml", "config.yml")) or name in {
@@ -102,6 +128,8 @@ def _role(path: Path) -> str | None:
         return "pipeline_config"
     if name == "code_commit.txt":
         return "code_commit"
+    if name == "input_archive.json":
+        return "input_archive_record"
     if name == "identity_overrides.yaml":
         return "identity_overrides"
     if name == "sssom_sources.yaml":
@@ -125,6 +153,72 @@ def _dataset_for_path(
     if dataset_ids is not None and parent not in dataset_ids:
         return None
     return parent
+
+
+def _in_graph_part(rel: Path) -> bool:
+    """Return whether a run file is an output of a per-graph part of a source."""
+    from rdfsolve.graph_parts import GRAPHS_DIR
+
+    return len(rel.parts) > 3 and rel.parts[1] == GRAPHS_DIR
+
+
+def _graph_parts(
+    run_root: Path,
+    dataset_id: str,
+    artifacts: dict[str, ReleaseArtifact],
+    extractions: list[ExtractionReleaseRecord],
+) -> list[GraphPartReleaseRecord]:
+    """Read the per-graph parts of a source from its graph-part indexes, one per extraction."""
+    from rdfsolve.graph_parts import INDEX_SUFFIX
+
+    directory = run_root / dataset_id
+    if not directory.is_dir():
+        return []
+    completion = {item.mode: item.completion_state for item in extractions}
+    parts: dict[str, GraphPartReleaseRecord] = {}
+    for index in sorted(directory.glob(f"*{INDEX_SUFFIX}")):
+        raw = _load_json(index)
+        mode = str(raw.get("mode") or "unknown")
+        for row in raw.get("parts") or []:
+            if not isinstance(row, dict) or not row.get("name") or not row.get("graph"):
+                continue
+            name = str(row["name"])
+            part = parts.setdefault(
+                name,
+                GraphPartReleaseRecord(
+                    graph_uri=str(row["graph"]),
+                    name=name,
+                    registry_entry=row.get("registry_entry"),
+                    classes_as_data=bool(row.get("classes_as_data")),
+                    membership_properties=list(row.get("membership_properties") or []),
+                    own_settings=bool(row.get("own_settings")),
+                ),
+            )
+            schema = directory / str(row["schema"]) if row.get("schema") else None
+            relative = schema.relative_to(run_root).as_posix() if schema else None
+            artifact = artifacts.get(relative) if relative else None
+            about = _schema_metadata(schema) if artifact is not None and schema else {}
+            report = (
+                schema.with_name(schema.name.replace("_schema.json", "_report.json"))
+                if schema
+                else None
+            )
+            state = (
+                _completion(_load_json(report))
+                if report is not None and report.is_file()
+                else completion.get(mode, "unknown")
+            )
+            part.extractions.append(
+                GraphPartExtraction(
+                    mode=mode,
+                    derivation=str(row.get("derivation") or "unknown"),
+                    completion_state=state,
+                    schema_path=relative if artifact is not None else None,
+                    schema_artifact_id=artifact.artifact_id if artifact is not None else None,
+                    snapshot_id=about.get("snapshot_id") or None,
+                )
+            )
+    return [parts[name] for name in sorted(parts)]
 
 
 def _identity_check(path: Path, role: str | None) -> tuple[str | None, str | None]:
@@ -153,6 +247,9 @@ def inventory_artifacts(
         rel = path.relative_to(run_root)
         digest = sha256_file(path)
         role = _role(path)
+        if role is not None and _in_graph_part(rel):
+            # The schema of one graph of a source is not another schema of the source.
+            role = f"graph_part_{role}"
         identity_check, identity_check_note = _identity_check(path, role)
         rows.append(
             ReleaseArtifact(
@@ -357,6 +454,99 @@ def _artifact_refs_by_dataset(artifacts: list[ReleaseArtifact]) -> dict[str, lis
     return out
 
 
+def _input_pins(
+    run_root: Path, dataset_id: str, artifacts: list[ReleaseArtifact]
+) -> dict[str, Any]:
+    """Return the fields of a dataset record that name the pinned inputs of its local index."""
+    paths = sorted((run_root / dataset_id).glob("*_inputs.json"))
+    if not paths:
+        return {}
+    path = paths[0]
+    manifest = _load_json(path)
+    relative = path.relative_to(run_root).as_posix()
+    artifact = next((a for a in artifacts if a.path == relative), None)
+    files = manifest.get("files") or []
+    downloads = []
+    for item in manifest.get("downloads") or []:
+        release = item.get("release") or {}
+        size = item.get("bytes")
+        downloads.append(
+            InputDownloadRecord(
+                url=item["url"],
+                final_url=item.get("final_url"),
+                path=item.get("path"),
+                sha256=item.get("sha256"),
+                byte_size=size if isinstance(size, int) else None,
+                last_modified=item.get("last_modified"),
+                etag=item.get("etag"),
+                release_version=release.get("version"),
+                release_metalink=release.get("metalink"),
+                publisher_check=item.get("publisher_check"),
+            )
+        )
+    return {
+        "input_manifest_artifact": artifact.artifact_id if artifact else None,
+        "input_manifest_path": relative,
+        "inputs_recorded": manifest.get("recorded"),
+        "input_file_count": len(files),
+        "input_byte_size": sum(int(item.get("bytes") or 0) for item in files),
+        "input_release_versions": [str(v) for v in manifest.get("release_versions") or []],
+        "input_downloads": downloads,
+    }
+
+
+def _pins_of_graph_parts(run_root: Path, datasets: list[DatasetReleaseRecord]) -> None:
+    """Name the pinned inputs of a source in each of its graph parts, and in the registry
+    entry that is one of its graphs: the pins belong to the source, whose index the part's
+    schema was mined from.
+    """
+    from rdfsolve.qlever.inputs import graph_input_directory
+
+    by_id = {dataset.dataset_id: dataset for dataset in datasets}
+    for dataset in datasets:
+        if not dataset.input_manifest_path:
+            continue
+        files = (_load_json(run_root / dataset.input_manifest_path).get("files")) or []
+        paths = [str(item.get("path")) for item in files if isinstance(item, dict)]
+        for part in dataset.graph_parts:
+            prefix = graph_input_directory(Path(), part.graph_uri).as_posix() + "/"
+            part.input_manifest_artifact = dataset.input_manifest_artifact
+            part.input_paths = sorted(path for path in paths if path.startswith(prefix))
+    for dataset in datasets:
+        source = by_id.get(dataset.graph_part_of or "")
+        if source is not None and dataset.input_manifest_path is None:
+            dataset.input_manifest_artifact = source.input_manifest_artifact
+            dataset.input_manifest_path = source.input_manifest_path
+            dataset.inputs_recorded = source.inputs_recorded
+
+
+def _input_archive(
+    run_root: Path, datasets: list[DatasetReleaseRecord], artifacts: list[ReleaseArtifact]
+) -> InputArchiveRecord | None:
+    """Return where the run's downloaded inputs are kept, and name each archived download's
+    path in it (rdfsolve.release.input_archive); None when they were not archived.
+    """
+    from rdfsolve.release.input_archive import ARCHIVE_RECORD
+
+    path = run_root / ARCHIVE_RECORD
+    if not path.is_file():
+        return None
+    record = _load_json(path)
+    archived = record.get("files") or {}
+    for dataset in datasets:
+        for item in dataset.input_downloads:
+            item.archive_path = archived.get(f"{dataset.dataset_id}:{item.url}")
+    return InputArchiveRecord(
+        packaging=record["packaging"],
+        location=record["location"],
+        created=record.get("created"),
+        manifest_sha256=record["manifest_sha256"],
+        file_count=record["file_count"],
+        byte_size=record["byte_size"],
+        record_artifact=next((a.artifact_id for a in artifacts if a.path == ARCHIVE_RECORD), None),
+    )
+
+
 def _snapshot_id(dataset_id: str, about: dict[str, Any], report: dict[str, Any]) -> str:
     """Return the one snapshot identity used throughout rdfsolve.
 
@@ -449,6 +639,7 @@ def build_release_manifest(
     artifacts = inventory_artifacts(run_root, dataset_ids=set(dataset_ids))
     artifact_ids = _artifact_refs_by_dataset(artifacts)
 
+    by_path = {artifact.path: artifact for artifact in artifacts}
     datasets: list[DatasetReleaseRecord] = []
     for dataset_id in dataset_ids:
         source = sources.get(dataset_id, {})
@@ -470,6 +661,7 @@ def build_release_manifest(
                 ExtractionReleaseRecord(
                     mode=_report_mode(extraction_report),
                     completion_state=_completion(raw),
+                    sampled_queries=len(raw.get("sampled_queries") or []),
                     report_path=extraction_report.relative_to(run_root).as_posix()
                     if extraction_report.exists()
                     else None,
@@ -514,6 +706,7 @@ def build_release_manifest(
                 access_files=access_files,
                 graph_scope=[str(item) for item in graphs],
                 graph_sources=source.get("graph_sources") or {},
+                sampled_graphs=source.get("sampled_graphs") or {},
                 extraction_mode=mode,
                 completion_state=_combined_completion(
                     [item.completion_state for item in extractions]
@@ -524,8 +717,21 @@ def build_release_manifest(
                 ontology_evidence_context=ontology_context,
                 local_ontology_file_candidate_count=local_ontology_file_count,
                 ontology_usages=_ontology_usages(run_root, dataset_id),
+                graph_parts=_graph_parts(run_root, dataset_id, by_path, extractions),
+                **_input_pins(run_root, dataset_id, artifacts),
             )
         )
+    # An entry that is one graph of a source mined across its graphs points to that source.
+    part_of = {
+        part.registry_entry: dataset.dataset_id
+        for dataset in datasets
+        for part in dataset.graph_parts
+        if part.registry_entry
+    }
+    for dataset in datasets:
+        dataset.graph_part_of = part_of.get(dataset.dataset_id)
+    _pins_of_graph_parts(run_root, datasets)
+    input_archive = _input_archive(run_root, datasets, artifacts)
 
     code_commit = None
     commit_path = run_root / "code_commit.txt"
@@ -574,7 +780,7 @@ def build_release_manifest(
     return ReleaseManifest(
         release_id=release_id,
         base_uri=frozen_base_uri,
-        issued=issued or datetime.now(timezone.utc),
+        issued=issued or datetime.now(UTC),
         rdfsolve_version=rdfsolve_version,
         code_commit=code_commit,
         run_root=run_root.name,
@@ -588,6 +794,7 @@ def build_release_manifest(
         identity_review_error=identity_review_error,
         ontology_registry_artifact=ontology_registry_artifact,
         service_records=service_records,
+        input_archive=input_archive,
         datasets=datasets,
         artifacts=artifacts,
     )

@@ -13,6 +13,7 @@ from __future__ import annotations
 import functools
 import hashlib
 import json
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -23,7 +24,7 @@ from rdflib import URIRef
 from rdfsolve._uri import make_expander
 from rdfsolve.models.source_model import SourceModel
 from rdfsolve.schema_models.enrichment import RdfTerm
-from rdfsolve.schema_models.paths import absolute_iri
+from rdfsolve.schema_models.paths import absolute_iri, is_rdf_iri
 
 
 @dataclass(frozen=True)
@@ -81,7 +82,7 @@ def registry_uri_formats() -> dict[str, tuple[str, ...]]:
 def _valid_iri(text: str) -> str | None:
     """Return the IRI, or None when it is not valid (registries list some formats with spaces)."""
     try:
-        return absolute_iri(text)
+        return absolute_iri(text) if is_rdf_iri(text) else None
     except ValueError:
         return None
 
@@ -89,9 +90,12 @@ def _valid_iri(text: str) -> str | None:
 def parse(value: Any) -> Identifier | None:
     """Read an identifier written as a registered IRI or a CURIE; None for anything else.
 
-    An identifiers.org IRI that Bioregistry reads as idot (http://identifiers.org/mgi/101757) is
-    read as namespace/identifier. The local identifier is standardized (CHEBI:15377 is chebi
-    15377).
+    An identifiers.org IRI that Bioregistry reads as idot (identifiers.org/<namespace>/<id>) is
+    read as namespace/identifier. An identifiers.org or n2t.net IRI names its namespace, and
+    that namespace is kept when it is registered and the identifier is valid in it, even where
+    Bioregistry would read the IRI under another prefix, so that the identifier matches the
+    CURIEs that other sources write for it. The local identifier is standardized (Bioregistry's
+    standard form, without a redundant prefix).
     """
     import bioregistry
 
@@ -100,6 +104,7 @@ def parse(value: Any) -> Identifier | None:
         prefix, local = bioregistry.parse_iri(text) or (None, None)
         if prefix == "idot" and local and "/" in local:
             prefix, _, local = local.partition("/")
+        prefix, local = _named_namespace(text) or (prefix, local)
     elif ":" in text and not any(c.isspace() for c in text):
         prefix, local = bioregistry.parse_curie(text) or (None, None)
     else:
@@ -110,6 +115,28 @@ def parse(value: Any) -> Identifier | None:
     local = resource.standardize_identifier(local)
     valid = resource.is_valid_identifier(local) if resource.get_pattern() else None
     return Identifier(resource.prefix, local, valid)
+
+
+_RESOLVERS = re.compile(r"^https?://(?:www\.)?(?:identifiers\.org|n2t\.net)/([^/:]+)[/:](.+)$")
+
+
+def _named_namespace(iri: str) -> tuple[str, str] | None:
+    """Return the namespace and identifier that a resolver IRI names, when the namespace is
+    registered and the identifier valid in it.
+    """
+    import bioregistry
+
+    match = _RESOLVERS.match(iri)
+    if match is None:
+        return None
+    prefix = bioregistry.normalize_prefix(match[1])
+    resource = bioregistry.get_resource(prefix) if prefix else None
+    if resource is None:
+        return None
+    local = resource.standardize_identifier(match[2])
+    if resource.get_pattern() and not resource.is_valid_identifier(local):
+        return None
+    return resource.prefix, local
 
 
 def curie(value: Any) -> str:

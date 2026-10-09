@@ -72,6 +72,9 @@ class ExtractionReleaseRecord(BaseModel):
 
     mode: str
     completion_state: CompletionState = "unknown"
+    # Refused queries answered over a bounded sample (report sampled_queries): not failures;
+    # their rows are flagged sampled in the schema, with lower-bound counts.
+    sampled_queries: int = Field(0, ge=0)
     report_path: str | None = None
     snapshot_id: str | None = None
     schema_path: str | None = None
@@ -81,6 +84,70 @@ class ExtractionReleaseRecord(BaseModel):
     ontology_graph_scope: list[str] = Field(default_factory=list)
     endpoint: str | None = None
     retrieved_at: str | None = None
+
+
+class GraphPartExtraction(BaseModel):
+    """The schema of one data graph of a source from one extraction of the source."""
+
+    mode: str
+    # edge_graph_split, mined_with_graph_settings, void_scoped_to_graph or not_in_void
+    derivation: str
+    completion_state: CompletionState = "unknown"
+    schema_path: str | None = None
+    schema_artifact_id: str | None = None
+    snapshot_id: str | None = None
+
+
+class GraphPartReleaseRecord(BaseModel):
+    """One data graph of a source mined across several graphs, with its own schemas.
+
+    ``registry_entry`` names the registry entry that is this graph of the source (a graph
+    scope), whose own record points back with ``graph_part_of``.
+    """
+
+    graph_uri: str
+    name: str
+    registry_entry: str | None = None
+    classes_as_data: bool = False
+    membership_properties: list[str] = Field(default_factory=list)
+    own_settings: bool = False
+    extractions: list[GraphPartExtraction] = Field(default_factory=list)
+    # The pin of the source's inputs (the index is the source's), and the pinned files that
+    # hold this graph (graph_sources), by their path in it
+    input_manifest_artifact: str | None = None
+    input_paths: list[str] = Field(default_factory=list)
+
+
+class InputDownloadRecord(BaseModel):
+    """One downloaded file that a local index was built from, pinned when it was downloaded."""
+
+    url: str
+    final_url: str | None = None
+    path: str | None = None
+    sha256: str | None = None
+    byte_size: int | None = Field(default=None, ge=0)
+    last_modified: str | None = None
+    etag: str | None = None
+    release_version: str | None = None
+    release_metalink: str | None = None
+    # The file compared with the size and hashes of its publisher's metalink
+    publisher_check: Literal["match", "mismatch", "unchecked"] | None = None
+    # Its path in the run's input archive (ReleaseManifest.input_archive), when it was archived
+    archive_path: str | None = None
+
+
+class InputArchiveRecord(BaseModel):
+    """Where the downloaded inputs of a run are kept (rdfsolve.release.input_archive)."""
+
+    packaging: str
+    # The bag's path or, once deposited, its URL or DOI
+    location: str
+    created: str | None = None
+    # SHA-256 of the bag's manifest-sha256.txt, which lists each file's pinned SHA-256
+    manifest_sha256: str
+    file_count: int = Field(ge=0)
+    byte_size: int = Field(ge=0)
+    record_artifact: str | None = None
 
 
 class DatasetReleaseRecord(BaseModel):
@@ -97,6 +164,17 @@ class DatasetReleaseRecord(BaseModel):
     access_files: dict[str, list[str]] = Field(default_factory=dict)
     graph_scope: list[str] = Field(default_factory=list)
     graph_sources: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    # Graphs whose local inputs are a sample of the endpoint's graph, with how they were sampled.
+    sampled_graphs: dict[str, str] = Field(default_factory=dict)
+    # The pin of the files a local index was built from (<dataset>_inputs.json): every file
+    # with its SHA-256 is in the artifact; the downloads are listed here.
+    input_manifest_artifact: str | None = None
+    input_manifest_path: str | None = None
+    inputs_recorded: Literal["before_index", "after_index"] | None = None
+    input_file_count: int | None = None
+    input_byte_size: int | None = None
+    input_release_versions: list[str] = Field(default_factory=list)
+    input_downloads: list[InputDownloadRecord] = Field(default_factory=list)
     extraction_mode: str | None = None
     completion_state: CompletionState = "unknown"
     report_path: str | None = None
@@ -105,6 +183,10 @@ class DatasetReleaseRecord(BaseModel):
     ontology_evidence_context: str | None = None
     local_ontology_file_candidate_count: int = 0
     ontology_usages: list[OntologyUsageReleaseRecord] = Field(default_factory=list)
+    # The schemas of each data graph of a source mined across several graphs (rdfsolve.graph_parts)
+    graph_parts: list[GraphPartReleaseRecord] = Field(default_factory=list)
+    # The source whose per-graph schema of this entry's graph is this entry's schema
+    graph_part_of: str | None = None
 
 
 class ReleaseManifest(BaseModel):
@@ -126,6 +208,8 @@ class ReleaseManifest(BaseModel):
     identity_review_error: str | None = None
     ontology_registry_artifact: str | None = None
     service_records: list[str] = Field(default_factory=list)
+    # The copy of the downloaded inputs of the local indexes, when one was made
+    input_archive: InputArchiveRecord | None = None
     datasets: list[DatasetReleaseRecord] = Field(default_factory=list)
     artifacts: list[ReleaseArtifact] = Field(default_factory=list)
 

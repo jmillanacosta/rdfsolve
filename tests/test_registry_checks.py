@@ -87,3 +87,30 @@ def test_registry_report_identifies_bad_inputs_without_writing_them(tmp_path, mo
     assert not any(r["severity"] == "error" for r in held_findings), held_findings
     assert any(r["check_id"] == "B1" for r in held_findings), "Held conflicts stay visible"
     assert any("canonical count=None" in r["detail"] for r in held_findings)
+
+
+def test_a_download_from_another_source_s_folder_is_flagged(tmp_path):
+    """An entry whose files sit in a folder named after another source may hold that source's
+    data; a provider's copy (provider.dataset) of a dataset is not flagged."""
+    sources = tmp_path / "sources.yaml"
+    sources.write_text(
+        yaml.safe_dump(
+            [
+                {"name": "other", "graph_uris": []},
+                {
+                    "name": "dict",
+                    "graph_uris": [],
+                    "download_nt": "https://ftp.example.org/other/dict.nt.gz",
+                },
+                {
+                    "name": "mirror.other",
+                    "graph_uris": [],
+                    "download_nt": "https://m.example.org/other/x.nt",
+                },
+            ]
+        )
+    )
+    flagged = {
+        (r["sources"], r["severity"]) for r in check_registry(sources) if r["check_id"] == "A7"
+    }
+    assert flagged == {("dict", "warn")}

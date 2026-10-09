@@ -451,7 +451,8 @@ class MinedSchema(BaseModel):
                 shape.target_class for shape in self.shapes.node_shapes if shape.target_class
             )
         for p in self.patterns:
-            classes.add(p.subject_class)
+            if not p.untyped_subject:
+                classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
         for profile in self.collections or []:
@@ -627,8 +628,13 @@ class MinedSchema(BaseModel):
             logging.getLogger(__name__).warning(
                 "VoID does not encode SHACL profiles, collections or composed navigation. Keep canonical JSON."
             )
-        return to_void_graph(
-            trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
+
+        return rdf_terms_only(
+            to_void_graph(
+                rdf_writable(trim_export_text(self, trim_descriptions)),
+                trim_descriptions=trim_descriptions,
+            )
         )
 
     def to_linkml(
@@ -644,9 +650,10 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.exporters.linkml import to_linkml
         from rdfsolve.schema_models.exporters.text import clip_description
+        from rdfsolve.schema_models.iri_quality import rdf_writable
 
         return to_linkml(
-            trim_export_text(self, trim_descriptions),
+            rdf_writable(trim_export_text(self, trim_descriptions)),
             schema_name=schema_name or self.about.dataset_name,
             schema_description=clip_description(schema_description, trim_descriptions),
         )
@@ -763,8 +770,9 @@ class MinedSchema(BaseModel):
             @prefix sh: <http://www.w3.org/ns/shacl#> .
         """
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
 
-        schema = trim_export_text(self, trim_descriptions)
+        schema = rdf_writable(trim_export_text(self, trim_descriptions))
         if paths == "without":
             schema = schema.model_copy(update={"navigation": None})
         elif paths == "only":
@@ -780,7 +788,7 @@ class MinedSchema(BaseModel):
         if void:
             graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
         schema.annotate_rdf(graph)
-        result: str = graph.serialize(format="turtle")
+        result: str = rdf_terms_only(graph).serialize(format="turtle")
         return result
 
 
@@ -799,16 +807,39 @@ class MiningResult(BaseModel):
     metadata: Any | None = None
     """Infrastructure descriptions (DCAT/VoID)."""
 
-    def export(self, output_dir: Path) -> None:
-        """Export three separate files."""
+    def export(self, output_dir: Path) -> dict[str, Any]:
+        """Export three separate files and return what they leave out.
+
+        A triple of the ontology or metadata graph whose term is not an RDF IRI cannot be
+        written: it is left out, and the terms are returned per file ({"ontology": ...,
+        "metadata": ...}, the form of a report's iri_findings graphs) and written to
+        iri_findings.json beside the files. The schema's VoID already leaves such rows out.
+        """
+        import logging
+
+        from rdfsolve.schema_models.iri_quality import writable_graph
+
         output_dir.mkdir(parents=True, exist_ok=True)
 
         (output_dir / "schema.ttl").write_text(
             self.data_schema.to_void_graph().serialize(format="turtle")
         )
 
-        if self.ontology is not None:
-            (output_dir / "ontology.ttl").write_text(self.ontology.to_turtle())
-
-        if self.metadata is not None:
-            (output_dir / "metadata.ttl").write_text(self.metadata.to_turtle())
+        left_out: dict[str, Any] = {}
+        for name, part in (("ontology", self.ontology), ("metadata", self.metadata)):
+            if part is None:
+                continue
+            graph, found = writable_graph(part.to_rdf_graph())
+            (output_dir / f"{name}.ttl").write_text(graph.serialize(format="turtle"))
+            if found:
+                logging.getLogger(__name__).warning(
+                    "%s: %d triples with %d terms that are not RDF IRIs left out "
+                    "(iri_findings.json)",
+                    name,
+                    found["triples_left_out"],
+                    len(found["terms"]),
+                )
+                left_out[name] = found
+        if left_out:
+            (output_dir / "iri_findings.json").write_text(_json.dumps(left_out, indent=2))
+        return left_out

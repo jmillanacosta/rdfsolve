@@ -8,9 +8,8 @@ from pydantic import BaseModel, Field
 class ClassExtensions(BaseModel):
     """Classes with the same members, and the nearest classes that hold all members of another.
 
-    A source that states every type of its entities (Bgee: each gene is orth:Gene,
-    orth:SequenceUnit, orth:GeneTreeNode, SO_0000704 and CDAO_0000140) repeats its patterns for
-    each name; a view shows one class for each group. The relations are extensional: they hold
+    A source that states every type of its entities (each one under several class names with
+    the same members) repeats its patterns for each name; a view shows one class for each group. The relations are extensional: they hold
     for the data, and an ontology can declare other relations.
     """
 

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 
 if TYPE_CHECKING:
     from rdfsolve.mappings.models.core import MappingEdge
@@ -52,6 +53,7 @@ def build_connectivity(
     candidates: Sequence[Link] = (),
     routes: Sequence[RouteEvidence] = (),
     min_share: float = 0.5,
+    untyped_subjects: bool = False,
 ) -> Any:
     """Build a directed multigraph with dataset-qualified class nodes.
 
@@ -60,6 +62,12 @@ def build_connectivity(
     remain distinct edges, each with its level of evidence (LEVELS). A link of which no value
     was found is left out. A route across two datasets that was tested on the data (*routes*,
     rdfsolve.mappings.routes) is one edge. No transitive mapping inference is run.
+
+    The subjects without a type of a dataset (its untyped patterns) are not a class. With
+    *untyped_subjects* they are one node, (dataset, "untyped subjects") with untyped=True, with
+    their schema edges to classes; it shares no class with another dataset. Without it (the
+    class graph, as the release analysis counts it) the node is added only for a link or route
+    from or to those subjects.
     """
     import networkx as nx
 
@@ -69,8 +77,13 @@ def build_connectivity(
         for cls in sorted(extract_class_set(schema)):
             graph.add_node((dataset, cls), dataset=dataset, iri=cls)
             occurrences[cls].append(dataset)
+        if untyped_subjects and any(p.untyped_subject for p in schema.patterns):
+            graph.add_node(
+                (dataset, UNTYPED_SUBJECTS_LABEL), dataset=dataset, iri=None, untyped=True
+            )
         for pattern in schema.patterns:
-            left, right = (dataset, pattern.subject_class), (dataset, pattern.object_class)
+            subject = UNTYPED_SUBJECTS_LABEL if pattern.untyped_subject else pattern.subject_class
+            left, right = (dataset, subject), (dataset, pattern.object_class)
             if left in graph and right in graph:
                 graph.add_edge(
                     left,
@@ -99,7 +112,15 @@ def build_connectivity(
         predicate: str | None,
         evidence: dict[str, Any],
     ) -> None:
-        """Add one evidence edge between two schema class nodes."""
+        """Add one evidence edge between two schema class nodes (or untyped-subject nodes)."""
+        for end in (left, right):
+            if (
+                end[1] == UNTYPED_SUBJECTS_LABEL
+                and end[0] in schemas
+                and end not in graph
+                and any(p.untyped_subject for p in schemas[end[0]].patterns)
+            ):
+                graph.add_node(end, dataset=end[0], iri=None, untyped=True)
         if left not in graph or right not in graph:
             raise ValueError(
                 f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"

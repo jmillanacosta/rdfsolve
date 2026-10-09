@@ -1,10 +1,9 @@
 """Mappings that sources state, compared and resolved, as SSSOM records.
 
-A claim is one source stating a mapping: WikiPathways (BridgeDb) says the LIPID MAPS id of a
-metabolite is ChEBI 89488 and 91146; ChEBI, which issues ChEBI ids, says (with a
-cross-reference) that it is 91146 only. Sources disagree, and BridgeDb links depend on the
-BridgeDb release without saying which. So claims keep their source, are compared, and a
-resolution says which are accepted and why.
+A claim is one source stating a mapping between two identifiers. Sources disagree (one states
+two targets, the issuer of the target namespace states one), and a source's links can depend on
+a release of a mapping database without saying which. So claims keep their source, are
+compared, and a resolution says which are accepted and why.
 
 Records follow SSSOM, the Simple Standard for Sharing Ontological Mappings (Matentzoglu et al.
 2022; https://w3id.org/sssom), as sssom-py's Mapping: the stated cross-reference is
@@ -12,20 +11,19 @@ Records follow SSSOM, the Simple Standard for Sharing Ontological Mappings (Mate
 ``semapv:UnspecifiedMatching``; the source that states it is ``mapping_provider``; the IRIs as
 the source wrote them and its property are kept in ``other``, so nothing is lost. Prefixes are
 written as Bioregistry normalizes them. An identifier that fails the pattern of its namespace
-(a UniProt proteome IRI with a fragment) is no SSSOM record; the claims list it as invalid.
+is no SSSOM record; the claims list it as invalid.
 
 The resolution follows the assembly and prioritization of SeMRA, the Semantic Mapping Reasoning
 Assembler (Hoyt et al. 2025; https://github.com/biopragmatics/semra), and adds the authority of
 the source that issues a namespace:
 
-- the source that issues the target identifiers (ChEBI for ChEBI ids) is the authority for
+- the source that issues the target identifiers is the authority for
   mappings to them; when it states targets, the other sources' different targets are
   overruled;
-- several targets of one subject narrow to those the issuer prefers, when it marks some
-  (UniProt's reviewed entries: BridgeDb links an Ensembl gene to its Swiss-Prot entry and to
-  TrEMBL fragments);
+- several targets of one subject narrow to those the issuer prefers, when it marks some (its
+  reviewed entries);
 - several targets of one subject are accepted together only when they are variants of one
-  entity that a source states (L-serine and its zwitterion are tautomers, in ChEBI);
+  entity that a source states;
 - otherwise several targets are ambiguous: none is accepted, and the report says so.
 
 The resolution is written as SSSOM too (:meth:`Resolution.to_sssom`): accepted mappings as
@@ -34,9 +32,8 @@ overruled ones as negative mappings (``predicate_modifier: Not``), and the targe
 ambiguous group with confidence 0.5 and cardinality 1:n. SSSOM tools such as SeMRA, which
 removes negative mappings before grouping, then group the identifiers as resolved.
 
-A claim can also be checked through a third identifier: the BridgeDb link from an Ensembl
-gene to a UniProt accession agrees with UniProt when UniProt gives the accession the same
-NCBI Gene id that BridgeDb gives the gene.
+A claim can also be checked through a third identifier: a link from A to B agrees with B's
+source when that source gives B the same third identifier that the linking source gives A.
 """
 
 from __future__ import annotations
@@ -62,7 +59,7 @@ REVIEWED = "semapv:MappingReview"  # an automatic review: mapping_tool, never re
 CHAINED = "semapv:MappingChaining"
 CROSS_REFERENCE = "oboinowl:hasDbXref"  # prefixes as Bioregistry normalizes them
 EXACT = "skos:exactMatch"
-AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group (owner decision 2026-10-02)
+AMBIGUOUS = 0.5  # confidence of each target of an ambiguous group
 
 
 def claim(
@@ -165,12 +162,15 @@ class Resolution:
     def pairs(self) -> list[tuple[str, str]]:
         """Return the accepted exact (subject, object) pairs, as the sources wrote them.
 
-        A pair is exact when its claims state identity, or when the cross-references of its
-        namespaces are taken as exact (decide's *exact*); only exact pairs join records.
+        A pair is exact when one of its accepted claims states identity, or when the
+        cross-references of its namespaces are taken as exact (decide's *exact*); a claim
+        found only through another identifier is exact when that link is too. Only exact pairs
+        join records. The variant pairs the decision accepted are included: two records decided
+        to be either variant are one entity, and Identity takes a pair within one namespace as
+        declared variants.
         """
-        return sorted(
-            {(subject_of(c), object_of(c)) for c in self.accepted if _is_exact(c, self.exact)}
-        )
+        exact = {(subject_of(c), object_of(c)) for c in self.accepted if _is_exact(c, self.exact)}
+        return sorted(exact | {tuple(sorted(pair)) for pair in self.variants})  # type: ignore[misc]
 
     def table(self) -> Any:
         """Return the outcome of each (subject, target namespace) group as a DataFrame."""
@@ -296,7 +296,7 @@ class Claims:
         """Return the mappings that *source* states in RDF with *predicates*.
 
         Only links between registered identifiers are claims; *objects* keeps the claims whose
-        object has this prefix (UniProt's rdfs:seeAlso to NCBI Gene, not to InterPro).
+        object has this prefix (one target namespace of a predicate that cites several).
         """
         import pyoxigraph as ox
 
@@ -331,8 +331,8 @@ class Claims:
         """Return what *client* states in these records about the identity of their identifiers.
 
         *results* and *records* are client Results (either form). The predicates are read from
-        the records: a declared identity (owl:sameAs, skos:exactMatch, Bio2RDF
-        cross-references), or a predicate whose values are all identifiers of one namespace
+        the records: a declared identity (owl:sameAs, skos:exactMatch and other declared
+        cross-reference properties), or a predicate whose values are all identifiers of one namespace
         that this source does not issue, some of them only cited here, not described, and that
         the schema of the source lists as a cross-reference (Client.cross_references). *citing*
         adds every link to identifiers of these namespaces, as evidence for check.
@@ -381,8 +381,8 @@ class Claims:
             subject, target = parse(quad.subject.value), parse(quad.object.value)
             if subject is None or target is None:
                 continue
-            # A node drawn with its ChEBI id that names it again (bdbChEBI to itself) is a claim,
-            # so that the ChEBI record is fetched; two ids of one namespace are two entities.
+            # A node that names its own identifier again is a claim, so that the issuer's record
+            # is fetched; two ids of one namespace are two entities.
             if subject.prefix == target.prefix and subject.curie != target.curie:
                 continue
             if quad.predicate.value in chosen or target.prefix in wanted:
@@ -408,8 +408,8 @@ class Claims:
     ) -> Claims:
         """Return these claims and those of *client*: the resources that carry each identifier.
 
-        The source states the mapping with a cross-reference (ChEBI's hasDbXref
-        'lipidmaps:LMSP0501AA04'); Client.identify finds them, in batches. Only a match written
+        The source states the mapping with a cross-reference (a CURIE or IRI value);
+        Client.identify finds them, in batches. Only a match written
         with the prefix of the identifier, or as an IRI, is a cross-reference (a bare number is
         not), and identifiers of the client's own prefix are not asked. By default the
         identifiers asked are the subjects of the claims into the namespace *client* issues.
@@ -429,8 +429,8 @@ class Claims:
             identifiers = sorted(
                 {subject_of(c) for c in self.claims if _prefix(object_of(c)) in issued}
             )
-        # The issuer is not asked about its own identifiers: a ChEBI id is its own class, and
-        # matching its bare number found other classes (any value "15377").
+        # The issuer is not asked about its own identifiers: an identifier is its own record,
+        # and matching its bare number would find other records with that value.
         written = {
             curie(i): i for i in identifiers if (read := parse(i)) and read.prefix not in issued
         }
@@ -510,7 +510,7 @@ class Claims:
         return pd.DataFrame(rows)
 
     def check(self, through: str, *, among: Sequence[str] | None = None) -> Any:
-        """Check each claim through a third identifier namespace (*through*, e.g. ncbigene).
+        """Check each claim through a third identifier namespace (*through*, a prefix).
 
         A claim subject → object agrees when the *through* targets that any source gives the
         subject and those it gives the object share one; it disagrees when both have some and
@@ -563,15 +563,14 @@ class Claims:
     ) -> Resolution:
         """Decide which claims are accepted, for each subject and target namespace.
 
-        The authority is the source that issues the target namespace (ChEBI for ChEBI ids),
-        then *authority* in order, then any source. The targets of the first source that states
+        The authority is the source that issues the target namespace, then *authority* in order, then any source. The targets of the first source that states
         some are taken; the other sources' different targets are overruled. One target is
         accepted; several are accepted only when *variants* (pairs, or a function of the
         target IRIs, such as Ontologies.variants) joins them into one group; otherwise the
         group is ambiguous and nothing is accepted. *namespaces* keeps these target namespaces;
         by default those that a source of the claims issues (where the issuer can be heard).
         *prefer* are identifiers (IRIs, or Results of a client) that the issuer marks as its
-        preferred entries (UniProt's reviewed ones): several targets narrow to those preferred,
+        preferred entries (reviewed ones): several targets narrow to those preferred,
         when some are.
 
         A cross-reference is not an identity. *exact* names the namespaces whose
@@ -605,8 +604,12 @@ class Claims:
             )
             chosen = rank[0]
             mine = [c for c in claims if source_of(c) == chosen]
-            # One IRI per identifier: a source can write one target twice (bdbUniprot to
-            # identifiers.org/uniprot/Q13510, owl:sameAs to purl.uniprot.org/uniprot/Q13510).
+            # What the source states of the identifier itself comes before what it states of
+            # another identifier the subject is linked to (a chain through a cross-reference,
+            # which can name another form): chained claims count only when nothing is direct.
+            direct = [c for c in mine if "through" not in _other(c)]
+            mine = direct or mine
+            # One IRI per identifier: a source can write one target twice, under two URI forms.
             targets = sorted(
                 {_key(object_of(c)): object_of(c) for c in sorted(mine, key=object_of)}.values()
             )
@@ -632,7 +635,10 @@ class Claims:
             set_aside: set[str] = {_key(object_of(c)) for c in mine} - {_key(t) for t in targets}
             if outcome.startswith("accepted"):
                 keys = {_key(t) for t in targets}
-                accepted += [c for c in mine if _key(object_of(c)) in keys]
+                # The other sources that state an accepted target support it: a mapping is
+                # exact when one of its claims is, even when the deciding source states it only
+                # through another identifier.
+                accepted += [c for c in claims if _key(object_of(c)) in keys]
                 variant_pairs += pairs
             groups.append(
                 {

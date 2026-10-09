@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 from weakref import WeakKeyDictionary
 
-from rdfsolve._outcomes import QueryOutcome
+from rdfsolve._outcomes import QueryFailure, QueryOutcome
 from rdfsolve.mining import query_builders as builders
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ SUBJECT_COUNTS = frozenset(
 )
 PROPERTY_BUILDERS = frozenset(getattr(builders, n) for n in OBJECT_KINDS if hasattr(builders, n))
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+logger = logging.getLogger(__name__)
 _KINDS: WeakKeyDictionary[SparqlHelper, dict[tuple[str, ...], set[str] | None]] = (
     WeakKeyDictionary()
 )
@@ -84,9 +86,9 @@ def _subjects_from_total(
 
     A group whose edges are all the edges of (class, property) in its graph has an object of the
     group on every edge, so its distinct subjects are those of (class, property): exact. The
-    edges and distinct subjects of (class, property) are one merge join on QLever (Bgee: 13 s for
-    813,735,712 edges), where the distinct subjects of each group reached the time limit. A group
-    with part of the edges is counted alone (Bgee ExpressionCondition: 709,482,280 edges, 93 s).
+    edges and distinct subjects of (class, property) are one merge join on QLever, where the
+    distinct subjects of each group can reach the time limit. A group with part of the edges is
+    counted alone.
     None when a query is refused or a group cannot be counted alone; the count of each group
     then runs.
     """
@@ -109,42 +111,139 @@ def _subjects_from_total(
     if totals.state != "complete":
         return None
     by_graph = {row.get("_g", {}).get("value"): row for row in totals.rows}
-    rows = []
-    for row in groups.rows:
-        # The count builders name the edge count ?cnt; the property usage query names it ?triples.
-        edges = (row.get("cnt") or row.get("triples") or {}).get("value")
-        graph = row.get("_g", {}).get("value")
-        whole = by_graph.get(graph)
-        if whole is None:
+    subjects: dict[int, dict[str, Any]] = {}
+    alone: list[int] = []
+    for index, row in enumerate(groups.rows):
+        whole = by_graph.get(row.get("_g", {}).get("value"))
+        if whole is None or _edges(row) is None:
             return None
-        if edges != whole["cnt"]["value"]:
-            test = _group_test(builder, row, context_graphs)
-            if test is None:
-                return None
-            one = builders._build_class_property_total_query(
-                [class_uri], prop, graphs, context_graphs, test
-            )
-            counted = select_outcome(one, f"{purpose}/group", helper, [class_uri], graphs)
-            if counted.state != "complete":
-                return None
-            match = [r for r in counted.rows if r.get("_g", {}).get("value") == graph]
-            if len(match) != 1 or match[0]["cnt"]["value"] != edges:
-                return None
-            whole = match[0]
-        rows.append({**row, "subjects": whole["subjects"]})
-    return QueryOutcome(rows, "complete", [])
+        if _edges(row) == whole["cnt"]["value"]:
+            subjects[index] = whole["subjects"]
+        elif _group(builder, row) is None:
+            return None
+        else:
+            alone.append(index)
+    failures: list[QueryFailure] = []
+    if alone:
+        logger.info("%s: distinct subjects of %d object groups, in batches", purpose, len(alone))
+        found = _count_groups(
+            alone,
+            groups.rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            f"{purpose}/groups",
+            helper,
+            failures,
+        )
+        if found is None:
+            return None
+        subjects.update(found)
+    rows = [
+        {**row, "subjects": subjects[i]} if i in subjects else row
+        for i, row in enumerate(groups.rows)
+    ]
+    return QueryOutcome(rows, "complete", gaps=failures)
 
 
-def _group_test(
-    builder: Callable[..., str], row: dict[str, Any], context_graphs: list[str] | None
-) -> str | None:
-    """Return the test of the object that keeps the edges of one group, or None."""
+def _group(builder: Callable[..., str], row: dict[str, Any]) -> tuple[str, str] | None:
+    """Return the term that names the group of a row and the test that keeps its edges, with
+    the group as ?_group; None when the builder's groups cannot be told apart.
+    """
     name = getattr(builder, "__name__", "")
     if name == "_build_batched_typed_count_query" and row.get("oc", {}).get("type") == "uri":
-        return builders._type_pattern("?o", f"<{row['oc']['value']}>", context_graphs)
+        return row["oc"]["value"], "?o a ?_group ."
     if name == "_build_batched_literal_count_query" and row.get("dt", {}).get("type") == "uri":
-        return f"FILTER(isLiteral(?o) && DATATYPE(?o) = <{row['dt']['value']}>)"
+        return row["dt"]["value"], "FILTER(isLiteral(?o) && DATATYPE(?o) = ?_group)"
     return None
+
+
+def _count_groups(
+    indexes: list[int],
+    rows: list[dict[str, Any]],
+    class_uri: str,
+    prop: str,
+    graphs: list[str] | None,
+    context_graphs: list[str] | None,
+    builder: Callable[..., str],
+    purpose: str,
+    helper: SparqlHelper,
+    failures: list[QueryFailure],
+) -> dict[int, dict[str, Any]] | None:
+    """Count the distinct subjects of these groups in one query; a refused batch is split in
+    two, and a group refused alone is recorded in *failures*. None on a result that does not
+    match the edges counted before.
+    """
+    from rdfsolve.mining.query_fallbacks import select_outcome
+
+    found = {i: g for i in indexes if (g := _group(builder, rows[i])) is not None}
+    terms = sorted({term for term, _ in found.values()})
+    test = found[indexes[0]][1]
+    if test.startswith("?o a "):
+        test = builders._type_pattern("?o", "?_group", context_graphs)
+    values = "VALUES ?_group { " + " ".join(f"<{t}>" for t in terms) + " } "
+    query = builders._build_class_property_total_query(
+        [class_uri], prop, graphs, context_graphs, values + test, group="?_group"
+    )
+    outcome = select_outcome(query, purpose, helper, [class_uri], graphs)
+    if outcome.state != "complete":
+        if len(indexes) == 1:
+            for failure in outcome.failures:
+                failures.append(
+                    QueryFailure(
+                        failure.category,
+                        f"distinct subjects of the {_edges(rows[indexes[0]])} edges to {terms[0]} "
+                        f"not counted: {failure.message}",
+                        purpose,
+                        [class_uri],
+                        graphs,
+                    )
+                )
+            return {}
+        half = len(indexes) // 2
+        left = _count_groups(
+            indexes[:half],
+            rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            purpose,
+            helper,
+            failures,
+        )
+        right = _count_groups(
+            indexes[half:],
+            rows,
+            class_uri,
+            prop,
+            graphs,
+            context_graphs,
+            builder,
+            purpose,
+            helper,
+            failures,
+        )
+        return None if left is None or right is None else {**left, **right}
+    answered = {
+        (r.get("_g", {}).get("value"), r.get("_group", {}).get("value")): r for r in outcome.rows
+    }
+    counted: dict[int, dict[str, Any]] = {}
+    for i in indexes:
+        match = answered.get((rows[i].get("_g", {}).get("value"), found[i][0]))
+        if match is None or match["cnt"]["value"] != _edges(rows[i]):
+            return None
+        counted[i] = match["subjects"]
+    return counted
+
+
+def _edges(row: dict[str, Any]) -> str | None:
+    """Return the edge count of a row: ?cnt in the count builders, ?triples in property usage."""
+    value: str | None = (row.get("cnt") or row.get("triples") or {}).get("value")
+    return value
 
 
 def query_by_property(
@@ -158,8 +257,14 @@ def query_by_property(
     context_graphs: list[str] | None,
     properties: list[str] | None = None,
 ) -> QueryOutcome:
-    """Query the given or enumerated properties whose objects can match the builder."""
+    """Query the given or enumerated properties whose objects can match the builder.
+
+    A property whose query is refused, and whose lighter retry gives no row, is asked over a
+    sample of its edges when the builder takes one (rdfsolve.mining.sampling): its rows then
+    carry the provenance of the sample and their counts are lower bounds.
+    """
     from rdfsolve.mining.query_fallbacks import enumerate_properties_for_class, select_outcome
+    from rdfsolve.mining.sampling import accepts_sample, sampled_select
 
     result = QueryOutcome()
     if properties is None:
@@ -169,7 +274,7 @@ def query_by_property(
         result = QueryOutcome(state=found.state, failures=found.failures)
         properties = [r["p"]["value"] for r in found.rows if r.get("p", {}).get("type") == "uri"]
     for prop in dict.fromkeys(properties):
-        if prop == RDF_TYPE and builder.__name__ in TYPE_EXCLUDED:
+        if prop in builders.MEMBERSHIP.get() and builder.__name__ in TYPE_EXCLUDED:
             continue
         kinds = object_kinds(prop, graphs, context_graphs, helper)
         if kinds is not None and not kinds & OBJECT_KINDS[builder.__name__]:
@@ -207,5 +312,28 @@ def query_by_property(
             )
             if retry.rows:
                 found = QueryOutcome(retry.rows, "partial", found.failures + retry.failures)
+        if not found.rows and accepts_sample(builder):
+            # Refused for the whole property: ask over a sample of its edges (lower bounds).
+
+            def edges(size: int, prop: str = prop) -> str:
+                """Ask the query of the property over its first *size* edges."""
+                return builder(
+                    [class_uri],
+                    graphs,
+                    property_uri=prop,
+                    type_context_graph_uris=context_graphs,
+                    sample=size,
+                )
+
+            found = sampled_select(
+                edges,
+                f"{purpose}/property/{prop}",
+                helper,
+                found,
+                unit="edges",
+                classes=[class_uri],
+                graph_uris=graphs,
+                property_uri=prop,
+            )
         result = result.merge(found)
     return result

@@ -33,17 +33,44 @@ Pass these to :meth:`MinedSchema.clean_schema`; nothing applies them
 implicitly. Extend the list per endpoint instead of editing it.
 """
 
+# Virtuoso's own graphs under its default host name: the WebDAV store, the ODS dataspace and the
+# SPARQL endpoint's graph, on the ports Virtuoso uses (8890, 8891). Other graphs on localhost
+# may be data, so the host as a whole is not a prefix.
+VIRTUOSO_SYSTEM_PATHS: tuple[str, ...] = ("DAV", "dataspace", "sparql")
+VIRTUOSO_LOCAL_PORTS: tuple[int, ...] = (8890, 8891)
+
 SUGGESTED_SERVICE_GRAPHS: tuple[str, ...] = (
     "http://www.openlinksw.com/",
     "http://www.w3.org/ns/ldp#",
-    "http://localhost:8890/",
+    *(
+        f"http://localhost:{port}/{path}"
+        for port in VIRTUOSO_LOCAL_PORTS
+        for path in VIRTUOSO_SYSTEM_PATHS
+    ),
     "urn:core:services:sparql",
     "urn:activitystreams-owl:",
+    # Virtuoso's service description graph, named with a relative IRI.
+    "servicedescription",
+    # The OWL vocabulary that Virtuoso loads into a graph of its own: not a source's data.
+    "http://www.w3.org/2002/07/owl#",
 )
 """Graph IRI prefixes that hold engine metadata rather than source data.
 
 Endpoint-specific description graphs, such as a host's
 ``.well-known/sparql-examples``, are named per endpoint by the caller.
+"""
+
+KNOWN_ENGINE_GRAPHS: tuple[str, ...] = (
+    "http://www.openlinksw.com/schemas/virtrdf#",
+    "http://localhost:8890/DAV/",
+    "http://localhost:8890/sparql",
+    "http://localhost:8891/DAV/",
+    "http://www.w3.org/ns/ldp#",
+    "urn:core:services:sparql",
+    "urn:activitystreams-owl:map",
+    "http://www.w3.org/2002/07/owl#",
+)
+"""Graphs that a Virtuoso endpoint holds of its own. Asked for by name when the endpoint does not list its graphs in time.
 """
 
 _RESOURCE_URIS = frozenset(
@@ -67,3 +94,16 @@ _SENTINEL_OBJECTS = frozenset({"Literal", "Resource", "BlankNode"})
 - BlankNode: Object is a blank node (anonymous resource)
 """
 _URI_SCHEMES = ("http://", "https://", "urn:", "_:")
+UNTYPED_SUBJECT = "http://www.w3.org/2000/01/rdf-schema#Resource"
+"""The subject class of a pattern of IRI subjects that have no type (subject_binding "untyped").
+
+rdfs:Resource, the class of everything, as an untyped IRI object is "Resource" (rdfs:Resource):
+the pattern says nothing of the subject beyond its property. ABSTAT gives untyped records
+owl:Thing for the same purpose. The binding, not the IRI, marks the pattern: a source may type
+records with rdfs:Resource, and those are typed patterns of that class.
+"""
+UNTYPED_SUBJECTS_LABEL = "untyped subjects"
+"""The name under which class-centric views list the patterns of subjects without a type.
+
+Not a class: views show these rows apart from every class, never as rdfs:Resource.
+"""

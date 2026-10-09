@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 from rdfsolve.schema_models.core import MinedSchema
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,37 @@ VOCABULARIES = frozenset(
 )
 
 
+# The class of a link end that is the subjects without a type (untyped patterns): a name, not
+# an IRI, as the object sentinels are. Queries bind such an end through its triples and keep
+# it only without a type; class-level outputs (SSSOM) leave it out.
+UNTYPED = UNTYPED_SUBJECTS_LABEL
+
+
+def is_untyped(cls: str | None) -> bool:
+    """Return whether a link end's class is the subjects without a type."""
+    return cls == UNTYPED
+
+
+def untyped_test(node: str) -> str:
+    """Keep a bound node only when it is an IRI without a type (rdf:type)."""
+    name = node.lstrip("?$")
+    return f"FILTER(isIRI({node})) FILTER NOT EXISTS {{ {node} a ?_{name}Type }}"
+
+
+def members(node: str, cls: str) -> str:
+    """Bind *node* to the members of a class, or to the subjects without a type (UNTYPED).
+
+    An untyped end is bound through any triple of the node as subject; FILTER NOT EXISTS
+    keeps it apart from the typed subjects, which the class ends of other links take.
+    """
+    from rdflib import URIRef
+
+    if is_untyped(cls):
+        name = node.lstrip("?$")
+        return f"{node} ?_{name}P ?_{name}O . {untyped_test(node)}"
+    return f"{node} a {URIRef(cls).n3()} ."
+
+
 @dataclass
 class Signatures:
     """Identifier types of one schema: of property values, and of class subjects."""
@@ -80,7 +112,7 @@ def identifier_type(value: str, ignore: Iterable[str] = VOCABULARIES) -> str | N
     """Return the Bioregistry prefix of a valid identifier IRI or CURIE, or None.
 
     Read by rdfsolve.identifiers.parse; an identifier that fails the pattern of its prefix
-    (purl.uniprot.org/uniprot/P53_HUMAN, an entry name) has no type.
+    (another kind of name in the same namespace) has no type.
     """
     from rdfsolve.identifiers import parse
 
@@ -91,19 +123,23 @@ def identifier_type(value: str, ignore: Iterable[str] = VOCABULARIES) -> str | N
 
 
 def signatures(schema: MinedSchema, ignore: Iterable[str] = VOCABULARIES) -> Signatures:
-    """Type the example values and subjects of a schema; rdf:type values are classes."""
+    """Type the example values and subjects of a schema; rdf:type values are classes.
+
+    The examples of subjects without a type are under UNTYPED ("untyped subjects"), not a class.
+    """
     ignored = frozenset(ignore)
     values: dict[str, set[tuple[str, str]]] = defaultdict(set)
     subjects: dict[str, set[str]] = defaultdict(set)
     for example in schema.enrichment.examples if schema.enrichment else []:
         if example.property_uri == RDF_TYPE:
             continue
+        owner = UNTYPED if example.untyped_subject else example.subject_class
         if example.subject.kind == "uri" and (
             kind := identifier_type(example.subject.value, ignored)
         ):
-            subjects[kind].add(example.subject_class)
+            subjects[kind].add(owner)
         if kind := identifier_type(example.value.value, ignored):
-            values[kind].add((example.subject_class, example.property_uri))
+            values[kind].add((owner, example.property_uri))
     return Signatures(dict(values), dict(subjects))
 
 
@@ -200,7 +236,7 @@ def _local(value: str) -> tuple[str, str] | None:
     """Return the Bioregistry prefix and the standard local identifier of an IRI or CURIE.
 
     A local identifier that is not valid for the prefix gives None: a namespace can also name
-    other things (purl.uniprot.org/uniprot/P53_HUMAN is an entry name, not an accession).
+    other things (an entry name beside its accessions).
     """
     from rdfsolve.identifiers import parse
 
@@ -237,7 +273,7 @@ def _lookup(
     from rdfsolve.client.identify import spellings
 
     if link.kind == "join":
-        pattern = f"?t a {URIRef(link.target_class or '').n3()} . BIND(?t AS ?x)"
+        pattern = members("?t", link.target_class or "") + " BIND(?t AS ?x)"
         terms = {
             key: [t for t in spellings(replacements.get(key, key)) if isinstance(t, URIRef)]
             for key in keys
@@ -245,7 +281,11 @@ def _lookup(
     else:
         pattern = f"?x {URIRef(link.target_property or '').n3()} ?t ."
         if in_target_class and link.target_class:
-            pattern += f" ?x a {URIRef(link.target_class).n3()} ."
+            pattern += (
+                " " + untyped_test("?x")
+                if is_untyped(link.target_class)
+                else f" ?x a {URIRef(link.target_class).n3()} ."
+            )
         terms = {key: spellings(replacements.get(key, key)) for key in keys}
     pattern += extra
     found: dict[str, list[tuple[str, str]]] = defaultdict(list)
@@ -314,8 +354,7 @@ def _term_key(
 def _read_all(client: Client, query: str, expected: int | None) -> list[dict[str, Any]]:
     """Read a whole result in one response when its rows match the count, else page to the end.
 
-    Paging sorts the whole result for every page (a local target of 45,000 terms: about 350 s);
-    a local QLever index answers in one response.
+    Paging sorts the whole result for every page; a local QLever index answers in one response.
     """
     rows = client._select(query)
     if expected is None or len(rows) != expected:
@@ -342,11 +381,15 @@ def _read_target(
     from rdfsolve.client.identify import spellings
 
     if link.kind == "join":
-        pattern = f"?t a {URIRef(link.target_class or '').n3()} . BIND(?t AS ?x)"
+        pattern = members("?t", link.target_class or "") + " BIND(?t AS ?x)"
     else:
         pattern = f"?x {URIRef(link.target_property or '').n3()} ?t ."
         if in_target_class and link.target_class:
-            pattern += f" ?x a {URIRef(link.target_class).n3()} ."
+            pattern += (
+                " " + untyped_test("?x")
+                if is_untyped(link.target_class)
+                else f" ?x a {URIRef(link.target_class).n3()} ."
+            )
     # Only the terms are read: verify() keeps the matched term, and a blank node (a subject, or a
     # value) cannot be paged and equals no spelling of an identifier.
     scoped = target._scope(pattern + extra) + " FILTER(!isBlank(?t))"
@@ -408,7 +451,11 @@ def verify(
     def _iri(value: str) -> str:
         return URIRef(value).n3()
 
-    body = source._scope(f"?s a {_iri(link.source_class)} ; {_iri(link.property)} ?v .")
+    body = source._scope(
+        f"?s {_iri(link.property)} ?v . {untyped_test('?s')}"
+        if is_untyped(link.source_class)
+        else f"?s a {_iri(link.source_class)} ; {_iri(link.property)} ?v ."
+    )
     population: int | None
     if sample is None:
         counted = source._select(f"SELECT (COUNT(DISTINCT ?v) AS ?n) WHERE {{ {body} }}")
@@ -560,7 +607,7 @@ def read_links(path: str | Path) -> list[LinkEvidence]:
     """Read a table of verified links. A row without a sample (a failed lookup) is skipped.
 
     The examples of an exact link hold every found pair, which can exceed the default field
-    limit of the csv module (HGNC to AOP-Wiki: 136,477 characters).
+    limit of the csv module.
     """
     csv.field_size_limit(max(csv.field_size_limit(), 1 << 30))
     with Path(path).open(newline="") as handle:
@@ -629,9 +676,14 @@ def class_association(
     from rdflib import URIRef
 
     replacements = replacements or {}
-    cls, prop = URIRef(link.source_class).n3(), URIRef(link.property).n3()
+    prop = URIRef(link.property).n3()
+    start = (
+        f"?s {prop} ?v . {untyped_test('?s')}"
+        if is_untyped(link.source_class)
+        else f"?s a {URIRef(link.source_class).n3()} ; {prop} ?v ."
+    )
     rows = source._select(
-        f"SELECT DISTINCT ?s ?v WHERE {{ {source._scope(f'?s a {cls} ; {prop} ?v .')} }}",
+        f"SELECT DISTINCT ?s ?v WHERE {{ {source._scope(start)} }}",
         exhaustive=True,
     )
     subjects_of: dict[str, set[str]] = defaultdict(set)
@@ -644,11 +696,11 @@ def class_association(
         {(s, x) for key, matches in found.items() for _, x in matches for s in subjects_of[key]}
     )
 
-    def members(client: Client, iri: str | None) -> int:
-        """Count the members of a class in the scope of the client."""
+    def count(client: Client, iri: str | None) -> int:
+        """Count the members of a class (or the subjects without a type) in the client's scope."""
         if not iri:
             return 0
-        body = client._scope(f"?m a {URIRef(iri).n3()} .")
+        body = client._scope(members("?m", iri))
         rows = client._select(f"SELECT (COUNT(DISTINCT ?m) AS ?n) WHERE {{ {body} }}")
         return int(rows[0]["n"]["value"]) if rows else 0
 
@@ -656,9 +708,9 @@ def class_association(
         link,
         pairs,
         len({s for s, _ in pairs}),
-        members(source, link.source_class),
+        count(source, link.source_class),
         len({x for _, x in pairs}),
-        members(target, link.target_class),
+        count(target, link.target_class),
     )
 
 

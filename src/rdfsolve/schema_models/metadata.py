@@ -31,6 +31,17 @@ FIELDS = {
 }
 
 
+def _log_left_out(found: dict[str, Any] | None, what: str) -> None:
+    """Log the triples that a serialization left out (iri_quality.left_out)."""
+    if found:
+        logger.warning(
+            "%s: %d triples with %d terms that are not RDF IRIs left out (iri_findings)",
+            what,
+            found["triples_left_out"],
+            len(found["terms"]),
+        )
+
+
 class RetainedMetadata(BaseModel):
     """Store source RDF in canonical JSON without changing its vocabulary."""
 
@@ -39,17 +50,27 @@ class RetainedMetadata(BaseModel):
     endpoint: str | None = None
     graph_uris: list[str] | None = None
     scope: str
+    iri_findings: dict[str, Any] | None = Field(
+        None,
+        description="Triples of the source RDF left out because a term is not an RDF IRI "
+        "(triples_left_out, terms with their triples); None when nothing was left out",
+    )
 
     @classmethod
     def from_document(cls, document: MetadataDocument) -> RetainedMetadata:
-        """Capture source RDF and its retrieval scope."""
+        """Capture source RDF and its retrieval scope.
+
+        A triple whose term is not an RDF IRI cannot be written; it is left out and recorded in
+        iri_findings.
+        """
         dataset = document.rdf_dataset
         return cls(
-            rdf=(dataset.serialize(format="trig") if dataset is not None else document.to_turtle()),
+            rdf=document.to_trig() if dataset is not None else document.to_turtle(),
             format="trig" if dataset is not None else "turtle",
             endpoint=document.endpoint,
             graph_uris=document.graph_uris,
             scope=document.scope,
+            iri_findings=document.iri_findings(),
         )
 
     def to_document(self) -> MetadataDocument:
@@ -176,15 +197,38 @@ class MetadataDocument(BaseModel):
         """Return a copy of the evidence, not reconstructed metadata."""
         return self.graph + Graph()
 
+    def iri_findings(self) -> dict[str, Any] | None:
+        """Return the triples that to_turtle (or to_trig, with contexts) leaves out.
+
+        A term that is not an RDF IRI (rdfsolve.schema_models.iri_quality) cannot be written in
+        an RDF syntax. None when nothing is left out.
+        """
+        from rdfsolve.schema_models.iri_quality import writable_dataset, writable_graph
+
+        if self.rdf_dataset is not None:
+            return writable_dataset(self.rdf_dataset)[1]
+        return writable_graph(self.graph)[1]
+
     def to_turtle(self) -> str:
-        """Serialize the retrieved RDF."""
-        return self.graph.serialize(format="turtle")
+        """Serialize the retrieved RDF, without the triples whose terms are not RDF IRIs."""
+        from rdfsolve.schema_models.iri_quality import writable_graph
+
+        graph, found = writable_graph(self.graph)
+        _log_left_out(found, "metadata Turtle")
+        return graph.serialize(format="turtle")
 
     def to_trig(self) -> str:
-        """Export retained graph boundaries; require captured dataset contexts."""
+        """Export retained graph boundaries; require captured dataset contexts.
+
+        Quads whose terms or graph names are not RDF IRIs are left out (iri_findings).
+        """
+        from rdfsolve.schema_models.iri_quality import writable_dataset
+
         if self.rdf_dataset is None:
             raise ValueError("No dataset contexts were retained; use to_turtle()")
-        return self.rdf_dataset.serialize(format="trig")
+        dataset, found = writable_dataset(self.rdf_dataset)
+        _log_left_out(found, "metadata TriG")
+        return dataset.serialize(format="trig")
 
     def project(self, subject_iri: str | None = None) -> dict[str, Any]:
         """Project one dataset. Leave absent or ambiguous scalar fields unset.

@@ -9,6 +9,7 @@ from typing import Any
 
 from rdfsolve._outcomes import QueryFailure
 from rdfsolve.mining.query_builders import (
+    UntypedSubjects,
     _graph_clause,
     _graph_scope,
     _subject_type_pattern,
@@ -25,14 +26,17 @@ from rdfsolve.schema_models.enrichment import (
     SchemaEnrichment,
     TermAnnotation,
 )
+from rdfsolve.schema_models.paths import absolute_iri
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.sparql_helper import SparqlHelper
 
 
 def _iri(value: str) -> str:
-    if not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", value) or re.search(r'[<>"{}|^`\\\s]', value):
-        raise ValueError(f"Invalid IRI in enrichment query: {value!r}")
-    return f"<{value}>"
+    """Write an IRI of the data in a query; one that is not an RDF IRI is written when sent."""
+    try:
+        return f"<{absolute_iri(value)}>"
+    except ValueError as error:
+        raise ValueError(f"Invalid IRI in enrichment query: {value!r}") from error
 
 
 def definition_query(iris: list[str], graph_uris: list[str] | None) -> str:
@@ -52,11 +56,17 @@ EXAMPLE_SAMPLE = 1000
 
 
 def _filtered(pattern: SchemaPattern) -> bool:
-    """Return whether the value condition of *pattern*'s example query is a filter."""
-    return pattern.object_binding != "term" and pattern.object_class in (
-        "Literal",
-        "Resource",
-        "BlankNode",
+    """Return whether the value condition of *pattern*'s example query is a filter (an untyped
+    subject is one too).
+    """
+    return pattern.untyped_subject or (
+        pattern.object_binding != "term"
+        and pattern.object_class
+        in (
+            "Literal",
+            "Resource",
+            "BlankNode",
+        )
     )
 
 
@@ -74,8 +84,7 @@ def example_query(
     With *sample*, a value condition that is a filter (a literal's datatype, an untyped
     resource, a blank node) is applied to the first *sample* subject-value pairs of the
     property, not to all of them: QLever evaluates the filter over the whole join before the
-    limit (ChEMBL chembl#Activity chemblId, 24 M values: over 300 s, against 0.1 s on a sample
-    of 1,000; article/experiments/example-queries-20261002). A sample with no such value gives
+    limit, which on a large property costs far more than a sample. A sample with no such value gives
     no row; the caller asks again without one.
     """
     if not 1 <= limit <= 20:
@@ -85,11 +94,13 @@ def example_query(
     dataset, opening, closing = _graph_scope(graph_uris, type_context_graph_uris)
     if not with_dataset:
         dataset = ""
-    subject = (
-        f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
-        if pattern.subject_binding == "term"
-        else _type_pattern("?subject", _iri(pattern.subject_class), type_context_graph_uris)
-    )
+    if pattern.subject_binding == "term":
+        subject = f"VALUES ?subject {{ {_iri(pattern.subject_class)} }}"
+    elif pattern.untyped_subject:
+        edge = f"?subject {_iri(pattern.property_uri)} ?value ."
+        subject = _type_pattern("?subject", UntypedSubjects(edge=edge), type_context_graph_uris)
+    else:
+        subject = _type_pattern("?subject", _iri(pattern.subject_class), type_context_graph_uris)
     if pattern.object_binding == "term":
         condition = f"VALUES ?value {{ {_iri(pattern.object_class)} }}"
     elif pattern.object_class == "Literal":
@@ -103,6 +114,8 @@ def example_query(
     else:
         condition = _type_pattern("?value", _iri(pattern.object_class), type_context_graph_uris)
     if sample and _filtered(pattern):
+        if pattern.untyped_subject:
+            subject, condition = "", f"{subject} {condition}"
         return f"""SELECT DISTINCT ?subject ?value {dataset} WHERE {{
       {{ SELECT ?subject ?value WHERE {{
         {subject}
@@ -216,8 +229,7 @@ def query_enrichment(
         """Group example queries and retain each result slot.
 
         A batch that does not complete is asked again one query at a time, so that only the
-        query that is too costly fails (ChEMBL: one string-valued pattern of chembl#Activity
-        failed 13 batches of 10, 2026-09-30).
+        query that is too costly fails.
         """
         for offset in range(0, len(queries), 10):
             group = list(enumerate(queries[offset : offset + 10], offset))
@@ -275,6 +287,7 @@ def query_enrichment(
         for pattern in schema.patterns:
             key = (
                 pattern.subject_class,
+                pattern.subject_binding,
                 pattern.property_uri,
                 pattern.object_class,
                 pattern.datatype,
@@ -288,6 +301,7 @@ def query_enrichment(
                 result.examples.append(
                     PatternExample(
                         subject_class=pattern.subject_class,
+                        subject_binding="untyped" if pattern.untyped_subject else "type",
                         property_uri=pattern.property_uri,
                         subject=_term(row["subject"], result.query_count),
                         value=_term(row["value"], result.query_count),

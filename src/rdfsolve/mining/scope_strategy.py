@@ -3,7 +3,7 @@
 The scope is a list of seed subjects, a sample of the members of chosen classes, and the
 resources that chosen predicates reach from them in one hop. Every statement of the scope is
 read. Resources are classified by rdf:type, by a membership property when the data uses one
-(P31, "instance of", on Wikidata), and by the class that an IRI prefix implies, for stores
+(as a Wikibase "instance of" property), and by the class that an IRI prefix implies, for stores
 that leave out these type statements. The schema is small and enough for a client that reads
 these resources; a new run shows when their statements change.
 """
@@ -49,8 +49,8 @@ class ScopeStrategy(MiningStrategy):
         """Mine *subjects*, up to *window* members of each class, and what *follow* reaches.
 
         *membership* classifies resources in addition to rdf:type. *prefix_classes* gives
-        the class of the IRIs that start with a prefix (the Wikidata Query Service leaves
-        out wikibase:Item and wikibase:Statement). Types that start with a prefix in
+        the class of the IRIs that start with a prefix (for a store that leaves out the type
+        statements of its items). Types that start with a prefix in
         *ignore_classes* are left out (Wikibase types an item that has no value for a
         property as wdno:P...). Labels are read in *language*.
         """
@@ -238,7 +238,7 @@ class ScopeStrategy(MiningStrategy):
 def _batches(iris: list[str], size: int = BATCH) -> Iterator[str]:
     """Yield the IRIs as SPARQL terms, in groups that fit in one VALUES block."""
     for start in range(0, len(iris), size):
-        yield " ".join(URIRef(iri).n3() for iri in iris[start : start + size])
+        yield " ".join(f"<{iri}>" for iri in iris[start : start + size])
 
 
 def _term(binding: dict[str, Any]) -> dict[str, Any]:

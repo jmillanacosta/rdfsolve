@@ -22,7 +22,7 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import SchemaPattern
 
-VocabularySource: TypeAlias = "str | Path | Graph | ox.Store | ox.Dataset"
+type VocabularySource = str | Path | Graph | ox.Store | ox.Dataset
 SCHEMA = "https://schema.org/"
 DCAM = "http://purl.org/dc/dcam/"
 # Every class is an owl:Thing and an rdfs:Resource. Properties with these domains apply to all.

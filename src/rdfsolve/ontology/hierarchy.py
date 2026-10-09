@@ -101,19 +101,23 @@ def fetch_superclasses(
     batch_size: int = 500,
     purpose: str = "ontology-terms/superclasses",
     graph_uris: list[str] | None = None,
+    unreadable: set[str] | None = None,
 ) -> dict[str, set[str]]:
     """Return named ``rdfs:subClassOf`` parents for *terms* and all their ancestors.
 
-    Read the RDF merge of the selected graphs, or the endpoint default dataset.
+    Read the RDF merge of the selected graphs, or the endpoint default dataset. A batch whose
+    answer is too large or too slow is split in halves; a single term that still cannot be read gets no
+    parents and is added to *unreadable*, when given.
     """
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
     dataset, _, _ = _graph_scope(graph_uris)
     parents: dict[str, set[str]] = {}
-    frontier = sorted(set(terms))
-    while frontier:
-        for start in range(0, len(frontier), batch_size):
-            batch = frontier[start : start + batch_size]
-            values = " ".join(f"<{iri}>" for iri in batch)
-            query = f"""\
+
+    def read(batch: list[str]) -> None:
+        """Read the parents of one batch, splitting it while its answer is refused."""
+        values = " ".join(f"<{iri}>" for iri in batch)
+        query = f"""\
 SELECT ?c ?parent
 {dataset}
 WHERE {{
@@ -121,14 +125,30 @@ WHERE {{
   ?c <{RDFS_SUBCLASS_OF}> ?parent .
   FILTER(isIRI(?parent) && ?parent != ?c)
 }}"""
+        try:
             result = helper.select(query, purpose=purpose)
-            for iri in batch:
-                parents.setdefault(iri, set())
-            for row in result.get("results", {}).get("bindings", []):
-                child = row.get("c", {}).get("value")
-                parent = row.get("parent", {}).get("value")
-                if child and parent and parent not in NOT_DATA_TYPES:
-                    parents.setdefault(child, set()).add(parent)
+        except EndpointTimeoutError:
+            if len(batch) == 1:
+                if unreadable is not None:
+                    unreadable.add(batch[0])
+                parents.setdefault(batch[0], set())
+                return
+            half = len(batch) // 2
+            read(batch[:half])
+            read(batch[half:])
+            return
+        for iri in batch:
+            parents.setdefault(iri, set())
+        for row in result.get("results", {}).get("bindings", []):
+            child = row.get("c", {}).get("value")
+            parent = row.get("parent", {}).get("value")
+            if child and parent and parent not in NOT_DATA_TYPES:
+                parents.setdefault(child, set()).add(parent)
+
+    frontier = sorted(set(terms))
+    while frontier:
+        for start in range(0, len(frontier), batch_size):
+            read(frontier[start : start + batch_size])
         frontier = sorted({p for ps in parents.values() for p in ps} - parents.keys())
     return parents
 
@@ -137,8 +157,8 @@ def read_hierarchy(paths: Iterable[str | Path]) -> dict[str, set[str]]:
     """Read (child, parent) IRI pairs from tab-separated files, plain or gzip-compressed.
 
     Lines that start with # are comments. The files give parents to terms whose ontology is not
-    in the data: PubChem types records with NCIt and PR terms, but the index holds no hierarchy
-    for them. A term is not its own parent.
+    in the data (a source that types its records with terms of ontologies it does not hold).
+    A term is not its own parent.
     """
     parents: dict[str, set[str]] = defaultdict(set)
     for path in paths:

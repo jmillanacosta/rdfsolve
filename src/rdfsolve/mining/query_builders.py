@@ -2,14 +2,39 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import Any
-
-from typing_extensions import Self
+from typing import Any, Self
 
 from rdfsolve.sparql_helper import SparqlHelper
 
+RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# The properties that place a record in its class in a mining run: rdf:type, or with it a
+# property such as a category (set by membership() for the run).
+MEMBERSHIP: ContextVar[tuple[str, ...]] = ContextVar("membership", default=(RDF_TYPE,))
+
+
+@contextmanager
+def membership(properties: Sequence[str] | None) -> Iterator[None]:
+    """Use *properties* as class membership in the queries written inside the block."""
+    token = MEMBERSHIP.set(tuple(properties) if properties else (RDF_TYPE,))
+    try:
+        yield
+    finally:
+        MEMBERSHIP.reset(token)
+
+
+def membership_path(properties: str | Sequence[str] | None = None) -> str:
+    """Write class membership as a SPARQL path: ``a``, one property, or alternatives."""
+    chosen = (properties,) if isinstance(properties, str) else tuple(properties or MEMBERSHIP.get())
+    terms = ["a" if p == RDF_TYPE else f"<{p}>" for p in chosen]
+    return terms[0] if len(terms) == 1 else "(" + "|".join(terms) + ")"
+
+
 __all__ = [
+    "UntypedSubjects",
     "Window",
     "_build_batched_blank_node_query",
     "_build_batched_literal_count_query",
@@ -90,15 +115,62 @@ def _context_pattern(pattern: str, graph_uris: list[str] | None) -> str:
     )
 
 
+class UntypedSubjects(str):
+    """The IRI subjects without a type, in place of a class in the pattern and count queries.
+
+    The value is rdfs:Resource (UNTYPED_SUBJECT), the subject class of the untyped patterns, so
+    that the rows of a query name it as ?class. A batch holds it alone. The subject test is
+    ``FILTER(isIRI(?s)) FILTER NOT EXISTS { ?s <p> ?o . ?s a ?t }``, the test of an untyped IRI
+    object turned to the subject; the group repeats the edge of the property (*edge*), as the
+    structural census does: QLever evaluates the group of NOT EXISTS on its own, and a group of
+    ``?s a ?t`` alone reads every type triple. With *every* (a census found no typed subject of
+    the property) only FILTER(isIRI(?s)) is sent.
+    """
+
+    every: bool
+    edge: str
+
+    def __new__(cls, *, every: bool = False, edge: str = "") -> Self:
+        """Keep whether every subject is untyped, and the edge that the test repeats."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
+
+        value = super().__new__(cls, UNTYPED_SUBJECT)
+        value.every = every
+        value.edge = edge
+        return value
+
+
+def _untyped_subject_test(
+    node: str,
+    marker: UntypedSubjects,
+    context_graph_uris: list[str] | None,
+    membership: str | Sequence[str] | None = None,
+) -> str:
+    """Keep the IRI subjects without a type (see UntypedSubjects); *membership* as in
+    _type_pattern.
+    """
+    test = f"FILTER(isIRI({node}))"
+    if marker.every:
+        return test
+    types = _type_pattern(node, "?_subjectType", context_graph_uris, membership)
+    return f"{test} FILTER NOT EXISTS {{ {marker.edge} {types} }}"
+
+
 def _type_pattern(
-    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+    node: str,
+    cls: str,
+    context_graph_uris: list[str] | None = None,
+    membership: str | Sequence[str] | None = None,
 ) -> str:
     """Match each node/type pair once across data and companion graphs.
 
-    *membership* is the property that places a record in its class when the source does not use
-    rdf:type (rdfs:subClassOf for a source whose records are classes).
+    *membership* is the property, or the properties, that place a record in its class when the
+    source does not use rdf:type alone; by default, the membership of the mining run. An
+    UntypedSubjects in place of the class keeps the nodes without a type instead.
     """
-    triple = f"{node} {f'<{membership}>' if membership else 'a'} {cls} ."
+    if isinstance(cls, UntypedSubjects):
+        return _untyped_subject_test(node, cls, context_graph_uris, membership)
+    triple = f"{node} {membership_path(membership)} {cls} ."
     if not context_graph_uris:
         return triple
     variables = " ".join(term for term in (node, cls) if term.startswith("?"))
@@ -106,7 +178,10 @@ def _type_pattern(
 
 
 def _subject_type_pattern(
-    node: str, cls: str, context_graph_uris: list[str] | None = None, membership: str | None = None
+    node: str,
+    cls: str,
+    context_graph_uris: list[str] | None = None,
+    membership: str | Sequence[str] | None = None,
 ) -> str:
     """Match typed subjects with an outgoing edge in the selected data."""
     pattern = _type_pattern(node, cls, context_graph_uris, membership)
@@ -126,7 +201,7 @@ def _values_block(class_uris: list[str], property_uri: str | None = None) -> str
 class Window:
     """A bounded slice of one class's members, for when a whole-class query exceeds its budget.
 
-    run_first asks Blazegraph (Wikidata's engine) to evaluate the slice before joining it.
+    run_first asks Blazegraph to evaluate the slice before joining it.
     """
 
     limit: int
@@ -135,9 +210,9 @@ class Window:
 
 
 def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
-    """Bind ?s to the class members, or to one window of them."""
+    """Bind ?s to the class members, or to one window of them (untyped subjects: no window)."""
     pattern = _type_pattern("?s", cls, context)
-    if window is None:
+    if window is None or isinstance(cls, UntypedSubjects):
         return pattern
     hint = (
         " <http://www.bigdata.com/queryHints#Prior> <http://www.bigdata.com/queryHints#runFirst> true ."
@@ -146,6 +221,37 @@ def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
     )
     return (
         f"{{ SELECT ?s WHERE {{ {pattern} }} LIMIT {window.limit} OFFSET {window.offset} }}{hint}"
+    )
+
+
+def _sampled_edges(
+    values: str,
+    cls: str,
+    prop: str,
+    context: list[str] | None,
+    g_open: str,
+    g_close: str,
+    binds: str,
+    kind: str,
+    sample: int,
+) -> str:
+    """Bind ?s and ?o to a bounded sample of the edges of one class (or untyped subjects).
+
+    With a property (or several classes, or a representative of member terms), the first
+    *sample* edges whose subject passes the class test and whose object passes *kind* (the
+    object test of the builder), in a sub-select; the rest of the query aggregates over them.
+    For one class without a property, the first *sample* members of the class (a member window)
+    with all their edges. Used when the whole query is refused
+    (rdfsolve.mining.sampling); every count over the sample is a lower bound.
+    """
+    if prop.startswith("?") and not values and not isinstance(cls, UntypedSubjects):
+        members = _members(cls, context, Window(sample))
+        return f"{values}\n  {members}\n  {g_open} ?s {prop} ?o . {g_close}{binds}\n  {kind}"
+    graph_var = " ?_g" if g_open else ""
+    keep = (" ?class" if values else "") + (f" {prop}" if prop.startswith("?") else "")
+    return (
+        f"{{ SELECT ?s ?o{graph_var}{keep} WHERE {{ {values} {_type_pattern('?s', cls, context)} "
+        f"{g_open} ?s {prop} ?o . {g_close} {kind} }} LIMIT {sample} }}{binds}"
     )
 
 
@@ -169,9 +275,20 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
     """Write one class or property as constants; BIND keeps their result columns.
 
     A Representative among the classes binds ?class to the representative for subjects typed
-    by any of its members (VALUES (?_member ?class)).
+    by any of its members (VALUES (?_member ?class)). UntypedSubjects, alone, binds ?class to
+    rdfs:Resource and returns, as the class, the subject test with the edge of the property.
     """
     binds = ""
+    prop = f"<{property_uri}>" if property_uri else "?p"
+    untyped = [c for c in class_uris if isinstance(c, UntypedSubjects)]
+    if untyped:
+        if len(class_uris) != 1:
+            raise ValueError("Untyped subjects are queried alone, not in a batch of classes")
+        binds = f" BIND(<{untyped[0]}> AS ?class)" + (
+            f" BIND({prop} AS ?p)" if property_uri else ""
+        )
+        marker = UntypedSubjects(every=untyped[0].every, edge=f"?s {prop} ?o .")
+        return "", marker, prop, binds
     if any(isinstance(c, Representative) for c in class_uris):
         rows = " ".join(
             f"(<{member}> <{c}>)"
@@ -184,7 +301,6 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
         binds += f" BIND({cls} AS ?class)"
     else:
         cls, values = "?class", _values_block(class_uris)
-    prop = f"<{property_uri}>" if property_uri else "?p"
     if property_uri:
         binds += f" BIND({prop} AS ?p)"
     return values, cls, prop, binds
@@ -396,7 +512,7 @@ WHERE {{
     SELECT ?s ?p (COUNT(?o) AS ?cnt)
     WHERE {{
       {g_open}
-        ?s a <{subject_class}> .
+        ?s {membership_path()} <{subject_class}> .
         ?s ?p ?o .
       {g_close}
     }}
@@ -418,7 +534,7 @@ def _build_example_query(
 SELECT DISTINCT ?s ?o
 WHERE {{
   {g_open}
-    ?s a <{subject_class}> .
+    ?s {membership_path()} <{subject_class}> .
     ?s <{property_uri}> ?o .
   {g_close}
 }}
@@ -456,7 +572,7 @@ def _build_class_overlap_query(
     """Count the members of a class that are members of each class, the class itself included.
 
     The (member, class) pairs are made distinct before the count: a grouped COUNT(DISTINCT) of
-    genex:Expression (709,482,280 members) reached 600 s on QLever, the distinct pairs 133 s.
+    a large class is much slower on QLever than counting the distinct pairs.
     """
     dataset, _, _ = _graph_scope(graph_uris, type_context_graph_uris)
     both = (
@@ -624,10 +740,30 @@ def _build_batched_typed_object_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     window: Window | None = None,
+    sample: int | None = None,
 ) -> str:
     """Typed-object patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
+    sampled = (
+        _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(!isLiteral(?o))",
+            sample,
+        )
+        if sample
+        else None
+    )
+    edges = sampled or (
+        f"{values}\n      {_members(cls, type_context_graph_uris, window)}\n"
+        f"      {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p ?oc
@@ -635,9 +771,7 @@ SELECT {distinct}?class ?p ?oc
 WHERE {{
   {{
     SELECT DISTINCT ?class ?p ?o WHERE {{
-      {values}
-      {_members(cls, type_context_graph_uris, window)}
-      {g_open} ?s {prop} ?o . {g_close}{binds}
+      {edges}
     }}
   }}
   {_type_pattern("?o", "?oc", type_context_graph_uris)}
@@ -655,18 +789,36 @@ def _build_batched_literal_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     window: Window | None = None,
+    sample: int | None = None,
 ) -> str:
     """Literal patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
+    sampled = (
+        _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(isLiteral(?o))",
+            sample,
+        )
+        if sample
+        else None
+    )
+    edges = sampled or (
+        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p (DATATYPE(?o) AS ?dt)
 {dataset}
 WHERE {{
-  {values}
-  {_members(cls, type_context_graph_uris, window)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   FILTER(isLiteral(?o))
 }}"""
     if paginated:
@@ -682,18 +834,36 @@ def _build_batched_untyped_uri_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     window: Window | None = None,
+    sample: int | None = None,
 ) -> str:
     """Untyped-URI patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
+    sampled = (
+        _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            f"FILTER(isURI(?o)) FILTER NOT EXISTS {{ {_type_pattern('?o', '?any', type_context_graph_uris)} }}",
+            sample,
+        )
+        if sample
+        else None
+    )
+    edges = sampled or (
+        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p
 {dataset}
 WHERE {{
-  {values}
-  {_members(cls, type_context_graph_uris, window)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   FILTER(isURI(?o))
   FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
 }}"""
@@ -710,18 +880,36 @@ def _build_batched_blank_node_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     window: Window | None = None,
+    sample: int | None = None,
 ) -> str:
     """Blank-node patterns for a batch of classes."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
+    sampled = (
+        _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(isBlank(?o))",
+            sample,
+        )
+        if sample
+        else None
+    )
+    edges = sampled or (
+        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
     q = f"""\
 SELECT {distinct}?class ?p ?bnPred
 {dataset}
 WHERE {{
-  {values}
-  {_members(cls, type_context_graph_uris, window)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   FILTER(isBlank(?o))
   OPTIONAL {{ ?o ?bnPred ?bnObj }}
 }}"""
@@ -738,6 +926,7 @@ def _build_batched_typed_count_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     subjects: bool = True,
+    sample: int | None = None,
 ) -> str:
     """Typed-object COUNT grouped by ``(class, p, oc)`` and edge graph.
 
@@ -750,6 +939,18 @@ def _build_batched_typed_count_query(
     edges = f"""{values}
   {_type_pattern("?s", cls, type_context_graph_uris)}
   {g_open} ?s {prop} ?o . {g_close}{binds}"""
+    if sample:
+        edges = _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(!isLiteral(?o))",
+            sample,
+        )
     if subjects:
         q = f"""\
 SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)\n       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
@@ -781,14 +982,16 @@ def _build_class_property_total_query(
     graph_uris: list[str] | None,
     type_context_graph_uris: list[str] | None = None,
     object_test: str = "",
+    group: str = "",
 ) -> str:
     """Count the edges and distinct subjects of (class, property) and edge graph.
 
-    The edges are those of the count queries; *object_test* keeps the edges of one group.
+    The edges are those of the count queries; *object_test* keeps the edges of some groups,
+    and *group* is the variable that tells the groups apart in the result.
     """
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
-    graph_var = " ?_g" if g_open else ""
+    graph_var = (" ?_g" if g_open else "") + (f" {group}" if group else "")
     return f"""\
 SELECT ?class{graph_var} (COUNT(*) AS ?cnt) (COUNT(DISTINCT ?s) AS ?subjects)
 {dataset}
@@ -809,6 +1012,7 @@ def _build_batched_literal_count_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     subjects: bool = True,
+    sample: int | None = None,
 ) -> str:
     """Literal triple and distinct-subject counts grouped by ``(class, p, dt)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
@@ -819,6 +1023,19 @@ def _build_batched_literal_count_query(
       {g_open} ?s {prop} ?o . {g_close}{binds}
       FILTER(isLiteral(?o))
       BIND(DATATYPE(?o) AS ?dt)"""
+    if sample:
+        edges = _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(isLiteral(?o))",
+            sample,
+        )
+        edges += "\n      BIND(DATATYPE(?o) AS ?dt)"
     if subjects:
         q = f"""\
 SELECT ?class ?p ?dt{graph_var} (SUM(?k) AS ?cnt) (COUNT(*) AS ?subjects)
@@ -882,19 +1099,35 @@ def _build_batched_untyped_count_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     subjects: bool = True,
+    sample: int | None = None,
 ) -> str:
     """Untyped-URI COUNT grouped by ``(class, p)`` and edge graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
+    untyped_object = _type_pattern("?o", "?any", type_context_graph_uris)
+    edges = (
+        f"{values}\n  {_type_pattern('?s', cls, type_context_graph_uris)}\n"
+        f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
+    if sample:
+        edges = _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            f"FILTER(isURI(?o)) FILTER NOT EXISTS {{ {untyped_object} }}",
+            sample,
+        )
     distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
     q = f"""\
 SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)\n       {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
-  {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   FILTER(isURI(?o))
   FILTER NOT EXISTS {{ {_type_pattern("?o", "?any", type_context_graph_uris)} }}
 }}
@@ -912,19 +1145,34 @@ def _build_batched_blank_node_count_query(
     type_context_graph_uris: list[str] | None = None,
     property_uri: str | None = None,
     subjects: bool = True,
+    sample: int | None = None,
 ) -> str:
     """Count blank-node edges per class, property and graph."""
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = " ?_g" if g_open else ""
+    edges = (
+        f"{values}\n  {_type_pattern('?s', cls, type_context_graph_uris)}\n"
+        f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
+    )
+    if sample:
+        edges = _sampled_edges(
+            values,
+            cls,
+            prop,
+            type_context_graph_uris,
+            g_open,
+            g_close,
+            binds,
+            "FILTER(isBlank(?o))",
+            sample,
+        )
     distinct_subjects = "(COUNT(DISTINCT ?s) AS ?subjects) " if subjects else ""
     query = f"""SELECT ?class ?p{graph_var} (COUNT(*) AS ?cnt)
        {distinct_subjects}(COUNT(DISTINCT ?o) AS ?objects)
 {dataset}
 WHERE {{
-  {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   FILTER(isBlank(?o))
 }}
 GROUP BY ?class ?p{graph_var}"""

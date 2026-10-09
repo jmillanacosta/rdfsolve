@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -33,8 +33,8 @@ _EXTRA_PROVIDER_INDEX: dict[str, list[str]] | None = None
 def _build_extra_provider_index() -> dict[str, list[str]]:
     """Build a mapping from provider code -> [bioregistry prefix, ...].
 
-    This allows resolving names like ``"bio2rdf.uniprot"`` to ``"uniprot"``
-    by looking up which resource has ``bio2rdf`` as an extra provider.
+    This allows resolving names like ``"<provider>.<prefix>"`` to ``"<prefix>"``
+    by looking up which resource has ``<provider>`` as an extra provider.
     The index is computed once and cached in :data:`_EXTRA_PROVIDER_INDEX`.
     """
     try:
@@ -245,7 +245,7 @@ def get_bioregistry_metadata(br_prefix: str) -> dict[str, Any]:
         if value:
             meta[key] = str(value)
     meta["package_version"] = _bioregistry_package_version()
-    meta["enriched_at"] = datetime.now(timezone.utc).isoformat()
+    meta["enriched_at"] = datetime.now(UTC).isoformat()
     return meta
 
 
@@ -384,6 +384,9 @@ _LOCAL_RDF_EXTENSIONS: frozenset[str] = frozenset(
         ".nq.xz",
         ".trig",
         ".trig.gz",
+        # A Blazegraph journal, exported to N-Quads before indexing (qlever.utils).
+        ".jnl",
+        ".jnl.gz",
     }
 )
 

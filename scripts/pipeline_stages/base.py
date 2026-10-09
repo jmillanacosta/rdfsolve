@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import subprocess
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +17,73 @@ from .config import PipelineConfig
 
 log = logging.getLogger(__name__)
 
+
+def rdf_only(graph, what: str, report=None):
+    """Return *graph* without the triples whose terms are not RDF IRIs, which no RDF syntax
+    writes (rdfsolve.schema_models.iri_quality), and log how many were left out.
+
+    With a mining *report*, the terms left out and their triples are recorded as data-quality
+    findings (config iri_findings, graphs: *what*).
+    """
+    from rdfsolve.schema_models.iri_quality import graph_findings, rdf_terms_only
+
+    terms = graph_findings(graph)
+    before = len(graph)
+    rdf_terms_only(graph)
+    if len(graph) < before:
+        log.warning(
+            "%s: %d triples with %d terms that are not RDF IRIs left out (report: iri_findings)",
+            what,
+            before - len(graph),
+            len(terms),
+        )
+        if report is not None:
+            found = report.config.setdefault("iri_findings", {})
+            found.setdefault("graphs", {})[what] = {
+                "triples_left_out": before - len(graph),
+                "terms": [{"iri": iri, "triples": n} for iri, n in terms.items()],
+            }
+    return graph
+
+
+def write_rdf(graph, path: Path, what: str, report=None) -> None:
+    """Write *graph* as Turtle to *path* without the triples whose terms are not RDF IRIs.
+
+    The one way the pipeline writes an RDF output: rdf_only leaves out and records (with a
+    *report*) what no RDF syntax can write, so that one term with a space does not refuse the
+    whole file (bio2rdf.biomodels, job 115598: the class "http://bio2rdf.org/mathematical
+    modelling ontology_vocabulary:Resource" in the observed shapes ended the source partial).
+    """
+    path.write_text(rdf_only(graph, what, report).serialize(format="turtle"), encoding="utf-8")
+
+
+def _logged_step(step: str):
+    """Log when an output step starts and ends, so that a long step is seen in the job log."""
+
+    def wrap(method):
+        @functools.wraps(method)
+        def run(self, *args, **kwargs):
+            started = time.monotonic()
+            log.info("Output step %s started", step)
+            try:
+                return method(self, *args, **kwargs)
+            finally:
+                log.info("Output step %s finished in %.1f s", step, time.monotonic() - started)
+
+        return run
+
+    return wrap
+
+
+@contextmanager
+def _light(helper: Any, seconds: float | None) -> Iterator[None]:
+    """Run the block with each query of *helper* limited to *seconds* (helper.budget), if set."""
+    budget = getattr(helper, "budget", None)
+    if seconds is None or budget is None:
+        yield
+        return
+    with budget(seconds):
+        yield
 
 class PartialMiningError(RuntimeError):
     """Saved patterns have incomplete evidence."""
@@ -107,10 +176,19 @@ class Stage:
         from rdfsolve.mining.report_tracking import ReportCollector
 
         report = miner.last_report
+        redirected = getattr(getattr(miner, "helper", None), "redirected_from", None)
+        if isinstance(redirected, str):
+            # The endpoint redirected (http to https): the queries went to the new URL.
+            report.config["endpoint_redirect"] = {
+                "given": redirected,
+                "queried": miner.helper.endpoint_url,
+            }
         collector = ReportCollector(report, report_path, fresh=False)
         report.finished_at = None
         phase = collector.start_phase("pipeline-outputs")
         collector.flush()
+        # The report that the RDF outputs record what they leave out in (_write_rdf).
+        self._output_report = report
         try:
             yield
         except Exception as error:
@@ -119,8 +197,16 @@ class Stage:
         else:
             collector.finish_phase(phase)
         finally:
+            self._output_report = None
             report.finished_at = datetime.now(timezone.utc).isoformat()
             collector.flush()
+
+    def _write_rdf(self, graph, path: Path, what: str) -> None:
+        """Write an RDF output with write_rdf.
+
+        What it leaves out is recorded in the report of the output phase (_output_phase).
+        """
+        write_rdf(graph, path, what, getattr(self, "_output_report", None))
 
     @staticmethod
     def _require_complete(miner: Any) -> None:
@@ -140,6 +226,7 @@ class Stage:
             raise error(f"Mining incomplete: {'; '.join(reasons) or 'see the source report'}")
 
 
+    @_logged_step("ontology discovery")
     def _save_ontology_discovery(
         self,
         schema: Any,
@@ -150,6 +237,8 @@ class Stage:
         helper: Any,
         mining_context: str = "unknown",
         local_ontology_file_candidates: list[Any] | None = None,
+        published_void: Any | None = None,
+        light: bool = False,
     ) -> None:
         """Save ontology discovery/acquisition evidence for one mined snapshot.
 
@@ -157,6 +246,12 @@ class Stage:
         deliberately separate evidence channels.  ``download_owl``-derived file
         candidates must only be passed by local/grouped mining stages; they say
         nothing about which graphs are loaded or exposed by a remote endpoint.
+
+        When the endpoint publishes a VoID whose service description lists its named
+        graphs, those names are inspected and the endpoint is not scanned for them; the
+        discovery file records the VoID graph as their source. With *light* (a VoID-first
+        source), each query has config.void_first_probe_seconds; a probe that does not answer
+        is recorded in the discovery file (discovery_error), as any refusal.
         """
         local_candidates = list(local_ontology_file_candidates or [])
         if not self.config.discover_ontology_graphs and not local_candidates:
@@ -165,13 +260,36 @@ class Stage:
         graph_candidates = []
         if self.config.discover_ontology_graphs:
             from rdfsolve.ontology.discovery import discover_remote_ontology_graphs
+            from rdfsolve.schema_models.readers.void import service_description_graph_names
 
-            result = discover_remote_ontology_graphs(
-                helper,
-                observed_classes=schema.get_classes(),
-                observed_properties=schema.get_properties(),
-                max_graphs=self.config.ontology_discovery_max_graphs,
+            named = (
+                service_description_graph_names(published_void.void)
+                if published_void is not None
+                else []
             )
+            known: dict[str, Any] = {}
+            if named:
+                evidence = f"{published_void.graph} (issued {published_void.issued})"
+                log.info(
+                    "[%s] Ontology discovery: %d named graphs from the service description "
+                    "in %s; the endpoint is not scanned for graphs",
+                    name,
+                    len(named),
+                    evidence,
+                )
+                known = {
+                    "graph_uris": named,
+                    "graph_names_source": "service_description",
+                    "graph_names_evidence": evidence,
+                }
+            with _light(helper, self.config.void_first_probe_seconds if light else None):
+                result = discover_remote_ontology_graphs(
+                    helper,
+                    observed_classes=schema.get_classes(),
+                    observed_properties=schema.get_properties(),
+                    max_graphs=self.config.ontology_discovery_max_graphs,
+                    **known,
+                )
             graph_candidates = result.candidates
             path = output_dir / f"{name}{suffix}_ontology_discovery.json"
             path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
@@ -208,6 +326,7 @@ class Stage:
         acquisition_path = output_dir / f"{name}{suffix}_ontology_acquisition.json"
         acquisition_path.write_text(acquisition.model_dump_json(indent=2), encoding="utf-8")
 
+    @_logged_step("declared artifacts")
     def _save_declared_artifacts(
         self,
         source: Any,
@@ -236,6 +355,7 @@ class Stage:
             path = output_dir / f"{name}{suffix}_declared_artifacts.json"
             path.write_text(bundle.model_dump_json(indent=2), encoding="utf-8")
 
+    @_logged_step("property usage evidence")
     def _save_property_usage_evidence(
         self,
         schema: Any,
@@ -244,31 +364,113 @@ class Stage:
         suffix: str,
         *,
         helper: Any,
+        void: Any | None = None,
+        void_name: str = "",
     ) -> None:
-        """Write class/property subject-support evidence as a separate artifact."""
+        """Write class/property subject-support evidence as a separate artifact.
+
+        With the scoped VoID of a VoID-first source, the classes whose every property it
+        describes take their measures from it and are not queried; the others are queried
+        with config.void_first_probe_seconds per query (IDSM, rehearsal 2026-10-06: one
+        property-usage query of PubChem's substance graph ran to the 330 s deadline).
+        """
         if not self.config.collect_property_usage_evidence:
             return
         from rdfsolve.evidence.observed import collect_property_usage_evidence
 
         classes = sorted({pattern.subject_class for pattern in schema.patterns})
+        stated: dict[tuple[str, str], dict[str, Any]] = {}
+        if void is not None:
+            from rdfsolve.mining.query_builders import MEMBERSHIP
+            from rdfsolve.mining.void_strategy import void_property_usage
+
+            described = void_property_usage(void)
+            members = set(MEMBERSHIP.get())
+            used: dict[str, set[str]] = {}
+            for pattern in schema.patterns:
+                if pattern.property_uri not in members:
+                    used.setdefault(pattern.subject_class, set()).add(pattern.property_uri)
+            covered = {
+                cls
+                for cls, props in used.items()
+                if props and all((cls, prop) in described for prop in props)
+            }
+            stated = {key: value for key, value in described.items() if key[0] in covered}
         report_path = output_dir / f"{name}{suffix}_report.json"
         report = json.loads(report_path.read_text()) if report_path.is_file() else {}
-        evidence = collect_property_usage_evidence(
+        settings = dict(
             dataset_id=name,
             classes=classes,
             class_entity_counts=schema.about.class_entity_counts,
             class_entity_count_states=schema.about.class_entity_count_states,
-            helper=helper,
             graph_uris=schema.about.graph_uris,
             batch_size=min(max(1, self.config.class_batch_size), 10),
-            chunk_size=self.config.class_chunk_size or self.config.chunk_size,
             collect_node_kinds=self.config.collect_property_value_profiles,
             collect_datatypes=self.config.collect_property_value_profiles,
             collect_histograms=self.config.collect_property_value_histograms,
             shared_extensions=(report.get("config") or {}).get("shared_extensions"),
         )
+        store = getattr(self, "_scan_store", None)
+        if store is not None:
+            from rdfsolve.mining.scan_structure import property_usage_evidence
+
+            evidence = property_usage_evidence(store, **settings)
+        else:
+            light = self.config.void_first_probe_seconds if void is not None else None
+            with _light(helper, light):
+                evidence = collect_property_usage_evidence(
+                    **settings,
+                    helper=helper,
+                    chunk_size=self.config.class_chunk_size or self.config.chunk_size,
+                    stated=stated,
+                    stated_by=f"void/{void_name}" if void_name else "void",
+                )
         path = output_dir / f"{name}{suffix}_property_usage.json"
         path.write_text(evidence.model_dump_json(indent=2), encoding="utf-8")
+        # The evidence gives each (class, property) partition its totals over every object kind,
+        # which the patterns alone cannot give where object classes overlap.
+        void_path = output_dir / f"{name}{suffix}_void.ttl"
+        if void_path.is_file():
+            from rdfsolve.schema_models.exporters.void import add_property_usage
+
+            void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
+            add_property_usage(void_graph, schema, evidence)
+            self._write_rdf(void_graph, void_path, "void")
+        if store is not None:
+            self._save_observed_shapes(schema, output_dir, name, suffix, store)
+        grouping = getattr(self, "_scan_grouping", None)
+        if store is not None and grouping is not None:
+            from rdfsolve.mining.term_release import write_term_release
+
+            # The exact per-term rows and the term hierarchy, which clients regroup on demand.
+            manifest = write_term_release(store, grouping, output_dir / f"{name}{suffix}", dataset=name)
+            report_path = output_dir / f"{name}{suffix}_report.json"
+            if report_path.is_file():
+                data = json.loads(report_path.read_text(encoding="utf-8"))
+                data.setdefault("config", {})["term_release"] = manifest
+                report_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+
+    def _save_observed_shapes(self, schema: Any, output_dir: Path, name: str, suffix: str, store: Any) -> None:
+        """Write SHACL shapes whose constraints are the extremes observed in the rows.
+
+        They validate the release they were read from by construction (rdfsolve.mining.scan_shapes);
+        they describe the release, not the source's rules, and are kept apart from the
+        deactivated templates of _shacl.ttl and from the constraints that sources declare.
+        """
+        from rdfsolve.mining.scan_shapes import class_property_profiles, observed_shapes
+        from rdfsolve.qlever.datatypes import CENSUS_FILE, read_census
+
+        census_path = store.base.path.parent / CENSUS_FILE
+        profiles = class_property_profiles(
+            store, census=read_census(census_path) if census_path.is_file() else None
+        )
+        graph = observed_shapes(
+            profiles, dataset_name=name, graph_uris=schema.about.graph_uris or None
+        )
+        self._write_rdf(graph, output_dir / f"{name}{suffix}_observed_shapes.ttl", "observed_shapes")
+        (output_dir / f"{name}{suffix}_observed_profiles.json").write_text(
+            json.dumps([p.model_dump(mode="json") for p in profiles], indent=1), encoding="utf-8"
+        )
 
     def _without_service_data(self, schema: Any) -> Any:
         """Return the schema without engine and service data when the run asks for it.
@@ -290,6 +492,12 @@ class Stage:
         )
         return cleaned
 
+    def _navigation_budget(self, void_first: bool) -> float:
+        """Return the seconds for testing paths: the VoID-first budget for such a source."""
+        special = self.config.void_first_navigation_budget
+        return special if void_first and special is not None else self.config.navigation_budget
+
+    @_logged_step("schema outputs")
     def _save_schema_outputs(
         self,
         schema: Any,
@@ -298,14 +506,21 @@ class Stage:
         suffix: str,
         helper=None,
         members: dict[str, list[str]] | None = None,
+        report: Any = None,
+        void_first: bool = False,
     ) -> None:
         """Save schema in requested output formats.
+
+        A source mined VoID-first (*void_first*) tests its paths within
+        config.void_first_navigation_budget, when it is set, else config.navigation_budget.
 
         Args:
             schema: MinedSchema object to save
             output_dir: Directory to save outputs
             name: Source name
             suffix: Output file suffix
+            report: Mining report that records why path testing stopped early (config
+                navigation), when given
         """
         path = output_dir / f"{name}{suffix}_schema.json"
         path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
@@ -316,21 +531,55 @@ class Stage:
                 name,
                 self.config.trim_descriptions,
             )
-        if self.config.navigation_hops and helper is not None:
+        budget = self._navigation_budget(void_first)
+        store = getattr(self, "_scan_store", None)
+        if self.config.navigation_hops and store is not None:
+            from rdfsolve.mining.scan_paths import find_tested_paths_in_store
+
+            # The rows that scan mining read: paths are tested by joins, not by probes.
+            log.info("[%s] Navigation: testing paths on the rows (budget %s s)", name, budget)
+            schema.navigation = find_tested_paths_in_store(
+                schema,
+                store,
+                max_hops=self.config.navigation_hops,
+                budget_s=budget,
+                members=members,
+            )
+        elif self.config.navigation_hops and helper is not None:
             from rdfsolve.mining.navigation import find_tested_paths
 
             # Only paths that instances of the data follow are written (owner, 2026-09-30).
+            log.info("[%s] Navigation: testing paths (budget %s s)", name, budget)
             schema.navigation = find_tested_paths(
                 schema,
                 helper,
                 max_hops=self.config.navigation_hops,
-                budget_s=self.config.navigation_budget,
+                budget_s=budget,
                 members=members,
             )
+        if self.config.navigation_hops and schema.navigation is not None:
+            navigation = schema.navigation
+            if navigation.stop_reason is not None:
+                stopped = {
+                    "stop_reason": navigation.stop_reason,
+                    "cuts": navigation.cuts,
+                    "complete_lengths": navigation.complete_lengths,
+                    "query_count": navigation.query_count,
+                    "failed_queries": navigation.failed_queries,
+                }
+                log.warning("[%s] Navigation: stopped early: %s", name, stopped)
+                if report is not None:
+                    report.config["navigation"] = stopped
 
-        if self.config.restriction_patterns and helper is not None:
+        if self.config.restriction_patterns and store is not None:
+            from rdfsolve.mining.scan_enrichment import restriction_patterns
+
+            log.info("[%s] Restriction patterns: from the rows", name)
+            schema.restriction_patterns = restriction_patterns(store)
+        elif self.config.restriction_patterns and helper is not None:
             from rdfsolve.mining.restrictions import mine_restriction_patterns
 
+            log.info("[%s] Restriction patterns: mining", name)
             schema.restriction_patterns = mine_restriction_patterns(
                 helper, graph_uris=restriction_scope(schema.about)
             )
@@ -361,8 +610,7 @@ class Stage:
             try:
                 void_graph = schema.to_void_graph(trim_descriptions=self.config.trim_descriptions)
                 if void_graph:
-                    void_ttl = void_graph.serialize(format="turtle")
-                    path.write_text(void_ttl, encoding="utf-8")
+                    self._write_rdf(void_graph, path, "void")
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate VoID: {e}") from e
 

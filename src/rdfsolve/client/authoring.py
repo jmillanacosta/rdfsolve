@@ -399,7 +399,7 @@ def create_record(
     extra_types: Sequence[str] = (),
 ) -> BaseModel:
     """Create a named or anonymous record with explicit blank-node scope."""
-    from rdfsolve.client.hydration import class_iri, field_metadata
+    from rdfsolve.client.hydration import class_iri, field_metadata, is_untyped
 
     data = {
         name: coerce_value(value, field_metadata(model.model_fields[name]), name, language)
@@ -416,7 +416,9 @@ def create_record(
         raise ValueError("extra_types must be a sequence of IRIs")
     for iri in extra_types:
         absolute_iri(iri)
-    data["rdf_type"] = list(dict.fromkeys([class_iri(model), *extra_types]))
+    # A record of the view of subjects without a type states no class of its own.
+    own = [] if is_untyped(model) else [class_iri(model)]
+    data["rdf_type"] = list(dict.fromkeys([*own, *extra_types]))
     if blank_node_scope is not None:
         if not blank_node_scope:
             raise ValueError("Use a nonempty blank_node_scope")

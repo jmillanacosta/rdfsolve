@@ -4,25 +4,14 @@ from __future__ import annotations
 
 import importlib
 
-from rdfsolve.ontology.structure import (
-    DisjointClassRelation,
-    DomainAssertion,
-    EquivalentClassRelation,
-    EquivalentPropertyRelation,
-    InverseRelation,
-    OntologyStructure,
-    PropertyCharacteristic,
-    RangeAssertion,
-    Restriction,
-    SubClassRelation,
-    SubPropertyRelation,
-)
 from rdfsolve.schema_models._constants import (
     _BLANK_NODE_URIS,
     _RESOURCE_URIS,
     _SENTINEL_OBJECTS,
     _URI_SCHEMES,
     SERVICE_NAMESPACE_PREFIXES,
+    UNTYPED_SUBJECT,
+    UNTYPED_SUBJECTS_LABEL,
 )
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema, MiningResult
@@ -30,7 +19,7 @@ from rdfsolve.schema_models.exporters.rdfconfig import to_rdfconfig
 from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
 from rdfsolve.schema_models.exporters.void import minedschema_to_void
 from rdfsolve.schema_models.metadata import MetadataDocument
-from rdfsolve.schema_models.pattern import PatternType, SchemaPattern
+from rdfsolve.schema_models.pattern import PatternSample, PatternType, SchemaPattern
 from rdfsolve.schema_models.readers.shacl import shacl_to_minedschema
 from rdfsolve.schema_models.readers.void import void_to_minedschema
 from rdfsolve.schema_models.report import (
@@ -53,7 +42,24 @@ from rdfsolve.schema_models.void_model import (
     VoidPropertyPartition,
 )
 
-# Names that should be resolved lazily via __getattr__
+# Names that should be resolved lazily via __getattr__. The ontology structure models are lazy
+# because rdfsolve.ontology.structure imports rdfsolve.schema_models.enrichment: importing them
+# here would make "import rdfsolve.ontology.structure" fail on a partly initialised module.
+_LAZY_STRUCTURE = frozenset(
+    {
+        "DisjointClassRelation",
+        "DomainAssertion",
+        "EquivalentClassRelation",
+        "EquivalentPropertyRelation",
+        "InverseRelation",
+        "OntologyStructure",
+        "PropertyCharacteristic",
+        "RangeAssertion",
+        "Restriction",
+        "SubClassRelation",
+        "SubPropertyRelation",
+    }
+)
 _LAZY_LINKML = {
     "make_valid_linkml_name": "rdfsolve.schema_models.exporters.linkml",
     "to_linkml": "rdfsolve.schema_models.exporters.linkml",
@@ -62,7 +68,9 @@ _LAZY_LINKML = {
 
 
 def __getattr__(name: str) -> object:
-    """Lazily import LinkML-dependent symbols on first access."""
+    """Lazily import LinkML-dependent symbols and the ontology structure models on first access."""
+    if name in _LAZY_STRUCTURE:
+        return getattr(importlib.import_module("rdfsolve.ontology.structure"), name)
     if name in _LAZY_LINKML:
         module = importlib.import_module(_LAZY_LINKML[name])
         return getattr(module, name)
@@ -72,6 +80,8 @@ def __getattr__(name: str) -> object:
 __all__ = [
     # constants
     "SERVICE_NAMESPACE_PREFIXES",
+    "UNTYPED_SUBJECT",
+    "UNTYPED_SUBJECTS_LABEL",
     "_BLANK_NODE_URIS",
     "_RESOURCE_URIS",
     "_SENTINEL_OBJECTS",
@@ -92,6 +102,7 @@ __all__ = [
     "MiningResult",
     "OneShotQueryResult",
     "OntologyStructure",
+    "PatternSample",
     "PatternType",
     "PhaseReport",
     "PropertyCharacteristic",
