@@ -86,29 +86,41 @@ class RetypedStore:
     """A row store (or a view of one) whose type table is replaced; count_patterns reads it.
 
     Everything else (rows, graphs, predicates, the types of blank nodes in the data graphs) is
-    the store's own.
+    the store's own. With *rows*, the rows the table is made distinct from (retype with
+    distinct=False), graph_types() returns them and the tables by node are made distinct from
+    them, as a store's own type rows: a count of classes then reads the rows, and the table by
+    id leaves the node text out before it is made distinct.
     """
 
-    def __init__(self, store: RowStore | StoreView | RetypedStore, types: pl.LazyFrame) -> None:
-        """Keep *store* and the type table (s, c) that replaces its own."""
+    # The replaced type table is made distinct where it is read (type_table), as given.
+    distinct_types = False
+
+    def __init__(
+        self,
+        store: RowStore | StoreView | RetypedStore,
+        types: pl.LazyFrame,
+        rows: pl.LazyFrame | None = None,
+    ) -> None:
+        """Keep *store* and the type table (s, c) that replaces its own (made from *rows*)."""
         self._store = store
         self._types = types
+        self._rows = rows
 
     def __getattr__(self, name: str) -> Any:
         """Read everything but the types from the store."""
         return getattr(self._store, name)
 
     def graph_types(self) -> pl.LazyFrame:
-        """Return the replaced type table (s, sid, c), without graphs."""
-        return self._types
+        """Return the replaced type rows (s, sid, c), without graphs: the table, or its rows."""
+        return self._types if self._rows is None else self._rows
 
     def types(self) -> pl.LazyFrame:
         """Return the replaced type table (s, c)."""
-        return self._types.select("s", "c").unique()
+        return self.graph_types().select("s", "c").unique()
 
     def type_ids(self) -> pl.LazyFrame:
         """Return the replaced type table by id (sid, c), which count_patterns joins on."""
-        return self._types.select("sid", "c").unique()
+        return self.graph_types().select("sid", "c").unique()
 
     def members(self) -> pl.LazyFrame:
         """Return the members of each class in the replaced type table."""
@@ -122,24 +134,36 @@ def _keys(types: pl.LazyFrame) -> list[str]:
 
 
 def type_table(store: RowStore | StoreView) -> pl.LazyFrame:
-    """Return the type table of the store's scope with the ids: (s, sid, c), one row each."""
+    """Return the type table of the store's scope with the ids: (s, sid, c), one row each.
+
+    The rows are made distinct unless the store's membership rows already are
+    (RowStore.distinct_types): the classes of a type table (_type_classes) are then read
+    from the rows, without holding every (node, class) row of a large index at once.
+    """
     rows = store.graph_types()
-    return rows.select(*_keys(rows), "c").unique()
+    table = rows.select(*_keys(rows), "c")
+    return table if getattr(store, "distinct_types", False) else table.unique()
 
 
 def _table(types: pl.LazyFrame) -> pl.LazyFrame:
     return types.select(*_keys(types), "c").unique()
 
 
-def retype(types: pl.LazyFrame, representative: Mapping[str, str]) -> pl.LazyFrame:
+def retype(
+    types: pl.LazyFrame, representative: Mapping[str, str], *, distinct: bool = True
+) -> pl.LazyFrame:
     """Rewrite the classes of a type table (terms as <iri>) by *representative*; one row per
     (s, c), so a record typed with two members of one representative is one member of it.
+
+    With *distinct* False, the rewritten rows are not made distinct (a record typed with two
+    members of one representative has two rows): the rows of a RetypedStore.
     """
     import polars as pl
 
     keys = _keys(types)
     if not representative:
-        return types.select(*keys, "c").unique()
+        rows = types.select(*keys, "c")
+        return rows.unique() if distinct else rows
     mapping = pl.LazyFrame(
         {
             "c": [f"<{t}>" for t in representative],
@@ -147,12 +171,12 @@ def retype(types: pl.LazyFrame, representative: Mapping[str, str]) -> pl.LazyFra
         },
         schema={"c": pl.String, "r": pl.String},
     )
-    return (
+    rows = (
         types.select(*keys, "c")
         .join(mapping, on="c", how="left")
         .select(*keys, c=pl.coalesce("r", "c"))
-        .unique()
     )
+    return rows.unique() if distinct else rows
 
 
 def without_classes(types: pl.LazyFrame, classes: Iterable[str]) -> pl.LazyFrame:
@@ -357,6 +381,10 @@ def _shapes(
     """ontology_as_data.fetch_shapes from the rows: the predicates of the instances of each term
     in the whole index (ql:has-predicate), the membership predicates left out; their number and
     one of them.
+
+    The subjects of each predicate are read as those of the instances (by id when the type
+    table has ids), so that only the instances' subjects are made distinct, never all the
+    subjects of a large predicate.
     """
     import polars as pl
 
@@ -368,15 +396,17 @@ def _shapes(
     base = getattr(store, "base", store)
     wanted = pl.LazyFrame({"c": [f"<{t}>" for t in terms]}, schema={"c": pl.String})
     instances = types.join(wanted, on="c", how="semi").collect()
+    key = _keys(types)[-1]
+    nodes = instances.lazy().select(key).unique()
     membership = set(MEMBERSHIP.get())
     found = []
     for predicate in base.predicates:
         if predicate in membership:
             continue
-        subjects = base.rows(predicate).select("s").unique()
+        subjects = base.rows(predicate).select(key).join(nodes, on=key, how="semi").unique()
         found.append(
             instances.lazy()
-            .join(subjects, on="s", how="semi")
+            .join(subjects, on=key, how="semi")
             .select("c")
             .unique()
             .with_columns(p=pl.lit(predicate))
@@ -606,6 +636,7 @@ def group_before_counting(
         return None
     record: dict[str, Any] = {"before_mining": True, "before_counting": True, "limit": limit}
     representative: dict[str, str] | None = None
+    rows: pl.LazyFrame | None = None
     kinds = None
     if classes_as_data:
         kinds = _record_kinds(store, table)
@@ -628,11 +659,14 @@ def group_before_counting(
             store, table, classes, budget, limit, ontology_graph_uris, hierarchy_files
         )
         representative = {t: r for t, r in chosen.items() if r != t}
-        table = retype(table, representative)
+        # Counting reads the rewritten rows (RetypedStore): the table of a large index is
+        # never made distinct whole, only by id and in parts (count_patterns).
+        rows = retype(table, representative, distinct=False)
+        table = rows.unique()
         record = {**found, **{k: v for k, v in record.items() if k != "limit"}, "limit": limit}
     return GroupedBeforeCounting(
         types=table,
-        store=RetypedStore(store, table),
+        store=RetypedStore(store, table, rows),
         record=record,
         representative=representative,
         kinds=kinds,

@@ -2,8 +2,9 @@
 the type table of a row store and counting again (exact counts), minimal types, and the folding
 of ``p some F`` class expressions into edge rows."""
 
+import polars as pl
 import pytest
-from rdflib import BNode, Graph, Literal, Namespace
+from rdflib import BNode, Dataset, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import OWL, RDF, RDFS
 
 from rdfsolve.mining import mine_with_ontology
@@ -309,3 +310,49 @@ def test_the_release_keeps_the_exact_terms_of_a_scan_grouped_before_counting(tmp
     classes = pl.read_parquet(tmp_path / "fixture_term_classes.parquet")
     grouped = dict(classes.select("class", "representative").drop_nulls().iter_rows())
     assert grouped.get(T + "ethanol") == grouping.representative[T + "ethanol"]
+
+
+def test_the_type_table_of_an_index_without_graphs_is_not_made_distinct_again(tmp_path):
+    """Its membership rows are one per node and class already: a type table read from them
+    is the same table, and a large one is not held whole to make it distinct (its classes are
+    read from the rows)."""
+    store = store_from_graph(_double_typed(), tmp_path / "store")
+    table = type_table(store)
+    assert "UNIQUE" not in table.explain()
+    read = table.collect().sort("s", "c")
+    assert read.equals(store.graph_types().select("s", "sid", "c").unique().collect().sort("s", "c"))
+    assert read.height == read.unique().height
+
+    # A node typed in two graphs has a membership row in each: made distinct, one row.
+    data = Dataset(default_union=True)
+    for name in ("one", "two"):
+        data.graph(URIRef(EX + name)).add((E.x, RDF.type, N.a))
+    named = store_from_graph(data, tmp_path / "named")
+    assert not named.distinct_types
+    assert named.graph_types().collect().height == 2
+    assert type_table(named).collect().height == 1
+    assert type_table(RetypedStore(store, table)).collect().height == read.height
+
+
+def test_a_scan_grouped_before_counting_counts_the_rewritten_rows(tmp_path):
+    """The store counted after grouping reads the rewritten rows, not a distinct table of the
+    whole index; its tables by node are distinct, and the counts are those of the table."""
+    from rdfsolve.mining.scan_terms import group_before_counting
+
+    store = store_from_graph(_double_typed(), tmp_path / "store")
+    grouped = group_before_counting(store, limit=1, budget=2)
+    assert grouped is not None
+    rows = grouped.store.graph_types()
+    assert "UNIQUE" not in rows.explain()
+    root = f"<{N.root}>"
+    x = rows.filter(pl.col("s") == f"<{E.x}>").collect()
+    assert x["c"].to_list() == [root, root], "Two members of one representative: two rows"
+    ids = grouped.store.type_ids().collect()
+    assert ids.height == ids.unique().height
+    assert ids.sort("sid", "c").equals(
+        grouped.types.select("sid", "c").unique().collect().sort("sid", "c")
+    )
+    counted = _rows(count_patterns(grouped.store))
+    assert counted == _rows(count_patterns(RetypedStore(store, grouped.types)))
+    string = "http://www.w3.org/2001/XMLSchema#string"
+    assert counted[(str(N.root), str(E.name), "Literal", string)] == (2, 2, 2)

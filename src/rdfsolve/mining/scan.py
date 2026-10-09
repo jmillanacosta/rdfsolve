@@ -222,6 +222,17 @@ class RowStore:
             return pl.DataFrame(schema=types.collect_schema()).lazy()
         return types
 
+    @property
+    def distinct_types(self) -> bool:
+        """Whether the membership rows (graph_types) are already one per node and class.
+
+        An index without named graphs gives each membership triple once: an export query reads
+        distinct rows, and the rows of several membership properties and the named class
+        expressions (types-named.parquet) are made distinct when written. Such a type table
+        need not be made distinct again, which on a large index holds every row in memory.
+        """
+        return self.graphs is None
+
     def literal_type_values(self, limit: int = 20) -> dict[str, Any] | None:
         """Return the type values that are not classes (literals), with their membership rows.
 
@@ -321,6 +332,9 @@ class StoreView:
     - data_types(): the types in the data graphs alone, as a query without type context reads
       them (the predicates of blank nodes; property usage evidence).
     """
+
+    # A node typed in several graphs of the scope has a membership row in each.
+    distinct_types = False
 
     def __init__(
         self, store: RowStore, graph_uris: Sequence[str], context: Sequence[str] = ()
