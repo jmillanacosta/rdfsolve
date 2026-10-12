@@ -2634,39 +2634,63 @@ def count_patterns(
                 """Return a part of the type table, restricted to this batch's nodes if read."""
                 return own[type_number] if own else type_part(type_number)
 
+            # The types of the objects that can have one (IRIs and blank nodes), read once for
+            # the batch: a literal row needs no object type, and a part's rows are classified
+            # once, each with the part of the types its object falls in. Crossing every part
+            # of the rows with every part of the types cost the square of the type parts.
+            if own:
+                object_types = own
+            else:
+                targets = (
+                    pl.scan_parquet(folder / "rows" / "*" / "*.parquet")
+                    .filter(pl.col("kind") != "literal")
+                    .select(sid="oid")
+                    .unique()
+                )
+                object_types = {
+                    n: type_part(n).lazy().join(targets, on="sid", how="semi").collect()
+                    for n in range(type_parts)
+                }
+
             sums, subject_counts = [], []
             for part in range(parts):
                 rows = _part(folder / "rows", part, schema)
                 selected = pl.col("sid") % parts == part
                 subjects = unit_types(part % type_parts).filter(selected)
                 typed_subjects = typed_part(part % type_parts).filter(selected)
-                pairs = []
-                for object_part in range(type_parts):
-                    cell = rows.filter(pl.col("oid") % type_parts == object_part)
-                    objects = renamed(unit_types(object_part))
-                    cells = classify(
-                        cell,
-                        subjects.rename({"c": "subject_class"}),
-                        typed_subjects,
-                        objects,
-                    )
-                    for index, f in enumerate(cells):
-                        sums.append(f.group_by(keys).agg(count=pl.len()))
-                        pairs.append(f.select(*keys, "sid").unique())
-                        by_object = (
-                            f.select(*keys, "oid")
-                            .unique()
-                            .with_columns(b=(pl.col("oid") % parts).cast(pl.UInt32))
+                wanted = rows.filter(pl.col("kind") != "literal").select("oid").unique()
+                objects = pl.concat(
+                    [
+                        renamed(object_types[n]).join(
+                            wanted.filter(pl.col("oid") % type_parts == n), on="oid", how="semi"
                         )
-                        for (b,), chunk in by_object.partition_by(
-                            "b", as_dict=True, include_key=False
-                        ).items():
-                            target = folder / "objects" / str(b)
-                            target.mkdir(parents=True, exist_ok=True)
-                            chunk.write_parquet(target / f"{part}-{object_part}-{index}.parquet")
-                subject_counts.append(
-                    pl.concat(pairs).unique().group_by(keys).agg(distinct_subjects=pl.len())
+                        for n in range(type_parts)
+                    ]
                 )
+                cells = classify(
+                    rows, subjects.rename({"c": "subject_class"}), typed_subjects, objects
+                )
+                # The four tables have distinct object classes (Literal, a class, Resource,
+                # BlankNode), so their keys never meet: they are counted as one table.
+                classified = pl.concat(cells, how="vertical_relaxed")
+                sums.append(classified.group_by(keys).agg(count=pl.len()))
+                subject_counts.append(
+                    classified.select(*keys, "sid")
+                    .unique()
+                    .group_by(keys)
+                    .agg(distinct_subjects=pl.len())
+                )
+                by_object = (
+                    classified.select(*keys, "oid")
+                    .unique()
+                    .with_columns(b=(pl.col("oid") % parts).cast(pl.UInt32))
+                )
+                for (b,), chunk in by_object.partition_by(
+                    "b", as_dict=True, include_key=False
+                ).items():
+                    target = folder / "objects" / str(b)
+                    target.mkdir(parents=True, exist_ok=True)
+                    chunk.write_parquet(target / f"{part}.parquet")
                 # The counts of the parts read so far are added up as each part ends, so that
                 # they take the rows of their keys, not of their keys in every part and cell.
                 sums = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]

@@ -148,3 +148,34 @@ def test_a_predicate_without_rows_is_batched():
         predicates={"a": "a.parquet", "b": "b.parquet"}, manifest={"rows": {"a": 0, "b": 5}}
     )
     assert _batches(store) == [["a", "b"]]
+
+
+@pytest.mark.parametrize("rows", [7, 10**9])
+def test_a_part_of_the_rows_is_classified_once_not_with_every_part_of_the_types(
+    store, monkeypatch, rows
+):
+    """Each part of the rows writes one file of objects per object part: classifying it once
+    for each part of the types made the cost of a batch the square of the type parts."""
+    import polars as pl
+
+    whole = _counts(store)
+    written: list[str] = []
+    write = pl.DataFrame.write_parquet
+
+    def spy(self, file, *args, **kwargs):
+        if "objects" in str(file):
+            written.append(str(file))
+        return write(self, file, *args, **kwargs)
+
+    monkeypatch.setattr(pl.DataFrame, "write_parquet", spy)
+    monkeypatch.setattr(scan, "PARTITION_ROWS", rows)
+    monkeypatch.setattr(scan, "TYPE_PARTITION_ROWS", 13)
+    monkeypatch.setattr(scan, "BATCH_ROWS", rows)
+    assert _counts(store) == whole
+    assert written
+    # .../unit-<batch>/objects/<object part>/<file>
+    cells = {tuple(f.split("/")[-4:]) for f in written}
+    assert len(cells) == len(written)
+    assert all(name.removesuffix(".parquet").isdigit() for *_, name in cells), (
+        "One file per batch, object part and row part"
+    )
