@@ -1361,11 +1361,24 @@ class GraphExporter:
         return None, "every default-graph triple is in a named graph"
 
     def _write_manifest(self) -> None:
+        """Write the manifest. Until a run has gone through every graph, the earlier run's records
+        of the graphs it has not reached yet are kept, so that a run that stops early (a listing
+        that fails, a time limit, a kill) never loses what earlier runs retrieved and verified.
+        """
         self.manifest["bytes"] = self.bytes
         self.manifest["requests"] = self.requests
+        written = dict(self.manifest)
+        if written.get("outcome") not in ("complete", "partial"):
+            reached = {(g.get("graph"), g.get("role")) for g in written.get("graphs", [])}
+            earlier = [
+                g
+                for g in self._previous.get("graphs", [])
+                if (g.get("graph"), g.get("role")) not in reached
+            ]
+            written["graphs"] = [*written.get("graphs", []), *earlier]
         path = self.output / MANIFEST
         temporary = path.with_suffix(".json.tmp")
-        temporary.write_text(json.dumps(self.manifest, indent=2) + "\n", encoding="utf-8")
+        temporary.write_text(json.dumps(written, indent=2) + "\n", encoding="utf-8")
         temporary.replace(path)
 
     def _resumable(self, graph: str | None, role: str) -> GraphOutcome | None:

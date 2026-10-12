@@ -224,6 +224,26 @@ def test_resume_keeps_retrieved_graphs(endpoint: type[_Endpoint], tmp_path: Path
     assert manifest["bytes"] > 0 and manifest["requests"] == 0 and manifest["requests_before"] == 3
 
 
+def test_a_run_that_stops_early_keeps_the_graphs_retrieved_before(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """A resume whose graph listing fails leaves the earlier records on disk, and the next run
+    resumes from them without sending a CONSTRUCT again."""
+    import json
+
+    first = _export(endpoint, tmp_path)
+    endpoint.queries.clear()
+    endpoint.refuse = ("SELECT",)  # the graph listing fails
+    stopped = _export(endpoint, tmp_path)
+    assert stopped["outcome"] == "failed"
+    on_disk = json.loads((tmp_path / "toy" / "manifest.json").read_text())
+    assert _by_graph(on_disk).keys() == _by_graph(first).keys()
+    endpoint.refuse = ()
+    endpoint.queries.clear()
+    again = _export(endpoint, tmp_path)
+    assert source_complete(again) and not [q for q in endpoint.queries if "CONSTRUCT" in q]
+
+
 def test_registry_graphs_are_taken_as_given(endpoint: type[_Endpoint], tmp_path: Path) -> None:
     """An entry that names its graphs exports those only, without the default graph."""
     entry = {"name": "toy", "endpoint": endpoint.url, "graph_uris": [EX + "g2"]}  # type: ignore[attr-defined]
