@@ -569,7 +569,7 @@ check_endpoint_health("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
 Create graphs showing dataset relationships via shared classes and mappings:
 
 ```bash
-python scripts/build_graphs.py output/schemas/ --mappings output/mappings/
+python scripts/analyze_mappings.py output/schemas/ --class-mappings output/mappings/*.sssom.tsv --output results/graphs/
 ```
 
 ### Questions through MCP
