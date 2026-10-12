@@ -67,6 +67,9 @@ __all__ = [
 ]
 
 BUCKETS = 8
+# Rows whose distinct subjects or objects are counted at a time (dataset_statistics): a larger
+# property, or the whole store, is counted in buckets of ids of about this many rows.
+STATISTICS_PART_ROWS = 200_000_000
 # Shapes (distinct subject and object property sets) of one property above which its uncovered
 # edges are described by their kind, datatype and language alone (shape_semantics
 # "property_profile"), with exact counts: a source without classes can give millions of
@@ -118,17 +121,22 @@ def _language() -> pl.Expr:
 
 
 def _distinct(frames: Iterable[pl.LazyFrame], column: str, buckets: int) -> int:
-    """Count the distinct values of *column* over *frames*, one bucket of values at a time."""
+    """Count the distinct values of *column* over *frames*, one bucket of values at a time.
+
+    An id column (sid, oid: QLever's ids, one per term) is bucketed by its value; a text column
+    by its hash. The ids are counted, not the text, so that a bucket holds integers.
+    """
     import polars as pl
 
     frames = [f.select(column) for f in frames]
     if not frames:
         return 0
+    key = pl.col(column) if column in ("sid", "oid") else pl.col(column).hash()
     total = 0
     for bucket in range(buckets):
         total += (
             pl.concat(frames)
-            .filter(pl.col(column).hash() % buckets == bucket)
+            .filter(key % buckets == bucket)
             .unique()
             .select(pl.len())
             .collect(engine="streaming")
@@ -171,24 +179,23 @@ def dataset_statistics(
         store = store.base
     partitions: dict[str, dict[str, int]] = {}
     for predicate in store.predicates:
-        row = (
-            store.rows(predicate)
-            .select(
-                triples=pl.len(),
-                distinct_subjects=pl.col("s").n_unique(),
-                distinct_objects=pl.col("oid").n_unique(),
-            )
-            .collect(engine="streaming")
-            .row(0, named=True)
-        )
-        partitions[predicate] = {k: int(v) for k, v in row.items()}
+        rows = store.rows(predicate)
+        triples = int(rows.select(pl.len()).collect(engine="streaming").item())
+        parts = max(1, -(-triples // STATISTICS_PART_ROWS))
+        partitions[predicate] = {
+            "triples": triples,
+            "distinct_subjects": _distinct([rows], "sid", parts),
+            "distinct_objects": _distinct([rows], "oid", parts),
+        }
     frames = [store.rows(p) for p in store.predicates]
+    total = sum(p["triples"] for p in partitions.values())
+    parts = max(buckets, -(-total // STATISTICS_PART_ROWS))
     return {
         "state": "counted",
         "source": source,
-        "triples": sum(p["triples"] for p in partitions.values()),
-        "distinct_subjects": _distinct(frames, "s", buckets),
-        "distinct_objects": _distinct(frames, "oid", buckets),
+        "triples": total,
+        "distinct_subjects": _distinct(frames, "sid", parts),
+        "distinct_objects": _distinct(frames, "oid", parts),
         "distinct_properties": len(partitions),
         "property_partitions": dict(sorted(partitions.items())),
         "refused_partitions": {},
