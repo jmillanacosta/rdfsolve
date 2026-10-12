@@ -98,9 +98,9 @@ def _load_file(path: Path, store: ox.Store) -> None:
         store.extend(to_oxigraph(Dataset().parse(path)))
     elif zipped:
         with gzip.open(path, "rb") as handle:
-            store.bulk_load(cast("IO[bytes]", handle), format=rdf_format)
+            store.bulk_load(cast("IO[bytes]", handle), format=rdf_format, lenient=True)
     else:
-        store.bulk_load(path=str(path), format=rdf_format)
+        store.bulk_load(path=str(path), format=rdf_format, lenient=True)
 
 
 _RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})

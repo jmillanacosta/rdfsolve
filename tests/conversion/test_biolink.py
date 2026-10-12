@@ -7,7 +7,7 @@ import rdflib
 
 from rdfsolve.conversion import Profile, Query, Rule, rules_of
 from rdfsolve.property_graph import Fold, Identity, PropertyGraph
-from tests.conversion.data import BIOLINK_YAML, BL, DATA, WP, Local, biolink_client, pairs, store
+from tests.conversion.data import BIOLINK_YAML, BL, DATA, DERIVATIONS, WP, Local, biolink_client, pairs, store
 
 
 def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
@@ -15,10 +15,10 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
     one edge with its qualifier. The model draws a class with its parents and a slot as an edge."""
     import csv
 
-    from rdfsolve.conversion import Biolink, to_kgx
+    from rdfsolve.conversion import Model, to_kgx
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     data = f"""<https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}name> "HMGCR" .
     <http://identifiers.org/ncbigene/3156> a <{BL}Gene> .
     <https://identifiers.org/ncbigene/3156>
@@ -64,14 +64,14 @@ def test_a_biolink_graph_is_written_as_kgx_and_its_terms_drawn(tmp_path):
 
 
 def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
-    """Biolink's rule: input derives_into output, with the reaction's catalysts as
-    catalyst_qualifier; derived edges keep the round trip and are written to KGX."""
+    """Biolink's rule, given with the model: input derives_into output, with the reaction's
+    catalysts as catalyst_qualifier; derived edges keep the round trip and are written to KGX."""
     import csv
 
-    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions, to_kgx
+    from rdfsolve.conversion import Model, derive_associations, derive_conversions, to_kgx
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     data = f"""<urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <https://identifiers.org/chebi/CHEBI:1> ;
         <{BL}has_output> <https://identifiers.org/chebi/CHEBI:2>, <https://identifiers.org/chebi/CHEBI:3> .
     <https://identifiers.org/ncbigene/3156> a <{BL}Gene> ; <{BL}catalyzes> <urn:r1> .
@@ -80,9 +80,8 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
     <https://identifiers.org/chebi/CHEBI:3> a <{BL}ChemicalEntity> ."""
     mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
     with biolink_client() as client:
-        assert derive_conversions(client, mapped, biolink) == {
+        assert derive_conversions(client, mapped, [DERIVATIONS.read_text()], biolink) == {
             "chemical entity to chemical derivation association": 2,
-            "with catalyst": 2,
         }
         assert [s["name"] for s in client.session_metadata()["steps"]] == ["Conversions"]
     graph = PropertyGraph.from_rdf(mapped)
@@ -110,10 +109,10 @@ def test_reaction_nodes_imply_derivation_edges_with_their_catalysts(tmp_path):
 def test_biolink_ancestors_with_mixins_join_genes_and_proteins(tmp_path):
     """Along is_a only, a gene and a protein meet at named thing; with their mixins, both are a
     gene or gene product (and a macromolecular machine mixin, catalyst_qualifier's range)."""
-    from rdfsolve.conversion import Biolink
+    from rdfsolve.conversion import Model
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     assert biolink.ancestors("protein") == ["named thing"]
     assert biolink.ancestors("protein", mixins=True) == [
         "named thing",
@@ -131,7 +130,7 @@ def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
     """A process that is no molecular activity (the source does not say what it is) links its
     input to its output with related_to, Biolink's root predicate, also when both are the same
     chemical; its catalyst stays attached. No derives_into is claimed."""
-    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions
+    from rdfsolve.conversion import Model, derive_associations, derive_conversions
 
     (tmp_path / "b.yaml").write_text(
         BIOLINK_YAML.replace(
@@ -140,7 +139,7 @@ def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
             "  molecular activity: {is_a: biological process or activity, id_prefixes: [RHEA]}",
         )
     )
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     data = f"""<urn:p1> a <{BL}BiologicalProcessOrActivity> ;
         <{BL}has_input> <https://identifiers.org/chebi/CHEBI:16113> ;
         <{BL}has_output> <https://identifiers.org/chebi/CHEBI:16113> .
@@ -148,7 +147,9 @@ def test_a_process_of_unknown_kind_gives_only_related_to(tmp_path):
     <https://identifiers.org/chebi/CHEBI:16113> a <{BL}ChemicalEntity> ."""
     mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
     with biolink_client() as client:
-        assert derive_conversions(client, mapped, biolink) == {"association": 1, "with catalyst": 1}
+        assert derive_conversions(client, mapped, [DERIVATIONS.read_text()], biolink) == {
+            "association": 1
+        }
     graph = PropertyGraph.from_rdf(mapped)
     derive_associations(graph, biolink)
     network = graph.to_networkx(edge_types=["related_to"])
@@ -166,10 +167,10 @@ def test_an_association_gives_one_direct_edge_and_one_kgx_row(tmp_path):
     with the qualifier attached; KGX still writes it as one row."""
     import csv
 
-    from rdfsolve.conversion import Biolink, derive_associations, to_kgx
+    from rdfsolve.conversion import Model, derive_associations, to_kgx
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     data = f"""<https://identifiers.org/ncbigene/335> a <{BL}Gene> .
     <https://identifiers.org/ncbigene/19> a <{BL}Gene> .
     <urn:i1> a <{BL}Association> ; <{BL}subject> <https://identifiers.org/ncbigene/335> ;
@@ -199,14 +200,14 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
     """A node drawn as a protein in one place and as a chemical in another (one node through
     same), and a node with gene and protein: both found, logged, and each decision taken out by a
     CONSTRUCT recorded in the client's session."""
-    from rdfsolve.conversion import Biolink, keep_kinds, kind_conflicts
+    from rdfsolve.conversion import Model, keep_kinds, kind_conflicts
 
     (tmp_path / "b.yaml").write_text(
         BIOLINK_YAML.replace(
             "  association:", "  chemical entity: {is_a: named thing}\n  association:"
         )
     )
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     mapped = ox.Dataset(
         ox.parse(
             f"""<urn:a> a <{BL}Protein> . <urn:b> a <{BL}ChemicalEntity> .
@@ -216,7 +217,7 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
     )
     with biolink_client() as client:
         conflicts = kind_conflicts(
-            client=client, statements=mapped, biolink=biolink, same=[("urn:a", "urn:b")]
+            client=client, statements=mapped, model=biolink, same=[("urn:a", "urn:b")]
         )
         assert [(row.nodes, row.kinds) for row in conflicts.itertuples()] == [
             (("urn:a", "urn:b"), ("chemical entity", "protein")),
@@ -224,7 +225,7 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
         ]
         assert "urn:a urn:b" in caplog.text
         kept = {"urn:a": "protein", "urn:b": "protein", "urn:d": "gene"}
-        assert keep_kinds(client=client, statements=mapped, biolink=biolink, kept=kept) == 2
+        assert keep_kinds(client=client, statements=mapped, model=biolink, kept=kept) == 2
         assert {(q.subject.value, q.object.value) for q in mapped} == {
             ("urn:a", BL + "Protein"),
             ("urn:d", BL + "Gene"),
@@ -238,10 +239,10 @@ def test_kind_conflicts_are_found_and_decided_by_queries_in_the_session(tmp_path
 def test_a_view_shows_qualifiers_and_keeps_the_nodes_an_edge_names(tmp_path):
     """Direct edges without reaction and association nodes: a regulation shows its direction,
     an enzyme left without edges stays (an edge's catalyst_qualifier names it), others go."""
-    from rdfsolve.conversion import Biolink, derive_associations, derive_conversions
+    from rdfsolve.conversion import Model, derive_associations, derive_conversions
 
     (tmp_path / "b.yaml").write_text(BIOLINK_YAML)
-    biolink = Biolink.read(tmp_path / "b.yaml")
+    biolink = Model.read(tmp_path / "b.yaml")
     data = f"""<urn:r1> a <{BL}MolecularActivity> ; <{BL}has_input> <urn:c1> ; <{BL}has_output> <urn:c2> .
     <urn:g1> a <{BL}Gene> ; <{BL}catalyzes> <urn:r1> . <urn:alone> a <{BL}Gene> .
     <urn:c1> a <{BL}ChemicalEntity> . <urn:c2> a <{BL}ChemicalEntity> .
@@ -250,7 +251,7 @@ def test_a_view_shows_qualifiers_and_keeps_the_nodes_an_edge_names(tmp_path):
         <{BL}object> <urn:g3> ; <{BL}object_direction_qualifier> "increased" ."""
     mapped = ox.Dataset(ox.parse(data.encode(), ox.RdfFormat.TURTLE))
     with biolink_client() as client:
-        derive_conversions(client, mapped, biolink)
+        derive_conversions(client, mapped, [DERIVATIONS.read_text()], biolink)
     graph = PropertyGraph.from_rdf(mapped, identity=Identity())
     derive_associations(graph, biolink)
     network = graph.to_networkx(

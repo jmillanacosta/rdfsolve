@@ -93,17 +93,17 @@ def test_the_sssom_rows_say_what_the_queries_state(tmp_path):
 
 def test_a_category_from_the_identifiers_of_a_node(tmp_path):
     """A node with no category takes the one its identifiers and those decided for it share."""
-    from rdfsolve.conversion import Biolink, categorize
+    from rdfsolve.conversion import Model, categorize
 
     yaml = tmp_path / "biolink.yaml"
-    yaml.write_text("""version: 9.9
+    yaml.write_text(f"version: 9.9\ndefault_prefix: biolink\nprefixes:\n  biolink: {BL}\n" + """
 classes:
   named thing: {}
   gene: {is_a: named thing, id_prefixes: [NCBIGene, ENSEMBL]}
   protein: {is_a: named thing, id_prefixes: [UniProtKB, ENSEMBL]}
   protein isoform: {is_a: protein, id_prefixes: [UniProtKB]}
 """)
-    biolink = Biolink.read(yaml)
+    biolink = Model.read(yaml)
     assert biolink.categories("ensembl") == [BL + "Gene", BL + "Protein"]
     assert biolink.categories("uniprot") == [BL + "Protein"], "the broadest class that lists it"
     data = "<https://identifiers.org/ensembl/ENSG00000113161> <urn:x> 'HMGCR' ."
@@ -240,7 +240,7 @@ def test_rules_take_curies_and_a_and_within_names_the_scope():
     assert _expand("biolink:catalyzes") == BL + "catalyzes"
     record = type("Pathway", (), {})()
     vars(record)["uri"] = "urn:wp1"
-    client = SimpleNamespace(type_name=lambda model: "Pathway")
+    client = SimpleNamespace(kind_name=lambda model: "Pathway")
     from rdfsolve import conversion
 
     original = conversion._link

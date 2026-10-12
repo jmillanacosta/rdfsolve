@@ -122,6 +122,7 @@ class Client(DatasetClient):
         self.related_registries = tuple(related_registries)
         self._prepared: dict[str, tuple[PreparedQuery, Any, tuple[str, ...]]] = {}
         self._field_names: dict[tuple[type[BaseModel], str], str] = {}
+        self._kind_names: dict[type[BaseModel], str] = {}
 
     @cached_property
     def catalogue(self) -> Catalogue:
@@ -1200,6 +1201,31 @@ class Client(DatasetClient):
         local = re.split(r"[/#:]", iri)[-1]
         return local if re.search(r"\d", local) else _name(local)
 
+    def kind_name(self, model: type[BaseModel] | str) -> str:
+        """Return the name that finds a record type again: its label, or its CURIE when other
+        types share the label (gpml:DataNode and wp:DataNode, both "Data Node").
+        """
+        model = self.model(model) if isinstance(model, str) else model
+        if model in self._kind_names:
+            return self._kind_names[model]
+        name = self.type_name(model)
+        try:
+            found = self.model(name) is model
+        except ValueError:
+            found = False
+        if not found:
+            iri = class_iri(model)
+            name = next(
+                (
+                    f"{prefix}:{iri[len(namespace) :]}"
+                    for prefix, namespace in self.schema.get_prefixes().items()
+                    if namespace and iri.startswith(namespace)
+                ),
+                iri,
+            )
+        self._kind_names[model] = name
+        return name
+
     def link_name(self, model: type[BaseModel] | str, field: str) -> str:
         """Use a source label or readable predicate name for a link."""
         model = self.model(model) if isinstance(model, str) else model
@@ -1885,17 +1911,7 @@ class Results:
 
     def _shown(self, model: type[BaseModel]) -> str:
         """Return a type's name, or its CURIE when the name is shared by other types."""
-        name = self.client.type_name(model)
-        try:
-            if self.client.model(name) is model:
-                return name
-        except ValueError:
-            pass
-        iri = class_iri(model)
-        for prefix, namespace in self.client.schema.get_prefixes().items():
-            if namespace and iri.startswith(namespace):
-                return f"{prefix}:{iri[len(namespace) :]}"
-        return iri
+        return self.client.kind_name(model)
 
     def related(
         self,

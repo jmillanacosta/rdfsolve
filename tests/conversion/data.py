@@ -1,5 +1,7 @@
 """Shared inputs of the conversion tests: a small WikiPathways-shaped dataset, a Biolink model
-excerpt, and clients over local statements."""
+excerpt with the rule of its derivation convention, and clients over local statements."""
+
+from pathlib import Path
 
 import pyoxigraph as ox
 import rdflib
@@ -55,7 +57,14 @@ class Local:
         return out
 
 
-BIOLINK_YAML = """version: 9.9
+# The Biolink derivation convention, as the rule the notebook gives with the model.
+DERIVATIONS = Path(__file__).parents[2] / "notebooks/data/biolink-derivations.rq"
+
+BIOLINK_YAML = """id: https://w3id.org/biolink/biolink-model
+version: 9.9
+default_prefix: biolink
+prefixes:
+  biolink: https://w3id.org/biolink/vocab/
 classes:
   named thing: {}
   gene: {is_a: named thing, mixins: [gene or gene product], id_prefixes: [NCBIGene, ENSEMBL]}
@@ -64,9 +73,11 @@ classes:
   gene or gene product: {is_a: macromolecular machine mixin, mixin: true}
   gene product mixin: {is_a: gene or gene product, mixin: true}
   molecular activity: {is_a: named thing, id_prefixes: [RHEA]}
-  association: {is_a: named thing}
+  association: {is_a: named thing, slots: [subject, predicate, object]}
   chemical entity to chemical derivation association: {is_a: association}
 slots:
+  name: {slot_uri: rdfs:label}
   catalyzes: {is_a: related to}
   has input: {is_a: has participant, domain: molecular activity, range: named thing}
+  has output: {is_a: has participant, domain: molecular activity, range: named thing}
 """

@@ -116,3 +116,35 @@ def test_flowchart_draws_boxes_and_labelled_arrows():
     )
     assert 'a("`**Person**' in text and ":::focus" in text
     assert 'a -->|"`member of`"| b' in text and 'a -.->|"`knows`"| a' in text
+
+
+def test_a_shapes_sparql_rule_is_a_construct_for_its_focus_nodes():
+    """A sh:SPARQLRule is its CONSTRUCT with the prefixes it declares, $this a member of the
+    shape's target class; a deactivated rule and a triple rule are counted, not read."""
+    import pyoxigraph as ox
+
+    model = Shacl(
+        __import__("rdflib")
+        .Graph()
+        .parse(
+            data=SHAPES
+            + """
+    ex:Prefixes sh:declare [ sh:prefix "ex" ; sh:namespace "http://example.org/"^^xsd:anyURI ] .
+    ex:PersonShape sh:rule [ a sh:SPARQLRule ; sh:prefixes ex:Prefixes ;
+        sh:construct "CONSTRUCT { $this a ex:Member } WHERE { $this ex:memberOf ?group }" ] ,
+      [ a sh:SPARQLRule ; sh:deactivated true ; sh:construct "CONSTRUCT { $this a ex:Gone } WHERE { }" ] ,
+      [ a sh:TripleRule ; sh:subject sh:this ; sh:predicate ex:p ; sh:object ex:o ] .
+    """,
+            format="turtle",
+        )
+    )
+    [query] = model.implied()
+    assert query.startswith("PREFIX ex: <http://example.org/>") and "$this" not in query
+    assert model.skipped_rules == 2
+    data = ox.Store()
+    data.load(
+        b"""<urn:ada> a <http://example.org/Person> ; <http://example.org/memberOf> <urn:g> .
+        <urn:bot> <http://example.org/memberOf> <urn:g> .""",
+        ox.RdfFormat.TURTLE,
+    )
+    assert [t.subject.value for t in data.query(query)] == ["urn:ada"], "only the focus nodes"

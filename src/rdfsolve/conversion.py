@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from rdfsolve.target_model import Model
-from rdfsolve.targets.biolink import Biolink
 
 if TYPE_CHECKING:
     import pyoxigraph as ox
@@ -35,7 +34,6 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.paths import PropertyPath
 
 __all__ = [
-    "Biolink",
     "Model",
     "Profile",
     "Query",
@@ -54,7 +52,8 @@ logger = logging.getLogger(__name__)
 
 def _expand(text: str, client: Client | None = None) -> str:
     """Return the IRI of "a" (rdf:type), of a CURIE or of an IRI: the prefixes of the client's
-    mined schema first, then those of the registered target models' own terms, then Bioregistry.
+    mined schema first, then Bioregistry's (the namespace a vocabulary's terms have in RDF, else
+    the prefix of its identifiers' URIs).
     """
     import bioregistry
 
@@ -66,10 +65,11 @@ def _expand(text: str, client: Client | None = None) -> str:
     if not sep:
         raise ValueError(f"{text!r}: write an IRI, a CURIE or 'a'")
     known = client.schema.get_prefixes() if client is not None else {}
-    from rdfsolve.target_model import registered_prefixes
-
+    resource = bioregistry.get_resource(prefix)
     base = (
-        known.get(prefix) or registered_prefixes().get(prefix) or bioregistry.get_uri_prefix(prefix)
+        known.get(prefix)
+        or (resource.get_rdf_uri_prefix() if resource is not None else None)
+        or bioregistry.get_uri_prefix(prefix)
     )
     if not base:
         raise ValueError(f"{text!r}: unknown prefix {prefix!r}")
@@ -167,7 +167,7 @@ class Rule:
     # Classes the ends may not have (the subject or the object is also left out when it is one).
     subject_unless_classes: tuple[str, ...] = ()
     object_unless_classes: tuple[str, ...] = ()
-    literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
+    literal: bool = False  # *value* is a literal (a qualifier value), not an IRI
     # The names of the ends' variables in a query written from the rule (write_query).
     subject_as: str | None = field(default=None, compare=False)
     object_as: str | None = field(default=None, compare=False)
@@ -420,7 +420,7 @@ class Profile:
         client: Client | None = None,
     ) -> Profile:
         """Return the profile of query files (Query): the rules of each, the target and its
-        version from their headers (``# target: biolink 4.4.5``); the source's release and
+        version from their headers (``# target: <name> <version>``); the source's release and
         endpoint from *client* (its mined schema). A query outside the plain subset is kept and
         run whole.
         """
@@ -504,7 +504,7 @@ class Profile:
             if any(iri.startswith(v) for v in prefix_map.values()):
                 continue
             base = iri.rsplit("#", 1)[0] + "#" if "#" in iri else iri.rsplit("/", 1)[0] + "/"
-            # Bioregistry's prefix where it knows the namespace (biolink), else the last segment.
+            # Bioregistry's prefix where it knows the namespace, else the last segment.
             known = bioregistry.curie_from_iri(iri)
             name = known.partition(":")[0] if known and iri.startswith(base) else None
             name = name or base.rstrip("/#").rsplit("/", 1)[-1].lower().replace(".", "_") or "ns"
@@ -1073,9 +1073,9 @@ def _paths(focus: Any, links: list[tuple[Any, str, Any]]) -> dict[Any, str]:
     return paths
 
 
-def categorize(graph: Any, biolink: Model, pairs: Iterable[tuple[str, str]] = ()) -> dict[str, Any]:
-    """Give each node of *graph* (PropertyGraph) without a Biolink category the one its
-    identifiers allow: the categories Biolink lists for the prefix of each of its identifiers,
+def categorize(graph: Any, model: Model, pairs: Iterable[tuple[str, str]] = ()) -> dict[str, Any]:
+    """Give each node of *graph* (PropertyGraph) without a class of *model* the one its
+    identifiers allow: the classes the model lists for the prefix of each of its identifiers,
     and of the identifiers decided to name the same entity (*pairs*, Resolution.pairs), shared
     by all of them. The category is a kind, not a statement: it is
     not given back as RDF. Where the prefixes allow none or several, the node is listed.
@@ -1089,14 +1089,14 @@ def categorize(graph: Any, biolink: Model, pairs: Iterable[tuple[str, str]] = ()
     given: Counter[str] = Counter()
     left: dict[str, list[str]] = {}
     for node in graph.nodes.values():
-        if any(label.startswith(biolink.BASE) for label in node.labels):
+        if any(label.startswith(model.BASE) for label in node.labels):
             continue
         iris = set(node.members or [node.id])
         iris |= {t for i in list(iris) for t in targets.get(i, ())}
         prefixes = {found.prefix for i in iris if (found := parse(i))}
         if not prefixes:
             continue
-        allowed = [set(biolink.categories(p)) for p in prefixes]
+        allowed = [set(model.categories(p)) for p in prefixes]
         common = set.intersection(*allowed) if allowed else set()
         if len(common) == 1:
             category = next(iter(common))
@@ -1110,7 +1110,7 @@ def categorize(graph: Any, biolink: Model, pairs: Iterable[tuple[str, str]] = ()
     return {
         "given": dict(given.most_common()),
         "left": left,
-        "basis": f"Biolink {biolink.version} id_prefixes of the node's identifiers and of those decided to name it",
+        "basis": f"{model.name or 'the target model'} {model.version} id_prefixes of the node's identifiers and of those decided to name it",
     }
 
 
@@ -1157,7 +1157,7 @@ def write_query(
     """Return the rules of one focus as a query file: a ``# key: value`` header and one plain
     CONSTRUCT, which Query reads back into the same rules.
 
-    *source* is a client (its name and its mined prefixes) or a name; *target* a Biolink model
+    *source* is a client (its name and its mined prefixes) or a name; *target* a target model
     or a name with its version. The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
     after the last link of its path. *prefixes* abbreviate IRIs (those of the source's schema
     and of the target).
@@ -1310,7 +1310,7 @@ def within(client: Client, records: Any, via: str, inverse: bool = False) -> str
     link to the focus by *via* instead (a link of the records, to what they contain).
     """
     iris = [str(vars(record)["uri"]) for record in records.records]
-    kinds = {client.type_name(type(record)) for record in records.records}
+    kinds = {client.kind_name(type(record)) for record in records.records}
     if not iris or len(kinds) != 1:
         raise ValueError("Give records of one record type")
     prop = _link(client, via, next(iter(kinds)))
@@ -1339,27 +1339,28 @@ def _local_prefixes(iris: Iterable[str], base: str) -> dict[str, str]:
 
 def to_kgx(
     graph: Any,
-    biolink: Model,
+    model: Model,
     folder: str | Path,
     knowledge_source: str,
     local_prefix: str = "local",
 ) -> tuple[Path, Path]:
-    """Write a property graph of Biolink statements as KGX TSV (nodes.tsv, edges.tsv); return
+    """Write a property graph of statements in *model* as KGX TSV (nodes.tsv, edges.tsv); return
     their paths.
 
-    Node ids are CURIEs: with the prefixes Biolink writes (Biolink.curie), else Bioregistry's,
+    Node ids are CURIEs: with the prefixes the model writes (Model.curie), else Bioregistry's,
     else ``<local_prefix>_<last segment of the IRI's namespace>``; prefixes.json beside the
     files expands those. A node that names one entity under several identifiers (a merge, or
     an identifier decided for it: PGNode.identifiers) is named by the one whose prefix its
-    Biolink category lists first (the category's id_prefixes, in the model's order), and
-    lists the others as ``xref``. A node's category is its Biolink classes (the model's root class when
-    it has none). Each edge of a Biolink predicate is a row; a node that is an association
-    (subject, predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
-    (*knowledge_source*, an infores CURIE; knowledge_level and agent_type).
+    category lists first (the category's id_prefixes, in the model's order), and lists the
+    others as ``xref``. A node's category is its classes of the model (the model's root class
+    when it has none); its name is the value of the model's naming slot. Each edge of a slot of
+    the model is a row; a node that reifies a statement (subject, predicate, object and
+    qualifiers) is one row too. Edges get the provenance KGX requires (*knowledge_source*, an
+    infores CURIE; knowledge_level and agent_type).
     """
     import csv
 
-    base = biolink.BASE
+    base = model.BASE
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -1368,14 +1369,14 @@ def to_kgx(
     from rdfsolve._uri import curie_from_prefixes
     from rdfsolve.identifiers import parse
 
-    # A CURIE for every node (KGX requires one): the prefix Biolink writes, else Bioregistry's,
+    # A CURIE for every node (KGX requires one): the prefix the model writes, else Bioregistry's,
     # else a prefix named for the IRI's namespace; the prefixes used are written beside the files.
     used: dict[str, str] = {}
     unregistered = sorted(
         {
             n
             for n in graph.nodes
-            if not biolink.curie(n) and parse(n) is None and not n.startswith("_:")
+            if not model.curie(n) and parse(n) is None and not n.startswith("_:")
         }
     )
     minted = _local_prefixes(unregistered, local_prefix)
@@ -1386,7 +1387,7 @@ def to_kgx(
         """Return a node id as a CURIE."""
         if iri in named:
             return named[iri]
-        if found := biolink.curie(iri):
+        if found := model.curie(iri):
             return found
         if (registered := parse(iri)) is not None:
             used[registered.prefix] = iri[: len(iri) - len(registered.local)]
@@ -1399,7 +1400,7 @@ def to_kgx(
 
     def term(iri: str) -> str:
         """Return a term of the model as <prefix>:<local>."""
-        return biolink.term(iri)
+        return model.term(iri)
 
     from rdfsolve.property_graph import REFERENCE
 
@@ -1412,19 +1413,19 @@ def to_kgx(
         for label in node.labels:
             if label.startswith(base):
                 with contextlib.suppress(ValueError):
-                    order += [p for p in biolink.id_prefixes(label) if p not in order]
+                    order += [p for p in model.id_prefixes(label) if p not in order]
         rank = {p: i for i, p in enumerate(order)}
         ids.sort(key=lambda c: rank.get(c.prefix, len(rank)))
         if not ids:
             continue
         best = ids[0]
-        written = biolink.curie(best.curie) or best.curie
+        written = model.curie(best.curie) or best.curie
         if best.iri():
             short(best.iri() or "")  # records the prefix's expansion
         named.update(dict.fromkeys([nid, *node.members], written))
-        xrefs[nid] = [biolink.curie(c.curie) or c.curie for c in ids[1:]]
+        xrefs[nid] = [model.curie(c.curie) or c.curie for c in ids[1:]]
 
-    associations = _association_parts(graph, biolink)
+    associations = _association_parts(graph, model)
     rows = []
     for edge in graph.edges:
         slot = edge.type[len(base) :] if edge.type.startswith(base) else None
@@ -1451,6 +1452,9 @@ def to_kgx(
             )
         rows.append(row)
     nodes_path, edges_path = folder / "nodes.tsv", folder / "edges.tsv"
+    root = model.root()
+    naming = model.naming_relation()
+    name_iri = model.slot_iri(naming) if naming else None
     with nodes_path.open("w", newline="") as f:
         out = csv.writer(f, delimiter="\t")
         out.writerow(["id", "category", "name", "xref"])
@@ -1459,8 +1463,8 @@ def to_kgx(
                 continue
             categories = list(
                 dict.fromkeys(term(c) for c in node.labels if c.startswith(base))
-            ) or [biolink.term(biolink.class_iri(biolink.root() or "named thing"))]
-            names = [v.lexical for v in node.properties.get(base + "name", [])]
+            ) or ([model.term(model.class_iri(root))] if root else [])
+            names = [v.lexical for v in node.properties.get(name_iri, [])] if name_iri else []
             out.writerow(
                 [
                     short(nid),
@@ -1498,12 +1502,14 @@ def to_kgx(
     return nodes_path, edges_path
 
 
-def derive_conversions(client: Client, statements: ox.Dataset, biolink: Model) -> dict[str, int]:
-    """State what the target model's conventions imply from the converted statements; return how
-    many statements of each class were added.
+def derive_conversions(
+    client: Client, statements: ox.Dataset, rules: Iterable[str], model: Any = None
+) -> dict[str, int]:
+    """State what *rules* imply from the converted statements; return how many nodes of each
+    class were added (named by *model*, a target model, when it has the class).
 
-    The queries come from the model (Model.implied): a general model implies nothing; a model
-    with conventions of its own (a registered subclass) gives them as CONSTRUCT queries. The
+    *rules* are CONSTRUCT queries: the target model's own (TargetModel.implied, such as a SHACL
+    target's sh:SPARQLRule) and those given with it (plan.Target(model, rules=...)). The
     statements are added to *statements*, each query recorded in *client*'s session (step
     "Conversions"); derive_associations makes each reified statement an edge.
     """
@@ -1511,25 +1517,26 @@ def derive_conversions(client: Client, statements: ox.Dataset, biolink: Model) -
 
     found = []
     with client.step("Conversions"):
-        for query in biolink.implied():
+        for query in rules:
             found += list(client.construct(query, data=statements))
     for q in found:
         statements.add(ox.Quad(q.subject, q.predicate, q.object))
-    counts = Counter(biolink.name_of(q.object.value) for q in found if q.predicate.value == _TYPE)
-    catalysed = {
-        q.subject for q in found if q.predicate.value == biolink.BASE + "catalyst_qualifier"
-    }
-    return {**counts, "with catalyst": len(catalysed)}
+    names = {k.iri: k.name for k in model.kinds()} if model is not None else {}
+    return dict(
+        Counter(
+            names.get(q.object.value, q.object.value) for q in found if q.predicate.value == _TYPE
+        )
+    )
 
 
-def _association_parts(graph: Any, biolink: Model) -> dict[str, dict[str, Any]]:
+def _association_parts(graph: Any, model: Model) -> dict[str, dict[str, Any]]:
     """Return the nodes of *graph* that reify a statement (Model.statement_classes), each with its
     subject, predicate and object, and its qualifiers (key: values), from its edges and values.
     """
     from rdfsolve.property_graph import REFERENCE, Value
 
-    base = biolink.BASE
-    kinds = {biolink.class_iri(n) for n in biolink.statement_classes()}
+    base = model.BASE
+    kinds = {model.class_iri(n) for n in model.statement_classes()}
     parts: dict[str, dict[str, Any]] = {
         n: {"qualifiers": defaultdict(list)}
         for n, node in graph.nodes.items()
@@ -1555,11 +1562,11 @@ def _association_parts(graph: Any, biolink: Model) -> dict[str, dict[str, Any]]:
     return parts
 
 
-def derive_associations(graph: Any, biolink: Model) -> int:
+def derive_associations(graph: Any, model: Model) -> int:
     """Add a direct edge for each reified statement of *graph* (PropertyGraph); return how many.
 
-    A Biolink association states one edge: its subject, predicate and object, with its
-    qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
+    A reified statement (a node of Model.statement_classes) states one edge: its subject,
+    predicate and object, with its qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
     qualifiers attached; a qualifier that names nodes is a list, also with one. The edges are
     derived: the association's own statements are given back as RDF, and to_kgx writes it as
     one row.
@@ -1567,7 +1574,7 @@ def derive_associations(graph: Any, biolink: Model) -> int:
     from rdfsolve.property_graph import REFERENCE, PGEdge
 
     added = 0
-    for nid, found in sorted(_association_parts(graph, biolink).items()):
+    for nid, found in sorted(_association_parts(graph, model).items()):
         if not (found.get("subject") and found.get("object") and found["predicate"]):
             continue
         qualifiers = dict(found["qualifiers"])
@@ -1592,28 +1599,28 @@ def derive_associations(graph: Any, biolink: Model) -> int:
 def kind_conflicts(
     client: Client,
     statements: ox.Dataset,
-    biolink: Model,
+    model: Model,
     same: Iterable[tuple[str, str]] = (),
 ) -> Any:
-    """Return the nodes with two Biolink kinds of which neither is under the other (mixins too).
+    """Return the nodes with two kinds of *model* of which neither is under the other (mixins too).
 
-    A node that sources give two kinds, or nodes that *same* makes one, hold both; Biolink keeps
-    one kind, so it is decided (keep_kinds) before the graph is built. Found by a CONSTRUCT of the conflicting type statements, recorded
+    A node that sources give two kinds, or nodes that *same* makes one, hold both; the model
+    keeps one kind, so it is decided (keep_kinds) before the graph is built. Found by a CONSTRUCT of the conflicting type statements, recorded
     in *client*'s session (step "Kind conflicts"); each conflict is logged as a warning.
-    Rows: nodes and kinds (Biolink names), sorted.
+    Rows: nodes and kinds (the model's names), sorted.
     """
     import pandas as pd
 
     kinds = sorted(
         {q.object.value for q in statements if q.predicate.value == _TYPE}
-        & {biolink.class_iri(name) for name in biolink.classes}
+        & {model.class_iri(name) for name in model.classes}
     )
-    above = {k: set(biolink.ancestors(biolink.name_of(k), mixins=True)) for k in kinds}
+    above = {k: set(model.ancestors(model.name_of(k), mixins=True)) for k in kinds}
     apart = [
         (a, b)
         for a in kinds
         for b in kinds
-        if a < b and biolink.name_of(a) not in above[b] and biolink.name_of(b) not in above[a]
+        if a < b and model.name_of(a) not in above[b] and model.name_of(b) not in above[a]
     ]
     group: dict[str, str] = {}
 
@@ -1647,7 +1654,7 @@ def kind_conflicts(
     found: defaultdict[str, set[str]] = defaultdict(set)
     with client.step("Kind conflicts"):
         for q in client.construct(query, data=statements):
-            found[q.subject.value].add(biolink.name_of(q.object.value))
+            found[q.subject.value].add(model.name_of(q.object.value))
     rows: dict[str, tuple[set[str], set[str]]] = defaultdict(lambda: (set(), set()))
     for node, names in found.items():
         nodes, kinds_of = rows[find(node)]
@@ -1663,10 +1670,10 @@ def kind_conflicts(
 
 
 def keep_kinds(
-    client: Client, statements: ox.Dataset, biolink: Model, kept: Mapping[str, str]
+    client: Client, statements: ox.Dataset, model: Model, kept: Mapping[str, str]
 ) -> int:
-    """Keep one Biolink kind of each node in *kept* (node: Biolink name); return how many type
-    statements were taken out of *statements*.
+    """Keep one kind of *model* for each node in *kept* (node: the model's name of the kind);
+    return how many type statements were taken out of *statements*.
 
     The other kinds of a node, those that are not the kept one or above it, are taken out. They
     are the statements of a CONSTRUCT recorded in *client*'s session (step "Keep kinds"), so
@@ -1675,14 +1682,14 @@ def keep_kinds(
     import pyoxigraph as ox
 
     allowed = " ".join(
-        f"(<{node}> <{biolink.class_iri(name)}>)"
+        f"(<{node}> <{model.class_iri(name)}>)"
         for node, kind in kept.items()
-        for name in [kind, *biolink.ancestors(kind, mixins=True)]
+        for name in [kind, *model.ancestors(kind, mixins=True)]
     )
     query = (
         f"CONSTRUCT {{ ?node a ?kind }} WHERE {{\n"
         f"  VALUES ?node {{ {' '.join(f'<{n}>' for n in kept)} }}\n"
-        f"  ?node a ?kind . FILTER(STRSTARTS(STR(?kind), {_literal(biolink.BASE)}))\n"
+        f"  ?node a ?kind . FILTER(STRSTARTS(STR(?kind), {_literal(model.BASE)}))\n"
         f"  MINUS {{ VALUES (?node ?kind) {{ {allowed} }} }}\n}}"
     )
     with client.step("Keep kinds"):

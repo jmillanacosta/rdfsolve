@@ -1,5 +1,1 @@
-"""Conventions of particular target models, as Model subclasses registered for their schema id."""
-
-from rdfsolve.targets.biolink import Biolink
-
-__all__ = ["Biolink"]
+"""Target models in formats other than LinkML: SHACL shapes graphs and property-graph metagraphs."""

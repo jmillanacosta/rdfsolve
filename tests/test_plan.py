@@ -42,12 +42,12 @@ slots:
 """
 
 
-def _client():
+def _client(data=DATA):
     """A client over the records, with the schema their statements give."""
     from rdfsolve import MinedSchema, SchemaPattern
     from rdfsolve.client.api import Client
 
-    graph = rdflib.Graph().parse(data=DATA, format="turtle")
+    graph = rdflib.Graph().parse(data=data, format="turtle")
     patterns = {
         (str(s_type), str(p), str(o_type) if o_type is not None else "Literal")
         for s, p, o in graph
@@ -126,6 +126,82 @@ def test_contents_are_written_as_in_related_from_either_side(tmp_path):
         Plan(scope, into=Target(path), contents="Has part")
 
 
+def test_kinds_that_share_a_name_are_kept_apart_by_their_curies(tmp_path):
+    """Two classes named Node (a protein and a drawing's box, as WikiPathways' gpml:DataNode and
+    wp:DataNode): each is a kind of the plan, named by its CURIE, and the box left out is left
+    out of the contents too."""
+    from rdfsolve.plan import Plan, Target
+
+    draw = "http://example.org/draw#"
+    path = tmp_path / "target.yaml"
+    path.write_text(MODEL)
+    client = _client(f"""@prefix ex: <{EX}> . @prefix draw: <{draw}> .
+    ex:pw1 a ex:Pathway .
+    <{UNIPROT}P00001> a ex:Node ; ex:isPartOf ex:pw1 .
+    draw:b1 a draw:Node ; ex:isPartOf ex:pw1 .""")
+    client.schema.prefixes = {"ex": EX, "draw": draw}
+    assert {k.name for k in client.kinds} == {"Pathway", "ex:Node", "draw:Node"}
+    scope = client.from_table("Pathway", [EX + "pw1"])
+    plan = Plan(scope, into=Target(path), contents="^Is part of")
+    assert plan.ExNode.target.name == "protein" and plan.DrawNode.kind.iri == draw + "Node"
+    plan.DrawNode.leave_out()
+    plan.Pathway.use("pathway")
+    network = plan.run(tmp_path / "queries")
+    counts = network.counts()
+    assert counts["kinds"]["protein"] == 1 and counts["relations"]["part of"] == 1
+    assert "?member a ex:Node ." in network.queries.is_part_of_ex_node
+    assert not [p for p in network.rules if "draw" in p.name], "the box is part of nothing"
+
+
+def test_a_member_also_of_a_kind_left_out_is_part_of_its_pathway(tmp_path):
+    """WikiPathways types a protein wp:Protein and wp:DataNode: leaving DataNode out leaves out
+    the nodes that are only that, and keeps the proteins part of their pathway."""
+    from rdfsolve.plan import Plan, Target
+
+    path = tmp_path / "target.yaml"
+    path.write_text(MODEL)
+    client = _client(f"""@prefix ex: <{EX}> .
+    ex:pw1 a ex:Pathway .
+    <{UNIPROT}P00001> a ex:Protein, ex:DataNode ; ex:isPartOf ex:pw1 .
+    ex:box a ex:DataNode ; ex:isPartOf ex:pw1 .""")
+    scope = client.from_table("Pathway", [EX + "pw1"])
+    plan = Plan(scope, into=Target(path), contents="^Is part of")
+    plan.DataNode.leave_out()
+    plan.Pathway.use("pathway")
+    network = plan.run(tmp_path / "queries")
+    part_of = {(q.subject.value, q.object.value) for q in network.statements if "part" in q.predicate.value}
+    assert part_of == {(UNIPROT + "P00001", EX + "pw1")}
+
+
+def test_a_plan_runs_into_shapes_and_states_what_their_rules_imply(tmp_path):
+    """The target's rules run after the plan's: the shapes' sh:SPARQLRule, then a .rq file given
+    with the target; what they add is counted by the target's kind names."""
+    from rdfsolve.plan import Plan, Target
+
+    shapes = tmp_path / "shapes.ttl"
+    shapes.write_text("""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix t: <http://example.org/target/> .
+    t:PathwayShape a sh:NodeShape ; sh:targetClass t:Pathway .
+    t:MemberShape a sh:NodeShape ; sh:targetClass t:Member .
+    t:ProteinShape a sh:NodeShape ; sh:targetClass t:Protein ;
+        sh:property [ sh:path t:partOf ; sh:class t:Pathway ] ;
+        sh:rule [ a sh:SPARQLRule ;
+            sh:construct "CONSTRUCT { $this a <http://example.org/target/Member> } WHERE { $this <http://example.org/target/partOf> ?p }" ] .""")
+    extra = tmp_path / "pathways-are-members.rq"
+    extra.write_text(
+        "PREFIX t: <http://example.org/target/>\n"
+        "CONSTRUCT { ?p a t:Member } WHERE { ?p a t:Pathway }"
+    )
+    scope = _client().from_table("Pathway", [EX + "pw1"])
+    target = Target(shapes, rules=[extra])
+    assert len(target.rules) == 2
+    plan = Plan(scope, into=target, contents="^Is part of")
+    for p in list(plan.open):
+        p.leave_out()
+    network = plan.run(tmp_path / "queries")
+    assert network.counts()["kinds"]["Protein"] == 2
+    assert network.implied == {"Member": 3}, "two proteins by the shapes' rule, a pathway by the file"
+
+
 def test_following_links_reads_large_sets_in_batches():
     from rdfsolve.client.hydration import HydrationLimitError
 
@@ -196,7 +272,7 @@ def test_the_plan_runs_as_generated_queries(plan, tmp_path):
     plan.Pathway.use(plan.target.kinds.pathway)
     network = plan.run(tmp_path / "queries")
     written = {p.name for p in network.rules}
-    assert {"protein.rq", "metabolite.rq", "catalysis.rq", "is_part_of.rq"} <= written
+    assert {"protein.rq", "metabolite.rq", "catalysis.rq", "is_part_of_protein.rq"} <= written
     assert "reaction.rq" not in written
     counts = network.counts()
     assert counts["kinds"]["protein"] == 2 and counts["kinds"]["small molecule"] == 2

@@ -11,6 +11,11 @@ namespaces of its class's IRIs; the prefixes declared (sh:declare) for the names
 are the identifiers of that kind. Shapes marked sh:deactivated still
 describe the model (a mined schema's shapes are observations, not constraints), so they count.
 Paths other than one IRI are not relations; they are counted in skipped.
+
+A node shape's rules (SHACL-AF sh:rule) state what converted data implies: each sh:SPARQLRule is
+its CONSTRUCT (with the prefixes its sh:prefixes declare), run for the shape's focus nodes ($this,
+a member of the shape's target classes). Deactivated rules and other rules (sh:TripleRule) are
+counted in skipped_rules.
 """
 
 from __future__ import annotations
@@ -211,6 +216,27 @@ class Shacl(TargetModel):
             )
         self._values = [ValueInfo(v, rel_names[iri]) for iri, vs in values.items() for v in vs]
         self._naming = next((r.name for r in self._relations if r.iri in NAMING), None)
+        found = []
+        self.skipped_rules = 0
+        for shape, rule in g.subject_objects(sh("rule")):
+            query = text(rule, (SH + "construct",))
+            if not query or text(rule, (SH + "deactivated",)).lower() == "true":
+                self.skipped_rules += 1
+                continue
+            declared_here = {
+                str(prefix): str(ns)
+                for owner in g.objects(rule, sh("prefixes"))
+                for d in g.objects(owner, sh("declare"))
+                for prefix in g.objects(d, sh("prefix"))
+                for ns in g.objects(d, sh("namespace"))
+            }
+            query = _focused(query, shapes.get(shape, []))
+            if query is None:
+                self.skipped_rules += 1
+                continue
+            header = "".join(f"PREFIX {p}: <{ns}>\n" for p, ns in sorted(declared_here.items()))
+            found.append((float(text(rule, (SH + "order",)) or 0), str(rule), header + query))
+        self._rules = [q for *_, q in sorted(found)]
         caps = {"iris", "directed"}
         if any(k.parents for k in self._kinds):
             caps.add("hierarchy")
@@ -267,3 +293,23 @@ class Shacl(TargetModel):
     def naming_relation(self) -> str | None:
         """Return the relation on a naming property (rdfs:label, schema:name, …), when one has a shape."""
         return self._naming
+
+    def implied(self) -> list[str]:
+        """Return the CONSTRUCT queries of the shapes' SPARQL rules, in their sh:order."""
+        return list(self._rules)
+
+
+def _focused(query: str, classes: list[str]) -> str | None:
+    """Return a rule's CONSTRUCT run for every focus node of its shape at once: $this is ?this, a
+    member of one of *classes*; None when the query has no WHERE pattern to put that in.
+    """
+    if "$this" not in query or not classes:
+        return query
+    where = re.search(r"(?i)\bWHERE\s*\{", query) or re.search(
+        r"(?is)\bCONSTRUCT\s*\{[^{}]*\}\s*\{", query
+    )
+    if where is None:
+        return None
+    focus = " UNION ".join(f"{{ ?this a <{c}> }}" for c in classes)
+    query = query[: where.end()] + f"\n  {focus}\n" + query[where.end() :]
+    return re.sub(r"\$this\b", "?this", query)

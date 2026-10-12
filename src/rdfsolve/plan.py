@@ -383,7 +383,7 @@ class Kind:
         if "_links" not in self.__dict__:
             table = self.client.fields(self.model)
             names = {
-                str(getattr(m, "rdf_class_iri", "")): self.client.type_name(m)
+                str(getattr(m, "rdf_class_iri", "")): self.client.kind_name(m)
                 for m in self.client.models.values()
             }
             self.__dict__["_links"] = Names(
@@ -477,7 +477,7 @@ def kinds_of(client: Client) -> Names:
     """Return the kinds of a source's mined schema, by name (client.kinds)."""
     out = {}
     for model in client.models.values():
-        label = client.type_name(model)
+        label = client.kind_name(model)
         out[label] = Kind(client, model, label, str(getattr(model, "rdf_class_iri", "")))
     return Names(f"Kinds of {client.schema.about.dataset_name or 'the source'}", out)
 
@@ -556,14 +556,27 @@ class Target(_Shown):
     *model* is any TargetModel, or a file read by its kind (read_model): a LinkML schema (.yaml),
     a property-graph metagraph (.json), or a SHACL shapes graph (any RDF file; an rdflib Graph). What the model's format does not state is listed in the printout, and the
     plan says what it cannot propose without it.
+
+    *rules* are what converted data implies in this model, as CONSTRUCT queries (.rq files or
+    their text), run after the plan's own rules; they follow the model's own (a SHACL target's
+    sh:SPARQLRule).
     """
 
-    def __init__(self, model: Any) -> None:
-        """Read the model's terms."""
+    def __init__(self, model: Any, rules: Iterable[str | Path] = ()) -> None:
+        """Read the model's terms and the rules given with it."""
         from rdfsolve.target_model import TargetModel, read_model
 
         self.model = model if isinstance(model, TargetModel) else read_model(model)
         m = self.model
+        self.rules = [
+            *m.implied(),
+            *(
+                Path(r).read_text(encoding="utf-8")
+                if isinstance(r, Path) or str(r).endswith(".rq")
+                else str(r)
+                for r in rules
+            ),
+        ]
         self._kinds = {k.name: k for k in m.kinds()}
         self._relations = {r.name: r for r in m.relations()}
         classes = {
@@ -1321,7 +1334,7 @@ class Plan(_Shown):
 
     def _scope_kinds(self) -> set[str]:
         """Return the record types of the scope."""
-        return {self.client.type_name(type(r)) for r in self.scope.records}
+        return {self.client.kind_name(type(r)) for r in self.scope.records}
 
     def _contents_text(self) -> str:
         """Return the contents link as written in Results.related ("^name" when it points in)."""
@@ -1394,7 +1407,7 @@ class Plan(_Shown):
         """Return the IRIs of the records of each kind in the plan."""
         out: dict[str, set[str]] = defaultdict(set)
         for r in self.records:
-            out[self.client.type_name(type(r))].add(str(vars(r)["uri"]))
+            out[self.client.kind_name(type(r))].add(str(vars(r)["uri"]))
         return out
 
     def _children(self) -> dict[str, set[str]]:
@@ -1511,7 +1524,7 @@ class Plan(_Shown):
         from rdfsolve.client.api import Results
 
         if (label, link.iri) not in self._reach:
-            records = [r for r in self.records if self.client.type_name(type(r)) == label]
+            records = [r for r in self.records if self.client.kind_name(type(r)) == label]
             found: dict[str, set[str]] = {}
             try:
                 values = Results(self.client, records)._links(link.name)
@@ -1532,7 +1545,7 @@ class Plan(_Shown):
                 {
                     str(vars(r)["uri"])
                     for r in self.records
-                    if self.client.type_name(type(r)) == kind.name
+                    if self.client.kind_name(type(r)) == kind.name
                 }
             )
             or 1
@@ -1729,7 +1742,7 @@ class Plan(_Shown):
         link = self.contents
         if link is None:
             return
-        holders = {self.client.type_name(type(r)) for r in self.scope.records}
+        holders = {self.client.kind_name(type(r)) for r in self.scope.records}
         holder = next(iter(holders)) if len(holders) == 1 else None
         kind = getattr(self.kinds, _attribute(holder)) if holder else link.kind
         held = self.proposals.get(holder) if holder else None
@@ -1762,17 +1775,19 @@ class Plan(_Shown):
             if p.reading == "edge" and p.status != "chosen":
                 self._repropose(p)
 
-    def _not_nodes(self) -> list[str]:
-        """Return the kinds of the plan's records that the run does not write as nodes."""
-        kinds = {self.client.type_name(type(r)) for r in self.records}
-        return sorted(
-            k
-            for k in kinds
-            if (q := self.proposals.get(k)) is None
-            or q.reading not in ("node", "process")
-            or q.status not in ("proposed", "chosen")
-            or q.target is None
-        )
+    def _node_kinds(self) -> dict[str, Proposal]:
+        """Return the proposals of the kinds of the plan's records that the run writes as nodes,
+        by class IRI.
+        """
+        kinds = {self.client.kind_name(type(r)) for r in self.records}
+        return {
+            q.kind.iri: q
+            for k in sorted(kinds)
+            if (q := self.proposals.get(k)) is not None
+            and q.reading in ("node", "process")
+            and q.status in ("proposed", "chosen")
+            and q.target is not None
+        }
 
     def _kind_target_of(self, link: Link | None) -> str | None:
         """Return the target class of the records a link reaches, when they are of one class."""
@@ -2074,27 +2089,37 @@ class Plan(_Shown):
             if p.reading == "container":
                 if p.ends[1] is None:
                     continue
-                holder = p.kind.iri
-                rules = [
-                    Rule.between(
-                        client,
-                        focus=holder,
-                        predicate=p.target.iri,
-                        subject=("^" if self.contents_incoming else "") + p.ends[1].name,
-                        subject_as="member",
-                        # only members that become nodes: a kind read as edges or left out has
-                        # no node to be part of anything
-                        subject_unless_kinds=self._not_nodes(),
+                # Only members that become nodes (a kind read as edges or left out has no node to
+                # be part of anything), one rule per node kind: a member is often of several kinds
+                # (wp:Protein and wp:DataNode), and is kept by the kind it is a node of.
+                nodes = self._node_kinds()
+                for member in nodes.values():
+                    unless: tuple[str, ...] = ()
+                    if member.only_this_kind:  # as its node rule: not those of kinds below it
+                        from rdfsolve.conversion import _other_kinds
+
+                        unless = tuple(
+                            c for c in _other_kinds(client, member.kind.iri) if c not in nodes
+                        )
+                    rules = [
+                        Rule.between(
+                            client,
+                            focus=p.kind.iri,
+                            predicate=p.target.iri,
+                            subject=("^" if self.contents_incoming else "") + p.ends[1].name,
+                            subject_kind=member.kind.iri,
+                            subject_as="member",
+                            subject_unless_kinds=unless,
+                        )
+                    ]
+                    out.append(
+                        (
+                            f"{_attribute(label, snake=True)}_{_attribute(member.kind.name, snake=True)}",
+                            f"{p.ends[1].name} becomes {p.target.name} ({member.kind.name})",
+                            rules,
+                            _attribute(p.kind.name, snake=True),
+                        )
                     )
-                ]
-                out.append(
-                    (
-                        _attribute(label, snake=True),
-                        f"{p.ends[1].name} becomes {p.target.name}",
-                        rules,
-                        _attribute(p.kind.name, snake=True),
-                    )
-                )
                 continue
             name = _attribute(label, snake=True)
             if p.reading in ("node", "process"):
@@ -2224,7 +2249,7 @@ class Plan(_Shown):
         The rules are written as SPARQL CONSTRUCT files in *folder* (one per kind, for anyone to
         read or run again; "queries" in the current directory by default; earlier .rq files
         there are replaced), run on the source within the scope, and followed by what the
-        target model's conventions imply. Open choices are not converted, and are listed.
+        rules of the target (Target.rules) imply. Open choices are not converted, and are listed.
         """
         from rdfsolve.conversion import Profile, derive_conversions, within, write_query
 
@@ -2265,7 +2290,9 @@ class Plan(_Shown):
             else ""
         )
         statements = profile.run(self.client, scope=scope)
-        implied = derive_conversions(self.client, statements, cast("Model", self.target.model))
+        implied = derive_conversions(
+            self.client, statements, self.target.rules, self.target.model
+        )
         network = Network(self, statements, paths, implied, profile)
         logger.info("Wrote %d queries to %s.", len(paths), folder)
         logger.info("%r", network)
@@ -2426,7 +2453,9 @@ class Network(_Shown):
         with out["mappings"].open("w") as handle:
             write_table(self.profile.to_sssom(), handle)
         for path in self.rules:
-            shutil.copy(path, folder / "queries" / path.name)
+            copy = folder / "queries" / path.name
+            if copy.resolve() != path.resolve():  # the run may have written them there
+                shutil.copy(path, copy)
         out["queries"] = folder / "queries"
         graph = self.graph(same)
         identity = getattr(self.plan, "identity", None)
@@ -2513,7 +2542,7 @@ class Network(_Shown):
             graph=self.statements, identity=Identity(same=list(same)), hierarchy=hierarchy
         )
         if hasattr(model, "statement_classes"):
-            derive_associations(graph=graph, biolink=cast("Model", model))
+            derive_associations(graph=graph, model=cast("Model", model))
         return graph
 
     def _parts(self) -> list[Any]:
@@ -2527,7 +2556,7 @@ class Network(_Shown):
         ]
         if self.implied:
             parts.append(
-                "implied by the target model: "
+                "implied by the target's rules: "
                 + " · ".join(f"{k} {n}" for k, n in self.implied.items())
             )
         parts.append(

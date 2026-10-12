@@ -7,7 +7,7 @@ import json
 
 import pyoxigraph as ox
 
-from rdfsolve.conversion import Biolink, to_kgx
+from rdfsolve.conversion import Model, to_kgx
 from rdfsolve.mappings.claims import Claims, claim
 from rdfsolve.property_graph import Identity, PropertyGraph, identity_violations
 
@@ -107,7 +107,7 @@ def test_a_supporting_direct_claim_makes_the_decided_mapping_exact():
 
 
 def test_kgx_names_a_merged_node_by_its_category_first_prefix(tmp_path):
-    biolink = Biolink(
+    biolink = Model(
         "test",
         {
             "named thing": {"id_prefixes": []},
@@ -117,6 +117,8 @@ def test_kgx_names_a_merged_node_by_its_category_first_prefix(tmp_path):
             "entity": {},
         },
         {"name": {}, "participates in": {}},
+        prefix="biolink",
+        base=BL,
     )
     pg = PropertyGraph.from_rdf(statements(), identity=Identity(same=decision().pairs()))
     nodes, edges = to_kgx(pg, biolink, tmp_path / "kgx", "infores:test", local_prefix="src")

@@ -52,8 +52,9 @@ __all__ = [
 ]
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+# The properties that name a node, besides those named "name" in any vocabulary (schema:name, a
+# target model's name slot).
 NAMES = (
-    "https://w3id.org/biolink/vocab/name",
     "http://www.w3.org/2000/01/rdf-schema#label",
     "http://www.w3.org/2004/02/skos/core#prefLabel",
 )
@@ -307,7 +308,9 @@ def cluster_checks(
     return pd.DataFrame(rows, columns=["node", "kind", "members", "status", "reason"])
 
 
-def _names(node: PGNode, keys: Sequence[str]) -> set[str]:
+def _names(node: PGNode, keys: Sequence[str] | None) -> set[str]:
+    if keys is None:
+        keys = [*(k for k in node.properties if re.split(r"[/#]", k)[-1] == "name"), *NAMES]
     return {
         normal
         for key in keys
@@ -322,7 +325,7 @@ def audit(
     resolution: Resolution | None = None,
     *,
     variants: Iterable[tuple[str, str]] = (),
-    names: Sequence[str] = NAMES,
+    names: Sequence[str] | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Explain every name that nodes of one kind share under different ids (step 8).
 

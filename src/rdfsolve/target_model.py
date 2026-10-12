@@ -4,10 +4,11 @@ A target model is any LinkML schema: its classes (with is_a, mixins and the iden
 they take), its slots (with domain, range and is_a) and its enumerations. Terms are named by the
 schema's default prefix: a class by its name in CamelCase, a slot by its name in snake_case.
 
-A model can carry conventions of its own that the general schema does not state, such as how
-it reifies a statement or which statements its process classes imply. Those live in a subclass
-registered for the schema's id (Model.read picks it); the general model has none, and every
-operation that needs one says so.
+Everything a conversion uses is read from the schema: the classes that reify a statement (those
+with subject, predicate and object slots), the processes (the domains of the input and output
+slots), and the class a node takes when it has no more specific one. What converted data implies
+is given as CONSTRUCT rules: a SHACL target states them (sh:rule); for any model they can be given
+with it (plan.Target(model, rules=...)).
 """
 
 from __future__ import annotations
@@ -25,7 +26,6 @@ __all__ = [
     "TargetModel",
     "ValueInfo",
     "read_model",
-    "register",
 ]
 
 # Capabilities a target model can declare; the plan uses only those its target has.
@@ -133,8 +133,11 @@ class TargetModel:
         """Return the relations from a process to its inputs and to its outputs, when the model has them."""
         return None, None
 
-
-_MODELS: dict[str, type[Model]] = {}
+    def implied(self) -> list[str]:
+        """Return the CONSTRUCT queries of what the model states that converted data implies (its
+        rules); none when its format states none.
+        """
+        return []
 
 
 def read_model(source: Any) -> TargetModel:
@@ -175,24 +178,6 @@ def read_model(source: Any) -> TargetModel:
     return Shacl.read(path)
 
 
-def registered_prefixes() -> dict[str, str]:
-    """Return the prefix and namespace of each registered model's own terms (PREFIX, NAMESPACE)."""
-    import rdfsolve.targets  # registers the models with conventions of their own
-
-    return {cls.PREFIX: cls.NAMESPACE for cls in _MODELS.values() if cls.PREFIX and cls.NAMESPACE}
-
-
-def register(schema_id: str) -> Any:
-    """Register a Model subclass for the LinkML schemas whose id is *schema_id*."""
-
-    def wrap(cls: type[Model]) -> type[Model]:
-        """Record *cls* as the reader of the schemas with that id."""
-        _MODELS[schema_id] = cls
-        return cls
-
-    return wrap
-
-
 @dataclass
 class Model(TargetModel):
     """A LinkML schema at one version: classes, slots, enums and its prefixes."""
@@ -208,13 +193,10 @@ class Model(TargetModel):
 
     # The slots of a class that state one edge (a reified statement), when the model has them.
     STATEMENT_SLOTS: ClassVar[tuple[str, str, str]] = ("subject", "predicate", "object")
-    # A registered model's own prefix and namespace, for CURIEs of its terms (registered_prefixes).
-    PREFIX: ClassVar[str] = ""
-    NAMESPACE: ClassVar[str] = ""
 
     @classmethod
     def read(cls, path: str | Path) -> Model:
-        """Read a LinkML YAML schema (a pinned copy); a registered subclass reads its own id."""
+        """Read a LinkML YAML schema (a pinned copy)."""
         import yaml
 
         data = yaml.safe_load(Path(path).read_text())
@@ -224,10 +206,7 @@ class Model(TargetModel):
         }
         prefix = str(data.get("default_prefix") or "")
         base = prefixes.get(prefix, "") or str(data.get("id") or "")
-        import rdfsolve.targets  # registers the models with conventions of their own
-
-        kind = _MODELS.get(str(data.get("id") or ""), cls) if cls is Model else cls
-        return kind(
+        return cls(
             str(data.get("version", "")),
             data.get("classes", {}) or {},
             data.get("slots", {}) or {},
@@ -295,18 +274,45 @@ class Model(TargetModel):
         )
 
     def root(self) -> str | None:
-        """Return the class that every non-mixin class is below, when there is one."""
-        tops = [n for n, c in self.classes.items() if not c.get("is_a") and not c.get("mixin")]
-        counts = Counter(t for n in self.classes for t in [*self.ancestors(n), n] if t in tops)
+        """Return the class a node takes when it has no more specific one: of the broadest classes
+        a node can have (neither abstract nor a mixin, below none or only abstract ones), the one
+        the most classes are under.
+        """
+
+        def concrete(name: str) -> bool:
+            c = self.classes.get(name, {})
+            return not c.get("abstract") and not c.get("mixin")
+
+        broadest = {
+            n for n in self.classes if concrete(n) and not any(map(concrete, self.ancestors(n)))
+        }
+        counts = Counter(t for n in self.classes for t in [*self.ancestors(n), n] if t in broadest)
         return counts.most_common(1)[0][0] if counts else None
 
     def statement_classes(self) -> list[str]:
-        """Return the classes that reify a statement (they have the STATEMENT_SLOTS), with those below."""
+        """Return the classes that reify a statement (they have the STATEMENT_SLOTS; mixins only
+        lend them), with those below.
+        """
         found = [
             n
             for n, c in self.classes.items()
-            if set(self.STATEMENT_SLOTS) <= set(c.get("slots") or [])
+            if not c.get("mixin") and set(self.STATEMENT_SLOTS) <= set(c.get("slots") or [])
         ]
+        return sorted({b for n in found for b in self.below(n)})
+
+    def process_kinds(self) -> list[str]:
+        """Return the classes of processes, with those below: the domains of both an input and an
+        output slot (by the words of their names; not their inverses, which go to the process).
+        """
+        domains = {
+            side: {
+                self._slot_value(n, "domain")
+                for n, s in self.slots.items()
+                if side in n.split() and not s.get("inverse")
+            }
+            for side in ("input", "output")
+        }
+        found = (domains["input"] & domains["output"]) - {None}
         return sorted({b for n in found for b in self.below(n)})
 
     def diagram(self, *names: str, terms: Sequence[str] = (), fenced: bool = True) -> str:
@@ -541,12 +547,6 @@ class Model(TargetModel):
                     if side in name.split() and side not in found:
                         found[side] = name
         return found.get("input"), found.get("output")
-
-    def implied(self) -> list[str]:
-        """Return the CONSTRUCT queries of the statements that the model's conventions imply
-        from converted data (none for a general model).
-        """
-        return []
 
     def by_prefix(self, prefixes: Iterable[str]) -> dict[str, list[str]]:
         """Return the classes (names) that list each identifier prefix, broadest and narrower."""

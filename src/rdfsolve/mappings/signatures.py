@@ -50,7 +50,6 @@ VOCABULARIES = frozenset(
         "vann",
         "bibo",
         "oa",
-        "biolink",
     }
 )
 

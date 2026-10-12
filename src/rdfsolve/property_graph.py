@@ -267,7 +267,7 @@ class Fold:
 
         *members* is the property from the instance to its members (wp:participants of a
         Complex); *among* keeps the members of this class (wp:Protein); *predicate* is the
-        target schema's IRI of the relation (biolink:in_complex_with).
+        target schema's IRI of the relation.
         """
         return cls(
             of,
@@ -373,7 +373,7 @@ def provenance(
     The source release is the one the metadata miner read (VoID, version or issued date); when
     the source states none, the snapshot the schema was mined from says when, and the release
     is written as unknown. *target* and *target_version* name the property-graph schema the
-    rule converts to (Biolink Model, 4.4.5).
+    rule converts to and its version.
     """
     from importlib.metadata import PackageNotFoundError, version
 
@@ -1444,12 +1444,13 @@ def _ids(node: PGNode) -> dict[str, Any]:
     return out
 
 
-_TITLE_PROPERTIES = ("https://w3id.org/biolink/vocab/name", *NAME_PROPERTIES)
-
-
 def _title(node: PGNode) -> str:
-    """Return a node's name for drawing: a name or label property, else the end of its IRI."""
-    for key in _TITLE_PROPERTIES:
+    """Return a node's name for drawing: its label (rdfs:label, skos:prefLabel), else a property
+    named "name" in any vocabulary (a target model's name slot), else a synonym, else the end of
+    its IRI.
+    """
+    named = sorted(k for k in node.properties if re.split(r"[/#]", k)[-1] == "name")
+    for key in (*NAME_PROPERTIES[:2], *named, *NAME_PROPERTIES[2:]):
         for value in node.properties.get(key, []):
             return str(value.lexical)
     return re.split(r"[/#]", node.id.rstrip("/"))[-1]
