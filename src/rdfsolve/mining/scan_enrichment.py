@@ -34,6 +34,8 @@ from typing import TYPE_CHECKING, Any, Literal
 from rdfsolve.mining.scan import RDF_LANG, RDF_TYPE, XSD_STRING, RowStore
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     import polars as pl
 
     from rdfsolve.ontology.structure import OntologyStructure
@@ -240,43 +242,357 @@ def _annotations(
     return found
 
 
-def _example_rows(
-    store: RowStore, pattern: SchemaPattern, limit: int
-) -> list[tuple[str, str, str | None]]:
-    """Return the first *limit* (subject, value) pairs of *pattern*, ordered by subject then
-    value, with the conditions of enrichment.example_query.
+# Classified rows (a row under each class of its subject and of its object) of a predicate read
+# at a time for the examples: a larger predicate is read in parts by subject id, and the
+# smallest examples of the parts are merged.
+EXAMPLE_PART_ROWS = 10_000_000
+# Rows of a predicate sampled to estimate its classified rows a row, and the fewest rows of a
+# part however many classes its nodes have.
+EXAMPLE_SAMPLE_ROWS = 1_000_000
+EXAMPLE_MIN_PART_ROWS = 10_000
+# Seconds between two progress lines of the examples.
+EXAMPLE_PROGRESS_SECONDS = 60.0
+
+# The kinds of subject and object an example row is classified under.
+_TYPED, _UNTYPED, _TERM = "type", "untyped", "term"
+
+
+def _smallest(frame: pl.DataFrame, keys: list[str], limit: int) -> pl.DataFrame:
+    """Return the *limit* smallest distinct (s, o) of each group of *keys*, by s then o.
+
+    The smallest pairs of a group have the group's *limit* smallest subjects, which a group-by
+    finds without sorting the rows: only the rows of those subjects are sorted.
     """
     import polars as pl
 
-    rows = _rows(store, pattern.property_uri)
-    if rows is None:
-        return []
-    types = _type_rows(store).lazy()
-    subject = f"<{pattern.subject_class}>"
+    cut = frame.group_by(keys).agg(pl.col("s").unique().bottom_k(limit)).explode("s")
+    kept = frame.join(cut, on=[*keys, "s"], how="semi", nulls_equal=True)
+    return (
+        kept.unique([*keys, "s", "o"], keep="first")
+        .sort([*keys, "s", "o"])
+        .group_by(keys, maintain_order=True)
+        .head(limit)
+    )
+
+
+def _subject_key(pattern: SchemaPattern) -> tuple[str, str]:
+    """Return how *pattern* selects its subjects: (kind, class or term IRI)."""
     if pattern.subject_binding == "term":
-        rows = rows.filter(pl.col("s") == subject)
-    elif pattern.untyped_subject:
-        typed = types.select("s").unique()
-        rows = rows.filter(pl.col("s").str.starts_with("<")).join(typed, on="s", how="anti")
-    else:
-        rows = rows.join(types.filter(pl.col("c") == subject).select("s"), on="s", how="semi")
-    obj = pattern.object_class
+        return _TERM, pattern.subject_class
+    if pattern.untyped_subject:
+        return _UNTYPED, ""
+    return _TYPED, pattern.subject_class
+
+
+def _object_key(pattern: SchemaPattern) -> tuple[str, str]:
+    """Return how *pattern* selects its values: (kind, class, sentinel or term IRI)."""
     if pattern.object_binding == "term":
-        rows = rows.filter(pl.col("o") == f"<{obj}>")
-    elif obj == "Literal":
-        rows = rows.filter(pl.col("kind") == "literal")
-        if pattern.datatype:
-            rows = rows.filter(pl.col("d") == pattern.datatype)
-    elif obj == "Resource":
-        typed = types.select(o="s").unique()
-        rows = rows.filter(pl.col("kind") == "iri").join(typed, on="o", how="anti")
-    elif obj == "BlankNode":
-        rows = rows.filter(pl.col("kind") == "bnode")
+        return _TERM, pattern.object_class
+    if pattern.object_class in _SENTINELS:
+        return pattern.object_class, ""
+    return _TYPED, pattern.object_class
+
+
+class _Progress:
+    """Log the progress of the examples at most once every EXAMPLE_PROGRESS_SECONDS."""
+
+    def __init__(self, properties: int, patterns: int) -> None:
+        """Keep the totals and the time of the last line."""
+        import time
+
+        self.properties, self.patterns = properties, patterns
+        self.last = time.monotonic()
+
+    def step(self, properties: int, patterns: int) -> None:
+        """Log the properties and patterns done, when the last line is old enough."""
+        import logging
+        import time
+
+        now = time.monotonic()
+        if now - self.last >= EXAMPLE_PROGRESS_SECONDS:
+            self.last = now
+            logging.getLogger(__name__).info(
+                "Examples: %d of %d properties, %d of %d patterns",
+                properties,
+                self.properties,
+                patterns,
+                self.patterns,
+            )
+
+
+def _subject_rows(
+    rows: pl.DataFrame,
+    patterns: list[SchemaPattern],
+    types: pl.DataFrame,
+    typed: pl.DataFrame,
+) -> pl.DataFrame:
+    """Classify rows under every subject a pattern asks for: (sk, sc) is a class of the subject
+    (_TYPED), no type of an IRI subject (_UNTYPED) or the subject term itself (_TERM). *types*
+    and *typed* hold the types of these rows' subjects (sid, c: the classes the patterns name)
+    and the typed ids (sid).
+    """
+    import polars as pl
+
+    classes = sorted({f"<{p.subject_class}>" for p in patterns if _subject_key(p)[0] == _TYPED})
+    terms = sorted({f"<{p.subject_class}>" for p in patterns if _subject_key(p)[0] == _TERM})
+    frames = []
+    if classes:
+        frames.append(
+            rows.join(
+                types.rename({"c": "sc"}),
+                on="sid",
+            ).with_columns(sk=pl.lit(_TYPED))
+        )
+    if any(_subject_key(p)[0] == _UNTYPED for p in patterns):
+        frames.append(
+            rows.filter(pl.col("s").str.starts_with("<"))
+            .join(typed, on="sid", how="anti")
+            .with_columns(sk=pl.lit(_UNTYPED), sc=pl.lit(""))
+        )
+    if terms:
+        frames.append(
+            rows.filter(pl.col("s").is_in(terms)).with_columns(sk=pl.lit(_TERM), sc=pl.col("s"))
+        )
+    columns = ["s", "o", "d", "oid", "kind", "sk", "sc"]
+    if not frames:
+        return rows.select(columns[:5]).with_columns(sk=pl.lit(""), sc=pl.lit("")).head(0)
+    return pl.concat([f.select(*columns[:-1], pl.col("sc").cast(pl.String)) for f in frames])
+
+
+def _value_rows(
+    rows: pl.DataFrame,
+    patterns: list[SchemaPattern],
+    types: pl.DataFrame,
+    typed: pl.DataFrame,
+) -> pl.DataFrame:
+    """Classify subject-classified rows under every value a pattern asks for: (ok, oc, dt) is a
+    class of the object (_TYPED), Literal with its datatype, Resource (an IRI without a type),
+    BlankNode, or the object term itself (_TERM). *types* and *typed* hold the types of these
+    rows' objects (sid, c: the classes the patterns name) and the typed ids (sid).
+    """
+    import polars as pl
+
+    objects = [_object_key(p) for p in patterns]
+    classes = sorted({f"<{c}>" for kind, c in objects if kind == _TYPED})
+    terms = sorted({f"<{c}>" for kind, c in objects if kind == _TERM})
+    sentinels = {kind for kind, _ in objects if kind in _SENTINELS}
+    literal = pl.col("kind") == "literal"
+    none = pl.lit(None, pl.String)
+    frames = []
+    if "Literal" in sentinels:
+        frames.append(
+            rows.filter(literal).with_columns(ok=pl.lit("Literal"), oc=pl.lit(""), dt=pl.col("d"))
+        )
+    if "BlankNode" in sentinels:
+        frames.append(
+            rows.filter(pl.col("kind") == "bnode").with_columns(
+                ok=pl.lit("BlankNode"), oc=pl.lit(""), dt=none
+            )
+        )
+    if "Resource" in sentinels:
+        frames.append(
+            rows.filter(pl.col("kind") == "iri")
+            .join(typed.rename({"sid": "oid"}), on="oid", how="anti")
+            .with_columns(ok=pl.lit("Resource"), oc=pl.lit(""), dt=none)
+        )
+    if classes:
+        frames.append(
+            rows.filter(~literal)
+            .join(
+                types.rename({"sid": "oid", "c": "oc"}),
+                on="oid",
+            )
+            .with_columns(ok=pl.lit(_TYPED), dt=none)
+        )
+    if terms:
+        frames.append(
+            rows.filter(pl.col("o").is_in(terms)).with_columns(
+                ok=pl.lit(_TERM), oc=pl.col("o"), dt=none
+            )
+        )
+    keys = ["sk", "sc", "ok", "oc", "dt"]
+    if not frames:
+        return pl.DataFrame(
+            schema={
+                **dict.fromkeys(keys, pl.String),
+                "s": pl.String,
+                "o": pl.String,
+                "d": pl.String,
+            }
+        )
+    return pl.concat(
+        [
+            f.select(
+                *(pl.col(k).cast(pl.String) for k in keys),
+                pl.col("s").cast(pl.String),
+                pl.col("o").cast(pl.String),
+                pl.col("d").cast(pl.String),
+            )
+            for f in frames
+        ]
+    )
+
+
+def _fanout(sample: pl.DataFrame, types: pl.DataFrame, column: str) -> float:
+    """Return the classes of a row's *column* node on average (at least 1), from a sample."""
+    if not sample.height:
+        return 1.0
+    joined = sample.join(types, left_on=column, right_on="sid").height
+    return max(1.0, joined / sample.height)
+
+
+def _predicate_examples(
+    store: RowStore,
+    predicate: str,
+    patterns: list[SchemaPattern],
+    limit: int,
+    types: pl.DataFrame,
+    typed: pl.DataFrame,
+) -> dict[tuple[str, str, str, str, str | None], pl.DataFrame]:
+    """Return the smallest examples of the patterns of one predicate, by pattern key.
+
+    Each row of the predicate is classified under every subject and every value that a pattern
+    of the predicate asks for, with the conditions of enrichment.example_query; the classes are
+    joined by id with *types* (sid, c: the rdf:type rows of the classes the patterns name) and
+    *typed* (sid: every node with an rdf:type row). A row whose nodes have k and m classes
+    becomes k * m classified rows, so the rows are read in parts by subject id sized by those
+    classes (EXAMPLE_PART_ROWS classified rows a part, estimated on a sample). Each part keeps
+    the *limit* smallest (s, o) of each group, and the parts are merged the same way, which
+    gives the smallest of the whole predicate.
+    """
+    import polars as pl
+
+    rows = store.rows(predicate).select("s", "o", "d", "sid", "oid", "kind")
+    size = int(rows.select(pl.len()).collect(engine="streaming").item())
+    if not size:
+        return {}
+    subject_classes = [f"<{p.subject_class}>" for p in patterns if _subject_key(p)[0] == _TYPED]
+    object_classes = [f"<{c}>" for kind, c in map(_object_key, patterns) if kind == _TYPED]
+    subject_types = types.filter(pl.col("c").cast(pl.String).is_in(subject_classes))
+    object_types = types.filter(pl.col("c").cast(pl.String).is_in(object_classes))
+    step = max(1, size // EXAMPLE_SAMPLE_ROWS)
+    sample = rows.select("sid", "oid").gather_every(step).collect(engine="streaming")
+    expansion = _fanout(sample, subject_types, "sid") * _fanout(sample, object_types, "oid")
+    part_rows = max(EXAMPLE_MIN_PART_ROWS, int(EXAMPLE_PART_ROWS / expansion))
+    parts = max(1, -(-size // part_rows))
+    keys = ["sk", "sc", "ok", "oc", "dt"]
+    found: list[pl.DataFrame] = []
+    for part in range(parts):
+        selected = rows.filter(pl.col("sid") % parts == part) if parts > 1 else rows
+        subjects = _subject_rows(
+            selected.collect(engine="streaming"), patterns, subject_types, typed
+        )
+        values = _value_rows(subjects, patterns, object_types, typed)
+        if values.height:
+            # A copy: a slice of the part's strings would keep the whole part's text alive.
+            small = _smallest(values, keys, limit)
+            found.append(pl.DataFrame(small.to_dict(as_series=False), schema=small.schema))
+    if not found:
+        return {}
+    merged = _smallest(pl.concat(found), keys, limit)
+    out: dict[tuple[str, str, str, str, str | None], pl.DataFrame] = {}
+    for key, group in merged.group_by(keys, maintain_order=True):
+        out[tuple(key)] = group.select("s", "o", "d")
+    return out
+
+
+def _pattern_examples(
+    store: RowStore, patterns: list[SchemaPattern], limit: int, progress: _Progress
+) -> list[list[tuple[str, str, str | None]]]:
+    """Return the first *limit* (subject, value) pairs of each pattern, ordered by subject then
+    value, with the conditions of enrichment.example_query.
+
+    The rdf:type rows (the miner's ``a``) of the classes the patterns name are read once, by id
+    with the classes as categories, and the typed nodes by id; each predicate is then read once
+    for all of its patterns (_predicate_examples).
+    """
+    import polars as pl
+
+    by_predicate: dict[str, list[int]] = defaultdict(list)
+    for number, pattern in enumerate(patterns):
+        if pattern.property_uri in store.predicates:
+            by_predicate[pattern.property_uri].append(number)
+    out: list[list[tuple[str, str, str | None]]] = [[] for _ in patterns]
+    if not by_predicate:
+        return out
+    type_rows = _rows(store, RDF_TYPE)
+    classes = sorted(
+        {f"<{p.subject_class}>" for p in patterns if _subject_key(p)[0] == _TYPED}
+        | {f"<{c}>" for kind, c in map(_object_key, patterns) if kind == _TYPED}
+    )
+    if type_rows is None:
+        types = pl.DataFrame(schema={"sid": pl.UInt64, "c": pl.Categorical})
+        typed = pl.DataFrame(schema={"sid": pl.UInt64})
     else:
-        members = types.filter(pl.col("c") == f"<{obj}>").select(o="s")
-        rows = rows.join(members, on="o", how="semi")
-    frame = rows.select("s", "o", "d").unique(["s", "o"]).sort("s", "o").head(limit).collect()
-    return [(s, o, d) for s, o, d in frame.iter_rows()]
+        types = (
+            type_rows.filter(pl.col("o").is_in(classes))
+            .select("sid", c=pl.col("o").cast(pl.Categorical))
+            .unique()
+            .collect(engine="streaming")
+        )
+        typed = type_rows.select("sid").unique().collect(engine="streaming")
+    done = 0
+    for count, (predicate, numbers) in enumerate(sorted(by_predicate.items()), start=1):
+        own = [patterns[n] for n in numbers]
+        found = _predicate_examples(store, predicate, own, limit, types, typed)
+        for number, pattern in zip(numbers, own, strict=True):
+            out[number] = _examples_of(found, pattern, limit)
+        done += len(numbers)
+        progress.step(count, done)
+    return out
+
+
+def _examples_of(
+    found: dict[tuple[str, str, str, str, str | None], pl.DataFrame],
+    pattern: SchemaPattern,
+    limit: int,
+) -> list[tuple[str, str, str | None]]:
+    """Return the examples of one pattern from the smallest rows of its predicate's groups."""
+    import polars as pl
+
+    sk, sc = _subject_key(pattern)
+    ok, oc = _object_key(pattern)
+    subject = "" if sk == _UNTYPED else f"<{sc}>"
+    value = "" if ok in _SENTINELS else f"<{oc}>"
+    if ok == "Literal" and not pattern.datatype:
+        groups = [frame for key, frame in found.items() if key[:4] == (sk, subject, ok, value)]
+    else:
+        dt = pattern.datatype if ok == "Literal" else None
+        groups = [found[key] for key in [(sk, subject, ok, value, dt)] if key in found]
+    if not groups:
+        return []
+    frame = _smallest(pl.concat(groups).with_columns(k=pl.lit(0)), ["k"], limit)
+    return [(s, o, d) for s, o, d in frame.select("s", "o", "d").iter_rows()]
+
+
+def _class_examples(store: RowStore, classes: list[str], limit: int) -> dict[str, list[str]]:
+    """Return the *limit* smallest members (rdf:type subjects) of each class.
+
+    One streaming pass a member: the smallest subject of each class not chosen yet, so that
+    no pass holds more than the members already chosen.
+    """
+    import polars as pl
+
+    type_rows = _rows(store, RDF_TYPE)
+    wanted = [f"<{c}>" for c in classes]
+    members: dict[str, list[str]] = {c: [] for c in classes}
+    if type_rows is None or not wanted:
+        return members
+    rows = type_rows.filter(pl.col("o").is_in(wanted)).select("s", c="o")
+    chosen = pl.DataFrame(schema={"s": pl.String, "c": pl.String})
+    for _ in range(limit):
+        found = (
+            rows.join(chosen.lazy(), on=["s", "c"], how="anti")
+            .group_by("c")
+            .agg(pl.col("s").min())
+            .collect(engine="streaming")
+        )
+        if not found.height:
+            break
+        chosen = pl.concat([chosen, found.select("s", "c")])
+    for s, c in chosen.sort("c", "s").iter_rows():
+        members[c[1:-1]].append(s)
+    return members
 
 
 def enrichment(
@@ -319,23 +635,19 @@ def enrichment(
         if annotation not in destination:
             destination.append(annotation)
     if examples_per_pattern:
-        import polars as pl
-
-        types = _type_rows(store)
-        result.class_examples = {}
-        for iri in classes:
-            members = types.filter(pl.col("c") == f"<{iri}>")["s"].unique().sort()
-            result.class_examples[iri] = [
-                _rdf_term(s, None) for s in members.head(examples_per_pattern)
-            ]
+        members = _class_examples(store, classes, examples_per_pattern)
+        result.class_examples = {iri: [_rdf_term(s, None) for s in members[iri]] for iri in classes}
         unique = {}
         for pattern in schema.patterns:
             key = (pattern.subject_class, pattern.property_uri)
             unique[(*key, pattern.subject_binding, pattern.object_class, pattern.datatype)] = (
                 pattern
             )
-        for pattern in unique.values():
-            for s, o, d in _example_rows(store, pattern, examples_per_pattern):
+        chosen = list(unique.values())
+        progress = _Progress(len({p.property_uri for p in chosen}), len(chosen))
+        rows_of = _pattern_examples(store, chosen, examples_per_pattern, progress)
+        for pattern, rows in zip(chosen, rows_of, strict=True):
+            for s, o, d in rows:
                 result.examples.append(
                     PatternExample(
                         subject_class=pattern.subject_class,

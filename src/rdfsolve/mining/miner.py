@@ -1572,12 +1572,16 @@ class SchemaMiner:
         if self._store is not None:
             from rdfsolve.mining.scan_enrichment import enrichment
 
-            return enrichment(
+            # A phase of its own, as the SPARQL enrichment has: it reads every pattern's rows.
+            phase = self._report.start_phase("enrichment")
+            found = enrichment(
                 self._store,
                 schema,
                 examples_per_pattern=self.examples_per_pattern,
                 annotation_iris=annotation_iris,
             )
+            self._report.finish_phase(phase, items=len(found.examples))
+            return found
         from rdfsolve.mining.enrichment import query_enrichment
 
         return query_enrichment(

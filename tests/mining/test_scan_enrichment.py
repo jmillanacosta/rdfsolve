@@ -376,3 +376,18 @@ def test_term_patterns(tmp_path, with_typed):
     assert _dump(found) == _dump(expected)
     objects = {p.object_class for p in found if p.subject_binding == "term"}
     assert {"Resource", "Literal", str(E.Doc), str(E.Paper), str(OBO.UBERON_2)} <= objects
+
+
+def test_examples_read_in_parts_equal_the_whole(setup, monkeypatch):
+    """A predicate or type table read in parts by subject id (EXAMPLE_PART_ROWS) gives the same
+    examples and class examples as one read: the smallest of each part are merged."""
+    from rdfsolve.mining import scan_enrichment
+
+    _, schema, store, _ = setup
+    whole = enrichment(store, schema, examples_per_pattern=2)
+    monkeypatch.setattr(scan_enrichment, "EXAMPLE_PART_ROWS", 1)
+    monkeypatch.setattr(scan_enrichment, "EXAMPLE_MIN_PART_ROWS", 1)
+    parts = enrichment(store, schema, examples_per_pattern=2)
+    assert _dump(parts.examples) == _dump(whole.examples)
+    assert parts.class_examples == whole.class_examples
+    assert whole.examples
