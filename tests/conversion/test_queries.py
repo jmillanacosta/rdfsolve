@@ -236,7 +236,15 @@ def test_rules_take_curies_and_a_and_within_names_the_scope():
 
     from rdfsolve.conversion import _expand, within
 
+    import tempfile
+    from pathlib import Path
+
+    from rdfsolve.target_model import Model
+
     assert _expand("a") == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    with tempfile.TemporaryDirectory() as folder:  # a target read names its own prefix's terms
+        (Path(folder) / "model.yaml").write_text(BIOLINK_YAML)
+        Model.read(Path(folder) / "model.yaml")
     assert _expand("biolink:catalyzes") == BL + "catalyzes"
     record = type("Pathway", (), {})()
     vars(record)["uri"] = "urn:wp1"

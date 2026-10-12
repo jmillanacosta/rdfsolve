@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 def _expand(text: str, client: Client | None = None) -> str:
     """Return the IRI of "a" (rdf:type), of a CURIE or of an IRI: the prefixes of the client's
-    mined schema first, then Bioregistry's (the namespace a vocabulary's terms have in RDF, else
+    mined schema first, then those of the target models read (model_prefixes), then Bioregistry's (the namespace a vocabulary's terms have in RDF, else
     the prefix of its identifiers' URIs).
     """
     import bioregistry
@@ -64,10 +64,13 @@ def _expand(text: str, client: Client | None = None) -> str:
     prefix, sep, local = text.partition(":")
     if not sep:
         raise ValueError(f"{text!r}: write an IRI, a CURIE or 'a'")
+    from rdfsolve.target_model import model_prefixes
+
     known = client.schema.get_prefixes() if client is not None else {}
     resource = bioregistry.get_resource(prefix)
     base = (
         known.get(prefix)
+        or model_prefixes().get(prefix)
         or (resource.get_rdf_uri_prefix() if resource is not None else None)
         or bioregistry.get_uri_prefix(prefix)
     )

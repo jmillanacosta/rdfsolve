@@ -25,6 +25,7 @@ __all__ = [
     "RelationInfo",
     "TargetModel",
     "ValueInfo",
+    "model_prefixes",
     "read_model",
 ]
 
@@ -140,6 +141,16 @@ class TargetModel:
         return []
 
 
+# The prefix and namespace of the terms of each target model read in this session, as the model
+# declares them (its default prefix), so that rules written with its CURIEs name its terms.
+_MODEL_PREFIXES: dict[str, str] = {}
+
+
+def model_prefixes() -> dict[str, str]:
+    """Return the prefix and namespace of the terms of each target model read so far."""
+    return dict(_MODEL_PREFIXES)
+
+
 def read_model(source: Any) -> TargetModel:
     """Return the target model in a file, by its kind: LinkML YAML (.yaml, .yml), a metagraph
     (.json with metanode_kinds), or a SHACL shapes graph (any other RDF file, or an rdflib Graph).
@@ -206,6 +217,8 @@ class Model(TargetModel):
         }
         prefix = str(data.get("default_prefix") or "")
         base = prefixes.get(prefix, "") or str(data.get("id") or "")
+        if prefix and base:
+            _MODEL_PREFIXES[prefix] = base
         return cls(
             str(data.get("version", "")),
             data.get("classes", {}) or {},
