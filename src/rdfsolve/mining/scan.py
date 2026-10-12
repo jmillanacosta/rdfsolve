@@ -2945,7 +2945,30 @@ class ScanStrategy(MiningStrategy):
         if expressions:
             context.report.report.config["class_expressions"] = expressions
         invalid = {repr(p[:200]): n for p, n in self.row_store.left_out_predicates.items()}
-        patterns = count_patterns(self.store, invalid)
+        from rdfsolve.mining.scan_checkpoint import read_checkpoint, write_checkpoint
+
+        # A retried run of the same work reads the counted patterns (scan_checkpoint).
+        settings = {
+            "graph_uris": sorted(getattr(self.store, "graph_uris", None) or []),
+            "context": sorted(getattr(self.store, "context", ()) or ()),
+            "grouping": self.grouped.record if self.grouped is not None else None,
+        }
+        saved = read_checkpoint(self.store, "scan-patterns", settings)
+        if saved is not None:
+            patterns = [SchemaPattern.model_validate(p) for p in saved["patterns"]]
+            invalid = dict(saved["invalid"])
+            context.report.report.config["scan_checkpoint"] = {"scan-patterns": "read"}
+        else:
+            patterns = count_patterns(self.store, invalid)
+            write_checkpoint(
+                self.store,
+                "scan-patterns",
+                settings,
+                {
+                    "patterns": [p.model_dump(mode="json") for p in patterns],
+                    "invalid": invalid,
+                },
+            )
         for pattern in patterns:
             found = long_text.get(pattern.property_uri)
             if found and pattern.object_class == "Literal":

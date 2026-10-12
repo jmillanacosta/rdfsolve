@@ -507,8 +507,35 @@ class SchemaMiner:
         phase = self._report.start_phase("structural-patterns")
         config = self._report.report.config
         config["structural_execution"] = "scan"
-        # One census for each data graph of a graph scope, as StructuralStrategy.mine.
-        entries, structural = structural_coverage(self._store, patterns)
+        # One census for each data graph of a graph scope, as StructuralStrategy.mine; a
+        # retried run of the same census reads it (scan_checkpoint).
+        import hashlib
+
+        from rdfsolve.mining.scan_checkpoint import read_checkpoint, write_checkpoint
+        from rdfsolve.schema_models.structural import StructuralPattern
+
+        counted = sorted(p.model_dump_json() for p in patterns)
+        settings = {
+            "graph_uris": sorted(getattr(self._store, "graph_uris", None) or []),
+            "context": sorted(getattr(self._store, "context", ()) or ()),
+            "patterns": hashlib.sha256("\n".join(counted).encode()).hexdigest(),
+        }
+        saved = read_checkpoint(self._store, "structural-patterns", settings)
+        if saved is not None:
+            entries = saved["entries"]
+            structural = [StructuralPattern.model_validate(p) for p in saved["structural"]]
+            config.setdefault("scan_checkpoint", {})["structural-patterns"] = "read"
+        else:
+            entries, structural = structural_coverage(self._store, patterns)
+            write_checkpoint(
+                self._store,
+                "structural-patterns",
+                settings,
+                {
+                    "entries": entries,
+                    "structural": [p.model_dump(mode="json") for p in structural],
+                },
+            )
         config["structural_coverage"] = entries
         context.structural_patterns = structural
         config["structural_pattern_count"] = len(structural)
