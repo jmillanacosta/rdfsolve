@@ -82,15 +82,35 @@ def find_tested_paths_in_store(
     graphs = list(schema.about.graph_uris or [])
     context = (schema.about.type_graph_uris or []) + (schema.about.type_context_graph_uris or [])
     store = store.base.view(graphs, context) if graphs else store.base
-    # Instances by QLever id (16 bytes a row); the source counts read the members by term.
-    types = store.type_ids().select("sid", c=_bare(pl.col("c").cast(pl.String))).unique().collect()
+    # Instances by QLever id, the classes as categories (12 bytes a row); the type table is
+    # never held as text.
+    types = (
+        store.type_ids()
+        .select("sid", c=_bare(pl.col("c").cast(pl.String)).cast(pl.Categorical))
+        .unique()
+        .collect(engine="streaming")
+    )
     typed = types.select("sid").unique()
-    roots = store.members().select("s", c=_bare(pl.col("c"))).unique().collect()
 
     def instances(cls: str) -> pl.DataFrame:
         """Return the ids (sid) of the instances of *cls* and of the terms it stands for."""
         terms = [cls, *members.get(cls, ())]
-        return types.filter(pl.col("c").is_in(terms)).select("sid").unique()
+        return types.filter(pl.col("c").cast(pl.String).is_in(terms)).select("sid").unique()
+
+    def source_count(cls: str) -> int:
+        """Return the members of *cls* and of the terms it stands for (_subject_type_pattern):
+        its instances, or, with type context graphs, those with an edge in the data graphs.
+        """
+        if not getattr(store, "context", ()):
+            return instances(cls).height
+        terms = [cls, *members.get(cls, ())]
+        return int(
+            store.members()
+            .filter(_bare(pl.col("c")).is_in(terms))
+            .select(pl.col("s").n_unique())
+            .collect(engine="streaming")
+            .item()
+        )
 
     loaded: dict[str, pl.DataFrame] = {}
 
@@ -126,24 +146,33 @@ def find_tested_paths_in_store(
             rows = rows.join(instances(target).rename({"sid": "oid"}), on="oid", how="semi")
         return rows.select(s="sid", o="oid").unique()
 
-    # Edges by predicate, so that each predicate is read once; the budget counts this too.
+    # Edges by predicate, so that each predicate is read once; the budget counts this too. The
+    # pairs of each edge are kept once, in the table of the edges leaving its subject class
+    # (column e), and read from there: the matched rows of a large source are most of its
+    # triples, and a second copy of them did not fit in memory.
     deadline = clock() + budget_s
-    steps: dict[int, pl.DataFrame] = {}
+    parts: dict[str, list[pl.DataFrame]] = {}
+    done: set[int] = set()
     for k in sorted(keys, key=lambda k: (k[1], k)):
         if clock() >= deadline:
             break
-        steps[index[k]] = step(unique[k])
-    keys = [k for k in keys if index[k] in steps]
+        frame = step(unique[k]).with_columns(e=pl.lit(index[k], pl.Int32))
+        parts.setdefault(k[0], []).append(frame)
+        done.add(index[k])
+    loaded.clear()
+    keys = [k for k in keys if index[k] in done]
     leaving: dict[str, pl.DataFrame] = {}
-    for k in keys:
-        frame = steps[index[k]].with_columns(e=pl.lit(index[k], pl.Int32))
-        leaving[k[0]] = pl.concat([leaving[k[0]], frame]) if k[0] in leaving else frame
+    for c in list(parts):
+        leaving[c] = pl.concat(parts.pop(c), rechunk=True)
     fanout = {c: frame.group_by("s").len() for c, frame in leaving.items()}
+
+    def steps(e: int) -> pl.DataFrame:
+        """Return the (s, o) pairs of edge *e*."""
+        return leaving[keys_of[e][0]].filter(pl.col("e") == e).select("s", "o")
+
+    keys_of = {index[k]: k for k in keys}
     # The source count of a path: the members of its first class (_subject_type_pattern).
-    sources = {
-        c: roots.filter(pl.col("c").is_in([c, *members.get(c, ())]))["s"].n_unique()
-        for c in {k[0] for k in keys}
-    }
+    sources = {c: source_count(c) for c in {k[0] for k in keys}}
     tested: Counter[int] = Counter()
     matched: Counter[int] = Counter()
     found: dict[tuple[int, ...], int] = {}
@@ -153,9 +182,9 @@ def find_tested_paths_in_store(
 
     def followed(route: tuple[int, ...]) -> int:
         """Count the starts that follow the whole route, from its end backwards (exact)."""
-        reach = steps[route[-1]].select("s").unique()
+        reach = steps(route[-1]).select("s").unique()
         for i in reversed(route[:-1]):
-            reach = steps[i].join(reach.rename({"s": "o"}), on="o", how="semi").select("s").unique()
+            reach = steps(i).join(reach.rename({"s": "o"}), on="o", how="semi").select("s").unique()
         return reach.height
 
     def extend(path: tuple[int, ...], pairs: pl.DataFrame, limit: int) -> None:
@@ -217,7 +246,7 @@ def find_tested_paths_in_store(
     complete: list[int] = []
     for limit in range(2, max_hops + 1):
         for k in keys:
-            first = steps[index[k]]
+            first = steps(index[k])
             if first.height and not stopped:
                 extend((index[k],), first.select(start="s", end="o").unique(), limit)
         if stopped:
