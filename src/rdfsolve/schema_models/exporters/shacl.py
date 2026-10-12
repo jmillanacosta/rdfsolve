@@ -291,8 +291,8 @@ def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
 def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str) -> None:
     """Give each node shape the namespaces of its class's example IRIs as sh:pattern.
 
-    The namespaces of each class are also declared with their prefixes (sh:declare) on a
-    declarations resource of that class, so that a reader can tell which registered identifiers
+    The namespaces of registered identifiers are also declared with their prefixes (sh:declare)
+    on a declarations resource of that class, so that a reader can tell which registered identifiers
     the class's IRIs are, also where a prefix names another namespace elsewhere in the graph.
     """
     from hashlib import sha256
@@ -312,8 +312,8 @@ def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: s
             found = parse(iri)  # a registered identifier: its namespace as written in the IRI
             if found is not None and iri.endswith(found.local):
                 prefix, namespace = found.prefix, iri[: len(iri) - len(found.local)]
-            else:
-                _, prefix, namespace = uri_to_curie(iri)
+            else:  # not a registered identifier: the namespace alone, with no prefix to declare
+                prefix, namespace = "", uri_to_curie(iri)[2]
             if namespace and namespace != iri:
                 namespaces.setdefault(class_iri, {})[namespace] = prefix
     special = set("\\.?*+(){}|[]^$")

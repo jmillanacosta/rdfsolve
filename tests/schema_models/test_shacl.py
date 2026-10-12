@@ -244,6 +244,7 @@ def test_node_shapes_name_the_namespaces_of_their_class_iris():
         "urn:Chem": [
             RdfTerm(kind="uri", value="https://identifiers.org/chebi/CHEBI:15377"),
             RdfTerm(kind="uri", value="http://purl.obolibrary.org/obo/CHEBI_16236"),
+            RdfTerm(kind="uri", value="http://example.org/20260910/chem-1"),  # not registered
         ],
     }
     graph = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
@@ -253,7 +254,9 @@ def test_node_shapes_name_the_namespaces_of_their_class_iris():
     }
     assert patterns["urn:Gene"] == r"^(https://identifiers\.org/ncbigene/)"
     assert patterns["urn:Chem"] == (
-        r"^(http://purl\.obolibrary\.org/obo/CHEBI_|https://identifiers\.org/chebi/CHEBI:)"
+        r"^(http://example\.org/20260910/|http://purl\.obolibrary\.org/obo/CHEBI_|"
+        r"https://identifiers\.org/chebi/CHEBI:)"
     )
+    assert not any(str(p).isdigit() for p in graph.objects(None, SH.prefix)), "no invented prefix"
     kinds = {k.iri: k.identifiers for k in Shacl(graph).kinds()}
     assert kinds["urn:Gene"] == ("ncbigene",) and kinds["urn:Chem"] == ("chebi",)
