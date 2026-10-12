@@ -193,3 +193,38 @@ def test_row_navigation_keeps_a_bounded_number_of_paths_per_class_and_length(tmp
     kept = {tuple(s.property_uri for s in p.steps) for p in capped.paths}
     assert kept <= {tuple(s.property_uri for s in p.steps) for p in whole.paths}
     assert not whole.truncated_lengths and not whole.omitted_by_class
+
+
+def test_paths_tested_on_samples_of_every_instance_equal_the_whole_search(tmp_path, monkeypatch):
+    """With a start sample as large as every class, the hop-by-hop reading of the sampled
+    starts' edges finds the same paths with the same counts as reading every edge; with a
+    smaller sample, each kept path is one of the whole search's, with a sampled support."""
+    from rdfsolve.mining import scan_paths
+    from rdfsolve.mining.scan_paths import find_tested_paths_in_store
+
+    graph = _graph()
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine(dataset_name="fixture")
+    store = store_from_graph(graph, tmp_path / "store")
+
+    def routes(summary):
+        return {
+            tuple((s.subject_class, s.property_uri, s.object_class) for s in p.steps): (
+                p.source_count,
+                p.matched_sources,
+            )
+            for p in summary.paths
+        }
+
+    whole = find_tested_paths_in_store(schema, store, max_hops=3)
+    sampled = find_tested_paths_in_store(schema, store, max_hops=3, start_sample=10_000)
+    assert routes(sampled) == routes(whole) and routes(whole)
+    assert sampled.start_sample == 10_000 and sampled.stop_reason is None
+    assert sampled.complete_lengths == whole.complete_lengths
+    monkeypatch.setattr(scan_paths, "PAIR_LIMIT", 0)
+    assert routes(find_tested_paths_in_store(schema, store, max_hops=3, start_sample=10_000)) == (
+        routes(whole)
+    )
+    one = find_tested_paths_in_store(schema, store, max_hops=3, start_sample=1)
+    assert set(routes(one)) <= set(routes(whole))
+    assert all(source == 1 and matched == 1 for source, matched in routes(one).values())

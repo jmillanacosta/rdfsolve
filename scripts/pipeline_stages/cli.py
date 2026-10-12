@@ -414,6 +414,13 @@ Examples:
         "keys and FILTER past the last row read) (default: offset)",
     )
     parser.add_argument(
+        "--navigation-start-sample",
+        type=int,
+        default=None,
+        help="Test the paths of a scanned store on at most this many instances of each start "
+        "class; the support of a path is then that of the sample (default: every instance)",
+    )
+    parser.add_argument(
         "--void-first-navigation-budget",
         type=float,
         default=None,
@@ -605,6 +612,9 @@ Examples:
     if config.navigation_budget < 0:
         parser.error("--navigation-budget must be nonnegative")
     config.void_first_navigation_budget = args.void_first_navigation_budget
+    config.navigation_start_sample = args.navigation_start_sample
+    if config.navigation_start_sample is not None and config.navigation_start_sample < 1:
+        parser.error("--navigation-start-sample must be positive")
     config.pagination = "cursor" if args.pagination == "cursor" else "offset"
     if config.void_first_navigation_budget is not None and config.void_first_navigation_budget < 0:
         parser.error("--void-first-navigation-budget must be nonnegative")

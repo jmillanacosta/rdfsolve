@@ -544,6 +544,7 @@ class Stage:
                 max_hops=self.config.navigation_hops,
                 budget_s=budget,
                 members=members,
+                start_sample=self.config.navigation_start_sample,
             )
         elif self.config.navigation_hops and helper is not None:
             from rdfsolve.mining.navigation import find_tested_paths

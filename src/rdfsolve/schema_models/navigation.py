@@ -81,6 +81,9 @@ class NavigationSummary(BaseModel):
     query_count: int = Field(default=0, ge=0)
     failed_queries: int = Field(default=0, ge=0)
     cuts: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    # Paths tested on a sample of each start class's instances (at most this many a class): the
+    # matched_sources and source_count of a path are then those of the sample.
+    start_sample: int | None = Field(default=None, ge=1)
     # Member terms of the groups of ontology terms that kept paths go through (for their queries)
     member_terms: dict[str, list[str]] = Field(default_factory=dict)
 

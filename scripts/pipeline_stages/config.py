@@ -109,6 +109,9 @@ class PipelineConfig:
     # None uses navigation_budget. Path testing of IDSM's molmedb and isdb ran out of its 1800 s
     # without finishing, the largest cost left in their VoID-first runs (2026-10-06).
     void_first_navigation_budget: float | None = None
+    # Test the paths of a scanned store on at most this many instances of each start class
+    # (scan_paths start_sample): the counts are then those of the sample. None tests every one.
+    navigation_start_sample: int | None = None
     # How the miner pages its listings: "offset" (LIMIT/OFFSET) or "cursor" (keyset: ORDER BY
     # the projected keys and FILTER past the last row). Class listings switch to keys by
     # themselves when an OFFSET page fails beyond the first.
