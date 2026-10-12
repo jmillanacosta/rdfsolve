@@ -76,6 +76,27 @@ __all__ = [
 EXPORT_FORMAT = "rdfsolve-graph-export/1"
 DEFAULT_CAP = 50_000_000
 MANIFEST = "manifest.json"
+# How a registry entry names a file of an endpoint export: by its path below the folder that holds
+# the exports (<source>/<stamp>/<file>), so that the entry is the same on every machine; the
+# folder is the one the export was written in (prepare_workdir resolves it from there).
+EXPORT_SCHEME = "rdfsolve-export:"
+
+
+def export_reference(export_dir: Path, name: str) -> str:
+    """Return how a registry entry names the file *name* of the export in *export_dir*."""
+    return f"{EXPORT_SCHEME}{export_dir.parent.name}/{export_dir.name}/{name}"
+
+
+def export_file(reference: str, export_dir: Path) -> Path:
+    """Return the local file of an export reference, below the folder of *export_dir*'s exports.
+
+    A file: URI or an absolute path (how entries named export files before) is taken as is.
+    """
+    if reference.startswith(EXPORT_SCHEME):
+        return export_dir.parent.parent / reference.removeprefix(EXPORT_SCHEME)
+    return Path(reference.removeprefix("file://"))
+
+
 # Formats asked for, best first; N-Triples streams and parses fastest.
 # N-Triples alone first: given a list with q-values, QLever answers Turtle, which it writes
 # many times slower than N-Triples.
@@ -1729,7 +1750,8 @@ def _field(piece: dict[str, Any]) -> str:
 def exported_entry(export_dir: Path) -> dict[str, Any]:
     """Return the registry fields that make a complete export the inputs of a local source.
 
-    The named graphs become graph_uris and graph_sources (one file URL per piece; a graph
+    The named graphs become graph_uris and graph_sources (one export reference per piece,
+    export_reference; a graph
     without triples is left out); an export of the default graph alone becomes download_*
     fields. endpoint_export pins the export: the endpoint, when it ended, and the manifest
     with its SHA-256, which holds the SHA-256 of each file. A default-graph remainder beside
@@ -1769,16 +1791,16 @@ def exported_entry(export_dir: Path) -> dict[str, Any]:
         for graph in named:
             mapping = sources.setdefault(graph["graph"], {})
             for piece in _kept_files(graph):
-                url = (export_dir / piece["file"]).as_uri()
+                url = export_reference(export_dir, piece["file"])
                 mapping.setdefault(_field(piece), []).append(url)
         fields["graph_sources"] = sources
     else:
         for piece in _kept_files(default[0]) if default else []:
-            fields.setdefault(_field(piece), []).append((export_dir / piece["file"]).as_uri())
+            fields.setdefault(_field(piece), []).append(export_reference(export_dir, piece["file"]))
     fields["endpoint_export"] = {
         "endpoint": manifest["endpoint"],
         "finished": manifest["finished"],
-        "manifest": str(path),
+        "manifest": export_reference(export_dir, path.name),
         "manifest_sha256": _sha256(path),
         "graphs": len(graphs),
         "triples": sum(int(g.get("triples") or 0) for g in graphs),
@@ -1827,10 +1849,12 @@ def prepare_workdir(export_dir: Path, workdir: Path) -> dict[str, Any]:
                 for url in urls:
                     placed[url] = workdir / "rdf" / url.rsplit("/", 1)[-1]
     sizes: dict[str, dict[str, str | None]] = {}
-    manifest = json.loads(Path(fields["endpoint_export"]["manifest"]).read_text("utf-8"))
+    manifest = json.loads(
+        export_file(fields["endpoint_export"]["manifest"], export_dir).read_text("utf-8")
+    )
     digests = {p["file"]: p["sha256"] for g in manifest["graphs"] for p in _kept_files(g)}
     for url, target in placed.items():
-        source = Path(url.removeprefix("file://"))
+        source = export_file(url, export_dir)
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists():
             try:

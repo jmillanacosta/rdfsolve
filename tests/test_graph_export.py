@@ -619,3 +619,27 @@ def test_files_of_a_failed_graph_are_removed_when_it_is_exported_again(
     on_disk = {p.name for p in (tmp_path / "toy").glob("*.gz")}
     listed = {p["file"] for g in manifest["graphs"] for p in g["pieces"] if p["file"]}
     assert on_disk == listed
+
+
+def test_an_exported_entry_names_its_files_by_export_reference(
+    endpoint: type[_Endpoint], tmp_path: Path
+) -> None:
+    """The registry fields of an export name no path of this machine, and a record made with
+    the file URIs of before still matches them (nothing is downloaded again)."""
+    from rdfsolve.graph_export import EXPORT_SCHEME, exported_entry, prepare_workdir
+    from rdfsolve.qlever.downloads import needs_download, write_record
+
+    entry = {"name": "toy", "endpoint": endpoint.url, "graph_uris": [EX + "g1", EX + "g2"]}  # type: ignore[attr-defined]
+    export = tmp_path / "exports" / "toy" / "20260101"
+    GraphExporter(entry, export, delay=0.0).run()
+    fields = exported_entry(export)
+    urls = [u for m in fields["graph_sources"].values() for us in m.values() for u in us]
+    assert urls and all(u.startswith(EXPORT_SCHEME + "toy/20260101/") for u in urls)
+    assert fields["endpoint_export"]["manifest"] == EXPORT_SCHEME + "toy/20260101/manifest.json"
+    assert str(tmp_path) not in json.dumps(fields)
+    prepare_workdir(export, tmp_path / "work")  # resolves the references to the export's files
+    old = tmp_path / "old"
+    (old / "rdf").mkdir(parents=True)
+    (old / "rdf" / "x.nt").write_text("")
+    write_record(old, [(export / u.rsplit("/", 1)[-1]).as_uri() for u in urls], head=lambda u: None)
+    assert not needs_download(old, urls, has_inputs=True)

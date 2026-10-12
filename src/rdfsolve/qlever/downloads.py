@@ -68,6 +68,8 @@ def server_state(url: str) -> dict[str, str | None] | None:
     """
     import requests
 
+    if not url.startswith(("http://", "https://")):
+        return None  # a local file (an export reference): no server to ask
     try:
         answer = requests.head(
             url, allow_redirects=True, timeout=60, headers={"Accept-Encoding": "identity"}
@@ -135,7 +137,18 @@ def needs_download(workdir: Path, urls: list[str], *, has_inputs: bool) -> bool:
     if not has_inputs or (workdir / MARKER).exists():
         return True
     recorded = recorded_urls(read_record(workdir))
-    return recorded is not None and set(recorded) != set(urls)
+    return recorded is not None and {same_file(u) for u in recorded} != {same_file(u) for u in urls}
+
+
+def same_file(url: str) -> str:
+    """Return a URL as the file it names: a file: URI of an endpoint export and its export
+    reference (graph_export.EXPORT_SCHEME) name the same file, so records made with either match.
+    """
+    from rdfsolve.graph_export import EXPORT_SCHEME
+
+    if url.startswith("file://") and "/exports/" in url:
+        return EXPORT_SCHEME + url.split("/exports/", 1)[1]
+    return url
 
 
 def updated_urls(
