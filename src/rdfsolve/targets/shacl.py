@@ -230,12 +230,12 @@ class Shacl(TargetModel):
                 for prefix in g.objects(d, sh("prefix"))
                 for ns in g.objects(d, sh("namespace"))
             }
-            query = _focused(query, shapes.get(shape, []))
-            if query is None:
+            focused = _focused(query, shapes.get(shape, []))
+            if focused is None:
                 self.skipped_rules += 1
                 continue
             header = "".join(f"PREFIX {p}: <{ns}>\n" for p, ns in sorted(declared_here.items()))
-            found.append((float(text(rule, (SH + "order",)) or 0), str(rule), header + query))
+            found.append((float(text(rule, (SH + "order",)) or 0), str(rule), header + focused))
         self._rules = [q for *_, q in sorted(found)]
         caps = {"iris", "directed"}
         if any(k.parents for k in self._kinds):

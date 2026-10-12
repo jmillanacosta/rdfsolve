@@ -293,6 +293,7 @@ class Model(TargetModel):
         """
 
         def concrete(name: str) -> bool:
+            """Return whether a node can have the class: neither abstract nor a mixin."""
             c = self.classes.get(name, {})
             return not c.get("abstract") and not c.get("mixin")
 
