@@ -136,9 +136,14 @@ def _lookup(items: Mapping[str, Any], name: str, what: str, where: str, hint: st
     """Return the item named *name* (its key or its attribute name, by words); NotFoundError lists the
     near names and all the choices.
     """
-    wanted = _words(name.lstrip("^"))
+    text = name.lstrip("^")
+    wanted, typed = _words(text), _attribute(text).lower()
     for key, value in items.items():
-        if _words(key) == wanted:
+        shown = str(getattr(value, "name", key))  # the item's own name, as printed
+        if wanted in (_words(key), _words(shown)) or typed in (
+            _attribute(key).lower(),
+            _attribute(shown).lower(),
+        ):
             return value
     near = [k for k in items if _tokens(k) & _tokens(name)]
     raise NotFoundError(
@@ -2290,9 +2295,7 @@ class Plan(_Shown):
             else ""
         )
         statements = profile.run(self.client, scope=scope)
-        implied = derive_conversions(
-            self.client, statements, self.target.rules, self.target.model
-        )
+        implied = derive_conversions(self.client, statements, self.target.rules, self.target.model)
         network = Network(self, statements, paths, implied, profile)
         logger.info("Wrote %d queries to %s.", len(paths), folder)
         logger.info("%r", network)

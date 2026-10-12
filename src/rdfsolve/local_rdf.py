@@ -97,10 +97,37 @@ def _load_file(path: Path, store: ox.Store) -> None:
     if rdf_format is None:
         store.extend(to_oxigraph(Dataset().parse(path)))
     elif zipped:
-        with gzip.open(path, "rb") as handle:
-            store.bulk_load(cast("IO[bytes]", handle), format=rdf_format, lenient=True)
+        _bulk_load(store, path.name, rdf_format, opener=lambda: gzip.open(path, "rb"))  # noqa: SIM115 (opened in a with block there)
     else:
-        store.bulk_load(path=str(path), format=rdf_format, lenient=True)
+        _bulk_load(store, path.name, rdf_format, path=path)
+
+
+def _bulk_load(
+    store: ox.Store,
+    name: str,
+    rdf_format: ox.RdfFormat,
+    *,
+    path: Path | None = None,
+    opener: Any = None,
+) -> None:
+    """Bulk load one RDF input; one that is not valid RDF (such as a relative IRI with no base)
+    is loaded again without validating its terms, which are then kept as written, as QLever
+    indexes them, so that a local store and the index of the same file hold the same terms.
+    """
+    for lenient in (False, True):
+        try:
+            if opener is None:
+                store.bulk_load(path=str(path), format=rdf_format, lenient=lenient)
+            else:
+                with opener() as handle:
+                    store.bulk_load(cast("IO[bytes]", handle), format=rdf_format, lenient=lenient)
+            return
+        except SyntaxError as error:
+            if lenient:
+                raise
+            logger.warning(
+                "%s is not valid RDF (%s); loading it without validating its terms", name, error
+            )
 
 
 _RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})
@@ -195,8 +222,12 @@ def _load_zip(path: Path, store: ox.Store) -> None:
             rdf_format = ox.RdfFormat.from_extension(extension)
             if rdf_format is None:
                 continue
-            with archive.open(member) as handle:
-                store.bulk_load(handle, format=rdf_format)
+            _bulk_load(
+                store,
+                f"{path.name}:{member}",
+                rdf_format,
+                opener=lambda member=member: archive.open(member),
+            )
 
 
 def to_rdflib(quads: Iterable[ox.Quad]) -> Dataset:

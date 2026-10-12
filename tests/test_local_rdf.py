@@ -270,3 +270,11 @@ def test_a_registry_name_is_the_entry_even_beside_a_folder_of_that_name(tmp_path
     )
     Client.open(schema, data_file="fixture.source")
     assert asked == ["fixture.source"]
+
+
+def test_a_file_with_relative_iris_loads_with_its_terms_as_written(tmp_path):
+    from rdfsolve.local_rdf import load_store
+
+    (tmp_path / "relative.ttl").write_text("<urn:a> <urn:p> <event_0> .\n")
+    store = load_store(tmp_path / "relative.ttl")
+    assert [q.object.value for q in store] == ["event_0"]

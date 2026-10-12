@@ -148,3 +148,14 @@ def test_a_shapes_sparql_rule_is_a_construct_for_its_focus_nodes():
         ox.RdfFormat.TURTLE,
     )
     assert [t.subject.value for t in data.query(query)] == ["urn:ada"], "only the focus nodes"
+
+
+def test_a_kind_is_found_by_its_printed_name_with_brackets_and_acronyms(tmp_path):
+    shapes = tmp_path / "ids.ttl"
+    shapes.write_text(
+        "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+        '<urn:s> a sh:NodeShape ; sh:targetClass <urn:GeneId> ; rdfs:label "Gene ID (NCBI)" .\n'
+    )
+    kinds = Target(shapes).kinds
+    assert kinds["Gene ID (NCBI)"] is kinds.GeneIDNCBI is kinds["gene id ncbi"]
