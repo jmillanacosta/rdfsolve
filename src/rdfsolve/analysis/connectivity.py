@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
+from rdfsolve.mappings.confidence import agent_type, edge_type, knowledge_level
 from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 
 if TYPE_CHECKING:
@@ -138,6 +139,12 @@ def build_connectivity(
                 "justification": mapping.mapping_justification,
                 "mapping_source": mapping.mapping_source,
                 "evidence": "plausible",
+                # What kind of claim the mapping is, how it was made, and that it is taken
+                # from its set, not checked on the data (rdfsolve.mappings.confidence).
+                "edge_type": edge_type(mapping.predicate) or "RELATED",
+                "knowledge_level": knowledge_level(mapping.mapping_justification or ""),
+                "agent_type": agent_type(mapping.mapping_justification or ""),
+                "validation": "asserted",
             },
         )
     for evidence in links:
@@ -161,6 +168,12 @@ def build_connectivity(
                 "complete": evidence.complete,
                 "flags": evidence.flags,
                 "evidence": "confirmed" if evidence.complete and share >= min_share else "tested",
+                "edge_type": "INSTANCE_LINK",
+                "knowledge_level": "observation",
+                "agent_type": "data_analysis_pipeline",
+                # Checked on the data: validated when the sampled values resolve enough.
+                "validation": "validated" if evidence.complete and share >= min_share else "tested",
+                "confidence": share,
             },
         )
     for link in candidates:
@@ -174,6 +187,10 @@ def build_connectivity(
                 "identifier_type": link.identifier_type,
                 "target_property": link.target_property,
                 "evidence": "plausible",
+                "edge_type": "INSTANCE_LINK",
+                "knowledge_level": "prediction",
+                "agent_type": "automated_agent",
+                "validation": "candidate",
             },
         )
     for tested in routes:
