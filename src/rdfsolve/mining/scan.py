@@ -230,8 +230,13 @@ class RowStore:
         distinct rows, and the rows of several membership properties and the named class
         expressions (types-named.parquet) are made distinct when written. Such a type table
         need not be made distinct again, which on a large index holds every row in memory.
+        With named graphs the same holds when no membership triple is in more than one graph
+        (each membership property has as many rows as triples).
         """
-        return self.graphs is None
+        if self.graphs is None:
+            return True
+        membership = [p for p in self.manifest.get("membership") or [] if p in self.predicates]
+        return bool(membership) and not any(self._duplicated(p) for p in membership)
 
     def literal_type_values(self, limit: int = 20) -> dict[str, Any] | None:
         """Return the type values that are not classes (literals), with their membership rows.

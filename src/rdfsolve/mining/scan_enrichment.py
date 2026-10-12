@@ -1114,6 +1114,11 @@ def metadata_document(
 _TermPatternKey = tuple[str, str, str, str | None, Literal["type", "term"], Literal["type", "term"]]
 
 
+# Rows of a predicate counted at a time for the terms that are its values: a larger predicate is
+# counted in parts by subject id, each joined with its share of the type table.
+TERM_PART_ROWS = 50_000_000
+
+
 def term_patterns(
     store: RowStore,
     typed: list[SchemaPattern] | None,
@@ -1152,21 +1157,30 @@ def term_patterns(
         if graph_uris
         else "endpoint_default"
     )
-    types = store.types().collect()
-    context = types
+    class_terms = [f"<{OWL_CLASS}>", f"<{RDFS_CLASS}>"]
+    annotation_class = f"<{OWL}AnnotationProperty>"
+    # The type table is read by id (sid, c as a category) and never collected whole: the terms,
+    # declared classes and annotation properties are the rows of a few classes, read first.
+    rows_of_types = store.graph_types()
+    types = rows_of_types.select("sid", c=pl.col("c").cast(pl.Categorical))
+    if not getattr(store, "distinct_types", False):
+        types = types.unique()
+    wanted = pl.col("c").is_in([*class_terms, annotation_class])
+    own = rows_of_types.filter(wanted).select("s", "sid", "c").unique().collect(engine="streaming")
+    context = own
     if ontology_graph_uris:
         base = store.base
         extra = base.graph_types().filter(
-            pl.col("g").is_in([f"<{g}>" for g in ontology_graph_uris])
+            pl.col("g").is_in([f"<{g}>" for g in ontology_graph_uris]) & wanted
         )
-        context = pl.concat([types, extra.select("s", "c").collect()]).unique()
-    class_terms = [f"<{OWL_CLASS}>", f"<{RDFS_CLASS}>"]
-    terms = context.filter(pl.col("c").is_in(class_terms) & pl.col("s").str.starts_with("<"))
-    terms = terms.select("s").unique()
-    declared_classes = types.filter(pl.col("c").is_in(class_terms)).select("s").unique()
-    annotation = set(
-        context.filter(pl.col("c") == f"<{OWL}AnnotationProperty>")["s"].str.slice(1).str.head(-1)
+        context = pl.concat([own, extra.select("s", "sid", "c").collect()]).unique()
+    term_ids = (
+        context.filter(pl.col("c").is_in(class_terms) & pl.col("s").str.starts_with("<"))
+        .select("sid")
+        .unique()
     )
+    declared_classes = own.filter(pl.col("c").is_in(class_terms)).select("sid").unique().lazy()
+    annotation = set(context.filter(pl.col("c") == annotation_class)["s"].str.slice(1).str.head(-1))
     data_predicates = [
         p for p in store.predicates if not p.startswith(NON_DATA_NAMESPACES) and p not in annotation
     ]
@@ -1179,14 +1193,45 @@ def term_patterns(
             per_graph[graph] = per_graph.get(graph, 0) + n
 
     def edges(predicate: str) -> pl.LazyFrame:
-        """Return the rows of *predicate* (s, o, d, kind, g); g is null outside a graph scope."""
+        """Return the rows of *predicate* (s, o, d, kind, g, sid, oid); g is null outside a
+        graph scope.
+        """
         rows = store.graph_rows(predicate) if graph_uris else store.rows(predicate)
         if not graph_uris:
             rows = rows.with_columns(g=pl.lit(None, pl.String))
-        return rows.select("s", "o", "d", "kind", "g")
+        return rows.select("s", "o", "d", "kind", "g", "sid", "oid")
 
-    term_list = terms.lazy()
+    term_list = term_ids.lazy()
+    term_objects = term_list.rename({"sid": "oid"})
     iri_s = pl.col("s").str.starts_with("<")
+
+    def term_values(predicate: str, members: pl.LazyFrame) -> None:
+        """Count the terms that are values of *predicate* by subject class (*members*: sid, c),
+        in parts by subject id (TERM_PART_ROWS), each part joined with its share of the types.
+        """
+        rows = (
+            edges(predicate)
+            .filter(iri_s & (pl.col("kind") == "iri"))
+            .join(term_objects, on="oid", how="semi")
+            .join(declared_classes, on="sid", how="anti")
+        )
+        size = int(store.rows(predicate).select(pl.len()).collect(engine="streaming").item())
+        parts = max(1, -(-size // TERM_PART_ROWS))
+        found = []
+        for part in range(parts):
+            selected = pl.col("sid") % parts == part
+            found.append(
+                rows.filter(selected)
+                .join(members.filter(selected), on="sid", how="inner")
+                .group_by("c", "o", "g")
+                .agg(n=pl.len())
+                .collect(engine="streaming")
+                .with_columns(pl.col("c").cast(pl.String))
+            )
+        total = pl.concat(found).group_by("c", "o", "g").agg(pl.col("n").sum())
+        for (c, o), part_rows in total.group_by("c", "o"):
+            add((c[1:-1], predicate, o[1:-1], None, "type", "term"), part_rows.select("g", "n"))
+
     if typed is not None and not ontology_graph_uris:
         pairs: dict[str, set[str]] = defaultdict(set)
         for pattern in typed:
@@ -1198,49 +1243,39 @@ def term_patterns(
         for predicate in sorted(pairs):
             if predicate not in data_predicates:
                 continue
-            members = types.lazy().filter(pl.col("c").is_in([f"<{c}>" for c in pairs[predicate]]))
-            found = (
-                edges(predicate)
-                .filter(iri_s & (pl.col("kind") == "iri"))
-                .join(term_list.rename({"s": "o"}), on="o", how="semi")
-                .join(declared_classes.lazy(), on="s", how="anti")
-                .join(members, on="s", how="inner")
-                .group_by("c", "o", "g")
-                .agg(n=pl.len())
-                .collect()
-            )
-            for (c, o), part in found.group_by("c", "o"):
-                add((c[1:-1], predicate, o[1:-1], None, "type", "term"), part.select("g", "n"))
+            classes = [f"<{c}>" for c in pairs[predicate]]
+            term_values(predicate, types.filter(pl.col("c").cast(pl.String).is_in(classes)))
     else:
         metaclasses = [f"<{m}>" for m in ONTOLOGY_METACLASSES]
-        members = types.lazy().filter(
-            pl.col("c").str.starts_with("<") & ~pl.col("c").is_in(metaclasses)
-        )
+        name = pl.col("c").cast(pl.String)
+        members = types.filter(name.str.starts_with("<") & ~name.is_in(metaclasses))
         for predicate in data_predicates:
-            found = (
-                edges(predicate)
-                .filter(iri_s & (pl.col("kind") == "iri"))
-                .join(term_list.rename({"s": "o"}), on="o", how="semi")
-                .join(declared_classes.lazy(), on="s", how="anti")
-                .join(members, on="s", how="inner")
-                .group_by("c", "o", "g")
-                .agg(n=pl.len())
-                .collect()
-            )
-            for (c, o), part in found.group_by("c", "o"):
-                add((c[1:-1], predicate, o[1:-1], None, "type", "term"), part.select("g", "n"))
-    value_types = types.lazy().filter(pl.col("c").str.starts_with("<")).rename({"s": "o"})
+            term_values(predicate, members)
+    value_types = types.filter(pl.col("c").cast(pl.String).str.starts_with("<")).rename(
+        {"sid": "oid"}
+    )
     for predicate in data_predicates:
         rows = (
-            edges(predicate).join(term_list, on="s", how="semi").filter(pl.col("kind") != "bnode")
+            edges(predicate)
+            .join(term_list, on="sid", how="semi")
+            .filter(pl.col("kind") != "bnode")
+            .collect(engine="streaming")
+            .lazy()
         )
-        is_term = rows.join(term_list.rename({"s": "o"}), on="o", how="semi").with_columns(
+        is_term = rows.join(term_objects, on="oid", how="semi").with_columns(
             oc=pl.col("o"), binding=pl.lit("term")
         )
-        rest = rows.join(term_list.rename({"s": "o"}), on="o", how="anti")
+        rest = rows.join(term_objects, on="oid", how="anti")
+        iri_rest = rest.filter(pl.col("kind") == "iri")
+        # The types of these values only: the type table is read for them, not held whole.
+        own_types = (
+            value_types.join(iri_rest.select("oid").unique(), on="oid", how="semi")
+            .with_columns(pl.col("c").cast(pl.String))
+            .collect(engine="streaming")
+            .lazy()
+        )
         iris = (
-            rest.filter(pl.col("kind") == "iri")
-            .join(value_types, on="o", how="left")
+            iri_rest.join(own_types, on="oid", how="left")
             .with_columns(oc=pl.col("c").fill_null("Resource"), binding=pl.lit("type"))
             .drop("c")
         )

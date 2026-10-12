@@ -145,8 +145,15 @@ def type_table(store: RowStore | StoreView) -> pl.LazyFrame:
     return table if getattr(store, "distinct_types", False) else table.unique()
 
 
-def _table(types: pl.LazyFrame) -> pl.LazyFrame:
-    return types.select(*_keys(types), "c").unique()
+def _table(types: pl.LazyFrame, *, distinct: bool = False) -> pl.LazyFrame:
+    """Return the record and class columns of a type table, one row per record and class.
+
+    With *distinct* (a table read from a store whose membership rows are distinct:
+    RowStore.distinct_types) the rows are not made distinct again, which on a large index held
+    every row of the table in memory.
+    """
+    table = types.select(*_keys(types), "c")
+    return table if distinct else table.unique()
 
 
 def retype(
@@ -191,7 +198,12 @@ def _type_classes(types: pl.LazyFrame) -> list[str]:
     """Return the IRI classes of a type table, as class discovery returns them."""
     import polars as pl
 
-    found = types.select("c").unique().filter(pl.col("c").str.starts_with("<")).collect()
+    found = (
+        types.select("c")
+        .filter(pl.col("c").str.starts_with("<"))
+        .unique()
+        .collect(engine="streaming")
+    )
     return sorted(_bare(c) for c in found["c"])
 
 
@@ -292,7 +304,8 @@ def minimal_types(
     """
     import polars as pl
 
-    table = _table(types) if types is not None else type_table(store)
+    distinct = bool(getattr(store, "distinct_types", False))
+    table = _table(types, distinct=distinct) if types is not None else type_table(store)
     classes = _type_classes(table)
     parents = superclasses(
         store,
@@ -310,10 +323,15 @@ def minimal_types(
     if not pairs:
         return table
     below = pl.LazyFrame(pairs, schema={"t": pl.String, "c": pl.String}, orient="row")
-    # The records are joined by QLever's id when the table has it, not by their text.
+    # The records are joined by QLever's id when the table has it, not by their text, and only
+    # the rows of the classes in a (descendant, ancestor) pair take part in the join.
     record = _keys(table)[-1]
+    lower = sorted({t for t, _ in pairs})
+    upper = sorted({c for _, c in pairs})
     redundant = (
-        table.join(table.select(record, t="c"), on=record)
+        table.filter(pl.col("c").is_in(upper))
+        .select(record, "c")
+        .join(table.filter(pl.col("c").is_in(lower)).select(record, t="c"), on=record)
         .join(below, on=["t", "c"], how="semi")
         .select(record, "c")
         .unique()
@@ -750,7 +768,8 @@ def group_terms(
     """
     from rdfsolve.mining.scan import count_patterns
 
-    table = _table(types) if types is not None else type_table(store)
+    distinct = bool(getattr(store, "distinct_types", False))
+    table = _table(types, distinct=distinct) if types is not None else type_table(store)
     if minimal:
         table = minimal_types(
             store,
@@ -777,7 +796,9 @@ def group_terms(
             hierarchy_files,
         )
     grouped_before = {t: r for t, r in before.items() if r != t}
-    first = retype(table, grouped_before)
+    # Only the classes and the members of each class are read from it: its rows need not be
+    # made distinct (on a large index that held every row of the table).
+    first = retype(table, grouped_before, distinct=False)
     objects = {p.object_class for p in raw if p.object_class not in _SENTINEL_OBJECTS}
     pattern_classes = (
         set(_type_classes(first)) | {grouped_before.get(o, o) for o in objects}
@@ -832,8 +853,9 @@ def group_terms(
     combined = {t: after.get(r, r) for t, r in grouped_before.items()}
     combined.update({t: r for t, r in after.items() if r != t and t not in combined})
     rewritten = retype(table, combined) if combined else table
+    # The count reads the rewritten rows and makes its tables by id distinct from them.
     patterns = (
-        count_patterns(RetypedStore(store, rewritten))
+        count_patterns(RetypedStore(store, rewritten, retype(table, combined, distinct=False)))
         if combined
         else [p.model_copy(deep=True) for p in raw]
     )
