@@ -485,17 +485,32 @@ def collections(store: RowStore) -> list[CollectionProfile]:
         for s, o, _ in rest_rows.select("s", "o", "d").unique().collect().iter_rows():
             rests[s].append(o)
     heads = set(firsts) | set(rests) | {nil}
+    head_frame = pl.LazyFrame({"o": sorted(heads)}, schema={"o": pl.String})
     owners: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for predicate in store.predicates:
         if predicate in (RDF + "first", RDF + "rest", RDF_TYPE):
             continue
-        found = store.rows(predicate).filter(pl.col("o").is_in(list(heads))).select("s", "o")
-        for s, o in found.collect().iter_rows():
+        found = store.rows(predicate).select("s", "o").join(head_frame, on="o", how="semi")
+        for s, o in found.collect(engine="streaming").iter_rows():
             owners[o].append((s, predicate))
+    # The types of the owners and of the list members only: the type rows are read for these
+    # nodes, never collected whole (a store can have lists on a handful of nodes and types on
+    # all of them).
+    nodes = {owner for found in owners.values() for owner, _ in found}
+    nodes |= {term for cells in firsts.values() for term, _ in cells}
     types: dict[str, set[str]] = defaultdict(set)
-    for s, c in _type_rows(store).iter_rows():
-        if c.startswith("<"):
-            types[s].add(c[1:-1])
+    type_rows = _rows(store, RDF_TYPE)
+    if type_rows is not None and nodes:
+        wanted = pl.LazyFrame({"s": sorted(nodes)}, schema={"s": pl.String})
+        found_types = (
+            type_rows.select("s", c="o")
+            .join(wanted, on="s", how="semi")
+            .unique()
+            .collect(engine="streaming")
+        )
+        for s, c in found_types.iter_rows():
+            if c.startswith("<"):
+                types[s].add(c[1:-1])
 
     def members(head: str) -> list[tuple[str, str | None]] | None:
         """Return the (term, datatype) members of the list at *head*; None for a malformed one."""
