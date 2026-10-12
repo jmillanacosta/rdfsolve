@@ -29,7 +29,8 @@ class Identification(BaseModel):
     method: str = Field(
         "any property",
         description="schema property: asked only properties whose examples carry this "
-        "identifier type; any property: every property was searched.",
+        "identifier type; any property: every property was searched; resource IRI: the resource "
+        "is named by a registered IRI of the identifier (predicate empty).",
     )
     intermediates: list[str] = Field(
         default_factory=list,
@@ -113,12 +114,44 @@ def identify(client: Client, identifiers: Iterable[str]) -> list[Identification]
     return _without_intermediates(client, found)
 
 
+def named(client: Client, keys: list[str]) -> list[Identification]:
+    """Return the resources whose own IRI is a registered IRI of an identifier: a source that names
+    its records by their identifiers carries them as the records themselves.
+    """
+    rows = " ".join(
+        f"({Literal(k).n3()} {t.n3()})" for k in keys for t in spellings(k) if isinstance(t, URIRef)
+    )
+    if not rows:
+        return []
+    body = client._scope(f"VALUES (?key ?s) {{ {rows} }} FILTER EXISTS {{ ?s ?p ?o }}")
+    with client.step("Identify resources by their IRIs"):
+        bindings = client._select(f"SELECT DISTINCT ?key ?s WHERE {{ {body} }}")
+    return [
+        Identification(
+            identifier=row["key"]["value"],
+            resource=row["s"]["value"],
+            predicate="",
+            value=row["s"]["value"],
+            kind="uri",
+            method="resource IRI",
+        )
+        for row in bindings
+    ]
+
+
 def _without_intermediates(client: Client, found: list[Identification]) -> list[Identification]:
     """Keep a matched resource that links to another match; report the other as intermediate."""
-    resources = sorted({m.resource for m in found})
-    if len(resources) < 2:
+    # A resource that is not an absolute IRI (a relative IRI kept as the source writes it) cannot
+    # be named in a query: it is kept as found, and takes no part in the links checked here.
+    written = {}
+    for resource in sorted({m.resource for m in found}):
+        try:
+            written[resource] = _iri(resource)
+        except ValueError:
+            continue
+    if len(written) < 2:
         return found
-    values = " ".join(_iri(r) for r in resources)
+    values = " ".join(written.values())
     body = client._scope(f"VALUES ?a {{ {values} }} VALUES ?b {{ {values} }} ?a ?link ?b .")
     with client.step("Link identified resources"):
         rows = client._select(f"SELECT DISTINCT ?a ?b WHERE {{ {body} }}")

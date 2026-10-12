@@ -445,6 +445,14 @@ class Client(DatasetClient):
 
         return identify(self, identifiers)
 
+    def named(self, identifiers: Iterable[str]) -> list[Identification]:
+        """Return the resources whose own IRI is a registered IRI of one of *identifiers* (the
+        records a source names by their identifiers).
+        """
+        from rdfsolve.client.identify import named
+
+        return named(self, list(dict.fromkeys(identifiers)))
+
     def statements(
         self, iris: Iterable[str], *, languages: Iterable[str] = (), names: bool = True
     ) -> Graph:

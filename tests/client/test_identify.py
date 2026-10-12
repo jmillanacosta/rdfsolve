@@ -93,3 +93,29 @@ def test_identifiers_resolve_across_spellings_then_statements_follow():
         assert sent and not [q for q in sent if "?s ?p ?o ." in q], (
             "Ask only properties that carry ORCIDs"
         )
+
+
+def test_a_resource_kept_as_a_relative_iri_is_found_without_breaking_the_link_check(tmp_path):
+    from rdfsolve.local_rdf import load_store
+
+    data = tmp_path / "relative.ttl"  # a relative IRI with no base, as some dumps write it
+    data.write_text(
+        '<item_1> <urn:orcid> "0000-0002-4166-7093" .\n'
+        '<urn:item2> <urn:orcid> "0000-0002-4166-7093" .\n'
+        '<urn:item3> <urn:orcid> "0000-0002-4166-7093" .\n'
+    )
+    with Client(MinedSchema(), load_store(data), graph_uris=[]) as source:
+        found = source.identify(["orcid:0000-0002-4166-7093"])
+    assert sorted(m.resource for m in found) == ["item_1", "urn:item2", "urn:item3"]
+
+
+def test_a_record_named_by_its_identifier_iri_is_found_by_that_identifier():
+    data = Dataset().parse(
+        data="<urn:g> { <https://identifiers.org/ncbigene/1595> a <urn:Gene> . }", format="trig"
+    )
+    with Client(MinedSchema(), data, graph_uris=["urn:g"]) as source:
+        assert source.identify(["ncbigene:1595"]) == [], "no statement has it as a value"
+        found = source.named(["ncbigene:1595"])
+    assert [(m.resource, m.method) for m in found] == [
+        ("https://identifiers.org/ncbigene/1595", "resource IRI")
+    ]

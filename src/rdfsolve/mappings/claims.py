@@ -429,8 +429,8 @@ class Claims:
             identifiers = sorted(
                 {subject_of(c) for c in self.claims if _prefix(object_of(c)) in issued}
             )
-        # The issuer is not asked about its own identifiers: an identifier is its own record,
-        # and matching its bare number would find other records with that value.
+        # The issuer is not searched for its own identifiers: matching their bare numbers would
+        # find other records with that value.
         written = {
             curie(i): i for i in identifiers if (read := parse(i)) and read.prefix not in issued
         }
@@ -440,6 +440,15 @@ class Claims:
             if x.kind == "uri"
             or x.value.lower().startswith(x.identifier.split(":", 1)[0].lower() + ":")
         ]
+        # Every identifier is also matched as a resource named by one of its registered IRIs (a
+        # source that names its records by their identifiers); for the issuer's own identifiers
+        # this is the only match.
+        named = {curie(i): i for i in identifiers if parse(i)}
+        if named and hasattr(client, "named"):
+            matches += [
+                (named.get(x.identifier, x.identifier), x.resource, x.predicate)
+                for x in client.named(list(named))
+            ]
         found = [claim(s, o, name, p) for s, o, p in matches if _valid(s, o)]
         invalid = [(s, o, name) for s, o, _ in matches if not _valid(s, o)]
         if through:
