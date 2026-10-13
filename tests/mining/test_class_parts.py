@@ -116,3 +116,11 @@ def test_a_prefix_that_is_no_prefix_name_is_not_declared():
     assert _PREFIX_NAME.match("ncbigene") and _PREFIX_NAME.match("kegg.compound")
     assert not _PREFIX_NAME.match("_3dmet"), "A SPARQL prefix name starts with a letter"
     assert not _PREFIX_NAME.match("3dmet") and not _PREFIX_NAME.match("obo.")
+
+
+def test_parts_counted_in_parts_of_the_members_add_up(tmp_path, monkeypatch):
+    from rdfsolve.mining import class_parts as module
+
+    whole = parts_of(tmp_path / "whole")
+    monkeypatch.setattr(module, "PART_ROWS", 2)
+    assert parts_of(tmp_path / "parts") == whole

@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = ["class_parts", "classify", "part_key"]
 
+# Membership rows classified in one part (class_parts).
+PART_ROWS = 100_000_000
 # A valid IRI scheme and its colon (RFC 3987): a letter, then letters, digits, "+", "." or "-".
 _SCHEME = r"^[A-Za-z][A-Za-z0-9+.\-]*:"
 # The start of an IRI of no registered namespace: scheme, host and, when a separator follows
@@ -39,14 +41,27 @@ def class_parts(members: pl.LazyFrame, classes: Iterable[str] | None = None) -> 
     rows = members.select("s", "c").filter(pl.col("c").str.starts_with("<"))
     if classes is not None:
         rows = rows.filter(pl.col("c").is_in([f"<{c}>" for c in classes]))
-    rows = rows.unique().with_columns(pl.col("c").str.strip_prefix("<").str.strip_suffix(">"))
-    counted = (
-        classify(rows, "s", reader)
-        .group_by("c", "kind", "prefix", "ns")
-        .agg(pl.len().alias("n"))
-        .collect(engine="streaming")
-    )
-    return ClassParts(by_class=_parts(counted.iter_rows(named=True), reader))
+    # The membership rows are made distinct and classified in parts by a hash of the member: a
+    # member is in one part, so the counts of the parts add up, and no part holds every row.
+    total = int(rows.select(pl.len()).collect(engine="streaming").item())
+    parts = max(1, -(-total // PART_ROWS))
+    counted = []
+    for part in range(parts):
+        selected = rows.filter(pl.col("s").hash() % parts == part) if parts > 1 else rows
+        counted.append(
+            classify(
+                selected.unique().with_columns(
+                    pl.col("c").str.strip_prefix("<").str.strip_suffix(">")
+                ),
+                "s",
+                reader,
+            )
+            .group_by("c", "kind", "prefix", "ns")
+            .agg(pl.len().alias("n"))
+            .collect(engine="streaming")
+        )
+    summed = pl.concat(counted).group_by("c", "kind", "prefix", "ns").agg(pl.col("n").sum())
+    return ClassParts(by_class=_parts(summed.iter_rows(named=True), reader))
 
 
 def classify(frame: pl.LazyFrame, term: str, reader: Any) -> pl.LazyFrame:
