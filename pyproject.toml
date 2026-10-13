@@ -62,6 +62,7 @@ dependencies = [
 
     # JSON processing
     "ujson>=5.0.0",  # Fast JSON parser for large mapping files
+    "ijson>=3.3",  # Streaming JSON parser: reads sections of large schema files
 
     # Other
     # pandas 3 turns a column of rdflib BNodes (a str subclass) into plain strings when the
@@ -180,7 +181,7 @@ plugins = [
 
 [[tool.mypy.overrides]]
 # These upstream packages do not publish type information.
-module = ["linkml.*", "linkml_runtime.*", "pyarrow.*", "IPython.*"]
+module = ["linkml.*", "linkml_runtime.*", "pyarrow.*", "IPython.*", "ijson", "ijson.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

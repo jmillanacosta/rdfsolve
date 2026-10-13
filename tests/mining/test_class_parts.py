@@ -25,8 +25,18 @@ _:b1 a ex:Node .
 """
 
 
+# A blank-node label written as an IRI: an IRI whose scheme is not valid.
+WRONG_SCHEME = URIRef("_:subspc_1")
+
+
+def graph_of_data():
+    graph = Graph().parse(data=DATA, format="turtle")
+    graph.add((WRONG_SCHEME, RDF.type, URIRef("http://example.org/Node")))
+    return graph
+
+
 def parts_of(tmp_path):
-    store = store_from_graph(Graph().parse(data=DATA, format="turtle"), tmp_path / "store")
+    store = store_from_graph(graph_of_data(), tmp_path / "store")
     return class_parts(store.members())
 
 
@@ -42,6 +52,7 @@ def test_members_counted_by_how_they_are_identified(tmp_path):
         ("namespace", "http://data.example.org/node/"): 2,
         ("identifier", "mi"): 1,
         ("blank_node", None): 1,
+        ("invalid_scheme", "_:"): 1,
     }, "A local identifier that is not valid for its prefix is a part of its own"
 
 
@@ -51,7 +62,7 @@ def test_part_shapes_accept_exactly_the_counted_members(tmp_path):
     graph = Graph()
     for shape in shapes:
         shape.to_rdf(graph)
-    data = Graph().parse(data=DATA, format="turtle")
+    data = graph_of_data()
 
     def members_of(shape):
         """Return the members of the class that conform to one part shape."""
@@ -76,7 +87,8 @@ def test_part_shapes_accept_exactly_the_counted_members(tmp_path):
         "A local identifier written with its prefix is read"
     )
     iris = [m for shape in shapes if shape.node_kind != "BlankNode" for m in by_name[shape.name]]
-    assert sorted(iris) == sorted({*iris}) and len(iris) == 7, (
+    assert by_name["Node with IRIs whose scheme is not valid (_:)"] == {"_:subspc_1"}
+    assert sorted(iris) == sorted({*iris}) and len(iris) == 8, (
         "Each member with an IRI conforms to exactly one part"
     )
 

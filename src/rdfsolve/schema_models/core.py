@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json as _json
-from collections.abc import Sequence
+from collections.abc import Collection, Iterator, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -32,6 +32,12 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.selection import SchemaSelection
     from rdfsolve.sparql_helper import SparqlHelper
+
+
+# The sections of a schema that hold per-row detail: the structural census, the patterns before
+# grouping and of exact terms, and the tested navigation paths. Tasks that use only the class
+# patterns, the enrichment and the prefixes read a schema without them (from_json, leave_out).
+DETAIL_SECTIONS = ("structural_patterns", "raw_patterns", "term_patterns", "navigation")
 
 
 class MinedSchema(BaseModel):
@@ -495,9 +501,21 @@ class MinedSchema(BaseModel):
         }
 
     @classmethod
-    def from_json(cls, path: str | Path) -> MinedSchema:
-        """Read a saved schema through format detection and validation."""
-        return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
+    def from_json(cls, path: str | Path, *, leave_out: Collection[str] = ()) -> MinedSchema:
+        """Read a saved schema through format detection and validation.
+
+        *leave_out* names sections of a canonical schema (fields of this model) that are not
+        read: the file is streamed and those sections are skipped, so a schema whose large
+        sections a task does not need is read in little memory. The fields left out keep their
+        defaults; such a schema is for reading, not for writing back.
+        """
+        if not leave_out:
+            return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
+        with Path(path).open("rb") as stream:
+            sections = _schema_sections(stream, frozenset(leave_out))
+        if not sections:
+            return cls.from_json(path)
+        return cls.from_dict({"format": "rdfsolve.mined-schema", "version": 1, "schema": sections})
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> MinedSchema:
@@ -849,3 +867,73 @@ class MiningResult(BaseModel):
         if left_out:
             (output_dir / "iri_findings.json").write_text(_json.dumps(left_out, indent=2))
         return left_out
+
+
+def _schema_sections(stream: Any, leave_out: frozenset[str]) -> dict[str, Any]:
+    """Return the sections of a canonical schema file (the members of its "schema" object),
+    without those in *leave_out*: their parse events are passed over, never built.
+    """
+    import ijson
+    from ijson.common import ObjectBuilder
+
+    sections: dict[str, Any] = {}
+    events = ijson.parse(stream, use_float=True)
+    for prefix, event, value in events:
+        if prefix != "schema" or event != "map_key":
+            continue
+        builder = None if value in leave_out else ObjectBuilder()
+        depth = 0
+        for _, inner, item in events:
+            if builder is not None:
+                builder.event(inner, item)
+            if inner in ("start_map", "start_array"):
+                depth += 1
+            elif inner in ("end_map", "end_array"):
+                depth -= 1
+            if depth == 0:
+                break
+        if builder is not None:
+            sections[value] = builder.value
+    return sections
+
+
+def iter_section_rows(
+    path: str | Path, names: Collection[str]
+) -> Iterator[tuple[str, dict[str, Any] | None]]:
+    """Yield the rows of the named list sections of a canonical schema file, one at a time.
+
+    For each named section that is a list, (name, None) comes first, so that an empty section
+    is told from one that is absent or null; then (name, row) for each of its rows. Nothing else
+    of the file is built, so a section larger than memory can be read.
+    """
+    import ijson
+    from ijson.common import ObjectBuilder
+
+    wanted = frozenset(names)
+    with Path(path).open("rb") as stream:
+        events = ijson.parse(stream, use_float=True)
+        for prefix, event, value in events:
+            if prefix != "schema" or event != "map_key":
+                continue
+            name = value
+            _, first, item = next(events)
+            if name not in wanted or first != "start_array":
+                depth = 1 if first in ("start_map", "start_array") else 0
+                while depth:
+                    _, inner, _ = next(events)
+                    depth += inner in ("start_map", "start_array")
+                    depth -= inner in ("end_map", "end_array")
+                continue
+            yield name, None
+            for _, inner, item in events:
+                if inner == "end_array":
+                    break
+                builder = ObjectBuilder()
+                builder.event(inner, item)
+                depth = 1 if inner in ("start_map", "start_array") else 0
+                while depth:
+                    _, nested, value_item = next(events)
+                    builder.event(nested, value_item)
+                    depth += nested in ("start_map", "start_array")
+                    depth -= nested in ("end_map", "end_array")
+                yield name, builder.value

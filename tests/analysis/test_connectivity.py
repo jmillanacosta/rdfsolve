@@ -129,3 +129,48 @@ def test_a_route_takes_the_strongest_edges_first():
     assert [e["kind"] for e in route["edges"]] == ["verified_link", "schema"]
     assert route["weakest_segment"] == "confirmed" and route["evidence"] == "plausible"
     assert best_route(graph, ("b", "urn:D"), ("a", "urn:A")) is None, "Edges have a direction"
+
+
+def _tested(steps, matched):
+    return NavigationPath(
+        steps=steps, evidence="instance_tested", instance_support="matched", matched_sources=matched
+    )
+
+
+BA = SchemaPattern(subject_class="urn:B", property_uri="urn:back", object_class="urn:A")
+AT = SchemaPattern(
+    subject_class="urn:A",
+    property_uri="http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+    object_class="urn:T",
+)
+TC = SchemaPattern(subject_class="urn:T", property_uri="urn:s", object_class="urn:C")
+AC = SchemaPattern(subject_class="urn:A", property_uri="urn:direct", object_class="urn:C")
+
+
+def test_a_network_keeps_the_shortest_path_of_a_class_pair_and_no_detour(tmp_path):
+    import json
+
+    from rdfsolve.analysis.connectivity import network_paths, read_network_paths
+
+    routes = [
+        _tested([AB, BC], 3),  # A to C in two steps
+        _tested([AB, BC, CD], 2),  # A to D in three
+        _tested([AB, BA, AB], 9),  # comes back to A: a round trip
+        _tested([AT, TC], 7),  # through a type: no relation between records
+        _tested([AB, BC], 5),  # A to C again, more instances: kept among equals
+    ]
+    kept = network_paths(routes)
+    assert [(p.steps[0].subject_class, p.steps[-1].object_class) for p in kept] == [
+        ("urn:A", "urn:C"),
+        ("urn:A", "urn:D"),
+    ]
+    assert kept[0].matched_sources == 5
+    schema = _schema("a", [AB, BC, CD, BA, AT, TC], routes)
+    path = tmp_path / "a_local_schema.json"
+    path.write_text(json.dumps(schema.to_dict()), encoding="utf-8")
+    streamed = read_network_paths(path)
+    assert [(p.signature(), p.matched_sources) for p in streamed] == [
+        (p.signature(), p.matched_sources) for p in kept
+    ], "Read from the packed file, the same paths"
+    graph = build_connectivity({"a": schema}, paths={"a": streamed})
+    assert len(_edges(graph, "path")) == 2

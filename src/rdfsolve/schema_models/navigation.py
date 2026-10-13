@@ -9,6 +9,26 @@ from pydantic import BaseModel, Field, model_serializer, model_validator
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
 
+# Properties that do not relate one record to another: membership and annotation. A path does
+# not go through them (navigation search and the paths of a network); their one-step patterns
+# stay in the schema. A property the data declares owl:AnnotationProperty is one as well.
+NON_RELATION_PROPERTIES = frozenset(
+    {
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://www.w3.org/2000/01/rdf-schema#comment",
+        "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#altLabel",
+        "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+        "http://www.w3.org/2004/02/skos/core#definition",
+        "http://purl.org/dc/elements/1.1/title",
+        "http://purl.org/dc/elements/1.1/description",
+        "http://purl.org/dc/terms/title",
+        "http://purl.org/dc/terms/description",
+    }
+)
+
 
 class NavigationPath(BaseModel):
     """A route. A schema-composed route is a candidate; an instance-tested route was followed by

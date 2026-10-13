@@ -187,6 +187,13 @@ class DatasetReleaseRecord(BaseModel):
     graph_parts: list[GraphPartReleaseRecord] = Field(default_factory=list)
     # The source whose per-graph schema of this entry's graph is this entry's schema
     graph_part_of: str | None = None
+    # A release assembled from several runs (rdfsolve.release.assemble): the commit of the code
+    # that mined this dataset, the run folder it was copied from, and the files of the folder
+    # that a later step wrote again (with the commit of that code).
+    code_commit: str | None = None
+    assembled_from: str | None = None
+    rewritten_files: list[str] = Field(default_factory=list)
+    rewritten_by_commit: str | None = None
 
 
 class ReleaseManifest(BaseModel):

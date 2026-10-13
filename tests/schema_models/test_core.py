@@ -206,6 +206,24 @@ def test_canonical_round_trip_preserves_all_model_fields(schema, tmp_path):
         MinedSchema.from_dict(raw)
 
 
+def test_detail_sections_can_be_left_out_while_reading(schema, tmp_path):
+    from rdfsolve.schema_models.core import DETAIL_SECTIONS
+
+    schema = schema.model_copy(
+        update={
+            "raw_patterns": list(schema.patterns),
+            "structural_patterns": [],
+        }
+    )
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+    light = MinedSchema.from_json(path, leave_out=DETAIL_SECTIONS)
+    assert light.patterns == schema.patterns and light.enrichment == schema.enrichment
+    assert light.about == schema.about and light.prefixes == schema.prefixes
+    assert (light.raw_patterns, light.structural_patterns) == (None, None)
+    assert MinedSchema.from_json(path) == schema, "A full read is unchanged"
+
+
 def test_version_iri_survives_rdf_exports():
     schema = MinedSchema(
         patterns=[],
@@ -310,3 +328,34 @@ def test_void_conversion_preserves_source_metadata_and_contexts_through_json():
         assert metadata.scope == "retained VoID RDF"
         exported = Dataset().parse(data=metadata.to_trig(), format="trig")
         assert isomorphic(exported.graph("http://aopwiki.org/"), graph)
+
+
+def test_section_rows_are_read_one_at_a_time_and_an_empty_section_is_present(schema, tmp_path):
+    from rdfsolve.schema_models.core import iter_section_rows
+
+    schema = schema.model_copy(update={"raw_patterns": list(schema.patterns), "term_patterns": []})
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+    read = list(iter_section_rows(path, ["raw_patterns", "term_patterns", "structural_patterns"]))
+    assert read[0] == ("raw_patterns", None) and ("term_patterns", None) in read
+    rows = [row for name, row in read if name == "raw_patterns" and row is not None]
+    assert [SchemaPattern.model_validate(r) for r in rows] == schema.patterns
+    assert not any(name == "structural_patterns" for name, _ in read), "Absent or null: nothing"
+
+
+def test_streamed_view_counts_equal_the_counts_of_the_held_schema(schema, tmp_path):
+    from rdfsolve.analysis import release
+
+    excluded = {schema.patterns[0].subject_class}
+    schema = schema.model_copy(update={"raw_patterns": list(schema.patterns), "term_patterns": []})
+    path = tmp_path / "schema.json"
+    path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+    views = release._streamed_views(path, excluded)
+    kept = [
+        p for p in schema.raw_patterns
+        if p.subject_binding != "type" or p.subject_class not in excluded
+    ]
+    assert views["raw_patterns"]["rows"] == len(schema.raw_patterns)
+    assert views["raw_patterns"]["kept"] == len(kept)
+    assert views["raw_patterns"]["terms"] == release._terms(kept)
+    assert views["term_patterns"]["rows"] == 0

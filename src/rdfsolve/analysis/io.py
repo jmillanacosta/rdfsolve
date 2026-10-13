@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from pathlib import Path
 
 from rdfsolve.analysis.schema import extract_class_set
@@ -12,9 +12,16 @@ from rdfsolve.schema_models.core import MinedSchema
 
 
 def iter_extractions(
-    directory: str | Path, *, extraction_mode: str | None = None
+    directory: str | Path,
+    *,
+    extraction_mode: str | None = None,
+    leave_out: Collection[str] = (),
 ) -> Iterator[tuple[str, ExtractionReleaseRecord, MinedSchema | None]]:
-    """Yield each attempt and its hash-verified schema when present."""
+    """Yield each attempt and its hash-verified schema when present.
+
+    *leave_out* names schema sections that are not read (MinedSchema.from_json), such as
+    rdfsolve.schema_models.core.DETAIL_SECTIONS for a task that needs none of them.
+    """
     from rdfsolve.release.build import sha256_file
     from rdfsolve.release.model import ReleaseManifest
 
@@ -42,7 +49,7 @@ def iter_extractions(
                 raise ValueError(f"Missing extraction artifact: {relative}")
             if sha256_file(path) != artifact.sha256:
                 raise ValueError(f"Schema hash differs from release: {relative}")
-            schema = MinedSchema.from_json(path)
+            schema = MinedSchema.from_json(path, leave_out=leave_out)
             if (
                 schema.about.dataset_name != dataset.dataset_id
                 or schema.about.snapshot_id != extraction.snapshot_id

@@ -42,3 +42,43 @@ def test_runs_of_different_code_or_the_same_dataset_are_refused(tmp_path):
         assemble_runs([first, run(tmp_path, "chunk-2", ["b"], commit="other")], tmp_path / "x")
     with pytest.raises(ValueError, match="in more than one run"):
         assemble_runs([first, run(tmp_path, "chunk-3", ["a"])], tmp_path / "y")
+
+
+def test_datasets_of_runs_of_different_code_are_joined_with_their_commits(tmp_path):
+    from rdflib import Graph, URIRef
+    from rdflib.namespace import PROV
+
+    from rdfsolve.release.assemble import assemble_selected
+    from rdfsolve.release.build import build_release_manifest
+    from rdfsolve.release.rdf import release_to_rdf
+
+    first = run(tmp_path, "chunk-1", ["a", "b"], commit="old1")
+    second = run(tmp_path, "chunk-2", ["c"], commit="old2")
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("- name: a\n- name: b\n- name: c\n")
+    rewrites = tmp_path / "rewrites" / "a"
+    rewrites.mkdir(parents=True)
+    (rewrites / "a_local_schema.json").write_text('{"rewritten": true}')
+    out = assemble_selected(
+        {"a": first / "a", "b": first / "b", "c": second / "c"},
+        tmp_path / "release",
+        {"sources.yaml": registry},
+        rewritten={"a": rewrites},
+        rewritten_by_commit="new1",
+        code_commit="new1",
+    )
+    assert json.loads((out / "a" / "a_local_schema.json").read_text()) == {"rewritten": True}
+    assert (first / "a" / "a_local_schema.json").read_text() == "{}", "Runs are not changed"
+    record = json.loads((out / "assembly.json").read_text())["datasets"]
+    assert {d: r["code_commit"] for d, r in record.items()} == {"a": "old1", "b": "old1", "c": "old2"}
+    assert record["a"]["rewritten_files"] == ["a_local_schema.json"]
+    with pytest.raises(FileExistsError):
+        assemble_selected({"a": first / "a"}, out, {"sources.yaml": registry})
+
+    manifest = build_release_manifest(out, release_id="r1")
+    by_id = {d.dataset_id: d for d in manifest.datasets}
+    assert (manifest.code_commit, by_id["c"].code_commit) == ("new1", "old2")
+    assert by_id["a"].rewritten_by_commit == "new1" and by_id["b"].rewritten_files == []
+    graph = release_to_rdf(manifest)
+    used = {str(o) for o in graph.objects(None, PROV.used)}
+    assert {f"https://github.com/jmillanacosta/rdfsolve/commit/{c}" for c in ("old1", "old2", "new1")} <= used

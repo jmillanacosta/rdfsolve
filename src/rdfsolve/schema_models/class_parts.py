@@ -23,7 +23,9 @@ if TYPE_CHECKING:
 
 __all__ = ["ClassPart", "ClassParts", "part_label", "part_shape_iri", "part_shape_iri_of_key"]
 
-PartKind = Literal["identifier", "invalid_identifier", "namespace", "relative_iri", "blank_node"]
+PartKind = Literal[
+    "identifier", "invalid_identifier", "namespace", "relative_iri", "invalid_scheme", "blank_node"
+]
 _SPECIAL = set("\\.?*+(){}|[]^$")
 
 
@@ -34,7 +36,9 @@ class ClassPart(BaseModel):
     IRI in a registered namespace of *prefix* whose local part is not valid there), namespace
     (an IRI of none of the registered namespaces; *namespaces* holds its start: the scheme,
     host and first path segment), relative_iri (an IRI without a scheme, which RDF does not
-    allow) or blank_node. *namespaces* are the IRI starts the members
+    allow), invalid_scheme (an IRI whose text before its first colon is no valid scheme, such
+    as a blank-node label written as an IRI; *namespaces* holds that text and the colon) or
+    blank_node. *namespaces* are the IRI starts the members
     are written with; *pattern* the prefix's pattern of local identifiers, where known.
     """
 
@@ -52,8 +56,8 @@ class ClassPart(BaseModel):
         """Return what distinguishes the part within its class: its kind and its prefix, or its
         namespace for IRIs of no registered namespace (part_key in rdfsolve.mining.class_parts).
         """
-        if self.kind == "namespace":
-            return f"namespace|{self.namespaces[0] if self.namespaces else ''}"
+        if self.kind in ("namespace", "invalid_scheme"):
+            return f"{self.kind}|{self.namespaces[0] if self.namespaces else ''}"
         return f"{self.kind}|{self.prefix or ''}"
 
 
@@ -79,6 +83,9 @@ def part_label(class_label: str, part: ClassPart) -> str:
         return f"{class_label} as blank nodes"
     if part.kind == "relative_iri":
         return f"{class_label} with IRIs without a scheme"
+    if part.kind == "invalid_scheme":
+        scheme = part.namespaces[0] if part.namespaces else ""
+        return f"{class_label} with IRIs whose scheme is not valid ({scheme})"
     return f"{class_label} with IRIs in {part.namespaces[0] if part.namespaces else 'no namespace'}"
 
 
@@ -106,20 +113,40 @@ def _any_case(text: str) -> str:
     )
 
 
-def _within(inner: ClassPart, outer: ClassPart) -> bool:
-    """Return whether the IRIs of *inner* also match the namespaces of *outer*, so that *outer*
-    excludes them: a longer namespace that starts with one of *outer*'s, or the same namespace
-    as a part of no registered namespace when *inner* is a valid identifier.
+def _exclusions(parts: list[ClassPart]) -> dict[int, list[ClassPart]]:
+    """Return, for each part (by position), the parts whose IRIs also match its namespaces, so
+    that it excludes them: a longer namespace that starts with one of its own, or the same
+    namespace when it is a part of no registered namespace and the other a valid identifier.
+
+    The namespaces are sorted once and each part finds those that start with its own by
+    bisection, so classes of many parts are handled without comparing every pair.
     """
-    if inner is outer or {inner.kind, outer.kind} & {"blank_node", "relative_iri"}:
-        return False
-    for a in inner.namespaces:
-        for b in outer.namespaces:
-            if a != b and a.startswith(b):
-                return True
-            if a == b and outer.kind == "namespace" and inner.kind == "identifier":
-                return True
-    return False
+    from bisect import bisect_left
+
+    named = sorted(
+        (namespace, index)
+        for index, part in enumerate(parts)
+        if part.kind not in ("blank_node", "relative_iri")
+        for namespace in part.namespaces
+    )
+    keys = [namespace for namespace, _ in named]
+    found: dict[int, list[ClassPart]] = {}
+    for index, outer in enumerate(parts):
+        if outer.kind in ("blank_node", "relative_iri"):
+            continue
+        inside: dict[int, None] = {}
+        for start in outer.namespaces:
+            at = bisect_left(keys, start)
+            while at < len(keys) and keys[at].startswith(start):
+                other = named[at][1]
+                inner = parts[other]
+                if other != index and (
+                    keys[at] != start or (outer.kind == "namespace" and inner.kind == "identifier")
+                ):
+                    inside[other] = None
+                at += 1
+        found[index] = [parts[other] for other in inside]
+    return found
 
 
 def _starts(namespaces: list[str]) -> str:
@@ -137,7 +164,8 @@ def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> l
 
     shapes: list[ShaclNodeShape] = []
     valid = {p.prefix: part_shape_iri(class_shape, p) for p in parts if p.kind == "identifier"}
-    for part in parts:
+    excluded = _exclusions(parts)
+    for index, part in enumerate(parts):
         uri = part_shape_iri(class_shape, part)
         shape = ShaclNodeShape(
             uri=uri,
@@ -160,7 +188,7 @@ def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> l
         if part.kind == "invalid_identifier" and part.prefix in valid:
             shape.not_shapes = [valid[part.prefix]]
         shape.not_shapes += [
-            part_shape_iri(class_shape, other) for other in parts if _within(other, part)
+            part_shape_iri(class_shape, other) for other in excluded.get(index, [])
         ]
         if part.kind != "blank_node":
             shape.node_kind = "IRI"

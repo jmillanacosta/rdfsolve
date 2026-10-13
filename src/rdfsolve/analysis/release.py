@@ -16,14 +16,14 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-from rdfsolve.analysis.connectivity import build_connectivity
+from rdfsolve.analysis.connectivity import build_connectivity, read_network_paths
 from rdfsolve.analysis.io import iter_extractions, read_class_mappings
 from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.mappings.instances import read_derived_mappings, read_instance_links
 from rdfsolve.release.build import sha256_file
 from rdfsolve.release.model import ReleaseManifest
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
-from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.core import MinedSchema, iter_section_rows
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.structural import StructuralPattern
 
@@ -45,22 +45,72 @@ def _terms(rows: Sequence[SchemaPattern | StructuralPattern]) -> dict[str, set[s
     return terms
 
 
-def _view_counts(schema: MinedSchema) -> dict[str, dict[str, int] | None]:
-    """Count retained rows and graph-local exact subject shapes."""
+# The views that can hold far more rows than memory: read row by row from the schema file
+# (_streamed_views), never held.
+_STREAMED = ("raw_patterns", "term_patterns", "structural_patterns")
+
+
+def _add_terms(terms: dict[str, set[str]], view: str, row: dict[str, Any]) -> None:
+    """Add the vocabulary of one row read from a schema file to *terms* (as _terms)."""
+    terms["predicates"].add(row["property_uri"])
+    if view == "structural_patterns":
+        return
+    for value, binding in (
+        (row["subject_class"], row.get("subject_binding", "type")),
+        (row["object_class"], row.get("object_binding", "type")),
+    ):
+        if value not in _SENTINEL_OBJECTS and binding != "untyped":
+            terms["terms" if binding == "term" else "classes"].add(value)
+
+
+def _streamed_views(path: Path, excluded: set[str]) -> dict[str, dict[str, Any]]:
+    """Return, for each streamed view present in a schema file, its rows, the rows kept once
+    the excluded subject classes are left out (patterns views only), the vocabulary of the kept
+    rows, and the distinct exact subject shapes (structural census).
+    """
+    found: dict[str, dict[str, Any]] = {}
+    for view, row in iter_section_rows(path, _STREAMED):
+        if row is None:
+            found[view] = {
+                "rows": 0,
+                "kept": 0,
+                "terms": {"classes": set(), "predicates": set(), "terms": set()},
+                "shapes": set(),
+            }
+            continue
+        record = found[view]
+        record["rows"] += 1
+        if view == "structural_patterns":
+            if row.get("shape_semantics", "exact_property_sets") == "exact_property_sets":
+                record["shapes"].add(
+                    (row.get("graph_uri"), row["subject_kind"], tuple(row["subject_properties"]))
+                )
+        elif row.get("subject_binding", "type") == "type" and row["subject_class"] in excluded:
+            continue
+        record["kept"] += 1
+        _add_terms(record["terms"], view, row)
+    return found
+
+
+def _view_counts(
+    schema: MinedSchema, streamed: dict[str, dict[str, Any]], *, kept: bool
+) -> dict[str, dict[str, int] | None]:
+    """Count retained rows and graph-local exact subject shapes; the streamed views from
+    *streamed* (all their rows, or with *kept* those left after the exclusions).
+    """
     result: dict[str, dict[str, int] | None] = {}
     for view in (*_VIEWS, "collections"):
-        rows = getattr(schema, view)
-        result[view] = None if rows is None else {"rows": len(rows)}
-    if schema.structural_patterns is not None:
+        if view in _STREAMED:
+            record = streamed.get(view)
+            result[view] = None if record is None else {"rows": record["kept" if kept else "rows"]}
+        else:
+            rows = getattr(schema, view)
+            result[view] = None if rows is None else {"rows": len(rows)}
+    structural = streamed.get("structural_patterns")
+    if structural is not None:
         result["structural_patterns"] = {
-            "rows": len(schema.structural_patterns),
-            "subject_shapes": len(
-                {
-                    (p.graph_uri, p.subject_kind, tuple(p.subject_properties))
-                    for p in schema.structural_patterns
-                    if p.shape_semantics == "exact_property_sets"
-                }
-            ),
+            "rows": structural["rows"],
+            "subject_shapes": len(structural["shapes"]),
         }
     return result
 
@@ -137,7 +187,9 @@ def analyze_release(
     samples = {dataset.dataset_id: dataset.sampled_graphs for dataset in manifest.datasets}
     inventory: list[dict[str, Any]] = []
     schemas: dict[str, MinedSchema] = {}
-    for dataset, attempt, schema in iter_extractions(root):
+    streamed: dict[str, dict[str, dict[str, Any]]] = {}
+    network: dict[str, list[Any]] = {}
+    for dataset, attempt, schema in iter_extractions(root, leave_out=(*_STREAMED, "navigation")):
         # Only an index built from the source's files holds the sample.
         sampled = dict(samples[dataset]) if attempt.mode != "remote" else {}
         row: dict[str, Any] = {
@@ -159,11 +211,21 @@ def analyze_release(
                 raise ValueError(
                     f"Schema used by multiple extraction records: {attempt.schema_path}"
                 )
-            row["retained_views"] = _view_counts(schema)
+            views = _streamed_views(
+                verified_path(attempt.schema_path), set(excluded_subject_classes)
+            )
+            streamed[attempt.schema_path] = views
+            # The paths a network keeps, read from the file without holding all tested paths.
+            network[attempt.schema_path] = read_network_paths(verified_path(attempt.schema_path))
+            row["retained_views"] = _view_counts(schema, views, kept=False)
             row["coverage_scope"] = "retained_extraction"
             view = schema.model_copy(deep=True)
-            excluded_counts = {}
-            for name in ("patterns", "raw_patterns", "term_patterns"):
+            excluded_counts: dict[str, int] = {
+                name: views[name]["rows"] - views[name]["kept"]
+                for name in ("raw_patterns", "term_patterns")
+                if name in views
+            }
+            for name in ("patterns",):
                 patterns = getattr(view, name)
                 if patterns is not None:
                     kept = [
@@ -182,7 +244,7 @@ def analyze_release(
                 view.collections = kept_collections
             row["view_exclusions"] = excluded_counts
             schemas[attempt.schema_path] = view
-            row["views"] = _view_counts(view)
+            row["views"] = _view_counts(view, views, kept=True)
         row["coverage_basis"] = (
             "unavailable"
             if row["coverage"] is None
@@ -245,7 +307,12 @@ def analyze_release(
             for m in derived
             if m.source_dataset in by_name and m.target_dataset in by_name
         ]
-        graph = build_connectivity(selected, class_mappings=edges, derived=derived_here)
+        graph = build_connectivity(
+            selected,
+            class_mappings=edges,
+            derived=derived_here,
+            paths={key: network[key] for key in selected},
+        )
         metadata = {row["schema_path"]: row for row in attempts}
         for (key, _), data in graph.nodes(data=True):
             data.update(
@@ -285,7 +352,11 @@ def analyze_release(
 
     vocabulary = {
         key: {
-            view: _terms(rows) if (rows := getattr(schema, view)) is not None else None
+            view: (streamed[key][view]["terms"] if view in streamed[key] else None)
+            if view in _STREAMED
+            else _terms(rows)
+            if (rows := getattr(schema, view)) is not None
+            else None
             for view in _VIEWS
         }
         for key, schema in schemas.items()

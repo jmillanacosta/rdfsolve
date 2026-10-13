@@ -3,7 +3,8 @@
 Each member (a typed subject) falls in one part of its class (rdfsolve.schema_models.
 class_parts): a valid identifier of a registered prefix, an IRI in a registered namespace that
 is not a valid identifier there, an IRI of another namespace (its scheme, host and first path
-segment), an IRI without a scheme (relative), or a blank node. The store's membership rows are read once, the parts are counted
+segment), an IRI without a scheme (relative), an IRI whose scheme is not valid (by that
+text: a blank-node label written as an IRI is one), or a blank node. The store's membership rows are read once, the parts are counted
 per class with the streaming engine, and only the counts are held.
 """
 
@@ -19,6 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = ["class_parts", "classify", "part_key"]
 
+# A valid IRI scheme and its colon (RFC 3987): a letter, then letters, digits, "+", "." or "-".
+_SCHEME = r"^[A-Za-z][A-Za-z0-9+.\-]*:"
 # The start of an IRI of no registered namespace: scheme, host and, when a separator follows
 # it, the first path segment.
 _OTHER = r"^([A-Za-z][A-Za-z0-9+.-]*:(?://[^/#?]*/?)?(?:[^/#?]*[/#])?)"
@@ -63,6 +66,8 @@ def classify(frame: pl.LazyFrame, term: str, reader: Any) -> pl.LazyFrame:
         .then(pl.lit("blank_node"))
         .when(~pl.col("_iri").str.contains(":", literal=True))
         .then(pl.lit("relative_iri"))
+        .when(~pl.col("_iri").str.contains(_SCHEME))
+        .then(pl.lit("invalid_scheme"))
         .when(pl.col("_key").is_not_null())
         .then(pl.lit("identifier"))
         .when(pl.col("_m_prefix").is_not_null())
@@ -78,6 +83,8 @@ def classify(frame: pl.LazyFrame, term: str, reader: Any) -> pl.LazyFrame:
             .alias("prefix"),
             pl.when(pl.col("kind").is_in(["blank_node", "relative_iri"]))
             .then(pl.lit(None, dtype=pl.String))
+            .when(pl.col("kind") == "invalid_scheme")
+            .then(pl.col("_iri").str.extract(r"^([^:]*:)", 1))
             .otherwise(pl.coalesce(pl.col("_m_ns"), other))
             .alias("ns"),
         )
@@ -93,8 +100,8 @@ def part_key() -> pl.Expr:
     import polars as pl
 
     return (
-        pl.when(pl.col("kind") == "namespace")
-        .then(pl.concat_str(pl.lit("namespace|"), pl.col("ns").fill_null("")))
+        pl.when(pl.col("kind").is_in(["namespace", "invalid_scheme"]))
+        .then(pl.concat_str(pl.col("kind"), pl.lit("|"), pl.col("ns").fill_null("")))
         .otherwise(pl.concat_str(pl.col("kind"), pl.lit("|"), pl.col("prefix").fill_null("")))
     )
 
@@ -110,7 +117,7 @@ def _parts(rows: Iterable[dict[str, Any]], reader: Any) -> dict[str, list[ClassP
     }
     grouped: dict[str, dict[tuple[str, str | None, str | None], dict[str, Any]]] = {}
     for row in rows:
-        other = row["kind"] == "namespace"
+        other = row["kind"] in ("namespace", "invalid_scheme")
         key = (row["kind"], row["prefix"], row["ns"] if other else None)
         part = grouped.setdefault(row["c"], {}).setdefault(key, {"n": 0, "ns": set()})
         part["n"] += row["n"]

@@ -29,7 +29,10 @@ class SSSOMSeedingStage(Stage):
 
         write_release_manifest(build_release_manifest(self.config.output_dir), self.config.output_dir)
 
-        extractions = list(iter_extractions(self.config.output_dir))
+        from rdfsolve.schema_models.core import DETAIL_SECTIONS
+
+        # The mappings read the class patterns, the enrichment and the prefixes of each schema.
+        extractions = list(iter_extractions(self.config.output_dir, leave_out=DETAIL_SECTIONS))
         schemas = [(dataset, schema) for dataset, _, schema in extractions if schema is not None]
         from rdfsolve.config import mint
 

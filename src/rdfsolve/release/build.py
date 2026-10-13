@@ -603,6 +603,25 @@ def _identity_review(run_root: Path) -> tuple[bool | None, int | None, int | Non
     )
 
 
+def _assembled(assembly: dict[str, Any], dataset_id: str) -> dict[str, Any]:
+    """Return the provenance of a dataset in a release assembled from several runs
+    (assembly.json of rdfsolve.release.assemble): its run, the commit of the code that mined
+    it, and the files that a later step wrote again.
+    """
+    if not assembly:
+        return {}
+    record = (assembly.get("datasets") or {}).get(dataset_id)
+    if record is None:
+        run = (assembly.get("dataset_runs") or {}).get(dataset_id)
+        return {"assembled_from": run, "code_commit": assembly.get("code_commit")} if run else {}
+    return {
+        "assembled_from": record.get("run"),
+        "code_commit": record.get("code_commit"),
+        "rewritten_files": sorted(record.get("rewritten_files") or []),
+        "rewritten_by_commit": record.get("rewritten_by_commit"),
+    }
+
+
 def build_release_manifest(
     run_dir: str | Path,
     *,
@@ -637,6 +656,7 @@ def build_release_manifest(
         else dataset_dirs
     )
     artifacts = inventory_artifacts(run_root, dataset_ids=set(dataset_ids))
+    assembly = _load_json(run_root / "assembly.json")
     artifact_ids = _artifact_refs_by_dataset(artifacts)
 
     by_path = {artifact.path: artifact for artifact in artifacts}
@@ -719,6 +739,7 @@ def build_release_manifest(
                 ontology_usages=_ontology_usages(run_root, dataset_id),
                 graph_parts=_graph_parts(run_root, dataset_id, by_path, extractions),
                 **_input_pins(run_root, dataset_id, artifacts),
+                **_assembled(assembly, dataset_id),
             )
         )
     # An entry that is one graph of a source mined across its graphs points to that source.
