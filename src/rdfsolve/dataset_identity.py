@@ -11,7 +11,9 @@ the same published RDF dataset under two names, or reached through another
 endpoint or dump. same_upstream relates different RDF datasets built from one
 upstream resource, such as independent RDF conversions. version_of relates two
 releases of one resource; its override names the newer release, so the pair has
-a fixed direction. version_of, graph_scope_of and distinct keep entries apart.
+a fixed direction. A distribution_of override may name the original entry, which
+gives that pair a direction too. version_of, graph_scope_of and distinct keep
+entries apart.
 Candidates never join entries.
 """
 
@@ -96,7 +98,8 @@ class IdentityRelation(BaseModel):
 
     graph_scope_of reads as left is a graph scope of right, and version_of as left
     is an older release of right. Other relations are stored with their names in
-    sorted order.
+    sorted order. ``original`` names the original entry of a curated
+    distribution_of pair, and is empty when that is not recorded.
     """
 
     left: str
@@ -105,6 +108,7 @@ class IdentityRelation(BaseModel):
     basis: str
     decided_by: Literal["rule", "override", "candidate"]
     note: str = ""
+    original: str = ""
 
 
 class IdentityResolution(BaseModel):
@@ -162,10 +166,23 @@ def _override(item: Mapping[str, Any]) -> IdentityRelation:
     """Read one curated relation; a version_of pair is stored older first, newer second.
 
     A version_of override must name its newer release in ``newer`` (one of the two
-    entries); no other relation takes ``newer``.
+    entries); no other relation takes ``newer``. A distribution_of override may name
+    its original entry in ``original`` (one of the two entries); no other relation
+    takes ``original``.
     """
     left, right, relation = item["left"], item["right"], item["relation"]
     newer = item.get("newer")
+    original = item.get("original")
+    if original is not None:
+        if relation != "distribution_of":
+            raise ValueError(
+                f"{relation} {left} / {right}: 'original' applies to distribution_of only"
+            )
+        if original not in (left, right):
+            raise ValueError(
+                f"distribution_of {left} / {right}: 'original' must name one of the two "
+                f"entries, got {original!r}"
+            )
     if relation == "version_of":
         if newer not in (left, right):
             raise ValueError(
@@ -182,6 +199,7 @@ def _override(item: Mapping[str, Any]) -> IdentityRelation:
         basis="curated override",
         decided_by="override",
         note=str(item.get("note", "")),
+        original=original or "",
     )
 
 

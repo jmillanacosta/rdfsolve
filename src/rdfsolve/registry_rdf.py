@@ -9,7 +9,7 @@ nodes use the IRIs that linksets and SSSOM files already use
 
 Standard terms are used only where their meaning matches the registry field.
 The few registry notions without such a term are declared in the output under
-:data:`RDFSOLVE` with a label and a comment. :data:`FIELDS` lists every
+:data:`RDFSOLVE` with a label and a comment, when the output uses them. :data:`FIELDS` lists every
 registry field with the terms it is written with, or why it is left out.
 """
 
@@ -19,11 +19,11 @@ import hashlib
 import json
 import logging
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from pathlib import Path
 from urllib.parse import quote
 
-from rdflib import OWL, RDF, RDFS, SH, XSD, Graph, Literal, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
 from rdflib.namespace import DCTERMS, FOAF, PROV
 
 from rdfsolve.config import DEFAULT_BASE_URI, get_base_uri, mint_from_base
@@ -54,11 +54,28 @@ SD = Namespace("http://www.w3.org/ns/sparql-service-description#")
 SPDX = Namespace("http://spdx.org/rdf/terms#")
 IANA = Namespace("https://www.iana.org/assignments/media-types/")
 BIOREGISTRY = Namespace("https://bioregistry.io/registry/")
+SCHEMA = Namespace("https://schema.org/")
+OBO = Namespace("http://purl.obolibrary.org/obo/")
+SIO = Namespace("http://semanticscience.org/resource/")
+DATASET_TYPE = Namespace("http://publications.europa.eu/resource/authority/dataset-type/")
 # Fixed, unlike the instance base: a term must not change with RDFSOLVE_BASE_URI.
 RDFSOLVE = Namespace(DEFAULT_BASE_URI + "vocab/")
 KG_REGISTRY_CATALOG = "kg-registry"
+BIOREGISTRY_CATALOG = "bioregistry"
+# Curated dataset_kind values with a dcterms:type from the EU dataset-type authority table;
+# kinds without a value there get no type.
+_DATASET_TYPES: dict[str, URIRef] = {"ontology": DATASET_TYPE.ONTOLOGY}
+# How a decided identity relation was asserted, as an ECO assertion method class.
+_ASSERTION_METHODS: dict[str, URIRef] = {
+    "rule": OBO.ECO_0000203,  # automatic assertion
+    "override": OBO.ECO_0000218,  # manual assertion
+}
+HAS_CURATION_STATUS = OBO.IAO_0000114
+PENDING_FINAL_VETTING = OBO.IAO_0000125
+SAMPLE = SIO.SIO_001050
 
-# rdfsolve terms: (kind, label, comment). Only registry notions that no standard term states.
+# rdfsolve terms: (kind, label, comment). Only registry notions that no standard term states;
+# a term is declared in the output only when the output uses it.
 TERMS: dict[str, tuple[URIRef, str, str]] = {
     "sameDataset": (
         RDF.Property,
@@ -73,84 +90,9 @@ TERMS: dict[str, tuple[URIRef, str, str]] = {
         "distribution of",
         (
             "One entry is another endpoint, mirror or dump of the same published RDF dataset as the "
-            "other. The registry does not record which of the two is the original, so the relation "
-            "is read in both directions."
-        ),
-    ),
-    "basis": (
-        RDF.Property,
-        "basis",
-        (
-            "What an identity relation between registry entries rests on, such as a structural "
-            "rule over endpoints and graphs or a curated override."
-        ),
-    ),
-    "decidedBy": (
-        RDF.Property,
-        "decided by",
-        (
-            "How an identity relation was decided: 'rule' (structural rule), 'override' (curated) "
-            "or 'candidate' (proposed, not decided, so the relation itself is not asserted)."
-        ),
-    ),
-    "identityReviewComplete": (
-        RDF.Property,
-        "identity review complete",
-        "Whether every candidate identity relation of the registry has been decided.",
-    ),
-    "identityCandidateCount": (
-        RDF.Property,
-        "identity candidate count",
-        "The number of candidate identity relations of the registry that are not yet decided.",
-    ),
-    "datasetKind": (
-        RDF.Property,
-        "dataset kind",
-        (
-            "Curated kind of a registry dataset: 'instance' data, an 'ontology', or 'unknown' "
-            "until reviewed."
-        ),
-    ),
-    "bioregistryRecord": (
-        RDF.Property,
-        "Bioregistry record",
-        "The Bioregistry resource whose prefix the registry assigns to this entry.",
-    ),
-    "alias": (
-        RDF.Property,
-        "alias",
-        "Another registry name of this entry, under which earlier outputs name it.",
-    ),
-    "typeContextGraph": (
-        RDF.Property,
-        "type context graph",
-        (
-            "A named graph read for the types of subjects and objects of the entry's data. It is "
-            "not part of the entry's data."
-        ),
-    ),
-    "ontologyGraph": (
-        RDF.Property,
-        "ontology graph",
-        (
-            "A named graph read to interpret the entry's data with its ontology. It is not part of "
-            "the entry's data."
-        ),
-    ),
-    "sampledInputs": (
-        RDF.Property,
-        "sampled inputs",
-        (
-            "How the dumps given for this graph sample it: counts made from them are counts of the "
-            "sample, not of the graph."
-        ),
-    ),
-    "queryExamples": (
-        RDF.Property,
-        "query examples",
-        (
-            "A named graph, document or repository with published SPARQL query examples for this "
-            "entry."
+            "other. Written only for pairs whose original entry the registry does not record, so "
+            "the relation is read in both directions; a pair with a recorded original is written "
+            "with dcat:distribution or dcat:servesDataset."
         ),
     ),
 }
@@ -159,20 +101,21 @@ TERMS: dict[str, tuple[URIRef, str, str]] = {
 _RUNTIME = "left out: mining or access setting of the pipeline, not a description of the data"
 _HEALTH = "left out: volatile endpoint observation (registry check A6)"
 _CACHED = "left out: cached derived data (registry check A6)"
-_BIOREGISTRY_OWN = (
-    "left out: Bioregistry's own record, reachable through rdfsolve:bioregistryRecord"
-)
+_BIOREGISTRY_OWN = "left out: Bioregistry's own record, reachable through its catalog record"
 FIELDS: dict[str, str] = {
     "name": "dcterms:identifier; also the last segment of the entry IRI",
-    "aliases": "rdfsolve:alias",
+    "aliases": "schema:alternateName",
     "catalogs": "dcat:Catalog <base/catalog/NAME> dcat:dataset/dcat:service and dcat:record",
     "catalog_local_name": "dcterms:identifier of the entry's dcat:CatalogRecord in each catalog",
     "source_role": "rdf:type: dcat:Dataset, void:Dataset (dataset) or sd:Service, dcat:DataService",
-    "dataset_kind": "rdfsolve:datasetKind (datasets only)",
+    "dataset_kind": (
+        "dcterms:type <http://publications.europa.eu/resource/authority/dataset-type/ONTOLOGY> "
+        "for ontology (datasets only); other kinds have no value there and get no triple"
+    ),
     "skip_mining": "left out: corpus selection of the pipeline; release.json lists mined datasets",
     "skip_remote": _RUNTIME,
     "endpoint": "void:sparqlEndpoint (dataset); sd:endpoint and dcat:endpointURL (service)",
-    "sparql_examples": "rdfsolve:queryExamples (graphs, absolute document IRIs, repository)",
+    "sparql_examples": "schema:subjectOf (graphs, absolute document IRIs, repository)",
     "dataset_metadata": _CACHED,
     "metadata_graph_uris": _CACHED,
     "enrichment": _CACHED,
@@ -184,10 +127,10 @@ FIELDS: dict[str, str] = {
     "has_void_patterns": _CACHED,
     "void_iri": "left out: the IRI of the dataset in a published VoID, for matching (void_catalog)",
     "graph_uris": "sd:namedGraph [a sd:NamedGraph; sd:name G] (service: under sd:defaultDataset)",
-    "type_context_graph_uris": "rdfsolve:typeContextGraph [a sd:NamedGraph; sd:name G]",
-    "ontology_graph_uris": "rdfsolve:ontologyGraph [a sd:NamedGraph; sd:name G]",
+    "type_context_graph_uris": "dcterms:requires [a sd:NamedGraph; sd:name G]",
+    "ontology_graph_uris": "dcterms:requires [a sd:NamedGraph; sd:name G]",
     "graph_sources": "sd:graph [a sd:Graph, void:Dataset; void:dataDump URL] of that graph",
-    "sampled_graphs": "rdfsolve:sampledInputs on the sd:Graph of that graph",
+    "sampled_graphs": "the sd:Graph of that graph a sio:SIO_001050 (sample); text as rdfs:comment",
     "graph_settings": _RUNTIME,
     "chunk_size": _RUNTIME,
     "class_batch_size": _RUNTIME,
@@ -221,7 +164,10 @@ FIELDS: dict[str, str] = {
     "last_error": _HEALTH,
     "failure_count": _HEALTH,
     "avg_response_time": _HEALTH,
-    "bioregistry_prefix": "rdfsolve:bioregistryRecord <https://bioregistry.io/registry/P> sh:prefix",
+    "bioregistry_prefix": (
+        "<https://bioregistry.io/registry/P> a dcat:CatalogRecord; foaf:primaryTopic the entry, "
+        "in the Bioregistry dcat:Catalog, with dcterms:identifier P"
+    ),
     "bioregistry_name": "dcterms:title",
     "bioregistry_description": "dcterms:description",
     "bioregistry_homepage": "dcat:landingPage (not foaf:homepage, which is inverse functional)",
@@ -396,10 +342,11 @@ class _Writer:
             graph.add((node, RDF.type, DCAT.Dataset))
             graph.add((node, RDF.type, VOID.Dataset))
             graph.add((catalog, DCAT.dataset, node))
-            graph.add((node, RDFSOLVE.datasetKind, Literal(source.dataset_kind)))
+            if source.dataset_kind in _DATASET_TYPES:
+                graph.add((node, DCTERMS.type, _DATASET_TYPES[source.dataset_kind]))
         graph.add((node, DCTERMS.identifier, Literal(source.name)))
         for alias in source.aliases:
-            graph.add((node, RDFSOLVE.alias, Literal(alias)))
+            graph.add((node, SCHEMA.alternateName, Literal(alias)))
         self._describe(source, node)
         self._catalogs(source, node, service)
         if source.endpoint:
@@ -424,11 +371,11 @@ class _Writer:
                 *([examples.link_to_repository] if examples.link_to_repository else []),
             ]
             for location in locations:
-                graph.add((node, RDFSOLVE.queryExamples, _iri(location, f"{source.name}.examples")))
+                graph.add((node, SCHEMA.subjectOf, _iri(location, f"{source.name}.examples")))
         return node
 
     def _describe(self, source: SourceModel, node: URIRef) -> None:
-        """Add the title, description, topics, license, landing page and Bioregistry record."""
+        """Add the title, description, topics, notes, license, landing page and publications."""
         graph = self.graph
         if source.bioregistry_name:
             graph.add((node, DCTERMS.title, Literal(source.bioregistry_name)))
@@ -452,19 +399,25 @@ class _Writer:
                 iri = _metadata_iri(publication, f"{source.name}.bioregistry_publications")
                 if iri is not None:
                     graph.add((node, DCTERMS.isReferencedBy, iri))
-        if source.bioregistry_prefix:
-            record = BIOREGISTRY[source.bioregistry_prefix]
-            graph.add((node, RDFSOLVE.bioregistryRecord, record))
-            graph.add((record, SH.prefix, Literal(source.bioregistry_prefix)))
 
     def _catalogs(self, source: SourceModel, node: URIRef, service: bool) -> None:
-        """List the entry in each external catalog, with its name there as a catalog record."""
+        """List the entry in each external catalog, with its name there as a catalog record.
+
+        The Bioregistry record of an entry is Bioregistry's own record IRI of its prefix;
+        records of the other catalogs are minted per entry.
+        """
         records = [(name, source.catalog_local_name) for name in source.catalogs]
         if source.kg_registry_id:
             records.append((KG_REGISTRY_CATALOG, source.kg_registry_id))
+        if source.bioregistry_prefix:
+            records.append((BIOREGISTRY_CATALOG, source.bioregistry_prefix))
         for name, local_name in records:
             catalog = URIRef(mint_from_base(self.base, "catalog", name))
-            record = URIRef(mint_from_base(self.base, "catalog", name, "record", source.name))
+            record = (
+                BIOREGISTRY[local_name]
+                if name == BIOREGISTRY_CATALOG
+                else URIRef(mint_from_base(self.base, "catalog", name, "record", source.name))
+            )
             self.graph.add((catalog, RDF.type, DCAT.Catalog))
             self.graph.add((catalog, DCTERMS.identifier, Literal(name)))
             self.graph.add((catalog, DCAT.service if service else DCAT.dataset, node))
@@ -498,10 +451,9 @@ class _Writer:
 
         for iri in source.graph_uris:
             graph.add((holder, SD.namedGraph, named_graph(iri)))
-        for iri in source.type_context_graph_uris:
-            graph.add((node, RDFSOLVE.typeContextGraph, named_graph(iri)))
-        for iri in source.ontology_graph_uris:
-            graph.add((node, RDFSOLVE.ontologyGraph, named_graph(iri)))
+        # Graphs read to type or interpret the data: needed to read it, not part of it.
+        for iri in [*source.type_context_graph_uris, *source.ontology_graph_uris]:
+            graph.add((node, DCTERMS.requires, named_graph(iri)))
         for iri, fields in sorted(source.graph_sources.items()):
             content = URIRef(f"{named_graph(iri)}/content")
             graph.add((named_graph(iri), SD.graph, content))
@@ -513,7 +465,9 @@ class _Writer:
                     if iri in source.graph_uris and not service:
                         self._distribution(source, node, key, url)
             if iri in source.sampled_graphs:
-                graph.add((content, RDFSOLVE.sampledInputs, Literal(source.sampled_graphs[iri])))
+                # The dumps sample the graph: counts made from them are counts of the sample.
+                graph.add((content, RDF.type, SAMPLE))
+                graph.add((content, RDFS.comment, Literal(source.sampled_graphs[iri])))
             if iri in source.graph_uris and not service:
                 for urls in fields.values():
                     for url in urls:
@@ -570,21 +524,56 @@ class _Writer:
             graph.add((checksum, SPDX.checksumValue, Literal(value, datatype=XSD.hexBinary)))
 
 
-def _relation(graph: Graph, base: str, nodes: Mapping[str, URIRef], item: IdentityRelation) -> None:
-    """Add one identity relation: asserted when decided, and described with its basis."""
+def _triple(
+    nodes: Mapping[str, URIRef], endpoints: Collection[str], item: IdentityRelation
+) -> tuple[URIRef, URIRef, URIRef]:
+    """Return the subject, predicate and object that state one identity relation.
+
+    A distribution_of pair with a recorded original is written from the original:
+    a mirror with a SPARQL endpoint is a data service serving the original, any
+    other mirror is a distribution of it. Without an original the pair keeps the
+    undirected rdfsolve term.
+    """
     left, right = nodes[item.left], nodes[item.right]
-    predicate = _PREDICATES[item.relation]
+    if item.relation == "distribution_of" and item.original:
+        mirror = item.right if item.original == item.left else item.left
+        if mirror in endpoints:
+            return nodes[mirror], DCAT.servesDataset, nodes[item.original]
+        return nodes[item.original], DCAT.distribution, nodes[mirror]
     if item.relation in _INVERSE:
         left, right = right, left
+    return left, _PREDICATES[item.relation], right
+
+
+def _relation(
+    graph: Graph,
+    base: str,
+    nodes: Mapping[str, URIRef],
+    endpoints: Collection[str],
+    item: IdentityRelation,
+) -> None:
+    """Add one identity relation: asserted when decided, and described with its basis.
+
+    A decided statement is typed by its ECO assertion method (automatic for a rule,
+    manual for a curated override); a candidate is pending final vetting.
+    """
+    subject, predicate, obj = _triple(nodes, endpoints, item)
     if item.decided_by != "candidate":
-        graph.add((left, predicate, right))
+        graph.add((subject, predicate, obj))
+        if predicate == DCAT.servesDataset:
+            graph.add((subject, RDF.type, DCAT.DataService))
+        elif predicate == DCAT.distribution:
+            graph.add((obj, RDF.type, DCAT.Distribution))
     statement = URIRef(mint_from_base(base, "identity", item.left, item.right))
     graph.add((statement, RDF.type, RDF.Statement))
-    graph.add((statement, RDF.subject, left))
+    graph.add((statement, RDF.subject, subject))
     graph.add((statement, RDF.predicate, predicate))
-    graph.add((statement, RDF.object, right))
-    graph.add((statement, RDFSOLVE.basis, Literal(item.basis)))
-    graph.add((statement, RDFSOLVE.decidedBy, Literal(item.decided_by)))
+    graph.add((statement, RDF.object, obj))
+    graph.add((statement, RDFS.comment, Literal(item.basis)))
+    if item.decided_by == "candidate":
+        graph.add((statement, HAS_CURATION_STATUS, PENDING_FINAL_VETTING))
+    else:
+        graph.add((statement, DCTERMS.type, _ASSERTION_METHODS[item.decided_by]))
     if item.note:
         graph.add((statement, RDFS.comment, Literal(item.note)))
 
@@ -593,6 +582,8 @@ def _declare_terms(graph: Graph) -> None:
     """Declare the rdfsolve terms used, so the file states what each one means."""
     for name, (kind, label, comment) in TERMS.items():
         term = RDFSOLVE[name]
+        if (None, term, None) not in graph and (None, None, term) not in graph:
+            continue
         graph.add((term, RDF.type, kind))
         graph.add((term, RDFS.label, Literal(label, lang="en")))
         graph.add((term, RDFS.comment, Literal(comment, lang="en")))
@@ -624,7 +615,8 @@ def registry_to_rdf(
     -------
     Graph
         The registry catalog, one node per entry, the external catalogs, the identity
-        relations with their basis, and the declarations of the rdfsolve terms used.
+        relations with their basis and assertion method, and the declarations of the
+        rdfsolve terms used.
 
     Raises
     ------
@@ -656,9 +648,12 @@ def registry_to_rdf(
         "foaf": FOAF,
         "owl": OWL,
         "prov": PROV,
-        "sh": SH,
         "iana": IANA,
         "bioregistry": BIOREGISTRY,
+        "schema": SCHEMA,
+        "obo": OBO,
+        "sio": SIO,
+        "dataset-type": DATASET_TYPE,
         "rdfsolve": RDFSOLVE,
         "dataset": Namespace(base + "dataset/"),
         "service": Namespace(base + "service/"),
@@ -670,14 +665,6 @@ def registry_to_rdf(
     graph.add((catalog, RDF.type, DCAT.Catalog))
     graph.add((catalog, DCTERMS.identifier, Literal(registry_id)))
     graph.add((catalog, DCTERMS.title, Literal("rdfsolve source registry", lang="en")))
-    graph.add((catalog, RDFSOLVE.identityReviewComplete, Literal(resolution.review_complete)))
-    graph.add(
-        (
-            catalog,
-            RDFSOLVE.identityCandidateCount,
-            Literal(len(resolution.candidates), datatype=XSD.nonNegativeInteger),
-        )
-    )
     writer = _Writer(graph, base)
     nodes = {source.name: writer.add(source, catalog) for source in sources}
     unknown = {
@@ -687,8 +674,10 @@ def registry_to_rdf(
     } - set(nodes)
     if unknown:
         raise ValueError(f"Identity relations name entries not in the registry: {sorted(unknown)}")
+    # Entries reached through a SPARQL endpoint: a mirror among them serves its original.
+    endpoints = {source.name for source in sources if source.endpoint}
     for item in (*resolution.relations, *resolution.candidates):
-        _relation(graph, base, nodes, item)
+        _relation(graph, base, nodes, endpoints, item)
     _declare_terms(graph)
     return graph
 

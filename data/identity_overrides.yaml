@@ -3,7 +3,11 @@
 # Each item decides one pair. It overrides the structural rules and any
 # candidate listed in identity_review.tsv. Relations:
 #   same_dataset     one published RDF dataset under two registry names
-#   distribution_of  another endpoint or dump of the same published RDF dataset
+#   distribution_of  another endpoint or dump of the same published RDF dataset;
+#                    'original' may name the original entry (one of left, right):
+#                    the registry RDF then writes original dcat:distribution mirror,
+#                    or mirror dcat:servesDataset original for a mirror with an
+#                    endpoint; without it the pair is written without a direction
 #   same_upstream    a different RDF dataset built from the same upstream resource
 #   version_of       another release of the same resource; 'newer' names the newer
 #                    release (one of left, right) and is required: the registry RDF
@@ -127,6 +131,7 @@
 - left: chebi
   right: chebi.idsm
   relation: distribution_of
+  original: chebi
   note: >-
     Both on the IDSM endpoint; chebi.idsm is the graph of the ChEBI RDF there.
 - left: bio2rdf.chembl
@@ -137,11 +142,13 @@
 - left: chembl
   right: chembl.bigcat
   relation: distribution_of
+  original: chembl
   note: >-
     The BiGCaT endpoint is a mirror of the EBI ChEMBL RDF.
 - left: chembl
   right: rdfportal.chembl
   relation: distribution_of
+  original: chembl
   note: >-
     Both serve the EBI ChEMBL RDF graph http://rdf.ebi.ac.uk/dataset/chembl.
 - left: mesh
@@ -192,11 +199,13 @@
 - left: bgee
   right: rdfportal.bgee
   relation: distribution_of
+  original: bgee
   note: >-
     RDF Portal mirrors the Bgee RDF (graph http://bgee.org).
 - left: rdfportal.rhea
   right: rhea
   relation: distribution_of
+  original: rhea
   note: >-
     RDF Portal mirrors the Rhea RDF of SIB.
 - left: homologene
@@ -257,11 +266,13 @@
 - left: cellosaurus
   right: rdfportal.cellosaurus
   relation: distribution_of
+  original: cellosaurus
   note: >-
     RDF Portal mirrors the Cellosaurus RDF of SIB.
 - left: pdbj.bmrb
   right: rdfportal.bmrb
   relation: distribution_of
+  original: pdbj.bmrb
   note: >-
     RDF Portal mirrors PDBj's BMRB/RDF (same entry IRIs, bmrbpub.pdbj.org/rdf/...); its
     copy (release 20250917) names the graphs after the older host
@@ -269,16 +280,19 @@
 - left: chebi
   right: rdfportal.chebi
   relation: distribution_of
+  original: chebi
   note: >-
     RDF Portal serves the EBI ChEBI RDF graph (rdf.ebi.ac.uk/dataset/chebi).
 - left: brenda
   right: rdfportal.brenda
   relation: distribution_of
+  original: brenda
   note: >-
     RDF Portal mirrors the BRENDA RDF of DSMZ.
 - left: mediadive
   right: rdfportal.mediadive
   relation: distribution_of
+  original: mediadive
   note: >-
     RDF Portal mirrors the MediaDive RDF of DSMZ.
 - left: glytoucan
@@ -292,16 +306,19 @@
 - left: mbgd
   right: rdfportal.mbgd
   relation: distribution_of
+  original: mbgd
   note: >-
     RDF Portal mirrors the MBGD RDF (graph mbgd.genome.ad.jp).
 - left: oma
   right: rdfportal.oma
   relation: distribution_of
+  original: oma
   note: >-
     RDF Portal mirrors the OMA RDF of SIB.
 - left: rdfportal.reactome
   right: reactome
   relation: distribution_of
+  original: reactome
   note: >-
     Both are the EBI Reactome RDF (graph rdf.ebi.ac.uk/dataset/reactome).
 
@@ -314,11 +331,13 @@
 - left: chebi
   right: uniprot.chebi
   relation: distribution_of
+  original: chebi
   note: >-
     The UniProt endpoint serves a copy of the ChEBI ontology in its graph sparql.uniprot.org/chebi.
 - left: rdfportal.pubchem
   right: pubchem.ftp
   relation: distribution_of
+  original: pubchem.ftp
   note: >-
     RDF Portal mirrors PubChem RDF, which pubchem.ftp indexes whole from PubChem's FTP (owner,
     2026-10-05: covered by pubchem.ftp, no index of its own).
@@ -385,6 +404,7 @@
 - left: rdfportal.uniprot
   right: uniprot
   relation: distribution_of
+  original: uniprot
   note: >-
     RDF Portal's SIB endpoint mirrors UniProt's RDF under its sparql.uniprot.org graph names; its
     download is the core ontology only (core.nt.gz). Not mined (owner, 2026-10-05: "drop
@@ -439,6 +459,7 @@
 - left: mesh.heading
   right: mesh.nlm.cumulative
   relation: distribution_of
+  original: mesh.nlm.cumulative
   note: >-
     IDSM's graph http://id.nlm.nih.gov/mesh/heading is NLM's cumulative graph at the MeSH 2024
     release, the release of NLM's dump mesh.nt.gz (2023-12-18) that mesh.nlm.cumulative

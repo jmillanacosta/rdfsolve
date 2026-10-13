@@ -6,17 +6,18 @@ from pathlib import Path
 import pytest
 import yaml
 from click.testing import CliRunner
-from rdflib import OWL, RDF, Graph, Literal, URIRef
+from rdflib import OWL, RDF, RDFS, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
-from rdflib.namespace import DCTERMS, PROV
+from rdflib.namespace import DCTERMS, FOAF, PROV
 
 from rdfsolve.cli import main
-from rdfsolve.dataset_identity import read_registry
+from rdfsolve.dataset_identity import read_overrides, read_registry
 from rdfsolve.models.source_model import SourceModel
 from rdfsolve.registry_rdf import (
     DCAT,
     FIELDS,
     RDFSOLVE,
+    SCHEMA,
     SD,
     SPDX,
     TERMS,
@@ -53,10 +54,10 @@ IRI_VALUED = {
     DCTERMS.isReferencedBy,
     DCTERMS.isPartOf,
     OWL.differentFrom,
-    RDFSOLVE.bioregistryRecord,
-    RDFSOLVE.typeContextGraph,
-    RDFSOLVE.ontologyGraph,
-    RDFSOLVE.queryExamples,
+    DCAT.servesDataset,
+    DCTERMS.requires,
+    DCTERMS.type,
+    SCHEMA.subjectOf,
 }
 LITERAL_VALUED = {
     DCTERMS.identifier,
@@ -64,9 +65,28 @@ LITERAL_VALUED = {
     DCAT.keyword,
     VOID.uriSpace,
     VOID.uriRegexPattern,
-    RDFSOLVE.datasetKind,
-    RDFSOLVE.basis,
-    RDFSOLVE.decidedBy,
+    SCHEMA.alternateName,
+}
+OBO = "http://purl.obolibrary.org/obo/"
+AUTOMATIC_ASSERTION = URIRef(OBO + "ECO_0000203")
+MANUAL_ASSERTION = URIRef(OBO + "ECO_0000218")
+HAS_CURATION_STATUS = URIRef(OBO + "IAO_0000114")
+PENDING_FINAL_VETTING = URIRef(OBO + "IAO_0000125")
+SAMPLE = URIRef("http://semanticscience.org/resource/SIO_001050")
+ONTOLOGY = URIRef("http://publications.europa.eu/resource/authority/dataset-type/ONTOLOGY")
+# Terms this writer no longer writes or declares: each has a standard replacement.
+REPLACED = {
+    "basis",
+    "decidedBy",
+    "identityReviewComplete",
+    "identityCandidateCount",
+    "datasetKind",
+    "bioregistryRecord",
+    "alias",
+    "typeContextGraph",
+    "ontologyGraph",
+    "sampledInputs",
+    "queryExamples",
 }
 
 
@@ -116,6 +136,15 @@ def _registry(tmp_path: Path) -> tuple[Path, Path]:
             "bioregistry_license": "hpo",
         },
         {"name": "demo.part", "endpoint": EP, "graph_uris": ["https://example.org/graph/a"]},
+        {"name": "demo.dump", "download_nt": ["https://dump.example.org/all.nt"]},
+        {
+            "name": "onto",
+            "dataset_kind": "ontology",
+            "type_context_graph_uris": ["https://example.org/graph/types"],
+            "bioregistry_prefix": "demo",
+        },
+        {"name": "lone", "endpoint": "https://lone.example.org/sparql"},
+        {"name": "lone.copy", "download_nt": ["https://lone-copy.example.org/all.nt"]},
         {"name": "other", "endpoint": EP, "graph_uris": ["https://example.org/graph/z"]},
         {"name": "old.release", "download_ttl": ["https://example.org/old.ttl"]},
         {"name": "conversion", "endpoint": "https://conv.example.org/sparql"},
@@ -140,8 +169,16 @@ def _registry(tmp_path: Path) -> tuple[Path, Path]:
                     "left": "demo",
                     "right": "demo.mirror",
                     "relation": "distribution_of",
+                    "original": "demo",
                     "note": "m",
                 },
+                {
+                    "left": "demo.dump",
+                    "right": "demo",
+                    "relation": "distribution_of",
+                    "original": "demo",
+                },
+                {"left": "lone", "right": "lone.copy", "relation": "distribution_of"},
                 {
                     "left": "demo",
                     "right": "old.release",
@@ -208,13 +245,19 @@ def test_graph_names_and_their_dumps_are_attached_to_the_entry(tmp_path):
         URIRef("https://example.org/graph/a"),
         URIRef("https://example.org/graph/b"),
     }
-    onto = graph.value(demo, RDFSOLVE.ontologyGraph)
+    onto = graph.value(demo, DCTERMS.requires)
     assert graph.value(onto, SD.name) == URIRef("https://example.org/graph/onto")
+    assert (onto, RDF.type, SD.NamedGraph) in graph
     assert onto not in data.values(), "An ontology graph is not a data graph"
+    types = graph.value(_node("onto"), DCTERMS.requires)
+    assert graph.value(types, SD.name) == URIRef("https://example.org/graph/types")
     content = graph.value(data[URIRef("https://example.org/graph/b")], SD.graph)
     assert (content, RDF.type, SD.Graph) in graph
     assert graph.value(content, VOID.dataDump) == URIRef("https://example.org/b.nt")
-    assert graph.value(content, RDFSOLVE.sampledInputs) == Literal("first file only")
+    assert (content, RDF.type, SAMPLE) in graph, "Sampled inputs: the content is a sample"
+    assert graph.value(content, RDFS.comment) == Literal("first file only")
+    whole = graph.value(data[URIRef("https://example.org/graph/a")], SD.graph)
+    assert (whole, RDF.type, SAMPLE) not in graph
     dumps = set(graph.objects(demo, VOID.dataDump))
     assert dumps == {URIRef("https://example.org/a.ttl.gz"), URIRef("https://example.org/b.nt")}
     assert URIRef("https://example.org/o.owl") not in set(graph.objects(None, DCAT.downloadURL)), (
@@ -222,7 +265,7 @@ def test_graph_names_and_their_dumps_are_attached_to_the_entry(tmp_path):
     )
     assert not list(graph.triples((None, VOID.inDataset, None)))
     assert graph.value(demo, VOID.uriSpace) == Literal("https://example.org/thing/")
-    assert set(graph.objects(demo, RDFSOLVE.queryExamples)) == {
+    assert set(graph.objects(demo, SCHEMA.subjectOf)) == {
         URIRef("https://example.org/graph/examples"),
         URIRef("https://github.com/example/queries"),
     }, "A local file path is not an IRI"
@@ -250,33 +293,102 @@ def test_distributions_formats_checksums_and_licenses(tmp_path):
     assert (document, RDF.type, DCTERMS.LicenseDocument) in graph, "A license that is not SPDX"
 
 
+def _statements(graph: Graph) -> dict[tuple[URIRef, URIRef], URIRef]:
+    return {
+        (graph.value(s, RDF.subject), graph.value(s, RDF.object)): s
+        for s in graph.subjects(RDF.type, RDF.Statement)
+    }
+
+
 def test_identity_relations_are_asserted_only_when_decided(tmp_path):
     graph = _graph(tmp_path)
-    assert (_node("demo"), RDFSOLVE.distributionOf, _node("demo.mirror")) in graph
     assert (_node("demo"), DCAT.previousVersion, _node("old.release")) in graph, "newer, older"
     assert (_node("old.release"), DCAT.previousVersion, _node("demo")) not in graph
     assert (_node("conversion"), PROV.alternateOf, _node("demo")) in graph
     assert (_node("other"), RDFSOLVE.sameDataset, _node("twin")) in graph
     assert (_node("demo.part"), DCTERMS.isPartOf, _node("demo")) in graph, "graph_scope_of rule"
     assert (_node("demo"), OWL.differentFrom, _node("other")) in graph, "distinct rule"
-    statements = {
-        (graph.value(s, RDF.subject), graph.value(s, RDF.object)): s
-        for s in graph.subjects(RDF.type, RDF.Statement)
-    }
-    override = statements[(_node("demo"), _node("demo.mirror"))]
-    assert graph.value(override, RDFSOLVE.decidedBy) == Literal("override")
-    assert graph.value(override, RDFSOLVE.basis) == Literal("curated override")
+    statements = _statements(graph)
     version = statements[(_node("demo"), _node("old.release"))]
     assert graph.value(version, RDF.predicate) == DCAT.previousVersion, "Statement as asserted"
-    rule = statements[(_node("demo.part"), _node("demo"))]
-    assert graph.value(rule, RDFSOLVE.decidedBy) == Literal("rule")
     candidate = statements[(_node("twin"), _node("twin.copy"))]
-    assert graph.value(candidate, RDFSOLVE.decidedBy) == Literal("candidate")
     predicate = graph.value(candidate, RDF.predicate)
     assert (_node("twin"), predicate, _node("twin.copy")) not in graph, "Candidates not asserted"
+
+
+def test_identity_statements_carry_their_assertion_method_and_curation_status(tmp_path):
+    graph = _graph(tmp_path)
+    statements = _statements(graph)
+    override = statements[(_node("demo.mirror"), _node("demo"))]
+    assert graph.value(override, DCTERMS.type) == MANUAL_ASSERTION
+    assert set(graph.objects(override, RDFS.comment)) == {
+        Literal("curated override"),
+        Literal("m"),
+    }, "The basis and the note are comments"
+    rule = statements[(_node("demo.part"), _node("demo"))]
+    assert graph.value(rule, DCTERMS.type) == AUTOMATIC_ASSERTION
+    assert graph.value(rule, HAS_CURATION_STATUS) is None
+    candidate = statements[(_node("twin"), _node("twin.copy"))]
+    assert graph.value(candidate, HAS_CURATION_STATUS) == PENDING_FINAL_VETTING
+    assert graph.value(candidate, DCTERMS.type) is None, "A candidate is not asserted"
+    _, resolution = load_registry(tmp_path / "sources.yaml", tmp_path / "identity_overrides.yaml")
+    pending = set(graph.subjects(HAS_CURATION_STATUS, PENDING_FINAL_VETTING))
+    assert len(pending) == len(resolution.candidates), "One pending statement per candidate"
     registry = next(s for s in graph.subjects(RDF.type, DCAT.Catalog) if "/registry/" in str(s))
-    assert graph.value(registry, RDFSOLVE.identityReviewComplete) == Literal(False)
-    assert graph.value(registry, RDFSOLVE.identityCandidateCount).toPython() == 1
+    assert set(graph.predicates(registry)) == {RDF.type, DCTERMS.identifier, DCTERMS.title} | {
+        DCAT.dataset,
+        DCAT.service,
+    }, "Review state and candidate count are derived from the statements, not stored"
+
+
+def test_a_distribution_with_a_recorded_original_is_written_from_the_original(tmp_path):
+    graph = _graph(tmp_path)
+    demo, mirror, dump = _node("demo"), _node("demo.mirror"), _node("demo.dump")
+    assert (mirror, DCAT.servesDataset, demo) in graph, "An endpoint mirror serves the original"
+    assert (mirror, RDF.type, DCAT.DataService) in graph
+    assert (mirror, RDF.type, DCAT.Dataset) in graph
+    assert (demo, DCAT.distribution, mirror) not in graph
+    assert (demo, DCAT.distribution, dump) in graph, "A dump mirror is a distribution"
+    assert {(dump, RDF.type, DCAT.Distribution), (dump, RDF.type, DCAT.Dataset)} <= set(graph)
+    assert (demo, RDF.type, DCAT.Distribution) not in graph, "The original stays a dataset"
+    assert not set(graph.triples((demo, RDFSOLVE.distributionOf, None)))
+    statements = _statements(graph)
+    assert graph.value(statements[(demo, dump)], RDF.predicate) == DCAT.distribution
+    lone, copy = _node("lone"), _node("lone.copy")
+    assert (lone, RDFSOLVE.distributionOf, copy) in graph, "No original: the rdfsolve term"
+    assert (copy, RDF.type, DCAT.Distribution) not in graph
+
+
+def test_an_original_must_name_one_entry_of_a_distribution_pair(tmp_path):
+    overrides = tmp_path / "overrides.yaml"
+    for item, message in [
+        ({"relation": "distribution_of", "original": "c"}, "must name one of"),
+        ({"relation": "same_dataset", "original": "a"}, "distribution_of only"),
+    ]:
+        overrides.write_text(yaml.safe_dump([{"left": "a", "right": "b", **item}]))
+        with pytest.raises(ValueError, match=message):
+            read_overrides(overrides)
+    overrides.write_text(
+        yaml.safe_dump([{"left": "a", "right": "b", "relation": "distribution_of", "original": "b"}])
+    )
+    (relation,) = read_overrides(overrides)
+    assert (relation.left, relation.right, relation.original) == ("a", "b", "b")
+
+
+def test_dataset_kinds_with_a_standard_value_are_typed(tmp_path):
+    graph = _graph(tmp_path)
+    assert graph.value(_node("onto"), DCTERMS.type) == ONTOLOGY
+    assert graph.value(_node("demo"), DCTERMS.type) is None, "No standard value for instance"
+    assert graph.value(_node("other"), DCTERMS.type) is None, "unknown is not written"
+
+
+def test_only_the_rdfsolve_terms_still_used_are_declared(tmp_path):
+    graph = _graph(tmp_path)
+    declared = {str(s) for s in graph.subjects(RDF.type, RDF.Property)}
+    assert declared == {str(RDFSOLVE.sameDataset), str(RDFSOLVE.distributionOf)}
+    assert not set(TERMS) & REPLACED
+    used = {str(p) for p in graph.predicates()} | {str(o) for o in graph.objects()}
+    assert not {str(RDFSOLVE[name]) for name in REPLACED} & used
 
 
 def test_catalog_records_name_the_entry_in_each_catalog(tmp_path):
@@ -286,7 +398,21 @@ def test_catalog_records_name_the_entry_in_each_catalog(tmp_path):
     assert (rdfportal, DCAT.service, _node("svc", "service")) in graph
     record = URIRef(f"{BASE}catalog/kg-registry/record/demo")
     assert graph.value(record, DCTERMS.identifier) == Literal("demo-kg")
-    assert (_node("demo"), RDFSOLVE.alias, Literal("demo.old")) in graph
+    assert (_node("demo"), SCHEMA.alternateName, Literal("demo.old")) in graph
+
+
+def test_the_bioregistry_record_is_a_catalog_record(tmp_path):
+    graph = _graph(tmp_path)
+    bioregistry = URIRef(f"{BASE}catalog/bioregistry")
+    assert (bioregistry, RDF.type, DCAT.Catalog) in graph
+    assert (bioregistry, DCAT.dataset, _node("demo")) in graph
+    record = URIRef("https://bioregistry.io/registry/demo")
+    assert (bioregistry, DCAT.record, record) in graph
+    assert (record, RDF.type, DCAT.CatalogRecord) in graph
+    assert graph.value(record, DCTERMS.identifier) == Literal("demo")
+    assert set(graph.objects(record, FOAF.primaryTopic)) == {_node("demo"), _node("onto")}, (
+        "Entries that share a prefix share its record"
+    )
 
 
 def test_an_access_field_that_is_not_an_iri_is_refused(tmp_path):
@@ -330,13 +456,9 @@ def test_the_project_registry_serializes_and_parses(tmp_path):
     _check_node_kinds(parsed)
     own = {str(RDFSOLVE[name]) for name in TERMS}
     assert unregistered_terms(parsed, own) == set()
-    registry = next(s for s in parsed.subjects(RDF.type, DCAT.Catalog) if "/registry/" in str(s))
-    assert parsed.value(registry, RDFSOLVE.identityReviewComplete).toPython() is (
-        resolution.review_complete
-    )
-    assert parsed.value(registry, RDFSOLVE.identityCandidateCount).toPython() == len(
-        resolution.candidates
-    )
+    pending = set(parsed.subjects(HAS_CURATION_STATUS, PENDING_FINAL_VETTING))
+    assert len(pending) == len(resolution.candidates)
+    assert (not pending) is resolution.review_complete
 
 
 def test_registry_cli_and_release_build_write_the_registry_rdf(tmp_path):

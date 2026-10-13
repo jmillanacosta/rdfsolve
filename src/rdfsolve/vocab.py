@@ -25,6 +25,8 @@ VOCABULARIES: dict[str, str] = {
     "http://www.w3.org/ns/dcat#": "https://www.w3.org/TR/vocab-dcat-3/",
     "http://spdx.org/rdf/terms#": "https://spdx.github.io/spdx-spec/v2.3/",
     "http://www.w3.org/ns/prov#": "https://www.w3.org/TR/prov-o/",
+    "http://purl.obolibrary.org/obo/": "https://obofoundry.org/",
+    "http://semanticscience.org/resource/": "https://github.com/MaastrichtU-IDS/semanticscience",
 }
 
 _TERMS = {
@@ -53,7 +55,7 @@ _TERMS = {
     ),
     "http://purl.org/dc/terms/": (
         "created creator description issued license modified publisher source title type "
-        "LicenseDocument identifier isPartOf isReferencedBy"
+        "LicenseDocument identifier isPartOf isReferencedBy requires"
     ),
     "http://xmlns.com/foaf/0.1/": "homepage primaryTopic",
     "http://www.w3.org/2002/07/owl#": "Ontology differentFrom imports versionIRI versionInfo",
@@ -61,14 +63,18 @@ _TERMS = {
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": (
         "Property Statement first object predicate rest subject type"
     ),
-    "https://schema.org/": "isBasedOn target url",
+    "https://schema.org/": "alternateName isBasedOn subjectOf target url",
     "http://www.w3.org/ns/dcat#": (
         "Catalog CatalogRecord DataService Dataset Distribution compressFormat dataset "
         "distribution downloadURL endpointURL keyword landingPage mediaType packageFormat "
-        "previousVersion record service"
+        "previousVersion record servesDataset service"
     ),
     "http://spdx.org/rdf/terms#": "Checksum algorithm checksum checksumValue",
     "http://www.w3.org/ns/prov#": "alternateOf",
+    # IAO_0000114: has curation status.
+    "http://purl.obolibrary.org/obo/": "IAO_0000114",
+    # SIO_001050: sample.
+    "http://semanticscience.org/resource/": "SIO_001050",
 }
 
 GENERATED_TERMS: frozenset[str] = frozenset(
