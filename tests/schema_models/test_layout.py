@@ -11,7 +11,7 @@ from rdfsolve.client.terms import read_term_release
 from rdfsolve.mining.term_release import _write, term_rows
 from rdfsolve.schema_models import AboutMetadata, MinedSchema, SchemaPattern
 from rdfsolve.schema_models.core import iter_section_rows
-from rdfsolve.schema_models.layout import repair_schema, write_schema
+from rdfsolve.schema_models.layout import _census_row, has_tested_paths, repair_schema, write_schema
 from rdfsolve.schema_models import navigation
 from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary, read_tested_paths
 from rdfsolve.schema_models.structural import StructuralPattern
@@ -118,6 +118,8 @@ def test_a_written_schema_is_read_back_whole_and_its_json_is_the_summary(schema,
     assert written["details"]["raw_patterns"] == {"file": "x_local_terms.parquet", "rows": 5}
     assert written["details"]["term_patterns"]["rows"] == 2
     assert written["details"]["navigation.paths"] == {"file": "x_local_paths.parquet", "rows": 6}
+    assert written["structural_patterns"] is None
+    assert written["details"]["structural_patterns"] == {"file": "x_local_census.parquet", "rows": 2}
     assert "\n  " not in path.read_text(), "The JSON is written without indentation"
     assert summary.navigation.paths_scope == "network"
     assert [p.signature() for p in summary.navigation.paths] == [
@@ -146,7 +148,7 @@ def test_a_repaired_schema_gives_the_files_of_a_written_one(schema, tmp_path):
     write_schema(schema, direct / "x_local_schema.json")
     for name in ("x_local_schema.json",):
         assert (repaired.parent / name).read_bytes() == (direct / name).read_bytes()
-    for name in ("x_local_terms.parquet", "x_local_paths.parquet"):
+    for name in ("x_local_terms.parquet", "x_local_paths.parquet", "x_local_census.parquet"):
         left, right = pq.read_table(repaired.parent / name), pq.read_table(direct / name)
         assert left.equals(right) and left.schema.metadata == right.schema.metadata, name
     assert MinedSchema.from_json(repaired) == _expected(schema)
@@ -160,6 +162,10 @@ def test_readers_give_the_same_rows_from_both_layouts(schema, tmp_path):
     assert sorted(map(json.dumps, iter_section_rows(old, names))) == sorted(
         map(json.dumps, iter_section_rows(new, names))
     )
+    census = [r for _, r in iter_section_rows(new, ["structural_patterns"]) if r is not None]
+    assert census == [
+        _census_row(r) for _, r in iter_section_rows(old, ["structural_patterns"]) if r is not None
+    ], "The census rows are those of the old file, without unused covered types"
     assert read_tested_paths(old) == read_tested_paths(new)
     assert read_tested_paths(old, ["urn:A"], max_hops=2) == read_tested_paths(new, ["urn:A"], 2)
     assert navigation.tested_step_support(old) == navigation.tested_step_support(new)
@@ -172,9 +178,18 @@ def test_readers_give_the_same_rows_from_both_layouts(schema, tmp_path):
 
 
 def test_mined_census_rows_of_untyped_subjects_have_no_covered_types():
-    from rdfsolve.schema_models.layout import _census_row
-
     row = _census("untyped", [("urn:A", "urn:B", None)]).model_dump(mode="json")
     assert _census_row(row)["covered_types"] == []
     row = _census("uncovered", [("urn:A", "urn:B", None)]).model_dump(mode="json")
     assert _census_row(row)["covered_types"] == [["urn:A", "urn:B", None]]
+
+
+def test_a_schema_whose_tested_paths_are_all_detours_has_paths_shapes(schema, tmp_path):
+    navigation = schema.navigation.model_copy(
+        update={"paths": [_path(AB, BA), _path(AB, NAME)]}
+    )
+    summary = write_schema(
+        schema.model_copy(update={"navigation": navigation}), tmp_path / "x_local_schema.json"
+    )
+    assert summary.navigation.paths == [] and has_tested_paths(summary)
+    assert not has_tested_paths(summary.model_copy(update={"navigation": None}))

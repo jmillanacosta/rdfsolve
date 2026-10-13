@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 from collections import Counter
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,18 @@ def _artifact_paths(manifest: ReleaseManifest, role: str) -> list[str]:
         for artifact in manifest.artifacts
         if artifact.role == role and artifact.dataset_id is not None
     )
+
+
+def _census_rows(path: Path, schema: dict[str, Any]) -> Iterator[Any]:
+    """Yield the census rows of a schema: from its JSON, or from its census file (layout)."""
+    if "structural_patterns" in (schema.get("details") or {}):
+        from rdfsolve.schema_models.core import iter_section_rows
+
+        for _, row in iter_section_rows(path, ["structural_patterns"]):
+            if row is not None:
+                yield row
+    else:
+        yield from schema.get("structural_patterns") or []
 
 
 def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]:
@@ -63,7 +76,7 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
                         row.get("subject_kind"),
                         tuple(sorted(set(row.get("subject_properties") or []))),
                     )
-                    for row in schema.get("structural_patterns") or []
+                    for row in _census_rows(root / rel, schema)
                     if isinstance(row, dict)
                     and row.get("shape_semantics", "exact_property_sets") == "exact_property_sets"
                 }

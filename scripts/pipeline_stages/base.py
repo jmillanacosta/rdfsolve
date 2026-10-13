@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from rdfsolve.schema_models.layout import write_schema
+from rdfsolve.schema_models.layout import has_tested_paths, write_schema
 
 from .config import PipelineConfig
 
@@ -624,7 +624,7 @@ class Stage:
                 path.write_text(
                     schema.to_shacl(trim_descriptions=trim, paths="without"), encoding="utf-8"
                 )
-                if summary.navigation is not None and summary.navigation.paths:
+                if has_tested_paths(summary):
                     paths_file = output_dir / f"{name}{suffix}_paths.shacl.ttl"
                     paths_file.write_text(
                         summary.to_shacl(trim_descriptions=trim, paths="only"), encoding="utf-8"

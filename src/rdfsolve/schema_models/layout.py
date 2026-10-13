@@ -12,6 +12,10 @@ the data.
     ``pattern`` numbers the patterns of a section, and ``fields`` (on the first row of a
     pattern) holds its other fields as JSON, without those at their default. The manifest of
     the term release, when there is one, is the file's metadata.
+``<stem>_census.parquet``
+    The structural census (record shapes and edges of each graph), one row per census row:
+    ``fields`` holds the row as JSON, without the fields at their default; property_uri,
+    graph_uri and count are columns of their own for readers of the file.
 ``<stem>_paths.parquet``
     The tested navigation paths, one row per path, as the numbers of its steps in the edge
     table of the file's metadata (as navigation.NavigationSummary packs them in JSON);
@@ -22,6 +26,9 @@ the data.
 write_schema writes the three from a schema in memory; repair_schema writes them from a schema
 JSON of the earlier layout, streamed, through the same writer, so that both give the same files.
 A full read (MinedSchema.from_json) puts the rows back into the model.
+
+A schema whose paths were tested has a file of the shapes of its paths (has_tested_paths), with
+no shape when the network keeps no path.
 
 A census row whose subjects were selected as untyped keeps no covered types: they select the
 rows of uncovered subjects only, and are the schema's own typed keys of the property.
@@ -50,15 +57,21 @@ METADATA_KEY = b"rdfsolve"
 # The sections written beside the JSON, by their key in MinedSchema.details.
 TERM_SECTIONS = {"raw_patterns": "raw", "term_patterns": "term"}
 PATHS_SECTION = "navigation.paths"
+CENSUS_SUFFIX = "_census.parquet"
+CENSUS_SECTION = "structural_patterns"
+# Census rows written to a Parquet file a batch at a time.
+_CENSUS_BATCH = 50_000
 # The key of a pattern in the term release's columns; the other fields go to ``fields``.
 _KEY_FIELDS = ("subject_class", "property_uri", "object_class", "datatype", "subject_binding")
 # Paths written to a Parquet file a batch at a time.
 _PATH_BATCH = 1_000_000
 
 __all__ = [
+    "CENSUS_SUFFIX",
     "PATHS_SUFFIX",
     "TERMS_SUFFIX",
     "PackedPaths",
+    "has_tested_paths",
     "iter_detail_rows",
     "load_details",
     "packed_paths",
@@ -373,22 +386,74 @@ def _census_row(row: dict[str, Any]) -> dict[str, Any]:
     return row
 
 
+def _census_table(rows: list[dict[str, Any]]) -> pa.Table:
+    import pyarrow as pa
+
+    from rdfsolve.schema_models.structural import StructuralPattern
+
+    defaults = {
+        name: field.get_default(call_default_factory=True)
+        for name, field in StructuralPattern.model_fields.items()
+        if not field.is_required()
+    }
+    fields = [
+        json.dumps(
+            {k: v for k, v in row.items() if k not in defaults or v != defaults[k]},
+            separators=(",", ":"),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        for row in rows
+    ]
+    return pa.table(
+        {
+            "property_uri": pa.array([r["property_uri"] for r in rows], pa.string()),
+            "graph_uri": pa.array([r.get("graph_uri") for r in rows], pa.string()),
+            "count": pa.array([r["count"] for r in rows], pa.uint64()),
+            "fields": pa.array(fields, pa.string()),
+        }
+    )
+
+
+def _write_census(rows: Iterable[Mapping[str, Any]], target: Path) -> int:
+    """Write census rows (as written) to *target*; return their number."""
+    import pyarrow.parquet as pq
+
+    from rdfsolve.schema_models.structural import StructuralPattern
+
+    schema = _census_table([]).schema
+    written = 0
+    batch: list[dict[str, Any]] = []
+    with pq.ParquetWriter(target, schema, compression="zstd", use_dictionary=True) as writer:
+        for given in rows:
+            row = StructuralPattern.model_validate(_census_row(dict(given))).model_dump(mode="json")
+            batch.append(row)
+            if len(batch) >= _CENSUS_BATCH:
+                writer.write_table(_census_table(batch))
+                written += len(batch)
+                batch = []
+        writer.write_table(_census_table(batch))
+        written += len(batch)
+    return written
+
+
 def _write_parts(
     summary: MinedSchema,
     target: Path,
     *,
     terms: Mapping[str, Iterable[Mapping[str, Any]]],
     paths: PackedPaths | None,
+    census: Iterable[Mapping[str, Any]] | None = None,
     manifest: dict[str, Any] | None = None,
 ) -> MinedSchema:
     """Write the summary JSON and the detail files; return the summary written.
 
-    *summary* has no raw or term patterns and no tested paths; *terms* gives the written rows of
-    each term section that the schema has, *paths* the tested paths. The terms file keeps
-    *manifest* (a term release's), else the manifest of the terms file it replaces.
+    *summary* has no raw or term patterns, no census and no tested paths; *terms* gives the
+    written rows of each term section that the schema has, *census* those of its census (None
+    when it has none), *paths* the tested paths. The terms file keeps *manifest* (a term
+    release's), else the manifest of the terms file it replaces.
     """
     from rdfsolve.schema_models.core import DetailFile
-    from rdfsolve.schema_models.structural import StructuralPattern
 
     stem = stem_of(target)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -407,11 +472,12 @@ def _write_parts(
         update["navigation"] = summary.navigation.model_copy(
             update={"paths": network, "paths_scope": "network"}
         )
-    if summary.structural_patterns:
-        update["structural_patterns"] = [
-            StructuralPattern.model_validate(_census_row(p.model_dump(mode="json")))
-            for p in summary.structural_patterns
-        ]
+    if census is not None:
+        census_path = stem.with_name(stem.name + CENSUS_SUFFIX)
+        details[CENSUS_SECTION] = DetailFile(
+            file=census_path.name, rows=_write_census(census, census_path)
+        )
+        update[CENSUS_SECTION] = None
     update["details"] = details or None
     written = summary.model_copy(update=update)
     target.write_text(
@@ -440,10 +506,30 @@ def write_schema(
     if navigation is not None and navigation.strategy == "tested" and navigation.paths:
         paths = PackedPaths.from_written(navigation.model_dump(mode="json")["paths"])
         navigation = navigation.model_copy(update={"paths": []})
-    summary = schema.model_copy(
-        update={"raw_patterns": None, "term_patterns": None, "navigation": navigation}
+    census = (
+        None
+        if schema.structural_patterns is None
+        else [p.model_dump(mode="json") for p in schema.structural_patterns]
     )
-    return _write_parts(summary, Path(target), terms=terms, paths=paths)
+    summary = schema.model_copy(
+        update={
+            "raw_patterns": None,
+            "term_patterns": None,
+            "structural_patterns": None,
+            "navigation": navigation,
+        }
+    )
+    return _write_parts(summary, Path(target), terms=terms, paths=paths, census=census)
+
+
+def has_tested_paths(schema: MinedSchema) -> bool:
+    """Return whether *schema* (a summary written by write_schema) has tested paths: its
+    paths shapes are then written, also when the network keeps no path.
+    """
+    return bool(
+        schema.navigation is not None
+        and (schema.navigation.paths or PATHS_SECTION in (schema.details or {}))
+    )
 
 
 # Reading
@@ -489,20 +575,37 @@ def _term_patterns(path: Path, section: str) -> Iterator[dict[str, Any]]:
             ).model_dump(mode="json")
 
 
+def _census_rows(path: Path) -> Iterator[dict[str, Any]]:
+    """Yield the census rows of a census file as written, in their order."""
+    import pyarrow.parquet as pq
+
+    from rdfsolve.schema_models.structural import StructuralPattern
+
+    for batch in pq.ParquetFile(path).iter_batches(columns=["fields"], batch_size=_CENSUS_BATCH):
+        for text in batch.column("fields").to_pylist():
+            yield StructuralPattern.model_validate(json.loads(text)).model_dump(mode="json")
+
+
 def iter_detail_rows(
     path: str | Path, details: Mapping[str, Any], names: Iterable[str]
 ) -> Iterator[tuple[str, dict[str, Any] | None]]:
-    """Yield the rows of the named term sections that *details* places in files, as
-    core.iter_section_rows yields them from the JSON: (name, None) first, then each row.
+    """Yield the rows of the named list sections that *details* places in files (term
+    sections, census), as core.iter_section_rows yields them from the JSON: (name, None) first,
+    then each row.
     """
     folder = Path(path).parent
     for name in names:
         detail = details.get(name)
-        if name not in TERM_SECTIONS or detail is None:
+        if detail is None or (name not in TERM_SECTIONS and name != CENSUS_SECTION):
             continue
-        file = detail["file"] if isinstance(detail, Mapping) else detail.file
+        file = folder / (detail["file"] if isinstance(detail, Mapping) else detail.file)
         yield name, None
-        for row in _term_patterns(folder / file, TERM_SECTIONS[name]):
+        rows = (
+            _census_rows(file)
+            if name == CENSUS_SECTION
+            else _term_patterns(file, TERM_SECTIONS[name])
+        )
+        for row in rows:
             yield name, row
 
 
@@ -567,6 +670,13 @@ def load_details(
                 SchemaPattern.model_validate(row)
                 for row in _term_patterns(path.parent / detail.file, section)
             ]
+    detail = schema.details.get(CENSUS_SECTION)
+    if detail is not None and CENSUS_SECTION not in skipped:
+        from rdfsolve.schema_models.structural import StructuralPattern
+
+        update[CENSUS_SECTION] = [
+            StructuralPattern.model_validate(row) for row in _census_rows(path.parent / detail.file)
+        ]
     detail = schema.details.get(PATHS_SECTION)
     if detail is not None and "navigation" not in skipped and schema.navigation is not None:
         packed = _paths_file(path.parent / detail.file)
@@ -603,17 +713,14 @@ def repair_schema(
     if sections.get("details"):
         msg = f"{source} already has detail files"
         raise ValueError(msg)
-    census: list[dict[str, Any]] | None = None
-    for _, row in iter_section_rows(source, ["structural_patterns"]):
-        if row is None:
-            census = []
-        elif census is not None:
-            census.append(_census_row(row))
-    sections["structural_patterns"] = census
-    present = {name for name, row in iter_section_rows(source, list(TERM_SECTIONS)) if row is None}
+    present = {
+        name
+        for name, row in iter_section_rows(source, [*TERM_SECTIONS, CENSUS_SECTION])
+        if row is None
+    }
 
     def term_rows(name: str) -> Iterator[dict[str, Any]]:
-        """Yield the written rows of one term section of *source*."""
+        """Yield the written rows of one list section of *source*."""
         for found, row in iter_section_rows(source, [name]):
             if row is not None and found == name:
                 yield row
@@ -670,7 +777,10 @@ def repair_schema(
             update={"navigation": summary.navigation.model_copy(update={"paths": []})}
         )
     terms = {name: term_rows(name) for name in TERM_SECTIONS if name in present}
+    census = term_rows(CENSUS_SECTION) if CENSUS_SECTION in present else None
     if terms_file is None:
         terms_file = stem_of(source).with_name(stem_of(source).name + TERMS_SUFFIX)
     manifest = _manifest(Path(terms_file))
-    return _write_parts(summary, Path(target), terms=terms, paths=paths, manifest=manifest)
+    return _write_parts(
+        summary, Path(target), terms=terms, paths=paths, census=census, manifest=manifest
+    )
