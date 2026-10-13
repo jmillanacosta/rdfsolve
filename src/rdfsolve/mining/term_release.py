@@ -126,6 +126,53 @@ def _write(frame: pl.DataFrame, path: Path, metadata: dict[str, Any] | None = No
     pq.write_table(table, path, compression="zstd", use_dictionary=True)
 
 
+def _attach(path: Path, manifest: dict[str, Any]) -> bool:
+    """Put *manifest* in the metadata of the terms file the schema was written with
+    (schema_models.layout: its raw and term sections, the same rows as term_rows); return False
+    when there is no such file.
+    """
+    import pyarrow.parquet as pq
+
+    if not path.is_file() or "section" not in pq.read_schema(path).names:
+        return False
+    table = pq.read_table(path)
+    if "raw" not in set(table.column("section").to_pylist()):
+        return False
+    written = json.loads((table.schema.metadata or {}).get(METADATA_KEY, b"{}"))
+    merged = {**manifest, **{k: written[k] for k in ("version", "layout") if k in written}}
+    table = table.replace_schema_metadata({METADATA_KEY: json.dumps(merged).encode()})
+    pq.write_table(table, path, compression="zstd", use_dictionary=True)
+    return True
+
+
+def _schema_terms(path: Path) -> Any:
+    """Return the term-binding rows of the terms file the schema was written with (the Arrow
+    table of its "term" section), or None: the release's rows replace the file, and these are
+    written after them.
+    """
+    import pyarrow.compute as pc
+    import pyarrow.parquet as pq
+
+    if not path.is_file() or "section" not in pq.read_schema(path).names:
+        return None
+    table = pq.read_table(path)
+    table = table.filter(pc.equal(table.column("section"), "term"))
+    return table.replace_schema_metadata(None) if table.num_rows else None
+
+
+def _as_raw(table: Any, saved: Any) -> Any:
+    """Return the release rows *table* in the columns of *saved* (section "raw", no pattern
+    fields: the schema does not hold these patterns, counted per term after grouping).
+    """
+    import pyarrow as pa
+
+    n = table.num_rows
+    table = table.append_column("section", pa.array(["raw"] * n, pa.string()))
+    table = table.append_column("pattern", pa.nulls(n, pa.uint32()))
+    table = table.append_column("fields", pa.nulls(n, pa.string()))
+    return table.select(saved.schema.names).cast(saved.schema)
+
+
 def _coded_types(types: pl.LazyFrame) -> tuple[pl.DataFrame, list[str]]:
     """Return the type table by integer codes, and its IRI classes (bare, sorted).
 
@@ -317,7 +364,14 @@ def write_term_release(
         },
     }
     terms_path.parent.mkdir(parents=True, exist_ok=True)
-    _write(terms, terms_path, manifest)
+    if not _attach(terms_path, manifest):
+        saved = _schema_terms(terms_path)
+        if saved is None:
+            _write(terms, terms_path, manifest)
+        else:
+            with _Writer(terms_path, manifest) as out:
+                out.write(_as_raw(terms.to_arrow(), saved))
+                out.write(saved)
     _write(classes, classes_path)
     manifest["files"] = {
         terms_path.name: terms_path.stat().st_size,
@@ -583,10 +637,14 @@ def _write_record_release(
         }
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
+    saved = _schema_terms(terms_path)
     with _Writer(terms_path, manifest) as out:
         for batch in source.iter_batches(batch_size=1 << 20):
-            out.write(pa.Table.from_batches([batch], schema=source.schema_arrow))
-        if out.writer is None:
+            table = pa.Table.from_batches([batch], schema=source.schema_arrow)
+            out.write(table if saved is None else _as_raw(table, saved))
+        if saved is not None:
+            out.write(saved)
+        elif out.writer is None:
             out.write(source.schema_arrow.empty_table())
     manifest["files"] = {
         terms_path.name: terms_path.stat().st_size,

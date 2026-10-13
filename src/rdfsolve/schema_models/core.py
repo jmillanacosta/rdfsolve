@@ -40,6 +40,13 @@ if TYPE_CHECKING:
 DETAIL_SECTIONS = ("structural_patterns", "raw_patterns", "term_patterns", "navigation")
 
 
+class DetailFile(BaseModel):
+    """A file beside the schema JSON that holds the rows of one of its sections."""
+
+    file: str = Field(description="File name, in the folder of the schema JSON")
+    rows: int = Field(ge=0, description="Rows of the section in the file")
+
+
 class MinedSchema(BaseModel):
     """Complete mined schema: patterns + provenance.
 
@@ -110,6 +117,11 @@ class MinedSchema(BaseModel):
         "None means not mined",
     )
     prefixes: dict[str, str] = Field(default_factory=dict)
+    details: dict[str, DetailFile] | None = Field(
+        None,
+        description="Sections whose rows are written beside the JSON (rdfsolve.schema_models."
+        "layout): raw_patterns, term_patterns, navigation.paths. None when all are in the JSON",
+    )
 
     @field_validator("patterns", "raw_patterns")
     @classmethod
@@ -501,21 +513,33 @@ class MinedSchema(BaseModel):
         }
 
     @classmethod
-    def from_json(cls, path: str | Path, *, leave_out: Collection[str] = ()) -> MinedSchema:
+    def from_json(
+        cls, path: str | Path, *, leave_out: Collection[str] = (), details: bool = True
+    ) -> MinedSchema:
         """Read a saved schema through format detection and validation.
 
         *leave_out* names sections of a canonical schema (fields of this model) that are not
         read: the file is streamed and those sections are skipped, so a schema whose large
         sections a task does not need is read in little memory. The fields left out keep their
         defaults; such a schema is for reading, not for writing back.
+
+        The rows of sections written beside the JSON (layout.write_schema) are read back from
+        their files, except those left out; with *details* False they are not read, and the
+        schema is the summary its JSON holds.
         """
+        from rdfsolve.schema_models.layout import load_details
+
         if not leave_out:
-            return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
-        with Path(path).open("rb") as stream:
-            sections = _schema_sections(stream, frozenset(leave_out))
-        if not sections:
-            return cls.from_json(path)
-        return cls.from_dict({"format": "rdfsolve.mined-schema", "version": 1, "schema": sections})
+            schema = cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
+        else:
+            with Path(path).open("rb") as stream:
+                sections = _schema_sections(stream, frozenset(leave_out))
+            if not sections:
+                return cls.from_json(path, details=details)
+            schema = cls.from_dict(
+                {"format": "rdfsolve.mined-schema", "version": 1, "schema": sections}
+            )
+        return load_details(schema, path, leave_out) if details else schema
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> MinedSchema:
@@ -904,12 +928,16 @@ def iter_section_rows(
 
     For each named section that is a list, (name, None) comes first, so that an empty section
     is told from one that is absent or null; then (name, row) for each of its rows. Nothing else
-    of the file is built, so a section larger than memory can be read.
+    of the file is built, so a section larger than memory can be read. The rows of a section
+    written beside the JSON (layout.write_schema) are read from its file, as they were written.
     """
     import ijson
     from ijson.common import ObjectBuilder
 
+    from rdfsolve.schema_models.layout import iter_detail_rows
+
     wanted = frozenset(names)
+    details: dict[str, Any] = {}
     with Path(path).open("rb") as stream:
         events = ijson.parse(stream, use_float=True)
         for prefix, event, value in events:
@@ -917,6 +945,17 @@ def iter_section_rows(
                 continue
             name = value
             _, first, item = next(events)
+            if name == "details" and first == "start_map":
+                builder = ObjectBuilder()
+                builder.event(first, item)
+                depth = 1
+                while depth:
+                    _, nested, value_item = next(events)
+                    builder.event(nested, value_item)
+                    depth += nested in ("start_map", "start_array")
+                    depth -= nested in ("end_map", "end_array")
+                details = builder.value
+                continue
             if name not in wanted or first != "start_array":
                 depth = 1 if first in ("start_map", "start_array") else 0
                 while depth:
@@ -937,3 +976,4 @@ def iter_section_rows(
                     depth += nested in ("start_map", "start_array")
                     depth -= nested in ("end_map", "end_array")
                 yield name, builder.value
+    yield from iter_detail_rows(path, details, [n for n in names if n in details])

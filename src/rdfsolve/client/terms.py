@@ -87,7 +87,23 @@ def read_term_release(terms: str | Path, classes: str | Path | None = None) -> T
     manifest = json.loads(metadata.get(b"rdfsolve", b"{}"))
     if classes is None:
         classes = terms.with_name(manifest["classes_file"])
-    return TermRelease(pl.read_parquet(terms), pl.read_parquet(classes), manifest)
+    rows = pl.read_parquet(terms)
+    if "section" in rows.columns:
+        # A terms file written with its schema (schema_models.layout) also holds the exact term
+        # bindings; the release's rows are those of the patterns before grouping.
+        rows = (
+            rows.filter(pl.col("section") == "raw")
+            .select(
+                *KEY[:4],
+                "graph",
+                "triples",
+                "distinct_subjects",
+                "distinct_objects",
+                "subject_binding",
+            )
+            .sort(KEY, nulls_last=True)
+        )
+    return TermRelease(rows, pl.read_parquet(classes), manifest)
 
 
 def _shape_groups(

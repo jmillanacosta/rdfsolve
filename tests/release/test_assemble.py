@@ -82,3 +82,48 @@ def test_datasets_of_runs_of_different_code_are_joined_with_their_commits(tmp_pa
     graph = release_to_rdf(manifest)
     used = {str(o) for o in graph.objects(None, PROV.used)}
     assert {f"https://github.com/jmillanacosta/rdfsolve/commit/{c}" for c in ("old1", "old2", "new1")} <= used
+
+
+def test_later_layers_replace_files_in_subfolders_and_each_is_recorded(tmp_path):
+    from rdflib.namespace import PROV
+
+    from rdfsolve.release.assemble import assemble_selected
+    from rdfsolve.release.build import build_release_manifest
+    from rdfsolve.release.rdf import release_to_rdf
+
+    first = run(tmp_path, "chunk-1", ["a"], commit="old1")
+    (first / "a" / "graphs" / "g").mkdir(parents=True)
+    (first / "a" / "graphs" / "g" / "g_local_schema.json").write_text("{}")
+    registry = tmp_path / "sources.yaml"
+    registry.write_text("- name: a\n")
+    parts = tmp_path / "parts" / "a"
+    parts.mkdir(parents=True)
+    (parts / "a_local_schema.json").write_text('{"parts": true}')
+    layout = tmp_path / "layout" / "a"
+    (layout / "graphs" / "g").mkdir(parents=True)
+    (layout / "a_local_schema.json").write_text('{"layout": true}')
+    (layout / "a_local_paths.parquet").write_text("p")
+    (layout / "graphs" / "g" / "g_local_schema.json").write_text('{"layout": true}')
+    out = assemble_selected(
+        {"a": first / "a"},
+        tmp_path / "release",
+        {"sources.yaml": registry},
+        rewritten={"a": parts},
+        rewritten_by_commit="new1",
+        layers=[({"a": layout}, "new2")],
+    )
+    assert json.loads((out / "a" / "a_local_schema.json").read_text()) == {"layout": True}
+    assert json.loads((out / "a" / "graphs" / "g" / "g_local_schema.json").read_text()) == {
+        "layout": True
+    }, "A layer reaches the schemas of graph parts"
+    assert (out / "a" / "a_local_paths.parquet").is_file(), "A layer adds files"
+    record = json.loads((out / "assembly.json").read_text())["datasets"]["a"]
+    assert [(r["commit"], r["files"]) for r in record["rewrites"]] == [
+        ("new1", ["a_local_schema.json"]),
+        ("new2", ["a_local_paths.parquet", "a_local_schema.json", "graphs/g/g_local_schema.json"]),
+    ]
+    manifest = build_release_manifest(out, release_id="r1")
+    dataset = manifest.datasets[0]
+    assert [r.commit for r in dataset.rewrites] == ["new1", "new2"]
+    used = {str(o) for o in release_to_rdf(manifest).objects(None, PROV.used)}
+    assert "https://github.com/jmillanacosta/rdfsolve/commit/new2" in used

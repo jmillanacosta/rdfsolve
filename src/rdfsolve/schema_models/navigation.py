@@ -106,6 +106,9 @@ class NavigationSummary(BaseModel):
     start_sample: int | None = Field(default=None, ge=1)
     # Member terms of the groups of ontology terms that kept paths go through (for their queries)
     member_terms: dict[str, list[str]] = Field(default_factory=dict)
+    # "network": paths holds the path the network keeps for each class pair; all tested paths
+    # are in the schema's paths file (rdfsolve.schema_models.layout), read back on a full read.
+    paths_scope: Literal["all", "network"] = "all"
 
     @model_validator(mode="before")
     @classmethod
@@ -179,46 +182,27 @@ def read_tested_paths(
 ) -> list[NavigationPath]:
     """Read the tested paths of a saved schema, only those that start at *start_classes*.
 
-    *path* is a schema JSON file (MinedSchema.to_json) whose navigation was tested on the data.
-    The paths are kept packed in the file (each step once, each path as step numbers); only the
-    paths whose first step starts at one of *start_classes* (class IRIs; all when None) and that
-    have at most *max_hops* steps become NavigationPath objects, so a few classes' paths can be
-    read without building all of them.
+    *path* is a schema JSON file whose navigation was tested on the data. The paths are kept
+    packed (each step once, each path as step numbers), in the schema's paths file or in its
+    JSON (layout.packed_paths); only the paths whose first step starts at one of
+    *start_classes* (class IRIs; all when None) and that have at most *max_hops* steps become
+    NavigationPath objects, so a few classes' paths can be read without building all of them.
     """
-    import json
-    from pathlib import Path
+    from rdfsolve.schema_models.layout import packed_paths
 
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    navigation = (data.get("schema", data) or {}).get("navigation") or {}
-    packed = navigation.get("paths")
-    if not isinstance(packed, dict):
+    packed = packed_paths(path)
+    if packed is None:
         return []
-    edges = packed.get("edges", [])
+    edges = packed.edges
     wanted = None if start_classes is None else set(start_classes)
-    shared = {
-        "evidence": "instance_tested",
-        "instance_support": "matched",
-        "graph_uris": packed.get("graph_uris", []),
-        "type_context_graph_uris": packed.get("type_context_graph_uris", []),
-    }
     found = []
-    for row in packed.get("rows", []):
+    for row in packed.rows():
         ids = row["edges"]
         if (max_hops is not None and len(ids) > max_hops) or (
             wanted is not None and edges[ids[0]].get("subject_class") not in wanted
         ):
             continue
-        found.append(
-            NavigationPath.model_validate(
-                {
-                    **shared,
-                    "steps": [edges[i] for i in ids],
-                    "matched_sources": row.get("matched"),
-                    "source_count": row.get("sources"),
-                    "observed_at": row.get("at"),
-                }
-            )
-        )
+        found.append(packed.path(row))
     return found
 
 
@@ -231,17 +215,15 @@ def tested_step_support(
     Read from the packed paths without building them (read_tested_paths builds them); only
     paths that start at *start_classes* (all when None) count.
     """
-    import json
-    from pathlib import Path
+    from rdfsolve.schema_models.layout import packed_paths
 
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    packed = ((data.get("schema", data) or {}).get("navigation") or {}).get("paths")
-    if not isinstance(packed, dict):
+    packed = packed_paths(path)
+    if packed is None:
         return {}
-    edges = packed.get("edges", [])
+    edges = packed.edges
     wanted = None if start_classes is None else set(start_classes)
     support: dict[tuple[str, str], tuple[int, int]] = {}
-    for row in packed.get("rows", []):
+    for row in packed.rows():
         first = edges[row["edges"][0]]
         key = (str(first.get("subject_class")), str(first.get("property_uri")))
         if wanted is not None and key[0] not in wanted:

@@ -35,6 +35,7 @@ from rdfsolve.qlever.inputs import (
 )
 from rdfsolve.qlever.lifecycle import exit_status
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
+from rdfsolve.schema_models.layout import write_schema
 
 from .base import PartialMiningError, Stage, write_rdf
 from .config import PipelineConfig, Source
@@ -964,7 +965,7 @@ class LocalMiningStage(Stage):
             report_path = output_dir / f"{name}{suffix}_report.json"
             with self._output_phase(miner, report_path):
                 schema_path = output_dir / f"{name}{suffix}_schema.json"
-                schema_path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+                write_schema(schema, schema_path)
                 if result.ontology:
                     ontology_path = output_dir / f"{name}{suffix}_ontology.ttl"
                     try:
@@ -1081,7 +1082,7 @@ class LocalMiningStage(Stage):
         self._save_property_usage_evidence(
             schema, output_dir, source.name, suffix, helper=helper
         )
-        (output_dir / f"{source.name}{suffix}_schema.json").write_text(json.dumps(schema.to_dict(), indent=2))
+        write_schema(schema, output_dir / f"{source.name}{suffix}_schema.json")
 
     def _ensure_qlever_image(self):
         """Require the prepared image; do not pull a new engine during mining."""

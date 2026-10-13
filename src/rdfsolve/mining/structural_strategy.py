@@ -1605,7 +1605,12 @@ class StructuralStrategy(MiningStrategy):
                     graph_uri=graph,
                     type_graph_uris=named,
                     object_type_graph_uris=context.type_context_graph_uris or [],
-                    covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
+                    # The covered types select the rows of uncovered subjects only.
+                    covered_types=(
+                        []
+                        if predicate in untyped
+                        else [(s, o, dt) for s, p, o, dt in keys if p == predicate]
+                    ),
                     subject_selection="untyped" if predicate in untyped else "uncovered",
                     count=0,
                     distinct_subjects=0,

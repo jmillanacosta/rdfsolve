@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from rdfsolve.schema_models.layout import write_schema
+
 from .config import PipelineConfig
 
 log = logging.getLogger(__name__)
@@ -523,7 +525,7 @@ class Stage:
                 navigation), when given
         """
         path = output_dir / f"{name}{suffix}_schema.json"
-        path.write_text(json.dumps(schema.to_dict(), indent=2), encoding="utf-8")
+        write_schema(schema, path)
         formats = self.config.output_formats
         if self.config.trim_descriptions is not None:
             log.warning(
@@ -592,10 +594,9 @@ class Stage:
             )
 
         path = output_dir / f"{name}{suffix}_schema.json"
-        path.write_text(
-            json.dumps(schema.to_dict(trim_descriptions=self.config.trim_descriptions), indent=2),
-            encoding="utf-8",
-        )
+        # The JSON summary and its detail files; the shapes of paths are made from the summary,
+        # whose paths are those of the network.
+        summary = write_schema(schema, path, trim_descriptions=self.config.trim_descriptions)
 
         if "json-ld" in formats:
             path = output_dir / f"{name}{suffix}_schema.jsonld"
@@ -623,10 +624,10 @@ class Stage:
                 path.write_text(
                     schema.to_shacl(trim_descriptions=trim, paths="without"), encoding="utf-8"
                 )
-                if schema.navigation is not None and schema.navigation.paths:
+                if summary.navigation is not None and summary.navigation.paths:
                     paths_file = output_dir / f"{name}{suffix}_paths.shacl.ttl"
                     paths_file.write_text(
-                        schema.to_shacl(trim_descriptions=trim, paths="only"), encoding="utf-8"
+                        summary.to_shacl(trim_descriptions=trim, paths="only"), encoding="utf-8"
                     )
             except Exception as e:
                 raise RuntimeError(f"[{name}] Could not generate SHACL: {e}") from e

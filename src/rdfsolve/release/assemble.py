@@ -16,7 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -148,6 +148,7 @@ def assemble_selected(
     rewritten: Mapping[str, str | Path] | None = None,
     rewritten_by_commit: str | None = None,
     code_commit: str | None = None,
+    layers: Sequence[tuple[Mapping[str, str | Path], str | None]] = (),
 ) -> Path:
     """Join dataset folders mined by different runs, with different code, into one release.
 
@@ -156,8 +157,10 @@ def assemble_selected(
     sssom_sources.yaml): one registry for the whole release, whatever each run used.
     *rewritten* maps a dataset to a folder of files that a later step wrote again (by
     *rewritten_by_commit*): they replace the files of the same name. *code_commit* is the
-    commit of the code that builds the release. The folders are copied; the runs are not
-    changed. assembly.json records, per dataset, the run, the commit of the code that mined it
+    commit of the code that builds the release. *layers* are further such steps, applied in
+    order after *rewritten*, each a mapping of datasets to folders and the commit of its code;
+    a layer's files replace those at the same path in the dataset folder, in subfolders as
+    well. The folders are copied; the runs are not changed. assembly.json records, per dataset, the run, the commit of the code that mined it
     (the run's code_commit.txt), the digests of the run's registry files and the files written
     again.
     """
@@ -177,12 +180,22 @@ def assemble_selected(
         if not source.is_dir():
             raise ValueError(f"No dataset folder for {dataset}: {source}")
         shutil.copytree(source, output / dataset, symlinks=False)
-        replaced: list[str] = []
-        if dataset in rewritten:
-            for path in sorted(Path(rewritten[dataset]).iterdir()):
+        rewrites: list[dict[str, Any]] = []
+        for folders, layer_commit in [(rewritten, rewritten_by_commit), *layers]:
+            if dataset not in folders:
+                continue
+            layer = Path(folders[dataset])
+            files = []
+            for path in sorted(layer.rglob("*")):
                 if path.is_file():
-                    shutil.copy2(path, output / dataset / path.name)
-                    replaced.append(path.name)
+                    relative = path.relative_to(layer)
+                    (output / dataset / relative).parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(path, output / dataset / relative)
+                    files.append(str(relative))
+            rewrites.append(
+                {"commit": layer_commit, "folder": str(layer.resolve()), "files": files}
+            )
+        replaced = rewrites[0]["files"] if rewrites and dataset in rewritten else []
         commit = run / "code_commit.txt"
         records[dataset] = {
             "run": str(run.resolve()),
@@ -190,6 +203,7 @@ def assemble_selected(
             "registry": {name: _digest(run / name) for name in SHARED if name != "code_commit.txt"},
             "rewritten_files": replaced,
             "rewritten_by_commit": rewritten_by_commit if replaced else None,
+            "rewrites": rewrites,
         }
     record = {
         "code_commit": code_commit,

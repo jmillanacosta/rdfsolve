@@ -215,14 +215,20 @@ def _dataset_activity(
         graph.add((activity, RDF.type, PROV.Activity))
         graph.add((activity, PROV.used, _commit_iri(dataset.code_commit)))
         graph.add((activity, DCTERMS.isPartOf, run))
-    if dataset.rewritten_files and dataset.rewritten_by_commit:
-        rewrite = URIRef(
-            mint_from_base(base, "activity", release_hash, dataset.dataset_id, "rewrite")
-        )
+    steps = [(r.commit, r.files) for r in dataset.rewrites] or [
+        (dataset.rewritten_by_commit, dataset.rewritten_files)
+    ]
+    informed = activity
+    for number, (commit, files) in enumerate(steps):
+        if not files or not commit:
+            continue
+        parts = ("rewrite",) if number == 0 else ("rewrite", str(number + 1))
+        rewrite = URIRef(mint_from_base(base, "activity", release_hash, dataset.dataset_id, *parts))
         graph.add((rewrite, RDF.type, PROV.Activity))
-        graph.add((rewrite, PROV.used, _commit_iri(dataset.rewritten_by_commit)))
-        graph.add((rewrite, PROV.wasInformedBy, activity))
-        written = ", ".join(dataset.rewritten_files)
+        graph.add((rewrite, PROV.used, _commit_iri(commit)))
+        graph.add((rewrite, PROV.wasInformedBy, informed))
+        written = ", ".join(files)
         graph.add((rewrite, RDFS.comment, Literal(f"Wrote again: {written}")))
         graph.add((rewrite, DCTERMS.isPartOf, run))
+        informed = rewrite
     return activity

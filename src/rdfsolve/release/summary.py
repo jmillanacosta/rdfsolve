@@ -46,11 +46,16 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
         raw = _load_json(root / rel)
         schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
         if isinstance(schema, dict):
+            # Sections written beside the JSON are counted from their details (layout).
+            details = schema.get("details") or {}
             for field in ("raw_patterns", "term_patterns", "structural_patterns"):
                 collection = schema.get(field)
                 if isinstance(collection, list):
                     retained[field] += 1
                     collections[field] += len(collection)
+                elif isinstance(details.get(field), dict):
+                    retained[field] += 1
+                    collections[field] += int(details[field].get("rows") or 0)
             subject_shapes += len(
                 {
                     (

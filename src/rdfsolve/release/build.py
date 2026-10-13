@@ -104,6 +104,7 @@ def _role(path: Path) -> str | None:
         ("_observed_profiles.json", "observed_profiles"),
         ("_term_classes.parquet", "term_classes"),
         ("_terms.parquet", "term_patterns"),
+        ("_paths.parquet", "tested_paths"),
         ("_endpoint_match.json", "endpoint_match"),
         ("_declared_identities.sssom.tsv", "declared_identities"),
         ("_declared_identities.json", "declared_identities_summary"),
@@ -619,6 +620,7 @@ def _assembled(assembly: dict[str, Any], dataset_id: str) -> dict[str, Any]:
         "code_commit": record.get("code_commit"),
         "rewritten_files": sorted(record.get("rewritten_files") or []),
         "rewritten_by_commit": record.get("rewritten_by_commit"),
+        "rewrites": record.get("rewrites") or [],
     }
 
 

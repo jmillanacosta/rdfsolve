@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 from rdflib import Graph, URIRef
 
+from rdfsolve.schema_models.layout import write_schema
+
 if TYPE_CHECKING:
     from rdfsolve.schema_models.void_schema import VoidSchema
 
@@ -133,7 +135,7 @@ def export_schema_artifacts(
     schema.about.endpoint = schema.about.endpoint or endpoint
     schema.about.dataset_name = schema.about.dataset_name or name
     canonical_path = out / f"{name}_{tag}_schema.json"
-    canonical_path.write_text(json.dumps(schema.to_dict(), indent=2) + "\n", encoding="utf-8")
+    write_schema(schema, canonical_path)
     written["schema_json"] = str(canonical_path)
 
     if fmt in ("void", "all"):

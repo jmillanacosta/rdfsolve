@@ -150,6 +150,14 @@ class InputArchiveRecord(BaseModel):
     record_artifact: str | None = None
 
 
+class RewriteRecord(BaseModel):
+    """A step that wrote files of an assembled dataset folder again (release.assemble)."""
+
+    commit: str | None = None
+    folder: str | None = None
+    files: list[str] = Field(default_factory=list)
+
+
 class DatasetReleaseRecord(BaseModel):
     """One dataset snapshot of a release and its artifacts."""
 
@@ -194,6 +202,8 @@ class DatasetReleaseRecord(BaseModel):
     assembled_from: str | None = None
     rewritten_files: list[str] = Field(default_factory=list)
     rewritten_by_commit: str | None = None
+    # Each step that wrote files of the folder again, in order: its commit and files.
+    rewrites: list[RewriteRecord] = Field(default_factory=list)
 
 
 class ReleaseManifest(BaseModel):

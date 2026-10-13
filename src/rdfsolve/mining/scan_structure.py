@@ -702,7 +702,12 @@ def _census_graph(
                     graph_uri=graph,
                     type_graph_uris=named,
                     object_type_graph_uris=context,
-                    covered_types=[(s, o, dt) for s, p, o, dt in keys if p == predicate],
+                    # The covered types select the rows of uncovered subjects only.
+                    covered_types=(
+                        [(s, o, dt) for s, p, o, dt in keys if p == predicate]
+                        if selection == "uncovered"
+                        else []
+                    ),
                     subject_selection=selection,
                     shape_semantics=semantics,
                     count=0,
