@@ -103,15 +103,23 @@ class PropertyUsageCollection(BaseModel):
 
 
 def _edges(classes: list[str], property_uri: str | None, context: list[str] | None) -> str:
-    """Match class members' edges other than rdf:type, with constants where possible."""
-    from rdfsolve.mining.query_builders import MEMBERSHIP, _bound, membership_path
+    """Match class members' edges other than rdf:type, with constants where possible.
+
+    The edges of a representative's subjects are made distinct first, so that a subject typed
+    with several of its member terms gives each edge once.
+    """
+    from rdfsolve.mining.query_builders import MEMBERSHIP, REPRESENTED, _bound, membership_path
 
     if context:
         raise ValueError("Property evidence reads types from the selected data only")
     values, cls, prop, binds = _bound(classes, property_uri)
     members = ", ".join(f"<{p}>" for p in MEMBERSHIP.get())
     rest = "" if property_uri else f" FILTER(?p NOT IN ({members}))"
-    return f"{values} ?s {membership_path()} {cls} . ?s {prop} ?o .{rest}{binds}"
+    edges = f"{values} ?s {membership_path()} {cls} . ?s {prop} ?o .{rest}"
+    if cls == REPRESENTED:
+        keep = "?class ?s" + (" ?p" if prop == "?p" else "") + " ?o"
+        edges = f"{{ SELECT DISTINCT {keep} WHERE {{ {edges} }} }}"
+    return f"{edges}{binds}"
 
 
 def _dataset_clause(graph_uris: list[str] | None) -> str:

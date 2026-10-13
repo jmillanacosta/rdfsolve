@@ -82,7 +82,14 @@ def test_terms_are_grouped_until_the_budget_holds(monkeypatch):
     assert not classes & LEAVES
     rows = _rows(schema.patterns)
     lifted = rows[T + "alcohol", EX + "mass", "Literal"]
-    assert (lifted.evidence_source, lifted.count) == ("inferred", 2)
+    # The merged row is counted again over its member terms: exact, with distinct counts.
+    assert (lifted.evidence_source, lifted.count, lifted.count_semantics) == (
+        "inferred",
+        2,
+        "endpoint_default",
+    )
+    assert (lifted.distinct_subjects, lifted.distinct_objects) == (2, 2)
+    assert report.config["ontology_term_subsumption"]["recount"]["kept_upper_bound"] == 0
     assert rows[EX + "Substance", EX + "mass", "Literal"].evidence_source == "mined"
     terms = _rows(schema.term_patterns)
     assert terms[EX + "Participant", EX + "compound", T + "propanol"].object_binding == "term"

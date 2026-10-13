@@ -200,7 +200,9 @@ def test_objects_typed_by_shape_grouped_terms_join_their_group(monkeypatch):
     }
     assert set(rows) == {EX + "Substance", group}, "No grouped term stays an object class"
     assert rows[group].subject_class == "urn:other:Reaction"
-    assert rows[group].count == 2 and rows[group].count_semantics == "upper_bound"
+    # The rows of the member terms are counted again as one row: exact, with distinct counts.
+    assert rows[group].count == 2 and rows[group].count_semantics == "endpoint_default"
+    assert (rows[group].distinct_subjects, rows[group].distinct_objects) == (1, 2)
     assert rows[group].evidence_source == "inferred"
     grouped = report.config["ontology_term_subsumption"]["object_classes_grouped_before_mining"]
     assert grouped["after"] < grouped["before"]

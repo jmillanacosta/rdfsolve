@@ -802,6 +802,7 @@ class SchemaMiner:
                     "after": len({p.object_class for p in patterns}),
                 },
             }
+            lifted: dict[str, str] | None = None
             if len(classes) > budget:
                 t0 = time.monotonic()
                 parents = fetch_superclasses(
@@ -810,6 +811,7 @@ class SchemaMiner:
                 self._report.record_query("ontology-terms/superclasses", time.monotonic() - t0)
                 chosen = choose_representatives(classes, parents, budget)
                 patterns = subsume_patterns(patterns, chosen.representative)
+                lifted = chosen.representative
                 members = chosen.members()
                 self._subsumed_classes |= set(members)
                 summary.update(
@@ -840,6 +842,21 @@ class SchemaMiner:
                         chosen.classes_after,
                         budget,
                     )
+            # The rows merged above are sums (upper bounds): count them again over the member
+            # terms of their groups. Records kept as classes join term rows, counted otherwise.
+            if not self.classes_as_data and self.counts:
+                from rdfsolve.mining.grouped_recount import group_members, recount_merged
+
+                patterns, summary["recount"] = recount_merged(
+                    patterns,
+                    group_members(self._grouped_members, lifted),
+                    self._helper,
+                    self.graph_uris,
+                    self._report,
+                    self._collect_bindings,
+                    self.chunk_size,
+                    type_context_graph_uris=self.type_context_graph_uris,
+                )
             self._report.report.config["ontology_term_subsumption"] = summary
             self._report.finish_phase(phase, items=len(patterns))
         except Exception as exc:

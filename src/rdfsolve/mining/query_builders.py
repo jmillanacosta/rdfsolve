@@ -34,6 +34,7 @@ def membership_path(properties: str | Sequence[str] | None = None) -> str:
 
 
 __all__ = [
+    "REPRESENTED",
     "UntypedSubjects",
     "Window",
     "_build_batched_blank_node_query",
@@ -51,6 +52,7 @@ __all__ = [
     "_build_class_discovery_query_plain",
     "_build_declared_classes_query",
     "_build_example_query",
+    "_build_grouped_object_count_query",
     "_build_label_query",
     "_build_literal_query",
     "_build_literal_query_plain",
@@ -209,18 +211,26 @@ class Window:
     run_first: bool = False
 
 
-def _members(cls: str, context: list[str] | None, window: Window | None) -> str:
-    """Bind ?s to the class members, or to one window of them (untyped subjects: no window)."""
+def _members(cls: str, context: list[str] | None, window: Window | None, values: str = "") -> str:
+    """Bind ?s to the class members, or to one window of them (untyped subjects: no window).
+
+    A window of a representative (*values* binds ?_member and ?class) holds its member terms
+    inside the window, so that the window is a slice of the representative's subjects.
+    """
     pattern = _type_pattern("?s", cls, context)
     if window is None or isinstance(cls, UntypedSubjects):
         return pattern
+    if cls == REPRESENTED:
+        pattern = f"{values} {pattern}"
     hint = (
         " <http://www.bigdata.com/queryHints#Prior> <http://www.bigdata.com/queryHints#runFirst> true ."
         if window.run_first
         else ""
     )
+    keep = "?s ?_member ?class" if cls == REPRESENTED else "?s"
     return (
-        f"{{ SELECT ?s WHERE {{ {pattern} }} LIMIT {window.limit} OFFSET {window.offset} }}{hint}"
+        f"{{ SELECT {keep} WHERE {{ {pattern} }} LIMIT {window.limit} OFFSET {window.offset} }}"
+        f"{hint}"
     )
 
 
@@ -249,17 +259,25 @@ def _sampled_edges(
         return f"{values}\n  {members}\n  {g_open} ?s {prop} ?o . {g_close}{binds}\n  {kind}"
     graph_var = " ?_g" if g_open else ""
     keep = (" ?class" if values else "") + (f" {prop}" if prop.startswith("?") else "")
+    # A subject typed with two members of a representative gives each edge once.
+    distinct = "DISTINCT " if cls == REPRESENTED else ""
     return (
-        f"{{ SELECT ?s ?o{graph_var}{keep} WHERE {{ {values} {_type_pattern('?s', cls, context)} "
+        f"{{ SELECT {distinct}?s ?o{graph_var}{keep} WHERE {{ {values} "
+        f"{_type_pattern('?s', cls, context)} "
         f"{g_open} ?s {prop} ?o . {g_close} {kind} }} LIMIT {sample} }}{binds}"
     )
+
+
+# The variable that binds the member terms of a representative in a query (see _bound).
+REPRESENTED = "?_member"
 
 
 class Representative(str):
     """An ontology term that stands for its member terms in the pattern queries.
 
-    Subjects typed by any member are counted under the representative; each member belongs
-    to one representative, so counts stay additive. The IRI is the representative's.
+    Subjects typed by any member are counted under the representative, each edge once even
+    when its subject is typed with several members (see _edge_set); each member belongs to
+    one representative. The IRI is the representative's.
     """
 
     members: tuple[str, ...]
@@ -275,7 +293,9 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
     """Write one class or property as constants; BIND keeps their result columns.
 
     A Representative among the classes binds ?class to the representative for subjects typed
-    by any of its members (VALUES (?_member ?class)). UntypedSubjects, alone, binds ?class to
+    by any of its members (VALUES (?_member ?class)); a subject typed with several members
+    matches once per member, so the count queries count its edges through _edge_set.
+    UntypedSubjects, alone, binds ?class to
     rdfs:Resource and returns, as the class, the subject test with the edge of the property.
     """
     binds = ""
@@ -295,7 +315,7 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
             for c in class_uris
             for member in (c.members if isinstance(c, Representative) else (c,))
         )
-        cls, values = "?_member", f"VALUES (?_member ?class) {{ {rows} }}"
+        cls, values = REPRESENTED, f"VALUES ({REPRESENTED} ?class) {{ {rows} }}"
     elif len(class_uris) == 1:
         cls, values = f"<{class_uris[0]}>", ""
         binds += f" BIND({cls} AS ?class)"
@@ -304,6 +324,31 @@ def _bound(class_uris: list[str], property_uri: str | None = None) -> tuple[str,
     if property_uri:
         binds += f" BIND({prop} AS ?p)"
     return values, cls, prop, binds
+
+
+def _edge_set(
+    values: str,
+    cls: str,
+    prop: str,
+    context: list[str] | None,
+    g_open: str,
+    g_close: str,
+    test: str = "",
+) -> str | None:
+    """Return the edges of the subjects of representatives, each once per representative.
+
+    A subject typed with two members of one representative matches the member join twice;
+    the distinct (class, subject, property, object, graph) rows count each edge once, and its
+    subject and object once in the distinct counts. *test* keeps the edges of one object kind
+    before they are made distinct. None for other classes, whose queries stay as they are.
+    """
+    if cls != REPRESENTED:
+        return None
+    keep = "?class ?s" + (" ?p" if prop == "?p" else "") + " ?o" + (" ?_g" if g_open else "")
+    return (
+        f"{{ SELECT DISTINCT {keep} WHERE {{ {values} {_type_pattern('?s', cls, context)} "
+        f"{g_open} ?s {prop} ?o . {g_close} {test} }} }}"
+    )
 
 
 def _build_object_kinds_query(
@@ -761,7 +806,7 @@ def _build_batched_typed_object_query(
         else None
     )
     edges = sampled or (
-        f"{values}\n      {_members(cls, type_context_graph_uris, window)}\n"
+        f"{values}\n      {_members(cls, type_context_graph_uris, window, values)}\n"
         f"      {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
@@ -810,7 +855,7 @@ def _build_batched_literal_query(
         else None
     )
     edges = sampled or (
-        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"{values}\n  {_members(cls, type_context_graph_uris, window, values)}\n"
         f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
@@ -855,7 +900,7 @@ def _build_batched_untyped_uri_query(
         else None
     )
     edges = sampled or (
-        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"{values}\n  {_members(cls, type_context_graph_uris, window, values)}\n"
         f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
@@ -901,7 +946,7 @@ def _build_batched_blank_node_query(
         else None
     )
     edges = sampled or (
-        f"{values}\n  {_members(cls, type_context_graph_uris, window)}\n"
+        f"{values}\n  {_members(cls, type_context_graph_uris, window, values)}\n"
         f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
     distinct = "" if (paginated and drop_distinct) else "DISTINCT "
@@ -939,6 +984,11 @@ def _build_batched_typed_count_query(
     edges = f"""{values}
   {_type_pattern("?s", cls, type_context_graph_uris)}
   {g_open} ?s {prop} ?o . {g_close}{binds}"""
+    grouped = _edge_set(
+        values, cls, prop, type_context_graph_uris, g_open, g_close, "FILTER(!isLiteral(?o))"
+    )
+    if grouped:
+        edges = grouped + binds
     if sample:
         edges = _sampled_edges(
             values,
@@ -992,13 +1042,19 @@ def _build_class_property_total_query(
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, prop, binds = _bound(class_uris, property_uri)
     graph_var = (" ?_g" if g_open else "") + (f" {group}" if group else "")
+    grouped = _edge_set(values, cls, prop, type_context_graph_uris, g_open, g_close)
+    edges = (
+        f"{grouped}{binds}"
+        if grouped
+        else f"""{values}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s {prop} ?o . {g_close}{binds}"""
+    )
     return f"""\
 SELECT ?class{graph_var} (COUNT(*) AS ?cnt) (COUNT(DISTINCT ?s) AS ?subjects)
 {dataset}
 WHERE {{
-  {values}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
-  {g_open} ?s {prop} ?o . {g_close}{binds}
+  {edges}
   {object_test}
 }}
 GROUP BY ?class{graph_var}"""
@@ -1023,6 +1079,11 @@ def _build_batched_literal_count_query(
       {g_open} ?s {prop} ?o . {g_close}{binds}
       FILTER(isLiteral(?o))
       BIND(DATATYPE(?o) AS ?dt)"""
+    grouped = _edge_set(
+        values, cls, prop, type_context_graph_uris, g_open, g_close, "FILTER(isLiteral(?o))"
+    )
+    if grouped:
+        edges = f"{grouped}{binds}\n      BIND(DATATYPE(?o) AS ?dt)"
     if sample:
         edges = _sampled_edges(
             values,
@@ -1110,6 +1171,11 @@ def _build_batched_untyped_count_query(
         f"{values}\n  {_type_pattern('?s', cls, type_context_graph_uris)}\n"
         f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
+    grouped = _edge_set(
+        values, cls, prop, type_context_graph_uris, g_open, g_close, "FILTER(isURI(?o))"
+    )
+    if grouped:
+        edges = grouped + binds
     if sample:
         edges = _sampled_edges(
             values,
@@ -1155,6 +1221,11 @@ def _build_batched_blank_node_count_query(
         f"{values}\n  {_type_pattern('?s', cls, type_context_graph_uris)}\n"
         f"  {g_open} ?s {prop} ?o . {g_close}{binds}"
     )
+    grouped = _edge_set(
+        values, cls, prop, type_context_graph_uris, g_open, g_close, "FILTER(isBlank(?o))"
+    )
+    if grouped:
+        edges = grouped + binds
     if sample:
         edges = _sampled_edges(
             values,
@@ -1177,3 +1248,42 @@ WHERE {{
 }}
 GROUP BY ?class ?p{graph_var}"""
     return SparqlHelper.prepare_paginated_query(query) if paginated else query
+
+
+def _build_grouped_object_count_query(
+    class_uris: list[str],
+    graph_uris: list[str] | None,
+    property_uri: str,
+    object_groups: dict[str, Sequence[str]],
+    type_context_graph_uris: list[str] | None = None,
+) -> str:
+    """Count the edges of one property whose objects are typed by members of a group.
+
+    *object_groups* maps each object group to its member terms. Each edge counts once per
+    (class, object group) and edge graph, however many members type its subject or object,
+    with its distinct subjects and objects.
+    """
+    dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
+    values, cls, prop, binds = _bound(class_uris, property_uri)
+    graph_var = " ?_g" if g_open else ""
+    rows = " ".join(
+        f"(<{member}> <{group}>)"
+        for group, members in object_groups.items()
+        for member in dict.fromkeys(members)
+    )
+    return f"""\
+SELECT ?class ?p ?oc{graph_var} (COUNT(*) AS ?cnt)
+       (COUNT(DISTINCT ?s) AS ?subjects) (COUNT(DISTINCT ?o) AS ?objects)
+{dataset}
+WHERE {{
+  {{
+    SELECT DISTINCT ?class ?s ?p ?o ?oc{graph_var} WHERE {{
+      {values}
+      {_type_pattern("?s", cls, type_context_graph_uris)}
+      {g_open} ?s {prop} ?o . {g_close}{binds}
+      VALUES (?_objectMember ?oc) {{ {rows} }}
+      {_type_pattern("?o", "?_objectMember", type_context_graph_uris)}
+    }}
+  }}
+}}
+GROUP BY ?class ?p ?oc{graph_var}"""

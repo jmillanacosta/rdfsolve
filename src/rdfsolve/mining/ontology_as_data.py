@@ -17,6 +17,7 @@ from typing import Any
 from rdfsolve._outcomes import QueryOutcome
 from rdfsolve.mining.query_builders import (
     MEMBERSHIP,
+    REPRESENTED,
     _bound,
     _context_pattern,
     _graph_scope,
@@ -102,13 +103,17 @@ def build_term_object_pair_query(
     dataset, g_open, g_close = _graph_scope(graph_uris, type_context_graph_uris)
     values, cls, _, _ = _bound([class_uri])
     graph_var = " ?_g" if g_open else ""
+    edges = f"""{values} VALUES ?p {{ <{property_uri}> }}
+  {_type_pattern("?s", cls, type_context_graph_uris)}
+  {g_open} ?s ?p ?t . {g_close}"""
+    if cls == REPRESENTED:
+        # A subject typed with several member terms of the group gives each edge once.
+        edges = f"{{ SELECT DISTINCT ?s ?p ?t{graph_var} WHERE {{ {edges} }} }}"
     return f"""\
 SELECT ?t{graph_var} (COUNT(*) AS ?n)
 {dataset}
 WHERE {{
-  {values} VALUES ?p {{ <{property_uri}> }}
-  {_type_pattern("?s", cls, type_context_graph_uris)}
-  {g_open} ?s ?p ?t . {g_close}
+  {edges}
   {_term_filter("?t", None)}
   FILTER(isIRI(?s) && isIRI(?t))
   FILTER NOT EXISTS {{ ?s a <{OWL_CLASS}> }}
