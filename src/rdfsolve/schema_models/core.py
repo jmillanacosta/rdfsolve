@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.class_extensions import ClassExtensions
+from rdfsolve.schema_models.class_parts import ClassParts
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
@@ -79,6 +80,11 @@ class MinedSchema(BaseModel):
         None,
         description="Classes with the same members and the nearest classes that hold all members "
         "of another, measured in the data; None means not measured",
+    )
+    class_parts: ClassParts | None = Field(
+        None,
+        description="The parts of each class by how its members are identified (registered "
+        "identifiers, other namespaces, blank nodes), counted in the data; None means not counted",
     )
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"

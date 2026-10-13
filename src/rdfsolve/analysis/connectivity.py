@@ -14,6 +14,7 @@ from rdfsolve.mappings.confidence import agent_type, edge_type, knowledge_level
 from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
 
 if TYPE_CHECKING:
+    from rdfsolve.mappings.instances import DerivedClassMapping
     from rdfsolve.mappings.models.core import MappingEdge
     from rdfsolve.mappings.routes import RouteEvidence
     from rdfsolve.mappings.signatures import Link, LinkEvidence
@@ -53,6 +54,7 @@ def build_connectivity(
     links: Sequence[LinkEvidence] = (),
     candidates: Sequence[Link] = (),
     routes: Sequence[RouteEvidence] = (),
+    derived: Sequence[DerivedClassMapping] = (),
     min_share: float = 0.5,
     untyped_subjects: bool = False,
 ) -> Any:
@@ -62,7 +64,11 @@ def build_connectivity(
     verified links (rdfsolve.mappings.signatures.verify) and proposed links (*candidates*)
     remain distinct edges, each with its level of evidence (LEVELS). A link of which no value
     was found is left out. A route across two datasets that was tested on the data (*routes*,
-    rdfsolve.mappings.routes) is one edge. No transitive mapping inference is run.
+    rdfsolve.mappings.routes) is one edge. A class mapping derived from the instances of two
+    classes (*derived*, rdfsolve.mappings.instances) is an instance_derived edge, of edge type
+    INSTANCE_DERIVED, with the edge type of its predicate and the derivation recorded; a record
+    link derived so is an instance_derived edge of edge type INSTANCE_LINK, with its properties.
+    One whose classes are not both in the graph is left out. No transitive mapping inference is run.
 
     The subjects without a type of a dataset (its untyped patterns) are not a class. With
     *untyped_subjects* they are one node, (dataset, "untyped subjects") with untyped=True, with
@@ -193,6 +199,13 @@ def build_connectivity(
                 "validation": "candidate",
             },
         )
+    for found in derived:
+        left = (found.source_dataset, found.source_class)
+        right = (found.target_dataset, found.target_class)
+        if left in graph and right in graph:
+            graph.add_edge(
+                left, right, kind="instance_derived", predicate=found.predicate, **found.edge()
+            )
     for tested in routes:
         route = tested.route
         left, right = (route.link.source, route.start_class), (route.link.target, route.end_class)

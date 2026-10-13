@@ -29,8 +29,8 @@ class SSSOMSeedingStage(Stage):
 
         write_release_manifest(build_release_manifest(self.config.output_dir), self.config.output_dir)
 
-        schemas = [(dataset, schema) for dataset, _, schema in iter_extractions(self.config.output_dir)
-                   if schema is not None]
+        extractions = list(iter_extractions(self.config.output_dir))
+        schemas = [(dataset, schema) for dataset, _, schema in extractions if schema is not None]
         from rdfsolve.config import mint
 
         dataset_void_uris = {name: mint("dataset", name) for name, _ in schemas}
@@ -55,11 +55,32 @@ class SSSOMSeedingStage(Stage):
             f"Enriched {total_enriched} mappings from {len(results)} sources ({errors} errors)"
         )
 
+        # The rows whose ends are instances of the datasets: instance mappings, linksets and
+        # the class mappings derived from them (mappings/instance, linksets, derived).
+        from rdfsolve.mappings.instances import derive_instance_mappings, instance_inputs
+
+        by_dataset, stores = instance_inputs(
+            extractions, self.config.output_dir, self.config.data_dir
+        )
+        instances = derive_instance_mappings(
+            self.config.sssom_sources_file,
+            by_dataset,
+            stores,
+            self.config.output_dir,
+            creator_id=self.config.creator_id,
+            creator_label=self.config.creator_label,
+        )
+
         return {
             "sources": len(results),
             "enriched_mappings": total_enriched,
             "failed": errors,
             "details": results,
+            "instance_mappings": {
+                "local_stores": len(stores),
+                "derived": instances["derived"],
+                "linksets": instances["linksets"],
+            },
         }
 
 

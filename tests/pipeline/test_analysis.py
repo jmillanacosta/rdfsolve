@@ -156,7 +156,10 @@ def test_release_analysis_keeps_channels_partial_evidence_and_shapes(tmp_path, m
         return {"fixture": 1}
 
     monkeypatch.setattr("rdfsolve.mappings.enrichment.enrich_external_sssom_sources", retain)
-    assert SSSOMSeedingStage(config).run()["success"]
+    seeded = SSSOMSeedingStage(config).run()
+    assert seeded["success"]
+    assert seeded["instance_mappings"]["derived"] == 0, "Instance mappings follow the selection"
+    assert (tmp_path / "mappings/derived/instance-derived.sssom.tsv").is_file()
 
     report_path = tmp_path / "typed/typed_remote_report.json"
     report_bytes = report_path.read_bytes()

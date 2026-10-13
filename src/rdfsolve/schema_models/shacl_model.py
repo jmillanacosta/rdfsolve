@@ -275,6 +275,14 @@ class ShaclNodeShape(BaseModel):
     )
     closed: bool = Field(False, description="sh:closed")
     pattern: str | None = Field(None, description="sh:pattern: the IRIs of the focus nodes")
+    node_kind: str | None = Field(None, description="sh:nodeKind of the focus nodes (local name)")
+    parts: list[str] = Field(
+        default_factory=list,
+        description="Node shapes combined with sh:or: a focus node conforms to one of them",
+    )
+    not_shapes: list[str] = Field(
+        default_factory=list, description="sh:not: node shapes a focus node does not conform to"
+    )
     deactivated: bool = False
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
@@ -308,6 +316,16 @@ class ShaclNodeShape(BaseModel):
             head = BNode()
             Collection(graph, head, members)
             graph.add((uri, sh["or"], head))
+        if self.parts:
+            from rdflib.collection import Collection
+
+            head = BNode()
+            Collection(graph, head, [Ref(part) for part in self.parts])
+            graph.add((uri, sh["or"], head))
+        for other in self.not_shapes:
+            graph.add((uri, sh["not"], Ref(other)))
+        if self.node_kind is not None:
+            graph.add((uri, sh.nodeKind, sh[self.node_kind]))
         if self.deactivated:
             graph.add((uri, sh.deactivated, RdfLiteral(True)))
         if self.pattern is not None:
@@ -346,10 +364,19 @@ class ShaclNodeShape(BaseModel):
 
         target_class = graph.value(uri, sh.targetClass, any=False)
         target_subjects_of = sorted(str(p) for p in graph.objects(uri, sh.targetSubjectsOf))
+        from rdflib.namespace import RDF
+
+        # A branch of sh:or that is a named node shape is a part; any other, an alternative.
+        branches = [branch for head in graph.objects(uri, sh["or"]) for branch in graph.items(head)]
+        parts = [
+            str(b)
+            for b in branches
+            if not isinstance(b, BNode) and (b, RDF.type, sh.NodeShape) in graph
+        ]
         alternatives = [
             ShaclPropertyShape.from_rdf(graph, branch)
-            for head in graph.objects(uri, sh["or"])
-            for branch in graph.items(head)
+            for branch in branches
+            if str(branch) not in parts
         ]
         name, name_language = _text(graph, uri, RDFS.label)
         if name is None:
@@ -357,6 +384,7 @@ class ShaclNodeShape(BaseModel):
         description, description_language = _text(graph, uri, RDFS.comment)
         if description is None:
             description, description_language = _text(graph, uri, sh.description)
+        kind = graph.value(uri, sh.nodeKind, any=False)
 
         property_shapes = []
         for ps_uri in graph.objects(uri, sh.property):
@@ -369,6 +397,9 @@ class ShaclNodeShape(BaseModel):
             alternatives=alternatives,
             closed=_boolean(graph, uri, sh.closed),
             pattern=str(pattern) if (pattern := graph.value(uri, sh.pattern, any=False)) else None,
+            node_kind=str(kind).rsplit("#", 1)[-1] if kind is not None else None,
+            parts=parts,
+            not_shapes=sorted(str(o) for o in graph.objects(uri, sh["not"])),
             deactivated=_boolean(graph, uri, sh.deactivated),
             ignored_properties=[
                 str(item)

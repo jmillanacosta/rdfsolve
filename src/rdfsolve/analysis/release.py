@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import replace
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ from typing import Any
 from rdfsolve.analysis.connectivity import build_connectivity
 from rdfsolve.analysis.io import iter_extractions, read_class_mappings
 from rdfsolve.analysis.overlap import jaccard_similarity
+from rdfsolve.mappings.instances import read_derived_mappings, read_instance_links
 from rdfsolve.release.build import sha256_file
 from rdfsolve.release.model import ReleaseManifest
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
@@ -204,11 +206,19 @@ def analyze_release(
             }
         )
 
-    mappings = []
+    mappings, derived_paths, link_paths = [], [], []
     for artifact in manifest.artifacts:
         relative = Path(artifact.path)
         if relative.parent == Path("mappings/enriched") and relative.name.endswith(".sssom.tsv"):
             mappings.append(verified_path(artifact.path))
+        if relative.parent == Path("mappings/derived") and relative.name.endswith(".sssom.tsv"):
+            derived_paths.append(verified_path(artifact.path))
+        if relative == Path("mappings/derived/instance-links.tsv"):
+            link_paths.append(verified_path(artifact.path))
+    # Class mappings and record links derived from instances (rdfsolve.mappings.instances),
+    # by dataset name.
+    derived = [m for path in derived_paths for m in read_derived_mappings(path)]
+    derived += [m for path in link_paths for m in read_instance_links(path)]
 
     channels, graphs = {}, {}
     for mode in sorted({row["mode"] for row in inventory}):
@@ -223,7 +233,19 @@ def analyze_release(
             found, report = read_class_mappings(path, selected)
             edges.extend(found)
             imports[str(path.relative_to(root))] = report
-        graph = build_connectivity(selected, class_mappings=edges)
+        by_name = {
+            row["dataset_id"]: row["schema_path"] for row in attempts if row["views"] is not None
+        }
+        derived_here = [
+            replace(
+                m,
+                source_dataset=by_name[m.source_dataset],
+                target_dataset=by_name[m.target_dataset],
+            )
+            for m in derived
+            if m.source_dataset in by_name and m.target_dataset in by_name
+        ]
+        graph = build_connectivity(selected, class_mappings=edges, derived=derived_here)
         metadata = {row["schema_path"]: row for row in attempts}
         for (key, _), data in graph.nodes(data=True):
             data.update(
@@ -247,6 +269,14 @@ def analyze_release(
             "class_nodes": len(graph),
             "schema_edges": sum(d["kind"] == "schema" for _, _, d in graph.edges(data=True)),
             "explicit_mapping_edges": len(edges),
+            "instance_derived_edges": sum(
+                d["kind"] == "instance_derived" and d["edge_type"] == "INSTANCE_DERIVED"
+                for _, _, d in graph.edges(data=True)
+            ),
+            "instance_link_edges": sum(
+                d["kind"] == "instance_derived" and d["edge_type"] == "INSTANCE_LINK"
+                for _, _, d in graph.edges(data=True)
+            ),
             "sampled_schema_extractions": sum(
                 bool(r["sampled_graphs"]) for r in attempts if r["views"] is not None
             ),

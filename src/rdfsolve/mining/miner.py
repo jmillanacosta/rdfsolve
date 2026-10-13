@@ -1444,6 +1444,11 @@ class SchemaMiner:
             phase = self._report.start_phase("class-extensions")
             schema.class_extensions = scan_structure.class_extensions(members, counted)
             self._report.finish_phase(phase, items=len(schema.class_extensions.members))
+            from rdfsolve.mining.class_parts import class_parts
+
+            phase = self._report.start_phase("class-parts")
+            schema.class_parts = class_parts(members.members(), [str(c) for c in counted])
+            self._report.finish_phase(phase, items=len(schema.class_parts.by_class))
         elif self.counts and not self._own_view:
             from rdfsolve.mining.pattern_enrichment import query_class_entity_counts
 

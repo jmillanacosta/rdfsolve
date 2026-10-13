@@ -376,6 +376,17 @@ def to_void_graph(schema: MinedSchema, *, trim_descriptions: int | None = None) 
         state = schema.about.class_entity_count_states.get(subject_class, "complete")
         if count is not None and state == "complete":
             g.add((class_partition_uri, void.entities, RdfLiteral(count, datatype=XSD.integer)))
+        parts = schema.class_parts.by_class.get(subject_class) if schema.class_parts else None
+        if parts and schema.class_parts is not None and schema.class_parts.complete:
+            from rdfsolve.schema_models.class_parts import add_void_parts
+            from rdfsolve.schema_models.exporters.shacl import shape_iri
+
+            add_void_parts(
+                g,
+                class_partition_uri,
+                shape_iri(schema.about.dataset_name or "", subject_class),
+                parts,
+            )
 
         # Add property partitions within this class partition
         for prop_uri in sorted(class_prop_patterns[subject_class].keys()):

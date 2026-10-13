@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 
 from rdfsolve.schema_models.collections import CollectionProfile
@@ -13,6 +14,8 @@ from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShap
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
+# A SPARQL prefix name (PN_PREFIX, ASCII): a letter first, no dot last.
+_PREFIX_NAME = re.compile(r"^[A-Za-z]([A-Za-z0-9_.-]*[A-Za-z0-9_-])?$")
 
 
 def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
@@ -289,7 +292,9 @@ def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
 
 
 def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str) -> None:
-    """Give each node shape the namespaces of its class's example IRIs as sh:pattern.
+    """Give each node shape the ways its members are identified: the parts of its class counted
+    in the data (schema.class_parts) as named shapes combined with sh:or, else the namespaces of
+    its class's example IRIs as sh:pattern.
 
     The namespaces of registered identifiers are also declared with their prefixes (sh:declare)
     on a declarations resource of that class, so that a reader can tell which registered identifiers
@@ -320,12 +325,25 @@ def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: s
     for class_iri, found_namespaces in sorted(namespaces.items()):
         by_prefix: dict[str, str] = {}
         for namespace, prefix in sorted(found_namespaces.items()):
-            if prefix:
+            # A prefix that is no SPARQL prefix name cannot be declared; its namespace stays in
+            # the class's sh:pattern.
+            if prefix and _PREFIX_NAME.match(prefix):
                 by_prefix.setdefault(prefix, namespace)
         if by_prefix:
             identity = sha256(class_iri.encode()).hexdigest()[:16]
             shapes.declare_prefixes(by_prefix, resource=f"{base_uri}identifiers-{identity}")
-    for shape in shapes.node_shapes:
+    counted = schema.class_parts.by_class if schema.class_parts is not None else {}
+    for shape in list(shapes.node_shapes):
+        parts = counted.get(shape.target_class or "")
+        if parts and shape.pattern is None:
+            # The parts counted over every member: named shapes, one of which each member meets.
+            from rdfsolve.schema_models.class_parts import part_shapes
+
+            label = shape.name or (shape.target_class or "").rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+            named = part_shapes(shape.uri, label, parts)
+            shape.parts = [part.uri for part in named]
+            shapes.node_shapes += named
+            continue
         if shape.pattern is None and shape.target_class in namespaces:
             escaped = (
                 "".join("\\" + c if c in special else c for c in namespace)

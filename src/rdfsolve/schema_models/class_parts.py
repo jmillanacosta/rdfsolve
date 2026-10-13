@@ -1,0 +1,193 @@
+"""The parts of each class by how its members are identified, counted in the data.
+
+The members of one class can be named in many ways: IRIs of several registered identifier
+namespaces, IRIs of a namespace whose local part is not a valid identifier there, IRIs of other
+namespaces, or blank nodes. Each way is a part of the class (ClassPart), counted over every
+member. A part is published as a SHACL node shape without a target, so that a node belongs to
+the part when it conforms to the shape (SHACL 3.5); the node shape of the class lists its parts
+with sh:or, so that a member named in no counted way is reported. In VoID, a part is a subset
+of the class partition with its number of entities, conforming to the part's shape.
+"""
+
+from __future__ import annotations
+
+from hashlib import md5
+from typing import TYPE_CHECKING, Literal
+
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from rdflib import Graph, URIRef
+
+    from rdfsolve.schema_models.shacl_model import ShaclNodeShape
+
+__all__ = ["ClassPart", "ClassParts", "part_label", "part_shape_iri", "part_shape_iri_of_key"]
+
+PartKind = Literal["identifier", "invalid_identifier", "namespace", "relative_iri", "blank_node"]
+_SPECIAL = set("\\.?*+(){}|[]^$")
+
+
+class ClassPart(BaseModel):
+    """One way in which members of a class are identified, and how many members are so.
+
+    *kind*: identifier (a valid identifier of a registered *prefix*), invalid_identifier (an
+    IRI in a registered namespace of *prefix* whose local part is not valid there), namespace
+    (an IRI of none of the registered namespaces; *namespaces* holds its start: the scheme,
+    host and first path segment), relative_iri (an IRI without a scheme, which RDF does not
+    allow) or blank_node. *namespaces* are the IRI starts the members
+    are written with; *pattern* the prefix's pattern of local identifiers, where known.
+    """
+
+    kind: PartKind
+    prefix: str | None = None
+    namespaces: list[str] = Field(default_factory=list)
+    pattern: str | None = None
+    peels: list[str] = Field(
+        default_factory=list,
+        description="Prefixes a local identifier may be written with (any case), as read",
+    )
+    entities: int
+
+    def key(self) -> str:
+        """Return what distinguishes the part within its class: its kind and its prefix, or its
+        namespace for IRIs of no registered namespace (part_key in rdfsolve.mining.class_parts).
+        """
+        if self.kind == "namespace":
+            return f"namespace|{self.namespaces[0] if self.namespaces else ''}"
+        return f"{self.kind}|{self.prefix or ''}"
+
+
+class ClassParts(BaseModel):
+    """The parts of each class (*by_class*: class IRI to its parts, the largest first).
+
+    *complete* is False when the parts were read from examples, not counted over every member.
+    """
+
+    by_class: dict[str, list[ClassPart]] = Field(default_factory=dict)
+    complete: bool = True
+
+
+def part_label(class_label: str, part: ClassPart) -> str:
+    """Return the label of a part of a class, e.g. "DataNode identified in uniprot"."""
+    if part.kind == "identifier":
+        return f"{class_label} identified in {part.prefix}"
+    if part.kind == "invalid_identifier":
+        return (
+            f"{class_label} with an IRI of {part.prefix} that is no valid {part.prefix} identifier"
+        )
+    if part.kind == "blank_node":
+        return f"{class_label} as blank nodes"
+    if part.kind == "relative_iri":
+        return f"{class_label} with IRIs without a scheme"
+    return f"{class_label} with IRIs in {part.namespaces[0] if part.namespaces else 'no namespace'}"
+
+
+def part_shape_iri(class_shape: str, part: ClassPart) -> str:
+    """Return the IRI of the node shape of a part: the class shape's IRI and a hash of the part's
+    key, so that it stays the same across releases while the part persists.
+    """
+    return part_shape_iri_of_key(class_shape, part.key())
+
+
+def part_shape_iri_of_key(class_shape: str, key: str) -> str:
+    """Return the IRI of the node shape of the part with this key (ClassPart.key)."""
+    return f"{class_shape}-part-{md5(key.encode(), usedforsecurity=False).hexdigest()[:8]}"
+
+
+def _escape(text: str) -> str:
+    """Return *text* as a regular expression that matches it literally."""
+    return "".join("\\" + c if c in _SPECIAL else c for c in text)
+
+
+def _any_case(text: str) -> str:
+    """Return the regular expression of *text* in any case."""
+    return "".join(
+        f"[{c.lower()}{c.upper()}]" if c.lower() != c.upper() else _escape(c) for c in text
+    )
+
+
+def _within(inner: ClassPart, outer: ClassPart) -> bool:
+    """Return whether the IRIs of *inner* also match the namespaces of *outer*, so that *outer*
+    excludes them: a longer namespace that starts with one of *outer*'s, or the same namespace
+    as a part of no registered namespace when *inner* is a valid identifier.
+    """
+    if inner is outer or {inner.kind, outer.kind} & {"blank_node", "relative_iri"}:
+        return False
+    for a in inner.namespaces:
+        for b in outer.namespaces:
+            if a != b and a.startswith(b):
+                return True
+            if a == b and outer.kind == "namespace" and inner.kind == "identifier":
+                return True
+    return False
+
+
+def _starts(namespaces: list[str]) -> str:
+    """Return the regular expression of IRIs that start with one of *namespaces*."""
+    return "^(" + "|".join(_escape(n) for n in sorted(namespaces)) + ")"
+
+
+def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> list[ShaclNodeShape]:
+    """Return the node shapes of the parts of one class (without targets).
+
+    An identifier part matches its namespaces followed by a valid local identifier; an invalid
+    identifier part matches its namespaces and not the identifier part of the same prefix.
+    """
+    from rdfsolve.schema_models.shacl_model import ShaclNodeShape
+
+    shapes: list[ShaclNodeShape] = []
+    valid = {p.prefix: part_shape_iri(class_shape, p) for p in parts if p.kind == "identifier"}
+    for part in parts:
+        uri = part_shape_iri(class_shape, part)
+        shape = ShaclNodeShape(
+            uri=uri,
+            name=part_label(class_label, part),
+            description=f"{part.entities} members counted in the data",
+        )
+        if part.kind == "blank_node":
+            shape.node_kind = "BlankNode"
+        elif part.kind == "relative_iri":
+            shape.pattern = "^[^:]*$"
+        elif part.kind == "identifier" and part.pattern:
+            # XPath regular expressions (sh:pattern) have no non-capturing groups.
+            local = part.pattern.removeprefix("^").removesuffix("$").replace("(?:", "(")
+            peels = "|".join(_any_case(p) for p in sorted(set(part.peels)))
+            shape.pattern = (
+                _starts(part.namespaces) + (f"({peels})?" if peels else "") + "(" + local + ")$"
+            )
+        else:
+            shape.pattern = _starts(part.namespaces)
+        if part.kind == "invalid_identifier" and part.prefix in valid:
+            shape.not_shapes = [valid[part.prefix]]
+        shape.not_shapes += [
+            part_shape_iri(class_shape, other) for other in parts if _within(other, part)
+        ]
+        if part.kind != "blank_node":
+            shape.node_kind = "IRI"
+        shapes.append(shape)
+    return shapes
+
+
+def add_void_parts(
+    graph: Graph, class_partition: URIRef, class_shape: str, parts: list[ClassPart]
+) -> None:
+    """Add the parts of a class to its VoID class partition: one subset each, with its entities,
+    its URI space (one namespace) or URI pattern, and the part's shape (dcterms:conformsTo).
+    """
+    from rdflib import Literal, URIRef
+    from rdflib.namespace import DCTERMS, RDF, XSD, Namespace
+
+    void = Namespace("http://rdfs.org/ns/void#")
+    for part in parts:
+        shape = part_shape_iri(class_shape, part)
+        node = URIRef(str(class_partition) + "-part-" + shape.rsplit("-part-", 1)[1])
+        graph.add((class_partition, void.subset, node))
+        graph.add((node, RDF.type, void.Dataset))
+        graph.add((node, void.entities, Literal(part.entities, datatype=XSD.integer)))
+        graph.add((node, DCTERMS.conformsTo, URIRef(shape)))
+        if part.kind == "relative_iri":
+            graph.add((node, void.uriRegexPattern, Literal("^[^:]*$")))
+        elif part.kind != "blank_node" and len(part.namespaces) == 1:
+            graph.add((node, void.uriSpace, Literal(part.namespaces[0])))
+        elif part.kind != "blank_node":
+            graph.add((node, void.uriRegexPattern, Literal(_starts(part.namespaces))))
