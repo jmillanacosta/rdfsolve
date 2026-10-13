@@ -815,40 +815,45 @@ def property_usage_evidence(
     # id (sid), the classes as an enum, and the values of a subject as its rows: by text and a
     # set of values per subject, the value counts of a large predicate take several times the
     # memory.
-    members = (
-        store.type_ids()
-        .select("sid", c=_bare(pl.col("c")))
-        .filter(pl.col("c").is_in(measured))
-        .unique()
-        .with_columns(c=pl.col("c").cast(pl.Enum(sorted(set(measured)))))
-    )
+    names = sorted(set(measured))
     found: list[list[tuple[Any, ...]]] = [[], [], [], []]
-    for predicate in data:
-        edges = store.rows(predicate).join(members, on="sid").with_columns(lang=_language())
-        frames = pl.collect_all(
-            [
-                edges.group_by("c").agg(
-                    triples=pl.len(),
-                    subjects=pl.col("sid").n_unique(),
-                    objects=pl.col("oid").n_unique(),
-                ),
-                edges.group_by("c", "kind").agg(n=pl.len()),
-                edges.filter(pl.col("kind") == "literal")
-                .group_by("c", "d", "lang")
-                .agg(n=pl.len()),
-                # rows() gives each triple once: a subject's rows are its distinct values.
-                edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
-            ],
-            engine="streaming",
+    # The members table is made once, by id: the subject id and the position of its class in
+    # *names*. Every predicate joins it from a file, instead of reading the type table, making it
+    # distinct and matching its class IRIs as text again for each predicate.
+    work = Path(tempfile.mkdtemp(prefix="scan-evidence-"))
+    try:
+        (
+            store.type_ids()
+            .select("sid", c=_bare(pl.col("c")))
+            .filter(pl.col("c").is_in(names))
+            .unique()
+            .select("sid", c=pl.col("c").cast(pl.Enum(names)).to_physical())
+            .sink_parquet(work / "members.parquet")
         )
-        frames = [
-            frame.with_columns(pl.col("c").cast(pl.String), p=pl.lit(predicate)).select(
-                "c", "p", *frame.columns[1:]
+        members = pl.scan_parquet(work / "members.parquet")
+        for predicate in data:
+            edges = store.rows(predicate).join(members, on="sid").with_columns(lang=_language())
+            frames = pl.collect_all(
+                [
+                    edges.group_by("c").agg(
+                        triples=pl.len(),
+                        subjects=pl.col("sid").n_unique(),
+                        objects=pl.col("oid").n_unique(),
+                    ),
+                    edges.group_by("c", "kind").agg(n=pl.len()),
+                    edges.filter(pl.col("kind") == "literal")
+                    .group_by("c", "d", "lang")
+                    .agg(n=pl.len()),
+                    # rows() gives each triple once: a subject's rows are its distinct values.
+                    edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
+                ],
+                engine="streaming",
             )
-            for frame in frames
-        ]
-        for out, frame in zip(found, frames, strict=True):
-            out.extend(frame.iter_rows())
+            for out, frame in zip(found, frames, strict=True):
+                for row in frame.iter_rows():
+                    out.append((names[row[0]], predicate, *row[1:]))
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
     for offset in range(0, len(measured), size):
         batch = set(measured[offset : offset + size])
         summary, kinds, literals, histogram = ([r for r in rows if r[0] in batch] for rows in found)
