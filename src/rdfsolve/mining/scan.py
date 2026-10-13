@@ -2482,17 +2482,13 @@ def count_patterns(
             scratch.append(Path(tempfile.mkdtemp(prefix=".count-", dir=store.base.path)))
         return scratch[0]
 
-    def classify(
-        rows: pl.DataFrame,
-        subjects: pl.DataFrame,
-        typed_subjects: pl.DataFrame,
-        objects: pl.DataFrame,
-    ) -> list[pl.DataFrame]:
-        """Give each row its patterns: the keys with sid and oid, in four tables (literal,
-        typed object, untyped IRI object, blank object).
+    def by_subject(
+        rows: pl.DataFrame, subjects: pl.DataFrame, typed_subjects: pl.DataFrame
+    ) -> tuple[pl.DataFrame, pl.DataFrame]:
+        """Give each row the classes of its subject: the literal rows with their keys, sid and
+        oid, and the other rows (keys without the object class, kind, sid, oid), whose
+        object classes by_object gives.
         """
-        # The predicates of a blank node are read in the RDF merge of the data graphs
-        # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
         typed = rows.join(subjects, on="sid", how="inner")
         # IRI subjects without a type, under one subject class of their own (UNTYPED).
         untyped_subjects = (
@@ -2509,11 +2505,26 @@ def count_patterns(
                 how="vertical_relaxed",
             )
         literal = typed.filter(pl.col("kind") == "literal").with_columns(
-            object_class=pl.lit("Literal").cast(pl.Categorical), datatype=pl.col("d")
+            object_class=pl.lit("Literal").cast(pl.Categorical),
+            datatype=pl.col("d"),
+            subject_class=pl.col("subject_class").cast(pl.Categorical),
         )
-        nonliteral = typed.filter(pl.col("kind") != "literal").with_columns(
-            datatype=pl.lit(None, pl.Categorical)
+        nonliteral = typed.filter(pl.col("kind") != "literal").select(
+            *(k for k in keys if k not in ("subject_class", "object_class", "datatype")),
+            "kind",
+            "sid",
+            "oid",
+            subject_class=pl.col("subject_class").cast(pl.Categorical),
         )
+        return literal.select(*keys, "sid", "oid"), nonliteral
+
+    def by_object(nonliteral: pl.DataFrame, objects: pl.DataFrame) -> list[pl.DataFrame]:
+        """Give rows whose subject is classified the classes of their object: the keys with sid
+        and oid, in three tables (typed object, untyped IRI object, blank object).
+        """
+        # The predicates of a blank node are read in the RDF merge of the data graphs
+        # (the OPTIONAL of _build_batched_blank_node_query has no GRAPH).
+        nonliteral = nonliteral.with_columns(datatype=pl.lit(None, pl.Categorical))
         with_types = nonliteral.join(objects, on="oid", how="left")
         typed_object = with_types.filter(pl.col("oc").is_not_null()).with_columns(
             object_class=pl.col("oc").cast(pl.Categorical)
@@ -2532,8 +2543,20 @@ def count_patterns(
         blank = blank.with_columns(object_class=pl.lit("BlankNode").cast(pl.Categorical))
         return [
             f.with_columns(pl.col("subject_class").cast(pl.Categorical)).select(*keys, "sid", "oid")
-            for f in (literal, typed_object, untyped, blank)
+            for f in (typed_object, untyped, blank)
         ]
+
+    def classify(
+        rows: pl.DataFrame,
+        subjects: pl.DataFrame,
+        typed_subjects: pl.DataFrame,
+        objects: pl.DataFrame,
+    ) -> list[pl.DataFrame]:
+        """Give each row its patterns: the keys with sid and oid, in four tables (literal,
+        typed object, untyped IRI object, blank object).
+        """
+        literal, nonliteral = by_subject(rows, subjects, typed_subjects)
+        return [literal, *by_object(nonliteral, objects)]
 
     # Joins use QLever's ids (an IRI or blank node has one id as subject and as object), and
     # the classes as categories: the type table of a large index fits in memory this way.
@@ -2614,11 +2637,11 @@ def count_patterns(
             schema = frame.collect_schema()
             folder = directory() / f"unit-{unit}"
             _spill(frame, folder / "rows", parts, "sid")
-            # A batch with fewer rows than the type table reads the types of its own nodes
-            # only, once: each part joins its rows with every part of the type table, and
-            # reading those whole for each part made a batch many times slower.
+            # A batch whose nodes' types fit the type budget (three parts of the type table)
+            # reads them once; a larger one reads each part of the types when it needs it, so
+            # the types of all its nodes are never held at once.
             own: dict[int, pl.DataFrame] = {}
-            if size * 2 < type_count:
+            if 2 * size <= 3 * type_rows:
                 nodes = pl.concat(
                     [
                         pl.scan_parquet(folder / "rows" / "*" / "*.parquet").select("sid"),
@@ -2634,76 +2657,139 @@ def count_patterns(
                 """Return a part of the type table, restricted to this batch's nodes if read."""
                 return own[type_number] if own else type_part(type_number)
 
-            # The types of the objects that can have one (IRIs and blank nodes), read once for
-            # the batch: a literal row needs no object type, and a part's rows are classified
-            # once, each with the part of the types its object falls in. Crossing every part
-            # of the rows with every part of the types cost the square of the type parts.
-            if own:
-                object_types = own
-            else:
-                targets = (
-                    pl.scan_parquet(folder / "rows" / "*" / "*.parquet")
-                    .filter(pl.col("kind") != "literal")
-                    .select(sid="oid")
-                    .unique()
-                )
-                object_types = {
-                    n: type_part(n).lazy().join(targets, on="sid", how="semi").collect()
-                    for n in range(type_parts)
-                }
-
-            sums, subject_counts = [], []
+            # First pass, by subject: each part of the rows is joined with its part of the
+            # types. Literal rows are counted at once; the other rows are written by the part
+            # of the types their object falls in, for the second pass.
+            sums, subject_counts, object_counts = [], [], []
+            pending = folder / "pending"
             for part in range(parts):
                 rows = _part(folder / "rows", part, schema)
                 selected = pl.col("sid") % parts == part
-                subjects = unit_types(part % type_parts).filter(selected)
-                typed_subjects = typed_part(part % type_parts).filter(selected)
-                wanted = rows.filter(pl.col("kind") != "literal").select("oid").unique()
-                objects = pl.concat(
-                    [
-                        renamed(object_types[n]).join(
-                            wanted.filter(pl.col("oid") % type_parts == n), on="oid", how="semi"
-                        )
-                        for n in range(type_parts)
-                    ]
+                literal, nonliteral = by_subject(
+                    rows,
+                    unit_types(part % type_parts).filter(selected).rename({"c": "subject_class"}),
+                    typed_part(part % type_parts).filter(selected),
                 )
-                cells = classify(
-                    rows, subjects.rename({"c": "subject_class"}), typed_subjects, objects
-                )
-                # The four tables have distinct object classes (Literal, a class, Resource,
-                # BlankNode), so their keys never meet: they are counted as one table.
-                classified = pl.concat(cells, how="vertical_relaxed")
-                sums.append(classified.group_by(keys).agg(count=pl.len()))
+                sums.append(literal.group_by(keys).agg(count=pl.len()))
                 subject_counts.append(
-                    classified.select(*keys, "sid")
+                    literal.select(*keys, "sid")
                     .unique()
                     .group_by(keys)
                     .agg(distinct_subjects=pl.len())
                 )
-                by_object = (
-                    classified.select(*keys, "oid")
+                by_bucket = (
+                    literal.select(*keys, "oid")
                     .unique()
                     .with_columns(b=(pl.col("oid") % parts).cast(pl.UInt32))
                 )
-                for (b,), chunk in by_object.partition_by(
+                for (b,), chunk in by_bucket.partition_by(
                     "b", as_dict=True, include_key=False
                 ).items():
                     target = folder / "objects" / str(b)
                     target.mkdir(parents=True, exist_ok=True)
                     chunk.write_parquet(target / f"{part}.parquet")
+                by_type_part = nonliteral.with_columns(
+                    n=(pl.col("oid") % type_parts).cast(pl.UInt32)
+                )
+                for (number,), chunk in by_type_part.partition_by(
+                    "n", as_dict=True, include_key=False
+                ).items():
+                    target = pending / str(number)
+                    target.mkdir(parents=True, exist_ok=True)
+                    chunk.write_parquet(target / f"{part}.parquet")
                 # The counts of the parts read so far are added up as each part ends, so that
-                # they take the rows of their keys, not of their keys in every part and cell.
+                # they take the rows of their keys, not of their keys in every part.
                 sums = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]
-                _compact(blank_fields)
                 subject_counts = [
                     pl.concat(subject_counts).group_by(keys).agg(pl.col("distinct_subjects").sum())
                 ]
-            object_counts = [
+            # Second pass, by object: each part of the types is read once and joined with the
+            # rows whose object falls in it, one part of the rows at a time. All rows of an
+            # object are in its part, so its distinct objects are counted there; the distinct
+            # subjects of these rows are written by the part of the rows they came from.
+            nonliteral_schema = {
+                "p": pl.Categorical,
+                **({"g": pl.Categorical} if by_graph else {}),
+                "subject_class": pl.Categorical,
+                "kind": pl.Categorical,
+                "sid": pl.UInt64,
+                "oid": pl.UInt64,
+            }
+
+            def classify_chunk(
+                frames: list[pl.DataFrame],
+                objects: pl.DataFrame,
+                type_number: int,
+                pairs: list[pl.DataFrame],
+                sums: list[pl.DataFrame],
+                folder: Path = folder,
+                parts: int = parts,
+            ) -> None:
+                """Classify rows whose object is in one part of the types; add their counts and
+                (pattern, object) pairs, and write their (pattern, subject) pairs by row part.
+                """
+                if not frames:
+                    return
+                rows = pl.concat(frames)
+                classified = pl.concat(by_object(rows, objects), how="vertical_relaxed")
+                sums.append(classified.group_by(keys).agg(count=pl.len()))
+                pairs.append(classified.select(*keys, "oid").unique())
+                by_part = (
+                    classified.select(*keys, "sid")
+                    .unique()
+                    .with_columns(b=(pl.col("sid") % parts).cast(pl.UInt32))
+                )
+                for (b,), chunk in by_part.partition_by(
+                    "b", as_dict=True, include_key=False
+                ).items():
+                    target = folder / "subjects" / str(b)
+                    target.mkdir(parents=True, exist_ok=True)
+                    count = len(list(target.glob(f"{type_number}-*.parquet")))
+                    chunk.write_parquet(target / f"{type_number}-{count}.parquet")
+                _compact(blank_fields)
+
+            for type_number in range(type_parts):
+                files = sorted((pending / str(type_number)).glob("*.parquet"))
+                if not files:
+                    continue
+                objects = renamed(unit_types(type_number))
+                pairs: list[pl.DataFrame] = []
+                # The rows written for this part of the types are classified in chunks of up to
+                # partition_rows rows, each joined once with the part: one join per file made a
+                # batch read the part's hash table once for every part of the rows.
+                chunks: list[list[pl.DataFrame]] = [[]]
+                held = 0
+                for path in files:
+                    rows = pl.read_parquet(path).select(
+                        pl.col(name).cast(dtype) for name, dtype in nonliteral_schema.items()
+                    )
+                    if held and held + rows.height > partition_rows:
+                        chunks.append([])
+                        held = 0
+                    chunks[-1].append(rows)
+                    held += rows.height
+                    if len(chunks) > 1:
+                        classify_chunk(chunks.pop(0), objects, type_number, pairs, sums)
+                        pairs[:] = [pl.concat(pairs).unique()]
+                        sums[:] = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]
+                classify_chunk(chunks.pop(0), objects, type_number, pairs, sums)
+                object_counts.append(
+                    pl.concat(pairs).unique().group_by(keys).agg(distinct_objects=pl.len())
+                )
+                shutil.rmtree(pending / str(type_number))
+            object_counts += [
                 pl.read_parquet(sorted(target.glob("*.parquet")))
                 .unique()
                 .group_by(keys)
                 .agg(distinct_objects=pl.len())
                 for target in sorted((folder / "objects").glob("*"))
+            ]
+            subject_counts += [
+                pl.read_parquet(sorted(target.glob("*.parquet")))
+                .unique()
+                .group_by(keys)
+                .agg(distinct_subjects=pl.len())
+                for target in sorted((folder / "subjects").glob("*"))
             ]
             counted = (
                 pl.concat(sums)

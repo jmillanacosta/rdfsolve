@@ -179,3 +179,27 @@ def test_a_part_of_the_rows_is_classified_once_not_with_every_part_of_the_types(
     assert all(name.removesuffix(".parquet").isdigit() for *_, name in cells), (
         "One file per batch, object part and row part"
     )
+
+
+def test_a_batch_over_the_type_budget_never_gathers_the_types_of_all_its_nodes(store, monkeypatch):
+    """A batch whose nodes' types exceed the type budget reads one part of the types at a time
+    (by subject, then by object), with the counts of one pass: gathering the types of all its
+    nodes at once held them all in memory."""
+    import polars as pl
+
+    whole = _counts(store)
+    gathered: list[int] = []
+    join = pl.LazyFrame.join
+
+    def spy(self, other, *args, **kwargs):
+        if kwargs.get("how") == "semi" and kwargs.get("on") == "sid":
+            gathered.append(1)
+        return join(self, other, *args, **kwargs)
+
+    monkeypatch.setattr(pl.LazyFrame, "join", spy)
+    monkeypatch.setattr(scan, "PARTITION_ROWS", 10**9)
+    monkeypatch.setattr(scan, "TYPE_PARTITION_ROWS", 13)
+    monkeypatch.setattr(scan, "BATCH_ROWS", 10**9)
+    assert _counts(store) == whole
+    assert not gathered
+    assert not list(store.path.glob(".count-*")), "The scratch directory is removed"
