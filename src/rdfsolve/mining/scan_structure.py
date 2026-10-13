@@ -292,12 +292,20 @@ def _membership_keys(
             continue
         for part in range(parts):
             selected = pl.col("sid") % parts == part
-            found = (
+            # The members with such an edge, each once, then their classes: joining each edge
+            # with every class of its subject gave k * k rows for a node with k types, all to
+            # IRIs without a type.
+            members = (
                 store.rows(prop)
                 .filter((pl.col("kind") == "iri") & selected)
                 .select("sid", "oid")
                 .join(typed_objects, on="oid", how="anti")
-                .join(classes.filter(selected), on="sid")
+                .select("sid")
+                .unique()
+            )
+            found = (
+                classes.filter(selected)
+                .join(members, on="sid", how="semi")
                 .select(pl.col("c").cast(pl.String))
                 .unique()
                 .collect(engine="streaming")
@@ -347,9 +355,16 @@ def _covered(
     parts = []
     if typed:
         pairs = pl.LazyFrame(typed, schema={"t": category, "x": category}, orient="row")
+        # Only the object types that some profile names are joined.
+        objects = sorted({o for _, o in typed})
         parts.append(
             edges.filter(pl.col("kind") != "literal")
-            .join(types.rename({"sid": "oid", "c": "x"}), on="oid")
+            .join(
+                types.filter(pl.col("c").cast(pl.String).is_in(objects)).rename(
+                    {"sid": "oid", "c": "x"}
+                ),
+                on="oid",
+            )
             .join(pairs, on=["t", "x"], how="semi")
         )
     if exact:
@@ -566,9 +581,11 @@ def _census_graph(
     try:
         uncovered_dir = work / "uncovered"
         uncovered_dir.mkdir(parents=True)
-        # The type table and its typed nodes are written once and read from the files: every
-        # part of every property joins them, and each plan would make them distinct again.
-        types.sink_parquet(work / "types.parquet")
+        # The type table and its typed nodes are written once, each (node, class) once, and
+        # read from the files: every part of every property joins them. A node can hold one
+        # class many times (in several graphs, or as the group of many of its terms), and each
+        # repeat would multiply its edges in every join.
+        types.unique().sink_parquet(work / "types.parquet")
         types = pl.scan_parquet(work / "types.parquet")
         types.select("sid").unique().sink_parquet(work / "typed.parquet")
         members = pl.scan_parquet(work / "typed.parquet")

@@ -269,3 +269,30 @@ def test_a_census_in_parts_by_subject_equals_the_whole(mined, tmp_path, monkeypa
     assert [p.model_dump(exclude={"examples"}) for p in parts] == [
         p.model_dump(exclude={"examples"}) for p in whole
     ]
+
+
+def test_membership_profiles_join_each_member_once_not_each_edge_with_every_class(
+    mined, monkeypatch
+):
+    """The classes with a membership edge to an IRI without a type are read from the members
+    that have such an edge, each once: joining each edge with every class of its subject gave
+    k * k rows for a node with k types."""
+    import polars as pl
+
+    from rdfsolve.mining.scan_structure import _membership_keys, _types, typed_keys
+
+    _, schema, _, store = mined
+    joins: list[str] = []
+    join = pl.LazyFrame.join
+
+    def spy(self, other, *args, **kwargs):
+        if kwargs.get("on") == "sid" and kwargs.get("how", "inner") == "inner":
+            joins.append("inner")
+        return join(self, other, *args, **kwargs)
+
+    monkeypatch.setattr(pl.LazyFrame, "join", spy)
+    keys = _membership_keys(store, typed_keys(schema.patterns), _types(store))
+    assert not joins, "No edge is joined with every class of its subject"
+    # E.a0 and E.a1 are typed with E.C, which has no type: their classes have the row.
+    for cls in (E.A, E.C):
+        assert (str(cls), str(RDF.type), "Resource", None) in keys
