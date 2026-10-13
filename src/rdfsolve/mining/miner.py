@@ -632,9 +632,20 @@ class SchemaMiner:
             from rdfsolve.mining.scan_enrichment import term_patterns as read_term_patterns
 
             # The exact term observations, read from the rows (the probe's definitions).
+            invalid: dict[str, int] = {}
             term_patterns = read_term_patterns(
-                store, patterns, ontology_graph_uris=self._ontology_graph_uris
+                store, patterns, ontology_graph_uris=self._ontology_graph_uris, invalid=invalid
             )
+            if invalid:
+                # Not a pattern's term: left out and reported with the scan's own (count_patterns).
+                found = config.setdefault(
+                    "scan_invalid_terms", {"triples_left_out": 0, "terms": []}
+                )
+                found["triples_left_out"] += sum(invalid.values())
+                found["terms"] += [
+                    {"term": t, "triples": n, "step": "ontology-terms"}
+                    for t, n in sorted(invalid.items())
+                ]
             grouping = group_terms(
                 store,
                 # Minimal types (ABSTAT): a record's types never include their own ancestors,

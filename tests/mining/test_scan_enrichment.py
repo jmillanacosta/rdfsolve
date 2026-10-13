@@ -391,3 +391,24 @@ def test_examples_read_in_parts_equal_the_whole(setup, monkeypatch):
     assert _dump(parts.examples) == _dump(whole.examples)
     assert parts.class_examples == whole.class_examples
     assert whole.examples
+
+
+def test_term_patterns_leave_out_terms_a_pattern_cannot_hold(tmp_path):
+    """A value or a value's type that is not a pattern term (an IRI written as a prefixed name in
+    angle brackets, such as ``<xsd:anyURI>``) is left out of the term patterns and counted in
+    *invalid*, as count_patterns does, instead of failing the source."""
+    graph = Graph()
+    term = OBO.UBERON_1
+    graph.add((term, RDF.type, OWL.Class))
+    graph.add((term, E.range, URIRef("xsd:anyURI")))  # an untyped IRI with the scheme "xsd"
+    graph.add((term, E.ref, E.doc))
+    graph.add((E.doc, RDF.type, URIRef("xsd:anyURI")))  # a value typed by such an IRI
+    graph.add((term, E.size, Literal(2)))
+    invalid: dict[str, int] = {}
+    found = term_patterns(store_from_graph(graph, tmp_path / "store"), None, invalid=invalid)
+    assert all(p.object_class != "xsd:anyURI" for p in found)
+    assert any(p.property_uri == str(E.size) for p in found)
+    # The untyped value <xsd:anyURI> is a Resource; the value typed by it is left out.
+    assert any(p.property_uri == str(E.range) and p.object_class == "Resource" for p in found)
+    assert not any(p.property_uri == str(E.ref) for p in found)
+    assert invalid == {repr("xsd:anyURI"): 1}

@@ -1124,9 +1124,14 @@ def term_patterns(
     typed: list[SchemaPattern] | None,
     *,
     ontology_graph_uris: list[str] | None = None,
+    invalid: dict[str, int] | None = None,
 ) -> list[SchemaPattern]:
     """Return the patterns that use an ontology term as value or subject, with their triple
     counts: what ontology_as_data.probe_term_patterns returns from the endpoint.
+
+    A row whose subject, predicate or object class is not a term a pattern can hold
+    (scan._pattern_term) is left out, and its triples are added to *invalid* by term (repr), as
+    count_patterns does, so that the caller reports them.
 
     An ontology term is an IRI typed owl:Class or rdfs:Class (in the data scope, and in the
     *ontology_graph_uris* when given). With *typed* and no ontology graphs, the terms that are
@@ -1292,10 +1297,27 @@ def term_patterns(
         for (s, oc, dt, binding), part in found.group_by("s", "oc", "dt", "binding"):
             oc = oc[1:-1] if oc.startswith("<") else oc
             add((s[1:-1], predicate, oc, dt, "term", binding), part.select("g", "n"))
+    from rdfsolve.mining.scan import _pattern_term
+
     patterns = []
     for (sc, predicate, oc, dt, subject_binding, object_binding), per_graph in sorted(
         counts.items(), key=lambda item: tuple(x or "" for x in item[0])
     ):
+        bad = [
+            term
+            for term, ok in (
+                (predicate, _pattern_term(predicate)),
+                (sc, _pattern_term(sc)),
+                (oc, _pattern_term(oc, sentinels=True)),
+            )
+            if not ok
+        ]
+        if bad:
+            if invalid is not None:
+                for term in bad:
+                    shown = repr(term[:200])
+                    invalid[shown] = invalid.get(shown, 0) + sum(per_graph.values())
+            continue
         named = {g[1:-1]: n for g, n in per_graph.items() if g is not None}
         patterns.append(
             SchemaPattern(
