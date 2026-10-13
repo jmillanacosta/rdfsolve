@@ -157,7 +157,7 @@ def test_the_release_links_a_graph_scope_entry_to_its_per_graph_schema(tmp_path,
     # A part's schema is validated as a schema.
     with monkeypatch.context() as patch:
         checked = []
-        patch.setattr(MinedSchema, "from_json", classmethod(lambda cls, path: checked.append(path)))
+        patch.setattr(MinedSchema, "from_json", classmethod(lambda cls, path, **_: checked.append(path)))
         assert validate_release(manifest, run).valid
     assert run / extraction.schema_path in checked
 

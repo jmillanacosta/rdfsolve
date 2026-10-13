@@ -42,9 +42,7 @@ def _validate_role_json(path: Path, role: str | None) -> None:
 
         ScientificValidationPlan.model_validate_json(path.read_text(encoding="utf-8"))
     elif role == "canonical_schema":
-        from rdfsolve.schema_models.core import MinedSchema
-
-        MinedSchema.from_json(path)
+        _validate_schema_streamed(path)
     elif role == "property_usage_evidence":
         from rdfsolve.evidence.observed import PropertyUsageCollection
 
@@ -61,6 +59,37 @@ def _validate_role_json(path: Path, role: str | None) -> None:
         from rdfsolve.ontology.sources import OntologyAcquisitionPlan
 
         OntologyAcquisitionPlan.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+# The list sections of a schema validated row by row rather than read whole.
+_ROW_SECTIONS = ("structural_patterns", "raw_patterns", "term_patterns")
+
+
+def _validate_schema_streamed(path: Path) -> None:
+    """Validate a schema file in the memory of its other sections and one row: the schema is
+    read without its row sections, then each of their rows is validated on its own with the
+    checks the whole model applies to it. Raises on the first error.
+    """
+    from rdfsolve.schema_models.core import MinedSchema, iter_section_rows
+    from rdfsolve.schema_models.pattern import SchemaPattern
+    from rdfsolve.schema_models.structural import StructuralPattern
+
+    MinedSchema.from_json(path, leave_out=_ROW_SECTIONS)
+    pattern_fields = set(SchemaPattern.model_fields)
+    for name, row in iter_section_rows(path, _ROW_SECTIONS):
+        if row is None:
+            continue
+        if name == "structural_patterns":
+            StructuralPattern.model_validate(row)
+            continue
+        if set(row) - pattern_fields:
+            raise ValueError(f"{name}: unknown canonical pattern fields")
+        pattern = SchemaPattern.model_validate(row)
+        bindings = (pattern.subject_binding, pattern.object_binding)
+        if name == "raw_patterns" and "term" in bindings:
+            raise ValueError("Exact term bindings belong in term_patterns")
+        if name == "term_patterns" and bindings == ("type", "type"):
+            raise ValueError("term_patterns requires an exact term binding")
 
 
 def _validate_sssom(path: Path) -> str | None:
@@ -81,6 +110,34 @@ _RDF_FORMATS = {
     ".owl": "xml",
     ".jsonld": "json-ld",
 }
+
+
+# The streaming parser's format of each format name above.
+_STREAMED_FORMATS = {
+    "turtle": "TURTLE",
+    "trig": "TRIG",
+    "nt": "N_TRIPLES",
+    "nquads": "N_QUADS",
+    "xml": "RDF_XML",
+}
+
+
+def _parse_streamed(path: Path, rdf_format: str) -> None:
+    """Parse an RDF file statement by statement, holding none of them: an artifact's syntax is
+    checked in the memory of one statement, whatever its size. Raises on the first error.
+    """
+    import pyoxigraph
+
+    name = _STREAMED_FORMATS.get(rdf_format)
+    if name is None:
+        Graph().parse(path, format=rdf_format)
+        return
+    # Relative IRIs resolve against the file, as rdflib resolves them.
+    base = path.resolve().as_uri()
+    for _ in pyoxigraph.parse(
+        path=str(path), format=getattr(pyoxigraph.RdfFormat, name), base_iri=base
+    ):
+        pass
 
 
 def validate_release(
@@ -167,7 +224,7 @@ def validate_release(
                 "application/rdf+xml",
             }:
                 try:
-                    Graph().parse(path, format=rdf_format)
+                    _parse_streamed(path, rdf_format)
                 except Exception as error:
                     issues.append(
                         ValidationIssue(path=artifact.path, kind="rdf_parse", message=str(error))
