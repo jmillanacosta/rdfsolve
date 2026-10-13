@@ -10,7 +10,11 @@ from datetime import UTC
 from typing import TYPE_CHECKING, Any, Literal
 
 from rdfsolve.mining.query_builders import _graph_scope, _subject_type_pattern, _type_pattern
-from rdfsolve.schema_models.navigation import NavigationPath, NavigationSummary
+from rdfsolve.schema_models.navigation import (
+    NON_RELATION_PROPERTIES,
+    NavigationPath,
+    NavigationSummary,
+)
 from rdfsolve.schema_models.pattern import SchemaPattern
 
 if TYPE_CHECKING:
@@ -476,6 +480,26 @@ def _matched_starts(
     return best
 
 
+def _annotation_properties(helper: SparqlHelper, dataset: str) -> set[str]:
+    """Return the properties that the data declare owl:AnnotationProperty (none when the query
+    fails).
+    """
+    from rdfsolve.sparql_helper import SparqlHelperError
+
+    query = (
+        f"SELECT DISTINCT ?p {dataset} WHERE {{ "
+        "?p a <http://www.w3.org/2002/07/owl#AnnotationProperty> . FILTER(isIRI(?p)) }"
+    )
+    try:
+        result = helper.select_with_fallback(query, purpose="navigation/annotation-properties")
+    except (SparqlHelperError, TimeoutError, OSError) as error:
+        logger.warning("Annotation properties not read: %s", error)
+        return set()
+    return {
+        row["p"]["value"] for row in result.get("results", {}).get("bindings", []) if "p" in row
+    }
+
+
 def find_tested_paths(
     schema: MinedSchema,
     helper: SparqlHelper,
@@ -512,6 +536,15 @@ def find_tested_paths(
     context = (schema.about.type_graph_uris or []) + (schema.about.type_context_graph_uris or [])
     dataset, _, _ = _graph_scope(graphs, context)
     deadline = clock() + budget_s
+    # Steps are relations between records: membership and annotation properties are left out.
+    with helper.budget(max(1.0, deadline - clock())):
+        left_out = NON_RELATION_PROPERTIES | _annotation_properties(helper, dataset)
+    unique = {k: e for k, e in unique.items() if k[1] not in left_out}
+    outgoing = {
+        c: relations
+        for c, edges in outgoing.items()
+        if (relations := [e for e in edges if e.property_uri not in left_out])
+    }
 
     def key(edge: SchemaPattern) -> tuple[str, str, str, str]:
         """Identify an edge of the schema graph."""
@@ -521,7 +554,7 @@ def find_tested_paths(
     matched: Counter[int] = Counter()
     kept: list[NavigationPath] = []
     complete: list[int] = []
-    queries = failed = 0
+    queries, failed = 1, 0  # the query of the annotation properties
     stop: Literal["budget", "endpoint_cuts"] | None = None
     cuts = QueryCuts()
     extension, support_purpose = "navigation/tested-paths", "navigation/path-support"

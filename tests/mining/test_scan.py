@@ -1,6 +1,7 @@
 """rdfsolve.mining.scan: the patterns counted from the rows of an index equal the patterns the
 two-phase strategy counts with SPARQL on the same data."""
 
+import pytest
 from rdflib import OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace
 
 from rdfsolve.mining.miner import SchemaMiner
@@ -87,6 +88,40 @@ def test_scan_finds_the_tested_paths_that_the_sparql_search_finds(tmp_path):
     assert scan.complete_lengths == sparql.complete_lengths == [2, 3]
 
 
+def test_tested_paths_step_only_through_relations_between_records(tmp_path):
+    """Membership and annotation properties (NON_RELATION_PROPERTIES, and those the data
+    declare owl:AnnotationProperty) are left out of the steps of tested paths, by both searches;
+    the schema's one-hop patterns keep them."""
+    from rdfsolve.mining.navigation import find_tested_paths
+    from rdfsolve.mining.scan_paths import find_tested_paths_in_store
+
+    graph = _graph()
+    graph.add((E.note, RDF.type, OWL.AnnotationProperty))
+    graph.add((E.b1, E.note, E.a0))
+    graph.add((E.b1, RDFS.seeAlso, E.a1))
+    graph.add((E.b1, RDF.type, E.A))
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine(dataset_name="fixture")
+        sparql = find_tested_paths(schema, miner.helper, max_hops=3)
+    store = store_from_graph(graph, tmp_path / "store")
+    scan_found = find_tested_paths_in_store(schema, store, max_hops=3)
+    left_out = {str(RDF.type), str(RDFS.label), str(RDFS.seeAlso), str(E.note)}
+    one_hop = {p.property_uri for p in schema.patterns}
+    assert {str(E.note), str(RDFS.seeAlso)} <= one_hop
+
+    def routes(summary):
+        return {
+            tuple((s.subject_class, s.property_uri, s.object_class) for s in p.steps): (
+                p.source_count,
+                p.matched_sources,
+            )
+            for p in summary.paths
+        }
+
+    assert routes(scan_found) == routes(sparql) and routes(scan_found)
+    assert not any(step[1] in left_out for route in routes(scan_found) for step in route)
+
+
 def test_anonymous_classes_are_named_in_manchester_syntax_and_folded_into_edges(tmp_path):
     """Two blank nodes with the same expression are one named class; its members' named class
     gets the edge the expression stands for (owner, 2026-10-06: fold by object class)."""
@@ -122,9 +157,11 @@ def test_anonymous_classes_are_named_in_manchester_syntax_and_folded_into_edges(
     assert config["class_expression_folding"]
 
 
-def test_a_branch_carrying_only_the_nodes_it_reaches_finds_the_same_paths(tmp_path, monkeypatch):
-    """Where pairs would grow too large, a branch carries its reached nodes and counts the
-    starts of each path backwards: the same paths and counts as with pairs."""
+@pytest.mark.parametrize("sparse", [1, 10**9])
+def test_node_sets_read_by_marks_or_by_search_find_the_same_paths(tmp_path, monkeypatch, sparse):
+    """The node sets of the search are met and followed by searching sorted arrays when small
+    and by a mark per node when large, and the starts of the paths are counted in batches as
+    small as one word of paths: every way gives the same paths, counts and summary."""
     from rdfsolve.mining import scan_paths
 
     graph = _graph()
@@ -132,7 +169,7 @@ def test_a_branch_carrying_only_the_nodes_it_reaches_finds_the_same_paths(tmp_pa
         schema = miner.mine(dataset_name="fixture")
     store = store_from_graph(graph, tmp_path / "store")
 
-    def routes():
+    def search():
         summary = scan_paths.find_tested_paths_in_store(schema, store, max_hops=3)
         return {
             tuple((s.subject_class, s.property_uri, s.object_class) for s in p.steps): (
@@ -140,11 +177,13 @@ def test_a_branch_carrying_only_the_nodes_it_reaches_finds_the_same_paths(tmp_pa
                 p.matched_sources,
             )
             for p in summary.paths
-        }
+        }, summary.model_dump(exclude={"paths"})
 
-    with_pairs = routes()
-    monkeypatch.setattr(scan_paths, "PAIR_LIMIT", 0)
-    assert routes() == with_pairs and with_pairs
+    searched, summary = search()
+    monkeypatch.setattr(scan_paths, "DENSE", 1)
+    monkeypatch.setattr(scan_paths, "SPARSE", sparse)
+    monkeypatch.setattr(scan_paths, "LABEL_BYTES", 1)
+    assert search() == (searched, summary) and searched
 
 
 def test_a_predicate_of_nul_bytes_is_left_out_and_reported(tmp_path):
@@ -221,7 +260,7 @@ def test_paths_tested_on_samples_of_every_instance_equal_the_whole_search(tmp_pa
     assert routes(sampled) == routes(whole) and routes(whole)
     assert sampled.start_sample == 10_000 and sampled.stop_reason is None
     assert sampled.complete_lengths == whole.complete_lengths
-    monkeypatch.setattr(scan_paths, "PAIR_LIMIT", 0)
+    monkeypatch.setattr(scan_paths, "DENSE", 1)
     assert routes(find_tested_paths_in_store(schema, store, max_hops=3, start_sample=10_000)) == (
         routes(whole)
     )
