@@ -2936,6 +2936,11 @@ class ScanStrategy(MiningStrategy):
         if long_text:
             # Literals read as ids, with the datatype and language of a sample of their text.
             context.report.report.config["scan_long_literals"] = long_text
+        # The class expressions are named (types-named.parquet written) before anything reads the
+        # type table: a lazy table read before would meet a file replaced under it.
+        expressions = name_class_expressions(self.row_store)
+        if expressions:
+            context.report.report.config["class_expressions"] = expressions
         self.store = self.row_store.view(context.graph_uris, context.type_context_graph_uris)
         phase = context.report.start_phase("scan-patterns")
         from rdfsolve.mining.scan_terms import group_before_counting
@@ -2970,9 +2975,6 @@ class ScanStrategy(MiningStrategy):
                 literal_types["values"],
                 literal_types["samples"][0]["value"],
             )
-        expressions = name_class_expressions(self.row_store)
-        if expressions:
-            context.report.report.config["class_expressions"] = expressions
         invalid = {repr(p[:200]): n for p, n in self.row_store.left_out_predicates.items()}
         from rdfsolve.mining.scan_checkpoint import read_checkpoint, write_checkpoint
 
