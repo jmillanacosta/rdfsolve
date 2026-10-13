@@ -154,8 +154,9 @@ def test_a_predicate_without_rows_is_batched():
 def test_a_part_of_the_rows_is_classified_once_not_with_every_part_of_the_types(
     store, monkeypatch, rows
 ):
-    """Each part of the rows writes one file of objects per object part: classifying it once
-    for each part of the types made the cost of a batch the square of the type parts."""
+    """Each part of the rows writes one file of literal objects per object part, and each
+    chunk of the second pass one of the other objects: classifying a part once for each part of
+    the types made the cost of a batch the square of the type parts."""
     import polars as pl
 
     whole = _counts(store)
@@ -176,9 +177,10 @@ def test_a_part_of_the_rows_is_classified_once_not_with_every_part_of_the_types(
     # .../unit-<batch>/objects/<object part>/<file>
     cells = {tuple(f.split("/")[-4:]) for f in written}
     assert len(cells) == len(written)
-    assert all(name.removesuffix(".parquet").isdigit() for *_, name in cells), (
-        "One file per batch, object part and row part"
-    )
+    names = [name.removesuffix(".parquet") for *_, name in cells]
+    assert all(
+        n.isdigit() or (n.startswith("t") and n[1:].replace("-", "").isdigit()) for n in names
+    ), "One file per batch, object part and row part (literals) or type part and chunk"
 
 
 def test_a_batch_over_the_type_budget_never_gathers_the_types_of_all_its_nodes(store, monkeypatch):

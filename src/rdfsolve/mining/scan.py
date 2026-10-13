@@ -2704,9 +2704,9 @@ def count_patterns(
                     pl.concat(subject_counts).group_by(keys).agg(pl.col("distinct_subjects").sum())
                 ]
             # Second pass, by object: each part of the types is read once and joined with the
-            # rows whose object falls in it, one part of the rows at a time. All rows of an
-            # object are in its part, so its distinct objects are counted there; the distinct
-            # subjects of these rows are written by the part of the rows they came from.
+            # rows whose object falls in it, one part of the rows at a time. The (pattern,
+            # object) pairs are written by the part of their object id and the distinct
+            # subjects by the part of the rows they came from; both are counted part by part.
             nonliteral_schema = {
                 "p": pl.Categorical,
                 **({"g": pl.Categorical} if by_graph else {}),
@@ -2720,20 +2720,34 @@ def count_patterns(
                 frames: list[pl.DataFrame],
                 objects: pl.DataFrame,
                 type_number: int,
-                pairs: list[pl.DataFrame],
                 sums: list[pl.DataFrame],
                 folder: Path = folder,
                 parts: int = parts,
             ) -> None:
-                """Classify rows whose object is in one part of the types; add their counts and
-                (pattern, object) pairs, and write their (pattern, subject) pairs by row part.
+                """Classify rows whose object is in one part of the types; add their counts, and
+                write their (pattern, object) pairs by object part and their (pattern, subject)
+                pairs by row part.
                 """
                 if not frames:
                     return
                 rows = pl.concat(frames)
                 classified = pl.concat(by_object(rows, objects), how="vertical_relaxed")
                 sums.append(classified.group_by(keys).agg(count=pl.len()))
-                pairs.append(classified.select(*keys, "oid").unique())
+                # The (pattern, object) pairs are written by the part of their object id, as
+                # those of literals, and counted part by part at the end: all distinct objects of
+                # a part of the types can be more than memory holds.
+                by_object_part = (
+                    classified.select(*keys, "oid")
+                    .unique()
+                    .with_columns(b=(pl.col("oid") % parts).cast(pl.UInt32))
+                )
+                for (b,), chunk in by_object_part.partition_by(
+                    "b", as_dict=True, include_key=False
+                ).items():
+                    target = folder / "objects" / str(b)
+                    target.mkdir(parents=True, exist_ok=True)
+                    count = len(list(target.glob(f"t{type_number}-*.parquet")))
+                    chunk.write_parquet(target / f"t{type_number}-{count}.parquet")
                 by_part = (
                     classified.select(*keys, "sid")
                     .unique()
@@ -2753,7 +2767,6 @@ def count_patterns(
                 if not files:
                     continue
                 objects = renamed(unit_types(type_number))
-                pairs: list[pl.DataFrame] = []
                 # The rows written for this part of the types are classified in chunks of up to
                 # partition_rows rows, each joined once with the part: one join per file made a
                 # batch read the part's hash table once for every part of the rows.
@@ -2769,13 +2782,9 @@ def count_patterns(
                     chunks[-1].append(rows)
                     held += rows.height
                     if len(chunks) > 1:
-                        classify_chunk(chunks.pop(0), objects, type_number, pairs, sums)
-                        pairs[:] = [pl.concat(pairs).unique()]
+                        classify_chunk(chunks.pop(0), objects, type_number, sums)
                         sums[:] = [pl.concat(sums).group_by(keys).agg(pl.col("count").sum())]
-                classify_chunk(chunks.pop(0), objects, type_number, pairs, sums)
-                object_counts.append(
-                    pl.concat(pairs).unique().group_by(keys).agg(distinct_objects=pl.len())
-                )
+                classify_chunk(chunks.pop(0), objects, type_number, sums)
                 shutil.rmtree(pending / str(type_number))
             object_counts += [
                 pl.read_parquet(sorted(target.glob("*.parquet")))
