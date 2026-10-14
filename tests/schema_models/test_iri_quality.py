@@ -163,3 +163,21 @@ def test_rdf_iri_check_uses_the_ascii_exclusions_of_rfc_3987():
         assert is_rdf_iri(allowed), repr(allowed)
     for excluded in (" ", "\t", "\n", "\x00", "\x1f", "<", ">", '"', "{", "}", "|", "^", "`", "\\"):
         assert not is_rdf_iri(f"http://ex.org/a{excluded}b"), repr(excluded)
+
+
+def test_rdf_iri_check_refuses_terms_that_parsers_refuse():
+    """A blank-node label written as an IRI, a broken percent encoding, a bracket outside an IP
+    literal host or a second fragment make a term that RDF parsers refuse: it is no RDF IRI."""
+    from rdfsolve.schema_models.paths import is_rdf_iri
+
+    for refused in (
+        "_:0.05xR_Ac",
+        "http://ex.org/onto%D%Antology#a",
+        "http://ex.org/0.3%-tobramycin",
+        "http://ex.org/url?q=a[b]c",
+        "http://ex.org/onto##22",
+        "relative/path",
+    ):
+        assert not is_rdf_iri(refused), repr(refused)
+    for allowed in ("http://ex.org/a%20b", "http://[::1]/a", "urn:x:y", "http://ex.org/a#b"):
+        assert is_rdf_iri(allowed), repr(allowed)

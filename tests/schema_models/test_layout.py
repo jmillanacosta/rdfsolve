@@ -193,3 +193,49 @@ def test_a_schema_whose_tested_paths_are_all_detours_has_paths_shapes(schema, tm
     )
     assert summary.navigation.paths == [] and has_tested_paths(summary)
     assert not has_tested_paths(summary.model_copy(update={"navigation": None}))
+
+
+def test_a_written_schema_is_validated_row_by_row_without_building_its_paths(
+    schema, tmp_path, monkeypatch
+):
+    from rdfsolve.release.validate import _validate_schema_streamed
+    from rdfsolve.schema_models import layout
+
+    path = tmp_path / "x_local_schema.json"
+    write_schema(schema, path)
+
+    def refuse(self, row):
+        raise AssertionError("A path was built")
+
+    monkeypatch.setattr(layout.PackedPaths, "path", refuse)
+    _validate_schema_streamed(path)
+    written = json.loads(path.read_text())
+    written["schema"]["details"]["raw_patterns"]["rows"] = 9
+    wrong = tmp_path / "y_local_schema.json"
+    wrong.write_text(json.dumps(written))
+    for name in ("terms", "paths", "census"):
+        (tmp_path / f"y_local_{name}.parquet").write_bytes(
+            (tmp_path / f"x_local_{name}.parquet").read_bytes()
+        )
+    for detail in written["schema"]["details"].values():
+        detail["file"] = detail["file"].replace("x_local", "y_local")
+    wrong.write_text(json.dumps(written))
+    with pytest.raises(ValueError, match="raw_patterns: 5 rows"):
+        _validate_schema_streamed(wrong)
+
+
+def test_a_path_with_a_step_outside_the_edge_table_is_invalid(schema, tmp_path):
+    import pyarrow as pa
+
+    from rdfsolve.release.validate import _validate_schema_streamed
+
+    path = tmp_path / "x_local_schema.json"
+    write_schema(schema, path)
+    paths = tmp_path / "x_local_paths.parquet"
+    table = pq.read_table(paths)
+    edges = table.column("edges").to_pylist()
+    edges[0] = [0, 99]
+    table = table.set_column(0, "edges", pa.array(edges, table.schema.field("edges").type))
+    pq.write_table(table, paths)
+    with pytest.raises(ValueError, match="is not a path"):
+        _validate_schema_streamed(path)

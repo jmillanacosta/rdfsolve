@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from typing import Literal
 
@@ -58,9 +59,21 @@ _INVALID_IRI_CHAR = re.compile(r'[\x00-\x20<>"{}|^`\\]')
 _UNWRITABLE_IRI_CHAR = re.compile(r'[<>"{}\n\r]')
 
 
+@functools.lru_cache(maxsize=1 << 20)
 def is_rdf_iri(value: str) -> bool:
-    """Return whether *value* has no character that RDF IRIs exclude."""
-    return _INVALID_IRI_CHAR.search(value) is None
+    """Return whether *value* is an absolute IRI that RDF can write: no character that RDF IRIs
+    exclude, and an IRI by RFC 3987 as RDF parsers read it (a scheme, well-formed percent
+    encodings, brackets only around an IP literal host, at most one fragment).
+    """
+    if _INVALID_IRI_CHAR.search(value) is not None:
+        return False
+    import pyoxigraph
+
+    try:
+        pyoxigraph.NamedNode(value)
+    except ValueError:
+        return False
+    return True
 
 
 def absolute_iri(value: str) -> str:

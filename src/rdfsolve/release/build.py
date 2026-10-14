@@ -105,6 +105,7 @@ def _role(path: Path) -> str | None:
         ("_term_classes.parquet", "term_classes"),
         ("_terms.parquet", "term_patterns"),
         ("_paths.parquet", "tested_paths"),
+        ("_census.parquet", "structural_census"),
         ("_endpoint_match.json", "endpoint_match"),
         ("_declared_identities.sssom.tsv", "declared_identities"),
         ("_declared_identities.json", "declared_identities_summary"),

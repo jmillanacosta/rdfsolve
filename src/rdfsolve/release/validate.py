@@ -67,18 +67,25 @@ _ROW_SECTIONS = ("structural_patterns", "raw_patterns", "term_patterns")
 
 def _validate_schema_streamed(path: Path) -> None:
     """Validate a schema file in the memory of its other sections and one row: the schema is
-    read without its row sections, then each of their rows is validated on its own with the
-    checks the whole model applies to it. Raises on the first error.
+    read without its row sections and without the rows of its detail files
+    (schema_models.layout), then each row is validated on its own with the checks the whole
+    model applies to it; the rows of each detail file are counted against the schema's record
+    of them, and tested paths are checked as packed rows (their steps once, each path as step
+    numbers). Raises on the first error.
     """
     from rdfsolve.schema_models.core import MinedSchema, iter_section_rows
+    from rdfsolve.schema_models.layout import PATHS_SECTION, packed_paths
     from rdfsolve.schema_models.pattern import SchemaPattern
     from rdfsolve.schema_models.structural import StructuralPattern
 
-    MinedSchema.from_json(path, leave_out=_ROW_SECTIONS)
+    schema = MinedSchema.from_json(path, leave_out=_ROW_SECTIONS, details=False)
+    details = schema.details or {}
     pattern_fields = set(SchemaPattern.model_fields)
+    counted = dict.fromkeys(_ROW_SECTIONS, 0)
     for name, row in iter_section_rows(path, _ROW_SECTIONS):
         if row is None:
             continue
+        counted[name] += 1
         if name == "structural_patterns":
             StructuralPattern.model_validate(row)
             continue
@@ -90,6 +97,31 @@ def _validate_schema_streamed(path: Path) -> None:
             raise ValueError("Exact term bindings belong in term_patterns")
         if name == "term_patterns" and bindings == ("type", "type"):
             raise ValueError("term_patterns requires an exact term binding")
+    for name, detail in details.items():
+        if name in counted and counted[name] != detail.rows:
+            raise ValueError(
+                f"{name}: {counted[name]} rows in {detail.file}, {detail.rows} recorded"
+            )
+    if PATHS_SECTION in details:
+        packed = packed_paths(path)
+        if packed is None:
+            raise ValueError(f"{PATHS_SECTION}: no paths in {details[PATHS_SECTION].file}")
+        for edge in packed.edges:
+            SchemaPattern.model_validate(edge)
+        rows = 0
+        for path_row in packed.rows():
+            rows += 1
+            steps = path_row["edges"]
+            if not 2 <= len(steps) <= 6 or not all(0 <= i < len(packed.edges) for i in steps):
+                raise ValueError(f"{PATHS_SECTION}: a path of steps {steps} is not a path")
+            for key in ("matched", "sources"):
+                if path_row.get(key) is not None and path_row[key] < 0:
+                    raise ValueError(f"{PATHS_SECTION}: negative {key}")
+        if rows != details[PATHS_SECTION].rows:
+            raise ValueError(
+                f"{PATHS_SECTION}: {rows} rows in {details[PATHS_SECTION].file}, "
+                f"{details[PATHS_SECTION].rows} recorded"
+            )
 
 
 def _validate_sssom(path: Path) -> str | None:
