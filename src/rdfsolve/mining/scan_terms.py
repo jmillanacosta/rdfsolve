@@ -34,8 +34,10 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 from rdfsolve.mining.ontology_as_data import (
     NAMESPACE_GROUP_MIN_TERMS,
+    SHAPE_READ_MAX_TERMS,
     Subsumption,
     choose_representatives,
+    group_by_namespace,
     group_by_shape,
     parentless_candidates,
 )
@@ -504,9 +506,17 @@ def _group_before_mining(
 
         loaded = fill_parents(parents, list(files.values()), classes)
     chosen = choose_representatives(classes, parents, budget)
+    # Terms that no ancestor can take are grouped by the shape of their instances, and above
+    # SHAPE_READ_MAX_TERMS by namespace, as two_phase_strategy._group_terms groups them.
     candidates = parentless_candidates(chosen, parents)
-    shapes = _shapes(store, types, candidates)
-    shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
+    namespace_groups: dict[str, dict[str, Any]] = {}
+    shapes: dict[str, Any] = {}
+    shape_groups: dict[str, frozenset[str]] = {}
+    if len(candidates) > SHAPE_READ_MAX_TERMS:
+        namespace_groups = group_by_namespace(chosen, parents)
+    else:
+        shapes = _shapes(store, types, candidates)
+        shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
     members = chosen.members()
     record = {
         "before_mining": True,
@@ -527,7 +537,11 @@ def _group_before_mining(
         "terms_with_loaded_parent_by_namespace": dict(
             Counter(namespace(c) for c in loaded).most_common()
         ),
-        "grouping_of_terms_without_parent": "shape",
+        "grouping_of_terms_without_parent": "namespace" if namespace_groups else "shape",
+        "terms_without_parent_candidates": len(candidates),
+        "shape_read_max_terms": SHAPE_READ_MAX_TERMS,
+        # Only when the terms without a parent were grouped by namespace.
+        **({"namespace_groups": namespace_groups} if namespace_groups else {}),
         "namespace_min_terms": NAMESPACE_GROUP_MIN_TERMS,
         "shape_groups": {
             group: {

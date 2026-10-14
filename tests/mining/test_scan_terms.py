@@ -356,3 +356,44 @@ def test_a_scan_grouped_before_counting_counts_the_rewritten_rows(tmp_path):
     assert counted == _rows(count_patterns(RetypedStore(store, grouped.types)))
     string = "http://www.w3.org/2001/XMLSchema#string"
     assert counted[(str(N.root), str(E.name), "Literal", string)] == (2, 2, 2)
+
+
+def test_a_scan_groups_many_terms_without_a_parent_by_namespace_as_two_phase_does(
+    tmp_path, monkeypatch
+):
+    """Above SHAPE_READ_MAX_TERMS terms without a parent, the scan groups them by namespace with
+    the two-phase function: the same group IRIs and record, whichever miner ran."""
+    from rdfsolve.mining import scan_terms
+    from rdfsolve.mining.ontology_as_data import namespace_group_iri
+    from rdfsolve.mining.scan_terms import group_before_counting
+
+    go, uniprot, mgi = (
+        "http://purl.obolibrary.org/obo/GO_",
+        "http://identifiers.org/uniprot/",
+        "http://identifiers.org/mgi/MGI:",
+    )
+    root = URIRef(go + "0008150")
+    graph = Graph()
+    for i in range(1, 41):
+        term = URIRef(f"{go}{i:07d}")
+        graph.add((term, RDFS.subClassOf, root))
+        graph.add((URIRef(f"{EX}go{i}"), RDF.type, term))
+    for prefix, n, name in ((uniprot, 300, "P"), (mgi, 150, "")):
+        for i in range(n):
+            record = URIRef(f"{EX}{name or 'mgi'}{i}")
+            graph.add((record, RDF.type, URIRef(f"{prefix}{name}{i:05d}" if name else f"{prefix}{i}")))
+            graph.add((record, URIRef(EX + "label"), Literal(f"r{i}")))
+    store = store_from_graph(graph, tmp_path / "store")
+    monkeypatch.setattr(scan_terms, "SHAPE_READ_MAX_TERMS", 100)
+    grouped = group_before_counting(store, limit=10, budget=5)
+    assert grouped is not None
+    record = grouped.record
+    assert record["grouping_of_terms_without_parent"] == "namespace"
+    assert {g["bioregistry_prefix"] for g in record["namespace_groups"].values()} == {
+        "uniprot",
+        "mgi",
+    }
+    members = record["representative_members"]
+    assert len(members[namespace_group_iri("bioregistry:uniprot")]) == 300
+    assert len(members[namespace_group_iri("bioregistry:mgi")]) == 150
+    assert "shape_groups" in record and not record["shape_groups"]
