@@ -490,11 +490,16 @@ class LocalMiningStage(Stage):
         """Generate the Qleverfile for a source without a cached index."""
         entry = source.qlever_entry()
 
+        # The index builder keeps one partial vocabulary file per batch open while it merges
+        # them, so an input of tens of billions of triples needs larger batches than the default
+        # to stay within the open-file limit (RDFSOLVE_QLEVER_TRIPLES_PER_BATCH).
         cfg = QleverConfig(
             memory_for_queries="80G",
             timeout="600s",
             parallel_parsing=False,
-            num_triples_per_batch=1_000_000,
+            num_triples_per_batch=int(
+                os.environ.get("RDFSOLVE_QLEVER_TRIPLES_PER_BATCH", "1000000")
+            ),
         )
 
         qleverfile_path = workdir / "Qleverfile"
