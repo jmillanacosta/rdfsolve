@@ -2773,7 +2773,7 @@ def count_patterns(
                 chunks: list[list[pl.DataFrame]] = [[]]
                 held = 0
                 for path in files:
-                    rows = pl.read_parquet(path).select(
+                    rows = pl.read_parquet(path, memory_map=False).select(
                         pl.col(name).cast(dtype) for name, dtype in nonliteral_schema.items()
                     )
                     if held and held + rows.height > partition_rows:
@@ -2787,14 +2787,14 @@ def count_patterns(
                 classify_chunk(chunks.pop(0), objects, type_number, sums)
                 shutil.rmtree(pending / str(type_number))
             object_counts += [
-                pl.read_parquet(sorted(target.glob("*.parquet")))
+                pl.read_parquet(sorted(target.glob("*.parquet")), memory_map=False)
                 .unique()
                 .group_by(keys)
                 .agg(distinct_objects=pl.len())
                 for target in sorted((folder / "objects").glob("*"))
             ]
             subject_counts += [
-                pl.read_parquet(sorted(target.glob("*.parquet")))
+                pl.read_parquet(sorted(target.glob("*.parquet")), memory_map=False)
                 .unique()
                 .group_by(keys)
                 .agg(distinct_subjects=pl.len())
