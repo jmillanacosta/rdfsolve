@@ -195,7 +195,9 @@ class RowStore:
         if self.graphs is None:
             return rows
         if self._duplicated(predicate):
-            rows = rows.unique(subset=["s", "oid"])
+            # By id (sid is the id of s): a filter on the subject ids of a part is then applied
+            # before the duplicates are removed, not after.
+            rows = rows.unique(subset=["sid", "oid"])
         return rows.drop("g", "gid")
 
     def _type_rows(self) -> pl.LazyFrame:
@@ -380,7 +382,9 @@ class StoreView:
         """Return the triples of *predicate* in the RDF merge of the data graphs."""
         rows = self.graph_rows(predicate)
         if len(self.graph_uris) > 1 and self.base._duplicated(predicate):
-            rows = rows.unique(subset=["s", "oid"])
+            # By id (sid is the id of s): a filter on the subject ids of a part is then applied
+            # before the duplicates are removed, not after.
+            rows = rows.unique(subset=["sid", "oid"])
         return rows.drop("g", "gid")
 
     def graph_types(self) -> pl.LazyFrame:

@@ -283,37 +283,47 @@ def _membership_keys(
     """
     import polars as pl
 
-    # IRI classes; the membership rows are read in parts by subject id (CENSUS_PART_ROWS), each
-    # joined with its own share of the types, so that one part of the type table is held.
+    # IRI classes. The membership edges to IRIs without a type are found in parts by object id,
+    # each with its own part of the typed nodes, and written; then each part by subject id of
+    # the types is matched with the subjects found. One part of the type table, of the typed
+    # nodes and of the subjects is held at a time: on a source whose class IRIs have no type,
+    # nearly every member has such an edge.
     classes = types.filter(~pl.col("c").cast(pl.String).str.starts_with("_:"))
     added = set(keys)
-    typed_objects = types.select(oid="sid").unique()
     rows = int(types.select(pl.len()).collect(engine="streaming").item())
     parts = max(1, -(-rows // CENSUS_PART_ROWS))
-    for prop in MEMBERSHIP.get():
-        if prop not in store.predicates:
-            continue
-        for part in range(parts):
-            selected = pl.col("sid") % parts == part
-            # The members with such an edge, each once, then their classes: joining each edge
-            # with every class of its subject gave k * k rows for a node with k types, all to
-            # IRIs without a type.
-            members = (
-                store.rows(prop)
-                .filter((pl.col("kind") == "iri") & selected)
-                .select("sid", "oid")
-                .join(typed_objects, on="oid", how="anti")
-                .select("sid")
-                .unique()
-            )
-            found = (
-                classes.filter(selected)
-                .join(members, on="sid", how="semi")
-                .select(pl.col("c").cast(pl.String))
-                .unique()
-                .collect(engine="streaming")
-            )
-            added |= {(c, prop, "Resource", None) for (c,) in found.iter_rows()}
+    work = Path(tempfile.mkdtemp(prefix="scan-membership-"))
+    try:
+        for number, prop in enumerate(MEMBERSHIP.get()):
+            if prop not in store.predicates:
+                continue
+            folder = work / f"{number:03d}"
+            folder.mkdir()
+            for part in range(parts):
+                by_object = pl.col("oid") % parts == part if parts > 1 else pl.lit(True)
+                by_subject = pl.col("sid") % parts == part if parts > 1 else pl.lit(True)
+                (
+                    store.rows(prop)
+                    .filter((pl.col("kind") == "iri") & by_object)
+                    .select("sid", "oid")
+                    .join(types.filter(by_subject).select(oid="sid").unique(), on="oid", how="anti")
+                    .select("sid")
+                    .unique()
+                    .sink_parquet(folder / f"{part:05d}.parquet")
+                )
+            members = pl.scan_parquet(folder / "*.parquet")
+            for part in range(parts):
+                selected = pl.col("sid") % parts == part if parts > 1 else pl.lit(True)
+                found = (
+                    classes.filter(selected)
+                    .join(members.filter(selected).unique(), on="sid", how="semi")
+                    .select(pl.col("c").cast(pl.String))
+                    .unique()
+                    .collect(engine="streaming")
+                )
+                added |= {(c, prop, "Resource", None) for (c,) in found.iter_rows()}
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
     return sorted(added, key=str)
 
 
