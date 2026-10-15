@@ -650,6 +650,7 @@ class MinedSchema(BaseModel):
         *,
         profile: str | Path | None = None,
         top_classes: Any = None,
+        timestamps: bool = False,
     ) -> MinedSchema:
         """Read declared rows for classes of published vocabularies.
 
@@ -666,6 +667,9 @@ class MinedSchema(BaseModel):
         top_classes are the classes every resource is one of: a range of one of them allows any
         IRI or blank node, with no class check (owl:Thing, rdfs:Resource and schema:Thing by
         default; give a vocabulary's own top class here).
+
+        The same inputs give the same schema: about.schema_id is a hash of its content, and the
+        times of the run are written only with *timestamps*.
         """
         from rdfsolve.schema_models.readers.vocabulary import (
             UNIVERSAL,
@@ -677,6 +681,7 @@ class MinedSchema(BaseModel):
             classes,
             profile=profile,
             top_classes=UNIVERSAL if top_classes is None else top_classes,
+            timestamps=timestamps,
         )
 
     # NetworkX export

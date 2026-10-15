@@ -373,3 +373,15 @@ def test_schema_thing_is_a_top_class_not_a_class_check():
     assert {p.object_class for p in kept.patterns if p.property_uri == str(S.knowsAbout)} == {
         str(S.Thing)
     }, "A vocabulary's top classes are a parameter"
+
+
+def test_the_same_inputs_give_the_same_schema():
+    """No random identifier and no times of the run, unless asked: a build can compare the file."""
+    first = MinedSchema.from_vocabulary(VOCABULARY, classes=[S.Person])
+    second = MinedSchema.from_vocabulary(VOCABULARY, classes=[S.Person])
+    assert json.dumps(first.to_dict(), sort_keys=True) == json.dumps(
+        second.to_dict(), sort_keys=True
+    )
+    assert first.about.schema_id and not first.about.generated_at
+    timed = MinedSchema.from_vocabulary(VOCABULARY, classes=[S.Person], timestamps=True)
+    assert timed.about.generated_at and timed.about.schema_id == first.about.schema_id

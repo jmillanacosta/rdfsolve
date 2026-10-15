@@ -204,6 +204,7 @@ def vocabulary_to_minedschema(
     *,
     profile: str | Path | None = None,
     top_classes: Iterable[str] = UNIVERSAL,
+    timestamps: bool = False,
 ) -> MinedSchema:
     """Declare, for each class, every property whose domain is the class or an ancestor.
 
@@ -295,6 +296,18 @@ def vocabulary_to_minedschema(
     schema.about.property_count = len(schema.get_properties())
     schema.enrichment = SchemaEnrichment.from_oxigraph(
         vocab.dataset, schema.get_classes(), schema.get_properties()
+    )
+    # The same inputs give the same schema: its identifier is a hash of its content, and the
+    # times of the run are written only with *timestamps*.
+    if not timestamps:
+        schema.about.retrieved_at = None
+        schema.about.generated_at = ""
+    from hashlib import sha256
+    from uuid import NAMESPACE_URL, uuid5
+
+    content = schema.model_dump_json(exclude={"about"})
+    schema.about.schema_id = str(
+        uuid5(NAMESPACE_URL, "rdfsolve:vocabulary:" + sha256(content.encode()).hexdigest())
     )
     return schema
 
