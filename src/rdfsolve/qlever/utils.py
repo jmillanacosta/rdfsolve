@@ -43,7 +43,8 @@ class QleverConfig:
     timeout: str = "9999999999s"
     parser_buffer_size: str = "10M"
     stxxl_memory: str = "16GB"
-    parallel_parsing: bool = False
+    # None: by the input format (parallel_parsing_for); True or False: as given.
+    parallel_parsing: bool | None = None
     num_triples_per_batch: int = 1_000_000
     access_token: str | None = None
     image: str = "docker.io/adfreiburg/qlever:latest"
@@ -914,6 +915,21 @@ def _build_get_data_steps(
 # Qleverfile rendering
 
 
+# Formats whose statements are each on one line, with no prefix declarations: the input can be
+# split anywhere between lines and parsed in parallel. A stream of Turtle files declares prefixes
+# along the way, which the parallel parser does not allow.
+LINE_FORMATS = frozenset({"nt"})
+
+
+def parallel_parsing_for(cfg: QleverConfig, rdf_format: str) -> bool:
+    """Return whether the index builder parses the input in parallel: as *cfg* says, else for a
+    format of one statement a line (LINE_FORMATS).
+    """
+    if cfg.parallel_parsing is not None:
+        return cfg.parallel_parsing
+    return rdf_format in LINE_FORMATS
+
+
 def _render_qleverfile(
     *,
     name: str,
@@ -939,7 +955,7 @@ def _render_qleverfile(
                 "cmd": 'cat "{}"',
                 "format": rdf_format,
                 "for-each": pattern,
-                "parallel": "true" if cfg.parallel_parsing else "false",
+                "parallel": "true" if parallel_parsing_for(cfg, rdf_format) else "false",
             }
             for pattern in shlex.split(input_files)
         ]
@@ -956,7 +972,7 @@ def _render_qleverfile(
         settings_json=cfg.settings_json,
         access_token=cfg.access_token or name,
         runtime=runtime,
-        parallel_parsing="true" if cfg.parallel_parsing else "false",
+        parallel_parsing="true" if parallel_parsing_for(cfg, rdf_format) else "false",
         parser_buffer_size=cfg.parser_buffer_size,
         stxxl_memory=cfg.stxxl_memory,
         memory_for_queries=cfg.memory_for_queries,

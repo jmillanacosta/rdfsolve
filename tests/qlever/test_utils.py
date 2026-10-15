@@ -566,3 +566,22 @@ def test_a_journal_export_without_java_stops_before_the_runner(tmp_path):
     done = _run_export(tmp_path, java="exit 127")
     assert done.returncode != 0 and "needs java on the PATH" in done.stderr
     assert not (tmp_path / "ran").exists()
+
+
+def test_n_triples_are_parsed_in_parallel_and_turtle_is_not(tmp_path):
+    """An input of one statement a line (N-Triples) can be split anywhere between lines; a stream
+    of Turtle files declares prefixes along the way, which the parallel parser does not allow. A
+    setting given in the configuration is kept."""
+    cases = [
+        ({"name": "lines", "download_nt": "https://example.org/data.nt.gz"}, None, "true"),
+        ({"name": "turtle", "download_ttl": "https://example.org/data.ttl"}, None, "false"),
+        (
+            {"name": "lines", "download_nt": "https://example.org/data.nt.gz"},
+            QleverConfig(parallel_parsing=False),
+            "false",
+        ),
+    ]
+    for source, settings, expected in cases:
+        parsed = configparser.ConfigParser(interpolation=None)
+        parsed.read_string(build_qleverfile(source, tmp_path, 7000, "docker", cfg=settings))
+        assert parsed["index"]["PARALLEL_PARSING"] == expected, source["name"]

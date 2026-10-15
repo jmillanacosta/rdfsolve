@@ -496,7 +496,6 @@ class LocalMiningStage(Stage):
         cfg = QleverConfig(
             memory_for_queries="80G",
             timeout="600s",
-            parallel_parsing=False,
             num_triples_per_batch=int(
                 os.environ.get("RDFSOLVE_QLEVER_TRIPLES_PER_BATCH", "1000000")
             ),

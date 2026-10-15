@@ -104,7 +104,6 @@ class LsLodCloudStage(LocalMiningStage):
         cfg = QleverConfig(
             memory_for_queries="250G",
             timeout="3600s",
-            parallel_parsing=False,
             num_triples_per_batch=1_000_000,
         )
 
