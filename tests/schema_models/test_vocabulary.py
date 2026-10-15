@@ -129,8 +129,12 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
     with pytest.raises(ValueError, match="Ambiguous"):
         client.create("Person", uri="urn:c", dcterms_source="https://example.org/"), "IRI or text?"
     page = "https://example.org/"
-    as_link = client.create("Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "iri"})
-    as_text = client.create("Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "text"})
+    as_link = client.create(
+        "Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "iri"}
+    )
+    as_text = client.create(
+        "Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "text"}
+    )
     guessed = client.create("Person", uri="urn:k", dcterms_source=page, iri_strings=True)
     assert URIRef(page) in set(as_link.to_graph().objects()), "A reading chosen once per field"
     assert Literal(page) in set(as_text.to_graph().objects())
@@ -159,8 +163,12 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
         (2, "dcterms_source"),
     }, "Every problem of every row, not the first one"
     made = client.from_table(
-        "Person", rows.iloc[[1]], id_column="iri", numberOfChildren="children",
-        dcterms_source="source", kinds={"dcterms_source": "iri"},
+        "Person",
+        rows.iloc[[1]],
+        id_column="iri",
+        numberOfChildren="children",
+        dcterms_source="source",
+        kinds={"dcterms_source": "iri"},
     )
     assert len(made) == 1
     shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
@@ -320,27 +328,32 @@ def test_a_profile_keeps_its_rules_and_form_annotations_through_json_and_shacl(t
     path = tmp_path / "s_schema.json"
     path.write_text(json.dumps(schema.to_dict()), encoding="utf-8")
     shapes = Graph().parse(data=MinedSchema.from_json(path).to_shacl(), format="turtle")
-    version = next(
-        s for s in shapes.subjects(sh.path, URIRef(VOCABULARY_PROFILE_S + "softwareVersion"))
-    )
-    found = {p: shapes.value(version, p) for p in (sh.minCount, sh.maxCount, sh.order, sh.group)}
+    # The profile's shape states a message: it covers that shape's constraints only, so the shape
+    # stays apart from the generated one, which takes the annotations.
+    on_path = set(shapes.subjects(sh.path, URIRef(VOCABULARY_PROFILE_S + "softwareVersion")))
+    (version,) = {s for s in on_path if shapes.value(s, sh.message) is not None}
+    (described,) = on_path - {version}
+    found = {p: shapes.value(version, p) for p in (sh.minCount, sh.maxCount)}
     assert {str(p).rsplit("#")[-1]: str(v) for p, v in found.items()} == {
         "minCount": "1",
         "maxCount": "1",
-        "order": "3",
-        "group": "urn:site:main",
     }
-    assert shapes.value(version, dash.singleLine) is not None
     assert str(shapes.value(version, sh.message)) == "A version is required"
-    assert len(list(shapes.objects(version, sh.name))) == 1, "The profile's name replaces"
-    owners = list(shapes.subjects(sh.property, version))
-    assert len(owners) == 1 and shapes.value(owners[0], sh.targetClass) is not None
+    assert str(shapes.value(described, sh.order)) == "3"
+    assert str(shapes.value(described, sh.group)) == "urn:site:main"
+    assert shapes.value(described, dash.singleLine) is not None
+    assert shapes.value(described, sh.message) is None, "The generated shape keeps no message"
+    assert len(list(shapes.objects(described, sh.name))) == 1, "The profile's name replaces"
+    owners = {o for s in on_path for o in shapes.subjects(sh.property, s)}
+    assert len(owners) == 1 and shapes.value(next(iter(owners)), sh.targetClass) is not None
     category = next(
         s for s in shapes.subjects(sh.path, URIRef(VOCABULARY_PROFILE_S + "applicationCategory"))
     )
     assert str(shapes.value(category, sh.hasValue)) == "research"
     assert (URIRef("urn:site:main"), sh.order, None) in shapes, "The property group is kept"
-    targets = list(shapes.subjects(sh.targetClass, URIRef(VOCABULARY_PROFILE_S + "SoftwareSourceCode")))
+    targets = list(
+        shapes.subjects(sh.targetClass, URIRef(VOCABULARY_PROFILE_S + "SoftwareSourceCode"))
+    )
     assert len(targets) == 1, "One node shape for the class, not the profile's beside it"
 
 
@@ -351,7 +364,9 @@ def test_schema_thing_is_a_top_class_not_a_class_check():
     knows = {p.object_class for p in schema.patterns if p.property_uri == str(S.knowsAbout)}
     assert knows == {"Resource", "BlankNode"}
     shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
-    assert not list(shapes.subject_objects(SH["class"])) or (None, SH["class"], S.Thing) not in shapes
+    assert (
+        not list(shapes.subject_objects(SH["class"])) or (None, SH["class"], S.Thing) not in shapes
+    )
     kept = MinedSchema.from_vocabulary(
         VOCABULARY, classes=[S.Person], top_classes=["http://www.w3.org/2002/07/owl#Thing"]
     )

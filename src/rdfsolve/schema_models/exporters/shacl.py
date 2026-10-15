@@ -665,37 +665,67 @@ def _complete_shapes(
     return shapes
 
 
+# Profile statements that describe a shape for people and forms, not what it checks.
+_ANNOTATIONS = ("name", "description", "order", "group")
+DASH = "http://datashapes.org/dash#"
+
+
 def merge_profile(graph: Graph, profile: str) -> None:
     """Merge the shapes of a SHACL application profile (Turtle) into generated shapes.
 
-    A profile node shape with a sh:targetClass that a generated node shape has is merged into
-    it; a profile property shape whose path is an IRI that a generated property shape of that
-    class has is merged into it: each predicate the profile shape states replaces the generated
-    values of that predicate (constraints, order, group, messages, DASH annotations), the other
-    generated values stay. A profile property shape without a generated one is added to the
-    class's shape; a node shape of a class with no generated shape, and every other statement
-    of the profile (property groups, declarations), are added as they are.
+    A profile node shape with a sh:targetClass, and each of its property shapes whose path is an
+    IRI, meet the generated shape of that class (and path): the one without a severity of its
+    own, not the Info and Warning shapes beside it. A profile shape that states a severity other
+    than sh:Violation, or a message, keeps them for its own constraints only: it stays a shape of
+    its own, next to the generated one (SHACL checks both), and only its annotations (sh:name,
+    sh:description, sh:order, sh:group, DASH) are merged into the generated shape, so that the
+    generated value types stay Violations with their own messages. Any other profile shape is
+    merged into the generated one: each predicate it states replaces the generated values of that
+    predicate, the other generated values stay. A profile property shape without a generated one
+    is added to the class's shape; a node shape of a class with no generated shape, and every other
+    statement of the profile (property groups, declarations), are added as they are.
     """
     from rdflib import RDF, Namespace
 
     sh = Namespace("http://www.w3.org/ns/shacl#")
     given = Graph().parse(data=profile, format="turtle")
+
+    def own(shape: Any, source: Graph) -> bool:
+        """Return whether a shape has no severity of its own other than sh:Violation."""
+        return source.value(shape, sh.severity) in (None, sh.Violation)
+
+    def advisory(shape: Any) -> bool:
+        """Return whether a profile shape states a severity other than sh:Violation, or a
+        message: they cover all of its constraints.
+        """
+        return not own(shape, given) or given.value(shape, sh.message) is not None
+
+    def annotation(predicate: Any) -> bool:
+        """Return whether a predicate describes a shape rather than constrains it."""
+        return predicate in {sh[name] for name in _ANNOTATIONS} or str(predicate).startswith(DASH)
+
     generated: dict[str, Any] = {}
-    for node, target_class in graph.subject_objects(sh.targetClass):
-        generated.setdefault(str(target_class), node)
+    for node, target_class in sorted(graph.subject_objects(sh.targetClass), key=str):
+        if own(node, graph) and graph.value(node, sh.closed) is None:
+            generated.setdefault(str(target_class), node)
     by_path: dict[tuple[str, str], Any] = {}
     for class_iri, node in generated.items():
-        for shape in graph.objects(node, sh.property):
+        for shape in sorted(graph.objects(node, sh.property), key=str):
             path = graph.value(shape, sh.path)
-            if isinstance(path, URIRef):
+            if isinstance(path, URIRef) and own(shape, graph):
                 by_path.setdefault((class_iri, str(path)), shape)
 
-    def merge_into(target: Any, source: Any, keep: set[Any]) -> None:
-        """Replace the values of *target* for each predicate *source* states, but *keep*."""
-        for predicate in set(given.predicates(source)) - keep:
+    def merge_into(target: Any, source: Any, keep: set[Any], *, annotations_only: bool) -> None:
+        """Replace the values of *target* for each predicate *source* states, but *keep* (only
+        its annotations, with *annotations_only*).
+        """
+        stated = {p for p in given.predicates(source) if p not in keep}
+        if annotations_only:
+            stated = {p for p in stated if annotation(p)}
+        for predicate in stated:
             graph.remove((target, predicate, None))
         for _, predicate, value in given.triples((source, None, None)):
-            if predicate not in keep:
+            if predicate in stated:
                 graph.add((target, predicate, value))
 
     merged: set[Any] = set()
@@ -703,8 +733,19 @@ def merge_profile(graph: Graph, profile: str) -> None:
         target = generated.get(str(cls))
         if target is None:
             continue
-        merged.add(node)
-        merge_into(target, node, {RDF.type, sh.targetClass, sh.property})
+        if advisory(node):
+            # Kept as a node shape of its own (its targets, constraints, severity and message);
+            # its property shapes are met below.
+            merge_into(target, node, {RDF.type, sh.targetClass, sh.property}, annotations_only=True)
+            merged.add(node)
+            for _, predicate, value in given.triples((node, None, None)):
+                if predicate != sh.property:
+                    graph.add((node, predicate, value))
+        else:
+            merged.add(node)
+            merge_into(
+                target, node, {RDF.type, sh.targetClass, sh.property}, annotations_only=False
+            )
         for shape in given.objects(node, sh.property):
             path = given.value(shape, sh.path)
             existing = by_path.get((str(cls), str(path))) if isinstance(path, URIRef) else None
@@ -712,7 +753,16 @@ def merge_profile(graph: Graph, profile: str) -> None:
                 graph.add((target, sh.property, shape))
                 continue
             merged.add(shape)
-            merge_into(existing, shape, {RDF.type, sh.path})
+            if advisory(shape):
+                # The generated shape takes the annotations; the profile shape keeps its
+                # constraints, severity and message, next to it on the same path.
+                merge_into(existing, shape, {RDF.type, sh.path}, annotations_only=True)
+                graph.add((target, sh.property, shape))
+                for _, predicate, value in given.triples((shape, None, None)):
+                    if not annotation(predicate):
+                        graph.add((shape, predicate, value))
+            else:
+                merge_into(existing, shape, {RDF.type, sh.path}, annotations_only=False)
     for triple in given:
         if triple[0] not in merged:
             graph.add(triple)

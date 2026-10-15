@@ -405,3 +405,66 @@ def test_record_errors_are_public():
     from rdfsolve.client.authoring import RecordError as Defined
 
     assert RecordError is Defined
+
+
+ADVISORY = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+<urn:profile:A> a sh:NodeShape ; sh:targetClass <urn:A> ;
+    sh:property [ sh:path <urn:p> ; sh:minCount 1 ; sh:severity sh:Warning ;
+                  sh:message "Add p when there is one." ; sh:name "the p" ] ,
+                [ sh:path <urn:q> ; sh:maxCount 9 ; sh:name "the q" ] .
+"""
+
+
+def _results(data: Graph, shapes: Graph) -> set[tuple[str, str]]:
+    _, report, _ = validate(data, shacl_graph=shapes, allow_warnings=True)
+    return {
+        (
+            str(report.value(r, SH.sourceConstraintComponent)).rsplit("#", 1)[-1],
+            str(report.value(r, SH.resultSeverity)).rsplit("#", 1)[-1],
+        )
+        for r in report.subjects(SH.resultSeverity, None)
+    }
+
+
+def test_a_profile_severity_and_message_cover_only_the_profile_constraints():
+    """The profile's Warning and message stay on its own shape; the generated value types stay
+    Violations; a plain profile shape is merged; the annotations go on the generated shape."""
+    schema = _fixture_schema()
+    schema.shape_profile = ADVISORY
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    p_shapes = set(shapes.subjects(SH.path, URIRef("urn:p")))
+    warned = {s for s in p_shapes if shapes.value(s, SH.severity) == SH.Warning}
+    assert len(warned) == 1 and shapes.value(next(iter(warned)), SH.message) is not None
+    generated = {s for s in p_shapes if (s, SH.datatype, None) in shapes}
+    assert len(generated) == 1
+    main = next(iter(generated))
+    assert shapes.value(main, SH.severity) is None and shapes.value(main, SH.message) is None
+    assert str(shapes.value(main, SH.name)) == "the p"
+    q = next(
+        s for s in shapes.subjects(SH.path, URIRef("urn:q")) if (s, SH.datatype, None) in shapes
+    )
+    assert shapes.value(q, SH.maxCount).toPython() == 9 and str(shapes.value(q, SH.name)) == "the q"
+    text = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    text.remove((URIRef("urn:a1"), URIRef("urn:p"), None))
+    text.add((URIRef("urn:a1"), URIRef("urn:p"), URIRef("urn:a-link")))
+    assert ("DatatypeConstraintComponent", "Violation") in _results(text, shapes)
+
+
+def test_a_profile_meets_the_main_shape_not_the_info_shapes_beside_it():
+    from rdfsolve.schema_models.enrichment import RdfTerm
+
+    schema = _fixture_schema()
+    schema.enrichment.class_examples = {
+        "urn:A": [RdfTerm(kind="uri", value="https://example.org/a/1")]
+    }
+    schema.shape_profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+<urn:profile:A> a sh:NodeShape ; sh:targetClass <urn:A> ; sh:closed false ;
+    sh:property [ sh:path <urn:r> ; sh:minCount 1 ] .
+"""
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    info = {s for s in shapes.subjects(SH.severity, SH.Info)}
+    assert info and not any((s, SH.closed, None) in shapes for s in info)
+    r = {s for s in shapes.subjects(SH.path, URIRef("urn:r")) if (s, SH.minCount, None) in shapes}
+    assert r and all(shapes.value(s, SH.severity) is None for s in r)
