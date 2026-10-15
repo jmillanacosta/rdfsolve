@@ -855,22 +855,22 @@ def property_usage_evidence(
         members = pl.scan_parquet(work / "members.parquet")
         for predicate in data:
             edges = store.rows(predicate).join(members, on="sid").with_columns(lang=_language())
-            frames = pl.collect_all(
-                [
-                    edges.group_by("c").agg(
-                        triples=pl.len(),
-                        subjects=pl.col("sid").n_unique(),
-                        objects=pl.col("oid").n_unique(),
-                    ),
-                    edges.group_by("c", "kind").agg(n=pl.len()),
-                    edges.filter(pl.col("kind") == "literal")
-                    .group_by("c", "d", "lang")
-                    .agg(n=pl.len()),
-                    # rows() gives each triple once: a subject's rows are its distinct values.
-                    edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
-                ],
-                engine="streaming",
-            )
+            plans = [
+                edges.group_by("c").agg(
+                    triples=pl.len(),
+                    subjects=pl.col("sid").n_unique(),
+                    objects=pl.col("oid").n_unique(),
+                ),
+                edges.group_by("c", "kind").agg(n=pl.len()),
+                edges.filter(pl.col("kind") == "literal")
+                .group_by("c", "d", "lang")
+                .agg(n=pl.len()),
+                # rows() gives each triple once: a subject's rows are its distinct values.
+                edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
+            ]
+            # One plan at a time: run together, each held its own join of the predicate's rows
+            # with the members (as in scan_shapes.class_property_profiles).
+            frames = [plan.collect(engine="streaming") for plan in plans]
             for out, frame in zip(found, frames, strict=True):
                 for row in frame.iter_rows():
                     out.append((names[row[0]], predicate, *row[1:]))

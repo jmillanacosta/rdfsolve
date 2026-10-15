@@ -635,6 +635,7 @@ class SchemaMiner:
         config = self._report.report.config
         expressions = foldable_expressions(store)
         types = without_classes(type_table(store), expressions)
+        logger.info("Ontology terms: %d foldable class expressions", len(expressions))
         raw_patterns = term_patterns = None
         budget = self._ontology_term_budget
         phase = self._report.start_phase("ontology-terms")
@@ -646,6 +647,7 @@ class SchemaMiner:
             term_patterns = read_term_patterns(
                 store, patterns, ontology_graph_uris=self._ontology_graph_uris, invalid=invalid
             )
+            logger.info("Ontology terms: %d exact term patterns read", len(term_patterns))
             if invalid:
                 # Not a pattern's term: left out and reported with the scan's own (count_patterns).
                 found = config.setdefault(
@@ -674,6 +676,7 @@ class SchemaMiner:
                 hierarchy_files=self._hierarchy_files,
             )
             patterns, raw_patterns, types = grouping.patterns, grouping.raw_patterns, grouping.types
+            logger.info("Ontology terms: grouped, %d patterns", len(patterns))
             self._exact_terms(grouping, expressions)
             self._scan_grouping = grouping
             config["ontology_term_subsumption"] = grouping.summary
@@ -693,6 +696,7 @@ class SchemaMiner:
             )
             patterns = patterns + folding.patterns
             config["class_expression_folding"] = folding.record
+            logger.info("Ontology terms: class expressions folded, %d patterns", len(patterns))
         # Class counts and extensions read the rewritten type table (representatives counted).
         self._scan_types = RetypedStore(store, types)
         self._report.finish_phase(phase, items=len(patterns))
