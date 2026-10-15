@@ -251,3 +251,18 @@ def test_a_rule_whose_link_the_source_lacks_is_listed_and_not_run():
     assert profile.last_skipped == [{"rule": "instance url", "missing_properties": [url]}]
     assert {q.predicate.value for q in out} == {BL + "catalyzes"}
     assert any("instance url" in str(w.message) for w in caught)
+
+
+def test_a_rule_takes_links_and_classes_as_iris_with_or_without_data():
+    """A link given as an IRI keeps its slashes; a class IRI the data has no members of is kept."""
+    from rdfsolve.conversion import Rule
+    from tests.conversion.data import BL, WP
+
+    client = biolink_client()
+    link = "https://example.org/sources/tools#instance_url"
+    rule = Rule.between(client, WP + "Protein", BL + "url", subject=None, object=link)
+    assert rule.object == f"<{link}>"
+    path = Rule.between(client, WP + "Protein", BL + "url", object=f"<{link}>/<{WP}label>")
+    assert path.object == f"<{link}>/<{WP}label>"
+    absent = "https://example.org/sources/Tool"
+    assert Rule.between(client, absent, "a", value=BL + "Tool").focus == absent

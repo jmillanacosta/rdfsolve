@@ -97,6 +97,21 @@ def _other_kinds(client: Client, cls: str) -> tuple[str, ...]:
     return tuple(sorted(out))
 
 
+_ABSOLUTE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+# A step of a link path: an IRI in angle brackets (which may hold "/"), or text without "/".
+_STEP = re.compile(r"\^?<[^>]*>|[^/]+")
+
+
+def _link_steps(text: str) -> list[str]:
+    """Return the steps of a link path ("a/b", "^a", "<iri>/b"). A path that is one absolute
+    IRI with "//" after its scheme (written without brackets) is one step.
+    """
+    bare = text.lstrip("^")
+    if "<" not in text and re.match(r"^[A-Za-z][A-Za-z0-9+.-]*://", bare):
+        return [text]
+    return [m.group(0) for m in _STEP.finditer(text)]
+
+
 def _link(client: Client, name: str, focus: str) -> str:
     """Return the property IRI of a link by field name, else by label: of the focus's record
     type first, else the one property that the record types name so. An IRI or a CURIE is the
@@ -210,9 +225,11 @@ class Rule:
     ) -> Rule:
         """Return a rule written with the names the client uses.
 
-        *focus* and the kinds are record types; *subject* and *object* are links of the focus
-        by field name or label, a path of them ("a/b"), or a link that points to the focus
-        ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
+        *focus* and the kinds are record types, by name or class IRI (a class IRI that the data
+        has no members of is kept: the rule then matches nothing in that data); *subject* and
+        *object* are links of the focus by field name, label, IRI or CURIE, a path of them
+        ("a/b"; an IRI in a path of several steps is written in angle brackets), or a link that
+        points to the focus ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
         IRIs, CURIEs or "a" for rdf:type. *unless_kinds* leaves out focus nodes of these
         record types; *exact_kind* leaves out nodes that are also of a kind at the same level as
         the focus or below it, as the whole source's mined schema relates its classes, so the
@@ -232,6 +249,10 @@ class Rule:
                 return None
             if ":" in name and not name.startswith(("http://", "https://")):
                 name = _expand(name, client)
+            if _ABSOLUTE.match(name) and not any(
+                class_iri(m) == name for m in client.models.values()
+            ):
+                return name
             model = client.model(name, links=links, to=to)
             if is_untyped(model):
                 raise ValueError(
@@ -245,7 +266,7 @@ class Rule:
             """Return the link that reaches an end, seen from the end (to the focus)."""
             if not path_text:
                 return []
-            last = path_text.split("/")[-1]
+            last = _link_steps(path_text)[-1]
             return [last.lstrip("^")] if last.startswith("^") else ["^" + last]
 
         def path(text: str | None) -> str | None:
@@ -253,14 +274,15 @@ class Rule:
             if text is None:
                 return None
             steps = []
-            for step in text.split("/"):
+            for step in _link_steps(text):
                 inverse = step.startswith("^")
                 steps.append(
                     ("^" if inverse else "") + f"<{_link(client, step.lstrip('^'), focus_iri)}>"
                 )
             return "/".join(steps)
 
-        first = [p.split("/")[0] for p in (subject, object) if p]
+        first = [_link_steps(p)[0] for p in (subject, object) if p]
+        single = {p: len(_link_steps(p)) == 1 for p in (subject, object, *(requires or {})) if p}
         focus_iri = kind(focus, first) or focus
         return cls(
             focus_iri,
@@ -269,10 +291,10 @@ class Rule:
             object=path(object),
             value=value if literal or value is None else _expand(value, client),
             subject_class=kind(
-                subject_kind, end(subject), focus_iri if subject and "/" not in subject else None
+                subject_kind, end(subject), focus_iri if subject and single[subject] else None
             ),
             object_class=kind(
-                object_kind, end(object), focus_iri if object and "/" not in object else None
+                object_kind, end(object), focus_iri if object and single[object] else None
             ),
             pairs=pairs,
             name=name,
@@ -287,7 +309,7 @@ class Rule:
             requires=tuple(
                 (
                     cast(str, path(link)),
-                    kind(reached, end(link), focus_iri if "/" not in link else None),
+                    kind(reached, end(link), focus_iri if single[link] else None),
                 )
                 for link, reached in (requires or {}).items()
             ),

@@ -843,8 +843,13 @@ class MinedSchema(BaseModel):
         trim_descriptions: int | None = None,
         void: bool = True,
         paths: Literal["with", "without", "only"] = "with",
+        properties: Collection[str] | Literal["profile"] | None = None,
     ) -> str:
         """Convert to SHACL shapes.
+
+        *properties* limits the property shapes to these property IRIs, or with "profile" to
+        the paths of the schema's shape profile (shape_profile); by default every property of
+        the schema has its shapes.
 
         *paths* selects the shapes of the paths over several steps: with the class shapes (the
         default), without them, or only them (the pipeline writes them to a file of their own).
@@ -868,6 +873,11 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
 
         schema = rdf_writable(trim_export_text(self, trim_descriptions))
+        if properties is not None:
+            kept = self._profile_paths() if properties == "profile" else set(properties)
+            schema = schema.model_copy(
+                update={"patterns": [p for p in schema.patterns if p.property_uri in kept]}
+            )
         if paths == "without":
             schema = schema.model_copy(update={"navigation": None})
         elif paths == "only":
@@ -889,6 +899,16 @@ class MinedSchema(BaseModel):
         schema.annotate_rdf(graph)
         result: str = rdf_terms_only(graph).serialize(format="turtle")
         return result
+
+    def _profile_paths(self) -> set[str]:
+        """Return the property IRIs that the shape profile's property shapes have as sh:path."""
+        from rdflib import Graph, URIRef
+        from rdflib.namespace import SH
+
+        if not self.shape_profile:
+            raise ValueError("properties='profile' requires a schema with a shape_profile")
+        profile = Graph().parse(data=self.shape_profile, format="turtle")
+        return {str(p) for p in profile.objects(None, SH.path) if isinstance(p, URIRef)}
 
 
 # MiningResult

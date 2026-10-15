@@ -384,3 +384,24 @@ def test_members_written_without_a_scheme_conform_once_read():
     shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
     data = Graph().parse(data=CARDINALITY_DATA, format="turtle")
     assert validate(data, shacl_graph=shapes)[0]
+
+
+def test_shapes_can_be_limited_to_some_properties_or_to_the_profile():
+    schema = _fixture_schema()
+    only = Graph().parse(data=schema.to_shacl(void=False, properties=["urn:p"]), format="turtle")
+    assert {str(p) for p in only.objects(None, SH.path)} == {"urn:p"}
+    schema.shape_profile = "<urn:s> a <http://www.w3.org/ns/shacl#NodeShape> ; " + (
+        "<http://www.w3.org/ns/shacl#targetClass> <urn:A> ; "
+        "<http://www.w3.org/ns/shacl#property> [ <http://www.w3.org/ns/shacl#path> <urn:q> ] ."
+    )
+    profiled = Graph().parse(
+        data=schema.to_shacl(void=False, properties="profile"), format="turtle"
+    )
+    assert {str(p) for p in profiled.objects(None, SH.path)} == {"urn:q"}
+
+
+def test_record_errors_are_public():
+    from rdfsolve.api import RecordError
+    from rdfsolve.client.authoring import RecordError as Defined
+
+    assert RecordError is Defined
