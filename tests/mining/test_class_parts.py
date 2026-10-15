@@ -80,9 +80,9 @@ def test_part_shapes_accept_exactly_the_counted_members(tmp_path):
 
     by_name = {shape.name: members_of(shape) for shape in shapes}
     assert by_name["Node identified in uniprot"] == {"https://identifiers.org/uniprot/P04637"}
-    assert by_name[
-        "Node with an IRI of uniprot that is no valid uniprot identifier"
-    ] == {"https://identifiers.org/uniprot/043174"}
+    assert by_name["Node with an IRI of uniprot that is no valid uniprot identifier"] == {
+        "https://identifiers.org/uniprot/043174"
+    }
     assert by_name["Node identified in mi"] == {"http://purl.obolibrary.org/obo/MI_MI:0914"}, (
         "A local identifier written with its prefix is read"
     )
@@ -124,3 +124,43 @@ def test_parts_counted_in_parts_of_the_members_add_up(tmp_path, monkeypatch):
     whole = parts_of(tmp_path / "whole")
     monkeypatch.setattr(module, "PART_ROWS", 2)
     assert parts_of(tmp_path / "parts") == whole
+
+
+def test_a_host_of_too_many_namespaces_is_one_part(tmp_path, monkeypatch):
+    """A first path segment that holds each record's id makes a namespace of every record: past
+    NAMESPACES_PER_HOST in a class, they are one part of kind host, with the exact total, and the
+    part keys of the nodes are that part's."""
+    import polars as pl
+
+    from rdfsolve.mining import class_parts as mining_parts
+    from rdfsolve.mining.class_parts import fold_part_keys
+    from rdfsolve.mining.value_measures import classify_iris
+
+    monkeypatch.setattr(mining_parts, "NAMESPACES_PER_HOST", 3)
+    graph = Graph()
+    iris = [f"http://data.example.org/record:{n}/position" for n in range(5)]
+    for iri in iris:
+        graph.add((URIRef(iri), RDF.type, URIRef("http://example.org/Position")))
+    graph.add(
+        (
+            URIRef("https://identifiers.org/ncbigene/7157"),
+            RDF.type,
+            URIRef("http://example.org/Position"),
+        )
+    )
+    parts = class_parts(store_from_graph(graph, tmp_path / "store").members())
+    found = {p.kind: p for p in parts.by_class["http://example.org/Position"]}
+    assert set(found) == {"host", "identifier"}
+    assert (found["host"].namespaces, found["host"].entities) == (["http://data.example.org/"], 5)
+    nodes = pl.DataFrame(
+        {
+            "cls": ["http://example.org/Position"] * 2,
+            "part": ["namespace|" + iris[0].rsplit("/", 1)[0] + "/", "identifier|ncbigene"],
+        }
+    )
+    assert fold_part_keys(nodes, parts)["part"].to_list() == [
+        "host|http://data.example.org/",
+        "identifier|ncbigene",
+    ]
+    monkeypatch.setattr("rdfsolve.mining.value_measures.NAMESPACES_PER_HOST", 3)
+    assert [(p.kind, p.entities) for p in classify_iris(iris)] == [("host", 5)]

@@ -1204,10 +1204,14 @@ def derive_instance_mappings(
             found, counted, stated = store_occurrences(
                 name, stores[name], schema, keyed_reader, keys, settings.identity_properties
             )
-            occurrences.append(found)
             members.append(counted)
             claim_tables.append(stated)
             parts_by_dataset[name] = _class_parts(stores[name], found)
+            # Nodes of namespaces that their class holds in one part of a host: that part's key.
+            from rdfsolve.mining.class_parts import fold_part_keys
+
+            found = fold_part_keys(found, parts_by_dataset[name])
+            occurrences.append(found)
             datasets[name] = {
                 "membership": "local",
                 "instances": found.height,

@@ -31,7 +31,13 @@ __all__ = [
 ]
 
 PartKind = Literal[
-    "identifier", "invalid_identifier", "namespace", "relative_iri", "invalid_scheme", "blank_node"
+    "identifier",
+    "invalid_identifier",
+    "namespace",
+    "host",
+    "relative_iri",
+    "invalid_scheme",
+    "blank_node",
 ]
 _SPECIAL = set("\\.?*+(){}|[]^$")
 
@@ -42,7 +48,9 @@ class ClassPart(BaseModel):
     *kind*: identifier (a valid identifier of a registered *prefix*), invalid_identifier (an
     IRI in a registered namespace of *prefix* whose local part is not valid there), namespace
     (an IRI of none of the registered namespaces; *namespaces* holds its start: the scheme,
-    host and first path segment), relative_iri (an IRI without a scheme, which RDF does not
+    host and first path segment), host (IRIs of one host whose namespaces in the class are too
+    many to list, rdfsolve.mining.class_parts.NAMESPACES_PER_HOST; *namespaces* holds the
+    scheme and host), relative_iri (an IRI without a scheme, which RDF does not
     allow), invalid_scheme (an IRI whose text before its first colon is no valid scheme, such
     as a blank-node label written as an IRI; *namespaces* holds that text and the colon) or
     blank_node. *namespaces* are the IRI starts the members
@@ -63,7 +71,7 @@ class ClassPart(BaseModel):
         """Return what distinguishes the part within its class: its kind and its prefix, or its
         namespace for IRIs of no registered namespace (part_key in rdfsolve.mining.class_parts).
         """
-        if self.kind in ("namespace", "invalid_scheme"):
+        if self.kind in ("namespace", "host", "invalid_scheme"):
             return f"{self.kind}|{self.namespaces[0] if self.namespaces else ''}"
         return f"{self.kind}|{self.prefix or ''}"
 

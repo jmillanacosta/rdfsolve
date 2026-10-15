@@ -78,6 +78,9 @@ STRUCTURAL_SHAPES_PER_PROPERTY = 200
 # Rows of one property whose coverage is tested at a time: a larger property is tested in parts
 # by subject id, so that the covered edges of one part are held, not those of the property.
 CENSUS_PART_ROWS = 50_000_000
+# Rows of one property whose usage evidence is counted at a time (property_usage_evidence): a
+# larger property is counted in parts by id.
+USAGE_PART_ROWS = 100_000_000
 _KIND = {"iri": "IRI", "bnode": "BlankNode", "literal": "Literal"}
 
 
@@ -776,6 +779,57 @@ def _shared_properties(group: Any) -> dict[tuple[Any, ...], tuple[str, str]]:
 # Property usage evidence
 
 
+def _usage_counts(rows: pl.LazyFrame, members: pl.LazyFrame) -> list[list[tuple[Any, ...]]]:
+    """Return the measures of one predicate's rows by member class (c, as in *members*): (c,
+    triples, subjects, objects), (c, kind, n), (c, datatype, language, n), (c, values, n).
+
+    A predicate of more than USAGE_PART_ROWS rows is counted in parts by id: the subject
+    measures in parts by subject id, the distinct objects in parts by object id, so that a
+    part's distinct ids are held, not the predicate's; the sums over the parts are exact. Each
+    measure is collected on its own: collected together, each held its own join of the rows.
+    """
+    import polars as pl
+
+    size = int(rows.select(pl.len()).collect(engine="streaming").item())
+    parts = max(1, -(-size // USAGE_PART_ROWS))
+    tables: list[list[pl.DataFrame]] = [[], [], [], [], []]
+    for part in range(parts):
+
+        def of(column: str, part: int = part) -> pl.Expr:
+            """Select the rows of this part by the hash of an id column."""
+            return pl.col(column).hash() % parts == part if parts > 1 else pl.lit(True)
+
+        subject = rows.filter(of("sid")).join(members.filter(of("sid")), on="sid")
+        subject = subject.with_columns(lang=_language())
+        plans = [
+            subject.group_by("c").agg(triples=pl.len(), subjects=pl.col("sid").n_unique()),
+            rows.filter(of("oid"))
+            .join(members, on="sid")
+            .group_by("c")
+            .agg(objects=pl.col("oid").n_unique()),
+            subject.group_by("c", "kind").agg(n=pl.len()),
+            subject.filter(pl.col("kind") == "literal").group_by("c", "d", "lang").agg(n=pl.len()),
+            # rows() gives each triple once: a subject's rows are its distinct values.
+            subject.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
+        ]
+        for table, plan in zip(tables, plans, strict=True):
+            table.append(plan.collect(engine="streaming"))
+    counted, objects, kinds, literals, histogram = (pl.concat(t) for t in tables)
+    summary = (
+        counted.group_by("c")
+        .agg(pl.col("triples").sum(), pl.col("subjects").sum())
+        .join(objects.group_by("c").agg(pl.col("objects").sum()), on="c", how="left")
+        .with_columns(pl.col("objects").fill_null(0))
+        .select("c", "triples", "subjects", "objects")
+    )
+    return [
+        list(summary.iter_rows()),
+        list(kinds.group_by("c", "kind").agg(pl.col("n").sum()).iter_rows()),
+        list(literals.group_by("c", "d", "lang").agg(pl.col("n").sum()).iter_rows()),
+        list(histogram.group_by("c", "v").agg(pl.col("n").sum()).iter_rows()),
+    ]
+
+
 def property_usage_evidence(
     store: RowStore | StoreView,
     *,
@@ -854,25 +908,8 @@ def property_usage_evidence(
         )
         members = pl.scan_parquet(work / "members.parquet")
         for predicate in data:
-            edges = store.rows(predicate).join(members, on="sid").with_columns(lang=_language())
-            plans = [
-                edges.group_by("c").agg(
-                    triples=pl.len(),
-                    subjects=pl.col("sid").n_unique(),
-                    objects=pl.col("oid").n_unique(),
-                ),
-                edges.group_by("c", "kind").agg(n=pl.len()),
-                edges.filter(pl.col("kind") == "literal")
-                .group_by("c", "d", "lang")
-                .agg(n=pl.len()),
-                # rows() gives each triple once: a subject's rows are its distinct values.
-                edges.group_by("c", "sid").agg(v=pl.len()).group_by("c", "v").agg(n=pl.len()),
-            ]
-            # One plan at a time: run together, each held its own join of the predicate's rows
-            # with the members (as in scan_shapes.class_property_profiles).
-            frames = [plan.collect(engine="streaming") for plan in plans]
-            for out, frame in zip(found, frames, strict=True):
-                for row in frame.iter_rows():
+            for out, rows in zip(found, _usage_counts(store.rows(predicate), members), strict=True):
+                for row in rows:
                     out.append((names[row[0]], predicate, *row[1:]))
     finally:
         shutil.rmtree(work, ignore_errors=True)

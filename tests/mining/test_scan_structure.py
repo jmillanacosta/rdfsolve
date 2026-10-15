@@ -174,6 +174,24 @@ def test_property_usage_evidence(mined):
     assert any(r.language_counts == {"en": 3, "nl": 1} for r in scan.records)
 
 
+def test_property_usage_counted_in_parts_is_the_same(mined, monkeypatch):
+    """A property of more rows than USAGE_PART_ROWS is counted in parts by id, with the same
+    measures."""
+    from rdfsolve.mining import scan_structure
+
+    _, schema, _, store = mined
+    arguments: dict[str, Any] = dict(
+        dataset_id="fixture",
+        classes=sorted({p.subject_class for p in schema.patterns}),
+        class_entity_counts=schema.about.class_entity_counts,
+        graph_uris=schema.about.graph_uris,
+        collect_histograms=True,
+    )
+    whole = property_usage_evidence(store, **arguments)
+    monkeypatch.setattr(scan_structure, "USAGE_PART_ROWS", 2)
+    assert property_usage_evidence(store, **arguments).model_dump() == whole.model_dump()
+
+
 def test_iri_findings(mined):
     _, schema, report, store = mined
     statistics = report.config["dataset_statistics"]

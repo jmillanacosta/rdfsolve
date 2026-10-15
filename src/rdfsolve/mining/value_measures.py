@@ -21,7 +21,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.mining.class_parts import _OTHER, _SCHEME
+from rdfsolve.mining.class_parts import _HOST, _OTHER, _SCHEME, NAMESPACES_PER_HOST
 from rdfsolve.mining.query_builders import _graph_scope, _type_pattern
 from rdfsolve.schema_models.class_parts import ClassPart
 from rdfsolve.schema_models.value_measures import ValueCount, ValueParts
@@ -100,6 +100,15 @@ def classify_iris(iris: Iterable[str]) -> list[ClassPart]:
     """
     from rdfsolve.identifiers import parse
 
+    iris = list(iris)
+    # A host with more namespaces than NAMESPACES_PER_HOST is one namespace, as in the parts of
+    # a class (mining.class_parts.fold_namespaces).
+    by_host: dict[str, set[str]] = defaultdict(set)
+    for iri in iris:
+        match, host = re.match(_OTHER, iri), re.match(_HOST, iri)
+        if re.match(_SCHEME, iri) and match is not None and host is not None:
+            by_host[host.group(1)].add(match.group(1))
+    crowded = {host for host, found in by_host.items() if len(found) > NAMESPACES_PER_HOST}
     parts: dict[tuple[str, str | None, str | None], dict[str, Any]] = {}
     for iri in iris:
         kind, prefix, namespace = "namespace", None, None
@@ -115,7 +124,10 @@ def classify_iris(iris: Iterable[str]) -> list[ClassPart]:
             else:
                 match = re.match(_OTHER, iri)
                 namespace = match.group(1) if match else iri
-        key = (kind, prefix, namespace if kind in ("namespace", "invalid_scheme") else None)
+                host = re.match(_HOST, iri)
+                if host is not None and host.group(1) in crowded:
+                    kind, namespace = "host", host.group(1)
+        key = (kind, prefix, namespace if kind in ("namespace", "host", "invalid_scheme") else None)
         part = parts.setdefault(key, {"n": 0, "ns": set()})
         part["n"] += 1
         if namespace:

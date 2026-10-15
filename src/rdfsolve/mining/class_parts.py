@@ -18,7 +18,7 @@ from rdfsolve.schema_models.class_parts import ClassPart, ClassParts
 if TYPE_CHECKING:
     import polars as pl
 
-__all__ = ["class_parts", "classify", "part_key"]
+__all__ = ["class_parts", "classify", "fold_namespaces", "fold_part_keys", "part_key"]
 
 # Membership rows classified in one part (class_parts).
 PART_ROWS = 100_000_000
@@ -27,6 +27,11 @@ _SCHEME = r"^[A-Za-z][A-Za-z0-9+.\-]*:"
 # The start of an IRI of no registered namespace: scheme, host and, when a separator follows
 # it, the first path segment.
 _OTHER = r"^([A-Za-z][A-Za-z0-9+.-]*:(?://[^/#?]*/?)?(?:[^/#?]*[/#])?)"
+# The scheme and host of an IRI.
+_HOST = r"^([A-Za-z][A-Za-z0-9+.-]*:(?://[^/#?]*/?)?)"
+# Namespaces of one host in one class above which they are one part, at the host: a first path
+# segment that holds a record's own id makes a namespace of every record.
+NAMESPACES_PER_HOST = 50
 
 
 def class_parts(members: pl.LazyFrame, classes: Iterable[str] | None = None) -> ClassParts:
@@ -61,7 +66,39 @@ def class_parts(members: pl.LazyFrame, classes: Iterable[str] | None = None) -> 
             .collect(engine="streaming")
         )
     summed = pl.concat(counted).group_by("c", "kind", "prefix", "ns").agg(pl.col("n").sum())
-    return ClassParts(by_class=_parts(summed.iter_rows(named=True), reader))
+    return ClassParts(by_class=_parts(fold_namespaces(summed).iter_rows(named=True), reader))
+
+
+def fold_namespaces(counted: pl.DataFrame) -> pl.DataFrame:
+    """Return counted part rows (c, kind, prefix, ns, n) with the namespaces of a host that has
+    more than NAMESPACES_PER_HOST of them in a class made one part of kind "host" (ns: the
+    host): the counts are sums of disjoint parts, so they stay exact.
+    """
+    import polars as pl
+
+    other = pl.col("kind") == "namespace"
+    host = pl.col("ns").str.extract(_HOST, 1)
+    crowded = (
+        counted.filter(other)
+        .with_columns(host=host)
+        .group_by("c", "host")
+        .agg(k=pl.col("ns").n_unique())
+        .filter(pl.col("k") > NAMESPACES_PER_HOST)
+        .select("c", "host", fold=pl.lit(True))
+    )
+    if crowded.is_empty():
+        return counted
+    return (
+        counted.with_columns(host=host)
+        .join(crowded, on=["c", "host"], how="left")
+        .with_columns(folded=other & pl.col("fold").fill_null(False))
+        .with_columns(
+            kind=pl.when(pl.col("folded")).then(pl.lit("host")).otherwise(pl.col("kind")),
+            ns=pl.when(pl.col("folded")).then(pl.col("host")).otherwise(pl.col("ns")),
+        )
+        .group_by("c", "kind", "prefix", "ns")
+        .agg(pl.col("n").sum())
+    )
 
 
 def classify(frame: pl.LazyFrame, term: str, reader: Any) -> pl.LazyFrame:
@@ -110,12 +147,48 @@ def classify(frame: pl.LazyFrame, term: str, reader: Any) -> pl.LazyFrame:
     return classified
 
 
+def fold_part_keys(
+    frame: pl.DataFrame, parts: ClassParts, cls: str = "cls", part: str = "part"
+) -> pl.DataFrame:
+    """Return *frame* with the part keys (column *part*, of nodes of class *cls*) of namespaces
+    that the counted *parts* hold in a part of kind "host" given as that part's key.
+    """
+    import polars as pl
+
+    hosts = [
+        (c, namespace)
+        for c, found in parts.by_class.items()
+        for p in found
+        if p.kind == "host"
+        for namespace in p.namespaces
+    ]
+    if not hosts:
+        return frame
+    table = pl.DataFrame(hosts, schema={cls: pl.String, "_host": pl.String}, orient="row")
+    named = pl.col(part).str.starts_with("namespace|")
+    return (
+        frame.with_columns(
+            _host=pl.when(named).then(
+                pl.col(part).str.strip_prefix("namespace|").str.extract(_HOST, 1)
+            )
+        )
+        .join(table.with_columns(_fold=pl.lit(True)), on=[cls, "_host"], how="left")
+        .with_columns(
+            pl.when(pl.col("_fold").fill_null(False))
+            .then(pl.concat_str(pl.lit("host|"), pl.col("_host")))
+            .otherwise(pl.col(part))
+            .alias(part)
+        )
+        .drop("_host", "_fold")
+    )
+
+
 def part_key() -> pl.Expr:
     """Return the key of the part of a classified row (as ClassPart.key)."""
     import polars as pl
 
     return (
-        pl.when(pl.col("kind").is_in(["namespace", "invalid_scheme"]))
+        pl.when(pl.col("kind").is_in(["namespace", "host", "invalid_scheme"]))
         .then(pl.concat_str(pl.col("kind"), pl.lit("|"), pl.col("ns").fill_null("")))
         .otherwise(pl.concat_str(pl.col("kind"), pl.lit("|"), pl.col("prefix").fill_null("")))
     )
@@ -132,7 +205,7 @@ def _parts(rows: Iterable[dict[str, Any]], reader: Any) -> dict[str, list[ClassP
     }
     grouped: dict[str, dict[tuple[str, str | None, str | None], dict[str, Any]]] = {}
     for row in rows:
-        other = row["kind"] in ("namespace", "invalid_scheme")
+        other = row["kind"] in ("namespace", "host", "invalid_scheme")
         key = (row["kind"], row["prefix"], row["ns"] if other else None)
         part = grouped.setdefault(row["c"], {}).setdefault(key, {"n": 0, "ns": set()})
         part["n"] += row["n"]
