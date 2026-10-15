@@ -110,6 +110,7 @@ class SchemaMiner:
         pagination: Literal["offset", "cursor"] = "offset",
         excluded_graph_prefixes: tuple[str, ...] = (),
         type_context_graph_uris: list[str] | None = None,
+        vocabulary_graph_uris: list[str] | None = None,
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
         untyped_subjects: bool = True,
@@ -128,6 +129,9 @@ class SchemaMiner:
         *sample_size* is the first sample (edges or members) of a query that the endpoint
         refuses after every other fallback: its rows are kept, flagged sampled, with counts
         that are lower bounds (rdfsolve.mining.sampling); 0 turns sampling off.
+        *vocabulary_graph_uris* are graphs that hold a vocabulary rather than data: the
+        enrichment reads the names and descriptions of the schema's classes and properties from
+        them too; their triples are not mined.
         """
         self.endpoint_url = endpoint_url
         self.untyped_subjects = untyped_subjects
@@ -158,6 +162,7 @@ class SchemaMiner:
             [graph_uris] if isinstance(graph_uris, str) else graph_uris
         )
         self.type_context_graph_uris = list(dict.fromkeys(type_context_graph_uris or []))
+        self.vocabulary_graph_uris = list(dict.fromkeys(vocabulary_graph_uris or []))
         self.chunk_size = chunk_size
         self.class_chunk_size = class_chunk_size
         self.class_batch_size = max(1, class_batch_size)
@@ -1626,6 +1631,7 @@ class SchemaMiner:
             report=self._rc,
             annotation_iris=annotation_iris,
             type_context_graph_uris=self.type_context_graph_uris,
+            vocabulary_graph_uris=self.vocabulary_graph_uris,
         )
 
     def _mine_schema(self, dataset_name: str | None) -> MinedSchema:

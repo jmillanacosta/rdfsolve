@@ -94,7 +94,9 @@ def test_shapes_validate_their_data(store, closed):
 
 def test_counts_are_annotations_on_partitions(store):
     shapes = _shapes(store)
-    shape = next(shapes.subjects(SH.targetClass, E.A))
+    shape = next(
+        s for s in shapes.subjects(SH.targetClass, E.A) if (s, SH.closed, None) not in shapes
+    )
     partition = shapes.value(shape, URIRef("http://purl.org/dc/terms/source"))
     assert shapes.value(partition, VOID.entities).toPython() == 4
     tag = next(
@@ -131,10 +133,52 @@ def test_a_change_beyond_the_observations_is_a_violation(store):
     assert _validate(extra, shapes) == (False, {"ClosedConstraintComponent"})
 
 
+def _severities(data: Graph, shapes: Graph) -> dict[str, set[str]]:
+    _, report, _ = pyshacl.validate(data, shacl_graph=shapes)
+    found: dict[str, set[str]] = {}
+    for result in report.subjects(SH.resultSeverity, None):
+        component = str(report.value(result, SH.sourceConstraintComponent)).rsplit("#", 1)[-1]
+        severity = str(report.value(result, SH.resultSeverity)).rsplit("#", 1)[-1]
+        found.setdefault(component, set()).add(severity)
+    return found
+
+
+def test_caps_above_one_are_info_and_the_closed_check_a_warning(store):
+    shapes = _shapes(store)
+    more = _graph()
+    more.add((E.a2, E.tag, Literal("t9")))  # past the most of the data (3)
+    assert _severities(more, shapes) == {"MaxCountConstraintComponent": {"Info"}}
+    assert pyshacl.validate(more, shacl_graph=shapes, allow_warnings=True)[0]
+    extra = _graph()
+    extra.add((E.a1, E.unseen, Literal("x")))
+    assert _severities(extra, shapes) == {"ClosedConstraintComponent": {"Warning"}}
+    two = _graph()
+    two.add((E.a1, E.part, BNode()))  # a second value where every instance has at most one
+    assert _severities(two, shapes) == {"MaxCountConstraintComponent": {"Violation"}}
+    assert not _shapes(store, closed=False).value(predicate=SH.closed, object=Literal(True))
+
+
+def test_names_and_descriptions_come_from_a_vocabulary(store):
+    vocabulary = Graph()
+    vocabulary.add((E.A, RDFS.label, Literal("Thing A", lang="en")))
+    vocabulary.add((E.tag, RDFS.label, Literal("etiket", lang="nl")))
+    vocabulary.add((E.tag, RDFS.label, Literal("tag", lang="en")))
+    vocabulary.add((E.tag, RDFS.comment, Literal("A word for the thing.")))
+    shapes = _shapes(store, vocabulary=vocabulary)
+    node = next(
+        s for s in shapes.subjects(SH.targetClass, E.A) if (s, SH.closed, None) not in shapes
+    )
+    assert str(shapes.value(node, RDFS.label)) == "Thing A"
+    tag = next(s for s in shapes.subjects(SH.path, E.tag) if (s, SH.name, None) in shapes)
+    assert str(shapes.value(tag, SH.name)) == "tag"
+    assert str(shapes.value(tag, SH.description)) == "A word for the thing."
+    assert "Instances by number of values" in str(shapes.value(tag, RDFS.comment))
+
+
 def test_ill_typed_literals_are_accepted_as_literals(store):
     shapes = _shapes(store)
-    size = next(s for s in shapes.subjects(SH.path, E.size))
-    assert "Ill-typed literals" in str(shapes.value(size, SH.description))
+    size = next(s for s in shapes.subjects(SH.path, E.size) if (s, SH.nodeKind, None) in shapes)
+    assert "Ill-typed literals" in str(shapes.value(size, RDFS.comment))
     kinds = {shapes.value(m, SH.nodeKind) for m in shapes.transitive_objects(size, None)}
     assert SH.Literal in kinds
 

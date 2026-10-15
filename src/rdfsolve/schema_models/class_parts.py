@@ -175,7 +175,12 @@ def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> l
         if part.kind == "blank_node":
             shape.node_kind = "BlankNode"
         elif part.kind == "relative_iri":
-            shape.pattern = "^[^:]*$"
+            # A parser resolves an IRI without a scheme against its base IRI, so the IRI a
+            # validator reads is not the one written: the part is any IRI.
+            shape.description += (
+                ", written without a scheme in the source; read as IRIs resolved against the "
+                "base of the reader"
+            )
         elif part.kind == "identifier" and part.pattern:
             # XPath regular expressions (sh:pattern) have no non-capturing groups.
             local = part.pattern.removeprefix("^").removesuffix("$").replace("(?:", "(")

@@ -171,9 +171,12 @@ def query_enrichment(
     report: ReportCollector | None = None,
     annotation_iris: list[str] | None = None,
     type_context_graph_uris: list[str] | None = None,
+    vocabulary_graph_uris: list[str] | None = None,
 ) -> SchemaEnrichment:
     """Attempt definitions and examples for every class and pattern.
 
+    Names and descriptions are read from *graph_uris* and also from *vocabulary_graph_uris*
+    (graphs of a vocabulary, which give no examples).
     Samples are endpoint-order examples, not random or representative samples.
     A complete state means all planned queries completed, not all terms have text.
     """
@@ -253,8 +256,9 @@ def query_enrichment(
 
     classes = sorted(schema.get_classes())
     iris = sorted(set(classes) | set(schema.get_properties()) | set(annotation_iris or []))
-    for offset in range(0, len(iris), 50):
-        for row in select(definition_query(iris[offset : offset + 50], graph_uris), "definitions"):
+    scopes = [graph_uris] + ([vocabulary_graph_uris] if vocabulary_graph_uris else [])
+    for scope, offset in ((g, o) for g in scopes for o in range(0, len(iris), 50)):
+        for row in select(definition_query(iris[offset : offset + 50], scope), "definitions"):
             try:
                 definition = TermAnnotation(
                     term_iri=row["term"]["value"],

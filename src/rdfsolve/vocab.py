@@ -45,7 +45,8 @@ _TERMS = {
     ),
     "http://www.w3.org/ns/shacl#": (
         "NodeShape PropertyShape SPARQLExecutable SPARQLSelectExecutable SPARQLAskExecutable "
-        "SPARQLConstructExecutable alternativePath ask class closed construct datatype "
+        "SPARQLConstructExecutable Info Violation Warning alternativePath ask class closed "
+        "construct datatype severity "
         "deactivated declare description ignoredProperties inversePath languageIn maxCount "
         "minCount name "
         "namespace nodeKind oneOrMorePath or path prefix prefixes property qualifiedMaxCount "

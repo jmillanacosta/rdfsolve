@@ -141,10 +141,10 @@ def test_void_and_shacl_exports_use_registered_terms(schema, caplog):
     )
     sh = Namespace("http://www.w3.org/ns/shacl#")
     caplog.clear()
-    observed = Graph().parse(data=sample.to_shacl(), format="turtle")
+    observed = Graph().parse(data=sample.to_shacl(activate_observed=False), format="turtle")
     assert "1 deactivated" in caplog.text and "activate_observed=True" in caplog.text
     assert list(observed.subjects(sh.deactivated, Literal(True)))
-    active = Graph().parse(data=sample.to_shacl(activate_observed=True), format="turtle")
+    active = Graph().parse(data=sample.to_shacl(), format="turtle")
     assert not list(active.subjects(sh.deactivated, Literal(True)))
 
 

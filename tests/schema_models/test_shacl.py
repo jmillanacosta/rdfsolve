@@ -253,6 +253,9 @@ def test_node_shapes_name_the_namespaces_of_their_class_iris():
         for shape, pattern in graph.subject_objects(SH.pattern)
     }
     assert patterns["urn:Gene"] == r"^(https://identifiers\.org/ncbigene/)"
+    assert {graph.value(shape, SH.severity) for shape, _ in graph.subject_objects(SH.pattern)} == {
+        SH.Info
+    }, "namespaces read from examples are not an error"
     assert patterns["urn:Chem"] == (
         r"^(http://example\.org/20260910/|http://purl\.obolibrary\.org/obo/CHEBI_|"
         r"https://identifiers\.org/chebi/CHEBI:)"
@@ -260,3 +263,124 @@ def test_node_shapes_name_the_namespaces_of_their_class_iris():
     assert not any(str(p).isdigit() for p in graph.objects(None, SH.prefix)), "no invented prefix"
     kinds = {k.iri: k.identifiers for k in Shacl(graph).kinds()}
     assert kinds["urn:Gene"] == ("ncbigene",) and kinds["urn:Chem"] == ("chebi",)
+
+
+def _fixture_schema(**changes) -> MinedSchema:
+    """A schema of class urn:A with two members and exact counts of three properties."""
+    from rdflib import XSD
+
+    from rdfsolve.schema_models.class_extensions import ClassExtensions
+
+    rows = [("urn:p", 2, 2), ("urn:q", 3, 2), ("urn:r", 1, 1)]
+    return MinedSchema(
+        about=AboutMetadata.build(dataset_name="fixture"),
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri=prop,
+                object_class="Literal",
+                datatype=str(XSD.string),
+                count=count,
+                distinct_subjects=subjects,
+                **changes,
+            )
+            for prop, count, subjects in rows
+        ],
+        class_extensions=ClassExtensions(members={"urn:A": 2}),
+    )
+
+
+CARDINALITY_DATA = """
+<urn:a1> a <urn:A> ; <urn:p> "x" ; <urn:q> "y", "z" ; <urn:r> "w" .
+<urn:a2> a <urn:A> ; <urn:p> "x" ; <urn:q> "y" .
+"""
+
+
+def test_exact_counts_give_required_and_single_values():
+    from rdfsolve.schema_models.exporters.shacl import counted_cardinalities
+
+    schema = _fixture_schema()
+    assert counted_cardinalities(schema) == {
+        ("urn:A", "urn:p"): (1, 1),
+        ("urn:A", "urn:q"): (1, None),
+        ("urn:A", "urn:r"): (None, 1),
+    }
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    data = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    assert validate(data, shacl_graph=shapes)[0], "the data the counts come from conforms"
+    missing = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    missing.remove((URIRef("urn:a2"), URIRef("urn:p"), None))
+    second = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    second.add((URIRef("urn:a1"), URIRef("urn:r"), Literal("v")))
+    for changed, component in (
+        (missing, SH.MinCountConstraintComponent),
+        (second, SH.MaxCountConstraintComponent),
+    ):
+        conforms, report, _ = validate(changed, shacl_graph=shapes)
+        assert not conforms
+        assert set(report.objects(None, SH.sourceConstraintComponent)) == {component}
+
+
+def test_counts_that_are_not_exact_prove_nothing():
+    from rdfsolve.schema_models.exporters.shacl import counted_cardinalities
+
+    assert counted_cardinalities(_fixture_schema(count_bound="lower_bound")) == {}
+    hierarchy = _fixture_schema()
+    hierarchy.patterns.append(
+        SchemaPattern(
+            subject_class="urn:Class",
+            property_uri=str(RDFS.subClassOf),
+            object_class="urn:Class",
+        )
+    )
+    assert counted_cardinalities(hierarchy) == {}, "subclass members are not counted"
+
+
+def test_shapes_are_active_and_named_from_the_enrichment():
+    from rdfsolve.schema_models.enrichment import RdfTerm, TermAnnotation
+
+    schema = _fixture_schema()
+    schema.enrichment.labels = [
+        TermAnnotation(
+            term_iri="urn:p",
+            predicate=str(RDFS.label),
+            text=RdfTerm(kind="literal", value="name", language="en"),
+        )
+    ]
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    assert not list(shapes.subjects(SH.deactivated, None))
+    assert (
+        str(next(shapes.objects(next(shapes.subjects(SH.path, URIRef("urn:p"))), SH.name)))
+        == "name"
+    )
+    inactive = Graph().parse(
+        data=schema.to_shacl(activate_observed=False, void=False), format="turtle"
+    )
+    assert list(inactive.subjects(SH.deactivated, Literal(True)))
+
+
+def test_a_member_outside_the_example_namespaces_is_reported_at_info():
+    from rdfsolve.schema_models.enrichment import RdfTerm
+
+    schema = _fixture_schema()
+    schema.enrichment.class_examples = {
+        "urn:A": [RdfTerm(kind="uri", value="https://example.org/a/1")]
+    }
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    data = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    conforms, report, _ = validate(data, shacl_graph=shapes, allow_warnings=True)
+    assert conforms
+    assert set(report.objects(None, SH.resultSeverity)) == {SH.Info}
+
+
+def test_members_written_without_a_scheme_conform_once_read():
+    """A parser resolves an IRI written without a scheme against its base: the part is any IRI."""
+    from rdfsolve.schema_models.class_parts import ClassPart, ClassParts
+
+    schema = _fixture_schema()
+    schema.class_parts = ClassParts(
+        by_class={"urn:A": [ClassPart(kind="relative_iri", entities=2)]}
+    )
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    data = Graph().parse(data=CARDINALITY_DATA, format="turtle")
+    assert validate(data, shacl_graph=shapes)[0]

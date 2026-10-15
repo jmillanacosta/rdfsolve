@@ -828,7 +828,7 @@ class MinedSchema(BaseModel):
         self,
         base_uri: str | None = None,
         *,
-        activate_observed: bool = False,
+        activate_observed: bool = True,
         trim_descriptions: int | None = None,
         void: bool = True,
         paths: Literal["with", "without", "only"] = "with",
@@ -842,7 +842,8 @@ class MinedSchema(BaseModel):
 
         Args:
             base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
-            activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
+            activate_observed: Write the observed shapes active (the default), so that they
+                validate data; False writes them deactivated. Source profiles stay unchanged.
             void: Add the VoID description, so that from_shacl reads the patterns back. Leave it
                 out when the VoID is published on its own.
 

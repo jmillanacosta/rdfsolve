@@ -7,7 +7,9 @@ the data they were read from with no violation:
 - the instances of a class are its SHACL instances in the data, the nodes with
   ``rdf:type/rdfs:subClassOf*`` the class (SHACL 1.0, 2.1.3.1), which sh:targetClass selects;
 - sh:minCount and sh:maxCount are the least and the most values of the property among all
-  instances (an instance without the property has 0 values; a minimum of 0 is not written);
+  instances (an instance without the property has 0 values; a minimum of 0 is not written).
+  A most of 1 is on the property shape; a most above 1 (the exact cap of the data, which a
+  valid new record may pass) is a property shape of its own with severity Info (*cap_severity*);
 - the values are described by sh:or of: sh:class for each class of a typed object (its
   rdf:type), sh:nodeKind sh:IRI or sh:BlankNode for objects without a class, sh:datatype for
   each datatype of the literals (the source datatype, after the census restore of QLever's
@@ -15,8 +17,14 @@ the data they were read from with no violation:
   without sh:or; sh:nodeKind gives the mix of node kinds;
 - a datatype with ill-typed literals (which sh:datatype rejects, as a SHACL engine checks the
   lexical form) is given as sh:nodeKind sh:Literal, and the property shape says how many;
-- with *closed*, sh:closed true and sh:ignoredProperties (rdf:type): every property of an
-  instance has a property shape.
+- with *closed* (the default), a second node shape of the class, with sh:closed true and
+  sh:ignoredProperties (rdf:type) and severity Warning (*closed_severity*): a property that no
+  instance of the class has is reported. The scan reads every row, so the list of properties
+  of each class is complete.
+
+Names and descriptions of the classes and properties (sh:name, sh:description; rdfs:label on
+node shapes) are read from a *vocabulary* graph when one is given; what the scan observed is
+said in rdfs:comment.
 
 The counts are annotations, not constraints, written with VoID terms on partitions of their
 own (``observed-class-…``): the instances of the class (void:entities); for each property its
@@ -24,7 +32,7 @@ triples, the instances that have it (void:distinctSubjects), its distinct object
 void-ext, the distinct IRI, blank-node and literal objects. Each shape points to its partition
 (dcterms:source) and to the dataset IRI (schema:isBasedOn), which carries the release when the
 base IRI is versioned. The number of instances with each number of values (the histogram) is
-in the property shape's sh:description and in the profile (JSON).
+in the property shape's rdfs:comment and in the profile (JSON).
 
 These shapes are kept apart from the deactivated value-type templates (exporters/shacl.py) and
 from the constraints that a source declares: their IRIs are ``…/shapes/observed-…``.
@@ -48,6 +56,7 @@ if TYPE_CHECKING:
     from rdflib import Graph
 
     from rdfsolve.mining.scan import RowStore, StoreView
+    from rdfsolve.schema_models.shacl_model import Severity
 
 __all__ = ["ClassProfile", "PropertyProfile", "class_property_profiles", "observed_shapes"]
 
@@ -378,21 +387,27 @@ def observed_shapes(
     dataset_name: str,
     dataset_iri: str | None = None,
     graph_uris: Sequence[str] | None = None,
-    closed: bool = False,
+    closed: bool = True,
+    closed_severity: Severity = "Warning",
+    cap_severity: Severity = "Info",
+    vocabulary: Graph | None = None,
 ) -> Graph:
     """Write the active observed shapes of *profiles* and their count partitions as RDF.
 
     *graph_uris* names the graph scope the profiles were read from (a store view), which the
-    shapes' descriptions state; *closed* adds sh:closed true with sh:ignoredProperties
-    (rdf:type).
+    shapes' descriptions state. *closed* adds, per class, a node shape with sh:closed true and
+    sh:ignoredProperties (rdf:type) at *closed_severity*. A most count above 1 is written at
+    *cap_severity*. *vocabulary* (a vocabulary, the data, or their merge) gives the names and
+    descriptions of the classes and properties.
     """
     from rdflib import BNode, Graph, Literal, Namespace, URIRef
     from rdflib.collection import Collection
-    from rdflib.namespace import DCTERMS, RDF
+    from rdflib.namespace import DCTERMS, RDF, RDFS
     from rdflib.namespace import XSD as XSDNS
     from rdflib.term import Node
 
     from rdfsolve.config import mint
+    from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, NAME_PREDICATES
 
     sh = Namespace("http://www.w3.org/ns/shacl#")
     void = Namespace("http://rdfs.org/ns/void#")
@@ -412,6 +427,18 @@ def observed_shapes(
     def number(n: int) -> Literal:
         """Return *n* as an xsd:integer literal."""
         return Literal(n, datatype=XSDNS.integer)
+
+    def text(iri: str, predicates: tuple[str, ...]) -> Literal | None:
+        """Return the vocabulary's text of *iri*: English or untagged first, then by predicate."""
+        if vocabulary is None:
+            return None
+        found = [
+            (value.language not in ("en", None, ""), rank, str(value), value)
+            for rank, predicate in enumerate(predicates)
+            for value in vocabulary.objects(URIRef(iri), URIRef(predicate))
+            if isinstance(value, Literal)
+        ]
+        return min(found)[3] if found else None
 
     def constrain(node: Any, constraints: list[tuple[str, Any]]) -> None:
         """Add the SHACL *constraints* to the shape *node*."""
@@ -437,10 +464,16 @@ def observed_shapes(
         g.add((node, sh.targetClass, URIRef(cls.class_iri)))
         g.add((node, DCTERMS.source, partition))
         g.add((node, schema_org.isBasedOn, URIRef(dataset)))
+        title = text(cls.class_iri, NAME_PREDICATES)
+        if title is not None:
+            g.add((node, RDFS.label, title))
+        summary = text(cls.class_iri, DEFINITION_PREDICATES)
+        if summary is not None:
+            g.add((node, sh.description, summary))
         g.add(
             (
                 node,
-                sh.description,
+                RDFS.comment,
                 Literal(
                     f"Observed in {scope}: the least and most values of each property among the "
                     f"{cls.instances} instances (rdf:type/rdfs:subClassOf*) of the class, and "
@@ -450,10 +483,29 @@ def observed_shapes(
             )
         )
         if closed:
-            g.add((node, sh.closed, Literal(True)))
+            # A shape of its own: its severity is not that of the class's other constraints.
+            fence = URIRef(f"{shapes}ns-{_short(cls.class_iri)}-closed")
+            g.add((fence, RDF.type, sh.NodeShape))
+            g.add((fence, sh.targetClass, URIRef(cls.class_iri)))
+            g.add((fence, sh.closed, Literal(True)))
+            g.add((fence, sh.severity, sh[closed_severity]))
             ignored = BNode()
             Collection(g, ignored, [RDF.type])
-            g.add((node, sh.ignoredProperties, ignored))
+            g.add((fence, sh.ignoredProperties, ignored))
+            g.add(
+                (
+                    fence,
+                    RDFS.comment,
+                    Literal(
+                        "Every property that an instance of the class has in the data has a "
+                        "property shape here: another property is reported."
+                    ),
+                )
+            )
+            for prop in cls.properties:
+                listed = BNode()
+                g.add((listed, sh.path, URIRef(prop.property_uri)))
+                g.add((fence, sh.property, listed))
         g.add((partition, RDF.type, void.Dataset))
         g.add((partition, void["class"], URIRef(cls.class_iri)))
         g.add((partition, void.entities, number(cls.instances)))
@@ -466,9 +518,33 @@ def observed_shapes(
             g.add((shape, RDF.type, sh.PropertyShape))
             g.add((shape, sh.path, URIRef(prop.property_uri)))
             g.add((shape, DCTERMS.source, part))
+            title = text(prop.property_uri, NAME_PREDICATES)
+            if title is not None:
+                g.add((shape, sh.name, title))
+            summary = text(prop.property_uri, DEFINITION_PREDICATES)
+            if summary is not None:
+                g.add((shape, sh.description, summary))
             if prop.min_count:
                 g.add((shape, sh.minCount, number(prop.min_count)))
-            g.add((shape, sh.maxCount, number(prop.max_count)))
+            if prop.max_count <= 1:
+                g.add((shape, sh.maxCount, number(prop.max_count)))
+            else:
+                cap = URIRef(f"{shape}-most")
+                g.add((node, sh.property, cap))
+                g.add((cap, RDF.type, sh.PropertyShape))
+                g.add((cap, sh.path, URIRef(prop.property_uri)))
+                g.add((cap, sh.maxCount, number(prop.max_count)))
+                g.add((cap, sh.severity, sh[cap_severity]))
+                g.add(
+                    (
+                        cap,
+                        RDFS.comment,
+                        Literal(
+                            f"The most values of an instance in the data ({prop.max_count}); "
+                            "a new record may have more."
+                        ),
+                    )
+                )
             kind = _NODE_KIND.get(frozenset(k for k, n in prop.node_kinds.items() if n))
             if kind:
                 g.add((shape, sh.nodeKind, sh[kind]))
@@ -485,14 +561,14 @@ def observed_shapes(
                 Collection(g, head, members)
                 g.add((shape, sh["or"], head))
             histogram = ", ".join(f"{n}: {k}" for n, k in prop.values_per_instance.items())
-            text = f"Instances by number of values: {histogram}."
+            note = f"Instances by number of values: {histogram}."
             if prop.ill_typed:
-                text += (
+                note += (
                     " Ill-typed literals (any literal accepted): "
                     + ", ".join(f"{d} {n}" for d, n in sorted(prop.ill_typed.items()))
                     + "."
                 )
-            g.add((shape, sh.description, Literal(text)))
+            g.add((shape, RDFS.comment, Literal(note)))
             g.add((partition, void.propertyPartition, part))
             g.add((part, RDF.type, void.Dataset))
             g.add((part, void.property, URIRef(prop.property_uri)))

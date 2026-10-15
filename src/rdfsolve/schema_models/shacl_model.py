@@ -23,6 +23,23 @@ NodeKind = Literal[
 ]
 
 
+Severity = Literal["Violation", "Warning", "Info"]
+
+
+def _severity(graph: Graph, shape: Node) -> Severity | None:
+    """Read sh:severity: one of the three SHACL severities, or None when it is not given."""
+    from rdflib import Namespace
+
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    value = graph.value(shape, sh.severity, any=False)
+    if value is None:
+        return None
+    name = str(value).removeprefix(str(sh))
+    if name not in get_args(Severity):
+        raise ValueError(f"Invalid sh:severity: {value}")
+    return cast(Severity, name)
+
+
 def _count(graph: Graph, shape: Node, predicate: URIRef) -> int | None:
     """Require the SHACL integer datatype and at most one value."""
     from rdflib import XSD
@@ -84,6 +101,9 @@ class ShaclPropertyShape(BaseModel):
     class_constraint: str | None = Field(None, description="sh:class")
     node_kind: NodeKind | None = None
     deactivated: bool = False
+    severity: Severity | None = Field(
+        None, description="sh:severity of the results of this shape (None: Violation)"
+    )
     min_count: int | None = Field(None, description="sh:minCount")
     max_count: int | None = Field(None, description="sh:maxCount")
     properties: list[ShaclPropertyShape] = Field(default_factory=list)
@@ -143,6 +163,8 @@ class ShaclPropertyShape(BaseModel):
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
         if self.deactivated:
             graph.add((node, sh.deactivated, RdfLiteral(True)))
+        if self.severity is not None:
+            graph.add((node, sh.severity, sh[self.severity]))
         if self.min_count is not None:
             graph.add((node, sh.minCount, RdfLiteral(self.min_count, datatype=XSD.integer)))
         if self.max_count is not None:
@@ -249,6 +271,7 @@ class ShaclPropertyShape(BaseModel):
             qualified_max_count=_count(graph, uri, sh.qualifiedMaxCount),
             qualified_disjoint=_boolean(graph, uri, sh.qualifiedValueShapesDisjoint),
             deactivated=_boolean(graph, uri, sh.deactivated),
+            severity=_severity(graph, uri),
             name=name,
             description=description,
             name_language=name_language,
@@ -284,6 +307,9 @@ class ShaclNodeShape(BaseModel):
         default_factory=list, description="sh:not: node shapes a focus node does not conform to"
     )
     deactivated: bool = False
+    severity: Severity | None = Field(
+        None, description="sh:severity of the results of this shape (None: Violation)"
+    )
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
     name: str | None = Field(None, description="rdfs:label")
@@ -328,6 +354,8 @@ class ShaclNodeShape(BaseModel):
             graph.add((uri, sh.nodeKind, sh[self.node_kind]))
         if self.deactivated:
             graph.add((uri, sh.deactivated, RdfLiteral(True)))
+        if self.severity is not None:
+            graph.add((uri, sh.severity, sh[self.severity]))
         if self.pattern is not None:
             graph.add((uri, sh.pattern, RdfLiteral(self.pattern)))
         if self.closed:
@@ -401,6 +429,7 @@ class ShaclNodeShape(BaseModel):
             parts=parts,
             not_shapes=sorted(str(o) for o in graph.objects(uri, sh["not"])),
             deactivated=_boolean(graph, uri, sh.deactivated),
+            severity=_severity(graph, uri),
             ignored_properties=[
                 str(item)
                 for head in graph.objects(uri, sh.ignoredProperties)

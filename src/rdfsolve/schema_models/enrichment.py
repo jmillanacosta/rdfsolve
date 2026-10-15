@@ -190,6 +190,23 @@ class PatternExample(BaseModel):
         return data
 
 
+def _preferred(
+    annotations: list[TermAnnotation], iri: str, predicates: tuple[str, ...]
+) -> str | None:
+    """Return the text of *iri* in English or untagged first, then by the order of *predicates*."""
+    candidates = [d for d in annotations if d.term_iri == iri]
+    if not candidates:
+        return None
+    candidates.sort(
+        key=lambda d: (
+            d.text.language not in ("en", None, ""),
+            predicates.index(d.predicate) if d.predicate in predicates else len(predicates),
+            d.text.value,
+        )
+    )
+    return candidates[0].text.value
+
+
 class SchemaEnrichment(BaseModel):
     """Bounded convenience samples; these do not estimate coverage or frequency."""
 
@@ -206,19 +223,13 @@ class SchemaEnrichment(BaseModel):
 
     def description(self, iri: str) -> str | None:
         """Choose an English or untagged source definition when available."""
-        candidates = [d for d in self.definitions if d.term_iri == iri]
-        if not candidates:
-            return None
-        candidates.sort(
-            key=lambda d: (
-                d.text.language not in ("en", None, ""),
-                DEFINITION_PREDICATES.index(d.predicate)
-                if d.predicate in DEFINITION_PREDICATES
-                else len(DEFINITION_PREDICATES),
-                d.text.value,
-            )
-        )
-        return candidates[0].text.value
+        return _preferred(self.definitions, iri, DEFINITION_PREDICATES)
+
+    def label(self, iri: str) -> str | None:
+        """Choose an English or untagged source label when available (a synonym when the term
+        has no label).
+        """
+        return _preferred(self.labels, iri, NAME_PREDICATES)
 
     def to_rdf_graph(self) -> Graph:
         """Copy source definitions and observed triples; do not add constraints.
