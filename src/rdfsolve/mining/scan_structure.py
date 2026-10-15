@@ -598,10 +598,18 @@ def _census_graph(
         # read from the files: every part of every property joins them. A node can hold one
         # class many times (in several graphs, or as the group of many of its terms), and each
         # repeat would multiply its edges in every join.
-        types.unique().sink_parquet(work / "types.parquet")
-        types = pl.scan_parquet(work / "types.parquet")
-        types.select("sid").unique().sink_parquet(work / "typed.parquet")
-        members = pl.scan_parquet(work / "typed.parquet")
+        # Made distinct in parts by subject id: a node's rows are in one part, so the parts
+        # hold no row twice, and one part of the table is held at a time.
+        type_rows = int(types.select(pl.len()).collect(engine="streaming").item())
+        type_parts = max(1, -(-type_rows // CENSUS_PART_ROWS))
+        (work / "types").mkdir()
+        (work / "typed").mkdir()
+        for part in range(type_parts):
+            selected = types.filter(pl.col("sid") % type_parts == part) if type_parts > 1 else types
+            selected.unique().sink_parquet(work / "types" / f"{part:05d}.parquet")
+            selected.select("sid").unique().sink_parquet(work / "typed" / f"{part:05d}.parquet")
+        types = pl.scan_parquet(work / "types" / "*.parquet")
+        members = pl.scan_parquet(work / "typed" / "*.parquet")
         census: dict[str, dict[str, Any]] = {}
         files: dict[str, Path] = {}
         for number, predicate in enumerate(sorted(store.predicates)):
