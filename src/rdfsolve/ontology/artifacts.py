@@ -12,7 +12,7 @@ import hashlib
 import mimetypes
 import shutil
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Literal
 from urllib.parse import unquote, urlparse
@@ -197,7 +197,7 @@ def archive_ontology_bytes(
         modified_values=modified_values,
         source_url=source_url,
         source_graph=source_graph,
-        retrieved_at=retrieved_at or datetime.now(timezone.utc).isoformat(),
+        retrieved_at=retrieved_at or datetime.now(UTC).isoformat(),
         media_type=media_type,
         sha256=digest,
         local_path=str(path),

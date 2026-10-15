@@ -207,7 +207,7 @@ class Ontologies:
                 terms = [t for t in terms if t.get("iri") == canonical and not t.get("is_obsolete")]
                 if not terms and (found := parse(canonical)) is not None:
                     # OLS files some ontologies under IRIs other than the PURL that Bioregistry
-                    # gives (SBO under biomodels.net/SBO/): ask by the OBO identifier instead.
+                    # gives: ask by the OBO identifier instead.
                     import bioregistry
 
                     obo_id = (
@@ -429,7 +429,7 @@ class Ontologies:
     def _held(self, terms: list[str]) -> tuple[dict[str, str], set[str]]:
         """Return the canonical IRI of each term and the canonical IRIs that UberGraph holds.
 
-        Another IRI form of an OBO term (identifiers.org) is asked by its PURL.
+        Another IRI form of an OBO term is asked by its PURL.
         """
         canonical = {term: canonical_iri(term) for term in terms}
         held = self._closure(
@@ -442,7 +442,7 @@ class Ontologies:
     def ancestors(self, terms: list[str]) -> dict[str, list[str] | None]:
         """Return all named superclasses of each term, or None for a term that no source knows.
 
-        UberGraph's closure for the terms it holds; OLS for the others (EFO, EDAM, ...). An
+        UberGraph's closure for the terms it holds; OLS for the others. An
         empty list is a term without superclasses; None is not that.
         """
         canonical, held = self._held(terms)
@@ -517,8 +517,8 @@ class Ontologies:
         """Return the pairs of terms that name one compound in another form.
 
         Tautomers and conjugate acids and bases (rdfsolve.ontology.vocabulary.
-        CHEMICAL_VARIANT_PREDICATES), from UberGraph's closure: L-serine and L-serine
-        zwitterion are tautomers. Terms it does not hold have no variants here.
+        CHEMICAL_VARIANT_PREDICATES), from UberGraph's closure. Terms it does not hold have no
+        variants here.
         """
         from rdfsolve.ontology.vocabulary import CHEMICAL_VARIANT_PREDICATES
 

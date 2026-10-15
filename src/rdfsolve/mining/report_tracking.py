@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -157,17 +157,35 @@ class ReportCollector:
     _MAX_DROPPED_SAMPLES: int = 20
 
     def record_outcome(self, outcome: QueryOutcome) -> None:
-        """Record unresolved failures after all permitted fallbacks finish."""
+        """Record unresolved failures after all permitted fallbacks finish, the measures
+        that were refused for rows that stand (measurement gaps), and the refused queries that
+        a bounded sample answered (sampled queries, not failures).
+        """
+        self._report.measurement_gaps.extend(outcome.gaps)
+        self._report.sampled_queries.extend(outcome.samples)
         if outcome.state != "complete":
             self._report.query_failures.extend(outcome.failures)
             self.set_abort_reason(f"{len(self._report.query_failures)} required queries incomplete")
 
-    def record_dropped_uri(self, sample: str) -> None:
+    def record_dropped_uri(self, sample: str, binding: dict[str, Any] | None = None) -> None:
         """Record a pattern dropped due to an invalid URI value.
 
         Increments the counter and keeps the first few examples so
-        the report gives actionable debugging info.
+        the report gives actionable debugging info. A class that the engine returns as a literal
+        (``?s rdf:type "strain"``) names no class: like a literal type value in class discovery,
+        it is skipped, and counted under ``literal_type_values`` as a finding of the source.
         """
+        if binding and any(
+            binding.get(key, {}).get("type") in ("literal", "typed-literal")
+            for key in ("sc", "class", "oc")
+        ):
+            found = self._report.config.setdefault(
+                "literal_type_values", {"count": 0, "samples": []}
+            )
+            found["count"] += 1
+            if len(found["samples"]) < self._MAX_DROPPED_SAMPLES:
+                found["samples"].append(sample)
+            return
         self._report.dropped_invalid_uris += 1
         if len(self._report.dropped_invalid_uri_samples) < self._MAX_DROPPED_SAMPLES:
             self._report.dropped_invalid_uri_samples.append(sample)
@@ -178,9 +196,10 @@ class ReportCollector:
         """Start a new phase and return its report object."""
         phase = PhaseReport(
             name=name,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
         self._report.phases.append(phase)
+        logger.info("Phase %s started", name)
         return phase
 
     def finish_phase(
@@ -190,7 +209,7 @@ class ReportCollector:
         error: str | None = None,
     ) -> None:
         """Mark a phase as finished and flush the report."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         phase.finished_at = now.isoformat()
         if phase.started_at:
             started = datetime.fromisoformat(phase.started_at)
@@ -200,6 +219,13 @@ class ReportCollector:
             )
         phase.items_discovered = items
         phase.error = error
+        logger.info(
+            "Phase %s finished: %d items in %.1f s%s",
+            phase.name,
+            items,
+            phase.duration_s or 0.0,
+            f" ({error})" if error else "",
+        )
         self.flush()
 
     def set_abort_reason(self, reason: str) -> None:
@@ -217,7 +243,7 @@ class ReportCollector:
         """Set final summary fields and flush."""
         r = self._report
         r.finished_at = datetime.now(
-            timezone.utc,
+            UTC,
         ).isoformat()
         if r.started_at:
             started = datetime.fromisoformat(r.started_at)
@@ -260,7 +286,7 @@ class ReportCollector:
             "classes": classes,
             "rows": rows,
             "state": state,
-            "at": datetime.now(timezone.utc).isoformat(),
+            "at": datetime.now(UTC).isoformat(),
         }
         with self._checkpoint.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(line, default=str) + "\n")

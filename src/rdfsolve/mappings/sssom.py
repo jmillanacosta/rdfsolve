@@ -7,7 +7,7 @@ sssom library.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from itertools import product
 from math import isnan
 from pathlib import Path
@@ -63,7 +63,7 @@ def create_sssom_mappings(
         MappingSetDataFrame ready for serialization
     """
     if mapping_set_version is None:
-        mapping_set_version = str(datetime.now(timezone.utc).date())
+        mapping_set_version = str(datetime.now(UTC).date())
 
     if mapping_provider is None:
         mapping_provider = "https://github.com/jmillanacosta/rdfsolve"
@@ -73,7 +73,7 @@ def create_sssom_mappings(
         "mapping_set_id": mapping_set_id,
         "mapping_set_version": mapping_set_version,
         "license": license_uri,
-        "mapping_date": str(datetime.now(timezone.utc).date()),
+        "mapping_date": str(datetime.now(UTC).date()),
         "mapping_provider": mapping_provider,
         "mapping_tool": mapping_tool,
         "mapping_tool_version": mapping_tool_version or VERSION,
@@ -203,8 +203,18 @@ def links_to_sssom(
 
     from rdfsolve._uri import prefix_map
     from rdfsolve.config import mint
+    from rdfsolve.mappings.signatures import is_untyped
 
-    kept = [e for e in links if e.share is not None and e.share >= min_share]
+    # A mapping set relates classes: a link from or to the subjects without a type has no
+    # class at that end and is left out (it stays in the link table, with its evidence).
+    kept = [
+        e
+        for e in links
+        if e.share is not None
+        and e.share >= min_share
+        and not is_untyped(e.link.source_class)
+        and not is_untyped(e.link.target_class)
+    ]
     retained: dict[str, str] = {"rdfsolve": get_base_uri()}
     for schema in schemas.values():
         for prefix, namespace in schema.get_prefixes().items():

@@ -1,0 +1,210 @@
+"""rdfsolve.mining.query_builders: the queries of mining are valid SPARQL, subject counts are taken
+from total counts where these suffice, and the census of a local graph is counted."""
+
+import re
+
+from rdflib import Dataset, Graph
+
+from rdfsolve import SchemaMiner
+from rdfsolve._outcomes import QueryOutcome
+from rdfsolve.evidence.observed import build_property_usage_query
+from rdfsolve.mining import property_queries
+from rdfsolve.mining.query_builders import (
+    _build_batched_literal_count_query,
+    _build_batched_literal_objects_query,
+    _build_batched_typed_count_query,
+    _build_class_weight_query,
+    _build_properties_for_class_query,
+)
+
+C, P = "urn:ex:Gene", "urn:ex:expressedIn"
+
+
+def test_property_usage_takes_distinct_subjects_from_the_class_and_property(monkeypatch):
+    answers = iter(
+        [
+            QueryOutcome([{"class": {"value": C}, "p": {"value": P}, "triples": {"value": "7"}}]),
+            QueryOutcome([{"cnt": {"value": "7"}, "subjects": {"value": "3"}}]),
+        ]
+    )
+    monkeypatch.setattr(
+        "rdfsolve.mining.query_fallbacks.select_outcome", lambda *args, **kwargs: next(answers)
+    )
+    outcome = property_queries._subjects_from_total(
+        C, P, None, None, build_property_usage_query, "property-usage", helper=None
+    )
+    assert outcome is not None and outcome.state == "complete"
+    assert outcome.rows == [
+        {
+            "class": {"value": C},
+            "p": {"value": P},
+            "triples": {"value": "7"},
+            "subjects": {"value": "3"},
+        }
+    ]
+
+
+GROUPS = """
+<urn:a1> a <urn:A> ; <urn:p> <urn:b1>, <urn:c1> . <urn:a2> a <urn:A> ; <urn:p> <urn:b1>, <urn:b2> .
+<urn:a3> a <urn:A> ; <urn:p> <urn:d1> .
+<urn:b1> a <urn:B> . <urn:b2> a <urn:B> . <urn:c1> a <urn:C> . <urn:d1> a <urn:D> .
+"""
+
+
+def counted(monkeypatch, refuse=lambda query: False):
+    """Mine GROUPS as QLever mines a large class: the count of the whole class is refused, so
+    each property is counted alone; *refuse* fails other chosen queries."""
+    from rdfsolve.sparql_helper import EndpointTimeoutError
+
+    with SchemaMiner.from_graph(Graph().parse(data=GROUPS, format="turtle"), delay=0) as miner:
+        monkeypatch.setattr(miner.helper, "sparql_engine", "qlever")
+        select, sent = miner.helper.select, []
+
+        def answer(query, **kwargs):
+            sent.append(kwargs.get("purpose", ""))
+            if kwargs.get("purpose") == "counts/typed-object" or refuse(query):
+                raise EndpointTimeoutError("Query cost/time limit")
+            return select(query, **kwargs)
+
+        monkeypatch.setattr(miner.helper, "select", answer)
+        schema = miner.mine("groups")
+    found = {
+        p.object_class: p.distinct_subjects for p in schema.patterns if p.property_uri == "urn:p"
+    }
+    return found, sent, miner.last_report
+
+
+def test_distinct_subjects_of_object_groups_are_counted_in_batches(monkeypatch):
+    """Groups that hold part of the edges of (class, property) are counted together, in one
+    query; a refused batch is split, and a group refused alone keeps its edges and objects."""
+    found, sent, _ = counted(monkeypatch)
+    assert found == {"urn:B": 2, "urn:C": 1, "urn:D": 1}
+    assert sum(p.endswith("/groups") for p in sent) == 1, "One query for all groups"
+    found, sent, report = counted(
+        monkeypatch, refuse=lambda q: re.search(r"VALUES \?_group \{ <[^>]+> <", q) is not None
+    )
+    assert found == {"urn:B": 2, "urn:C": 1, "urn:D": 1}, "Split down to one group each"
+    found, _, report = counted(
+        monkeypatch, refuse=lambda q: "VALUES ?_group" in q and "<urn:C>" in q
+    )
+    assert found == {"urn:B": 2, "urn:C": None, "urn:D": 1}
+    (gap,) = report.measurement_gaps
+    assert gap.category == "timeout" and gap.classes == ["urn:A"]
+    assert "1 edges to urn:C" in gap.message, "The report names the group and its edges"
+    assert not [f for f in report.query_failures if f.purpose.endswith("/groups")]
+    coverage = report.config["count_coverage"]
+    assert coverage["measurement_gaps"] == 1 and report.completion_state == "complete"
+    assert coverage["with_distinct_subjects"] == coverage["patterns"] - 1
+
+
+def test_queries_count_edges_in_the_selected_graph():
+    data = Dataset()
+    data.parse(
+        data='@prefix e: <urn:> .\n        e:edges { e:a e:p e:b; e:text "x", "y". e:c e:text "x". }\n        e:types { e:a a e:A. e:c a e:A. e:b a e:B. }\n        e:other { e:a e:text "excluded". }',
+        format="trig",
+    )
+    scope = ["urn:edges", "urn:types"]
+    queries = {
+        "typed edges": (_build_batched_typed_count_query, {"cnt": 1, "subjects": 1, "objects": 1}),
+        "literal edges": (_build_batched_literal_count_query, {"cnt": 3, "subjects": 2}),
+        "literal values": (_build_batched_literal_objects_query, {"objects": 2}),
+    }
+    for name, (build, counts) in queries.items():
+        query = build(["urn:A"], scope, paginated=True).format(limit=10, offset=0)
+        rows = [
+            {str(key): str(value) for key, value in row.asdict().items()}
+            for row in data.query(query)
+        ]
+        assert len(rows) == 1, f"{name}: {rows}"
+        assert {key: rows[0].get(key) for key in ("_g", *counts)} == {
+            "_g": "urn:edges",
+            **{key: str(value) for key, value in counts.items()},
+        }, name
+
+    from rdfsolve.mining.query_builders import (
+        _build_batched_typed_object_query,
+        _build_typed_object_for_class_property_query,
+        _build_typed_object_query_plain,
+    )
+
+    data.parse(
+        data="""@prefix e: <urn:> .
+        e:edges { e:c e:p e:b. e:a e:p _:x. }
+        e:types { _:x a e:B. }
+        e:context { e:b a e:B, e:C. }
+        e:other { e:a e:p e:outside. e:outside a e:Wrong. e:b a e:Wrong. }
+        """,
+        format="trig",
+    )
+    queries = {
+        "all classes": _build_typed_object_query_plain(scope, ["urn:context"]),
+        "class batch": _build_batched_typed_object_query(
+            ["urn:A"], scope, type_context_graph_uris=["urn:context"]
+        ),
+        "class property": _build_typed_object_for_class_property_query(
+            "urn:A", "urn:p", scope, type_context_graph_uris=["urn:context"]
+        ),
+    }
+    for name, query in queries.items():
+        rows = [row.asdict() for row in data.query(query)]
+        assert len(rows) == 2, f"{name}: repeated objects or types changed the row count: {rows}"
+        assert {str(row["oc"]) for row in rows} == {"urn:B", "urn:C"}, name
+
+    from rdfsolve.mining.property_queries import PROPERTY_BUILDERS
+
+    def answer(query):
+        rows = [sorted((str(k), str(v)) for k, v in r.asdict().items()) for r in data.query(query)]
+        return sorted(r for r in rows if dict(r).get("class"))  # empty groups are not rows
+
+    found = 0
+    for build in PROPERTY_BUILDERS:
+        for prop in ("urn:p", "urn:text"):
+            context = {"type_context_graph_uris": ["urn:context"]}
+            bound = build(["urn:A"], scope, property_uri=prop, **context)
+            assert "VALUES ?class" not in bound and "VALUES ?p" not in bound, (
+                "Engines must see constants"
+            )
+            batch = answer(build(["urn:A", "urn:Z"], scope, **context))
+            expected = [r for r in batch if ("class", "urn:A") in r and ("p", prop) in r]
+            assert answer(bound) == expected, (build.__name__, prop)
+            found += len(expected)
+    assert found, "The comparison must cover returned rows"
+
+
+def test_census_counts_data_subjects_in_each_scope():
+    plain = Graph().parse(
+        data="""
+        <urn:a> a <urn:A>, <urn:B>; <urn:p> "one", "two" .
+        <urn:b> a <urn:A>; <urn:p> "three" .
+    """,
+        format="turtle",
+    )
+    scoped = Dataset().parse(
+        data="""
+        <urn:data> { <urn:a> <urn:p> "one", "two" . <urn:b> <urn:p> "three" . }
+        <urn:types> { <urn:a> a <urn:A>, <urn:B> . <urn:b> a <urn:A> .
+                      <urn:outside> a <urn:A> . }
+    """,
+        format="trig",
+    )
+    for data, graphs, context in ((plain, None, None), (scoped, ["urn:data"], ["urn:types"])):
+        with SchemaMiner.from_graph(
+            data, graph_uris=graphs, type_context_graph_uris=context, delay=0
+        ) as miner:
+            query = _build_class_weight_query(graphs, context).format(offset=0, limit=100)
+            rows = miner.helper.select(query)["results"]["bindings"]
+            assert {r["class"]["value"]: int(r["n"]["value"]) for r in rows} == {
+                "urn:A": 2,
+                "urn:B": 1,
+            }, "Counts exclude companion-only subjects and retain multiple types"
+
+            properties = miner.helper.select(
+                _build_properties_for_class_query("urn:A", graphs, type_context_graph_uris=context)
+            )["results"]["bindings"]
+            expected = (
+                {"urn:p"}
+                if context
+                else {"urn:p", "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}
+            )
+            assert {r["p"]["value"] for r in properties} == expected
+            assert len(properties) == len(expected), "One row per observed scoped property"

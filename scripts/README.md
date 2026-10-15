@@ -33,26 +33,19 @@ python scripts/pipeline.py
 `sources.yaml` is a human-curated specification. Tools read it; observations go
 into separate output files.
 
-```bash
-python scripts/check_endpoints.py --sources data/sources.yaml --output output/endpoint_status.json
-python scripts/discover_void_partitions.py --sources data/sources.yaml --output-dir output/void
-```
-
-These are the endpoint-health and VoID-discovery entry points. Source settings
-are edited directly. The package `enrich_source` function returns observations;
-its `sources_file` argument supplies read-only context.
+Endpoint health is checked by the remote stage of `pipeline.py` before it mines a source
+(`rdfsolve.endpoint_health.check_endpoint_health`). VoID descriptions are read with
+`rdfsolve.source_enrichment.enrich_source(discover_void=True)`, and the VoID catalogs of the
+registry with `void_catalogs.py`. Source settings are edited directly; these return
+observations only.
 
 ## Graph Scripts
 
-### `build_graphs.py`
-
-Build connectivity graphs from mined schemas.
+Connectivity graphs between datasets (shared classes, class mappings and verified links) are
+built by the analysis stage of `pipeline.py`, and on their own by `analyze_mappings.py`:
 
 ```bash
-python scripts/build_graphs.py \
-    output/schemas/ \
-    --output results/graphs/ \
-    --mappings output/mappings/
+python scripts/analyze_mappings.py output/schemas/ --class-mappings output/mappings/*.sssom.tsv --output results/graphs/
 ```
 
 ## Links between datasets

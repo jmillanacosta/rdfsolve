@@ -5,6 +5,7 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
+
 from rdfsolve.evaluation.statistics import (
     Components,
     bootstrap,
@@ -28,10 +29,19 @@ def simulated(components, questions, repeats, seed=1):
     rows = []
     for q in range(questions):
         u, w = rng.normal(0, components.sigma_u), rng.normal(0, components.sigma_w)
-        for condition, logit in (("A", components.mu + u), ("B", components.mu + components.delta + u + w)):
+        for condition, logit in (
+            ("A", components.mu + u),
+            ("B", components.mu + components.delta + u + w),
+        ):
             for s in range(repeats):
-                rows.append({"question": f"q{q}", "condition": condition, "seed": s,
-                             "success": float(rng.random() < 1 / (1 + math.exp(-logit)))})
+                rows.append(
+                    {
+                        "question": f"q{q}",
+                        "condition": condition,
+                        "seed": s,
+                        "success": float(rng.random() < 1 / (1 + math.exp(-logit))),
+                    }
+                )
     return pd.DataFrame(rows)
 
 
@@ -40,23 +50,37 @@ def test_sign_flip_exact_and_monte_carlo_and_holm():
     assert sign_flip([0, 0, 0]) == 1.0 and sign_flip([]) == 1.0
     assert sign_flip([1, -1, 1, -1]) == 1.0
     assert sign_flip(np.ones(30), draws=20000) < 0.001
-    assert holm({"a": 0.01, "b": 0.04, "c": 0.03}) == pytest.approx({"a": 0.03, "b": 0.06, "c": 0.06})
+    assert holm({"a": 0.01, "b": 0.04, "c": 0.03}) == pytest.approx(
+        {"a": 0.03, "b": 0.06, "c": 0.06}
+    )
 
 
 def test_bootstrap_and_comparison_are_paired_by_question():
-    rows = [{"question": f"q{q}", "condition": c, "seed": s, "f1": q / 10 + (0.3 if c == "B" else 0)}
-            for q in range(10) for c in "AB" for s in range(3)]
+    rows = [
+        {"question": f"q{q}", "condition": c, "seed": s, "f1": q / 10 + (0.3 if c == "B" else 0)}
+        for q in range(10)
+        for c in "AB"
+        for s in range(3)
+    ]
     attempts = pd.DataFrame(rows)
     table = bootstrap(attempts, "f1", draws=2000).set_index("comparison")
     assert table.loc["B - A", "estimate"] == pytest.approx(0.3)
     assert table.loc["B - A", "low"] == pytest.approx(0.3) and table.loc["B - A", "se"] < 1e-9
     assert table.loc["A", "low"] < 0.45 < table.loc["A", "high"]
     row = compare(attempts, "f1").iloc[0]
-    assert (row.wins, row.ties, row.losses, row.p, row.p_holm) == (10, 0, 0, pytest.approx(2 / 1024), pytest.approx(2 / 1024))
+    assert (row.wins, row.ties, row.losses, row.p, row.p_holm) == (
+        10,
+        0,
+        0,
+        pytest.approx(2 / 1024),
+        pytest.approx(2 / 1024),
+    )
 
 
 def test_intraclass_correlation_and_design_effect():
-    same = pd.DataFrame([{"question": q, "condition": "A", "x": float(q % 2)} for q in range(8) for _ in range(3)])
+    same = pd.DataFrame(
+        [{"question": q, "condition": "A", "x": float(q % 2)} for q in range(8) for _ in range(3)]
+    )
     assert icc(same, "x", "A") == pytest.approx(1.0)
     assert math.isnan(icc(same.drop_duplicates("question"), "x", "A"))
     assert design_effect(5, 0.5) == 3.0
@@ -82,8 +106,12 @@ def test_simulated_power_is_calibrated_and_grows_with_questions():
 
 
 def test_priors_keep_the_fit_finite_under_complete_separation():
-    rows = [{"question": f"q{q}", "condition": c, "seed": s, "success": float(c == "B" or q % 2 == 0)}
-            for q in range(6) for c in "AB" for s in range(3)]
+    rows = [
+        {"question": f"q{q}", "condition": c, "seed": s, "success": float(c == "B" or q % 2 == 0)}
+        for q in range(6)
+        for c in "AB"
+        for s in range(3)
+    ]
     fitted = fit_components(pd.DataFrame(rows), "success", "A", "B")
     assert 0 < fitted.delta < 10 and fitted.sigma_u < 10
     assert fitted.rates()[1] > fitted.rates()[0]
@@ -94,12 +122,16 @@ def test_sensitivity_gives_detectable_differences_for_each_spread():
     table = sensitivity(model, [60], [3], [0.5, 3.0], [0.5, 1.0, 2.0, 3.0], sims=300, flips=300)
     found = table.set_index("sigma_u")
     assert list(found.index) == [0.5, 3.0]
-    assert found.delta[0.5] < found.delta[3.0], "A larger spread of difficulty needs a larger effect"
+    assert found.delta[0.5] < found.delta[3.0], (
+        "A larger spread of difficulty needs a larger effect"
+    )
 
 
 def test_the_null_shift_gives_equal_mean_rates():
     model = Components(mu=-2.5, delta=1.0, sigma_u=1.0, sigma_w=2.0)
-    assert model.rates(0.0)[1] > model.rates(0.0)[0] + 0.02, "A question-dependent effect moves the mean"
+    assert model.rates(0.0)[1] > model.rates(0.0)[0] + 0.02, (
+        "A question-dependent effect moves the mean"
+    )
     shift = null_shift(model)
     rate_a, rate_b = model.rates(shift)
     assert shift < 0 and rate_b == pytest.approx(rate_a, abs=1e-3)

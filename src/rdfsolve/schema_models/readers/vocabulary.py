@@ -22,11 +22,18 @@ from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.pattern import SchemaPattern
 
-VocabularySource: TypeAlias = "str | Path | Graph | ox.Store | ox.Dataset"
+type VocabularySource = str | Path | Graph | ox.Store | ox.Dataset
 SCHEMA = "https://schema.org/"
 DCAM = "http://purl.org/dc/dcam/"
-# Every class is an owl:Thing and an rdfs:Resource. Properties with these domains apply to all.
-UNIVERSAL = (str(OWL.Thing), str(RDFS.Resource))
+# The top classes: every resource is one. Properties with these domains apply to all classes,
+# and a range of one of them allows any IRI or blank node, not a class check. schema.org's
+# schema:Thing is its top class; other vocabularies' top classes are given with top_classes.
+UNIVERSAL = (
+    str(OWL.Thing),
+    str(RDFS.Resource),
+    SCHEMA + "Thing",
+    "http://schema.org/Thing",
+)
 DOMAINS = (
     str(RDFS.domain),
     SCHEMA + "domainIncludes",
@@ -196,18 +203,22 @@ def vocabulary_to_minedschema(
     classes: Iterable[str],
     *,
     profile: str | Path | None = None,
+    top_classes: Iterable[str] = UNIVERSAL,
+    timestamps: bool = False,
 ) -> MinedSchema:
     """Declare, for each class, every property whose domain is the class or an ancestor.
 
     Properties of an equivalent class (owl:equivalentClass) also apply. Properties without a
     domain apply to every class. Without a range, a property can have any
     value that its kind allows. Ranges that are classes become object rows. XSD datatypes and
-    schema.org data types become literal rows. rdfs:Literal allows any literal. owl:Thing and
-    rdfs:Resource allow any IRI or blank node. URL becomes an IRI row. An rdf:List range
+    schema.org data types become literal rows. rdfs:Literal allows any literal. A top class
+    (*top_classes*: owl:Thing, rdfs:Resource and schema:Thing by default) allows any IRI or blank
+    node, with no class check. URL becomes an IRI row. An rdf:List range
     declares list values whose members have the other ranges. The rows are declarations, not
     observations (evidence_source "vocabulary").
     """
     vocab = Vocabulary(vocabulary)
+    top = tuple(dict.fromkeys(str(c) for c in top_classes))
     requested = [str(c) for c in classes]
     unknown = [c for c in requested if not vocab.has(c)]
     if unknown:
@@ -226,7 +237,7 @@ def vocabulary_to_minedschema(
     patterns: list[SchemaPattern] = []
     lists: list[CollectionProfile] = []
     for cls in requested:
-        lineage = {*vocab.applies(cls), *UNIVERSAL}
+        lineage = {*vocab.applies(cls), *top}
         properties = {
             prop
             for domain in DOMAINS
@@ -238,7 +249,7 @@ def vocabulary_to_minedschema(
             rows = [
                 row
                 for target in sorted(ranges - {str(RDF.List)})
-                for row in _objects(vocab, target)
+                for row in _objects(vocab, target, top)
             ]
             patterns.extend(
                 SchemaPattern(
@@ -266,6 +277,7 @@ def vocabulary_to_minedschema(
         about=AboutMetadata.build(),
         class_hierarchy=_hierarchy(vocab, [*requested, *_ranges_modelled(patterns, requested)]),
         collections=lists or None,
+        shape_profile=_profile_text(profile) if profile is not None else None,
     )
     used = {
         iri
@@ -285,7 +297,27 @@ def vocabulary_to_minedschema(
     schema.enrichment = SchemaEnrichment.from_oxigraph(
         vocab.dataset, schema.get_classes(), schema.get_properties()
     )
+    # The same inputs give the same schema: its identifier is a hash of its content, and the
+    # times of the run are written only with *timestamps*.
+    if not timestamps:
+        schema.about.retrieved_at = None
+        schema.about.generated_at = ""
+    from hashlib import sha256
+    from uuid import NAMESPACE_URL, uuid5
+
+    content = schema.model_dump_json(exclude={"about"})
+    schema.about.schema_id = str(
+        uuid5(NAMESPACE_URL, "rdfsolve:vocabulary:" + sha256(content.encode()).hexdigest())
+    )
     return schema
+
+
+def _profile_text(profile: str | Path) -> str:
+    """Return the profile as Turtle, the form the schema keeps it in (shape_profile)."""
+    from rdflib import Graph
+
+    text = profile.read_text(encoding="utf-8") if isinstance(profile, Path) else profile
+    return Graph().parse(data=text, format="turtle").serialize(format="turtle")
 
 
 def _profile(profile: str | Path, requested: list[str]) -> MinedSchema:
@@ -326,11 +358,13 @@ def _ranges(vocab: Vocabulary, prop: str) -> set[str]:
     return set(UNDECLARED_RANGE[kinds[0]]) if kinds else set()
 
 
-def _objects(vocab: Vocabulary, target: str) -> list[tuple[str, str | None]]:
+def _objects(
+    vocab: Vocabulary, target: str, top: Iterable[str] = UNIVERSAL
+) -> list[tuple[str, str | None]]:
     """Return the RDF forms of the values of one declared range."""
     if target.startswith(str(XSD)) or target == str(RDF.langString):
         return [("Literal", target)]
-    if target in UNIVERSAL:
+    if target in set(top):
         return [("Resource", None), ("BlankNode", None)]
     if target == str(RDFS.Literal):
         # Any literal. Plain text is written as text. Explicit typed literals are accepted.

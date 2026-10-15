@@ -22,7 +22,10 @@ class SchemaSelection(BaseModel):
     @model_validator(mode="after")
     def check_selection(self) -> SchemaSelection:
         """Require fields and paths present in the retained source."""
-        available = {(p.subject_class, p.property_uri) for p in self.source.patterns}
+        # Fields are of classes: the patterns of subjects without a type are not selectable.
+        available = {
+            (p.subject_class, p.property_uri) for p in self.source.patterns if not p.untyped_subject
+        }
         available.update((p.subject_class, p.property_uri) for p in self.source.collections or [])
         if self.source.shapes is not None:
             available.update(
@@ -58,7 +61,11 @@ class SchemaSelection(BaseModel):
     def patterns(self) -> list[SchemaPattern]:
         """Return all observed ranges for the selected class-property pairs."""
         fields = self._fields()
-        return [p for p in self.source.patterns if (p.subject_class, p.property_uri) in fields]
+        return [
+            p
+            for p in self.source.patterns
+            if not p.untyped_subject and (p.subject_class, p.property_uri) in fields
+        ]
 
     @property
     def collections(self) -> list[CollectionProfile] | None:

@@ -110,8 +110,8 @@ def resolve_terms(
     identifiers of one namespace the same way, so the forms it uses are learned from *sample*
     identifiers of each namespace (all their registered IRI forms are checked), and only those
     forms are checked for the others; an identifier not found that way has all its forms
-    checked. Each check is one query per *batch* of IRIs and direction (68 UniProt accessions
-    of WP4726: 137 queries one by one). A name that is not an IRI or CURIE is resolved alone.
+    checked. Each check is one query per *batch* of IRIs and direction, instead of one query
+    per IRI. A name that is not an IRI or CURIE is resolved alone.
     """
     if kind not in {"class", "resource"}:
         raise ValueError("Choose kind='class' (typed members) or kind='resource' (exact term)")
@@ -272,8 +272,8 @@ def _witnesses(client: Client, iris: list[str], kind: str) -> dict[str, dict[str
     A resource is first looked up as a subject: one query with the IRIs as one VALUES list
     and one sampled statement each (a subject lookup, cheap on every engine). Only the IRIs
     without outgoing statements are then looked up as objects, the same way: grouping every
-    inbound statement of UniProt entries (which have outgoing ones) did not answer on its
-    endpoint. When the endpoint refuses, the rest are checked in LIMIT 1 subqueries, 20 at a
+    inbound statement of records with many incoming links may not answer. When the endpoint
+    refuses, the rest are checked in LIMIT 1 subqueries, 20 at a
     time (a UNION of 200 was slow on QLever). A class is checked
     with a LIMIT 1 subquery for each IRI (grouping all members of a large class would scan it).
     """

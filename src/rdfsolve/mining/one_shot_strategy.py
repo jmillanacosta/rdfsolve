@@ -146,7 +146,7 @@ class OneShotStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError) as exc:
-                        context.report.record_dropped_uri(f"{sc} {p} {oc}")
+                        context.report.record_dropped_uri(f"{sc} {p} {oc}", b)
                         logger.debug("Skipping invalid pattern (%s %s %s): %s", sc, p, oc, exc)
         elif qtype == "literal":
             for b in bindings:
@@ -165,7 +165,7 @@ class OneShotStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError) as exc:
-                        context.report.record_dropped_uri(f"{sc} {p} Literal")
+                        context.report.record_dropped_uri(f"{sc} {p} Literal", b)
                         logger.debug("Skipping invalid pattern (%s %s Literal): %s", sc, p, exc)
         elif qtype == "blank-node":
             patterns.extend(blank_node_patterns(bindings, context))
@@ -184,7 +184,7 @@ class OneShotStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError) as exc:
-                        context.report.record_dropped_uri(f"{sc} {p} {oc_default}")
+                        context.report.record_dropped_uri(f"{sc} {p} {oc_default}", b)
                         logger.debug(
                             "Skipping invalid pattern (%s %s %s): %s", sc, p, oc_default, exc
                         )

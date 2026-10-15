@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from rdfsolve.analysis.connectivity import build_connectivity, compare_schemas
 from rdfsolve.client.api import Client
+from rdfsolve.client.authoring import RecordError
 from rdfsolve.client.collections import RDFList
 from rdfsolve.client.query import execute_sparql
 from rdfsolve.client.query_fragments import PreparedQuery, QueryPattern
@@ -38,6 +39,7 @@ __all__ = [
     "QueryPattern",
     "RDFList",
     "RdfTerm",
+    "RecordError",
     "Requirement",
     "ask_rdf",
     "build_connectivity",

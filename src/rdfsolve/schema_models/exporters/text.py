@@ -1,7 +1,5 @@
 """Limit exported descriptions without changing RDF identifiers or examples."""
 
-from typing import TypeVar
-
 from pydantic import BaseModel
 
 from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, TermAnnotation
@@ -12,10 +10,7 @@ def clip_description(text: str | None, limit: int | None) -> str | None:
     return text if limit is None or text is None else text[:limit]
 
 
-T = TypeVar("T", bound=BaseModel)
-
-
-def trim_descriptions(model: T, limit: int | None) -> T:
+def trim_descriptions[T: BaseModel](model: T, limit: int | None) -> T:
     """Return a text-limited copy. Keep the original model unchanged."""
     if limit is None:
         return model

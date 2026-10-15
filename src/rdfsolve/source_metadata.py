@@ -8,7 +8,7 @@ from typing import Any
 
 
 def with_source_metadata(entries: list[dict[str, Any]], registry: Path) -> list[dict[str, Any]]:
-    """Add matching Bioregistry observations from the adjacent metadata sidecar."""
+    """Add matching Bioregistry and KG-Registry observations from the adjacent sidecar."""
     path = registry.with_suffix(".metadata.json")
     if not path.exists():
         return entries
@@ -21,10 +21,11 @@ def with_source_metadata(entries: list[dict[str, Any]], registry: Path) -> list[
         name = entry.get("name")
         metadata = records.get(name, {})
         if not isinstance(metadata, dict) or any(
-            not key.startswith("bioregistry_") for key in metadata
+            not key.startswith(("bioregistry_", "kg_registry_")) for key in metadata
         ):
             raise ValueError(f"Invalid source metadata for {name}")
-        if metadata and metadata.get("bioregistry_prefix", "") != entry.get(
+        bioregistry = any(key.startswith("bioregistry_") for key in metadata)
+        if bioregistry and metadata.get("bioregistry_prefix", "") != entry.get(
             "bioregistry_prefix", ""
         ):
             raise ValueError(f"Source metadata prefix differs for {name}")

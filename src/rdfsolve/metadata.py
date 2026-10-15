@@ -6,6 +6,7 @@ from typing import Any
 
 from rdflib import Dataset, Graph, URIRef
 
+from rdfsolve._datasets import default_graph
 from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.sparql_helper import SparqlHelper
 
@@ -29,14 +30,12 @@ def build_metadata_query(
     if subject_iris is not None:
         if not subject_iris:
             raise ValueError("subject_iris must not be empty")
-        selector = "VALUES ?root { " + " ".join(URIRef(i).n3() for i in subject_iris) + " }"
+        selector = "VALUES ?root { " + " ".join(f"<{i}>" for i in subject_iris) + " }"
     else:
         if not resource_types:
             raise ValueError("resource_types must not be empty")
         selector = (
-            "VALUES ?kind { "
-            + " ".join(URIRef(i).n3() for i in resource_types)
-            + " } ?root a ?kind ."
+            "VALUES ?kind { " + " ".join(f"<{i}>" for i in resource_types) + " } ?root a ?kind ."
         )
     return (
         """
@@ -85,7 +84,7 @@ def query_metadata_document(
             scoped += " }"
         text = helper.construct(scoped)
         retrieved = Graph().parse(data=text, format="turtle", publicID=helper.endpoint_url)
-        target = dataset.default_context if uri is None else dataset.graph(uri)
+        target = default_graph(dataset) if uri is None else dataset.graph(uri)
         target += retrieved
         graph += retrieved
     return MetadataDocument(

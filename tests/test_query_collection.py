@@ -4,6 +4,7 @@ from unittest.mock import Mock
 import pytest
 from rdflib import PROV, Graph, URIRef
 from rdflib.compare import isomorphic
+
 from rdfsolve.sparql_helper import SparqlHelper
 
 DATA = Path(__file__).parent / "test_data/aopwikirdf_metadata_excerpt.ttl"
@@ -59,6 +60,7 @@ def test_named_queries_roundtrip_and_session_isolation(monkeypatch):
         }"""
         saved = first.queries.add("mesh conversion", conversion, source=source)
         from rdfsolve.query_collection import QueryCollection
+
         archive = QueryCollection()
         archive.load_shacl(Graph().parse(data=first.queries.to_turtle(), format="turtle"))
         restored = archive.queries["mesh conversion"]

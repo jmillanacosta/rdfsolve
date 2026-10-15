@@ -8,7 +8,7 @@ projected.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 from typing import Literal
@@ -248,7 +248,7 @@ def archive_graph_artifact(
         kind=kind,
         source_url=source_url,
         source_graph=source_graph,
-        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        retrieved_at=datetime.now(UTC).isoformat(),
         sha256=digest,
         media_type="text/turtle",
         local_path=str(path),

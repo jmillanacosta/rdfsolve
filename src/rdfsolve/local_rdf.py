@@ -62,11 +62,24 @@ def load_store(path: str | Path | Iterable[str | Path]) -> ox.Store:
     into an Oxigraph store, with Oxigraph's bulk loader. Several paths (the dumps of one
     release) load into the same store.
 
-    The format comes from the extension; a format Oxigraph does not read is parsed by RDFLib.
+    A folder stands for the RDF files in it (rdf_files). The format comes from the extension;
+    a format Oxigraph does not read is parsed by RDFLib.
     """
+    import time
+
     store = ox.Store()
-    for one in [path] if isinstance(path, (str, Path)) else path:
+    paths = [Path(p) for p in ([path] if isinstance(path, (str, Path)) else path)]
+    paths = [f for p in paths for f in (rdf_files(p) if p.is_dir() else [p])]
+    for one in paths:
+        started, size = time.monotonic(), Path(one).stat().st_size / 1e6
+        logger.info("Loading %s (%.1f MB)", Path(one).name, size)
         _load_file(Path(one), store)
+        logger.info(
+            "Loaded %s: %d statements in the store after %.0f s",
+            Path(one).name,
+            len(store),
+            time.monotonic() - started,
+        )
     return store
 
 
@@ -84,13 +97,52 @@ def _load_file(path: Path, store: ox.Store) -> None:
     if rdf_format is None:
         store.extend(to_oxigraph(Dataset().parse(path)))
     elif zipped:
-        with gzip.open(path, "rb") as handle:
-            store.bulk_load(cast("IO[bytes]", handle), format=rdf_format)
+        _bulk_load(store, path.name, rdf_format, opener=lambda: gzip.open(path, "rb"))  # noqa: SIM115 (opened in a with block there)
     else:
-        store.bulk_load(path=str(path), format=rdf_format)
+        _bulk_load(store, path.name, rdf_format, path=path)
+
+
+def _bulk_load(
+    store: ox.Store,
+    name: str,
+    rdf_format: ox.RdfFormat,
+    *,
+    path: Path | None = None,
+    opener: Any = None,
+) -> None:
+    """Bulk load one RDF input; one that is not valid RDF (such as a relative IRI with no base)
+    is loaded again without validating its terms, which are then kept as written, as QLever
+    indexes them, so that a local store and the index of the same file hold the same terms.
+    """
+    for lenient in (False, True):
+        try:
+            if opener is None:
+                store.bulk_load(path=str(path), format=rdf_format, lenient=lenient)
+            else:
+                with opener() as handle:
+                    store.bulk_load(cast("IO[bytes]", handle), format=rdf_format, lenient=lenient)
+            return
+        except SyntaxError as error:
+            if lenient:
+                raise
+            logger.warning(
+                "%s is not valid RDF (%s); loading it without validating its terms", name, error
+            )
 
 
 _RDF_EXTENSIONS = frozenset({"ttl", "nt", "nq", "trig", "n3", "rdf", "owl"})
+# Seconds a download may wait to connect, or for each read, before it fails.
+DOWNLOAD_TIMEOUT = 60
+
+
+def rdf_files(folder: Path) -> list[Path]:
+    """Return the files of a folder that load_store reads (RDF, gzip, zip), in name order."""
+    found = []
+    for path in sorted(folder.iterdir()):
+        kinds = [s.lstrip(".") for s in path.suffixes if s != ".gz"]
+        if path.is_file() and kinds and kinds[-1] in _RDF_EXTENSIONS | {"zip"}:
+            found.append(path)
+    return found
 
 
 def registry_files(name: str) -> list[Path]:
@@ -100,6 +152,7 @@ def registry_files(name: str) -> list[Path]:
     (RDF, gzip, zip).
     """
     import os
+    import shutil
     import urllib.request
 
     from rdfsolve.sources import load_sources
@@ -123,11 +176,37 @@ def registry_files(name: str) -> list[Path]:
         kinds = [s.lstrip(".") for s in path.suffixes if s != ".gz"]
         if not kinds or kinds[-1] not in _RDF_EXTENSIONS | {"zip"}:
             continue
-        if not path.exists():
-            partial = path.with_name(path.name + ".part")
-            urllib.request.urlretrieve(url, partial)  # noqa: S310 (registry URLs)
-            partial.replace(path)
         files.append(path)
+    missing = [path for path in files if not path.exists()]
+    if missing:
+        # A first download can take minutes; say so, since nothing else is shown meanwhile.
+        logger.warning(
+            "Downloading %d files of %s into %s (once; later runs reuse them)",
+            len(missing),
+            name,
+            folder,
+        )
+    for url in urls:
+        path = folder / Path(url.split("?")[0]).name
+        if path in missing:
+            partial = path.with_name(path.name + ".part")
+            logger.warning("Downloading %s", url)
+            try:
+                # The timeout bounds the connection and each read, so an unreachable host fails
+                # instead of waiting without end.
+                with (
+                    urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT) as response,  # noqa: S310 (registry URLs)
+                    partial.open("wb") as out,
+                ):
+                    shutil.copyfileobj(response, out)
+            except OSError as error:
+                partial.unlink(missing_ok=True)
+                raise ConnectionError(
+                    f"Could not download {url} into {folder} ({error}). Download it another "
+                    f"way into that folder, or give the files themselves as data_file=[...]"
+                ) from error
+            partial.replace(path)
+            logger.info("Downloaded %s (%.1f MB)", path.name, path.stat().st_size / 1e6)
     return files
 
 
@@ -143,8 +222,12 @@ def _load_zip(path: Path, store: ox.Store) -> None:
             rdf_format = ox.RdfFormat.from_extension(extension)
             if rdf_format is None:
                 continue
-            with archive.open(member) as handle:
-                store.bulk_load(handle, format=rdf_format)
+            _bulk_load(
+                store,
+                f"{path.name}:{member}",
+                rdf_format,
+                opener=lambda member=member: archive.open(member),
+            )
 
 
 def to_rdflib(quads: Iterable[ox.Quad]) -> Dataset:
@@ -177,19 +260,54 @@ def _rdf(value: ox.NamedNode | ox.BlankNode | ox.Literal | ox.Triple) -> Identif
     raise ValueError("RDF triple terms are not supported")
 
 
+def refuse_service(query: str) -> None:
+    """Refuse a query with a SERVICE pattern: both local engines would send it to the host it
+    names, an internal address included, so a query passed through to local data could reach
+    other servers. Raise ValueError naming the reason; a query that does not parse is left to the
+    engine's own error.
+    """
+    from rdflib.plugins.sparql.parser import parseQuery
+    from rdflib.plugins.sparql.parserutils import CompValue
+
+    try:
+        parsed = parseQuery(query)
+    except Exception:
+        return
+    stack: list[Any] = [parsed]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, CompValue):
+            if node.name == "ServiceGraphPattern":
+                raise ValueError(
+                    "SERVICE is not run on local data: it would call the host it names. "
+                    "Open the client with allow_service=True to allow it."
+                )
+            stack.extend(node.values())
+        elif isinstance(node, (list, tuple)):
+            stack.extend(node)
+        elif hasattr(node, "asList"):
+            stack.extend(node.asList())
+
+
 class LocalRdf:
     """Query a local snapshot while retaining RDFLib terms at the API boundary."""
 
     def __init__(
-        self, graph: Graph | ox.Dataset | ox.Store, *, backend: LocalBackend = "oxigraph"
+        self,
+        graph: Graph | ox.Dataset | ox.Store,
+        *,
+        backend: LocalBackend = "oxigraph",
+        allow_service: bool = False,
     ) -> None:
         """Select an engine; retain RDFLib when Oxigraph changes stored RDF terms.
 
         Oxigraph data is queried without an RDFLib copy. It is copied to RDFLib only for the
-        rdflib backend, or when the Oxigraph store changes literal forms.
+        rdflib backend, or when the Oxigraph store changes literal forms. A query with a
+        SERVICE pattern is refused unless *allow_service* (refuse_service).
         """
         if backend not in {"oxigraph", "rdflib"}:
             raise ValueError("local backend must be oxigraph or rdflib")
+        self.allow_service = allow_service
         self.requested = backend
         self.backend = backend
         self.fallback_reason: str | None = None
@@ -293,6 +411,8 @@ class LocalRdf:
 
         Oxigraph writes the results itself when no RDFLib literal forms must be restored.
         """
+        if not self.allow_service:
+            refuse_service(query)
         if self._store is not None and not self._literals:
             namespaces = self.graph.namespaces() if self.graph is not None else []
             raw = self._store.query(query, prefixes={p: str(iri) for p, iri in namespaces})
@@ -310,6 +430,8 @@ class LocalRdf:
 
     def query(self, query: str) -> Result:
         """Execute SELECT, ASK or CONSTRUCT with the query's graph clauses."""
+        if not self.allow_service:
+            refuse_service(query)
         if self._store is None:
             if self.graph is None:
                 raise RuntimeError("Local RDF backend is not initialized")

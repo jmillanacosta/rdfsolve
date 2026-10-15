@@ -1,0 +1,178 @@
+"""Find which source resources carry an identifier, then read what the source says about them."""
+
+from rdflib import RDFS, Dataset, Literal, URIRef
+
+from rdfsolve.api import Client
+from rdfsolve.schema_models import MinedSchema
+
+DATA = """
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+<urn:g> {
+  <urn:item> <urn:direct/orcid> "0000-0002-4166-7093" ; <urn:claim/orcid> <urn:statement> ;
+      <urn:employer> <urn:org> ; rdfs:label "Javier"@en, "Javier"@es .
+  <urn:statement> <urn:value/orcid> "0000-0002-4166-7093" .
+  <urn:author> <urn:orcidId> "https://orcid.org/0000-0002-4166-7093" .
+  <urn:work> <urn:doi> "10.1093/BIOINFORMATICS/BTAG064" ; <urn:cites> <https://doi.org/10.1038/x> .
+  <urn:org> rdfs:label "Maastricht University"@en, "Universiteit Maastricht"@nl .
+}
+<urn:other> { <urn:elsewhere> <urn:doi> "10.1093/bioinformatics/btag064" . }
+"""
+
+
+def test_identifiers_resolve_across_spellings_then_statements_follow():
+    data = Dataset().parse(data=DATA, format="trig")
+    with Client(MinedSchema(), data, graph_uris=["urn:g"]) as source:
+        found = source.identify(
+            [
+                "orcid:0000-0002-4166-7093",
+                "doi:10.1093/bioinformatics/btag064",
+                "doi:10.1234/absent",
+            ]
+        )
+        by_resource = {(m.identifier, m.resource): m for m in found}
+        assert set(by_resource) == {
+            ("orcid:0000-0002-4166-7093", "urn:item"),
+            ("orcid:0000-0002-4166-7093", "urn:author"),
+            ("doi:10.1093/bioinformatics/btag064", "urn:work"),
+        }, (
+            "Every spelling is tried; the statement node is an intermediate; other graphs are out of scope"
+        )
+        item = by_resource[("orcid:0000-0002-4166-7093", "urn:item")]
+        assert (item.predicate, item.value) == ("urn:direct/orcid", "0000-0002-4166-7093")
+        assert item.intermediates == ["urn:statement"]
+        author = by_resource[("orcid:0000-0002-4166-7093", "urn:author")]
+        assert author.value == "https://orcid.org/0000-0002-4166-7093", "IRI spelled as a string"
+        assert not [m for m in found if m.identifier == "doi:10.1234/absent"], "No match is no row"
+
+        graph = source.statements(["urn:item", "urn:work"], languages=["en"])
+        assert (URIRef("urn:item"), URIRef("urn:employer"), URIRef("urn:org")) in graph
+        assert (URIRef("urn:item"), RDFS.label, Literal("Javier", lang="es")) not in graph, (
+            "Languages"
+        )
+        assert graph.value(URIRef("urn:org"), RDFS.label) == Literal(
+            "Maastricht University", lang="en"
+        )
+        assert (
+            URIRef("urn:work"),
+            URIRef("urn:cites"),
+            URIRef("https://doi.org/10.1038/x"),
+        ) in graph
+        bare = source.statements(["urn:item"], names=False)
+        assert (URIRef("urn:item"), RDFS.label, Literal("Javier", lang="es")) in bare, (
+            "All languages"
+        )
+        assert bare.value(URIRef("urn:org"), RDFS.label) is None, "No names of what it links to"
+
+    from rdfsolve.schema_models.enrichment import PatternExample, RdfTerm, SchemaEnrichment
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    example = PatternExample(
+        subject_class="urn:Person",
+        property_uri="urn:direct/orcid",
+        subject=RdfTerm(kind="uri", value="urn:someone"),
+        value=RdfTerm(kind="literal", value="0000-0001-7536-3744"),
+    )
+    unregistered = PatternExample(
+        subject_class="urn:Person",
+        property_uri="urn:homepage",
+        subject=RdfTerm(kind="uri", value="urn:someone"),
+        value=RdfTerm(kind="uri", value="http://example.org/unregistered"),
+    )
+    schema = MinedSchema(
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:Person", property_uri="urn:direct/orcid", object_class="Literal"
+            )
+        ],
+        enrichment=SchemaEnrichment(examples=[example, unregistered]),
+    )
+    with Client(schema, data, graph_uris=["urn:g"]) as guided:
+        found = guided.identify(["orcid:0000-0002-4166-7093"])
+        sent = [q for q in guided.queries if "Identify" in q or "VALUES (?key ?o)" in q]
+        assert [(m.resource, m.method) for m in found] == [("urn:item", "schema property")]
+        assert sent and not [q for q in sent if "?s ?p ?o ." in q], (
+            "Ask only properties that carry ORCIDs"
+        )
+
+
+def test_a_resource_kept_as_a_relative_iri_is_found_without_breaking_the_link_check(tmp_path):
+    from rdfsolve.local_rdf import load_store
+
+    data = tmp_path / "relative.ttl"  # a relative IRI with no base, as some dumps write it
+    data.write_text(
+        '<item_1> <urn:orcid> "0000-0002-4166-7093" .\n'
+        '<urn:item2> <urn:orcid> "0000-0002-4166-7093" .\n'
+        '<urn:item3> <urn:orcid> "0000-0002-4166-7093" .\n'
+    )
+    with Client(MinedSchema(), load_store(data), graph_uris=[]) as source:
+        found = source.identify(["orcid:0000-0002-4166-7093"])
+    assert sorted(m.resource for m in found) == ["item_1", "urn:item2", "urn:item3"]
+
+
+def test_a_record_named_by_its_identifier_iri_is_found_by_that_identifier():
+    data = Dataset().parse(
+        data="<urn:g> { <https://identifiers.org/ncbigene/1595> a <urn:Gene> . }", format="trig"
+    )
+    with Client(MinedSchema(), data, graph_uris=["urn:g"]) as source:
+        assert source.identify(["ncbigene:1595"]) == [], "no statement has it as a value"
+        found = source.named(["ncbigene:1595"])
+    assert [(m.resource, m.method) for m in found] == [
+        ("https://identifiers.org/ncbigene/1595", "resource IRI")
+    ]
+
+
+def test_a_relative_iri_value_keeps_its_statement_and_is_named_in_a_warning(monkeypatch):
+    """A source's relative IRI (as AOP-Wiki RDF has) is not put in a query: the statement stays,
+    its name is not read, and a warning names it, instead of failing the whole call."""
+    import warnings
+
+    from rdfsolve.client import identify
+
+    rows = {
+        "Read statements": [
+            {
+                "s": {"type": "uri", "value": "urn:a"},
+                "p": {"type": "uri", "value": "urn:p"},
+                "o": {"type": "uri", "value": "rel"},
+            },
+            {
+                "s": {"type": "uri", "value": "urn:a"},
+                "p": {"type": "uri", "value": "urn:q"},
+                "o": {"type": "uri", "value": "urn:b"},
+            },
+        ],
+    }
+
+    class Source:
+        current = ""
+        queries: list[str] = []
+
+        def _scope(self, body):
+            return body
+
+        def step(self, name):
+            import contextlib
+
+            self.current = name
+            return contextlib.nullcontext()
+
+        def _select(self, query, exhaustive=False):
+            self.queries.append(query)
+            return rows.get(self.current, [])
+
+    source = Source()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        graph = identify.statements(source, ["urn:a"])
+    assert (URIRef("urn:a"), URIRef("urn:p"), URIRef("rel")) in graph
+    assert any("rel" in str(w.message) and "absolute" in str(w.message) for w in caught)
+    names = [q for q in source.queries if "?name" in q]
+    assert names and "<urn:b>" in names[0] and "<rel>" not in names[0]
+    assert not any("does not look like a valid URI" in str(w.message) for w in caught)
+
+
+def test_a_query_term_is_a_plain_string_not_a_bracketed_uriref():
+    from rdfsolve.client.hydration import _iri
+
+    written = _iri(URIRef("https://identifiers.org/aop.events/177"))
+    assert type(written) is str and written == "<https://identifiers.org/aop.events/177>"

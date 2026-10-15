@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+from datetime import UTC
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Literal
@@ -61,7 +62,7 @@ def _archive_source_bytes(
         dataset_id=dataset_id,
         kind="sparql_examples",
         source_url=source_url,
-        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        retrieved_at=datetime.now(UTC).isoformat(),
         sha256=digest,
         media_type=None,
         local_path=str(output_path),

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.structural import StructuralPattern
     from rdfsolve.sparql_helper import SparqlHelper
 
-__all__ = ["MiningContext", "MiningStrategy"]
+__all__ = ["ClassListingLimitError", "MiningContext", "MiningStrategy"]
 
 
 class MiningContext:
@@ -37,6 +37,7 @@ class MiningContext:
         ontology_term_budget: int | None = None,
         group_before_mining: int | None = None,
         ontology_hierarchy_files: list[str] | None = None,
+        pagination: str = "offset",
     ) -> None:
         """Initialize mining context.
 
@@ -58,6 +59,7 @@ class MiningContext:
             group_before_mining: Group terms before per-class mining above this class count
             ontology_hierarchy_files: Files of (child, parent) pairs for terms whose
                 hierarchy is not in the data
+            pagination: How collect_bindings pages: "offset" or "cursor" (keyset)
         """
         self.helper = helper
         self.graph_uris = graph_uris
@@ -75,11 +77,14 @@ class MiningContext:
         self.ontology_term_budget = ontology_term_budget
         self.group_before_mining = group_before_mining
         self.ontology_hierarchy_files = ontology_hierarchy_files or []
+        self.pagination = pagination
         # Classes that typed mining discovered, and type values that it skipped (not IRIs).
         self.discovered_classes: list[str] | None = None
         self.skipped_type_values = 0
         # Representative -> member terms, when terms were grouped before mining.
         self.grouped_members: dict[str, list[str]] = {}
+        # Records kept as classes under their kind (a scan groups them before counting).
+        self.classes_as_data = False
         # Class batches chosen by the strategy; the counts phase reuses them.
         self.class_batches: list[list[str]] | None = None
         self.structural_patterns: list[StructuralPattern] = []
@@ -89,6 +94,25 @@ class MiningContext:
         # sets were verified identical to an already mined class (copy -> source).
         self.class_weights: dict[str, int] = {}
         self.shared_extensions: dict[str, str] = {}
+        # Most type values that class discovery lists through an endpoint (None: no limit);
+        # see ClassListingLimitError.
+        self.class_listing_limit: int | None = None
+        self.class_listing_stopped = False
+
+
+class ClassListingLimitError(Exception):
+    """Class discovery listed more type values than the run's limit, and stopped listing.
+
+    A source whose records are classes, or whose individuals are typed by per-record IRIs,
+    can have millions of type values, about one instance each. Listing them all through an
+    endpoint takes hours, and per-class mining of such a list is not feasible remotely.
+    """
+
+    def __init__(self, rows: list[dict[str, Any]], limit: int) -> None:
+        """Keep the rows listed so far and the limit."""
+        super().__init__(f"more than {limit} type values listed")
+        self.rows = rows
+        self.limit = limit
 
 
 class MiningStrategy(ABC):

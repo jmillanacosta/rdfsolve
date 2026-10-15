@@ -189,13 +189,28 @@ is the shared definition for models and declared constraints.
 Observed SHACL exports
 ----------------------
 
-schema.to_shacl() exports mined value-type templates as deactivated shapes
-and reports their number. They impose no validation requirements. To enforce
-the observed one-hop value types explicitly, use
-schema.to_shacl(activate_observed=True). This does not infer required fields
-or per-record cardinalities. Retained source constraints keep their activation
-state. Review the shapes before treating a conformance result as validation
-of an intended contract.
+schema.to_shacl() exports the observed shapes active: the kinds, classes and
+datatypes of the values of each property, and sh:minCount 1 / sh:maxCount 1
+where the schema's exact counts prove them (every member has the property; no
+member has two values). Rows found in a sample of a refused query give
+deactivated shapes. schema.to_shacl(activate_observed=False) writes every
+observed shape deactivated, as documentation only. Retained source constraints
+keep their activation state.
+
+Each shape states its severity (sh:severity). What examples alone show (the
+namespaces of example IRIs, parts of a class read from examples) is a node
+shape of its own with severity Info, so that a member outside the examples is
+not reported as an error. A SHACL report conforms only without any result,
+whatever its severity; validators that let Warning and Info pass (pySHACL's
+``allow_warnings=True``) report them without failing.
+
+Names and descriptions come from the enrichment (``enrich=True``). With
+``SchemaMiner(..., vocabulary_graph_uris=[...])`` they are also read from
+graphs that hold a vocabulary rather than data; those graphs are not mined.
+
+Review the shapes before treating a conformance result as validation of an
+intended contract. A shapes file made from an earlier schema JSON is made again
+with ``MinedSchema.from_json(path).to_shacl()``: no mining is needed.
 
 Provider SHACL evidence
 -----------------------

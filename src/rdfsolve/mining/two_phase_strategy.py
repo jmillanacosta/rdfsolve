@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from collections.abc import Callable
+from contextlib import nullcontext
 from typing import Any
 
 from pydantic import ValidationError
 
-from rdfsolve._outcomes import QueryOutcome
+from rdfsolve._outcomes import FailureCategory, QueryFailure, QueryOutcome
 from rdfsolve.mining.blank_nodes import blank_node_patterns
 from rdfsolve.mining.query_builders import (
     _build_batched_blank_node_query,
@@ -20,13 +22,23 @@ from rdfsolve.mining.query_builders import (
     _build_class_discovery_query_plain,
     _build_class_weight_query,
     _build_same_members_query,
+    membership_path,
 )
 from rdfsolve.mining.query_fallbacks import query_with_bisect, select_outcome
-from rdfsolve.mining.strategy import MiningContext, MiningStrategy
+from rdfsolve.mining.sampling import mark_sampled
+from rdfsolve.mining.strategy import ClassListingLimitError, MiningContext, MiningStrategy
 from rdfsolve.models import SchemaPattern
-from rdfsolve.sparql_helper import EndpointTimeoutError
+from rdfsolve.sparql_helper import (
+    EndpointRateLimitError,
+    EndpointTimeoutError,
+    SparqlHelper,
+    SparqlHelperError,
+)
 
 logger = logging.getLogger(__name__)
+
+# Listed classes mined when class discovery stops at its limit (see TwoPhaseStrategy._per_record).
+CLASS_SAMPLE = 1000
 
 __all__ = ["TwoPhaseStrategy", "plan_class_batches"]
 
@@ -64,6 +76,19 @@ def plan_class_batches(
     return batches
 
 
+def _engine_only_classes(context: MiningContext) -> frozenset[str] | None:
+    """Return the classes typed only in the excluded engine graphs, when a listing can use them.
+
+    None when the helper excludes no graph or does not know these classes; a class listing is
+    then read as it is sent (with the exclusion prologue, if any).
+    """
+    helper = context.helper
+    engine_only = getattr(helper, "engine_only_classes", None)
+    if isinstance(engine_only, frozenset) and getattr(helper, "excluded_graphs", None):
+        return engine_only
+    return None
+
+
 class TwoPhaseStrategy(MiningStrategy):
     """Two-phase mining strategy for large endpoints.
 
@@ -91,11 +116,18 @@ class TwoPhaseStrategy(MiningStrategy):
         # Phase 1 - discover classes
         p1 = context.report.start_phase("class-discovery")
         classes = self._discover_classes(context)
-        if not classes and not context.graph_uris:
+        if (
+            not classes
+            and not context.graph_uris
+            and not getattr(context, "class_listing_stopped", False)
+        ):
             classes = self._discover_classes_in_named_graphs(context)
         if not classes:
             context.report.finish_phase(p1, items=0)
-            context.report.report.config["class_schema_state"] = "no_observed_data_classes"
+            refused = context.report.report.config.get("class_listing", {}).get("state")
+            context.report.report.config["class_schema_state"] = (
+                "class_listing_refused" if refused == "refused" else "no_observed_data_classes"
+            )
             return []
 
         # Merge with ontology classes if available
@@ -131,7 +163,7 @@ class TwoPhaseStrategy(MiningStrategy):
         """Group ontology terms under their ancestors before per-class mining.
 
         Only when ontology-as-data is on and there are more classes than the configured limit
-        (for example about 181,000 ChEBI types in PubChem, which cannot be mined one by one).
+        (classes that are too many to mine one by one).
         The representatives are chosen as after mining (choose_representatives) and recorded
         with their members for review; the rows of each representative are then mined over all
         its member terms at once.
@@ -139,42 +171,120 @@ class TwoPhaseStrategy(MiningStrategy):
         budget, limit = context.ontology_term_budget, context.group_before_mining
         if budget is None or limit is None or len(classes) <= limit:
             return classes
+        phase = context.report.start_phase("ontology-terms/group-before-mining")
+        try:
+            return self._group_terms_now(classes, context, phase)
+        except SparqlHelperError as error:
+            # Grouping is an optimisation, but these classes are too many to mine one by one.
+            # The
+            # source is not failed: it ends partial, with the reason and the class count.
+            logger.warning("Grouping before mining failed (%s); classes not mined", error)
+            context.report.finish_phase(phase, error=str(error)[:300])
+            context.report.report.config["ontology_term_grouping"] = {
+                "before_mining": False,
+                "state": "failed",
+                "error": str(error)[:500],
+                "limit": limit,
+                "classes": len(classes),
+            }
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="failed",
+                    failures=[
+                        QueryFailure(
+                            "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+                            f"{len(classes)} classes not mined: grouping before mining failed: "
+                            f"{str(error)[:300]}",
+                            "ontology-terms/group-before-mining",
+                        )
+                    ],
+                )
+            )
+            return []
+
+    def _group_terms_now(self, classes: list[str], context: MiningContext, phase: Any) -> list[str]:
+        """Group the classes (see _group_terms); raise SparqlHelperError when a query fails."""
         from collections import Counter
 
         from rdfsolve.mining import ontology_as_data
         from rdfsolve.mining.ontology_as_data import (
             choose_representatives,
             fetch_shapes,
+            group_by_namespace,
             group_by_shape,
             parentless_candidates,
+            spread,
         )
         from rdfsolve.mining.query_builders import Representative
         from rdfsolve.ontology.hierarchy import fetch_superclasses, fill_parents, read_hierarchy
         from rdfsolve.ontology.terms import namespace
 
-        phase = context.report.start_phase("ontology-terms/group-before-mining")
+        budget, limit = context.ontology_term_budget, context.group_before_mining
+        if budget is None or limit is None:
+            return classes
+        unreadable_parents: set[str] = set()
         parents = fetch_superclasses(
-            context.helper, classes, graph_uris=context.ontology_graph_uris
+            context.helper,
+            classes,
+            graph_uris=context.ontology_graph_uris,
+            unreadable=unreadable_parents,
         )
         files = {path: read_hierarchy([path]) for path in context.ontology_hierarchy_files}
         with_loaded = fill_parents(parents, list(files.values()), classes)
         chosen = choose_representatives(classes, parents, budget)
-        # Terms that no ancestor can take are grouped by the shape of their instances (the owner
-        # decision of 2026-09-30, gate 4): a group is a shared unknown type, named later.
-        shapes, unreadable = fetch_shapes(
-            context.helper, parentless_candidates(chosen, parents), graph_uris=context.graph_uris
-        )
-        shape_groups = group_by_shape(chosen, parents, {t: s.properties for t, s in shapes.items()})
+        # Terms that no ancestor can take are grouped by the shape of their instances: a group
+        # is a shared unknown type, named later. When they are too many to read their shapes
+        # through the endpoint, they are grouped by namespace.
+        candidates = parentless_candidates(chosen, parents)
+        namespace_groups: dict[str, dict[str, Any]] = {}
+        shapes: dict[str, Any] = {}
+        unreadable: list[str] = []
+        if len(candidates) > ontology_as_data.SHAPE_READ_MAX_TERMS:
+            logger.info(
+                "%d terms without a parent: grouped by namespace, not by shape", len(candidates)
+            )
+            namespace_groups = group_by_namespace(chosen, parents)
+            shape_groups: dict[str, frozenset[str]] = {}
+        else:
+            shapes, unreadable = fetch_shapes(
+                context.helper, candidates, graph_uris=context.graph_uris
+            )
+            shape_groups = group_by_shape(
+                chosen, parents, {t: s.properties for t, s in shapes.items()}
+            )
         members = chosen.members()
         without_parent = Counter(namespace(c) for c in classes if not parents.get(c))
         present = set(classes)
         grouped: list[str] = []
+        sampled: dict[str, int] = {}
+        cap = ontology_as_data.NAMESPACE_GROUP_MINED_MEMBERS
         for rep in sorted(set(chosen.representative.values())):
             terms = members.get(rep, [])
-            if terms:
+            if rep in namespace_groups and len(terms) > cap:
+                # Every member stays on record (representative_members); the queries name a
+                # spread of them, and the rows of the group are marked sampled.
+                sampled[rep] = len(terms)
+                namespace_groups[rep]["mined_members"] = cap
+                grouped.append(Representative(rep, spread(terms, cap)))
+            elif terms:
                 grouped.append(Representative(rep, [*terms, *([rep] if rep in present else [])]))
             else:
                 grouped.append(rep)
+        if sampled:
+            context.report.record_outcome(
+                QueryOutcome(
+                    state="partial",
+                    failures=[
+                        QueryFailure(
+                            "sampled",
+                            f"namespace group mined over {cap} of its {n} member terms",
+                            "ontology-terms/group-before-mining",
+                            classes=[rep],
+                        )
+                        for rep, n in sorted(sampled.items())
+                    ],
+                )
+            )
         context.grouped_members = members
         context.report.report.config["ontology_term_grouping"] = {
             "before_mining": True,
@@ -193,7 +303,11 @@ class TwoPhaseStrategy(MiningStrategy):
             "terms_with_loaded_parent_by_namespace": dict(
                 Counter(namespace(c) for c in with_loaded).most_common()
             ),
-            "grouping_of_terms_without_parent": "shape",
+            "grouping_of_terms_without_parent": "namespace" if namespace_groups else "shape",
+            "terms_without_parent_candidates": len(candidates),
+            "shape_read_max_terms": ontology_as_data.SHAPE_READ_MAX_TERMS,
+            # Only when the terms without a parent were grouped by namespace.
+            **({"namespace_groups": namespace_groups} if namespace_groups else {}),
             "namespace_min_terms": ontology_as_data.NAMESPACE_GROUP_MIN_TERMS,
             "shape_groups": {
                 group: {
@@ -214,6 +328,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 1 for t in shapes if chosen.representative.get(t) == t
             ),
             "unreadable_shape_terms": sorted(unreadable),
+            "terms_whose_parents_were_not_read": len(unreadable_parents),
             "representative_members": members,
             "review_state": "unreviewed",
         }
@@ -225,8 +340,8 @@ class TwoPhaseStrategy(MiningStrategy):
         """Keep the completed batches of an earlier run and plan only the other classes.
 
         A pattern row belongs to one subject class, so a completed batch is reused when all its
-        classes are classes of this run, also under another plan (PubChem run 6 was planned in
-        fixed batches after its weight count was refused).
+        classes are classes of this run, also under another plan (fixed batches, when the
+        weight count was refused).
         """
         by_name = {str(c): c for c in classes}
         kept = [
@@ -256,16 +371,18 @@ class TwoPhaseStrategy(MiningStrategy):
         ):
             # The rdf:type triples of each class in the whole index bound its subjects in the
             # scope. The weights only plan batches, and _same_members confirms a match with a
-            # count of the scope (PubChem: COUNT(DISTINCT) with 26 FROM clauses asked 68.8 GB;
-            # the bound took 1.6 s).
+            # count of the scope (a COUNT(DISTINCT) over many FROM clauses can be far costlier).
             counts["upper_bound"] = _build_class_weight_query(None)
         rows = None
         for state, query in counts.items():
             t0 = time.monotonic()
             try:
-                rows = context.collect_bindings(
-                    query, "two-phase/class-weights", context.chunk_size
-                )
+                # Weights only pack batches: read without the exclusion when the listing is.
+                suspended = _engine_only_classes(context) is not None
+                with context.helper.graph_exclusion_suspended() if suspended else nullcontext():
+                    rows = context.collect_bindings(
+                        query, "two-phase/class-weights", context.chunk_size
+                    )
             except Exception as error:
                 context.report.record_query(
                     "two-phase/class-weights", time.monotonic() - t0, success=False
@@ -301,44 +418,118 @@ class TwoPhaseStrategy(MiningStrategy):
         return batches
 
     def _discover_classes(self, context: MiningContext) -> list[str]:
-        """Discover named classes in the current scope."""
-        ccs = context.class_chunk_size
-        if ccs is None:
-            logger.info("Phase 1: discovering classes (no pagination) …")
-            q = _build_class_discovery_query_plain(
-                context.graph_uris, context.type_context_graph_uris
+        """Discover named classes; read the listing without the graph exclusion when it can be.
+
+        When the classes typed only in the excluded engine graphs are known
+        (SparqlHelper.engine_only_classes), the listing is read without the exclusion prologue,
+        which can make it much slower, and those classes are dropped from it: the same
+        classes.
+        """
+        try:
+            return self._discover_classes_within_limit(context)
+        except ClassListingLimitError as stopped:
+            return self._per_record(context, stopped)
+
+    def _discover_classes_within_limit(self, context: MiningContext) -> list[str]:
+        """Discover the classes (see _discover_classes); raise ClassListingLimitError when the
+        listing passes context.class_listing_limit.
+        """
+        engine_only = _engine_only_classes(context)
+        if engine_only is None:
+            return self._list_discovered_classes(context)
+        with context.helper.graph_exclusion_suspended():
+            classes = self._list_discovered_classes(context)
+        kept = [c for c in classes if c not in engine_only]
+        if len(kept) < len(classes):
+            logger.info("  -> %d classes of the engine graphs left out", len(classes) - len(kept))
+        if context.discovered_classes is not None:  # None: a sampled listing
+            context.discovered_classes = list(kept)
+        return kept
+
+    def _per_record(self, context: MiningContext, stopped: ClassListingLimitError) -> list[str]:
+        """Record why class discovery stopped, and return a sample of the listed classes.
+
+        Two small queries describe a spread of 200 listed classes: their instances, and their
+        named parents. Classes with about one instance each, under a few parents, are records
+        or per-record types. The run goes on with a spread of CLASS_SAMPLE listed classes, grouped
+        before mining as any other list of classes when ontology terms are grouped; the rows are
+        marked sampled (a "sampled" failure), and the listing is the sorted start of all
+        classes, so classes after it are not in the sample.
+        """
+        from statistics import median
+
+        from rdfsolve.mining.ontology_as_data import spread
+        from rdfsolve.ontology.hierarchy import RDFS_SUBCLASS_OF
+
+        context.class_listing_stopped = True
+        listed = [
+            b["class"]["value"] for b in stopped.rows if b.get("class", {}).get("type") == "uri"
+        ]
+        sample = spread(listed, 200)
+        values = " ".join(f"<{c}>" for c in sample)
+        evidence: dict[str, Any] = {
+            "state": "stopped",
+            "limit": stopped.limit,
+            "listed": len(stopped.rows),
+            "sample": len(sample),
+        }
+        budget = getattr(context.helper, "budget", None)
+        try:
+            with budget(60) if budget is not None else nullcontext():
+                counts = context.helper.select(
+                    f"SELECT ?c (COUNT(?s) AS ?n) WHERE {{ VALUES ?c {{ {values} }} "
+                    f"?s {membership_path()} ?c }} GROUP BY ?c",
+                    purpose="two-phase/class-sample",
+                )["results"]["bindings"]
+                parents = context.helper.select(
+                    f"SELECT ?k (COUNT(DISTINCT ?c) AS ?n) WHERE {{ VALUES ?c {{ {values} }} "
+                    f"?c <{RDFS_SUBCLASS_OF}> ?k FILTER(isIRI(?k)) }} GROUP BY ?k",
+                    purpose="two-phase/class-sample",
+                )["results"]["bindings"]
+            instances = [int(row["n"]["value"]) for row in counts]
+            evidence.update(
+                median_instances=median(instances) if instances else None,
+                classes_with_one_instance=sum(1 for n in instances if n == 1),
+                parents=dict(
+                    sorted(
+                        ((row["k"]["value"], int(row["n"]["value"])) for row in parents),
+                        key=lambda item: -item[1],
+                    )[:10]
+                ),
             )
-            t0 = time.monotonic()
-            try:
-                try:
-                    result = context.helper.select(q, purpose="two-phase/classes")
-                    class_bindings = result.get("results", {}).get("bindings", [])
-                except EndpointTimeoutError as error:
-                    # A response limit, a time limit, or an answer cut off at the time limit of
-                    # the engine (PubChem on a shared node: QLever stopped after 600 s at 22 MB).
-                    logger.warning("Class listing refused (%s); paging it", error)
-                    class_bindings = context.collect_bindings(
-                        _build_class_discovery_query(
-                            context.graph_uris, context.type_context_graph_uris
-                        ),
-                        "two-phase/classes",
-                        context.chunk_size,
-                    )
-                context.report.record_query(
-                    "two-phase/classes",
-                    time.monotonic() - t0,
-                )
-            except Exception:
-                context.report.record_query(
-                    "two-phase/classes",
-                    time.monotonic() - t0,
-                    success=False,
-                )
-                raise
-        else:
-            logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
-            q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
-            class_bindings = context.collect_bindings(q, "two-phase/classes", ccs)
+        except (SparqlHelperError, KeyError, ValueError) as error:
+            evidence["sample_error"] = str(error)[:300]
+        mined = spread(listed, CLASS_SAMPLE)
+        evidence["mined_classes"] = len(mined)
+        context.report.report.config["class_discovery"] = evidence
+        message = (
+            f"class discovery stopped after {len(stopped.rows)} type values (limit "
+            f"{stopped.limit}); {len(mined)} of the listed classes are mined"
+        )
+        logger.warning("%s: %s", message, {k: v for k, v in evidence.items() if k != "parents"})
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure("sampled", message, "two-phase/classes")],
+            )
+        )
+        # Not every class was discovered: the census tests each edge (_typed_edges_covered).
+        context.discovered_classes = None
+        return mined
+
+    def _list_discovered_classes(self, context: MiningContext) -> list[str]:
+        """Discover named classes in the current scope.
+
+        Every later result depends on this listing, so a gateway that answers for an
+        overloaded host (a proxy's 502) is waited out before
+        the listing is given up (graph_selection.wait_out_gateway).
+        """
+        listed = True
+        try:
+            class_bindings = self._read_class_listing(context)
+        except (EndpointTimeoutError, EndpointRateLimitError) as error:
+            class_bindings = self._sample_classes(context, error)
+            listed = False
 
         classes = []
         non_iri_count = 0
@@ -353,17 +544,260 @@ class TwoPhaseStrategy(MiningStrategy):
         if non_iri_count:
             logger.info(f"  -> Skipped {non_iri_count} non-IRI type values")
         logger.info(f"  -> {len(classes)} data classes found")
-        context.discovered_classes = list(classes)
+        # A sampled listing leaves discovered_classes None: not every class was listed.
+        context.discovered_classes = list(classes) if listed else None
         context.skipped_type_values = non_iri_count
         return classes
 
+    def _read_class_listing(self, context: MiningContext) -> list[dict[str, Any]]:
+        """Read the whole class listing, in one query or in pages (_list_discovered_classes)."""
+        from rdfsolve.mining.graph_selection import wait_out_gateway
+
+        ccs = context.class_chunk_size
+        if ccs is None:
+            t0 = time.monotonic()
+            try:
+                class_bindings = wait_out_gateway(
+                    context.helper, lambda: self._list_classes(context), "Class listing"
+                )
+                context.report.record_query(
+                    "two-phase/classes",
+                    time.monotonic() - t0,
+                )
+            except Exception:
+                context.report.record_query(
+                    "two-phase/classes",
+                    time.monotonic() - t0,
+                    success=False,
+                )
+                raise
+            return class_bindings
+        logger.info("Phase 1: discovering classes (chunk_size=%d) …", ccs)
+        q = _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris)
+        return wait_out_gateway(
+            context.helper,
+            lambda: self._page_classes(context, q, ccs),
+            "Class listing",
+        )
+
+    def _sample_classes(
+        self, context: MiningContext, error: SparqlHelperError
+    ) -> list[dict[str, Any]]:
+        """List the classes of a sample of the type statements when the whole listing failed.
+
+        A proxy can cut every form of ``SELECT DISTINCT ?class WHERE { ?s a ?class }`` (one
+        query, then pages from offset 0) at its time limit, while a trivial query answers at
+        once. The listing is asked again over the first N type statements
+        (rdfsolve.mining.sampling: N, N/10, N/100). The classes of the sample are mined as
+        any others; classes outside it are not, so the listing is recorded as sampled (a lower
+        bound, config class_listing) and the source ends partial. When the samples are refused
+        too, or the host stayed busy, the listing is recorded as a gap and no class is mined:
+        the source goes on with the steps that do not need classes (untyped subjects). A host
+        that does not answer a trivial query either (host_answers) answers nothing at all, and
+        the error is raised: the source fails.
+        """
+        from rdfsolve.mining.query_fallbacks import _failure
+        from rdfsolve.mining.sampling import sample_query, sampled_select
+
+        plain = _build_class_discovery_query_plain(
+            context.graph_uris, context.type_context_graph_uris
+        )
+        refused = _failure(error, "two-phase/classes", [], context.graph_uris)
+        found = sampled_select(
+            lambda size: sample_query(plain, size),
+            "two-phase/classes",
+            context.helper,
+            refused,
+            unit="type statements",
+            graph_uris=context.graph_uris,
+        )
+        context.class_listing_stopped = True  # the named-graph retry would be refused alike
+        if found.state == "complete" and found.samples:
+            (sample, *_) = found.samples
+            listing = {
+                "state": "sampled",
+                "count_bound": "lower_bound",
+                "sample": sample.provenance(),
+                "error": str(error)[:500],
+            }
+            message = (
+                f"class listing refused ({str(error)[:300]}); the classes of a sample of "
+                f"{sample.size} type statements are mined, a lower bound"
+            )
+            category: FailureCategory = "sampled"
+            logger.warning("Class listing: %s", message)
+        else:
+            from rdfsolve.mining.graph_selection import host_answers
+
+            if not host_answers(context.helper):
+                raise error  # an endpoint that answers nothing at all fails the source
+            listing = {"state": "refused", "error": str(error)[:500]}
+            message = f"class listing refused, also over samples: {str(error)[:300]}"
+            category = refused.failures[0].category
+            logger.warning("Class listing: %s; no class is mined", message)
+        context.report.report.config["class_listing"] = listing
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure(category, message, "two-phase/classes")],
+                samples=found.samples,
+            )
+        )
+        return found.rows if found.state == "complete" else []
+
+    def _list_classes(self, context: MiningContext) -> list[dict[str, Any]]:
+        """List the classes in one query; page the listing when it is cut or capped."""
+        logger.info("Phase 1: discovering classes (no pagination) …")
+        q = _build_class_discovery_query_plain(context.graph_uris, context.type_context_graph_uris)
+        try:
+            result = context.helper.select(q, purpose="two-phase/classes")
+            class_bindings: list[dict[str, Any]] = result.get("results", {}).get("bindings", [])
+            limit = getattr(context, "class_listing_limit", None)
+            if limit is not None and len(class_bindings) > limit:
+                raise ClassListingLimitError(class_bindings, limit)
+            if SparqlHelper.row_cap_suspected(len(class_bindings)):
+                # A server cap cuts a listing silently: read it in pages of the cap.
+                logger.warning(
+                    "Class listing: exactly %d rows, a common server cap; paging it",
+                    len(class_bindings),
+                )
+                class_bindings = self._page_classes(
+                    context,
+                    _build_class_discovery_query(
+                        context.graph_uris, context.type_context_graph_uris
+                    ),
+                    len(class_bindings),
+                )
+        except EndpointTimeoutError as error:
+            # A response limit, a time limit, or an answer cut off at the time limit of
+            # the engine.
+            logger.warning("Class listing refused (%s); paging it", error)
+            class_bindings = self._page_classes(
+                context,
+                _build_class_discovery_query(context.graph_uris, context.type_context_graph_uris),
+                context.chunk_size,
+            )
+        return class_bindings
+
+    def _page_classes(
+        self, context: MiningContext, query: str, size: int | None
+    ) -> list[dict[str, Any]]:
+        """Read the class listing in pages; on a deep OFFSET failure, read it by key.
+
+        An engine that skips OFFSET rows pays for every row skipped, so deep pages can end in a
+        timeout or a 502 after shallow ones answered quickly. When an OFFSET page fails after the first, the
+        listing is read again by key (keyset paging: ORDER BY the class's key and FILTER past
+        the last key read, SparqlHelper.select_chunked with pagination="cursor"), which costs
+        the same at any depth. The OFFSET pages stay the first choice: a key page sorts the
+        whole listing (which can exceed a proxy's limit), while a shallow OFFSET page does not. When the key pages fail too, the classes read by both are kept and mined: the
+        listing is recorded as truncated (an unresolved failure, so the source ends PARTIAL,
+        and config.class_listing, whose class count is a lower bound). A failure before any
+        row is read is raised as before.
+        """
+        from rdfsolve.sparql_helper import PaginationTruncatedError
+
+        limit = getattr(context, "class_listing_limit", None)
+        try:
+            if limit is None:
+                return context.collect_bindings(query, "two-phase/classes", size)
+            return context.collect_bindings(  # type: ignore[call-arg]
+                query, "two-phase/classes", size, max_rows=limit
+            )
+        except PaginationTruncatedError as error:
+            failure = error
+            rows = list(error.partial_rows)
+        keyset: dict[str, Any] | None = None
+        if failure.offset > 0 and getattr(context, "pagination", "offset") != "cursor":
+            logger.warning(
+                "Class listing: an OFFSET page failed at offset %d (%s); reading it by key",
+                failure.offset,
+                str(failure)[:200],
+            )
+            keyed: list[dict[str, Any]] = []
+            try:
+                for page in context.helper.select_chunked(
+                    query,
+                    chunk_size=size or context.chunk_size,
+                    purpose="two-phase/classes",
+                    pagination="cursor",
+                    cursor_keys=["class"],
+                    max_page_retries=1,
+                    # The host gate already spaces the requests to the endpoint.
+                    delay_between_chunks=0.0,
+                ):
+                    keyed.extend(page)
+                    if limit is not None and len(keyed) > limit:
+                        raise ClassListingLimitError(keyed, limit)
+            except PaginationTruncatedError as error:
+                # The OFFSET failure stays the one recorded: it says how far the listing got.
+                keyset = {"state": "truncated", "rows_read": len(keyed), "error": str(error)[:500]}
+            else:
+                context.report.report.config["class_listing"] = {
+                    "state": "complete",
+                    "read_by": "keyset",
+                    "offset_failure": {"offset": failure.offset, "error": str(failure)[:500]},
+                }
+                return keyed
+            seen = {json.dumps(row, sort_keys=True) for row in rows}
+            rows += [row for row in keyed if json.dumps(row, sort_keys=True) not in seen]
+        if not rows:
+            raise failure
+        logger.warning(
+            "Class listing truncated at offset %d after %d rows (%s); mining what was read",
+            failure.offset,
+            len(rows),
+            str(failure)[:200],
+        )
+        message = (
+            f"class listing truncated at offset {failure.offset}: {len(rows)} rows read, "
+            f"the classes are a lower bound: {str(failure)[:300]}"
+        )
+        context.report.record_outcome(
+            QueryOutcome(
+                state="partial",
+                failures=[QueryFailure("truncated", message, "two-phase/classes")],
+            )
+        )
+        context.report.report.config["class_listing"] = {
+            "state": "truncated",
+            "offset": failure.offset,
+            "rows_read": len(rows),
+            "count_bound": "lower_bound",
+            "error": str(failure)[:500],
+            **({"keyset": keyset} if keyset is not None else {}),
+        }
+        return rows
+
     def _discover_classes_in_named_graphs(self, context: MiningContext) -> list[str]:
-        """Retry Phase 1 in the named graphs when the default graph has no types."""
+        """Retry Phase 1 in the named graphs when the default graph has no types.
+
+        Graph listing is optional: when the endpoint does not list its graphs (STRING's proxy
+        cuts the listing with HTTP 502 at 62 s), the source is not failed for it. The refusal
+        is recorded as an unresolved failure of graph discovery, so that the source ends partial
+        with the reason, not complete and apparently empty.
+        """
         from rdfsolve.mining.graph_selection import discover_data_graphs
 
-        graphs = discover_data_graphs(
-            context.helper, excluded_prefixes=context.excluded_graph_prefixes
-        )
+        try:
+            graphs = discover_data_graphs(
+                context.helper, excluded_prefixes=context.excluded_graph_prefixes
+            )
+        except SparqlHelperError as error:
+            logger.warning(
+                "The default graph holds no typed data, and the named graphs are not listed: %s",
+                str(error)[:200],
+            )
+            failure = QueryFailure(
+                "timeout" if isinstance(error, EndpointTimeoutError) else "endpoint",
+                f"named graphs not listed: {str(error)[:300]}",
+                "void/graph-discovery",
+            )
+            context.report.record_outcome(QueryOutcome(state="failed", failures=[failure]))
+            context.report.report.config["named_graph_discovery"] = {
+                "state": "graphs_not_listed",
+                "error": str(error)[:500],
+            }
+            return []
         companion = set(context.type_context_graph_uris or []) | set(
             context.ontology_graph_uris or []
         )
@@ -469,6 +903,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 continue
 
             # 2a. Typed-object patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             typed_bindings = query_bisect(
                 batch, _build_batched_typed_object_query, "two-phase/typed-object"
@@ -501,10 +936,12 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} {oc}")
+                        context.report.record_dropped_uri(f"{cls} {p} {oc}", b)
             patterns.extend(blank_node_patterns(anonymous_typed, context, "class"))
+            mark_sampled(patterns[kind_start:], typed_bindings.rows)
 
             # 2b. Literal patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             literal_bindings = query_bisect(
                 batch, _build_batched_literal_query, "two-phase/literal"
@@ -529,9 +966,12 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} Literal")
+                        context.report.record_dropped_uri(f"{cls} {p} Literal", b)
+
+            mark_sampled(patterns[kind_start:], literal_bindings.rows)
 
             # 2c. Untyped-URI patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             untyped_bindings = query_bisect(
                 batch, _build_batched_untyped_uri_query, "two-phase/untyped-uri"
@@ -557,9 +997,12 @@ class TwoPhaseStrategy(MiningStrategy):
                             )
                         )
                     except (ValueError, ValidationError):
-                        context.report.record_dropped_uri(f"{cls} {p} {untyped_oc}")
+                        context.report.record_dropped_uri(f"{cls} {p} {untyped_oc}", b)
+
+            mark_sampled(patterns[kind_start:], untyped_bindings.rows)
 
             # 2d. Blank node patterns
+            kind_start = len(patterns)
             t0 = time.monotonic()
             blank_bindings = query_bisect(
                 batch, _build_batched_blank_node_query, "two-phase/blank-node"
@@ -570,6 +1013,7 @@ class TwoPhaseStrategy(MiningStrategy):
                 success=blank_bindings.state == "complete",
             )
             patterns.extend(blank_node_patterns(blank_bindings.rows, context, "class"))
+            mark_sampled(patterns[kind_start:], blank_bindings.rows)
             # A batch with an unresolved failure is partial: a resumed run mines it again.
             state = (
                 "complete" if len(context.report.report.query_failures) == failures else "partial"

@@ -94,7 +94,7 @@ class SinglePassStrategy(MiningStrategy):
                         )
                     )
                 except (ValueError, ValidationError):
-                    context.report.record_dropped_uri(f"{sc} {p} {oc}")
+                    context.report.record_dropped_uri(f"{sc} {p} {oc}", b)
         return results
 
     def _run_literal(self, context: MiningContext) -> list[SchemaPattern]:
@@ -117,7 +117,7 @@ class SinglePassStrategy(MiningStrategy):
                         )
                     )
                 except (ValueError, ValidationError):
-                    context.report.record_dropped_uri(f"{sc} {p} Literal")
+                    context.report.record_dropped_uri(f"{sc} {p} Literal", b)
         return results
 
     def _run_untyped_uri(self, context: MiningContext) -> list[SchemaPattern]:
@@ -144,5 +144,5 @@ class SinglePassStrategy(MiningStrategy):
                         )
                     )
                 except (ValueError, ValidationError):
-                    context.report.record_dropped_uri(f"{sc} {p} {oc}")
+                    context.report.record_dropped_uri(f"{sc} {p} {oc}", b)
         return results

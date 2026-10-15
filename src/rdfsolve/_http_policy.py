@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from email.utils import parsedate_to_datetime
 from threading import Condition
 
@@ -22,8 +22,8 @@ def retry_after_seconds(value: str | None) -> float | None:
         try:
             stamp = parsedate_to_datetime(value)
             if stamp.tzinfo is None:
-                stamp = stamp.replace(tzinfo=timezone.utc)
-            seconds = (stamp - datetime.now(timezone.utc)).total_seconds()
+                stamp = stamp.replace(tzinfo=UTC)
+            seconds = (stamp - datetime.now(UTC)).total_seconds()
         except (ValueError, TypeError, OverflowError):
             return None
     return max(0.0, seconds) if math.isfinite(seconds) else None

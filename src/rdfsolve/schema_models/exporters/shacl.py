@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
+from collections.abc import Mapping
+from typing import Any
+
+from rdflib import Graph, URIRef
 
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.shacl_model import ShaclNodeShape, ShaclPropertyShape, ShaclShapesGraph
 
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+SUBCLASS_OF = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 
 ANY_LITERAL = "http://www.w3.org/2000/01/rdf-schema#Literal"
+# A SPARQL prefix name (PN_PREFIX, ASCII): a letter first, no dot last.
+_PREFIX_NAME = re.compile(r"^[A-Za-z]([A-Za-z0-9_.-]*[A-Za-z0-9_-])?$")
 
 
 def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
@@ -32,19 +41,36 @@ def shape_iri(dataset: str, cls: str, prop: str | None = None) -> str:
     return f"{base}ns-{short(cls)}" if prop is None else f"{base}ps-{short(cls)}-{short(prop)}"
 
 
+def untyped_shape_iri(dataset: str, prop: str) -> str:
+    """Return the IRI of the node shape of the subjects of *prop* without a type in *dataset*
+    (with the default base IRI of minedschema_to_shacl).
+    """
+    from hashlib import md5
+
+    from rdfsolve.config import mint
+
+    short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+    return mint("dataset", dataset or "unnamed") + f"/shapes/ns-untyped-{short}"
+
+
 def minedschema_to_shacl(
     schema: MinedSchema,
     base_uri: str | None = None,
     *,
-    activate_observed: bool = False,
+    activate_observed: bool = True,
 ) -> ShaclShapesGraph:
     """Convert MinedSchema to SHACL shapes.
 
-    Creates one NodeShape per subject class with PropertyShapes for each pattern.
+    Creates one NodeShape per subject class with PropertyShapes for each pattern: the kinds,
+    classes and datatypes of the values, and sh:minCount 1 / sh:maxCount 1 where the schema's
+    exact counts prove them (counted_cardinalities). Names and descriptions come from the
+    schema's enrichment.
 
     Args:
         schema: MinedSchema to convert
         base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
+        activate_observed: Write the observed shapes active (the default), so that they
+            validate data; False writes them deactivated, as documentation only.
 
     Returns:
         ShaclShapesGraph with NodeShape per class
@@ -64,8 +90,12 @@ def minedschema_to_shacl(
     )
     if lost_counts:
         logging.getLogger(__name__).warning(
-            "SHACL plus VoID metadata cannot retain %d pattern counts with unspecified "
-            "classes or datatypes. Keep canonical JSON; these are not sh:minCount values.",
+            "%d pattern rows describe objects without a class (IRIs without a type, blank "
+            "nodes, literals without a datatype). Their triples and distinct subjects, the "
+            "counts of each such kind for its class and property, are kept only in the JSON "
+            "schema; VoID gives the distinct blank-node and literal objects of each class and "
+            "property, and its distinct IRIs and triples only where no object has a class. "
+            "These counts are not sh:minCount values.",
             lost_counts,
         )
     if schema.shapes is not None:
@@ -73,21 +103,31 @@ def minedschema_to_shacl(
 
     from hashlib import md5
 
-    # Group patterns by subject class
+    # Group patterns by subject class; the patterns of untyped subjects by property.
     by_subject: dict[str, list[SchemaPattern]] = defaultdict(list)
+    untyped: dict[str, list[SchemaPattern]] = defaultdict(list)
     for pat in schema.patterns:
-        by_subject[pat.subject_class].append(pat)
+        if pat.untyped_subject:
+            untyped[pat.property_uri].append(pat)
+        else:
+            by_subject[pat.subject_class].append(pat)
 
     lists: dict[tuple[str, str], list[CollectionProfile]] = defaultdict(list)
     for profile in schema.collections or []:
         lists[(profile.subject_class, profile.property_uri)].append(profile)
+    cardinalities = counted_cardinalities(schema)
+    value_namespaces = _value_namespaces(schema)
+    below = _descendants(schema.class_hierarchy)
     node_shapes = []
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
-
+        # The SHACL instances of a class include the members of its subclasses, whose values
+        # the schema counts under the subclasses (minimal types): the shape allows them too.
+        members = [subject_class, *sorted(below.get(subject_class, ()))]
         by_property: dict[str, list[SchemaPattern]] = defaultdict(list)
-        for pattern in by_subject[subject_class]:
-            by_property[pattern.property_uri].append(pattern)
+        for member in members:
+            for pattern in by_subject.get(member, []):
+                by_property[pattern.property_uri].append(pattern)
         property_shapes = []
         for prop, patterns in sorted(by_property.items()):
             # No constraint on rdf:type: the schema keeps the rows of type values that are
@@ -95,47 +135,66 @@ def minedschema_to_shacl(
             if prop == RDF_TYPE:
                 continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
-            options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
-            for pattern in patterns:
-                option = ShaclPropertyShape(path="")
-                if pattern.object_class == "Literal":
-                    option.node_kind = "Literal"
-                    option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
-                elif pattern.object_class == "Resource":
-                    option.node_kind = "IRI"
-                elif pattern.object_class == "BlankNode":
-                    option.node_kind = "BlankNode"
-                else:
-                    option.node_kind = "BlankNodeOrIRI"
-                    option.class_constraint = pattern.object_class
-                options[(pattern.object_class, pattern.datatype)] = option
-            for profile in lists.get((subject_class, prop), []):
-                options[("List", None)] = _list_option(profile)
-            alternatives = list(options.values())
-            shape = (
-                alternatives[0]
-                if len(alternatives) == 1
-                else ShaclPropertyShape(path="", alternatives=alternatives)
+            namespaces, identifiers = _joined_namespaces(value_namespaces, members, prop, patterns)
+            shape = _value_shape(
+                patterns,
+                lists.get((subject_class, prop), []),
+                namespaces if identifiers else None,
             )
             shape.path = prop
             shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
-            shape.name = patterns[0].property_label
+            shape.name = schema.enrichment.label(prop) or patterns[0].property_label
             shape.description = schema.enrichment.description(prop)
+            shape.min_count, most = cardinalities.get((subject_class, prop), (None, None))
+            if most is not None and most <= 1:
+                shape.max_count = most
+            _mark_sampled(shape, patterns)
             property_shapes.append(shape)
+            if namespaces and not identifiers and not shape.deactivated:
+                # Values of other namespaces (web addresses): a new value may be of another
+                # host, so their namespaces are reported at Info.
+                seen = _value_shape(patterns, lists.get((subject_class, prop), []), namespaces)
+                seen.path, seen.uri, seen.severity = prop, f"{shape.uri}-namespaces", "Info"
+                seen.description = (
+                    "The namespaces of the IRI values without a type in the data; a new value "
+                    "may be in another."
+                )
+                property_shapes.append(seen)
+            if most is not None and most > 1 and not shape.deactivated:
+                # The most of the data, which a valid new record may pass: reported at Info.
+                property_shapes.append(
+                    ShaclPropertyShape(
+                        uri=f"{shape.uri}-most",
+                        path=prop,
+                        max_count=most,
+                        severity="Info",
+                        description=f"The most values of a member in the data ({most}); a new "
+                        "record may have more.",
+                    )
+                )
         node_shapes.append(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-{cls_hash}",
                 target_class=subject_class,
                 deactivated=not activate_observed,
-                name=by_subject[subject_class][0].subject_label,
+                name=schema.enrichment.label(subject_class)
+                or by_subject[subject_class][0].subject_label,
                 description=" ".join(
                     filter(
                         None,
                         [
                             schema.enrichment.description(subject_class),
                             (
-                                "Observed value-type template, not a source constraint. "
-                                "No required fields or per-entity cardinalities were inferred."
+                                "Observed in the data, not a source constraint: the kinds, "
+                                "classes and datatypes of the values of each property, with "
+                                "sh:minCount 1 where every member has the property and "
+                                "sh:maxCount 1 where no member has two values, as the exact "
+                                "counts of the schema show."
+                                if any(key[0] == subject_class for key in cardinalities)
+                                else "Observed in the data, not a source constraint: the "
+                                "kinds, classes and datatypes of the values of each property. "
+                                "The counts of the schema do not prove a required or "
+                                "single-valued property of this class."
                             ),
                         ],
                     )
@@ -144,9 +203,255 @@ def minedschema_to_shacl(
             )
         )
 
+    node_shapes += _untyped_shapes(schema, untyped, base_uri, activate_observed)
     return _complete_shapes(
         schema, ShaclShapesGraph(node_shapes=node_shapes, base_uri=base_uri), base_uri
     )
+
+
+def counted_cardinalities(
+    schema: MinedSchema,
+) -> dict[tuple[str, str], tuple[int | None, int | None]]:
+    """Return (sh:minCount, most values) of each (class, property) that exact counts prove.
+
+    The members of a class are class_extensions.members, else about.class_entity_counts. From
+    the measured values (schema.value_counts) where there are some: sh:minCount 1 when the
+    members with the property are every member of the class, and the most values of one member.
+    Otherwise from the pattern rows: sh:minCount 1 when the subjects of one row of the property
+    are every member of the class, and at most 1 value when the property has a single row whose
+    triples equal its distinct subjects. Only exact rows count: mined, not sampled, not lower
+    bounds, from one graph at most (distinct subjects of several graphs are not distinct
+    overall). Nothing is proved when membership is not rdf:type alone, or when the data holds
+    rdfs:subClassOf statements (a SHACL instance of a class is then also a member of a subclass,
+    whose values the class's rows do not count), or for a class with subclasses among the
+    schema's classes.
+    """
+    found: dict[tuple[str, str], tuple[int | None, int | None]] = {}
+    members = {
+        **schema.about.class_entity_counts,
+        **(schema.class_extensions.members if schema.class_extensions is not None else {}),
+    }
+    if schema.about.membership_property or any(
+        p.property_uri == SUBCLASS_OF for p in schema.patterns
+    ):
+        return found
+    parents = {
+        parent for found_parents in schema.class_hierarchy.values() for parent in found_parents
+    }
+    lists = {(c.subject_class, c.property_uri) for c in schema.collections or []}
+    counts = {(c.subject_class, c.property_uri): c for c in schema.value_counts or []}
+    rows: dict[tuple[str, str], list[SchemaPattern]] = defaultdict(list)
+    for pattern in schema.patterns:
+        if not pattern.untyped_subject and pattern.property_uri != RDF_TYPE:
+            rows[(pattern.subject_class, pattern.property_uri)].append(pattern)
+    for key, patterns in rows.items():
+        cls = key[0]
+        if cls in parents or key in lists:
+            continue
+        if key not in counts and not all(
+            p.evidence_source == "mined"
+            and p.sampled is None
+            and p.count_bound != "lower_bound"
+            and p.count is not None
+            and p.distinct_subjects is not None
+            and len(p.graphs or {}) <= 1
+            for p in patterns
+        ):
+            continue
+        size = members.get(cls)
+        measured = counts.get(key)
+        if measured is not None:
+            least = 1 if size and measured.subjects == size else None
+            found[key] = (least, measured.most or None)
+            continue
+        least = 1 if size and any(p.distinct_subjects == size for p in patterns) else None
+        most = (
+            1 if len(patterns) == 1 and patterns[0].count == patterns[0].distinct_subjects else None
+        )
+        if least is not None or most is not None:
+            found[key] = (least, most)
+    return found
+
+
+def _descendants(hierarchy: Mapping[str, list[str]]) -> dict[str, set[str]]:
+    """Return every subclass of each class of a hierarchy (class -> its nearest superclasses)."""
+    children: dict[str, set[str]] = defaultdict(set)
+    for child, parents in hierarchy.items():
+        for parent in parents:
+            children[parent].add(child)
+    found: dict[str, set[str]] = {}
+    for cls in children:
+        seen: set[str] = set()
+        todo = list(children[cls])
+        while todo:
+            child = todo.pop()
+            if child not in seen and child != cls:
+                seen.add(child)
+                todo.extend(children.get(child, ()))
+        found[cls] = seen
+    return found
+
+
+def _joined_namespaces(
+    value_namespaces: Mapping[tuple[str, str], tuple[list[str], bool]],
+    classes: list[str],
+    prop: str,
+    patterns: list[SchemaPattern],
+) -> tuple[str | None, bool]:
+    """Return the sh:pattern of the untyped IRI values of *prop* over *classes* (a class and its
+    subclasses), and whether each value is a registered identifier: none when a class with such
+    values has no measured namespaces.
+    """
+    from rdfsolve.schema_models.class_parts import namespaces_pattern
+
+    with_values = sorted(
+        {
+            p.subject_class
+            for p in patterns
+            if p.object_class == "Resource" and p.subject_class in classes
+        }
+    )
+    found = [value_namespaces.get((cls, prop)) for cls in with_values]
+    measured = [item for item in found if item is not None]
+    if not measured or len(measured) != len(found):
+        return None, False
+    namespaces = [n for names, _ in measured for n in names]
+    return namespaces_pattern(namespaces), all(identifiers for _, identifiers in measured)
+
+
+def _value_namespaces(schema: MinedSchema) -> dict[tuple[str, str], tuple[list[str], bool]]:
+    """Return the namespaces of the IRI values without a type of each (class, property), and
+    whether every value is a registered identifier: the namespaces of the parts counted over
+    every value (schema.value_parts). A pair with values written without a scheme has none: a
+    reader resolves them against its own base IRI.
+    """
+    found: dict[tuple[str, str], tuple[list[str], bool]] = {}
+    for measured in schema.value_parts or []:
+        namespaces = [n for part in measured.parts for n in part.namespaces]
+        if not measured.parts or any(
+            part.kind == "relative_iri" or not part.namespaces for part in measured.parts
+        ):
+            continue
+        identifiers = all(
+            part.kind in ("identifier", "invalid_identifier") for part in measured.parts
+        )
+        found[(measured.subject_class, measured.property_uri)] = (namespaces, identifiers)
+    return found
+
+
+def _value_shape(
+    patterns: list[SchemaPattern],
+    profiles: list[CollectionProfile],
+    namespaces: str | None = None,
+) -> ShaclPropertyShape:
+    """Return the value constraint of the patterns of one property: one option, or sh:or.
+
+    *namespaces* (sh:pattern) restricts the IRI values without a type to the namespaces they
+    were counted in.
+    """
+    options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
+    for pattern in patterns:
+        option = ShaclPropertyShape(path="")
+        if pattern.object_class == "Literal":
+            option.node_kind = "Literal"
+            option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
+        elif pattern.object_class == "Resource":
+            option.node_kind = "IRI"
+            option.pattern = namespaces
+        elif pattern.object_class == "BlankNode":
+            option.node_kind = "BlankNode"
+        else:
+            option.node_kind = "BlankNodeOrIRI"
+            option.class_constraint = pattern.object_class
+        options[(pattern.object_class, pattern.datatype)] = option
+    for profile in profiles:
+        options[("List", None)] = _list_option(profile)
+    alternatives = list(options.values())
+    return (
+        alternatives[0]
+        if len(alternatives) == 1
+        else ShaclPropertyShape(path="", alternatives=alternatives)
+    )
+
+
+def _mark_sampled(shape: ShaclPropertyShape, patterns: list[SchemaPattern]) -> bool:
+    """Deactivate a value shape whose kinds come in part from a sample of a refused query.
+
+    The sample shows kinds that occur, not every kind: an active shape would flag values of a
+    kind the sample missed. Counts of samples are never sh:minCount or sh:maxCount (no observed
+    shape states them). Return whether the shape was deactivated.
+    """
+    samples = [p.sampled for p in patterns if p.sampled and "patterns" in p.sampled.covers]
+    if not samples:
+        return False
+    first = samples[0]
+    shape.deactivated = True
+    note = (
+        f"Value kinds observed in a sample of {first.size} {first.unit} of a query that the "
+        "endpoint refused; other kinds may occur, so the shape is deactivated."
+    )
+    shape.description = f"{shape.description} {note}" if shape.description else note
+    return True
+
+
+def _membership_path(schema: MinedSchema) -> str | PropertyPath:
+    """Return the path of class membership: rdf:type, or the membership properties."""
+    membership = schema.about.membership_property
+    if not membership:
+        return RDF_TYPE
+    if isinstance(membership, str):
+        return membership
+    if len(membership) == 1:
+        return membership[0]
+    return PropertyPath(
+        operator="alternative",
+        items=[PropertyPath(operator="predicate", iri=p) for p in membership],
+    )
+
+
+def _untyped_shapes(
+    schema: MinedSchema,
+    untyped: dict[str, list[SchemaPattern]],
+    base_uri: str,
+    activate_observed: bool,
+) -> list[ShaclNodeShape]:
+    """Return a node shape for the untyped subjects of each property.
+
+    SHACL has no target for "the nodes without a type": the shape targets the subjects of the
+    property (sh:targetSubjectsOf) and holds when the node has a type (its class shapes
+    describe it) or when its values have the observed kinds: sh:or ([sh:path rdf:type;
+    sh:minCount 1] [sh:path p; values]). A typed subject is never held to the untyped values.
+    """
+    from hashlib import md5
+
+    shapes = []
+    typed = ShaclPropertyShape(path=_membership_path(schema), min_count=1)
+    for prop, patterns in sorted(untyped.items()):
+        short = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
+        values = _value_shape(patterns, [])
+        values.path = prop
+        values.uri = f"{base_uri}ps-untyped-{short}"
+        values.name = patterns[0].property_label
+        values.description = schema.enrichment.description(prop)
+        label = patterns[0].property_label or prop
+        incomplete = _mark_sampled(values, patterns)
+        shapes.append(
+            ShaclNodeShape(
+                uri=f"{base_uri}ns-untyped-{short}",
+                target_subjects_of=[prop],
+                alternatives=[typed.model_copy(deep=True), values],
+                deactivated=not activate_observed or incomplete,
+                name=f"Subjects of {label} without a type",
+                description=(
+                    "Observed values of the IRI subjects of this property that have no type "
+                    "(rdfsolve patterns with subject_binding 'untyped'). A subject with a type "
+                    "conforms through the first alternative; its class shapes describe it. "
+                    "Observed value-type template, not a source constraint. No required fields "
+                    "or per-entity cardinalities were inferred."
+                ),
+            )
+        )
+    return shapes
 
 
 LIST_MEMBERS = "rdf:rest*/rdf:first"
@@ -178,6 +483,94 @@ def _list_option(profile: CollectionProfile) -> ShaclPropertyShape:
     )
 
 
+def _add_iri_patterns(schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str) -> None:
+    """Give each node shape the ways its members are identified: the parts of its class counted
+    in the data (schema.class_parts) as named shapes combined with sh:or, else the namespaces of
+    its class's example IRIs as sh:pattern.
+
+    The namespaces of registered identifiers are also declared with their prefixes (sh:declare)
+    on a declarations resource of that class, so that a reader can tell which registered identifiers
+    the class's IRIs are, also where a prefix names another namespace elsewhere in the graph.
+    """
+    from hashlib import sha256
+
+    from rdfsolve._uri import uri_to_curie
+    from rdfsolve.identifiers import parse
+
+    examples: dict[str, set[str]] = defaultdict(set)
+    for class_iri, terms in schema.enrichment.class_examples.items():
+        examples[class_iri].update(t.value for t in terms if t.kind == "uri")
+    for example in schema.enrichment.examples:
+        if not example.untyped_subject and example.subject.kind == "uri":
+            examples[example.subject_class].add(example.subject.value)
+    namespaces: dict[str, dict[str, str]] = {}  # class -> namespace -> prefix
+    for class_iri, iris in examples.items():
+        for iri in iris:
+            found = parse(iri)  # a registered identifier: its namespace as written in the IRI
+            if found is not None and iri.endswith(found.local):
+                prefix, namespace = found.prefix, iri[: len(iri) - len(found.local)]
+            else:  # not a registered identifier: the namespace alone, with no prefix to declare
+                prefix, namespace = "", uri_to_curie(iri)[2]
+            if namespace and namespace != iri:
+                namespaces.setdefault(class_iri, {})[namespace] = prefix
+    special = set("\\.?*+(){}|[]^$")
+    for class_iri, found_namespaces in sorted(namespaces.items()):
+        by_prefix: dict[str, str] = {}
+        for namespace, prefix in sorted(found_namespaces.items()):
+            # A prefix that is no SPARQL prefix name cannot be declared; its namespace stays in
+            # the class's sh:pattern.
+            if prefix and _PREFIX_NAME.match(prefix):
+                by_prefix.setdefault(prefix, namespace)
+        if by_prefix:
+            identity = sha256(class_iri.encode()).hexdigest()[:16]
+            shapes.declare_prefixes(by_prefix, resource=f"{base_uri}identifiers-{identity}")
+    counted = schema.class_parts.by_class if schema.class_parts is not None else {}
+    complete = schema.class_parts is None or schema.class_parts.complete
+    for shape in list(shapes.node_shapes):
+        label = shape.name or (shape.target_class or "").rsplit("/", 1)[-1].rsplit("#", 1)[-1]
+        parts = counted.get(shape.target_class or "")
+        if parts and shape.pattern is None:
+            # The parts: named shapes, one of which each member meets. Parts read from examples
+            # are not counted over every member: a member named otherwise is reported at Info,
+            # by a node shape of their own.
+            from rdfsolve.schema_models.class_parts import part_shapes
+
+            named = part_shapes(shape.uri, label, parts)
+            holder = shape if complete else _example_shape(shape, label)
+            holder.parts = [part.uri for part in named]
+            if holder is not shape:
+                shapes.node_shapes.append(holder)
+            shapes.node_shapes += named
+            continue
+        if shape.pattern is None and shape.target_class in namespaces:
+            escaped = (
+                "".join("\\" + c if c in special else c for c in namespace)
+                for namespace in sorted(namespaces[shape.target_class])
+            )
+            # The namespaces of example IRIs: a sample, not every member.
+            holder = _example_shape(shape, label)
+            holder.pattern = "^(" + "|".join(escaped) + ")"
+            shapes.node_shapes.append(holder)
+
+
+def _example_shape(shape: ShaclNodeShape, label: str) -> ShaclNodeShape:
+    """Return a node shape beside *shape*, with its target, for what examples of its members show:
+    severity Info, as a member outside the examples is not an error the data shows.
+    """
+    return ShaclNodeShape(
+        uri=f"{shape.uri}-examples",
+        target_class=shape.target_class,
+        deactivated=shape.deactivated,
+        severity="Info",
+        name=f"{label}: IRIs as in the examples",
+        description=(
+            "How the example members of the class are identified, read from examples, not "
+            "counted over every member: a member identified otherwise is reported with "
+            "severity Info."
+        ),
+    )
+
+
 def _complete_shapes(
     schema: MinedSchema, shapes: ShaclShapesGraph, base_uri: str
 ) -> ShaclShapesGraph:
@@ -197,6 +590,7 @@ def _complete_shapes(
             inactive,
         )
     shapes.declare_prefixes(schema.get_prefixes(), resource=base_uri)
+    _add_iri_patterns(schema, shapes, base_uri)
     if schema.navigation is None or not schema.navigation.paths:
         return shapes
     tested = schema.navigation.strategy == "tested"
@@ -272,7 +666,7 @@ def _complete_shapes(
         )
     for route in schema.navigation.paths:
         # A tested path is given above with its counts; a nested profile for each of thousands
-        # of paths made the file too large (AOP-Wiki: 53 MB).
+        # of paths makes the file too large.
         if tested or route.instance_support != "matched":
             continue
         child = None
@@ -315,3 +709,108 @@ def _complete_shapes(
         "Keep canonical JSON for machine-readable filters, statistics, and route provenance."
     )
     return shapes
+
+
+# Profile statements that describe a shape for people and forms, not what it checks.
+_ANNOTATIONS = ("name", "description", "order", "group")
+DASH = "http://datashapes.org/dash#"
+
+
+def merge_profile(graph: Graph, profile: str) -> None:
+    """Merge the shapes of a SHACL application profile (Turtle) into generated shapes.
+
+    A profile node shape with a sh:targetClass, and each of its property shapes whose path is an
+    IRI, meet the generated shape of that class (and path): the one without a severity of its
+    own, not the Info and Warning shapes beside it. A profile shape that states a severity other
+    than sh:Violation, or a message, keeps them for its own constraints only: it stays a shape of
+    its own, next to the generated one (SHACL checks both), and only its annotations (sh:name,
+    sh:description, sh:order, sh:group, DASH) are merged into the generated shape, so that the
+    generated value types stay Violations with their own messages. Any other profile shape is
+    merged into the generated one: each predicate it states replaces the generated values of that
+    predicate, the other generated values stay. A profile property shape without a generated one
+    is added to the class's shape; a node shape of a class with no generated shape, and every other
+    statement of the profile (property groups, declarations), are added as they are.
+    """
+    from rdflib import RDF, Namespace
+
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    given = Graph().parse(data=profile, format="turtle")
+
+    def own(shape: Any, source: Graph) -> bool:
+        """Return whether a shape has no severity of its own other than sh:Violation."""
+        return source.value(shape, sh.severity) in (None, sh.Violation)
+
+    def advisory(shape: Any) -> bool:
+        """Return whether a profile shape states a severity other than sh:Violation, or a
+        message: they cover all of its constraints.
+        """
+        return not own(shape, given) or given.value(shape, sh.message) is not None
+
+    def annotation(predicate: Any) -> bool:
+        """Return whether a predicate describes a shape rather than constrains it."""
+        return predicate in {sh[name] for name in _ANNOTATIONS} or str(predicate).startswith(DASH)
+
+    generated: dict[str, Any] = {}
+    for node, target_class in sorted(graph.subject_objects(sh.targetClass), key=str):
+        if own(node, graph) and graph.value(node, sh.closed) is None:
+            generated.setdefault(str(target_class), node)
+    by_path: dict[tuple[str, str], Any] = {}
+    for class_iri, node in generated.items():
+        for shape in sorted(graph.objects(node, sh.property), key=str):
+            path = graph.value(shape, sh.path)
+            if isinstance(path, URIRef) and own(shape, graph):
+                by_path.setdefault((class_iri, str(path)), shape)
+
+    def merge_into(target: Any, source: Any, keep: set[Any], *, annotations_only: bool) -> None:
+        """Replace the values of *target* for each predicate *source* states, but *keep* (only
+        its annotations, with *annotations_only*).
+        """
+        stated = {p for p in given.predicates(source) if p not in keep}
+        if annotations_only:
+            stated = {p for p in stated if annotation(p)}
+        for predicate in stated:
+            graph.remove((target, predicate, None))
+        for _, predicate, value in given.triples((source, None, None)):
+            if predicate in stated:
+                graph.add((target, predicate, value))
+
+    merged: set[Any] = set()
+    for node, cls in given.subject_objects(sh.targetClass):
+        target = generated.get(str(cls))
+        if target is None:
+            continue
+        if advisory(node):
+            # Kept as a node shape of its own (its targets, constraints, severity and message);
+            # its property shapes are met below.
+            merge_into(target, node, {RDF.type, sh.targetClass, sh.property}, annotations_only=True)
+            merged.add(node)
+            for _, predicate, value in given.triples((node, None, None)):
+                if predicate != sh.property:
+                    graph.add((node, predicate, value))
+        else:
+            merged.add(node)
+            merge_into(
+                target, node, {RDF.type, sh.targetClass, sh.property}, annotations_only=False
+            )
+        for shape in given.objects(node, sh.property):
+            path = given.value(shape, sh.path)
+            existing = by_path.get((str(cls), str(path))) if isinstance(path, URIRef) else None
+            if existing is None:
+                graph.add((target, sh.property, shape))
+                continue
+            merged.add(shape)
+            if advisory(shape):
+                # The generated shape takes the annotations; the profile shape keeps its
+                # constraints, severity and message, next to it on the same path.
+                merge_into(existing, shape, {RDF.type, sh.path}, annotations_only=True)
+                graph.add((target, sh.property, shape))
+                for _, predicate, value in given.triples((shape, None, None)):
+                    if not annotation(predicate):
+                        graph.add((shape, predicate, value))
+            else:
+                merge_into(existing, shape, {RDF.type, sh.path}, annotations_only=False)
+    for triple in given:
+        if triple[0] not in merged:
+            graph.add(triple)
+    for prefix, namespace in given.namespaces():
+        graph.bind(prefix, namespace, override=False)

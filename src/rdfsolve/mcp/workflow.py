@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import perf_counter
@@ -132,7 +132,7 @@ async def ask_rdf(
     if output:
         folder = Path(output).expanduser().resolve()
         folder.mkdir(parents=True, exist_ok=True)
-        stem = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8]
+        stem = datetime.now(UTC).strftime("%Y%m%dT%H%M%S") + "-" + uuid4().hex[:8]
         answer.files = {
             name: str(folder / f"{stem}.{name}.{suffix}")
             for name, suffix in (("calls", "jsonl"), ("answer", "json"), ("package", "json"))

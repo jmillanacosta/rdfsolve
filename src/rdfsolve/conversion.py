@@ -14,6 +14,7 @@ provenance). Joins across sources are not rules: they go through the SSSOM resol
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 from collections import Counter, defaultdict
@@ -21,6 +22,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
+
+from rdfsolve.target_model import Model
 
 if TYPE_CHECKING:
     import pyoxigraph as ox
@@ -31,7 +34,7 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.paths import PropertyPath
 
 __all__ = [
-    "Biolink",
+    "Model",
     "Profile",
     "Query",
     "Rule",
@@ -49,7 +52,8 @@ logger = logging.getLogger(__name__)
 
 def _expand(text: str, client: Client | None = None) -> str:
     """Return the IRI of "a" (rdf:type), of a CURIE or of an IRI: the prefixes of the client's
-    mined schema first, then the Biolink Model's own prefix, then Bioregistry.
+    mined schema first, then those of the target models read (model_prefixes), then Bioregistry's (the namespace a vocabulary's terms have in RDF, else
+    the prefix of its identifiers' URIs).
     """
     import bioregistry
 
@@ -60,9 +64,16 @@ def _expand(text: str, client: Client | None = None) -> str:
     prefix, sep, local = text.partition(":")
     if not sep:
         raise ValueError(f"{text!r}: write an IRI, a CURIE or 'a'")
+    from rdfsolve.target_model import model_prefixes
+
     known = client.schema.get_prefixes() if client is not None else {}
-    base = known.get(prefix) or (Biolink.BASE if prefix == "biolink" else None)
-    base = base or bioregistry.get_uri_prefix(prefix)
+    resource = bioregistry.get_resource(prefix)
+    base = (
+        known.get(prefix)
+        or model_prefixes().get(prefix)
+        or (resource.get_rdf_uri_prefix() if resource is not None else None)
+        or bioregistry.get_uri_prefix(prefix)
+    )
     if not base:
         raise ValueError(f"{text!r}: unknown prefix {prefix!r}")
     return base + local
@@ -86,10 +97,28 @@ def _other_kinds(client: Client, cls: str) -> tuple[str, ...]:
     return tuple(sorted(out))
 
 
+_ABSOLUTE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+# A step of a link path: an IRI in angle brackets (which may hold "/"), or text without "/".
+_STEP = re.compile(r"\^?<[^>]*>|[^/]+")
+
+
+def _link_steps(text: str) -> list[str]:
+    """Return the steps of a link path ("a/b", "^a", "<iri>/b"). A path that is one absolute
+    IRI with "//" after its scheme (written without brackets) is one step.
+    """
+    bare = text.lstrip("^")
+    if "<" not in text and re.match(r"^[A-Za-z][A-Za-z0-9+.-]*://", bare):
+        return [text]
+    return [m.group(0) for m in _STEP.finditer(text)]
+
+
 def _link(client: Client, name: str, focus: str) -> str:
     """Return the property IRI of a link by field name, else by label: of the focus's record
-    type first, else the one property that the record types name so.
+    type first, else the one property that the record types name so. An IRI or a CURIE is the
+    property itself, with no lookup: a run whose data has no such link still has the rule.
     """
+    if name.startswith(("http://", "https://", "urn:")) or ":" in name:
+        return _expand(name.strip("<>"), client)
 
     def key(text: str) -> str:
         """Return a name compared without case, spaces or underscores."""
@@ -159,13 +188,16 @@ class Rule:
     # Classes the ends may not have (the subject or the object is also left out when it is one).
     subject_unless_classes: tuple[str, ...] = ()
     object_unless_classes: tuple[str, ...] = ()
-    literal: bool = False  # *value* is a literal (a Biolink qualifier value), not an IRI
+    literal: bool = False  # *value* is a literal (a qualifier value), not an IRI
     # The names of the ends' variables in a query written from the rule (write_query).
     subject_as: str | None = field(default=None, compare=False)
     object_as: str | None = field(default=None, compare=False)
     # The rest of the query's pattern: (path from the focus, class or None) that must exist for
     # the statement to be made, as in a CONSTRUCT whose WHERE must match as a whole.
     requires: tuple[tuple[str, str | None], ...] = field(default=(), compare=False)
+    # Values the focus must have for the statement to be made: (path from the focus, the text
+    # of a value it reaches), as FILTER(STR(?v) = "text") in a query.
+    when: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def between(
@@ -186,24 +218,28 @@ class Rule:
         subject_unless_kinds: Sequence[str] = (),
         object_unless_kinds: Sequence[str] = (),
         requires: Mapping[str, str | None] | None = None,
+        when: Mapping[str, Any] | None = None,
         exact_kind: bool = False,
         literal: bool = False,
         name: str | None = None,
     ) -> Rule:
         """Return a rule written with the names the client uses.
 
-        *focus* and the kinds are record types; *subject* and *object* are links of the focus
-        by field name or label, a path of them ("a/b"), or a link that points to the focus
-        ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
+        *focus* and the kinds are record types, by name or class IRI (a class IRI that the data
+        has no members of is kept: the rule then matches nothing in that data); *subject* and
+        *object* are links of the focus by field name, label, IRI or CURIE, a path of them
+        ("a/b"; an IRI in a path of several steps is written in angle brackets), or a link that
+        points to the focus ("^name"); None is the focus itself. *predicate* and *value* are the target's terms:
         IRIs, CURIEs or "a" for rdf:type. *unless_kinds* leaves out focus nodes of these
         record types; *exact_kind* leaves out nodes that are also of a kind at the same level as
         the focus or below it, as the whole source's mined schema relates its classes, so the
         rule is for nodes of exactly that kind. *subject_unless_kinds* and *object_unless_kinds*
         leave out ends of these record types. *requires* maps links of the focus (written as
         *subject*) to the record type they must reach (or None): the rule holds only for focus
-        nodes that have them.
+        nodes that have them. *when* maps links of the focus to a value: the rule holds only for
+        focus nodes with that value (compared as text: "true" matches a boolean true).
         """
-        from rdfsolve.client.hydration import class_iri
+        from rdfsolve.client.hydration import class_iri, is_untyped
 
         def kind(name: str | None, links: Sequence[str] = (), to: str | None = None) -> str | None:
             """Return the class IRI of a record type; a shared name is decided by the links the
@@ -213,13 +249,24 @@ class Rule:
                 return None
             if ":" in name and not name.startswith(("http://", "https://")):
                 name = _expand(name, client)
-            return class_iri(client.model(name, links=links, to=to))
+            if _ABSOLUTE.match(name) and not any(
+                class_iri(m) == name for m in client.models.values()
+            ):
+                return name
+            model = client.model(name, links=links, to=to)
+            if is_untyped(model):
+                raise ValueError(
+                    f"{name!r} names the subjects without a type: a rule hangs from a class. "
+                    "Write the conversion as a query that binds them through a property "
+                    "(?x <p> ?v . FILTER NOT EXISTS { ?x a ?type }); it is run whole."
+                )
+            return class_iri(model)
 
         def end(path_text: str | None) -> list[str]:
             """Return the link that reaches an end, seen from the end (to the focus)."""
             if not path_text:
                 return []
-            last = path_text.split("/")[-1]
+            last = _link_steps(path_text)[-1]
             return [last.lstrip("^")] if last.startswith("^") else ["^" + last]
 
         def path(text: str | None) -> str | None:
@@ -227,14 +274,15 @@ class Rule:
             if text is None:
                 return None
             steps = []
-            for step in text.split("/"):
+            for step in _link_steps(text):
                 inverse = step.startswith("^")
                 steps.append(
                     ("^" if inverse else "") + f"<{_link(client, step.lstrip('^'), focus_iri)}>"
                 )
             return "/".join(steps)
 
-        first = [p.split("/")[0] for p in (subject, object) if p]
+        first = [_link_steps(p)[0] for p in (subject, object) if p]
+        single = {p: len(_link_steps(p)) == 1 for p in (subject, object, *(requires or {})) if p}
         focus_iri = kind(focus, first) or focus
         return cls(
             focus_iri,
@@ -243,10 +291,10 @@ class Rule:
             object=path(object),
             value=value if literal or value is None else _expand(value, client),
             subject_class=kind(
-                subject_kind, end(subject), focus_iri if subject and "/" not in subject else None
+                subject_kind, end(subject), focus_iri if subject and single[subject] else None
             ),
             object_class=kind(
-                object_kind, end(object), focus_iri if object and "/" not in object else None
+                object_kind, end(object), focus_iri if object and single[object] else None
             ),
             pairs=pairs,
             name=name,
@@ -261,14 +309,36 @@ class Rule:
             requires=tuple(
                 (
                     cast(str, path(link)),
-                    kind(reached, end(link), focus_iri if "/" not in link else None),
+                    kind(reached, end(link), focus_iri if single[link] else None),
                 )
                 for link, reached in (requires or {}).items()
             ),
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,
+            when=tuple(
+                (
+                    cast(str, path(link)),
+                    str(given).lower() if isinstance(given, bool) else str(given),
+                )
+                for link, given in (when or {}).items()
+            ),
         )
+
+    def properties(self) -> set[str]:
+        """Return the properties the rule's paths go through (its links in the source)."""
+        texts = [
+            self.subject,
+            self.object,
+            *(path for path, _ in self.requires),
+            *(path for path, _ in self.when),
+        ]
+        return {
+            iri
+            for text in texts
+            if text
+            for iri in (re.findall(r"<([^>]+)>", text) if "<" in text else [text.strip()])
+        }
 
     def to_construct(self, scope: str = "") -> str:
         """Return the SPARQL CONSTRUCT of the rule; *scope* is a pattern on ?x (the focus)."""
@@ -304,6 +374,11 @@ class Rule:
         for i, (path, cls) in enumerate(self.requires):
             typed = f" ?r{i} a <{cls}> ." if cls else ""
             lines.append(f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?r{i} .{typed} }}")
+        for i, (path, given) in enumerate(self.when):
+            lines.append(
+                f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?w{i} . "
+                f"FILTER(STR(?w{i}) = {_literal(given)}) }}"
+            )
         for unless in self.subject_unless_classes:
             lines.append(f"FILTER NOT EXISTS {{ {subject} a <{unless}> }}")
         if obj.startswith("?"):
@@ -365,6 +440,15 @@ class Rule:
             graph.add((negated, SH["class"], URIRef(unless)))
             graph.add((condition, SH["not"], negated))
             graph.add((rule, SH.condition, condition))
+        for path, given in self.when:
+            # A value of the path whose text is *given*: a qualified pattern of the whole text.
+            condition, prop, value = BNode(), BNode(), BNode()
+            graph.add((rule, SH.condition, condition))
+            graph.add((condition, SH.property, prop))
+            graph.add((prop, SH.path, path_to_rdf(_path(path), graph)))
+            graph.add((value, SH.pattern, Literal("^" + re.escape(given) + "$")))
+            graph.add((prop, SH.qualifiedValueShape, value))
+            graph.add((prop, SH.qualifiedMinCount, Literal(1)))
         graph.add(
             (rule, SH.subject, nodes(self.subject, self.subject_class, self.subject_unless_classes))
         )
@@ -393,6 +477,8 @@ class Profile:
     provenance: Mapping[str, str | None] = field(default_factory=dict)
     queries: list[Query] = field(default_factory=list)
     dataset: str | None = None  # the mined source whose shapes the rules attach to
+    # The rules the last run left out, with the properties the source did not have (run).
+    last_skipped: list[dict[str, Any]] = field(default_factory=list, compare=False)
 
     @classmethod
     def from_queries(
@@ -405,7 +491,7 @@ class Profile:
         client: Client | None = None,
     ) -> Profile:
         """Return the profile of query files (Query): the rules of each, the target and its
-        version from their headers (``# target: biolink 4.4.5``); the source's release and
+        version from their headers (``# target: <name> <version>``); the source's release and
         endpoint from *client* (its mined schema). A query outside the plain subset is kept and
         run whole.
         """
@@ -489,7 +575,7 @@ class Profile:
             if any(iri.startswith(v) for v in prefix_map.values()):
                 continue
             base = iri.rsplit("#", 1)[0] + "#" if "#" in iri else iri.rsplit("/", 1)[0] + "/"
-            # Bioregistry's prefix where it knows the namespace (biolink), else the last segment.
+            # Bioregistry's prefix where it knows the namespace, else the last segment.
             known = bioregistry.curie_from_iri(iri)
             name = known.partition(":")[0] if known and iri.startswith(base) else None
             name = name or base.rstrip("/#").rsplit("/", 1)[-1].lower().replace(".", "_") or "ns"
@@ -616,11 +702,54 @@ class Profile:
     def run(self, client: Client, scope: str = "") -> ox.Dataset:
         """Run each rule's CONSTRUCT on *client*'s endpoint (recorded in its session); return
         all the statements they give.
+
+        A rule whose links the source's schema does not have (this run's data has no such
+        property) is not run: last_skipped lists it with the missing properties, and a warning
+        names it.
         """
+        import warnings
+
         import pyoxigraph as ox
 
+        schema = getattr(client, "schema", None)
+        present = set(schema.get_properties()) if schema is not None else None
+        runnable, self.last_skipped = [], []
+        for rule in self.rules:
+            missing = sorted(rule.properties() - present) if present is not None else []
+            if missing:
+                self.last_skipped.append(
+                    {"rule": rule.name or rule.predicate, "missing_properties": missing}
+                )
+            else:
+                runnable.append(rule)
+        if self.last_skipped:
+            warnings.warn(
+                f"{len(self.last_skipped)} rules not run, their links are not in the source: "
+                + "; ".join(
+                    f"{s['rule']} ({', '.join(s['missing_properties'])})" for s in self.last_skipped
+                ),
+                UserWarning,
+                stacklevel=2,
+            )
+        operations = getattr(client, "_operations", None)
+        if operations is not None:
+            source = getattr(client, "source", None)
+            operations.append(
+                {
+                    "operation": "profile.run",
+                    "profile": self.name,
+                    "target": self.target,
+                    "target_version": self.target_version,
+                    "scope": scope,
+                    "graph_uris": list(getattr(client, "graph_uris", []) or []),
+                    "endpoint": getattr(source, "endpoint_url", None),
+                    "rules": len(runnable),
+                    "skipped": list(self.last_skipped),
+                }
+            )
         out = ox.Dataset()
-        for query in [*self.constructs(scope), *(q.text for q in self.whole())]:
+        queries = [rule.to_construct(scope) for rule in runnable]
+        for query in [*queries, *(q.text for q in self.whole())]:
             for quad in client.construct(query):
                 out.add(quad)
         return out
@@ -793,10 +922,19 @@ class Query:
                 return []
         pairs: set[frozenset[Any]] = set()
         unless: dict[Any, list[str]] = {}
+        conditions: dict[Any, str] = {}
         for expr in _conjuncts(filters):
             kind = getattr(expr, "name", "")
             if kind == "RelationalExpression" and expr.op == "!=":
                 pairs.add(frozenset((expr.expr, expr.other)))
+            elif (
+                kind == "RelationalExpression"
+                and expr.op == "="
+                and getattr(expr.expr, "name", "") == "Builtin_STR"
+                and isinstance(expr.expr.arg, Variable)
+                and isinstance(expr.other, Literal)
+            ):
+                conditions[expr.expr.arg] = str(expr.other)
             elif kind == "Builtin_NOTEXISTS":
                 inner = _triples_of(expr["graph"])
                 if len(inner) == 1 and str(inner[0][1]) == _TYPE:
@@ -834,8 +972,9 @@ class Query:
             requires = tuple(
                 (paths[v], types[v][0] if types.get(v) else None)
                 for v in sorted(variables, key=str)
-                if v != focus and v not in ends and v not in optional
+                if v != focus and v not in ends and v not in optional and v not in conditions
             )
+            when = tuple((paths[v], conditions[v]) for v in sorted(conditions, key=str))
             common: dict[str, Any] = {
                 "focus": cls,
                 "predicate": str(p),
@@ -845,6 +984,7 @@ class Query:
                 "unless_classes": tuple(unless.get(focus, [])),
                 "subject_unless_classes": tuple(unless.get(s, [])) if s != focus else (),
                 "requires": requires,
+                "when": when,
             }
             if frozenset((s, o)) in pairs:
                 rules.append(Rule(**common, pairs=True))
@@ -900,14 +1040,22 @@ class Query:
         """
         from rdflib import URIRef
 
-        from rdfsolve.schema_models.exporters.shacl import shape_iri
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+        from rdfsolve.schema_models.exporters.shacl import shape_iri, untyped_shape_iri
 
         triples, _, _ = self._pattern()
         types = {s: str(o) for s, p, o in triples if str(p) == _TYPE and isinstance(o, URIRef)}
         counted: dict[tuple[str, str], int] = defaultdict(int)
+        # The patterns of subjects without a type: the statements of a variable with no class.
+        untyped: dict[str, int] = defaultdict(int)
         for pattern in schema.patterns:
+            if pattern.untyped_subject:
+                untyped[pattern.property_uri] += pattern.count or 0
+                continue
             counted[(pattern.subject_class, pattern.property_uri)] += pattern.count or 0
-        classes = {pattern.subject_class for pattern in schema.patterns}
+        classes = {
+            pattern.subject_class for pattern in schema.patterns if not pattern.untyped_subject
+        }
         dataset = schema.about.dataset_name or "local"
         rows: list[dict[str, Any]] = []
         for s, p, o in triples:
@@ -929,6 +1077,17 @@ class Query:
             ):
                 s, p, o = o, p.arg, s
             cls = types.get(s)
+            if cls is None and isinstance(p, URIRef) and str(p) in untyped:
+                rows.append(
+                    {
+                        "pattern": f"?{s} <{p}> ?{o}",
+                        "shape": untyped_shape_iri(dataset, str(p)),
+                        "statements": untyped[str(p)],
+                        "found": True,
+                        "subject": UNTYPED_SUBJECTS_LABEL,
+                    }
+                )
+                continue
             if cls is None or not isinstance(p, URIRef):
                 rows.append(
                     {
@@ -1039,175 +1198,9 @@ def _paths(focus: Any, links: list[tuple[Any, str, Any]]) -> dict[Any, str]:
     return paths
 
 
-@dataclass
-class Biolink:
-    """The Biolink Model at one version, read from its LinkML YAML: classes and slots."""
-
-    version: str
-    classes: dict[str, dict[str, Any]]
-    slots: dict[str, dict[str, Any]]
-
-    BASE = "https://w3id.org/biolink/vocab/"
-
-    @classmethod
-    def read(cls, path: str | Path) -> Biolink:
-        """Read biolink-model.yaml (a pinned copy)."""
-        import yaml
-
-        data = yaml.safe_load(Path(path).read_text())
-        return cls(str(data.get("version", "")), data.get("classes", {}), data.get("slots", {}))
-
-    def class_iri(self, name: str) -> str:
-        """Return the IRI of a class, from its name in the model."""
-        return self.BASE + "".join(w[:1].upper() + w[1:] for w in name.split(" "))
-
-    def slot_iri(self, name: str) -> str:
-        """Return the IRI of a slot, from its name in the model."""
-        return self.BASE + name.replace(" ", "_")
-
-    def ancestors(self, name: str, mixins: bool = False) -> list[str]:
-        """Return a class's ancestors along is_a, nearest first.
-
-        With *mixins*, also the mixins of the class and of its ancestors, with their own
-        parents: the categories the model says a node should carry.
-        """
-        out: list[str] = []
-        todo = [name]
-        while todo:
-            current = self.classes.get(todo.pop(0), {})
-            parents = [current.get("is_a"), *((current.get("mixins") or []) if mixins else [])]
-            for parent in parents:
-                if parent and parent != name and parent not in out:
-                    out.append(parent)
-                    todo.append(parent)
-        return out
-
-    def name_of(self, term: str) -> str:
-        """Return the model's name of a term given as a CURIE, an IRI or a name."""
-        local = term.rsplit(":", 1)[-1].rsplit("/", 1)[-1]
-        for name in (*self.classes, *self.slots):
-            if (
-                name == local
-                or self.class_iri(name).endswith("/" + local)
-                or self.slot_iri(name).endswith("/" + local)
-            ):
-                return name
-        raise ValueError(f"{term!r} is not a class or slot of Biolink {self.version}")
-
-    def diagram(self, *names: str, terms: Sequence[str] = (), fenced: bool = True) -> str:
-        """Draw the part of the model that *terms* use (Mermaid): a class with its parents (is_a),
-        its mixins and the identifier prefixes it takes; a slot as an edge from its domain to
-        its range, with the slot it specializes.
-        """
-        from rdfsolve.client.diagram import _md, _node
-
-        nodes: dict[str, str] = {}
-        lines, edges = [], []
-
-        def node(name: str, detail: str = "", style: str = "") -> str:
-            """Return the node of a class, drawn once."""
-            if name not in nodes:
-                nodes[name] = f"B{len(nodes)}"
-                lines.append(_node(nodes[name], name, detail))
-                if style:
-                    lines.append(f"style {nodes[name]} {style}")
-            return nodes[name]
-
-        for term in [*names, *terms]:
-            name = self.name_of(term)
-            if name in self.classes:
-                c = self.classes[name]
-                prefixes = ", ".join((c.get("id_prefixes") or [])[:6])
-                child = node(
-                    name,
-                    f"ids: {prefixes}" if prefixes else "",
-                    "fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px",
-                )
-                current = name
-                for parent in self.ancestors(name)[:2]:
-                    edges.append(f'{nodes[current]} -->|"is a"| {node(parent)}')
-                    current = parent
-                for mixin in c.get("mixins") or []:
-                    edges.append(
-                        f'{child} -.->|"mixin"| {node(mixin, "mixin", "fill:#f2f2f2,stroke:#9a9a9a,stroke-dasharray:3 3")}'
-                    )
-                    # a mixin's own parents, where it meets the other classes drawn
-                    current = mixin
-                    for parent in self.ancestors(mixin)[:2]:
-                        edge = f'{nodes[current]} -->|"is a"| {node(parent)}'
-                        if edge not in edges:
-                            edges.append(edge)
-                        current = parent
-            else:
-                slot = self.slots[name]
-                domain = node(slot.get("domain") or "any class")
-                range_ = node(slot.get("range") or "any class")
-                parent = f" (is a {slot['is_a']})" if slot.get("is_a") else ""
-                edges.append(f'{domain} ==>|"{_md(name + parent)}"| {range_}')
-        body = "\n".join(
-            [
-                "flowchart LR",
-                *lines,
-                *edges,
-                "classDef default fill:#eef4fb,stroke:#3b6ea8,stroke-width:1.5px,color:#1d2b3a",
-            ]
-        )
-        return f"```mermaid\n{body}\n```" if fenced else body
-
-    def curie(self, iri: str) -> str | None:
-        """Return an identifier as a CURIE with the prefix the model writes (its spelling of the
-        prefix, as its classes list them in id_prefixes), compared as
-        Bioregistry prefixes. None when the model takes no prefix for it.
-        """
-        import bioregistry
-
-        from rdfsolve.identifiers import parse
-
-        found = parse(iri)
-        if found is None:
-            return None
-        if not hasattr(self, "_prefixes"):
-            self._prefixes = {
-                (bioregistry.normalize_prefix(p) or p.lower()): p
-                for c in self.classes.values()
-                for p in c.get("id_prefixes") or []
-            }
-        prefix = self._prefixes.get(found.prefix)
-        return f"{prefix}:{found.local}" if prefix else None
-
-    def hierarchy(self) -> dict[str, set[str]]:
-        """Return the ancestors (IRIs) of each class IRI, for the most specific category."""
-        return {
-            self.class_iri(n): {self.class_iri(a) for a in self.ancestors(n)} for n in self.classes
-        }
-
-    def categories(self, prefix: str) -> list[str]:
-        """Return the categories (class IRIs, not mixins) where an identifier prefix belongs:
-        those that list it (compared as Bioregistry prefixes) while none of their ancestors
-        does. The model repeats a prefix on narrower classes; the prefix belongs to the
-        broadest class that lists it.
-        """
-        import bioregistry
-
-        wanted = bioregistry.normalize_prefix(prefix) or prefix.lower()
-        found = [
-            name
-            for name, c in self.classes.items()
-            if not c.get("mixin")
-            and any(
-                (bioregistry.normalize_prefix(p) or p.lower()) == wanted
-                for p in c.get("id_prefixes") or []
-            )
-        ]
-        listed = set(found)
-        return sorted(self.class_iri(n) for n in found if not listed & set(self.ancestors(n)))
-
-
-def categorize(
-    graph: Any, biolink: Biolink, pairs: Iterable[tuple[str, str]] = ()
-) -> dict[str, Any]:
-    """Give each node of *graph* (PropertyGraph) without a Biolink category the one its
-    identifiers allow: the categories Biolink lists for the prefix of each of its identifiers,
+def categorize(graph: Any, model: Model, pairs: Iterable[tuple[str, str]] = ()) -> dict[str, Any]:
+    """Give each node of *graph* (PropertyGraph) without a class of *model* the one its
+    identifiers allow: the classes the model lists for the prefix of each of its identifiers,
     and of the identifiers decided to name the same entity (*pairs*, Resolution.pairs), shared
     by all of them. The category is a kind, not a statement: it is
     not given back as RDF. Where the prefixes allow none or several, the node is listed.
@@ -1221,14 +1214,14 @@ def categorize(
     given: Counter[str] = Counter()
     left: dict[str, list[str]] = {}
     for node in graph.nodes.values():
-        if any(label.startswith(biolink.BASE) for label in node.labels):
+        if any(label.startswith(model.BASE) for label in node.labels):
             continue
         iris = set(node.members or [node.id])
         iris |= {t for i in list(iris) for t in targets.get(i, ())}
         prefixes = {found.prefix for i in iris if (found := parse(i))}
         if not prefixes:
             continue
-        allowed = [set(biolink.categories(p)) for p in prefixes]
+        allowed = [set(model.categories(p)) for p in prefixes]
         common = set.intersection(*allowed) if allowed else set()
         if len(common) == 1:
             category = next(iter(common))
@@ -1242,7 +1235,7 @@ def categorize(
     return {
         "given": dict(given.most_common()),
         "left": left,
-        "basis": f"Biolink {biolink.version} id_prefixes of the node's identifiers and of those decided to name it",
+        "basis": f"{model.name or 'the target model'} {model.version} id_prefixes of the node's identifiers and of those decided to name it",
     }
 
 
@@ -1275,6 +1268,19 @@ def identity_kept(source: Any, target: Any) -> dict[str, Any]:
     }
 
 
+def _file_sha256(data: str | Path | None) -> str:
+    """Return the sha256 of a local data file, or "" for an address or nothing."""
+    import hashlib
+
+    if not data or str(data).startswith(("http://", "https://")) or not Path(data).is_file():
+        return ""
+    digest = hashlib.sha256()
+    with Path(data).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def write_query(
     rules: Sequence[Rule],
     *,
@@ -1285,11 +1291,15 @@ def write_query(
     endpoint: str = "",
     prefixes: Mapping[str, str] | None = None,
     focus_as: str | None = None,
+    data: str | Path | None = None,
 ) -> str:
     """Return the rules of one focus as a query file: a ``# key: value`` header and one plain
     CONSTRUCT, which Query reads back into the same rules.
 
-    *source* is a client (its name and its mined prefixes) or a name; *target* a Biolink model
+    *data* is the data the query ran on (a file or an address): the header names it, with the
+    sha256 of a local file, so that a result can be tied to its input.
+
+    *source* is a client (its name and its mined prefixes) or a name; *target* a target model
     or a name with its version. The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
     after the last link of its path. *prefixes* abbreviate IRIs (those of the source's schema
     and of the target).
@@ -1306,9 +1316,9 @@ def write_query(
         made_with = str(described.get("generated with") or "")
         known = {**source.schema.get_prefixes(), **known}
         source = source.schema.about.dataset_name or ""
-    if isinstance(target, Biolink):
-        known.setdefault("biolink", Biolink.BASE)
-        target = f"biolink {target.version}"
+    if hasattr(target, "kinds"):  # a target model: its prefix, namespace and version
+        known.setdefault(target.prefix, target.base)
+        target = f"{target.prefix} {target.version}".strip()
 
     def term(iri: str) -> str:
         """Return an IRI as a prefixed name where a prefix fits it, else <iri>."""
@@ -1379,6 +1389,10 @@ def write_query(
             needed_by_all.add(needed)
             if cls:
                 classes[needed] = cls
+        for path, given in rule.when:
+            needed = var(path, None)
+            needed_by_all.add(needed)
+            filters.append(f"FILTER(STR({needed}) = {_literal(given)})")
         ends.append({v for v in (subject, obj) if v.startswith("?") and v != root})
         predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)
         template.append(f"  {subject} {predicate} {obj} .")
@@ -1418,6 +1432,8 @@ def write_query(
         "source release": release,
         "target": target,
         "endpoint": endpoint,
+        "data": str(data) if data else "",
+        "data sha256": _file_sha256(data),
         "generated with": made_with,
     }
     lines = [f"# {k}: {v}" for k, v in header.items() if v]
@@ -1436,17 +1452,19 @@ def write_query(
     return "\n".join(lines)
 
 
-def within(client: Client, records: Any, via: str) -> str:
+def within(client: Client, records: Any, via: str, inverse: bool = False) -> str:
     """Return the scope "the focus is linked by *via* to these records, or is one of them"
-    (Profile.run and rebuilds). *via* is a link name of the client.
+    (Profile.run and rebuilds). *via* is a link name of the client. With *inverse*, the records
+    link to the focus by *via* instead (a link of the records, to what they contain).
     """
     iris = [str(vars(record)["uri"]) for record in records.records]
-    kinds = {client.type_name(type(record)) for record in records.records}
+    kinds = {client.kind_name(type(record)) for record in records.records}
     if not iris or len(kinds) != 1:
         raise ValueError("Give records of one record type")
     prop = _link(client, via, next(iter(kinds)))
     values = " ".join(f"<{iri}>" for iri in iris)
-    return f"{{ ?x <{prop}> ?within . VALUES ?within {{ {values} }} }} UNION {{ VALUES ?x {{ {values} }} }}"
+    linked = f"?within <{prop}> ?x" if inverse else f"?x <{prop}> ?within"
+    return f"{{ {linked} . VALUES ?within {{ {values} }} }} UNION {{ VALUES ?x {{ {values} }} }}"
 
 
 _ASSOCIATION_SLOTS = ("subject", "predicate", "object")
@@ -1469,24 +1487,28 @@ def _local_prefixes(iris: Iterable[str], base: str) -> dict[str, str]:
 
 def to_kgx(
     graph: Any,
-    biolink: Biolink,
+    model: Model,
     folder: str | Path,
     knowledge_source: str,
     local_prefix: str = "local",
 ) -> tuple[Path, Path]:
-    """Write a property graph of Biolink statements as KGX TSV (nodes.tsv, edges.tsv); return
+    """Write a property graph of statements in *model* as KGX TSV (nodes.tsv, edges.tsv); return
     their paths.
 
-    Node ids are CURIEs: with the prefixes Biolink writes (Biolink.curie), else Bioregistry's,
+    Node ids are CURIEs: with the prefixes the model writes (Model.curie), else Bioregistry's,
     else ``<local_prefix>_<last segment of the IRI's namespace>``; prefixes.json beside the
-    files expands those. A node's category is its Biolink classes (the model's root class when
-    it has none). Each edge of a Biolink predicate is a row; a node that is an association
-    (subject, predicate, object and qualifiers) is one row too. Edges get the provenance KGX requires
-    (*knowledge_source*, an infores CURIE; knowledge_level and agent_type).
+    files expands those. A node that names one entity under several identifiers (a merge, or
+    an identifier decided for it: PGNode.identifiers) is named by the one whose prefix its
+    category lists first (the category's id_prefixes, in the model's order), and lists the
+    others as ``xref``. A node's category is its classes of the model (the model's root class
+    when it has none); its name is the value of the model's naming slot. Each edge of a slot of
+    the model is a row; a node that reifies a statement (subject, predicate, object and
+    qualifiers) is one row too. Edges get the provenance KGX requires (*knowledge_source*, an
+    infores CURIE; knowledge_level and agent_type).
     """
     import csv
 
-    base = biolink.BASE
+    base = model.BASE
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -1495,21 +1517,25 @@ def to_kgx(
     from rdfsolve._uri import curie_from_prefixes
     from rdfsolve.identifiers import parse
 
-    # A CURIE for every node (KGX requires one): the prefix Biolink writes, else Bioregistry's,
+    # A CURIE for every node (KGX requires one): the prefix the model writes, else Bioregistry's,
     # else a prefix named for the IRI's namespace; the prefixes used are written beside the files.
     used: dict[str, str] = {}
     unregistered = sorted(
         {
             n
             for n in graph.nodes
-            if not biolink.curie(n) and parse(n) is None and not n.startswith("_:")
+            if not model.curie(n) and parse(n) is None and not n.startswith("_:")
         }
     )
     minted = _local_prefixes(unregistered, local_prefix)
+    named: dict[str, str] = {}  # a node, or an IRI merged into one, to the identifier that names it
+    xrefs: dict[str, list[str]] = {}
 
     def short(iri: str) -> str:
         """Return a node id as a CURIE."""
-        if found := biolink.curie(iri):
+        if iri in named:
+            return named[iri]
+        if found := model.curie(iri):
             return found
         if (registered := parse(iri)) is not None:
             used[registered.prefix] = iri[: len(iri) - len(registered.local)]
@@ -1521,12 +1547,33 @@ def to_kgx(
         return iri
 
     def term(iri: str) -> str:
-        """Return a Biolink term as biolink:<local>."""
-        return "biolink:" + iri[len(base) :] if iri.startswith(base) else iri
+        """Return a term of the model as <prefix>:<local>."""
+        return model.term(iri)
 
     from rdfsolve.property_graph import REFERENCE
 
-    associations = _association_parts(graph, biolink)
+    for nid, node in graph.nodes.items():
+        merged = [*node.members, *getattr(node, "identifiers", [])]
+        if not merged:
+            continue
+        ids = list(dict.fromkeys(c for i in [nid, *merged] if (c := parse(i)) is not None))
+        order: list[str] = []
+        for label in node.labels:
+            if label.startswith(base):
+                with contextlib.suppress(ValueError):
+                    order += [p for p in model.id_prefixes(label) if p not in order]
+        rank = {p: i for i, p in enumerate(order)}
+        ids.sort(key=lambda c: rank.get(c.prefix, len(rank)))
+        if not ids:
+            continue
+        best = ids[0]
+        written = model.curie(best.curie) or best.curie
+        if best.iri():
+            short(best.iri() or "")  # records the prefix's expansion
+        named.update(dict.fromkeys([nid, *node.members], written))
+        xrefs[nid] = [model.curie(c.curie) or c.curie for c in ids[1:]]
+
+    associations = _association_parts(graph, model)
     rows = []
     for edge in graph.edges:
         slot = edge.type[len(base) :] if edge.type.startswith(base) else None
@@ -1553,17 +1600,27 @@ def to_kgx(
             )
         rows.append(row)
     nodes_path, edges_path = folder / "nodes.tsv", folder / "edges.tsv"
+    root = model.root()
+    naming = model.naming_relation()
+    name_iri = model.slot_iri(naming) if naming else None
     with nodes_path.open("w", newline="") as f:
         out = csv.writer(f, delimiter="\t")
-        out.writerow(["id", "category", "name"])
+        out.writerow(["id", "category", "name", "xref"])
         for nid, node in sorted(graph.nodes.items()):
             if nid in associations:
                 continue
             categories = list(
                 dict.fromkeys(term(c) for c in node.labels if c.startswith(base))
-            ) or ["biolink:NamedThing"]
-            names = [v.lexical for v in node.properties.get(base + "name", [])]
-            out.writerow([short(nid), "|".join(categories), names[0] if names else ""])
+            ) or ([model.term(model.class_iri(root))] if root else [])
+            names = [v.lexical for v in node.properties.get(name_iri, [])] if name_iri else []
+            out.writerow(
+                [
+                    short(nid),
+                    "|".join(categories),
+                    names[0] if names else "",
+                    "|".join(xrefs.get(nid, [])),
+                ]
+            )
     qualifiers = sorted({k for row in rows for k in row} - {"subject", "predicate", "object"})
     with edges_path.open("w", newline="") as f:
         out = csv.writer(f, delimiter="\t")
@@ -1593,63 +1650,41 @@ def to_kgx(
     return nodes_path, edges_path
 
 
-def derive_conversions(client: Client, statements: ox.Dataset, biolink: Biolink) -> dict[str, int]:
-    """State the associations that Biolink's process nodes imply; return how many of each kind.
+def derive_conversions(
+    client: Client, statements: ox.Dataset, rules: Iterable[str], model: Any = None
+) -> dict[str, int]:
+    """State what *rules* imply from the converted statements; return how many nodes of each
+    class were added (named by *model*, a target model, when it has the class).
 
-    Biolink's chemical-to-chemical derivation association states the rule: a molecular
-    activity (or a kind below it) that has input C1, has output C2 and is catalyzed by P gives
-    C1 derives_into C2, with P as its catalyst_qualifier. A process of no more specific kind
-    gives only related_to, Biolink's root predicate, from each input to each output (an
-    Association), so nothing is claimed that the source does not state; its catalysts are
-    qualifiers the same way. The associations are added to *statements* by a CONSTRUCT recorded
-    in *client*'s session (step "Conversions"); derive_associations makes each one an edge.
+    *rules* are CONSTRUCT queries: the target model's own (TargetModel.implied, such as a SHACL
+    target's sh:SPARQLRule) and those given with it (plan.Target(model, rules=...)). The
+    statements are added to *statements*, each query recorded in *client*'s session (step
+    "Conversions"); derive_associations makes each reified statement an edge.
     """
     import pyoxigraph as ox
 
-    from rdfsolve.config import mint
-
-    base = biolink.BASE
-    activity = biolink.name_of("MolecularActivity")
-    reactions = " ".join(
-        f"<{biolink.class_iri(n)}>"
-        for n in biolink.classes
-        if n == activity or activity in biolink.ancestors(n)
-    )
-    derivation = biolink.class_iri(biolink.name_of("ChemicalEntityToChemicalDerivationAssociation"))
-    query = f"""PREFIX biolink: <{base}>
-CONSTRUCT {{
-  ?association a ?kind ; biolink:subject ?input ; biolink:predicate ?predicate ;
-    biolink:object ?output ; biolink:catalyst_qualifier ?catalyst .
-}} WHERE {{
-  ?process biolink:has_input ?input ; biolink:has_output ?output .
-  OPTIONAL {{ ?catalyst biolink:catalyzes ?process }}
-  BIND(EXISTS {{ VALUES ?reaction {{ {reactions} }} ?process a ?reaction }} AS ?is_reaction)
-  FILTER(!?is_reaction || ?input != ?output)
-  BIND(IF(?is_reaction, <{derivation}>, biolink:Association) AS ?kind)
-  BIND(IF(?is_reaction, biolink:derives_into, biolink:related_to) AS ?predicate)
-  BIND(IRI(CONCAT({_literal(mint("association") + "/")},
-    MD5(CONCAT(STR(?process), " ", STR(?input), " ", STR(?output))))) AS ?association)
-}}"""
+    found = []
     with client.step("Conversions"):
-        found = list(client.construct(query, data=statements))
+        for query in rules:
+            found += list(client.construct(query, data=statements))
     for q in found:
         statements.add(ox.Quad(q.subject, q.predicate, q.object))
-    counts = Counter(biolink.name_of(q.object.value) for q in found if q.predicate.value == _TYPE)
-    catalysed = {q.subject for q in found if q.predicate.value == base + "catalyst_qualifier"}
-    return {**counts, "with catalyst": len(catalysed)}
+    names = {k.iri: k.name for k in model.kinds()} if model is not None else {}
+    return dict(
+        Counter(
+            names.get(q.object.value, q.object.value) for q in found if q.predicate.value == _TYPE
+        )
+    )
 
 
-def _association_parts(graph: Any, biolink: Biolink) -> dict[str, dict[str, Any]]:
-    """Return the association nodes of *graph* (an Association or a kind below it), each with its
+def _association_parts(graph: Any, model: Model) -> dict[str, dict[str, Any]]:
+    """Return the nodes of *graph* that reify a statement (Model.statement_classes), each with its
     subject, predicate and object, and its qualifiers (key: values), from its edges and values.
     """
     from rdfsolve.property_graph import REFERENCE, Value
 
-    base = biolink.BASE
-    root = biolink.name_of("Association")
-    kinds = {
-        biolink.class_iri(n) for n in biolink.classes if n == root or root in biolink.ancestors(n)
-    }
+    base = model.BASE
+    kinds = {model.class_iri(n) for n in model.statement_classes()}
     parts: dict[str, dict[str, Any]] = {
         n: {"qualifiers": defaultdict(list)}
         for n, node in graph.nodes.items()
@@ -1675,11 +1710,11 @@ def _association_parts(graph: Any, biolink: Biolink) -> dict[str, dict[str, Any]
     return parts
 
 
-def derive_associations(graph: Any, biolink: Biolink) -> int:
-    """Add a direct edge for each association node of *graph* (PropertyGraph); return how many.
+def derive_associations(graph: Any, model: Model) -> int:
+    """Add a direct edge for each reified statement of *graph* (PropertyGraph); return how many.
 
-    A Biolink association states one edge: its subject, predicate and object, with its
-    qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
+    A reified statement (a node of Model.statement_classes) states one edge: its subject,
+    predicate and object, with its qualifiers. The edge goes from the subject to the object, typed by the predicate, with the
     qualifiers attached; a qualifier that names nodes is a list, also with one. The edges are
     derived: the association's own statements are given back as RDF, and to_kgx writes it as
     one row.
@@ -1687,7 +1722,7 @@ def derive_associations(graph: Any, biolink: Biolink) -> int:
     from rdfsolve.property_graph import REFERENCE, PGEdge
 
     added = 0
-    for nid, found in sorted(_association_parts(graph, biolink).items()):
+    for nid, found in sorted(_association_parts(graph, model).items()):
         if not (found.get("subject") and found.get("object") and found["predicate"]):
             continue
         qualifiers = dict(found["qualifiers"])
@@ -1712,28 +1747,28 @@ def derive_associations(graph: Any, biolink: Biolink) -> int:
 def kind_conflicts(
     client: Client,
     statements: ox.Dataset,
-    biolink: Biolink,
+    model: Model,
     same: Iterable[tuple[str, str]] = (),
 ) -> Any:
-    """Return the nodes with two Biolink kinds of which neither is under the other (mixins too).
+    """Return the nodes with two kinds of *model* of which neither is under the other (mixins too).
 
-    A node that sources give two kinds, or nodes that *same* makes one, hold both; Biolink keeps
-    one kind, so it is decided (keep_kinds) before the graph is built. Found by a CONSTRUCT of the conflicting type statements, recorded
+    A node that sources give two kinds, or nodes that *same* makes one, hold both; the model
+    keeps one kind, so it is decided (keep_kinds) before the graph is built. Found by a CONSTRUCT of the conflicting type statements, recorded
     in *client*'s session (step "Kind conflicts"); each conflict is logged as a warning.
-    Rows: nodes and kinds (Biolink names), sorted.
+    Rows: nodes and kinds (the model's names), sorted.
     """
     import pandas as pd
 
     kinds = sorted(
         {q.object.value for q in statements if q.predicate.value == _TYPE}
-        & {biolink.class_iri(name) for name in biolink.classes}
+        & {model.class_iri(name) for name in model.classes}
     )
-    above = {k: set(biolink.ancestors(biolink.name_of(k), mixins=True)) for k in kinds}
+    above = {k: set(model.ancestors(model.name_of(k), mixins=True)) for k in kinds}
     apart = [
         (a, b)
         for a in kinds
         for b in kinds
-        if a < b and biolink.name_of(a) not in above[b] and biolink.name_of(b) not in above[a]
+        if a < b and model.name_of(a) not in above[b] and model.name_of(b) not in above[a]
     ]
     group: dict[str, str] = {}
 
@@ -1767,7 +1802,7 @@ def kind_conflicts(
     found: defaultdict[str, set[str]] = defaultdict(set)
     with client.step("Kind conflicts"):
         for q in client.construct(query, data=statements):
-            found[q.subject.value].add(biolink.name_of(q.object.value))
+            found[q.subject.value].add(model.name_of(q.object.value))
     rows: dict[str, tuple[set[str], set[str]]] = defaultdict(lambda: (set(), set()))
     for node, names in found.items():
         nodes, kinds_of = rows[find(node)]
@@ -1783,10 +1818,10 @@ def kind_conflicts(
 
 
 def keep_kinds(
-    client: Client, statements: ox.Dataset, biolink: Biolink, kept: Mapping[str, str]
+    client: Client, statements: ox.Dataset, model: Model, kept: Mapping[str, str]
 ) -> int:
-    """Keep one Biolink kind of each node in *kept* (node: Biolink name); return how many type
-    statements were taken out of *statements*.
+    """Keep one kind of *model* for each node in *kept* (node: the model's name of the kind);
+    return how many type statements were taken out of *statements*.
 
     The other kinds of a node, those that are not the kept one or above it, are taken out. They
     are the statements of a CONSTRUCT recorded in *client*'s session (step "Keep kinds"), so
@@ -1795,14 +1830,14 @@ def keep_kinds(
     import pyoxigraph as ox
 
     allowed = " ".join(
-        f"(<{node}> <{biolink.class_iri(name)}>)"
+        f"(<{node}> <{model.class_iri(name)}>)"
         for node, kind in kept.items()
-        for name in [kind, *biolink.ancestors(kind, mixins=True)]
+        for name in [kind, *model.ancestors(kind, mixins=True)]
     )
     query = (
         f"CONSTRUCT {{ ?node a ?kind }} WHERE {{\n"
         f"  VALUES ?node {{ {' '.join(f'<{n}>' for n in kept)} }}\n"
-        f"  ?node a ?kind . FILTER(STRSTARTS(STR(?kind), {_literal(biolink.BASE)}))\n"
+        f"  ?node a ?kind . FILTER(STRSTARTS(STR(?kind), {_literal(model.BASE)}))\n"
         f"  MINUS {{ VALUES (?node ?kind) {{ {allowed} }} }}\n}}"
     )
     with client.step("Keep kinds"):

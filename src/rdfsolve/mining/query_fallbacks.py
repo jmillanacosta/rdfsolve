@@ -7,13 +7,15 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome
+from rdfsolve._outcomes import Bindings, FailureCategory, QueryFailure, QueryOutcome, QuerySample
 from rdfsolve.mining.query_builders import (
+    MEMBERSHIP,
     _build_batched_typed_object_query,
     _build_properties_for_class_patterns_query,
     _build_properties_for_class_query,
     _build_typed_object_for_class_property_query,
 )
+from rdfsolve.mining.sampling import accepts_sample, sampled_select, with_sample
 from rdfsolve.sparql_helper import (
     EndpointError,
     EndpointRateLimitError,
@@ -137,8 +139,9 @@ def query_with_bisect(
         return QueryOutcome()
     from rdfsolve.mining.property_queries import decomposes, query_by_property
 
+    scope = {"type_context_graph_uris": type_context_graph_uris} if type_context_graph_uris else {}
     if decomposes(helper, classes, build_fn):
-        return query_by_property(
+        found = query_by_property(
             classes[0],
             graph_uris,
             build_fn,
@@ -148,7 +151,18 @@ def query_with_bisect(
             chunk_size,
             type_context_graph_uris,
         )
-    scope = {"type_context_graph_uris": type_context_graph_uris} if type_context_graph_uris else {}
+        if found.rows or not accepts_sample(build_fn):
+            return found
+        # The properties of the class were not listed: ask over a sample of its members.
+        return sampled_select(
+            lambda size: build_fn(classes, graph_uris, sample=size, **scope),
+            purpose,
+            helper,
+            found,
+            unit="members",
+            classes=classes,
+            graph_uris=graph_uris,
+        )
     outcome = select_outcome(
         build_fn(classes, graph_uris, **scope), purpose, helper, classes, graph_uris
     )
@@ -200,6 +214,17 @@ def query_with_bisect(
         )
     query = build_fn(classes, graph_uris, paginated=True, drop_distinct=unsafe_paging, **scope)
     paged = collect_outcome(query, purpose, collect_bindings, chunk_size, classes, graph_uris)
+    if paged.state != "complete" and decomposed is None and accepts_sample(build_fn):
+        # Every whole-class strategy was refused: ask over a sample of the class's members.
+        return sampled_select(
+            lambda size: build_fn(classes, graph_uris, sample=size, **scope),
+            purpose,
+            helper,
+            paged,
+            unit="members",
+            classes=classes,
+            graph_uris=graph_uris,
+        )
     if paged.state == "complete" or decomposed is None:
         return paged
     combined = paged.merge(decomposed)
@@ -228,7 +253,8 @@ def query_windows(
     """Observe rows in bounded member windows after every whole-class strategy failed.
 
     Windows are cheap slices near the start of the member list. They give positive
-    evidence only: the outcome is partial and says how the rows were obtained.
+    evidence only: the outcome is a sample (complete, with the sample recorded and each row
+    flagged), not a failure; when no window answers, the failure stands.
     """
     from rdfsolve.mining.query_builders import Window
 
@@ -244,15 +270,23 @@ def query_windows(
         used.append(offset)
     if not used:
         return failed
-    note = QueryFailure(
-        "sampled",
-        f"The whole-class query exceeded its budget; rows come from {len(used)} windows of "
-        f"{WINDOW_SIZE} members at offsets {used}. Other members may add rows.",
+    cause = next(iter(failed.failures), None)
+    sample = QuerySample(
         purpose,
+        WINDOW_SIZE * len(used),
+        "members",
+        cause.category if cause is not None else "timeout",
+        f"The whole-class query exceeded its budget; rows come from {len(used)} windows of "
+        f"{WINDOW_SIZE} members at offsets {used}. Other members may add rows. "
+        + (cause.message[:300] if cause is not None else ""),
         [class_uri],
+        None,
         graph_uris,
     )
-    return QueryOutcome(_deduplicate(rows), "partial", [*failed.failures, note])
+    # A sample, not a failure: the rows stand and are flagged sampled (rdfsolve.mining.sampling).
+    return QueryOutcome(
+        with_sample(_deduplicate(rows), sample), "complete", gaps=failed.gaps, samples=[sample]
+    )
 
 
 RDF_TYPE_IRI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
@@ -270,7 +304,7 @@ def enumerate_properties_for_class(
 
     A timeout is reported, not paged: the grouped result is small, so every page
     would repeat the whole join. On QLever the property sets of the subjects are read first
-    (PubChem run 6: the listing of pubchem:Compound by its triples failed three times).
+    (listing a large class by its triples can fail).
     """
     if str(getattr(helper, "sparql_engine", "")).lower() == "qlever":
         sets = select_outcome(
@@ -283,7 +317,7 @@ def enumerate_properties_for_class(
         # Every subject typed by the class has rdf:type in its property set: a list without it
         # means that the property sets were not read (an engine without them answers no row).
         listed = {row.get("p", {}).get("value") for row in sets.rows}
-        if sets.state == "complete" and RDF_TYPE_IRI in listed:
+        if sets.state == "complete" and listed & set(MEMBERSHIP.get()):
             return sets
     query = _build_properties_for_class_query(
         class_uri, graph_uris, type_context_graph_uris=type_context_graph_uris

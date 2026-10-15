@@ -17,7 +17,7 @@ from rdfsolve.version import VERSION
 
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client
-from typing_extensions import Self
+from typing import Self
 
 
 class Contract(BaseModel):

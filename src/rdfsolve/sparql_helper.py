@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import logging
 import os
+import re
 import secrets
 import socket
+import threading
 import time
 import warnings
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from contextvars import ContextVar
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from itertools import count
 from pathlib import Path
 from typing import Any, ClassVar, Literal, NoReturn, TypedDict
@@ -25,15 +28,22 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning, module="requests")
     import requests
     from requests.adapters import HTTPAdapter
+from typing import Self
+
 from rdflib import Graph, URIRef, Variable
 from rdflib import Literal as RdfLiteral
-from typing_extensions import Self
-from urllib3.connection import HTTPConnection
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
 
 from rdfsolve.query_collection import QueryCollection, QueryRun, SavedQuery
 from rdfsolve.schema_models.paths import PropertyPath
+from rdfsolve.sparql_terms import writable_query
 
 logger = logging.getLogger(__name__)
+# Seconds between the log lines of a query that is still running.
+HEARTBEAT_S = 300.0
+# Seconds that a request may run past its timeout before it is ended (SparqlHelper.deadline).
+DEADLINE_GRACE_S = 30.0
 
 
 class SelectExecution(TypedDict, total=False):
@@ -60,7 +70,7 @@ class QueryRecord:
     query: str
     query_type: Literal["SELECT", "CONSTRUCT", "ASK"]
     endpoint_url: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     description: str = ""
     keywords: list[str] = field(default_factory=list)
     success: bool = True
@@ -76,6 +86,8 @@ class QueryRecord:
     elapsed_seconds: float = 0.0
     wait_seconds: float = 0.0
     request_seconds: float = 0.0
+    # How the last request was cut by a limit on the way to the server (see QueryCut).
+    cut: QueryCut | None = None
 
     def query_id(self) -> str:
         """Generate a unique ID for this query based on content hash."""
@@ -96,12 +108,118 @@ def _default_agent() -> str:
         return "rdfsolve"
 
 
+class _Deadline:
+    """End one request at a wall-clock deadline, whatever the server sends.
+
+    A read timeout bounds one silence only: a server or proxy that sends a few bytes now and
+    then holds the read for ever. At the deadline a watcher shuts the socket of the request down,
+    which ends a blocked read in the requesting thread; the request then raises a timeout
+    (SparqlHelper._request_serial). The connection pools tell the watcher which connection the
+    request uses (_WatchedHTTPConnectionPool).
+    """
+
+    def __init__(self, seconds: float) -> None:
+        """Start the deadline *seconds* from now."""
+        self.seconds = seconds
+        self.expired = False
+        self.connection: Any = None
+        self._done = threading.Event()
+        self._token: Any = None
+
+    def __enter__(self) -> Self:
+        self._token = _active_deadline.set(self)
+        threading.Thread(target=self._watch, daemon=True).start()
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self._done.set()
+        _active_deadline.reset(self._token)
+
+    def _watch(self) -> None:
+        if self._done.wait(self.seconds):
+            return
+        self.expired = True
+        # Repeated until the request ends: at the deadline its socket may still be connecting.
+        while True:
+            sock = getattr(self.connection, "watched_sock", None)
+            if sock is not None:
+                with suppress(OSError):
+                    # The shutdown of the plain socket, also under TLS: SSLSocket.shutdown
+                    # would change the TLS state that the reading thread uses.
+                    socket.socket.shutdown(sock, socket.SHUT_RDWR)
+            if self._done.wait(1.0):
+                return
+
+
+_active_deadline: ContextVar[_Deadline | None] = ContextVar("sparql_deadline", default=None)
+# True inside SparqlHelper.graph_exclusion_suspended: queries are sent without the exclusion.
+_exclusion_suspended: ContextVar[bool] = ContextVar("graph_exclusion_suspended", default=False)
+
+
+class _WatchedHTTPConnection(HTTPConnection):
+    """A connection that keeps its socket for the deadline: http.client drops ``sock`` when a
+    response without a length is read to the closing of the connection.
+    """
+
+    watched_sock: socket.socket | None = None
+
+    def connect(self) -> None:
+        """Open the connection and keep its socket for the request's deadline."""
+        super().connect()
+        self.watched_sock = self.sock
+
+
+class _WatchedHTTPSConnection(HTTPSConnection):
+    """A TLS connection that keeps its socket for the deadline (_WatchedHTTPConnection)."""
+
+    watched_sock: socket.socket | None = None
+
+    def connect(self) -> None:
+        """Open the TLS connection and keep its socket for the request's deadline."""
+        super().connect()
+        self.watched_sock = self.sock
+
+
+class _WatchedHTTPConnectionPool(HTTPConnectionPool):
+    """A pool that gives the connection of each request to the request's deadline."""
+
+    ConnectionCls = _WatchedHTTPConnection
+
+    def _get_conn(self, timeout: float | None = None) -> Any:
+        conn = super()._get_conn(timeout)
+        deadline = _active_deadline.get()
+        if deadline is not None:
+            deadline.connection = conn
+        return conn
+
+
+class _WatchedHTTPSConnectionPool(HTTPSConnectionPool):
+    """A pool that gives the connection of each request to the request's deadline."""
+
+    ConnectionCls = _WatchedHTTPSConnection
+
+    def _get_conn(self, timeout: float | None = None) -> Any:
+        conn = super()._get_conn(timeout)
+        deadline = _active_deadline.get()
+        if deadline is not None:
+            deadline.connection = conn
+        return conn
+
+
+_WATCHED_POOLS: dict[str, type[HTTPConnectionPool]] = {
+    "http": _WatchedHTTPConnectionPool,
+    "https": _WatchedHTTPSConnectionPool,
+}
+
+
 class _KeepaliveAdapter(HTTPAdapter):
-    """An HTTP adapter whose connections send TCP keepalive probes.
+    """An HTTP adapter whose connections send TCP keepalive probes and can be ended at a deadline.
 
     A long query can be silent for minutes, and a live server answers the probes during that
     time. When the peer is gone without a reset (for example after a network change), the
     probes fail and the read ends in about two minutes. Without them, the read waits for ever.
+    A live peer that keeps the connection open is ended by the deadline of the request
+    (_Deadline), also behind an HTTP proxy.
     """
 
     SOCKET_OPTIONS: ClassVar[list[tuple[int, int, int]]] = [
@@ -123,10 +241,163 @@ class _KeepaliveAdapter(HTTPAdapter):
         """Give the socket options to every connection pool."""
         kwargs["socket_options"] = self.SOCKET_OPTIONS
         super().init_poolmanager(*args, **kwargs)
+        self.poolmanager.pool_classes_by_scheme = _WATCHED_POOLS
+
+    def proxy_manager_for(self, proxy: str, **proxy_kwargs: Any) -> Any:
+        """Watch the connections through an HTTP proxy too; a SOCKS proxy keeps its own pools."""
+        manager = super().proxy_manager_for(proxy, **proxy_kwargs)
+        if not proxy.lower().startswith("socks"):
+            manager.pool_classes_by_scheme = _WATCHED_POOLS
+        return manager
+
+
+@dataclass(frozen=True)
+class QueryCut:
+    """A request that a limit on the way to the data ended: the server, a proxy or a gateway.
+
+    *kind* is how it ended ("HTTP 524", "connection closed without a response"); *seconds* is
+    how long the request ran. A fixed limit ends every query that exceeds it at about the same
+    time. Two cuts are at the same limit within 2 s or 2 %.
+    """
+
+    kind: str
+    seconds: float
+
+    def same_limit(self, other: QueryCut) -> bool:
+        """Return whether two cuts are of the same kind, at the same time."""
+        window = max(2.0, 0.02 * max(self.seconds, other.seconds))
+        return self.kind == other.kind and abs(self.seconds - other.seconds) <= window
+
+
+# Consecutive cuts at the same limit after which a step stops sending queries of a purpose.
+# One cut is one slow query, and two can be two neighbouring queries of one heavy class (steps
+# send their queries class by class). Three in a row, with no answer between, show the limit.
+# Timeouts of the client's own limit do not count (QueryCut): there, runs of three timeouts
+# can be followed by an answer.
+CUTS_BEFORE_STOP = 3
+
+# Consecutive timeouts at the client's own limit after which a light step (QueryCuts with
+# client_timeouts) stops a purpose. Runs of three such timeouts can be followed by an answer,
+# so the stop waits for five: a purpose whose five queries in a row each ran past the limit has
+# its remaining queries recorded as not sent.
+TIMEOUTS_BEFORE_STOP = 5
+CLIENT_TIME_LIMIT = "client time limit"
+
+
+@dataclass
+class _PurposeCuts:
+    """The cuts of the queries of one purpose in a step."""
+
+    last: QueryCut | None = None
+    run: int = 0
+    cut: int = 0
+    not_sent: int = 0
+    stopped: str | None = None
+
+
+class QueryCuts:
+    """Stop a step from sending queries that the endpoint cuts at a fixed limit.
+
+    A step reports each answer (answered) and each failure (failed) of a purpose; after
+    *after* consecutive cuts at the same limit, the purpose is stopped, and the step asks
+    (skip) before each query, which counts the queries not sent. An answer resets the count.
+    A failure that is not a cut (a refused query) neither counts nor resets. record() says,
+    for each stopped purpose, why, how many queries were cut and how many were not sent.
+    """
+
+    def __init__(
+        self,
+        after: int = CUTS_BEFORE_STOP,
+        *,
+        client_timeouts: bool = False,
+        timeouts_after: int = TIMEOUTS_BEFORE_STOP,
+    ) -> None:
+        """Stop after *after* consecutive cuts at the same limit.
+
+        With *client_timeouts* (light steps, whose queries all run under one short limit), a
+        query that ran past the client's own limit counts too: *timeouts_after* of them in a
+        row stop the purpose.
+        """
+        if after < 1 or timeouts_after < 1:
+            raise ValueError("Stop after at least one cut")
+        self.after = after
+        self.client_timeouts = client_timeouts
+        self.timeouts_after = timeouts_after
+        self._purposes: dict[str, _PurposeCuts] = {}
+
+    def _of(self, purpose: str) -> _PurposeCuts:
+        return self._purposes.setdefault(purpose, _PurposeCuts())
+
+    def stopped(self, purpose: str | None = None) -> str | None:
+        """Return why a purpose (by default: any purpose of the step) was stopped."""
+        if purpose is not None:
+            return self._of(purpose).stopped
+        return next((c.stopped for c in self._purposes.values() if c.stopped), None)
+
+    def skip(self, purpose: str, *, whole_step: bool = False) -> bool:
+        """Return whether not to send a query of *purpose*; count it as not sent if so.
+
+        With *whole_step*, a stop of any purpose of the step stops this one too.
+        """
+        if not self.stopped(None if whole_step else purpose):
+            return False
+        self._of(purpose).not_sent += 1
+        return True
+
+    def answered(self, purpose: str) -> None:
+        """Record an answer: the queries of this purpose are not all cut."""
+        state = self._of(purpose)
+        state.last, state.run = None, 0
+
+    def failed(self, purpose: str, error: BaseException) -> str | None:
+        """Record a failed query; return why the purpose is stopped, once it is."""
+        cut: QueryCut | None = getattr(error, "cut", None)
+        if cut is None and self.client_timeouts and isinstance(error, EndpointTimeoutError):
+            cut = QueryCut(CLIENT_TIME_LIMIT, 0.0)
+        state = self._of(purpose)
+        if cut is None or state.stopped:
+            return state.stopped
+        state.cut += 1
+        same = state.last is not None and state.last.same_limit(cut)
+        state.run = state.run + 1 if same else 1
+        state.last = cut
+        client = cut.kind == CLIENT_TIME_LIMIT
+        if state.run >= (self.timeouts_after if client else self.after):
+            state.stopped = (
+                f"{state.run} queries in a row ran past the step's time limit"
+                if client
+                else f"endpoint cuts queries at {cut.seconds:.0f} s"
+            )
+            logger.warning(
+                "%s: %s (%s) - no more queries of it are sent", purpose, state.stopped, cut.kind
+            )
+        return state.stopped
+
+    def record(self) -> dict[str, dict[str, Any]]:
+        """Return, for each stopped purpose, why it stopped and what was cut and not sent."""
+        step = self.stopped()
+        return {
+            purpose: {
+                "stopped": state.stopped or step,
+                "cut_by": state.last.kind if state.last else None,
+                "queries_cut": state.cut,
+                "queries_not_sent": state.not_sent,
+            }
+            for purpose, state in sorted(self._purposes.items())
+            if state.stopped or state.not_sent
+        }
 
 
 class SparqlHelperError(Exception):
     """Base exception for SPARQL helper errors."""
+
+    # How the endpoint, or a proxy or gateway before it, cut the query (QueryCuts).
+    cut: QueryCut | None = None
+    # Whether a gateway answered for the server (HTTP 502, 503, 504, 522 or 524) without
+    # saying that it could not reach it (PROXY_CONNECT_FAILURE_PATTERNS) and without a cost
+    # limit of the engine: an overloaded host, worth waiting for when one query decides a
+    # whole step (graph discovery). A busy answer already waited out is not one.
+    gateway_overload: bool = False
 
 
 class EndpointError(SparqlHelperError):
@@ -144,6 +415,14 @@ class EndpointTimeoutError(EndpointError):
 
 class ResponseLimitError(EndpointTimeoutError):
     """Response exceeded the byte budget; use a smaller query."""
+
+
+class QueryParserLimitError(EndpointTimeoutError):
+    """The parser of the endpoint refused the query as too large or too deep (Virtuoso SQ074).
+
+    The same query is refused again; a query with fewer terms or alternatives is answered.
+    Splitting the rows it reads (for example batches of objects) does not shorten it.
+    """
 
 
 class EndpointRateLimitError(EndpointError):
@@ -220,11 +499,14 @@ class SparqlHelper:
         timeout: Connection and host-slot wait timeout in seconds
         read_timeout: Longest silence while a response is read; None (the default) lets a long
             query run. TCP keepalive probes find a dead connection in about two minutes.
-        rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429 or 503
-            with Retry-After). A longer cooldown raises EndpointRateLimitError.
+        deadline: Longest wall-clock time of one request, from sending it to the end of its
+            response, however the server sends it; past it the request raises
+            EndpointTimeoutError. None (the default) is timeout plus DEADLINE_GRACE_S.
+        rate_limit_wait: Longest wait for a cooldown that the server asks for (a 429, 502, 503
+            or 504 with Retry-After). A longer cooldown raises EndpointRateLimitError.
 
     Example:
-        >>> helper = SparqlHelper("https://sparql.swisslipids.org/")
+        >>> helper = SparqlHelper("https://example.org/sparql")
         >>> results = helper.select("SELECT ?g { GRAPH ?g { ?s ?p ?o } }")
         >>> for binding in results["results"]["bindings"]:
         ...     print(binding["g"]["value"])
@@ -258,12 +540,97 @@ class SparqlHelper:
         "cost limit exceeded",
         # Virtuoso: "Query did not complete due to ANYTIME timeout" (S1TAT).
         "anytime timeout",
+        # Virtuoso refusals that repeat for the same query, so the caller makes it smaller:
+        # "S1T00 Error SR171: Transaction timed out" and "SR319 Max row length is exceeded" (a
+        # GROUP_CONCAT over too many values).
+        "transaction timed out",
+        "sr171",
+        "sr319",
+        "max row length is exceeded",
         "sorted top clause",
+        # Virtuoso refuses these for the query, not for the moment: "42000 Error D1CTX: Hash
+        # dictionary is full, exceeded 2000000 entries" (a large CONSTRUCT) and "SQ200 Stack
+        # Overflow in cost model". The caller's fallback runs at once.
+        "d1ctx",
+        "hash dictionary is full",
+        "sq200",
+        "stack overflow in cost model",
         # QLever-specific: query exhausted memory or thread resources
         "waited for a result from another thread which then failed",
         "memory limit exceeded",
         "tried to allocate",
     )
+    # Limits of the query parser: the same query is refused again, and a smaller one (fewer
+    # properties, terms or alternatives in one expression) is answered. Virtuoso answers a
+    # FILTER with more than about 170 alternatives joined by || with "SQ074: Too many opened
+    # parentheses" and HTTP 500; a Java engine overflows its stack on a deep expression.
+    PARSER_LIMIT_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "sq074",
+        "too many opened parentheses",
+        "stackoverflowerror",
+        "stack overflow",
+        "query is too complex",
+        "expression too complex",
+    )
+
+    # A 503 (or a remote 429) whose body says that the server is busy, not that the query is
+    # too costly ("Too many concurrent queries. Please try again later."). A 502 or 504 from a proxy or gateway that says so, or
+    # sends Retry-After, is the same. The request is repeated after OVERLOAD_BACKOFF_S,
+    # doubled at each try, or after the Retry-After that the server sends, up to
+    # OVERLOAD_RETRIES times, whatever the retries of the step: one busy moment must not lose a
+    # source. A 503 that does not say so (a proxy that cannot resolve the host) is not waited for.
+    OVERLOAD_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "too many concurrent",
+        "too many queries",
+        "too many requests",
+        "try again later",
+        "server is busy",
+        "overloaded",
+    )
+    # Row counts at which an engine cuts an unpaged result without saying so: Virtuoso's
+    # ResultSetMaxRows (a cut result, even under a larger LIMIT, with HTTP 200 and no header),
+    # and the defaults of other engines. An
+    # unpaged listing with exactly this many rows is read again in pages of that size.
+    SUSPECTED_ROW_CAPS: ClassVar[frozenset[int]] = frozenset(
+        {1000, 2000, 5000, 10000, 50000, 100000, 1000000}
+    )
+
+    @classmethod
+    def row_cap_suspected(cls, rows: int) -> bool:
+        """Return whether an unpaged result of *rows* rows may have been cut at a server cap."""
+        return rows in cls.SUSPECTED_ROW_CAPS
+
+    OVERLOAD_BACKOFF_S: ClassVar[float] = 30.0
+    OVERLOAD_RETRIES: ClassVar[int] = 4
+
+    # Statuses with which a proxy or gateway answers for the server. A busy one (Retry-After or
+    # OVERLOAD_PATTERNS) is waited out; any one is marked gateway_overload unless its body says
+    # that the proxy could not reach the server at all ("The requested URL could not be
+    # retrieved", ERR_DNS_FAIL), which no wait mends.
+    GATEWAY_ERROR_STATUS: ClassVar[tuple[int, ...]] = (502, 503, 504, 522, 524)
+    PROXY_CONNECT_FAILURE_PATTERNS: ClassVar[tuple[str, ...]] = (
+        "could not be retrieved",
+        "err_dns_fail",
+        "err_connect_fail",
+        "unable to determine ip address",
+        "could not resolve",
+        "name or service not known",
+        "name resolution",
+        "connection refused",
+        "no route to host",
+        "origin dns error",
+    )
+
+    # HTTP statuses with which a gateway says that it stopped waiting for the server.
+    GATEWAY_TIMEOUT_STATUS: ClassVar[tuple[int, ...]] = (504, 522, 524)
+
+    # A gateway answer that says the server is busy but comes only after a long wait is the
+    # gateway's timer, not a busy server: a gateway can answer "502 Bad gateway ... the origin
+    # is overloaded" for one heavy query, each time after its own fixed time, while other
+    # queries answer in seconds. A busy server answers at once. Two such answers in a row to the same query, or one at the time
+    # of a gateway timeout already seen on the endpoint (QueryCut.same_limit), are a timeout
+    # of the query: the caller makes it smaller or samples it (_gateway_timed_out).
+    GATEWAY_CUT_AFTER_S: ClassVar[float] = 45.0
 
     def enable_query_collection(
         self, *, clear: bool = True, include_results: bool | None = None
@@ -324,7 +691,7 @@ class SparqlHelper:
         saved = self.queries.queries[name]
         if saved.requires_context:
             raise ValueError("This query requires SHACL validation context")
-        started_at = datetime.now(timezone.utc).isoformat()
+        started_at = datetime.now(UTC).isoformat()
         started = time.monotonic()
         error_text = ""
         success = False
@@ -375,11 +742,12 @@ class SparqlHelper:
         user_agent: str | None = None,
         read_timeout: float | None = None,
         rate_limit_wait: float = 600.0,
+        deadline: float | None = None,
     ) -> None:
         """Initialize SPARQL helper with retry logic and optional strategy hints.
 
-        user_agent identifies the client to endpoints; some, such as Wikidata, ask for
-        contact information in it. Defaults to $RDFSOLVE_USER_AGENT, else rdfsolve/<version>.
+        user_agent identifies the client to endpoints; some ask for contact information in
+        it. Defaults to $RDFSOLVE_USER_AGENT, else rdfsolve/<version>.
         """
         if max_response_bytes < 1 or max_retries < 1 or inter_request_delay < 0:
             raise ValueError("Use positive response/retry limits and nonnegative request delay")
@@ -391,7 +759,17 @@ class SparqlHelper:
         self._collect_queries = False
         self.max_response_bytes = max_response_bytes
         self._last_error_body = ""
+        self._last_retry_after: float | None = None
+        # Seconds that the last request ran, from sending it to its answer or failure.
+        self._last_request_seconds = 0.0
+        # The last gateway timeout seen on this endpoint (_gateway_timed_out).
+        self._gateway_cut: QueryCut | None = None
+        # Censuses of 2 properties in a row that the parser of the endpoint refused
+        # (structural_strategy.CENSUS_PARSER_REFUSALS_BEFORE_SINGLE).
+        self.census_parser_refusals = 0
         self.endpoint_url = endpoint_url.rstrip("/")
+        # The endpoint URL given, when the endpoint redirected to another (_follow_redirect).
+        self.redirected_from: str | None = None
         self.user_agent = user_agent or os.environ.get("RDFSOLVE_USER_AGENT") or _default_agent()
         self.use_post = use_post
         self.max_retries = max_retries
@@ -399,11 +777,19 @@ class SparqlHelper:
         self.max_backoff = max_backoff
         self.timeout = timeout
         self.read_timeout = read_timeout
+        self.deadline = deadline
         # A timed-out SELECT is retried in adaptive pages, unless a budget turns that off.
         self.page_recovery = True
         self.rate_limit_wait = rate_limit_wait
         self.sparql_engine = sparql_engine
         self.sparql_strategy = sparql_strategy
+        # Graphs left out of the default graph of a query without a dataset clause
+        # (graph_exclusion_prologue); set only after the endpoint passed the exclusion check.
+        self.excluded_graphs: list[str] = []
+        # The classes typed only in the excluded graphs, when they are known: a class listing
+        # is then read without the exclusion and these classes are dropped from it, which gives
+        # the same classes for less work (graph_exclusion_suspended).
+        self.engine_only_classes: frozenset[str] | None = None
         self.inter_request_delay = inter_request_delay
         if (
             type(select_page_size) is not int
@@ -463,15 +849,28 @@ class SparqlHelper:
         """Give each request in the block *seconds* and *retries* tries, without page recovery.
 
         A probe: a query that does not answer in time raises EndpointTimeoutError at once,
-        instead of being retried and recovered in pages. The settings are restored after.
+        instead of being retried and recovered in pages. Each request ends at *seconds* plus
+        DEADLINE_GRACE_S. The settings are restored after.
         """
-        saved = (self.timeout, self.read_timeout, self.max_retries, self.page_recovery)
-        self.timeout, self.read_timeout = seconds, seconds
+        saved = (
+            self.timeout,
+            self.read_timeout,
+            self.deadline,
+            self.max_retries,
+            self.page_recovery,
+        )
+        self.timeout, self.read_timeout, self.deadline = seconds, seconds, None
         self.max_retries, self.page_recovery = max(1, retries), recover
         try:
             yield
         finally:
-            self.timeout, self.read_timeout, self.max_retries, self.page_recovery = saved
+            (
+                self.timeout,
+                self.read_timeout,
+                self.deadline,
+                self.max_retries,
+                self.page_recovery,
+            ) = saved
 
     def select(
         self,
@@ -582,6 +981,19 @@ class SparqlHelper:
                     result[s].append(c)
         return result
 
+    @contextmanager
+    def graph_exclusion_suspended(self) -> Iterator[None]:
+        """Send the queries of the block without the graph exclusion prologue.
+
+        For a query whose answer can be cleaned of the excluded graphs after it is read (a class
+        listing, with engine_only_classes): the prologue can make it much slower.
+        """
+        token = _exclusion_suspended.set(True)
+        try:
+            yield
+        finally:
+            _exclusion_suspended.reset(token)
+
     def _execute(
         self,
         query: str,
@@ -591,9 +1003,25 @@ class SparqlHelper:
         purpose: str = "",
     ) -> Any:
         """Record each logical query, including one that fails after retries."""
+        query = writable_query(query)
+        if (
+            self.excluded_graphs
+            and not _exclusion_suspended.get()
+            and not has_dataset_clause(query)
+        ):
+            query = graph_exclusion_prologue(self.excluded_graphs) + query
         record = QueryRecord(query, query_type, self.endpoint_url, success=False, purpose=purpose)
         started = time.monotonic()
         token = _active_record.set(record)
+        label = f"{query_type} [{purpose or '-'}]"
+        done = threading.Event()
+
+        def heartbeat() -> None:
+            """Log the query while it runs, so that a long query is seen in the job log."""
+            while not done.wait(HEARTBEAT_S):
+                logger.info("%s still running after %.0f s", label, time.monotonic() - started)
+
+        threading.Thread(target=heartbeat, daemon=True).start()
         try:
             result = self._execute_request(
                 query, accept, query_type, parse_json, purpose, record=record
@@ -606,11 +1034,20 @@ class SparqlHelper:
         except Exception as error:
             record.error = type(error).__name__
             record.error_message = str(error)
+            if isinstance(error, SparqlHelperError):
+                error.cut = record.cut
             raise
         finally:
+            done.set()
             _active_record.reset(token)
             self._record_query(record)
             record.elapsed_seconds = time.monotonic() - started
+            logger.info(
+                "%s %s in %.1f s",
+                label,
+                "completed" if record.success else "failed",
+                record.elapsed_seconds,
+            )
 
     def _execute_request(
         self,
@@ -632,6 +1069,9 @@ class SparqlHelper:
 
         attempt = 0
         requests_made = 0
+        overloads = 0
+        # Whether the last busy answer to this query came only after a long wait.
+        late_before = False
         while attempt < self.max_retries:
             attempt += 1
             requests_made += 1
@@ -677,11 +1117,8 @@ class SparqlHelper:
 
                 parsed = json.loads(result) if parse_json else result
 
-                logger.info(
-                    "%s completed (%s)",
-                    query_type,
-                    "HTTP fallback used" if fallback_used else "no HTTP fallback",
-                )
+                if fallback_used:
+                    logger.info("%s [%s] used the HTTP fallback", query_type, purpose or "-")
                 return parsed
 
             except requests.exceptions.HTTPError as e:
@@ -694,6 +1131,18 @@ class SparqlHelper:
                 failure = EndpointError(
                     f"HTTP {status_code}: {detail or 'Endpoint request failed'}"
                 )
+                failure.gateway_overload = self._gateway_overload(status_code, body)
+                if any(marker in (detail or body).lower() for marker in self.PARSER_LIMIT_PATTERNS):
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    logger.warning(
+                        "%s query too large for the parser of %s - not retrying the unchanged"
+                        " query",
+                        tag,
+                        self.endpoint_url,
+                    )
+                    raise QueryParserLimitError(
+                        f"Query parser limit: {detail or status_code}", status_code=status_code
+                    ) from e
                 if any(
                     marker in body
                     for marker in (
@@ -705,6 +1154,18 @@ class SparqlHelper:
                     )
                 ):
                     raise EndpointError(f"HTTP {status_code}: query rejected: {detail}") from e
+                # A cost or memory limit is a limit with any client status: QLever behind a web
+                # server can answer "Tried to allocate …" with HTTP 400 and an HTML page.
+                # The caller makes the query smaller; the same query by POST is refused again.
+                if (
+                    400 <= status_code < 500
+                    and status_code != 429
+                    and any(pat in body for pat in self.COST_LIMIT_PATTERNS)
+                ):
+                    raise EndpointTimeoutError(
+                        f"Query cost/time limit: {detail or status_code}",
+                        status_code=status_code,
+                    ) from e
 
                 # Check if this looks like a POST-required error
                 # 400 = Bad Request (QLever rejects GET), 405 = Method Not Allowed,
@@ -736,6 +1197,51 @@ class SparqlHelper:
                     attempt -= 1
                     continue
 
+                # A server that says it is busy is waited for, with a long backoff, unless the
+                # answer is a gateway's timer that ended the query (_gateway_timed_out).
+                if self._overloaded(status_code, body):
+                    late = self._late_gateway_answer(status_code)
+                    if late is not None and (late_before or self._same_gateway_cut(late)):
+                        self._gateway_cut = late
+                        tag = f"{query_type}[{purpose}]" if purpose else query_type
+                        logger.warning(
+                            "%s HTTP %d from %s after %.0f s: treated as a gateway timeout of the"
+                            " query, not a busy server - not retrying the unchanged query (the"
+                            " caller makes it smaller or samples it)",
+                            tag,
+                            status_code,
+                            self.endpoint_url,
+                            late.seconds,
+                        )
+                        raise EndpointTimeoutError(
+                            f"Gateway timeout: HTTP {status_code} after {late.seconds:.0f} s"
+                            f" ({detail or 'busy answer'})",
+                            status_code=status_code,
+                        ) from e
+                    late_before = late is not None
+                    overloads += 1
+                    wait = self._overload_wait(overloads)
+                    tag = f"{query_type}[{purpose}]" if purpose else query_type
+                    if overloads > self.OVERLOAD_RETRIES or wait > self.rate_limit_wait:
+                        raise EndpointRateLimitError(
+                            f"HTTP {status_code}: the server stayed busy after {overloads} "
+                            f"tries: {detail}"
+                        ) from e
+                    from rdfsolve._http_policy import defer_host
+
+                    logger.warning(
+                        "%s HTTP %d from %s: the server is busy; waiting %.0f s (try %d of %d)",
+                        tag,
+                        status_code,
+                        self.endpoint_url,
+                        wait,
+                        overloads + 1,
+                        self.OVERLOAD_RETRIES + 1,
+                    )
+                    defer_host(urlsplit(self.endpoint_url).hostname or self.endpoint_url, wait)
+                    attempt -= 1
+                    continue
+
                 # Check for retryable status codes
                 if status_code in self.RETRY_STATUS_CODES:
                     # 502 Bad Gateway often means rate limiting or temporary overload
@@ -748,10 +1254,12 @@ class SparqlHelper:
                             self.endpoint_url,
                         )
                         # Treat as timeout to trigger batch size reduction
-                        raise EndpointTimeoutError(
+                        cut = EndpointTimeoutError(
                             f"HTTP 502 Bad Gateway (overload): {e}",
                             status_code=502,
-                        ) from e
+                        )
+                        cut.gateway_overload = failure.gateway_overload
+                        raise cut from e
                     # Cost and time limits require smaller queries from the caller.
                     if status_code in (429, 500, 504):
                         body = self._last_error_body.lower()
@@ -765,10 +1273,12 @@ class SparqlHelper:
                                 tag,
                                 self.endpoint_url,
                             )
-                            raise EndpointTimeoutError(
+                            cut = EndpointTimeoutError(
                                 f"Query cost/time limit: {detail or status_code}",
                                 status_code=status_code,
-                            ) from e
+                            )
+                            cut.gateway_overload = failure.gateway_overload
+                            raise cut from e
                     # Let adaptive callers reduce work after local capacity errors.
                     if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
                         "localhost",
@@ -795,12 +1305,11 @@ class SparqlHelper:
                             "Remote host rate-limited %s; honor shared cooldown", self.endpoint_url
                         )
                         continue
-                    self._handle_retry(
-                        attempt,
-                        query_type,
-                        failure,
-                        purpose,
-                    )
+                    try:
+                        self._handle_retry(attempt, query_type, failure, purpose)
+                    except EndpointError as exhausted:
+                        exhausted.gateway_overload = failure.gateway_overload
+                        raise
                     continue
 
                 # Non-retryable HTTP error
@@ -869,24 +1378,19 @@ class SparqlHelper:
                 )
 
             except json.JSONDecodeError as e:
-                # JSON parse error raises fast.
-                err_msg = str(e).lower()
-                if "control character" in err_msg or "invalid" in err_msg:
-                    tag = f"{query_type}[{purpose}]" if purpose else query_type
-                    logger.warning(
-                        "%s JSON parse error (invalid/control-char) from %s - not retrying: %s",
-                        tag,
-                        self.endpoint_url,
-                        e,
-                    )
-                    raise EndpointTimeoutError(f"JSON decode error (non-retriable): {e}") from e
-                # Other JSON parse error, is HTML response - retry.
-                self._handle_retry(
-                    attempt,
-                    query_type,
+                # A body that does not parse (empty, cut off, or with invalid characters) is
+                # not repeated unchanged: an empty or cut-off answer to a heavy query is a cut
+                # (some endpoints answer heavy queries with an empty HTTP 200), so the caller
+                # makes the query smaller, as for a timeout.
+                tag = f"{query_type}[{purpose}]" if purpose else query_type
+                logger.warning(
+                    "%s response from %s does not parse - not retrying the unchanged query: %s",
+                    tag,
+                    self.endpoint_url,
                     e,
-                    purpose,
                 )
+                kind = "empty response" if e.pos == 0 else "incomplete or invalid response"
+                raise EndpointTimeoutError(f"JSON decode error ({kind}): {e}") from e
 
             except Exception as e:
                 error_msg = str(e).lower()
@@ -984,11 +1488,21 @@ class SparqlHelper:
                 cooldown_wait=self.rate_limit_wait,
             ):
                 request_started = time.monotonic()
-                return self._request_serial(method, query, accept, raw=raw)
+                text = self._request_serial(method, query, accept, raw=raw)
+                if record is not None:
+                    record.cut = None
+                return text
         except HostBusyError as error:
             raise EndpointRateLimitError(str(error)) from error
+        except Exception as error:
+            if record is not None and request_started is not None:
+                record.cut = self._cut(error, time.monotonic() - request_started)
+            raise
         finally:
             finished = time.monotonic()
+            self._last_request_seconds = (
+                finished - request_started if request_started is not None else 0.0
+            )
             if record is not None:
                 record.wait_seconds += (
                     request_started if request_started is not None else finished
@@ -997,8 +1511,26 @@ class SparqlHelper:
                     record.request_seconds += finished - request_started
 
     def _request_serial(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
-        from rdfsolve._http_policy import defer_host, retry_after_seconds
+        """Send one request and read its response before the deadline (see _Deadline).
 
+        A request past its deadline raises a read timeout, which the caller turns into
+        EndpointTimeoutError, as for a server that is silent: a response that the deadline
+        ended is incomplete, even when its end looks like the end of the body.
+        """
+        seconds = self.deadline if self.deadline is not None else self.timeout + DEADLINE_GRACE_S
+        message = f"no complete response within the deadline of {seconds:g} s"
+        with _Deadline(seconds) as deadline:
+            try:
+                text = self._send(method, query, accept, raw=raw)
+            except Exception as error:
+                if deadline.expired:
+                    raise requests.exceptions.ReadTimeout(message) from error
+                raise
+            if deadline.expired:
+                raise requests.exceptions.ReadTimeout(message)
+            return text
+
+    def _send(self, method: str, query: str, accept: str, *, raw: bool = False) -> str:
         host = urlsplit(self.endpoint_url).hostname or self.endpoint_url
         headers = {"Accept": accept, "User-Agent": self.user_agent}
         if method == "POST":
@@ -1006,59 +1538,180 @@ class SparqlHelper:
                 "application/sparql-query" if raw else "application/x-www-form-urlencoded"
             )
         self._last_error_body = ""
-        with self._session.request(
-            method,
-            self.endpoint_url,
-            params={"query": query} if method == "GET" else None,
-            data=(query.encode("utf-8") if raw else {"query": query}) if method == "POST" else None,
-            headers=headers,
-            timeout=(self.timeout, self.read_timeout),
-            stream=True,
-        ) as response:
-            body = bytearray()
-            error_response = response.status_code >= 400
-            limit = (
-                min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+        self._last_retry_after = None
+        for _ in range(self.MAX_REDIRECTS + 1):
+            with self._session.request(
+                method,
+                self.endpoint_url,
+                params={"query": query} if method == "GET" else None,
+                data=(
+                    (query.encode("utf-8") if raw else {"query": query})
+                    if method == "POST"
+                    else None
+                ),
+                headers=headers,
+                timeout=(self.timeout, self.read_timeout),
+                stream=True,
+                allow_redirects=False,
+            ) as response:
+                location = response.headers.get("Location")
+                if response.status_code not in self.REDIRECT_STATUS or not location:
+                    return self._read_response(response, host)
+            self._follow_redirect(location)
+        raise EndpointError(f"More than {self.MAX_REDIRECTS} redirects from the endpoint")
+
+    # A redirect of the endpoint (http to https, answered to a POST with 302) is followed by sending the same request, with its method and body, to the new
+    # URL, which is kept for every later query. requests turns a POST that it follows after a
+    # 302 into a GET without the query, which the endpoint then refuses.
+    REDIRECT_STATUS: ClassVar[tuple[int, ...]] = (301, 302, 303, 307, 308)
+    MAX_REDIRECTS: ClassVar[int] = 5
+
+    def _follow_redirect(self, location: str) -> None:
+        """Move the endpoint to where it redirects, without the query string; log it once."""
+        from urllib.parse import urljoin, urlunsplit
+
+        parts = urlsplit(urljoin(self.endpoint_url, location))
+        target = urlunsplit((parts.scheme, parts.netloc, parts.path, "", "")).rstrip("/") or (
+            self.endpoint_url
+        )
+        if target == self.endpoint_url:
+            raise EndpointError(f"The endpoint redirects to itself: {location}")
+        logger.warning(
+            "The endpoint %s redirects to %s; queries go there", self.endpoint_url, target
+        )
+        if self.redirected_from is None:
+            self.redirected_from = self.endpoint_url
+        self.endpoint_url = target
+
+    def _read_response(self, response: requests.Response, host: str) -> str:
+        """Read a response within the byte limit; raise for an error status or a cut."""
+        from rdfsolve._http_policy import defer_host, retry_after_seconds
+
+        body = bytearray()
+        error_response = response.status_code >= 400
+        limit = min(self.max_response_bytes, 65536) if error_response else self.max_response_bytes
+        for chunk in response.iter_content(chunk_size=65536):
+            available = limit - len(body)
+            body.extend(chunk[:available])
+            if len(chunk) > available:
+                if error_response:
+                    break
+                raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
+        encoding = (
+            response.encoding
+            if "charset=" in response.headers.get("Content-Type", "").lower()
+            else "utf-8"
+        )
+        text = body.decode(encoding or "utf-8", errors="replace" if error_response else "strict")
+        if error_response:
+            self._last_error_body = text
+        if response.status_code == 503 or (
+            response.status_code == 429
+            and not any(pattern in text.lower() for pattern in self.COST_LIMIT_PATTERNS)
+        ):
+            cooldown = retry_after_seconds(response.headers.get("Retry-After"))
+            self._last_retry_after = cooldown
+            defer_host(host, cooldown if cooldown is not None else max(1.0, self.initial_backoff))
+        elif response.status_code in (502, 504):
+            # A gateway's Retry-After marks it busy (_overloaded); without one it is not deferred.
+            self._last_retry_after = retry_after_seconds(response.headers.get("Retry-After"))
+        response.raise_for_status()
+        state = response.headers.get("X-SQL-State", "")
+        if response.status_code == 206 or state == "S1TAT":
+            # Virtuoso returns what it found before its ANYTIME limit as HTTP 206 with
+            # X-SQL-State S1TAT. The results are incomplete: a count is too low and a
+            # FILTER NOT EXISTS keeps rows that the rest of the query would remove.
+            message = response.headers.get("X-SQL-Message", "").strip()
+            raise EndpointTimeoutError(
+                f"Query cost/time limit: incomplete results (HTTP {response.status_code}, "
+                f"X-SQL-State {state or 'none'}): {message}",
+                status_code=response.status_code,
             )
-            for chunk in response.iter_content(chunk_size=65536):
-                available = limit - len(body)
-                body.extend(chunk[:available])
-                if len(chunk) > available:
-                    if error_response:
-                        break
-                    raise ResponseLimitError(f"Decompressed response exceeds {limit} bytes")
-            encoding = (
-                response.encoding
-                if "charset=" in response.headers.get("Content-Type", "").lower()
-                else "utf-8"
-            )
-            text = body.decode(
-                encoding or "utf-8", errors="replace" if error_response else "strict"
-            )
-            if error_response:
-                self._last_error_body = text
-            if response.status_code == 503 or (
-                response.status_code == 429
-                and not any(pattern in text.lower() for pattern in self.COST_LIMIT_PATTERNS)
+        self._check_response_health(response, text)
+        return text
+
+    def _overloaded(self, status_code: int, body: str) -> bool:
+        """Return whether a response says that the server is busy (OVERLOAD_PATTERNS).
+
+        A 502, 503, 504 or remote 429 that says so, or that sends Retry-After, is one; a local
+        QLever's 429 is its capacity limit (the caller makes the query smaller), and a proxy
+        that could not reach the server (PROXY_CONNECT_FAILURE_PATTERNS) is not busy.
+        """
+        if status_code not in (429, 502, 503, 504):
+            return False
+        if any(pattern in body for pattern in self.PROXY_CONNECT_FAILURE_PATTERNS):
+            return False
+        if status_code == 429 and urlsplit(self.endpoint_url).hostname in (
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        ):
+            return False
+        if any(pattern in body for pattern in self.COST_LIMIT_PATTERNS):
+            return False
+        return self._last_retry_after is not None or any(
+            pattern in body for pattern in self.OVERLOAD_PATTERNS
+        )
+
+    def _late_gateway_answer(self, status_code: int) -> QueryCut | None:
+        """Return the busy gateway answer just received as a cut, when it came late.
+
+        A 502 or 504 (a gateway's statuses; a 503 or 429 is the server's own) that came after
+        GATEWAY_CUT_AFTER_S is one; a quick one is a busy server and None is returned.
+        """
+        if status_code not in (502, 504) or self._last_request_seconds < self.GATEWAY_CUT_AFTER_S:
+            return None
+        return QueryCut(f"HTTP {status_code}", self._last_request_seconds)
+
+    def _same_gateway_cut(self, cut: QueryCut) -> bool:
+        """Return whether a late answer is at the gateway timeout already seen on the endpoint."""
+        return self._gateway_cut is not None and self._gateway_cut.same_limit(cut)
+
+    def _gateway_overload(self, status_code: int, body: str) -> bool:
+        """Return whether a gateway error may be an overloaded host (gateway_overload).
+
+        Not when the proxy says that it could not reach the server, nor when the engine behind
+        it states a cost limit of the query.
+        """
+        return (
+            status_code in self.GATEWAY_ERROR_STATUS
+            and not any(pattern in body for pattern in self.PROXY_CONNECT_FAILURE_PATTERNS)
+            and not any(pattern in body for pattern in self.COST_LIMIT_PATTERNS)
+        )
+
+    @classmethod
+    def overload_backoff(cls, tries: int) -> float:
+        """Return the busy-host wait before the *tries*-th repeat (30, 60, 120, 240 s)."""
+        return float(cls.OVERLOAD_BACKOFF_S * 2 ** (tries - 1))
+
+    def _overload_wait(self, tries: int) -> float:
+        """Return the seconds to wait after the *tries*-th busy answer in a row."""
+        if self._last_retry_after is not None:
+            return max(1.0, self._last_retry_after)
+        return self.overload_backoff(tries)
+
+    def _cut(self, error: BaseException, seconds: float) -> QueryCut | None:
+        """Return how a request was cut, when a limit on the way to the data ended it.
+
+        A gateway-timeout status is a cut; any other server error, or a connection closed
+        without a response, is one after DROPPED_AFTER_SECONDS: a timer that fired, not a
+        query that was refused. The client's own read timeout is not a cut: it is the limit
+        that the caller set, and the queries of a step differ in what they cost.
+        """
+        if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
+            status = error.response.status_code
+            if status in self.GATEWAY_TIMEOUT_STATUS or (
+                status >= 500 and seconds >= self.DROPPED_AFTER_SECONDS
             ):
-                cooldown = retry_after_seconds(response.headers.get("Retry-After"))
-                defer_host(
-                    host, cooldown if cooldown is not None else max(1.0, self.initial_backoff)
-                )
-            response.raise_for_status()
-            state = response.headers.get("X-SQL-State", "")
-            if response.status_code == 206 or state == "S1TAT":
-                # Virtuoso returns what it found before its ANYTIME limit as HTTP 206 with
-                # X-SQL-State S1TAT. The results are incomplete: a count is too low and a
-                # FILTER NOT EXISTS keeps rows that the rest of the query would remove.
-                message = response.headers.get("X-SQL-Message", "").strip()
-                raise EndpointTimeoutError(
-                    f"Query cost/time limit: incomplete results (HTTP {response.status_code}, "
-                    f"X-SQL-State {state or 'none'}): {message}",
-                    status_code=response.status_code,
-                )
-            self._check_response_health(response, text)
-            return text
+                return QueryCut(f"HTTP {status}", seconds)
+            return None
+        if (
+            isinstance(error, requests.exceptions.ConnectionError)
+            and not isinstance(error, requests.exceptions.Timeout)
+            and seconds >= self.DROPPED_AFTER_SECONDS
+        ):
+            return QueryCut("connection closed without a response", seconds)
+        return None
 
     def _handle_retry(
         self,
@@ -1331,7 +1984,7 @@ class SparqlHelper:
             except PaginationTruncatedError as error:
                 # Virtuoso sorts at most 10,000 rows for a page (SR353). Rows of SELECT DISTINCT,
                 # and of a GROUP BY on projected variables, are unique on those variables, so
-                # the pages continue with a cursor on them (SIBiLS: the objects of a property).
+                # the pages continue with a cursor on them.
                 distinct = dict.get(parsed, "modifier") == "DISTINCT"
                 conditions = parsed["groupby"]["condition"] if "groupby" in parsed else []
                 group_keys = sorted(str(c) for c in conditions if isinstance(c, Variable))
@@ -1528,6 +2181,10 @@ class SparqlHelper:
 
                 except EndpointTimeoutError as error:
                     last_error = error
+                    if not self.page_recovery:
+                        # A probe (budget()): a page that does not answer in time is not asked
+                        # again in smaller pages.
+                        raise
                     if reductions >= max_page_retries:
                         logger.warning(
                             "Page recovery budget exhausted at offset %d", current_offset
@@ -1639,6 +2296,23 @@ class SparqlHelper:
                 effective_limit,
             )
 
+            if (
+                chunk_count < effective_limit
+                and not until_empty
+                and not cursor_names
+                and self.row_cap_suspected(chunk_count)
+            ):
+                # A short page of a common server cap may be cut, not the end: the next page is
+                # asked for, in pages of the cap.
+                logger.warning(
+                    "Chunked %s: %d rows of %d asked, a common server cap; paging by %d",
+                    purpose or "query",
+                    chunk_count,
+                    effective_limit,
+                    chunk_count,
+                )
+                current_chunk_size = chunk_count
+                continue
             if chunk_count < effective_limit and not until_empty and not cursor_names:
                 logger.debug(
                     "Partial chunk received, pagination complete",
@@ -1708,6 +2382,64 @@ class SparqlHelper:
         return f"SparqlHelper({url!r}, use_post={self._requires_post})"
 
 
+# The parts of a query that are not SPARQL syntax: long and short string literals, IRIs and
+# comments. They are blanked before a keyword is looked for, so that a FROM inside a literal, an
+# IRI or a comment is not taken for one. A literal is tried first (it may hold < or #), then an
+# IRI (it may hold #), then a comment.
+_OPAQUE_SPARQL = re.compile(
+    r'"""(?:[^"\\]|\\.|"(?!""))*"""'
+    r"|'''(?:[^'\\]|\\.|'(?!''))*'''"
+    r'|"(?:[^"\\\n]|\\.)*"'
+    r"|'(?:[^'\\\n]|\\.)*'"
+    r'|<[^<>"{}|^`\\\x00-\x20]*>'
+    r"|#[^\n]*"
+)
+# FROM as a keyword: not the end of a name, a variable (?from) or a prefixed name (ex:from).
+_DATASET_CLAUSE = re.compile(
+    r"(?i)(?<![\w?$:.\-])FROM(?:\s+NAMED)?(?:\s*<|\s+(?:[A-Za-z_][\w.-]*)?:)"
+)
+
+
+def _sparql_syntax(query: str) -> str:
+    """Return *query* with its literals, IRIs and comments blanked; an IRI keeps its brackets."""
+
+    def blank(match: re.Match[str]) -> str:
+        """Return the placeholder of one literal, IRI or comment."""
+        return "<>" if match.group(0).startswith("<") else " "
+
+    return _OPAQUE_SPARQL.sub(blank, query)
+
+
+def has_dataset_clause(query: str) -> bool:
+    """Return whether *query* names its graphs with FROM or FROM NAMED.
+
+    The keyword is looked for in the query's syntax only: a FROM inside a literal, an IRI or a
+    comment is not one.
+    """
+    return bool(_DATASET_CLAUSE.search(_sparql_syntax(query)))
+
+
+def graph_exclusion_prologue(graphs: list[str]) -> str:
+    """Return the Virtuoso pragmas that leave *graphs* out of the default graph of a query.
+
+    Without a dataset clause, Virtuoso's default graph is the union of every graph, its system
+    graphs included (virtrdf#, the WebDAV graph), which a census would count as data. The
+    pragmas are sent only with a
+    query that has no FROM or FROM NAMED: Virtuoso drops a FROM that names an excluded graph and
+    reads every other graph instead.
+
+    Only input:default-graph-exclude is sent, never input:named-graph-exclude:
+
+    - on some Virtuoso versions input:named-graph-exclude empties the default graph of the
+      query, silently (0 rows, HTTP 200, no error);
+    - it can make a query that binds a graph many times slower.
+
+    A query that binds a graph (?g in GRAPH ?g) is cleaned of the engine graphs by the caller
+    instead: the graph listings drop the graphs with an excluded prefix.
+    """
+    return "".join(f"DEFINE input:default-graph-exclude {URIRef(g).n3()}\n" for g in graphs)
+
+
 # Convenience function for one-off queries
 
 
@@ -1715,12 +2447,18 @@ def _error_detail(body: str) -> str:
     """Give the reason of an endpoint error without the echoed query.
 
     A JSON body (QLever) carries the reason in "exception", which itself may start with
-    "Invalid SPARQL query:"; other bodies are cut where the echoed query begins.
+    "Invalid SPARQL query:"; other bodies are cut where the echoed query begins. An HTML page is
+    read as its text, which may hold such a JSON body.
     """
     try:
         reason = json.loads(body).get("exception")
     except (ValueError, AttributeError):
         reason = None
+    if reason is None and any(marker in body[:1000] for marker in SparqlHelper.HTML_MARKERS):
+        body = re.sub(r"(?is)<(script|style)\b.*?</\1>|<[^>]+>", " ", body)
+        body = re.sub(r"\s+", " ", html.unescape(body))
+        found = re.search(r'"exception"\s*:\s*"((?:[^"\\]|\\.)*)"', body)
+        reason = found.group(1) if found else None
     if isinstance(reason, str) and reason.strip():
         return reason.strip()[:500]
     return body.split("SPARQL query:", 1)[0].strip()[:500]

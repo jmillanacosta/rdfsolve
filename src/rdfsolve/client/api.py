@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections import defaultdict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -20,7 +21,7 @@ from rdflib import BNode, Dataset, Graph, Literal, URIRef
 
 from rdfsolve._uri import curie_from_prefixes, prefix_map, uri_to_curie
 from rdfsolve.client.exploration import DatasetClient
-from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata
+from rdfsolve.client.hydration import _iri, _term, class_iri, field_metadata, is_untyped
 from rdfsolve.client.model_rdf import model_to_graph
 from rdfsolve.client.query_log import QueryLog
 from rdfsolve.client.registry import Registry
@@ -40,6 +41,8 @@ if TYPE_CHECKING:
     from rdfsolve.property_graph import Conversion, Fold, Identity, PropertyGraph
     from rdfsolve.schema_models.selection import SchemaSelection
 
+logger = logging.getLogger(__name__)
+
 
 def _key(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.casefold())
@@ -57,7 +60,10 @@ def _namespace(iri: str) -> str:
 
 
 def _name(name: str) -> str:
-    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", name).replace("_", " ").capitalize()
+    """Return a readable label for a local name (rdfsolve.naming.label)."""
+    from rdfsolve.naming import label
+
+    return label(name)
 
 
 def _name_fields(model: type[BaseModel]) -> list[str]:
@@ -115,19 +121,30 @@ class Client(DatasetClient):
         self.class_mappings = tuple(class_mappings)
         self.related_registries = tuple(related_registries)
         self._prepared: dict[str, tuple[PreparedQuery, Any, tuple[str, ...]]] = {}
+        # Record sets made before the catalogue: it retains them when a discovery call builds it.
+        self._pending_results: list[Results] = []
         self._field_names: dict[tuple[type[BaseModel], str], str] = {}
+        self._kind_names: dict[type[BaseModel], str] = {}
 
     @cached_property
     def catalogue(self) -> Catalogue:
-        """Retain this client's schema, mappings, entities and executable paths."""
+        """Retain this client's schema, mappings, entities and executable paths.
+
+        Built on the first discovery call, not when records are made: writing or reading
+        records needs none of it. The record sets made before are retained then.
+        """
         from rdfsolve.client.catalogue import Catalogue
 
-        return Catalogue(
+        catalogue = Catalogue(
             self,
             self.source_id,
             class_mappings=self.class_mappings,
             related_registries=self.related_registries,
         )
+        pending, self._pending_results = self._pending_results, []
+        for result in pending:
+            result._references = catalogue.retain_records(result)
+        return catalogue
 
     @property
     def schema(self) -> MinedSchema:
@@ -190,6 +207,7 @@ class Client(DatasetClient):
         *,
         format: FormatLiteral["json", "shacl", "void"] | None = None,
         data_file: str | Path | Sequence[str | Path] | None = None,
+        paths: str | Path | None = None,
         **kwargs: Any,
     ) -> Client:
         """Open a saved schema without mining or making source requests.
@@ -197,8 +215,9 @@ class Client(DatasetClient):
         JSON uses the canonical or VoID JSON-LD reader. For Turtle, choose
         format="shacl" or "void". RDF imports retain only supported fields.
         The source defaults to the schema endpoint. data_file selects local RDF: one file or
-        several (the dumps of one release), read into one store; or the name of a registry
-        entry, whose RDF downloads are fetched once (local_rdf.registry_files) and read together.
+        several (the dumps of one release), or a folder of them, read into one store; or the name of
+        a registry entry, whose RDF downloads are fetched once into $RDFSOLVE_DOWNLOADS/<name>
+        (default ~/.cache/rdfsolve; local_rdf.registry_files) and read together.
         """
         if isinstance(schema, MinedSchema):
             if format is not None:
@@ -228,15 +247,27 @@ class Client(DatasetClient):
                 raise ValueError("Choose source or data_file, not both")
             from rdfsolve.local_rdf import load_store, registry_files
 
-            if isinstance(data_file, str) and not Path(data_file).exists():
-                data_file = registry_files(data_file)
+            if isinstance(data_file, str) and not Path(data_file).is_file():
+                # A name of the registry is that entry, even where a folder of that name is in
+                # the working directory; another folder stands for the RDF files in it.
+                from rdfsolve.sources import load_sources
+
+                if any(s.name == data_file for s in load_sources()):
+                    data_file = registry_files(data_file)
+                elif not Path(data_file).is_dir():
+                    raise FileNotFoundError(
+                        f"data_file {data_file!r} is not a file, a folder or a registry entry"
+                    )
             store = load_store(data_file)
             if next(iter(store.named_graphs()), None) is None:
                 if kwargs.get("graph_uris"):
                     raise ValueError("A single local RDF graph has no named graph scope")
                 kwargs["graph_uris"] = []
             source = store
-        return cls(schema, source, **kwargs)
+        client = cls(schema, source, **kwargs)
+        if paths is not None:
+            client.add_paths(paths)
+        return client
 
     def registry(self, *, source_id: str) -> Registry:
         """Describe generated classes and source bindings from retained metadata."""
@@ -315,15 +346,37 @@ class Client(DatasetClient):
         """Return the records that the identifiers (IRIs or CURIEs) name here, with their values.
 
         Each is resolved to the IRI this source writes (resolve_many). *kind* is by default the
-        class this source gives the identifiers it issues (issued_kinds: owl:Class for ChEBI,
-        up:Protein for UniProt). *fields* are by default the record's literal values and its
-        cross-references (see cross_references), so that to_oxigraph gives them.
+        class of each identifier's prefix: the class whose example subjects carry that prefix in
+        the schema (rdfsolve.mappings.signatures), so identifiers of several kinds are fetched
+        in one call, each group with its class. A prefix with no class or with several needs
+        *kind*. *fields* are by default the record's literal values and its cross-references
+        (see cross_references), so that to_oxigraph gives them.
         """
         if kind is None:
-            issued = sorted({c for classes in self.issued_kinds().values() for c in classes})
-            if len(issued) != 1:
-                raise ValueError(f"Give kind=: this source issues {issued or 'no kind'}")
-            kind = issued[0]
+            from rdfsolve.identifiers import parse
+            from rdfsolve.mappings.signatures import signatures
+
+            subjects = signatures(self._schema).subjects
+            groups: dict[str, list[str]] = {}
+            unclear: dict[str, list[str]] = {}
+            for identifier in dict.fromkeys(identifiers):
+                parsed = parse(identifier)
+                prefix = parsed.prefix if parsed else None
+                classes = sorted(subjects.get(prefix, set())) if prefix else []
+                if len(classes) == 1:
+                    groups.setdefault(classes[0], []).append(identifier)
+                else:
+                    unclear.setdefault(f"{prefix}: {classes or 'no class'}", []).append(identifier)
+            if unclear:
+                listed = "; ".join(f"{k} ({', '.join(v[:3])})" for k, v in sorted(unclear.items()))
+                raise ValueError(f"Give kind=: no single class for the prefixes {listed}")
+            results = [self.fetch(ids, *fields, kind=cls) for cls, ids in sorted(groups.items())]
+            if not results:
+                return Results(self, [])
+            combined = results[0]
+            for more in results[1:]:
+                combined = combined + more
+            return combined
         found = self.resolve_many(identifiers)
         iris = sorted({r.iri for r in found.values() if r.iri})
         records = self.from_table(kind, pd.DataFrame({"iri": iris}), id_column="iri")
@@ -350,7 +403,7 @@ class Client(DatasetClient):
                 body = self._scope(
                     f"{{ VALUES ?named {{ {values} }} ?record {path} ?named . }} UNION "
                     f"{{ VALUES ?named {{ {values} }} BIND(?named AS ?record) }} "
-                    + self._type_pattern("?record", _iri(class_iri(model)))
+                    + self._model_pattern("?record", model)
                 )
                 rows = self._select(f"SELECT DISTINCT ?record ?named WHERE {{ {body} }}")
                 pairs |= {(r["record"]["value"], forms[r["named"]["value"]]) for r in rows}
@@ -362,6 +415,14 @@ class Client(DatasetClient):
             records,
             evidence=[{"source": given, "target": r, "via": via} for r, given in sorted(pairs)],
         )
+
+    def _model_pattern(self, node: str, model: type[BaseModel]) -> str:
+        """Match the subjects of a view: the members of its class, or, for the view of subjects
+        without a type, the subjects of its properties that have no type.
+        """
+        if is_untyped(model):
+            return self._untyped_subjects(node, model)
+        return self._type_pattern(node, _iri(class_iri(model)))
 
     def record_fields(self, kind: str) -> list[str]:
         """Return the fields of a class that hold its values: literals and cross-references."""
@@ -382,12 +443,11 @@ class Client(DatasetClient):
         """Return the properties of this source that cite identifiers of one other source.
 
         From the mined schema: every identifier value of the property is in one registered
-        namespace that this source does not issue (WikiPathways' bdbChEBI, bdbUniprot), and some
-        of its values are resources the source does not describe (object class Resource). An
-        invalid identifier counts in its namespace (lipidmaps/LMSP02 is a LIPID MAPS id that
-        fails the pattern). Not cross-references: properties whose values span namespaces
-        (dcterms:isPartOf, rdfs:seeAlso), or whose values the source describes itself
-        (dcterms:references to its PublicationReference records).
+        namespace that this source does not issue, and some of its values are resources the
+        source does not describe (object class Resource). An invalid identifier counts in its
+        namespace (an identifier that fails the namespace's pattern). Not cross-references:
+        properties whose values span namespaces (dcterms:isPartOf, rdfs:seeAlso), or whose
+        values the source describes itself.
         """
         from rdfsolve.identifiers import parse
         from rdfsolve.mappings.signatures import RDF_TYPE, VOCABULARIES
@@ -417,6 +477,14 @@ class Client(DatasetClient):
         from rdfsolve.client.identify import identify
 
         return identify(self, identifiers)
+
+    def named(self, identifiers: Iterable[str]) -> list[Identification]:
+        """Return the resources whose own IRI is a registered IRI of one of *identifiers* (the
+        records a source names by their identifiers).
+        """
+        from rdfsolve.client.identify import named
+
+        return named(self, list(dict.fromkeys(identifiers)))
 
     def statements(
         self, iris: Iterable[str], *, languages: Iterable[str] = (), names: bool = True
@@ -482,6 +550,51 @@ class Client(DatasetClient):
         query.ref = identifier("q", query.sparql)
         self._prepared[query.ref] = query, self.source, tuple(self.graph_uris)
         return query
+
+    def add_paths(self, path: str | Path) -> Client:
+        """Read the paths tested on the source from a saved schema (a mining run's schema JSON).
+
+        Only how many records follow each link of each kind is read now (link_support); a
+        kind's paths are read when asked for (client.kinds.<Kind>.paths). The kinds' links
+        then show the share of records that follow each.
+        """
+        from rdfsolve.schema_models.navigation import tested_step_support
+
+        self._paths_file = Path(path)
+        self._link_support = tested_step_support(self._paths_file)
+        logger.info(
+            "Read how often %d links are followed in the tested paths; client.kinds.<Kind>.links "
+            "shows them, client.kinds.<Kind>.paths the paths.",
+            len(self._link_support),
+        )
+        return self
+
+    def link_support(self, kind_iri: str, property_iri: str) -> float | None:
+        """Return the share of a kind's records that follow a link in the tested paths, or None.
+
+        The paths are those added (add_paths), else those of the client's own schema.
+        """
+        support = getattr(self, "_link_support", None)
+        if support is None:
+            from rdfsolve.schema_models.navigation import step_support
+
+            summary = self._schema.navigation
+            support = step_support(summary.paths if summary else [])
+            self._link_support = support
+        found = support.get((kind_iri, property_iri))
+        return found[0] / found[1] if found and found[1] else None
+
+    def tested_paths(self, kind_iri: str) -> list[Any]:
+        """Return the tested paths that start at a kind (read from the added file when there is one)."""
+        path = getattr(self, "_paths_file", None)
+        if path is not None:
+            from rdfsolve.schema_models.navigation import read_tested_paths
+
+            return read_tested_paths(path, start_classes=[kind_iri])
+        summary = self._schema.navigation
+        return [
+            r for r in (summary.paths if summary else []) if r.steps[0].subject_class == kind_iri
+        ]
 
     def navigation(self, *, max_hops: int = 6, observed_only: bool = False) -> pd.DataFrame:
         """Retrieve retained elongated routes and their snapshot support summaries."""
@@ -697,8 +810,7 @@ class Client(DatasetClient):
     def superclasses(self, classes: Iterable[str]) -> dict[str, set[str]]:
         """Return all named superclasses of each class, as this source's endpoint states them.
 
-        Read from the source's own vocabulary (rdfs:subClassOf, by levels): WikiPathways states
-        wp:Protein under wp:GeneProduct under wp:DataNode. A class the endpoint says nothing
+        Read from the source's own vocabulary (rdfs:subClassOf, by levels). A class the endpoint says nothing
         about has none.
         """
         from rdfsolve.ontology.hierarchy import fetch_superclasses
@@ -754,6 +866,10 @@ class Client(DatasetClient):
 
         if data is None and self._local_rdf is None:
             raise RuntimeError("Local RDF backend is not initialized")
+        if not self.allow_service:
+            from rdfsolve.local_rdf import refuse_service
+
+            refuse_service(query)
         if data is None:
             query = self._scope_query(query)
         self.queries.append(query)
@@ -814,8 +930,7 @@ class Client(DatasetClient):
         name = self.field_name(model, field)
         path = _path(model, name)
         pattern = (
-            self._type_pattern("?subject", _iri(class_iri(model)))
-            + f" ?subject {path_to_sparql(path)} ?value ."
+            self._model_pattern("?subject", model) + f" ?subject {path_to_sparql(path)} ?value ."
         )
         if text:
             pattern += f" FILTER(!isBlank(?value) && CONTAINS(LCASE(STR(?value)), LCASE({Literal(text).n3()})))"
@@ -965,22 +1080,22 @@ class Client(DatasetClient):
         iris shows class IRIs as "curie", "full" or "none"; merge draws one edge per pair
         of classes with the names of all their links.
         """
-        from rdfsolve.client.diagram import link_diagram, model_diagram, path_diagram
+        from rdfsolve.client.diagram import Diagram, link_diagram, model_diagram, path_diagram
 
         if kind is not None:
             kinds = (*kinds, kind)
         if links is not None:
             if len(kinds) != 1:
                 raise ValueError("Draw the links of one record type")
-            return link_diagram(self, kinds[0], links, fenced=fenced)
+            return Diagram(link_diagram(self, kinds[0], links, fenced=fenced))
         if paths is not None:
             if kinds:
                 raise ValueError("Choose model names or a paths table, not both")
-            return path_diagram(self, paths, path=path, instances=instances, fenced=fenced)
+            return Diagram(path_diagram(self, paths, path=path, instances=instances, fenced=fenced))
         if path is not None:
             raise ValueError("Supply a paths table to choose a path")
-        return model_diagram(
-            self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge
+        return Diagram(
+            model_diagram(self, kinds, fenced=fenced, namespaces=namespaces, iris=iris, merge=merge)
         )
 
     def _uses(self, cls: str, links: Iterable[str], to: str | None) -> bool:
@@ -995,7 +1110,8 @@ class Client(DatasetClient):
                 return False
             found = False
             for pattern in self.schema.patterns:
-                if pattern.property_uri != prop:
+                # Untyped subjects are no class: they neither own nor reach a class's link.
+                if pattern.property_uri != prop or pattern.untyped_subject:
                     continue
                 own, other = (
                     (pattern.object_class, pattern.subject_class)
@@ -1042,6 +1158,9 @@ class Client(DatasetClient):
         subject, or as object for "^name"), towards the class *to* when given.
         """
         name_or_iri = str(name_or_iri)
+        untyped = self._untyped_named(name_or_iri)
+        if untyped is not None:
+            return untyped
         prefix, sep, local = name_or_iri.partition(":")
         if sep and not local.startswith("//") and prefix in self.schema.get_prefixes():
             name_or_iri = self.schema.get_prefixes()[prefix] + local
@@ -1107,7 +1226,11 @@ class Client(DatasetClient):
 
     def type_name(self, model: type[BaseModel] | str) -> str:
         """Display a source label without changing the generated type."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+
         model = self.model(model) if isinstance(model, str) else model
+        if is_untyped(model):
+            return UNTYPED_SUBJECTS_LABEL
         iri = getattr(model, "rdf_class_iri", "")
         labels = [
             item.text.value
@@ -1117,9 +1240,36 @@ class Client(DatasetClient):
             and item.predicate in LABEL_PREDICATES
         ]
         if labels:
-            return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", min(labels))
+            from rdfsolve.naming import words
+
+            return " ".join(words(min(labels))) or min(labels)
         local = re.split(r"[/#:]", iri)[-1]
         return local if re.search(r"\d", local) else _name(local)
+
+    def kind_name(self, model: type[BaseModel] | str) -> str:
+        """Return the name that finds a record type again: its label, or its CURIE when other
+        types share the label (gpml:DataNode and wp:DataNode, both "Data Node").
+        """
+        model = self.model(model) if isinstance(model, str) else model
+        if model in self._kind_names:
+            return self._kind_names[model]
+        name = self.type_name(model)
+        try:
+            found = self.model(name) is model
+        except ValueError:
+            found = False
+        if not found:
+            iri = class_iri(model)
+            name = next(
+                (
+                    f"{prefix}:{iri[len(namespace) :]}"
+                    for prefix, namespace in self.schema.get_prefixes().items()
+                    if namespace and iri.startswith(namespace)
+                ),
+                iri,
+            )
+        self._kind_names[model] = name
+        return name
 
     def link_name(self, model: type[BaseModel] | str, field: str) -> str:
         """Use a source label or readable predicate name for a link."""
@@ -1219,7 +1369,8 @@ class Client(DatasetClient):
         if len(exact) == 1:
             return exact[0]  # An IRI or a CURIE identifies one property.
         local = [name for name, iri in iris.items() if re.split(r"[/#:]", iri)[-1] == text]
-        own = [name for name in local if iris[name].startswith(_namespace(class_iri(model)))]
+        namespace = "\0" if is_untyped(model) else _namespace(class_iri(model))
+        own = [name for name in local if iris[name].startswith(namespace)]
         for found in (own, local):
             if len(found) == 1:
                 return found[
@@ -1272,25 +1423,37 @@ class Client(DatasetClient):
         blank_node_scope: str | None = None,
         language: str | None = None,
         extra_types: list[str] | tuple[str, ...] = (),
+        kinds: Mapping[str, str] | None = None,
+        iri_strings: bool = False,
         **values: Any,
     ) -> BaseModel:
         """Create a record with schema-guided values and optional extra type IRIs.
 
         Language supplies a default for language-tagged fields. Explicit RDF
-        terms retain their metadata. Extra types add assertions to this node.
+        terms retain their metadata. Extra types add assertions to this node. *kinds* reads
+        the plain strings of a field as "iri" (a link) or "text"; with *iri_strings*, an
+        absolute http(s) or urn string is a link in a field that takes one.
         """
-        from rdfsolve.client.authoring import create_record
+        from rdfsolve.client.authoring import RecordError, create_record
 
         model = self.model(kind)
         fields = {self.field_name(model, field): value for field, value in values.items()}
-        return create_record(
-            model,
-            fields,
-            uri=uri,
-            blank_node_scope=blank_node_scope,
-            language=language,
-            extra_types=extra_types,
-        )
+        named = {self.field_name(model, field): field for field in values}
+        try:
+            return create_record(
+                model,
+                fields,
+                uri=uri,
+                blank_node_scope=blank_node_scope,
+                language=language,
+                extra_types=extra_types,
+                readings={self.field_name(model, k): v for k, v in (kinds or {}).items()},
+                iri_strings=iri_strings,
+            )
+        except RecordError as error:
+            raise RecordError(
+                [{**p, "field": named.get(p["field"], p["field"])} for p in error.problems]
+            ) from None
 
     def from_table(
         self,
@@ -1301,16 +1464,21 @@ class Client(DatasetClient):
         language: str | None = None,
         languages: Mapping[str, str] | None = None,
         datatypes: Mapping[str, str] | None = None,
+        kinds: Mapping[str, str] | None = None,
+        iri_strings: bool = False,
         blank_node_scope: str | None = None,
         **columns: str,
     ) -> Results:
         """Create records from columns, with optional literal defaults keyed by field.
 
         Missing identifiers create distinct blank nodes; missing field values are
-        omitted. Explicit RDF terms retain their metadata. Errors identify the row.
-        A list of IRIs gives one record of *kind* each, with no values.
+        omitted. Explicit RDF terms retain their metadata. A list of IRIs gives one record of
+        *kind* each, with no values. *kinds* reads the cells of a field as "iri" (a link) or
+        "text"; with *iri_strings*, an absolute http(s) or urn cell is a link in a field that
+        takes one (else a cell that fits both is refused as ambiguous). Every row is checked:
+        the error (RecordError) lists each problem with its row, index, field and value.
         """
-        from rdfsolve.client.authoring import create_record, table_literal
+        from rdfsolve.client.authoring import RecordError, create_record, table_literal
 
         if not isinstance(table, pd.DataFrame):
             table, id_column = pd.DataFrame({"iri": list(dict.fromkeys(table))}), "iri"
@@ -1321,11 +1489,14 @@ class Client(DatasetClient):
         if missing:
             raise ValueError(f"Missing columns: {sorted(missing)}")
         fields = {self.field_name(model, field): column for field, column in columns.items()}
+        named = {self.field_name(model, field): field for field in columns}
         languages = {self.field_name(model, k): v for k, v in (languages or {}).items()}
         datatypes = {self.field_name(model, k): v for k, v in (datatypes or {}).items()}
-        if (languages.keys() | datatypes.keys()) - fields.keys():
+        readings = {self.field_name(model, k): v for k, v in (kinds or {}).items()}
+        if (languages.keys() | datatypes.keys() | readings.keys()) - fields.keys():
             raise ValueError("Literal defaults require a mapped field")
         records = []
+        problems: list[dict[str, Any]] = []
         for position, (index, row) in enumerate(table.iterrows()):
             try:
                 identifier = (
@@ -1348,17 +1519,103 @@ class Client(DatasetClient):
                         uri=identifier,
                         blank_node_scope=blank_node_scope,
                         language=language,
+                        readings=readings,
+                        iri_strings=iri_strings,
                     )
                 )
+            except RecordError as error:
+                problems += [
+                    {
+                        "row": position,
+                        "index": index,
+                        **p,
+                        "field": named.get(p["field"], p["field"]),
+                        "column": fields.get(p["field"]),
+                    }
+                    for p in error.problems
+                ]
             except (TypeError, ValueError) as error:
-                raise ValueError(f"row {position} (index {index!r}): {error}") from error
+                problems.append(
+                    {
+                        "row": position,
+                        "index": index,
+                        "field": None,
+                        "value": None,
+                        "reason": str(error),
+                    }
+                )
+        if problems:
+            raise RecordError(problems)
         return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
+    def tables(self, profile: str | Graph | None = None) -> dict[str, pd.DataFrame]:
+        """Return the client's local RDF as tables for SQL, one per class of a SHACL profile
+        (rdfsolve.client.sql_tables): text cells that DataFrame.to_sql writes as they are,
+        named from the profile's CURIEs. *profile* defaults to the schema's shape_profile.
+        """
+        from rdfsolve.client.sql_tables import tables
+
+        return tables(self._local_graph(), self._table_profile(profile))
+
+    def from_tables(
+        self, tables: Mapping[str, pd.DataFrame], profile: str | Graph | None = None
+    ) -> Graph:
+        """Return the RDF of tables made by tables() (also read back from SQL), every value as
+        its term says: values of a kind their field's shape does not allow are written, for
+        SHACL to report.
+        """
+        from rdfsolve.client.sql_tables import from_tables
+
+        return from_tables(tables, self._table_profile(profile))
+
+    def _table_profile(self, profile: str | Graph | None) -> str | Graph:
+        """Return the profile of the tables: the one given, else the schema's shape_profile."""
+        found = profile if profile is not None else self.schema.shape_profile
+        if found is None:
+            raise ValueError(
+                "Tables follow a SHACL profile: give profile= or open a schema with one"
+            )
+        return found
+
+    def _local_graph(self) -> Graph:
+        """Return the client's local RDF as one graph (the union of its graphs)."""
+        source = self.source
+        if isinstance(source, Dataset):
+            merged = Graph()
+            for s, p, o, _ in source.quads((None, None, None, None)):
+                merged.add((s, p, o))
+            return merged
+        if isinstance(source, Graph):
+            return source
+        if isinstance(source, (ox.Store, ox.Dataset)):
+            data = Dataset()
+            data.parse(data=ox.serialize(source, format=ox.RdfFormat.N_QUADS), format="nquads")
+            merged = Graph()
+            for s, p, o, _ in data.quads((None, None, None, None)):
+                merged.add((s, p, o))
+            return merged
+        raise ValueError("Tables are read from local RDF: open the client on a graph or a store")
+
+    @property
+    def kinds(self) -> Any:
+        """The kinds of record of this source, as objects: client.kinds.<Name> (Tab completes).
+
+        Each kind prints its links and what they reach; kind.<link> is a link object.
+        """
+        from rdfsolve.plan import kinds_of
+
+        return kinds_of(self)
+
     def types(self) -> pd.DataFrame:
-        """List available record types without sending a query."""
-        return pd.DataFrame(
-            {"Class": sorted(self.type_name(model) for model in self.models.values())}
-        )
+        """List available record types without sending a query.
+
+        The view of subjects without a type, when the schema has one, is the last row:
+        "untyped subjects" (it is not a class).
+        """
+        names = sorted(self.type_name(model) for model in self.models.values())
+        if self.untyped_model is not None:
+            names.append(self.type_name(self.untyped_model))
+        return pd.DataFrame({"Class": names})
 
     @classmethod
     def from_session(
@@ -1393,7 +1650,10 @@ class Client(DatasetClient):
 
         from rdfsolve.identifiers import curie, parse
 
-        registered = parse(class_iri(self.model(kind))) if kind else None
+        chosen = self.model(kind) if kind else None
+        registered = (
+            parse(class_iri(chosen)) if chosen is not None and not is_untyped(chosen) else None
+        )
         prefix = registered.prefix if registered else None
         ontology = bioregistry.get_ols_prefix(prefix) if prefix else None
         looked_up = [
@@ -1447,7 +1707,9 @@ class Client(DatasetClient):
     def to_graph(self, *groups: Results | BaseModel) -> Graph:
         """Return records or result sets and their retained direct links as an RDF graph."""
         records: list[BaseModel] = []
-        model_types = tuple(self.models.values())
+        model_types = tuple(self.models.values()) + (
+            (self.untyped_model,) if self.untyped_model is not None else ()
+        )
         for group in groups:
             if isinstance(group, Results):
                 if group.client is not self:
@@ -1524,7 +1786,7 @@ class Client(DatasetClient):
         A source issues the identifiers of its own registered prefix (Bioregistry, from the
         dataset name of the schema); their classes are the schema classes whose example subjects
         carry that prefix (rdfsolve.mappings.signatures). An identifier the source only cites
-        (WikiPathways and Ensembl genes) is not its own.
+        is not its own.
         """
         import bioregistry
 
@@ -1559,7 +1821,21 @@ class Results:
         self.evidence = evidence or []
         self.coverage = coverage or {"status": "complete", "basis": "Retrieved records"}
         self.through: dict[str, set[str]] | None = None  # a path's start -> end (related)
-        self.references = client.catalogue.retain_records(self)
+        self._references: list[str] | None = None
+        pending = getattr(client, "_pending_results", None)
+        if "catalogue" in vars(client) or pending is None:
+            self._references = client.catalogue.retain_records(self)
+        else:
+            pending.append(self)
+
+    @property
+    def references(self) -> list[str]:
+        """The catalogue references of the records (the catalogue is built if it is not)."""
+        if self._references is None:
+            catalogue = self.client.catalogue
+            if self._references is None:
+                self._references = catalogue.retain_records(self)
+        return self._references
 
     def __len__(self) -> int:
         """Return the number of typed records."""
@@ -1572,6 +1848,17 @@ class Results:
     def __getitem__(self, index: int) -> BaseModel:
         """Read a generated object, with its usual field completion."""
         return self.records[index]
+
+    def __add__(self, other: Results) -> Results:
+        """Return the records of both sets, each once (in order of first appearance)."""
+        if other.client is not self.client:
+            raise ValueError("Records of different clients cannot be one set")
+        seen: dict[str, BaseModel] = {}
+        for record in [*self.records, *other.records]:
+            seen.setdefault(str(vars(record).get("uri")), record)
+        partial = "partial" in (self.coverage.get("status"), other.coverage.get("status"))
+        coverage = {"status": "partial" if partial else "complete", "basis": "Records of both sets"}
+        return Results(self.client, list(seen.values()), coverage=coverage)
 
     def __repr__(self) -> str:
         """Preview names without fetching more fields."""
@@ -1657,13 +1944,14 @@ class Results:
         loaded: dict[Any, BaseModel] = {}
         for model in {type(r) for r in self.records}:
             part = Results(self.client, [r for r in self.records if type(r) is model])
-            part._load(*self.client.record_fields(str(getattr(model, "rdf_class_iri", ""))))
+            kind = model.__name__ if is_untyped(model) else str(getattr(model, "rdf_class_iri", ""))
+            part._load(*self.client.record_fields(kind))
             loaded.update((vars(r)["uri"], r) for r in part.records)  # _load gives new records
         self.records = [loaded.get(vars(r)["uri"], r) for r in self.records]
         return self
 
     def where(self, field: str, value: Any) -> Results:
-        """Keep the records whose *field* has *value* (UniProt entries with reviewed true)."""
+        """Keep the records whose *field* has *value*."""
         self._load(field)
         kept = []
         for record in self.records:
@@ -1773,17 +2061,7 @@ class Results:
 
     def _shown(self, model: type[BaseModel]) -> str:
         """Return a type's name, or its CURIE when the name is shared by other types."""
-        name = self.client.type_name(model)
-        try:
-            if self.client.model(name) is model:
-                return name
-        except ValueError:
-            pass
-        iri = class_iri(model)
-        for prefix, namespace in self.client.schema.get_prefixes().items():
-            if namespace and iri.startswith(namespace):
-                return f"{prefix}:{iri[len(namespace) :]}"
-        return iri
+        return self.client.kind_name(model)
 
     def related(
         self,
@@ -1805,6 +2083,8 @@ class Results:
         until nothing new is reached; every record reached is returned, with the evidence of
         every hop. links() then gives each start record the records its path reaches.
         """
+        if isinstance(via, str) and via.startswith("^"):  # "^link": the link read backwards
+            via, incoming = via[1:], not incoming
         if (
             depth > 1
             or not (via is None or isinstance(via, str))
@@ -1882,15 +2162,15 @@ class Results:
         for source, field in routes:
             by_source[source].add(field)
         if value is None and any(len(fields) > 1 for fields in by_source.values()):
-            choices = sorted(
-                {
-                    self.client.link_name(target if incoming else source, field)
-                    for source, field in routes
-                }
+            raise ValueError(
+                f"These records reach {self.client.type_name(target)} by more than one link; "
+                f"choose one with via=:\n{self._link_choices(target)}"
             )
-            raise ValueError(f"Choose one link with via= from: {choices}")
         if self.records and not routes:
-            raise ValueError("No matching link. Use paths() to see where these records can lead.")
+            raise ValueError(
+                f"No such link to {self.client.type_name(target)}. The links that reach it:\n"
+                f"{self._link_choices(target)}\nUse paths() to see longer routes."
+            )
         found: dict[str, BaseModel] = {}
         with self.client.step(
             f"Read related {self.client.type_name(target)}"
@@ -1923,6 +2203,38 @@ class Results:
                 "via": via,
                 "query_ids": self.client._steps[-1]["query_ids"],
             },
+        )
+
+    def _link_choices(self, target: type[BaseModel]) -> str:
+        """List every link between these records and *target*, both ways, as via= values."""
+        import pandas as pd
+
+        from rdfsolve.plan import _text_table
+
+        there = self.client.type_name(target)
+        rows = []
+        for backwards in (False, True):
+            names = sorted(
+                {
+                    self.client.link_name(target if backwards else source, field)
+                    for source, field, dest in self._routes(backwards)
+                    if dest is target
+                }
+            )
+            rows += [
+                {
+                    "via=": f'"{"^" if backwards else ""}{name}"',
+                    "reads": f"{there} --{name}--> these"
+                    if backwards
+                    else f"these --{name}--> {there}",
+                }
+                for name in names
+            ]
+        if not rows:
+            return "  (none)"
+        return (
+            _text_table(pd.DataFrame(rows))
+            + '\n("^" follows a link backwards: the records that point to these)'
         )
 
     def _load(self, *fields: str) -> None:
@@ -1965,7 +2277,7 @@ class Results:
     ) -> list[BaseModel]:
         """Read the records of *iris*; a batch over the value budget is split in two and retried.
 
-        A UniProt entry can carry thousands of citations, so a batch may exceed the budget that
+        One record can carry thousands of values, so a batch may exceed the budget that
         one entry does not. When one entry alone exceeds it, the fields whose values alone
         exceed it are left out for that entry, and the coverage of the set says so (partial).
         """
@@ -2155,7 +2467,8 @@ def _add_release(schema: MinedSchema, path: Path) -> None:
     candidates = sorted(set(data.subjects(RDF.type, void.Dataset)), key=shared, reverse=True)
     if not candidates or shared(candidates[0]) == 0:
         return
-    helper = LocalGraphHelper(found.resolve().as_uri(), data)
+    # A small description, read as written (its literal forms are the release's own).
+    helper = LocalGraphHelper(found.resolve().as_uri(), data, backend="rdflib")
     described = query_endpoint_metadata(helper, subject_iri=str(candidates[0]))
     for field_name in _RELEASE_FIELDS:
         if described.get(field_name) and not getattr(about, field_name, None):
