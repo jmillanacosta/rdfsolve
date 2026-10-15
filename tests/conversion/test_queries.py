@@ -300,3 +300,50 @@ def test_one_query_of_several_rules_keeps_each_rule_to_its_own_ends(tmp_path):
         if t.object.value == BL + "MacromolecularComplex"
     }
     assert rebuilt == {"urn:c1", "urn:c2"}
+
+
+def test_a_rule_that_depends_on_a_value_is_a_filter_a_shacl_condition_and_a_query(tmp_path):
+    """when: the statement is made only for focus nodes with that value; the query file and the
+    SHACL rule say so too, and the query is read back into the same rule."""
+    import rdflib
+
+    from rdfsolve.conversion import write_query
+    from tests.conversion.data import pairs
+
+    rule = Rule(
+        WP + "Catalysis",
+        BL + "catalyzes",
+        subject=f"<{WP}source>",
+        object=f"<{WP}target>",
+        when=((f"<{WP}source>", "urn:p1"),),
+    )
+    assert pairs(rule) == {("urn:p1", "urn:r1")}, "Only the focus nodes with the value"
+    text = write_query([rule], title="cond", prefixes={"wp": WP, "biolink": BL}, focus_as="c")
+    assert 'FILTER(STR(' in text and '"urn:p1"' in text
+    (tmp_path / "cond.rq").write_text(text)
+    back = Query.read(tmp_path / "cond.rq")
+    assert back.problem is None and back.rules() == [Rule(**{**vars(rule), "name": back.name})]
+    graph = rdflib.Graph().parse(data=Profile("p", [rule]).to_shacl(), format="turtle")
+    patterns = {str(o) for o in graph.objects(None, rdflib.SH.pattern)}
+    assert "^urn:p1$" in patterns, "sh:condition with the value"
+
+
+def test_a_query_file_names_its_data_and_a_profile_run_records_its_scope(tmp_path):
+    """The header names the data with its sha256; the session records each run's scope."""
+    import hashlib
+
+    from rdfsolve.conversion import write_query
+    from tests.conversion.data import biolink_client
+
+    data = tmp_path / "week.ttl"
+    data.write_text(DATA)
+    rule = Rule(WP + "Conversion", BL + "has_input", object=f"<{WP}source>")
+    text = write_query([rule], title="t", prefixes={"wp": WP, "biolink": BL}, data=data)
+    assert f"# data: {data}" in text
+    assert f"# data sha256: {hashlib.sha256(data.read_bytes()).hexdigest()}" in text
+    client = biolink_client()
+    profile = Profile("week", [rule])
+    profile.run(client, scope="?x <urn:in> <urn:week> .")
+    (entry,) = [o for o in client.session_metadata()["operations"] if o["operation"] == "profile.run"]
+    assert entry["profile"] == "week" and entry["scope"] == "?x <urn:in> <urn:week> ."
+    assert entry["skipped"] == profile.last_skipped

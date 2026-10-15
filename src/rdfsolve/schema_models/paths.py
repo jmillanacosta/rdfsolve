@@ -88,4 +88,5 @@ def absolute_iri(value: str) -> str:
         )
     if _UNWRITABLE_IRI_CHAR.search(value):
         raise ValueError("Invalid character in an RDF IRI")
-    return value
+    # A plain string: "<" + a URIRef would make a URIRef of the bracketed text.
+    return str(value)

@@ -11,6 +11,8 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.namespace import DC, DCTERMS, FOAF, OWL, RDF
 from rdflib.term import Node
 
+from rdfsolve._datasets import default_graph
+
 logger = logging.getLogger(__name__)
 VOID = Namespace("http://rdfs.org/ns/void#")
 DCAT = Namespace("http://www.w3.org/ns/dcat#")
@@ -182,7 +184,7 @@ class MetadataDocument(BaseModel):
         if self.rdf_dataset is None:
             raise ValueError("No dataset contexts were retained")
         graph = (
-            self.rdf_dataset.default_context
+            default_graph(self.rdf_dataset)
             if graph_uri is None
             else self.rdf_dataset.graph(graph_uri)
         )

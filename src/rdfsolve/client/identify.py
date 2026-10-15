@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
@@ -172,38 +173,65 @@ def _without_intermediates(client: Client, found: list[Identification]) -> list[
 def statements(
     client: Client, iris: Iterable[str], languages: Iterable[str] = (), *, names: bool = True
 ) -> Graph:
-    """Read the resources' direct statements and the names of the resources they point to."""
-    langs = [lang.lower() for lang in languages]
-    keep = (
-        'FILTER(!isLiteral(?o) || LANG(?o) = "" || LCASE(LANG(?o)) IN ('
-        + ", ".join(Literal(lang).n3() for lang in langs)
-        + "))"
-        if langs
-        else ""
-    )
+    """Read the resources' direct statements and the names of the resources they point to.
+
+    The queries are plain patterns: literals in other *languages* are left out of the rows they
+    return, not by a FILTER (an engine can drop every row of a FILTER on terms after VALUES). A
+    value that is not an absolute IRI (a relative IRI of the source) keeps its statement; its
+    name is not read, and a warning names it.
+    """
+    langs = {lang.lower() for lang in languages}
+
+    def kept(binding: dict[str, Any]) -> bool:
+        """Return whether a value is kept: no literal of a language not asked for."""
+        language = (binding.get("xml:lang") or "").lower()
+        return (
+            not langs
+            or binding.get("type") not in ("literal", "typed-literal")
+            or (not language or language in langs)
+        )
+
     graph = Graph()
     subjects = list(dict.fromkeys(iris))
     predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
     for start in range(0, len(subjects), BATCH):
         values = " ".join(_iri(s) for s in subjects[start : start + BATCH])
-        body = client._scope(f"VALUES ?s {{ {values} }} ?s ?p ?o . {keep}")
+        body = client._scope(f"VALUES ?s {{ {values} }} ?s ?p ?o .")
         with client.step("Read statements"):
             rows = client._select(f"SELECT ?s ?p ?o WHERE {{ {body} }}", exhaustive=True)
         for row in rows:
-            graph.add(
-                (URIRef(row["s"]["value"]), URIRef(row["p"]["value"]), _term(row["o"]).to_rdf())
-            )
-    objects = sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)}) if names else []
-    label_filter = keep.replace("?o", "?name")
-    for start in range(0, len(objects), BATCH * 5):
-        values = " ".join(_iri(o) for o in objects[start : start + BATCH * 5])
-        body = client._scope(
-            f"VALUES ?o {{ {values} }} VALUES ?p {{ {predicates} }} ?o ?p ?name . {label_filter}"
+            if kept(row["o"]):
+                graph.add(
+                    (URIRef(row["s"]["value"]), URIRef(row["p"]["value"]), _term(row["o"]).to_rdf())
+                )
+    objects: list[str] = []
+    skipped: list[str] = []
+    for value in (
+        sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)}) if names else []
+    ):
+        try:
+            objects.append(_iri(value))
+        except ValueError:
+            skipped.append(value)
+    if skipped:
+        warnings.warn(
+            f"Names not read for {len(skipped)} values that are not absolute IRIs "
+            f"(their statements are kept): {', '.join(skipped[:10])}",
+            UserWarning,
+            stacklevel=3,
         )
+    for start in range(0, len(objects), BATCH * 5):
+        values = " ".join(objects[start : start + BATCH * 5])
+        body = client._scope(f"VALUES ?o {{ {values} }} VALUES ?p {{ {predicates} }} ?o ?p ?name .")
         with client.step("Read names"):
             rows = client._select(f"SELECT ?o ?p ?name WHERE {{ {body} }}", exhaustive=True)
         for row in rows:
-            graph.add(
-                (URIRef(row["o"]["value"]), URIRef(row["p"]["value"]), _term(row["name"]).to_rdf())
-            )
+            if kept(row["name"]):
+                graph.add(
+                    (
+                        URIRef(row["o"]["value"]),
+                        URIRef(row["p"]["value"]),
+                        _term(row["name"]).to_rdf(),
+                    )
+                )
     return graph

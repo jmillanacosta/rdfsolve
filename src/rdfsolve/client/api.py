@@ -121,20 +121,30 @@ class Client(DatasetClient):
         self.class_mappings = tuple(class_mappings)
         self.related_registries = tuple(related_registries)
         self._prepared: dict[str, tuple[PreparedQuery, Any, tuple[str, ...]]] = {}
+        # Record sets made before the catalogue: it retains them when a discovery call builds it.
+        self._pending_results: list[Results] = []
         self._field_names: dict[tuple[type[BaseModel], str], str] = {}
         self._kind_names: dict[type[BaseModel], str] = {}
 
     @cached_property
     def catalogue(self) -> Catalogue:
-        """Retain this client's schema, mappings, entities and executable paths."""
+        """Retain this client's schema, mappings, entities and executable paths.
+
+        Built on the first discovery call, not when records are made: writing or reading
+        records needs none of it. The record sets made before are retained then.
+        """
         from rdfsolve.client.catalogue import Catalogue
 
-        return Catalogue(
+        catalogue = Catalogue(
             self,
             self.source_id,
             class_mappings=self.class_mappings,
             related_registries=self.related_registries,
         )
+        pending, self._pending_results = self._pending_results, []
+        for result in pending:
+            result._references = catalogue.retain_records(result)
+        return catalogue
 
     @property
     def schema(self) -> MinedSchema:
@@ -336,14 +346,37 @@ class Client(DatasetClient):
         """Return the records that the identifiers (IRIs or CURIEs) name here, with their values.
 
         Each is resolved to the IRI this source writes (resolve_many). *kind* is by default the
-        class this source gives the identifiers it issues (issued_kinds). *fields* are by default the record's literal values and its
-        cross-references (see cross_references), so that to_oxigraph gives them.
+        class of each identifier's prefix: the class whose example subjects carry that prefix in
+        the schema (rdfsolve.mappings.signatures), so identifiers of several kinds are fetched
+        in one call, each group with its class. A prefix with no class or with several needs
+        *kind*. *fields* are by default the record's literal values and its cross-references
+        (see cross_references), so that to_oxigraph gives them.
         """
         if kind is None:
-            issued = sorted({c for classes in self.issued_kinds().values() for c in classes})
-            if len(issued) != 1:
-                raise ValueError(f"Give kind=: this source issues {issued or 'no kind'}")
-            kind = issued[0]
+            from rdfsolve.identifiers import parse
+            from rdfsolve.mappings.signatures import signatures
+
+            subjects = signatures(self._schema).subjects
+            groups: dict[str, list[str]] = {}
+            unclear: dict[str, list[str]] = {}
+            for identifier in dict.fromkeys(identifiers):
+                parsed = parse(identifier)
+                prefix = parsed.prefix if parsed else None
+                classes = sorted(subjects.get(prefix, set())) if prefix else []
+                if len(classes) == 1:
+                    groups.setdefault(classes[0], []).append(identifier)
+                else:
+                    unclear.setdefault(f"{prefix}: {classes or 'no class'}", []).append(identifier)
+            if unclear:
+                listed = "; ".join(f"{k} ({', '.join(v[:3])})" for k, v in sorted(unclear.items()))
+                raise ValueError(f"Give kind=: no single class for the prefixes {listed}")
+            results = [self.fetch(ids, *fields, kind=cls) for cls, ids in sorted(groups.items())]
+            if not results:
+                return Results(self, [])
+            combined = results[0]
+            for more in results[1:]:
+                combined = combined + more
+            return combined
         found = self.resolve_many(identifiers)
         iris = sorted({r.iri for r in found.values() if r.iri})
         records = self.from_table(kind, pd.DataFrame({"iri": iris}), id_column="iri")
@@ -833,6 +866,10 @@ class Client(DatasetClient):
 
         if data is None and self._local_rdf is None:
             raise RuntimeError("Local RDF backend is not initialized")
+        if not self.allow_service:
+            from rdfsolve.local_rdf import refuse_service
+
+            refuse_service(query)
         if data is None:
             query = self._scope_query(query)
         self.queries.append(query)
@@ -1386,25 +1423,37 @@ class Client(DatasetClient):
         blank_node_scope: str | None = None,
         language: str | None = None,
         extra_types: list[str] | tuple[str, ...] = (),
+        kinds: Mapping[str, str] | None = None,
+        iri_strings: bool = False,
         **values: Any,
     ) -> BaseModel:
         """Create a record with schema-guided values and optional extra type IRIs.
 
         Language supplies a default for language-tagged fields. Explicit RDF
-        terms retain their metadata. Extra types add assertions to this node.
+        terms retain their metadata. Extra types add assertions to this node. *kinds* reads
+        the plain strings of a field as "iri" (a link) or "text"; with *iri_strings*, an
+        absolute http(s) or urn string is a link in a field that takes one.
         """
-        from rdfsolve.client.authoring import create_record
+        from rdfsolve.client.authoring import RecordError, create_record
 
         model = self.model(kind)
         fields = {self.field_name(model, field): value for field, value in values.items()}
-        return create_record(
-            model,
-            fields,
-            uri=uri,
-            blank_node_scope=blank_node_scope,
-            language=language,
-            extra_types=extra_types,
-        )
+        named = {self.field_name(model, field): field for field in values}
+        try:
+            return create_record(
+                model,
+                fields,
+                uri=uri,
+                blank_node_scope=blank_node_scope,
+                language=language,
+                extra_types=extra_types,
+                readings={self.field_name(model, k): v for k, v in (kinds or {}).items()},
+                iri_strings=iri_strings,
+            )
+        except RecordError as error:
+            raise RecordError(
+                [{**p, "field": named.get(p["field"], p["field"])} for p in error.problems]
+            ) from None
 
     def from_table(
         self,
@@ -1415,16 +1464,21 @@ class Client(DatasetClient):
         language: str | None = None,
         languages: Mapping[str, str] | None = None,
         datatypes: Mapping[str, str] | None = None,
+        kinds: Mapping[str, str] | None = None,
+        iri_strings: bool = False,
         blank_node_scope: str | None = None,
         **columns: str,
     ) -> Results:
         """Create records from columns, with optional literal defaults keyed by field.
 
         Missing identifiers create distinct blank nodes; missing field values are
-        omitted. Explicit RDF terms retain their metadata. Errors identify the row.
-        A list of IRIs gives one record of *kind* each, with no values.
+        omitted. Explicit RDF terms retain their metadata. A list of IRIs gives one record of
+        *kind* each, with no values. *kinds* reads the cells of a field as "iri" (a link) or
+        "text"; with *iri_strings*, an absolute http(s) or urn cell is a link in a field that
+        takes one (else a cell that fits both is refused as ambiguous). Every row is checked:
+        the error (RecordError) lists each problem with its row, index, field and value.
         """
-        from rdfsolve.client.authoring import create_record, table_literal
+        from rdfsolve.client.authoring import RecordError, create_record, table_literal
 
         if not isinstance(table, pd.DataFrame):
             table, id_column = pd.DataFrame({"iri": list(dict.fromkeys(table))}), "iri"
@@ -1435,11 +1489,14 @@ class Client(DatasetClient):
         if missing:
             raise ValueError(f"Missing columns: {sorted(missing)}")
         fields = {self.field_name(model, field): column for field, column in columns.items()}
+        named = {self.field_name(model, field): field for field in columns}
         languages = {self.field_name(model, k): v for k, v in (languages or {}).items()}
         datatypes = {self.field_name(model, k): v for k, v in (datatypes or {}).items()}
-        if (languages.keys() | datatypes.keys()) - fields.keys():
+        readings = {self.field_name(model, k): v for k, v in (kinds or {}).items()}
+        if (languages.keys() | datatypes.keys() | readings.keys()) - fields.keys():
             raise ValueError("Literal defaults require a mapped field")
         records = []
+        problems: list[dict[str, Any]] = []
         for position, (index, row) in enumerate(table.iterrows()):
             try:
                 identifier = (
@@ -1462,10 +1519,33 @@ class Client(DatasetClient):
                         uri=identifier,
                         blank_node_scope=blank_node_scope,
                         language=language,
+                        readings=readings,
+                        iri_strings=iri_strings,
                     )
                 )
+            except RecordError as error:
+                problems += [
+                    {
+                        "row": position,
+                        "index": index,
+                        **p,
+                        "field": named.get(p["field"], p["field"]),
+                        "column": fields.get(p["field"]),
+                    }
+                    for p in error.problems
+                ]
             except (TypeError, ValueError) as error:
-                raise ValueError(f"row {position} (index {index!r}): {error}") from error
+                problems.append(
+                    {
+                        "row": position,
+                        "index": index,
+                        "field": None,
+                        "value": None,
+                        "reason": str(error),
+                    }
+                )
+        if problems:
+            raise RecordError(problems)
         return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
     @property
@@ -1693,7 +1773,21 @@ class Results:
         self.evidence = evidence or []
         self.coverage = coverage or {"status": "complete", "basis": "Retrieved records"}
         self.through: dict[str, set[str]] | None = None  # a path's start -> end (related)
-        self.references = client.catalogue.retain_records(self)
+        self._references: list[str] | None = None
+        pending = getattr(client, "_pending_results", None)
+        if "catalogue" in vars(client) or pending is None:
+            self._references = client.catalogue.retain_records(self)
+        else:
+            pending.append(self)
+
+    @property
+    def references(self) -> list[str]:
+        """The catalogue references of the records (the catalogue is built if it is not)."""
+        if self._references is None:
+            catalogue = self.client.catalogue
+            if self._references is None:
+                self._references = catalogue.retain_records(self)
+        return self._references
 
     def __len__(self) -> int:
         """Return the number of typed records."""

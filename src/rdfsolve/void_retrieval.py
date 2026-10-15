@@ -6,6 +6,7 @@ import logging
 
 from rdflib import Dataset, Graph, URIRef
 
+from rdfsolve._datasets import default_graph
 from rdfsolve.sparql_helper import EndpointTimeoutError, SparqlHelper
 
 logger = logging.getLogger(__name__)
@@ -192,5 +193,5 @@ def discover_description(
                 result.graph(uri).__iadd__(retrieve_description(helper, [uri]))
                 found.append(uri)
     if graphs is None:
-        result.default_context.__iadd__(retrieve_description(helper, None))
-    return result, found, bool(len(result.default_context))
+        default_graph(result).__iadd__(retrieve_description(helper, None))
+    return result, found, bool(len(default_graph(result)))

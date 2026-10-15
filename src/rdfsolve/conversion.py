@@ -99,8 +99,11 @@ def _other_kinds(client: Client, cls: str) -> tuple[str, ...]:
 
 def _link(client: Client, name: str, focus: str) -> str:
     """Return the property IRI of a link by field name, else by label: of the focus's record
-    type first, else the one property that the record types name so.
+    type first, else the one property that the record types name so. An IRI or a CURIE is the
+    property itself, with no lookup: a run whose data has no such link still has the rule.
     """
+    if name.startswith(("http://", "https://", "urn:")) or ":" in name:
+        return _expand(name.strip("<>"), client)
 
     def key(text: str) -> str:
         """Return a name compared without case, spaces or underscores."""
@@ -177,6 +180,9 @@ class Rule:
     # The rest of the query's pattern: (path from the focus, class or None) that must exist for
     # the statement to be made, as in a CONSTRUCT whose WHERE must match as a whole.
     requires: tuple[tuple[str, str | None], ...] = field(default=(), compare=False)
+    # Values the focus must have for the statement to be made: (path from the focus, the text
+    # of a value it reaches), as FILTER(STR(?v) = "text") in a query.
+    when: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def between(
@@ -197,6 +203,7 @@ class Rule:
         subject_unless_kinds: Sequence[str] = (),
         object_unless_kinds: Sequence[str] = (),
         requires: Mapping[str, str | None] | None = None,
+        when: Mapping[str, Any] | None = None,
         exact_kind: bool = False,
         literal: bool = False,
         name: str | None = None,
@@ -212,7 +219,8 @@ class Rule:
         rule is for nodes of exactly that kind. *subject_unless_kinds* and *object_unless_kinds*
         leave out ends of these record types. *requires* maps links of the focus (written as
         *subject*) to the record type they must reach (or None): the rule holds only for focus
-        nodes that have them.
+        nodes that have them. *when* maps links of the focus to a value: the rule holds only for
+        focus nodes with that value (compared as text: "true" matches a boolean true).
         """
         from rdfsolve.client.hydration import class_iri, is_untyped
 
@@ -286,7 +294,29 @@ class Rule:
             literal=literal,
             subject_as=subject_as,
             object_as=object_as,
+            when=tuple(
+                (
+                    cast(str, path(link)),
+                    str(given).lower() if isinstance(given, bool) else str(given),
+                )
+                for link, given in (when or {}).items()
+            ),
         )
+
+    def properties(self) -> set[str]:
+        """Return the properties the rule's paths go through (its links in the source)."""
+        texts = [
+            self.subject,
+            self.object,
+            *(path for path, _ in self.requires),
+            *(path for path, _ in self.when),
+        ]
+        return {
+            iri
+            for text in texts
+            if text
+            for iri in (re.findall(r"<([^>]+)>", text) if "<" in text else [text.strip()])
+        }
 
     def to_construct(self, scope: str = "") -> str:
         """Return the SPARQL CONSTRUCT of the rule; *scope* is a pattern on ?x (the focus)."""
@@ -322,6 +352,11 @@ class Rule:
         for i, (path, cls) in enumerate(self.requires):
             typed = f" ?r{i} a <{cls}> ." if cls else ""
             lines.append(f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?r{i} .{typed} }}")
+        for i, (path, given) in enumerate(self.when):
+            lines.append(
+                f"FILTER EXISTS {{ ?x {path_to_sparql(_path(path))} ?w{i} . "
+                f"FILTER(STR(?w{i}) = {_literal(given)}) }}"
+            )
         for unless in self.subject_unless_classes:
             lines.append(f"FILTER NOT EXISTS {{ {subject} a <{unless}> }}")
         if obj.startswith("?"):
@@ -383,6 +418,15 @@ class Rule:
             graph.add((negated, SH["class"], URIRef(unless)))
             graph.add((condition, SH["not"], negated))
             graph.add((rule, SH.condition, condition))
+        for path, given in self.when:
+            # A value of the path whose text is *given*: a qualified pattern of the whole text.
+            condition, prop, value = BNode(), BNode(), BNode()
+            graph.add((rule, SH.condition, condition))
+            graph.add((condition, SH.property, prop))
+            graph.add((prop, SH.path, path_to_rdf(_path(path), graph)))
+            graph.add((value, SH.pattern, Literal("^" + re.escape(given) + "$")))
+            graph.add((prop, SH.qualifiedValueShape, value))
+            graph.add((prop, SH.qualifiedMinCount, Literal(1)))
         graph.add(
             (rule, SH.subject, nodes(self.subject, self.subject_class, self.subject_unless_classes))
         )
@@ -411,6 +455,8 @@ class Profile:
     provenance: Mapping[str, str | None] = field(default_factory=dict)
     queries: list[Query] = field(default_factory=list)
     dataset: str | None = None  # the mined source whose shapes the rules attach to
+    # The rules the last run left out, with the properties the source did not have (run).
+    last_skipped: list[dict[str, Any]] = field(default_factory=list, compare=False)
 
     @classmethod
     def from_queries(
@@ -634,11 +680,54 @@ class Profile:
     def run(self, client: Client, scope: str = "") -> ox.Dataset:
         """Run each rule's CONSTRUCT on *client*'s endpoint (recorded in its session); return
         all the statements they give.
+
+        A rule whose links the source's schema does not have (this run's data has no such
+        property) is not run: last_skipped lists it with the missing properties, and a warning
+        names it.
         """
+        import warnings
+
         import pyoxigraph as ox
 
+        schema = getattr(client, "schema", None)
+        present = set(schema.get_properties()) if schema is not None else None
+        runnable, self.last_skipped = [], []
+        for rule in self.rules:
+            missing = sorted(rule.properties() - present) if present is not None else []
+            if missing:
+                self.last_skipped.append(
+                    {"rule": rule.name or rule.predicate, "missing_properties": missing}
+                )
+            else:
+                runnable.append(rule)
+        if self.last_skipped:
+            warnings.warn(
+                f"{len(self.last_skipped)} rules not run, their links are not in the source: "
+                + "; ".join(
+                    f"{s['rule']} ({', '.join(s['missing_properties'])})" for s in self.last_skipped
+                ),
+                UserWarning,
+                stacklevel=2,
+            )
+        operations = getattr(client, "_operations", None)
+        if operations is not None:
+            source = getattr(client, "source", None)
+            operations.append(
+                {
+                    "operation": "profile.run",
+                    "profile": self.name,
+                    "target": self.target,
+                    "target_version": self.target_version,
+                    "scope": scope,
+                    "graph_uris": list(getattr(client, "graph_uris", []) or []),
+                    "endpoint": getattr(source, "endpoint_url", None),
+                    "rules": len(runnable),
+                    "skipped": list(self.last_skipped),
+                }
+            )
         out = ox.Dataset()
-        for query in [*self.constructs(scope), *(q.text for q in self.whole())]:
+        queries = [rule.to_construct(scope) for rule in runnable]
+        for query in [*queries, *(q.text for q in self.whole())]:
             for quad in client.construct(query):
                 out.add(quad)
         return out
@@ -811,10 +900,19 @@ class Query:
                 return []
         pairs: set[frozenset[Any]] = set()
         unless: dict[Any, list[str]] = {}
+        conditions: dict[Any, str] = {}
         for expr in _conjuncts(filters):
             kind = getattr(expr, "name", "")
             if kind == "RelationalExpression" and expr.op == "!=":
                 pairs.add(frozenset((expr.expr, expr.other)))
+            elif (
+                kind == "RelationalExpression"
+                and expr.op == "="
+                and getattr(expr.expr, "name", "") == "Builtin_STR"
+                and isinstance(expr.expr.arg, Variable)
+                and isinstance(expr.other, Literal)
+            ):
+                conditions[expr.expr.arg] = str(expr.other)
             elif kind == "Builtin_NOTEXISTS":
                 inner = _triples_of(expr["graph"])
                 if len(inner) == 1 and str(inner[0][1]) == _TYPE:
@@ -852,8 +950,9 @@ class Query:
             requires = tuple(
                 (paths[v], types[v][0] if types.get(v) else None)
                 for v in sorted(variables, key=str)
-                if v != focus and v not in ends and v not in optional
+                if v != focus and v not in ends and v not in optional and v not in conditions
             )
+            when = tuple((paths[v], conditions[v]) for v in sorted(conditions, key=str))
             common: dict[str, Any] = {
                 "focus": cls,
                 "predicate": str(p),
@@ -863,6 +962,7 @@ class Query:
                 "unless_classes": tuple(unless.get(focus, [])),
                 "subject_unless_classes": tuple(unless.get(s, [])) if s != focus else (),
                 "requires": requires,
+                "when": when,
             }
             if frozenset((s, o)) in pairs:
                 rules.append(Rule(**common, pairs=True))
@@ -1146,6 +1246,19 @@ def identity_kept(source: Any, target: Any) -> dict[str, Any]:
     }
 
 
+def _file_sha256(data: str | Path | None) -> str:
+    """Return the sha256 of a local data file, or "" for an address or nothing."""
+    import hashlib
+
+    if not data or str(data).startswith(("http://", "https://")) or not Path(data).is_file():
+        return ""
+    digest = hashlib.sha256()
+    with Path(data).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def write_query(
     rules: Sequence[Rule],
     *,
@@ -1156,9 +1269,13 @@ def write_query(
     endpoint: str = "",
     prefixes: Mapping[str, str] | None = None,
     focus_as: str | None = None,
+    data: str | Path | None = None,
 ) -> str:
     """Return the rules of one focus as a query file: a ``# key: value`` header and one plain
     CONSTRUCT, which Query reads back into the same rules.
+
+    *data* is the data the query ran on (a file or an address): the header names it, with the
+    sha256 of a local file, so that a result can be tied to its input.
 
     *source* is a client (its name and its mined prefixes) or a name; *target* a target model
     or a name with its version. The focus is ``?<focus_as>``, else ``?<its class>``; an end is ``?<subject_as>`` or ``?<object_as>``, else named
@@ -1250,6 +1367,10 @@ def write_query(
             needed_by_all.add(needed)
             if cls:
                 classes[needed] = cls
+        for path, given in rule.when:
+            needed = var(path, None)
+            needed_by_all.add(needed)
+            filters.append(f"FILTER(STR({needed}) = {_literal(given)})")
         ends.append({v for v in (subject, obj) if v.startswith("?") and v != root})
         predicate = "a" if rule.predicate == _TYPE else term(rule.predicate)
         template.append(f"  {subject} {predicate} {obj} .")
@@ -1289,6 +1410,8 @@ def write_query(
         "source release": release,
         "target": target,
         "endpoint": endpoint,
+        "data": str(data) if data else "",
+        "data sha256": _file_sha256(data),
         "generated with": made_with,
     }
     lines = [f"# {k}: {v}" for k, v in header.items() if v]

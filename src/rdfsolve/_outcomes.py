@@ -14,9 +14,12 @@ FailureCategory = Literal[
     "invalid_response",
     "sampled",
     "rate_limited",
+    "empty",
 ]
 # "sampled": rows come from bounded member windows because the whole query exceeded its budget.
 # "rate_limited": the endpoint asked for a pause longer than the wait budget of the client.
+# "empty": a query answered without rows where rows were expected (a resource named as a seed
+# that gives no statement): the answer is not taken as the data.
 Bindings = list[dict[str, Any]]
 # The key of a result row that a sampled query answered (rdfsolve.mining.sampling); its value is
 # the provenance of the sample (QuerySample.provenance). Not a SPARQL variable.

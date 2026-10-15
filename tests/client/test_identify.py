@@ -119,3 +119,60 @@ def test_a_record_named_by_its_identifier_iri_is_found_by_that_identifier():
     assert [(m.resource, m.method) for m in found] == [
         ("https://identifiers.org/ncbigene/1595", "resource IRI")
     ]
+
+
+def test_a_relative_iri_value_keeps_its_statement_and_is_named_in_a_warning(monkeypatch):
+    """A source's relative IRI (as AOP-Wiki RDF has) is not put in a query: the statement stays,
+    its name is not read, and a warning names it, instead of failing the whole call."""
+    import warnings
+
+    from rdfsolve.client import identify
+
+    rows = {
+        "Read statements": [
+            {
+                "s": {"type": "uri", "value": "urn:a"},
+                "p": {"type": "uri", "value": "urn:p"},
+                "o": {"type": "uri", "value": "rel"},
+            },
+            {
+                "s": {"type": "uri", "value": "urn:a"},
+                "p": {"type": "uri", "value": "urn:q"},
+                "o": {"type": "uri", "value": "urn:b"},
+            },
+        ],
+    }
+
+    class Source:
+        current = ""
+        queries: list[str] = []
+
+        def _scope(self, body):
+            return body
+
+        def step(self, name):
+            import contextlib
+
+            self.current = name
+            return contextlib.nullcontext()
+
+        def _select(self, query, exhaustive=False):
+            self.queries.append(query)
+            return rows.get(self.current, [])
+
+    source = Source()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        graph = identify.statements(source, ["urn:a"])
+    assert (URIRef("urn:a"), URIRef("urn:p"), URIRef("rel")) in graph
+    assert any("rel" in str(w.message) and "absolute" in str(w.message) for w in caught)
+    names = [q for q in source.queries if "?name" in q]
+    assert names and "<urn:b>" in names[0] and "<rel>" not in names[0]
+    assert not any("does not look like a valid URI" in str(w.message) for w in caught)
+
+
+def test_a_query_term_is_a_plain_string_not_a_bracketed_uriref():
+    from rdfsolve.client.hydration import _iri
+
+    written = _iri(URIRef("https://identifiers.org/aop.events/177"))
+    assert type(written) is str and written == "<https://identifiers.org/aop.events/177>"

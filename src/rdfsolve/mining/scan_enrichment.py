@@ -31,6 +31,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal
 
+from rdfsolve._datasets import default_graph
 from rdfsolve.mining.scan import RDF_LANG, RDF_TYPE, XSD_STRING, RowStore
 
 if TYPE_CHECKING:
@@ -1101,7 +1102,7 @@ def metadata_document(
     for s, p, o, d in [*level0, *level1, *level2]:
         graph.add((node(s, p, None), URIRef(p), node(o, p, d)))
     dataset = Dataset()
-    dataset.default_context += graph
+    default_graph(dataset).__iadd__(graph)
     return MetadataDocument(
         graph=graph, rdf_dataset=dataset, endpoint=store.manifest.get("endpoint")
     )

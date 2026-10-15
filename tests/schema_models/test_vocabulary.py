@@ -1,6 +1,8 @@
 """rdfsolve.schema_models vocabularies: a schema is built from vocabularies and their profiles,
 with equivalences and hierarchies."""
 
+import json
+
 import pytest
 from rdflib import DCTERMS, FOAF, RDFS, SH, XSD, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection
@@ -51,9 +53,9 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
     assert schema.prefixes["foaf"] == str(FOAF) and "owl" not in schema.prefixes, (
         "Declared prefixes in use"
     )
-    parents = {S.ResearchOrganization: S.Organization, S.Organization: S.Thing, S.Person: S.Thing}
+    parents = {S.ResearchOrganization: S.Organization}
     assert schema.class_hierarchy == {str(c): [str(p)] for c, p in parents.items()}, (
-        "Range-only Thing joins"
+        "schema:Thing is the top class: a range of it is any resource, not a class to join"
     )
     assert {p.evidence_source for p in schema.patterns} == {"vocabulary"}, "Declared, not observed"
     person_rows = {p.property_uri for p in schema.patterns if p.subject_class == str(S.Person)}
@@ -126,6 +128,41 @@ def test_vocabulary_declarations_become_models_and_rdf(caplog, recwarn, tmp_path
     )
     with pytest.raises(ValueError, match="Ambiguous"):
         client.create("Person", uri="urn:c", dcterms_source="https://example.org/"), "IRI or text?"
+    page = "https://example.org/"
+    as_link = client.create("Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "iri"})
+    as_text = client.create("Person", uri="urn:k", dcterms_source=page, kinds={"dcterms_source": "text"})
+    guessed = client.create("Person", uri="urn:k", dcterms_source=page, iri_strings=True)
+    assert URIRef(page) in set(as_link.to_graph().objects()), "A reading chosen once per field"
+    assert Literal(page) in set(as_text.to_graph().objects())
+    assert URIRef(page) in set(guessed.to_graph().objects()), "An http(s) string is a link"
+    import pandas as pd
+
+    from rdfsolve.client.authoring import RecordError
+
+    rows = pd.DataFrame(
+        {
+            "iri": ["urn:p1", "urn:p2", "urn:p3"],
+            "children": ["x", "2", "y"],
+            "source": [page, page, page],
+        }
+    )
+    with pytest.raises(RecordError) as raised:
+        client.from_table(
+            "Person", rows, id_column="iri", numberOfChildren="children", dcterms_source="source"
+        )
+    found = {(p["row"], p["field"]) for p in raised.value.problems}
+    assert found == {
+        (0, "numberOfChildren"),
+        (0, "dcterms_source"),
+        (1, "dcterms_source"),
+        (2, "numberOfChildren"),
+        (2, "dcterms_source"),
+    }, "Every problem of every row, not the first one"
+    made = client.from_table(
+        "Person", rows.iloc[[1]], id_column="iri", numberOfChildren="children",
+        dcterms_source="source", kinds={"dcterms_source": "iri"},
+    )
+    assert len(made) == 1
     shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
     assert not set(shapes.triples((None, SH.datatype, RDFS.Literal))), "Any literal: a node kind"
     team = client.create("Person", uri="urn:t", colleague=RDFList(items=[ada, "urn:b"])).to_graph()
@@ -255,3 +292,69 @@ def test_a_profile_can_declare_ordered_lists():
     graph = code.to_graph()
     head = next(o for _, p, o in graph if str(p) == VOCABULARY_PROFILE_S + "contributor")
     assert [str(m) for m in graph.items(head)] == ["urn:p1", "urn:p2"], "In their order"
+
+
+RULES = """
+@prefix schema: <https://schema.org/> . @prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . @prefix site: <urn:site:> .
+@prefix dash: <http://datashapes.org/dash#> .
+site:main a sh:PropertyGroup ; sh:order 1 .
+site:SourceCode a sh:NodeShape ; sh:targetClass schema:SoftwareSourceCode ;
+    sh:property [ sh:path schema:softwareVersion ; sh:datatype xsd:string ; sh:minCount 1 ;
+        sh:maxCount 1 ; sh:order 3 ; sh:group site:main ; sh:name "Version" ;
+        sh:message "A version is required" ; dash:singleLine true ] ;
+    sh:property [ sh:path schema:applicationCategory ; sh:hasValue "research" ] .
+"""
+
+
+def test_a_profile_keeps_its_rules_and_form_annotations_through_json_and_shacl(tmp_path):
+    """minCount, hasValue, order, group, messages and DASH annotations of a profile survive
+    from_vocabulary -> to_dict -> from_json -> to_shacl, merged with the generated shapes."""
+    from rdflib import Namespace
+
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    dash = Namespace("http://datashapes.org/dash#")
+    schema = MinedSchema.from_vocabulary(
+        CODE, [VOCABULARY_PROFILE_S + "SoftwareSourceCode"], profile=RULES
+    )
+    path = tmp_path / "s_schema.json"
+    path.write_text(json.dumps(schema.to_dict()), encoding="utf-8")
+    shapes = Graph().parse(data=MinedSchema.from_json(path).to_shacl(), format="turtle")
+    version = next(
+        s for s in shapes.subjects(sh.path, URIRef(VOCABULARY_PROFILE_S + "softwareVersion"))
+    )
+    found = {p: shapes.value(version, p) for p in (sh.minCount, sh.maxCount, sh.order, sh.group)}
+    assert {str(p).rsplit("#")[-1]: str(v) for p, v in found.items()} == {
+        "minCount": "1",
+        "maxCount": "1",
+        "order": "3",
+        "group": "urn:site:main",
+    }
+    assert shapes.value(version, dash.singleLine) is not None
+    assert str(shapes.value(version, sh.message)) == "A version is required"
+    assert len(list(shapes.objects(version, sh.name))) == 1, "The profile's name replaces"
+    owners = list(shapes.subjects(sh.property, version))
+    assert len(owners) == 1 and shapes.value(owners[0], sh.targetClass) is not None
+    category = next(
+        s for s in shapes.subjects(sh.path, URIRef(VOCABULARY_PROFILE_S + "applicationCategory"))
+    )
+    assert str(shapes.value(category, sh.hasValue)) == "research"
+    assert (URIRef("urn:site:main"), sh.order, None) in shapes, "The property group is kept"
+    targets = list(shapes.subjects(sh.targetClass, URIRef(VOCABULARY_PROFILE_S + "SoftwareSourceCode")))
+    assert len(targets) == 1, "One node shape for the class, not the profile's beside it"
+
+
+def test_schema_thing_is_a_top_class_not_a_class_check():
+    """A range of schema:Thing allows any IRI or blank node: no sh:class schema:Thing check, which
+    untyped or external links would fail. Other vocabularies give their top class."""
+    schema = MinedSchema.from_vocabulary(VOCABULARY, classes=[S.Person])
+    knows = {p.object_class for p in schema.patterns if p.property_uri == str(S.knowsAbout)}
+    assert knows == {"Resource", "BlankNode"}
+    shapes = Graph().parse(data=schema.to_shacl(), format="turtle")
+    assert not list(shapes.subject_objects(SH["class"])) or (None, SH["class"], S.Thing) not in shapes
+    kept = MinedSchema.from_vocabulary(
+        VOCABULARY, classes=[S.Person], top_classes=["http://www.w3.org/2002/07/owl#Thing"]
+    )
+    assert {p.object_class for p in kept.patterns if p.property_uri == str(S.knowsAbout)} == {
+        str(S.Thing)
+    }, "A vocabulary's top classes are a parameter"

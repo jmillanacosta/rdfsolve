@@ -6,6 +6,7 @@ from typing import Any
 
 from rdflib import Dataset, Graph, URIRef
 
+from rdfsolve._datasets import default_graph
 from rdfsolve.schema_models.metadata import MetadataDocument
 from rdfsolve.sparql_helper import SparqlHelper
 
@@ -83,7 +84,7 @@ def query_metadata_document(
             scoped += " }"
         text = helper.construct(scoped)
         retrieved = Graph().parse(data=text, format="turtle", publicID=helper.endpoint_url)
-        target = dataset.default_context if uri is None else dataset.graph(uri)
+        target = default_graph(dataset) if uri is None else dataset.graph(uri)
         target += retrieved
         graph += retrieved
     return MetadataDocument(

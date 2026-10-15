@@ -263,3 +263,46 @@ def test_classification_client_joins_scoped_graphs(tmp_path):
         assert len(client.queries) == queries, (
             "Reject a model from another graph scope before querying"
         )
+
+
+def test_assessment_runs_sparql_targets_with_advanced_and_keeps_digests():
+    """advanced runs SHACL-AF (here a SPARQL-based target); the declarations are named by
+    digest unless their Turtle is asked for; the ontology is read, not changed; the comparison
+    with observed rows can be left out."""
+    data = Dataset().parse(
+        data="""@prefix e: <urn:example:> .
+        e:data { e:a a e:Cell; e:ref e:r . e:b a e:Cell . e:r a e:Reference . }
+    """,
+        format="trig",
+    )
+    with SchemaMiner.from_graph(data, graph_uris=["urn:example:data"], delay=0) as miner:
+        schema = miner.mine("references")
+    with Client(schema, data) as client:
+        selected = client.extract(
+            schema.select(fields=[("urn:example:Cell", "urn:example:ref")]),
+            root_class="urn:example:Cell",
+        )
+    shapes = Graph().parse(
+        data="""@prefix sh: <http://www.w3.org/ns/shacl#> .
+        <urn:shape> a sh:NodeShape;
+            sh:target [ a sh:SPARQLTarget ;
+                sh:select "SELECT ?this WHERE { ?this a <urn:example:Cell> }" ] ;
+            sh:property [ sh:path <urn:example:ref> ; sh:minCount 1 ] .
+    """,
+        format="turtle",
+    )
+    ontology = Graph().parse(
+        data="<urn:example:Cell> <http://www.w3.org/2000/01/rdf-schema#label> 'Cell' .",
+        format="turtle",
+    )
+    before = set(ontology)
+    plain = selected.assess(shapes, ontology=ontology, compare=False)
+    assert plain.state == "not_checked", "A SPARQL target is SHACL-AF: not run without advanced"
+    assert plain.shapes_turtle is None and len(plain.shapes_sha256) == 64
+    assert plain.comparisons == []
+    checked = selected.assess(shapes, ontology=ontology, advanced=True, keep_turtle=True)
+    assert checked.conforms is False
+    assert {v.focus.value for v in checked.violations} == {"urn:example:b"}
+    assert checked.focus_counts == {"urn:shape": 2}
+    assert checked.shapes_turtle and "SPARQLTarget" in checked.shapes_turtle
+    assert set(ontology) == before, "The ontology is read, not changed"

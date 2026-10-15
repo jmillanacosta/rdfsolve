@@ -124,6 +124,7 @@ class Hydrator:
         max_subjects: int = 100,
         contract: bool = False,
         local_backend: LocalBackend = "oxigraph",
+        allow_service: bool = False,
     ) -> None:
         """Create models and budgets without making requests.
 
@@ -132,7 +133,9 @@ class Hydrator:
         values work through larger sets in requests of these sizes; a request that cannot be
         made smaller (one record with more than max_rows values) is an error that names the limit.
 
-        None graph scope uses the schema scope. Pass [] for the default graph.
+        None graph scope uses the schema scope. Pass [] for the default graph. Queries of local
+        data with a SERVICE pattern are refused unless *allow_service*: the engines would call
+        the host it names.
         A supplied helper remains owned by the caller. Without a source or a schema
         endpoint, the client writes records but cannot query.
         """
@@ -156,12 +159,13 @@ class Hydrator:
             else source
         )
         self._local_rdf = (
-            LocalRdf(self.source, backend=local_backend)
+            LocalRdf(self.source, backend=local_backend, allow_service=allow_service)
             if isinstance(self.source, (Graph, ox.Dataset, ox.Store))
             else None
         )
         # The class views; the view of subjects without a type is apart (it has no class).
         self.models, self.untyped_model = generated_models(schema, contract=contract)
+        self.allow_service = allow_service
         self.batch_size = batch_size
         self.max_rows = max_rows
         self.max_subjects = max_subjects

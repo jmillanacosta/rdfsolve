@@ -359,3 +359,18 @@ def test_streamed_view_counts_equal_the_counts_of_the_held_schema(schema, tmp_pa
     assert views["raw_patterns"]["kept"] == len(kept)
     assert views["raw_patterns"]["terms"] == release._terms(kept)
     assert views["term_patterns"]["rows"] == 0
+
+
+def test_select_takes_every_field_of_classes():
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="x"),
+        patterns=[
+            pattern("urn:A", "urn:p", 1),
+            pattern("urn:A", "urn:q", 1),
+            pattern("urn:B", "urn:r", 1),
+        ],
+    )
+    chosen = schema.select(classes=["urn:A"], fields=[("urn:B", "urn:r")])
+    assert chosen.fields == [("urn:B", "urn:r"), ("urn:A", "urn:p"), ("urn:A", "urn:q")]
+    with pytest.raises(ValueError, match="urn:C"):
+        schema.select(classes=["urn:C"])

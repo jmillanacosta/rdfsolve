@@ -389,6 +389,52 @@ class RDFRecord(BaseModel):
         return to_oxigraph(self.to_graph(fields=fields))
 
 
+class RecordError(ValueError):
+    """Values that give no record: *problems* lists each one (field, value, reason, and the row
+    and index of a table).
+    """
+
+    def __init__(self, problems: list[dict[str, Any]]) -> None:
+        """Hold the problems; the message lists them."""
+        self.problems = problems
+        lines = [
+            (f"row {p['row']} (index {p['index']!r}): " if "row" in p else "")
+            + (f"{p['field']}: " if p.get("field") else "")
+            + p["reason"].removeprefix(f"{p.get('field')}: ")
+            for p in problems
+        ]
+        shown = "; ".join(lines[:10]) + (f"; and {len(lines) - 10} more" if len(lines) > 10 else "")
+        super().__init__(f"{len(problems)} problems: {shown}" if len(problems) > 1 else shown)
+
+
+# Strings that iri_strings reads as links: absolute http(s) and urn IRIs without spaces.
+_IRI_STRING = re.compile(r"^(?:https?://|urn:)\S+$")
+
+
+def takes_iri(extra: dict[str, Any]) -> bool:
+    """Return whether a field takes a link (an IRI or blank node) among its patterns."""
+    return any(p.get("object_class") != "Literal" for p in extra.get("rdf_patterns", []))
+
+
+def read_as(value: Any, reading: str | None, extra: dict[str, Any], field: str) -> Any:
+    """Give plain strings of a field the chosen reading: "iri" (a link) or "text" (a string
+    literal). Other values, and explicit RDF terms, are kept as they are.
+    """
+    if reading is None or value is None:
+        return value
+    if isinstance(value, list):
+        return [read_as(item, reading, extra, field) for item in value]
+    if not isinstance(value, str):
+        return value
+    if reading == "iri":
+        if not takes_iri(extra):
+            raise ValueError(f"{field}: the field takes no link; read its values as text")
+        return URIRef(absolute_iri(value))
+    if reading == "text":
+        return Literal(value)
+    raise ValueError(f"{field}: unknown reading {reading!r}; use 'iri' or 'text'")
+
+
 def create_record(
     model: type[BaseModel],
     values: Mapping[str, Any],
@@ -397,14 +443,33 @@ def create_record(
     blank_node_scope: str | None = None,
     language: str | None = None,
     extra_types: Sequence[str] = (),
+    readings: Mapping[str, str] | None = None,
+    iri_strings: bool = False,
 ) -> BaseModel:
-    """Create a named or anonymous record with explicit blank-node scope."""
+    """Create a named or anonymous record with explicit blank-node scope.
+
+    *readings* gives the plain strings of a field one reading ("iri" or "text"), so that a
+    value that fits both is not refused as ambiguous; with *iri_strings*, an absolute http(s)
+    or urn string is a link in any field that takes one. Every field is checked: the error
+    (RecordError) lists each value that fits no reading.
+    """
     from rdfsolve.client.hydration import class_iri, field_metadata, is_untyped
 
-    data = {
-        name: coerce_value(value, field_metadata(model.model_fields[name]), name, language)
-        for name, value in values.items()
-    }
+    data: dict[str, Any] = {}
+    problems: list[dict[str, Any]] = []
+    for name, value in values.items():
+        extra = field_metadata(model.model_fields[name])
+        reading = (readings or {}).get(name)
+        if reading is None and iri_strings and takes_iri(extra):
+            given = value if isinstance(value, list) else [value]
+            if given and all(isinstance(v, str) and _IRI_STRING.match(v) for v in given):
+                reading = "iri"
+        try:
+            data[name] = coerce_value(read_as(value, reading, extra, name), extra, name, language)
+        except ValueError as error:
+            problems.append({"field": name, "value": value, "reason": str(error)})
+    if problems:
+        raise RecordError(problems)
     if uri is not None:
         identifier = "_:" + str(uri) if isinstance(uri, BNode) else uri
         if not identifier.startswith("_:"):

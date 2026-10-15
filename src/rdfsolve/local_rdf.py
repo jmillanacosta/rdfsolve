@@ -260,19 +260,54 @@ def _rdf(value: ox.NamedNode | ox.BlankNode | ox.Literal | ox.Triple) -> Identif
     raise ValueError("RDF triple terms are not supported")
 
 
+def refuse_service(query: str) -> None:
+    """Refuse a query with a SERVICE pattern: both local engines would send it to the host it
+    names, an internal address included, so a query passed through to local data could reach
+    other servers. Raise ValueError naming the reason; a query that does not parse is left to the
+    engine's own error.
+    """
+    from rdflib.plugins.sparql.parser import parseQuery
+    from rdflib.plugins.sparql.parserutils import CompValue
+
+    try:
+        parsed = parseQuery(query)
+    except Exception:
+        return
+    stack: list[Any] = [parsed]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, CompValue):
+            if node.name == "ServiceGraphPattern":
+                raise ValueError(
+                    "SERVICE is not run on local data: it would call the host it names. "
+                    "Open the client with allow_service=True to allow it."
+                )
+            stack.extend(node.values())
+        elif isinstance(node, (list, tuple)):
+            stack.extend(node)
+        elif hasattr(node, "asList"):
+            stack.extend(node.asList())
+
+
 class LocalRdf:
     """Query a local snapshot while retaining RDFLib terms at the API boundary."""
 
     def __init__(
-        self, graph: Graph | ox.Dataset | ox.Store, *, backend: LocalBackend = "oxigraph"
+        self,
+        graph: Graph | ox.Dataset | ox.Store,
+        *,
+        backend: LocalBackend = "oxigraph",
+        allow_service: bool = False,
     ) -> None:
         """Select an engine; retain RDFLib when Oxigraph changes stored RDF terms.
 
         Oxigraph data is queried without an RDFLib copy. It is copied to RDFLib only for the
-        rdflib backend, or when the Oxigraph store changes literal forms.
+        rdflib backend, or when the Oxigraph store changes literal forms. A query with a
+        SERVICE pattern is refused unless *allow_service* (refuse_service).
         """
         if backend not in {"oxigraph", "rdflib"}:
             raise ValueError("local backend must be oxigraph or rdflib")
+        self.allow_service = allow_service
         self.requested = backend
         self.backend = backend
         self.fallback_reason: str | None = None
@@ -376,6 +411,8 @@ class LocalRdf:
 
         Oxigraph writes the results itself when no RDFLib literal forms must be restored.
         """
+        if not self.allow_service:
+            refuse_service(query)
         if self._store is not None and not self._literals:
             namespaces = self.graph.namespaces() if self.graph is not None else []
             raw = self._store.query(query, prefixes={p: str(iri) for p, iri in namespaces})
@@ -393,6 +430,8 @@ class LocalRdf:
 
     def query(self, query: str) -> Result:
         """Execute SELECT, ASK or CONSTRUCT with the query's graph clauses."""
+        if not self.allow_service:
+            refuse_service(query)
         if self._store is None:
             if self.graph is None:
                 raise RuntimeError("Local RDF backend is not initialized")

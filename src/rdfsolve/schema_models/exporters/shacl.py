@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from typing import Any
+
+from rdflib import Graph, URIRef
 
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.core import MinedSchema
@@ -490,3 +493,58 @@ def _complete_shapes(
         "Keep canonical JSON for machine-readable filters, statistics, and route provenance."
     )
     return shapes
+
+
+def merge_profile(graph: Graph, profile: str) -> None:
+    """Merge the shapes of a SHACL application profile (Turtle) into generated shapes.
+
+    A profile node shape with a sh:targetClass that a generated node shape has is merged into
+    it; a profile property shape whose path is an IRI that a generated property shape of that
+    class has is merged into it: each predicate the profile shape states replaces the generated
+    values of that predicate (constraints, order, group, messages, DASH annotations), the other
+    generated values stay. A profile property shape without a generated one is added to the
+    class's shape; a node shape of a class with no generated shape, and every other statement
+    of the profile (property groups, declarations), are added as they are.
+    """
+    from rdflib import RDF, Namespace
+
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    given = Graph().parse(data=profile, format="turtle")
+    generated: dict[str, Any] = {}
+    for node, target_class in graph.subject_objects(sh.targetClass):
+        generated.setdefault(str(target_class), node)
+    by_path: dict[tuple[str, str], Any] = {}
+    for class_iri, node in generated.items():
+        for shape in graph.objects(node, sh.property):
+            path = graph.value(shape, sh.path)
+            if isinstance(path, URIRef):
+                by_path.setdefault((class_iri, str(path)), shape)
+
+    def merge_into(target: Any, source: Any, keep: set[Any]) -> None:
+        """Replace the values of *target* for each predicate *source* states, but *keep*."""
+        for predicate in set(given.predicates(source)) - keep:
+            graph.remove((target, predicate, None))
+        for _, predicate, value in given.triples((source, None, None)):
+            if predicate not in keep:
+                graph.add((target, predicate, value))
+
+    merged: set[Any] = set()
+    for node, cls in given.subject_objects(sh.targetClass):
+        target = generated.get(str(cls))
+        if target is None:
+            continue
+        merged.add(node)
+        merge_into(target, node, {RDF.type, sh.targetClass, sh.property})
+        for shape in given.objects(node, sh.property):
+            path = given.value(shape, sh.path)
+            existing = by_path.get((str(cls), str(path))) if isinstance(path, URIRef) else None
+            if existing is None:
+                graph.add((target, sh.property, shape))
+                continue
+            merged.add(shape)
+            merge_into(existing, shape, {RDF.type, sh.path})
+    for triple in given:
+        if triple[0] not in merged:
+            graph.add(triple)
+    for prefix, namespace in given.namespaces():
+        graph.bind(prefix, namespace, override=False)

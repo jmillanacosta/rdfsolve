@@ -71,3 +71,24 @@ def test_a_prefix_implies_a_class_and_a_full_class_sample_keeps_the_run_partial(
     assert not {c for row in rows for c in row} & {ARTICLE}, "Ignored types are no classes"
     assert report.config["scope"]["classes"] == {PERSON: {"members": 1, "state": "sampled"}}
     assert report.completion_state == "partial", "Other members may add rows"
+
+
+def test_a_seed_with_no_statements_keeps_the_run_partial_and_is_named():
+    """An endpoint that answers a seed with no rows is not taken as complete."""
+    schema, report = mine(ScopeStrategy([EX + "paper", EX + "missing"]))
+    assert {p.subject_class for p in schema.patterns} == {ARTICLE}
+    assert report.completion_state == "partial"
+    failures = [vars(f) if not isinstance(f, dict) else f for f in report.query_failures]
+    empty = [f for f in failures if f["category"] == "empty"]
+    assert empty and empty[0]["classes"] == [EX + "missing"], "The seed is named"
+
+
+def test_scope_queries_have_no_filter_on_terms():
+    """Which terms are IRIs and which statements are types is read from the rows: an engine can
+    drop every row of a FILTER on terms after VALUES."""
+    import re
+
+    from rdfsolve.mining import scope_strategy
+
+    source = open(scope_strategy.__file__).read()
+    assert not re.search(r"FILTER\((isIRI|\?p !=)", source)

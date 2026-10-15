@@ -62,12 +62,32 @@ class Extraction(BaseModel):
         return result
 
     def assess(
-        self, shapes: Graph, *, ontology: Graph | None = None, inference: Inference = "none"
+        self,
+        shapes: Graph,
+        *,
+        ontology: Graph | None = None,
+        inference: Inference = "none",
+        advanced: bool = False,
+        compare: bool = True,
+        keep_turtle: bool = False,
     ) -> SelectionAssessment:
-        """Check supplied SHACL and optional ontology rules on the extracted RDF."""
+        """Check supplied SHACL and optional ontology rules on the extracted RDF.
+
+        *advanced* runs SHACL-AF (SPARQL-based constraints and rules); *compare* compares the
+        observed rows with the declared shapes; *keep_turtle* keeps the declarations' Turtle in
+        the result (else their digests only).
+        """
         from rdfsolve.client.assessment import assess
 
-        return assess(self, shapes, ontology, inference)
+        return assess(
+            self,
+            shapes,
+            ontology,
+            inference,
+            advanced=advanced,
+            compare=compare,
+            keep_turtle=keep_turtle,
+        )
 
     def save(self, path: str | Path) -> None:
         """Write TriG with every retained graph."""

@@ -2,14 +2,16 @@
 
 A local name such as ``hasValue`` is two words; a name that a registry writes in mixed case
 (a database or a standard, such as an identifier scheme with internal capitals) is one word,
-however it is cased inside a longer name. The mixed-case names are read from Bioregistry (the
-names and synonyms of its resources), so no name is listed here.
+however it is cased inside a longer name. The mixed-case names are those of Bioregistry (the
+names and synonyms of its resources), written to registered_names.txt with each release, so that
+naming a field does not load Bioregistry.
 """
 
 from __future__ import annotations
 
 import functools
 import re
+from pathlib import Path
 
 __all__ = ["label", "words"]
 
@@ -32,19 +34,43 @@ def _camel(text: str) -> list[str]:
     return out
 
 
-@functools.cache
-def _protected() -> re.Pattern[str] | None:
-    """Return a pattern of the mixed-case names that Bioregistry writes (longest first)."""
-    try:
-        import bioregistry
-    except ImportError:  # pragma: no cover
-        return None
+# The mixed-case names that Bioregistry writes, one per line, generated with the release
+# (write_registered_names): reading them does not load Bioregistry.
+REGISTERED_NAMES = Path(__file__).with_name("registered_names.txt")
+
+
+def registered_names() -> list[str]:
+    """Return the mixed-case names that Bioregistry writes (its names and synonyms), sorted."""
+    import bioregistry
+
     found: set[str] = set()
     for resource in bioregistry.resources():
         for text in [resource.get_name() or "", *(resource.get_synonyms() or [])]:
             for word in re.findall(r"[A-Za-z][A-Za-z0-9]*", text):
                 if re.search(r"[a-z]", word) and re.search(r"[A-Z]", word[1:]) and len(word) > 3:
                     found.add(word)
+    return sorted(found)
+
+
+def write_registered_names(path: Path = REGISTERED_NAMES) -> int:
+    """Write the registered names to *path* (done for each release); return how many."""
+    names = registered_names()
+    path.write_text("".join(f"{name}\n" for name in names), encoding="utf-8")
+    return len(names)
+
+
+@functools.cache
+def _protected() -> re.Pattern[str] | None:
+    """Return a pattern of the mixed-case names that Bioregistry writes (longest first), from the
+    list shipped with the package, or from Bioregistry when the list is absent.
+    """
+    if REGISTERED_NAMES.is_file():
+        found = set(REGISTERED_NAMES.read_text(encoding="utf-8").split())
+    else:
+        try:
+            found = set(registered_names())
+        except ImportError:  # pragma: no cover
+            return None
     if not found:
         return None
     alternatives = "|".join(re.escape(w) for w in sorted(found, key=len, reverse=True))

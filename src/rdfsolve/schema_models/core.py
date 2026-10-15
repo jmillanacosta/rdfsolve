@@ -117,6 +117,12 @@ class MinedSchema(BaseModel):
         "None means not mined",
     )
     prefixes: dict[str, str] = Field(default_factory=dict)
+    shape_profile: str | None = Field(
+        None,
+        description="Turtle of the SHACL application profile the schema was made with "
+        "(from_vocabulary profile=): its shapes are merged into the generated shapes by class "
+        "and path, with every constraint and annotation it states",
+    )
     details: dict[str, DetailFile] | None = Field(
         None,
         description="Sections whose rows are written beside the JSON (rdfsolve.schema_models."
@@ -238,12 +244,24 @@ class MinedSchema(BaseModel):
         *,
         paths: Sequence[NavigationPath] = (),
         fields: Sequence[tuple[str, str]] = (),
+        classes: Sequence[str] = (),
     ) -> SchemaSelection:
-        """Select class-property fields and retained paths with a copy of source evidence."""
+        """Select class-property fields and retained paths with a copy of source evidence.
+
+        *classes* selects every field of those classes (each property of their patterns), in
+        addition to *fields*.
+        """
         from rdfsolve.schema_models.selection import SchemaSelection
 
+        wanted = set(classes)
+        unknown = sorted(wanted - {p.subject_class for p in self.patterns})
+        if unknown:
+            raise ValueError(f"Classes without patterns in the schema: {unknown}")
+        chosen = list(fields) + [
+            (p.subject_class, p.property_uri) for p in self.patterns if p.subject_class in wanted
+        ]
         return SchemaSelection(
-            source=self.model_copy(deep=True), fields=list(fields), paths=list(paths)
+            source=self.model_copy(deep=True), fields=list(dict.fromkeys(chosen)), paths=list(paths)
         )
 
     # Service-namespace filtering
@@ -615,7 +633,12 @@ class MinedSchema(BaseModel):
 
     @classmethod
     def from_vocabulary(
-        cls, vocabulary: str | Any, classes: Any, *, profile: str | Path | None = None
+        cls,
+        vocabulary: str | Any,
+        classes: Any,
+        *,
+        profile: str | Path | None = None,
+        top_classes: Any = None,
     ) -> MinedSchema:
         """Read declared rows for classes of published vocabularies.
 
@@ -627,11 +650,23 @@ class MinedSchema(BaseModel):
         profile is a SHACL application profile (Turtle text or a file) that the user owns.
         Its shapes add rows for properties that the vocabularies do not declare for a class,
         without axioms about the vocabularies' terms. The added rows have evidence_source
-        "shacl".
-        """
-        from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+        "shacl". Its rules and form annotations are kept and merged into to_shacl.
 
-        return vocabulary_to_minedschema(vocabulary, classes, profile=profile)
+        top_classes are the classes every resource is one of: a range of one of them allows any
+        IRI or blank node, with no class check (owl:Thing, rdfs:Resource and schema:Thing by
+        default; give a vocabulary's own top class here).
+        """
+        from rdfsolve.schema_models.readers.vocabulary import (
+            UNIVERSAL,
+            vocabulary_to_minedschema,
+        )
+
+        return vocabulary_to_minedschema(
+            vocabulary,
+            classes,
+            profile=profile,
+            top_classes=UNIVERSAL if top_classes is None else top_classes,
+        )
 
     # NetworkX export
 
@@ -830,6 +865,10 @@ class MinedSchema(BaseModel):
             schema, base_uri=base_uri, activate_observed=activate_observed
         )
         graph = trim_export_text(shapes, trim_descriptions).to_rdf()
+        if self.shape_profile and paths != "only":
+            from rdfsolve.schema_models.exporters.shacl import merge_profile
+
+            merge_profile(graph, self.shape_profile)
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph
 

@@ -222,3 +222,32 @@ def test_a_rule_can_require_a_link_of_its_focus(tmp_path):
     (tmp_path / "wp-biolink-pairs.rq").write_text(text)
     back = Query.read(tmp_path / "wp-biolink-pairs.rq").rules()
     assert [r.requires for r in back] == [((f"<{WP}partOf>", WP + "Pathway"),)]
+
+
+def test_a_rule_whose_link_the_source_lacks_is_listed_and_not_run():
+    """A week's data without a field: the rule written with its IRI is kept, and a run lists it
+    instead of failing."""
+    import warnings
+    from types import SimpleNamespace
+
+    from rdfsolve.conversion import _link
+
+    url = "https://example.org/instance_url"
+    assert _link(None, url, WP + "Catalysis") == url, "An IRI needs no lookup"
+
+    class Source(Local):
+        schema = SimpleNamespace(get_properties=lambda: [WP + "source", WP + "target"])
+
+    profile = Profile(
+        "tools",
+        [
+            Rule(WP + "Catalysis", BL + "catalyzes", subject=WP + "source", object=WP + "target"),
+            Rule(WP + "Catalysis", BL + "url", object=url, name="instance url"),
+        ],
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        out = profile.run(Source())
+    assert profile.last_skipped == [{"rule": "instance url", "missing_properties": [url]}]
+    assert {q.predicate.value for q in out} == {BL + "catalyzes"}
+    assert any("instance url" in str(w.message) for w in caught)
