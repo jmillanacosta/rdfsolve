@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from collections.abc import Mapping
 from typing import Any
 
 from rdflib import Graph, URIRef
@@ -116,13 +117,17 @@ def minedschema_to_shacl(
         lists[(profile.subject_class, profile.property_uri)].append(profile)
     cardinalities = counted_cardinalities(schema)
     value_namespaces = _value_namespaces(schema)
+    below = _descendants(schema.class_hierarchy)
     node_shapes = []
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
-
+        # The SHACL instances of a class include the members of its subclasses, whose values
+        # the schema counts under the subclasses (minimal types): the shape allows them too.
+        members = [subject_class, *sorted(below.get(subject_class, ()))]
         by_property: dict[str, list[SchemaPattern]] = defaultdict(list)
-        for pattern in by_subject[subject_class]:
-            by_property[pattern.property_uri].append(pattern)
+        for member in members:
+            for pattern in by_subject.get(member, []):
+                by_property[pattern.property_uri].append(pattern)
         property_shapes = []
         for prop, patterns in sorted(by_property.items()):
             # No constraint on rdf:type: the schema keeps the rows of type values that are
@@ -130,7 +135,7 @@ def minedschema_to_shacl(
             if prop == RDF_TYPE:
                 continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
-            namespaces, identifiers = value_namespaces.get((subject_class, prop), (None, False))
+            namespaces, identifiers = _joined_namespaces(value_namespaces, members, prop, patterns)
             shape = _value_shape(
                 patterns,
                 lists.get((subject_class, prop), []),
@@ -268,15 +273,59 @@ def counted_cardinalities(
     return found
 
 
-def _value_namespaces(schema: MinedSchema) -> dict[tuple[str, str], tuple[str, bool]]:
-    """Return the sh:pattern of the IRI values without a type of each (class, property), and
+def _descendants(hierarchy: Mapping[str, list[str]]) -> dict[str, set[str]]:
+    """Return every subclass of each class of a hierarchy (class -> its nearest superclasses)."""
+    children: dict[str, set[str]] = defaultdict(set)
+    for child, parents in hierarchy.items():
+        for parent in parents:
+            children[parent].add(child)
+    found: dict[str, set[str]] = {}
+    for cls in children:
+        seen: set[str] = set()
+        todo = list(children[cls])
+        while todo:
+            child = todo.pop()
+            if child not in seen and child != cls:
+                seen.add(child)
+                todo.extend(children.get(child, ()))
+        found[cls] = seen
+    return found
+
+
+def _joined_namespaces(
+    value_namespaces: Mapping[tuple[str, str], tuple[list[str], bool]],
+    classes: list[str],
+    prop: str,
+    patterns: list[SchemaPattern],
+) -> tuple[str | None, bool]:
+    """Return the sh:pattern of the untyped IRI values of *prop* over *classes* (a class and its
+    subclasses), and whether each value is a registered identifier: none when a class with such
+    values has no measured namespaces.
+    """
+    from rdfsolve.schema_models.class_parts import namespaces_pattern
+
+    with_values = sorted(
+        {
+            p.subject_class
+            for p in patterns
+            if p.object_class == "Resource" and p.subject_class in classes
+        }
+    )
+    found = [value_namespaces.get((cls, prop)) for cls in with_values]
+    measured = [item for item in found if item is not None]
+    if not measured or len(measured) != len(found):
+        return None, False
+    namespaces = [n for names, _ in measured for n in names]
+    return namespaces_pattern(namespaces), all(identifiers for _, identifiers in measured)
+
+
+def _value_namespaces(schema: MinedSchema) -> dict[tuple[str, str], tuple[list[str], bool]]:
+    """Return the namespaces of the IRI values without a type of each (class, property), and
     whether every value is a registered identifier: the namespaces of the parts counted over
     every value (schema.value_parts). A pair with values written without a scheme has none: a
     reader resolves them against its own base IRI.
     """
-    from rdfsolve.schema_models.class_parts import namespaces_pattern
-
-    found: dict[tuple[str, str], tuple[str, bool]] = {}
+    found: dict[tuple[str, str], tuple[list[str], bool]] = {}
     for measured in schema.value_parts or []:
         namespaces = [n for part in measured.parts for n in part.namespaces]
         if not measured.parts or any(
@@ -286,10 +335,7 @@ def _value_namespaces(schema: MinedSchema) -> dict[tuple[str, str], tuple[str, b
         identifiers = all(
             part.kind in ("identifier", "invalid_identifier") for part in measured.parts
         )
-        found[(measured.subject_class, measured.property_uri)] = (
-            namespaces_pattern(namespaces),
-            identifiers,
-        )
+        found[(measured.subject_class, measured.property_uri)] = (namespaces, identifiers)
     return found
 
 

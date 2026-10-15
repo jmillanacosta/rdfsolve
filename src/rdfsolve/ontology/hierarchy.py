@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import gzip
 from collections import defaultdict, deque
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Literal
 
@@ -196,4 +196,37 @@ def fill_parents(
     return with_loaded
 
 
-__all__ = ["NamedOntologyIndex", "fetch_superclasses", "fill_parents", "read_hierarchy"]
+def nearest_classes(
+    parents: Mapping[str, Iterable[str]], classes: Iterable[str]
+) -> dict[str, list[str]]:
+    """Return, for each of *classes*, its nearest ancestors among *classes* (by *parents*, the
+    rdfs:subClassOf parents of every term and its ancestors): a branch of ancestors stops at the
+    first of *classes* it reaches. Classes without such an ancestor are left out.
+    """
+    wanted = set(classes)
+    found: dict[str, list[str]] = {}
+    for cls in sorted(wanted):
+        nearest: set[str] = set()
+        seen = {cls}
+        todo = [p for p in parents.get(cls, ()) if p not in seen]
+        while todo:
+            term = todo.pop()
+            if term in seen:
+                continue
+            seen.add(term)
+            if term in wanted:
+                nearest.add(term)
+            else:
+                todo.extend(parents.get(term, ()))
+        if nearest:
+            found[cls] = sorted(nearest)
+    return found
+
+
+__all__ = [
+    "NamedOntologyIndex",
+    "fetch_superclasses",
+    "fill_parents",
+    "nearest_classes",
+    "read_hierarchy",
+]

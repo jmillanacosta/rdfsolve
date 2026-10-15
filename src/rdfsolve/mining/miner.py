@@ -1449,6 +1449,8 @@ class SchemaMiner:
         elif self.enrich:
             schema.enrichment = self.query_enrichment(schema, annotation_iris=annotation_iris)
         classes, properties = self._collect_class_property_sets(schema.patterns)
+        if not schema.class_hierarchy:
+            schema.class_hierarchy = self._class_hierarchy(sorted(classes))
         # A strategy with its own view may state the members of its classes (VoID).
         entity_counts = dict(getattr(self._strategy, "entity_counts", {})) if self._own_view else {}
         # A count that the strategy holds for a lower bound (VoID: contradicted by its own
@@ -1611,6 +1613,36 @@ class SchemaMiner:
                 len(found["terms"]),
             )
         return schema
+
+    def _class_hierarchy(self, classes: list[str]) -> dict[str, list[str]]:
+        """Return the nearest superclasses of each class among *classes*, from the data's
+        rdfs:subClassOf statements (the ontology graphs when selected): a SHACL instance of a
+        class includes the members of its subclasses, which minimal types count apart.
+        """
+        from rdfsolve.ontology.hierarchy import fetch_superclasses, nearest_classes
+        from rdfsolve.sparql_helper import SparqlHelperError
+
+        phase = self._report.start_phase("class-hierarchy")
+        try:
+            if self._store is not None:
+                from rdfsolve.mining.scan_terms import superclasses
+
+                parents = superclasses(
+                    self._store,
+                    classes,
+                    ontology_graph_uris=self._ontology_graph_uris,
+                    hierarchy_files=self._hierarchy_files,
+                )
+            else:
+                parents = fetch_superclasses(
+                    self._helper, classes, graph_uris=self._ontology_graph_uris or self.graph_uris
+                )
+        except (SparqlHelperError, ValueError) as error:
+            self._report.finish_phase(phase, error=str(error)[:500])
+            return {}
+        found = nearest_classes(parents, classes)
+        self._report.finish_phase(phase, items=len(found))
+        return found
 
     def _measure_values(self, schema: MinedSchema) -> None:
         """Measure the values of each (class, property) for SHACL (value_counts, value_parts),

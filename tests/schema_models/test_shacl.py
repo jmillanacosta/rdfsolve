@@ -468,3 +468,45 @@ def test_a_profile_meets_the_main_shape_not_the_info_shapes_beside_it():
     assert info and not any((s, SH.closed, None) in shapes for s in info)
     r = {s for s in shapes.subjects(SH.path, URIRef("urn:r")) if (s, SH.minCount, None) in shapes}
     assert r and all(shapes.value(s, SH.severity) is None for s in r)
+
+
+HIERARCHY_DATA = """
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+<urn:B> rdfs:subClassOf <urn:A> .
+<urn:a1> a <urn:A> ; <urn:p> "text" .
+<urn:b1> a <urn:A>, <urn:B> ; <urn:p> <urn:c1> .
+<urn:c1> a <urn:C> .
+"""
+
+
+def test_a_class_shape_allows_the_values_of_its_subclasses_members():
+    """Minimal types count b1 under B only; SHACL targets it as an instance of A too."""
+    from rdflib import XSD
+
+    schema = MinedSchema(
+        about=AboutMetadata.build(dataset_name="fixture"),
+        patterns=[
+            SchemaPattern(
+                subject_class="urn:A",
+                property_uri="urn:p",
+                object_class="Literal",
+                datatype=str(XSD.string),
+            ),
+            SchemaPattern(subject_class="urn:B", property_uri="urn:p", object_class="urn:C"),
+        ],
+        class_hierarchy={"urn:B": ["urn:A"]},
+    )
+    shapes = Graph().parse(data=schema.to_shacl(void=False), format="turtle")
+    data = Graph().parse(data=HIERARCHY_DATA, format="turtle")
+    assert validate(data, shacl_graph=shapes)[0]
+
+
+def test_mining_records_the_class_hierarchy_of_the_data():
+    from rdfsolve.mining.miner import SchemaMiner
+    from rdfsolve.ontology.hierarchy import nearest_classes
+
+    graph = Graph().parse(data=HIERARCHY_DATA, format="turtle")
+    with SchemaMiner.from_graph(graph, delay=0) as miner:
+        schema = miner.mine(dataset_name="fixture")
+    assert schema.class_hierarchy.get("urn:B") == ["urn:A"]
+    assert nearest_classes({"x": {"y"}, "y": {"z"}}, ["x", "z"]) == {"x": ["z"]}
