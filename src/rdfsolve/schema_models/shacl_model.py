@@ -100,6 +100,7 @@ class ShaclPropertyShape(BaseModel):
     datatype: str | None = Field(None, description="sh:datatype")
     class_constraint: str | None = Field(None, description="sh:class")
     node_kind: NodeKind | None = None
+    pattern: str | None = Field(None, description="sh:pattern of the values")
     deactivated: bool = False
     severity: Severity | None = Field(
         None, description="sh:severity of the results of this shape (None: Violation)"
@@ -161,6 +162,8 @@ class ShaclPropertyShape(BaseModel):
             }
             if self.node_kind in nk_map:
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
+        if self.pattern is not None:
+            graph.add((node, sh.pattern, RdfLiteral(self.pattern)))
         if self.deactivated:
             graph.add((node, sh.deactivated, RdfLiteral(True)))
         if self.severity is not None:
@@ -259,6 +262,7 @@ class ShaclPropertyShape(BaseModel):
             datatype=str(datatype) if datatype else None,
             class_constraint=str(class_constraint) if class_constraint else None,
             node_kind=node_kind,
+            pattern=str(pattern) if (pattern := graph.value(uri, sh.pattern, any=False)) else None,
             min_count=_count(graph, uri, sh.minCount),
             max_count=_count(graph, uri, sh.maxCount),
             properties=[

@@ -48,7 +48,7 @@ _TERMS = {
         "SPARQLConstructExecutable Info Violation Warning alternativePath ask class closed "
         "construct datatype severity "
         "deactivated declare description ignoredProperties inversePath languageIn maxCount "
-        "minCount name "
+        "minCount name pattern "
         "namespace nodeKind oneOrMorePath or path prefix prefixes property qualifiedMaxCount "
         "qualifiedMinCount qualifiedValueShape qualifiedValueShapesDisjoint select targetClass "
         "targetSubjectsOf "

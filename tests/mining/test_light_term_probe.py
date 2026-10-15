@@ -38,7 +38,9 @@ def test_a_page_of_a_probe_is_not_asked_again_in_smaller_pages(monkeypatch):
 
 
 def test_the_term_probe_of_a_void_first_source_gives_up_at_the_first_timeout(monkeypatch):
-    with SchemaMiner.from_graph(Dataset().parse(data=DATA, format="turtle"), delay=0) as miner:
+    # The value measures have time budgets of their own; this checks the probe's alone.
+    graph = Dataset().parse(data=DATA, format="turtle")
+    with SchemaMiner.from_graph(graph, delay=0, value_measures=False) as miner:
         miner.light_probe_seconds = 60
         seen = []
         budget = Mock()

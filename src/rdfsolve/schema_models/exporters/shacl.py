@@ -115,6 +115,7 @@ def minedschema_to_shacl(
     for profile in schema.collections or []:
         lists[(profile.subject_class, profile.property_uri)].append(profile)
     cardinalities = counted_cardinalities(schema)
+    value_namespaces = _value_namespaces(schema)
     node_shapes = []
     for subject_class in sorted(by_subject.keys()):
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
@@ -129,16 +130,43 @@ def minedschema_to_shacl(
             if prop == RDF_TYPE:
                 continue
             prop_hash = md5(prop.encode(), usedforsecurity=False).hexdigest()[:8]
-            shape = _value_shape(patterns, lists.get((subject_class, prop), []))
+            namespaces, identifiers = value_namespaces.get((subject_class, prop), (None, False))
+            shape = _value_shape(
+                patterns,
+                lists.get((subject_class, prop), []),
+                namespaces if identifiers else None,
+            )
             shape.path = prop
             shape.uri = f"{base_uri}ps-{cls_hash}-{prop_hash}"
             shape.name = schema.enrichment.label(prop) or patterns[0].property_label
             shape.description = schema.enrichment.description(prop)
-            shape.min_count, shape.max_count = cardinalities.get(
-                (subject_class, prop), (None, None)
-            )
+            shape.min_count, most = cardinalities.get((subject_class, prop), (None, None))
+            if most is not None and most <= 1:
+                shape.max_count = most
             _mark_sampled(shape, patterns)
             property_shapes.append(shape)
+            if namespaces and not identifiers and not shape.deactivated:
+                # Values of other namespaces (web addresses): a new value may be of another
+                # host, so their namespaces are reported at Info.
+                seen = _value_shape(patterns, lists.get((subject_class, prop), []), namespaces)
+                seen.path, seen.uri, seen.severity = prop, f"{shape.uri}-namespaces", "Info"
+                seen.description = (
+                    "The namespaces of the IRI values without a type in the data; a new value "
+                    "may be in another."
+                )
+                property_shapes.append(seen)
+            if most is not None and most > 1 and not shape.deactivated:
+                # The most of the data, which a valid new record may pass: reported at Info.
+                property_shapes.append(
+                    ShaclPropertyShape(
+                        uri=f"{shape.uri}-most",
+                        path=prop,
+                        max_count=most,
+                        severity="Info",
+                        description=f"The most values of a member in the data ({most}); a new "
+                        "record may have more.",
+                    )
+                )
         node_shapes.append(
             ShaclNodeShape(
                 uri=f"{base_uri}ns-{cls_hash}",
@@ -179,19 +207,25 @@ def minedschema_to_shacl(
 def counted_cardinalities(
     schema: MinedSchema,
 ) -> dict[tuple[str, str], tuple[int | None, int | None]]:
-    """Return (sh:minCount, sh:maxCount) of each (class, property) that exact counts prove.
+    """Return (sh:minCount, most values) of each (class, property) that exact counts prove.
 
-    sh:minCount 1 when the subjects of one row of the property are every member of the class
-    (class_extensions.members); sh:maxCount 1 when the property has a single row whose triples
-    equal its distinct subjects. Only exact rows count: mined, not sampled, not lower bounds,
-    from one graph at most (distinct subjects of several graphs are not distinct overall).
-    Nothing is proved when membership is not rdf:type alone, or when the data holds
+    The members of a class are class_extensions.members, else about.class_entity_counts. From
+    the measured values (schema.value_counts) where there are some: sh:minCount 1 when the
+    members with the property are every member of the class, and the most values of one member.
+    Otherwise from the pattern rows: sh:minCount 1 when the subjects of one row of the property
+    are every member of the class, and at most 1 value when the property has a single row whose
+    triples equal its distinct subjects. Only exact rows count: mined, not sampled, not lower
+    bounds, from one graph at most (distinct subjects of several graphs are not distinct
+    overall). Nothing is proved when membership is not rdf:type alone, or when the data holds
     rdfs:subClassOf statements (a SHACL instance of a class is then also a member of a subclass,
     whose values the class's rows do not count), or for a class with subclasses among the
     schema's classes.
     """
     found: dict[tuple[str, str], tuple[int | None, int | None]] = {}
-    members = schema.class_extensions.members if schema.class_extensions is not None else {}
+    members = {
+        **schema.about.class_entity_counts,
+        **(schema.class_extensions.members if schema.class_extensions is not None else {}),
+    }
     if schema.about.membership_property or any(
         p.property_uri == SUBCLASS_OF for p in schema.patterns
     ):
@@ -200,6 +234,7 @@ def counted_cardinalities(
         parent for found_parents in schema.class_hierarchy.values() for parent in found_parents
     }
     lists = {(c.subject_class, c.property_uri) for c in schema.collections or []}
+    counts = {(c.subject_class, c.property_uri): c for c in schema.value_counts or []}
     rows: dict[tuple[str, str], list[SchemaPattern]] = defaultdict(list)
     for pattern in schema.patterns:
         if not pattern.untyped_subject and pattern.property_uri != RDF_TYPE:
@@ -208,7 +243,7 @@ def counted_cardinalities(
         cls = key[0]
         if cls in parents or key in lists:
             continue
-        if not all(
+        if key not in counts and not all(
             p.evidence_source == "mined"
             and p.sampled is None
             and p.count_bound != "lower_bound"
@@ -219,6 +254,11 @@ def counted_cardinalities(
         ):
             continue
         size = members.get(cls)
+        measured = counts.get(key)
+        if measured is not None:
+            least = 1 if size and measured.subjects == size else None
+            found[key] = (least, measured.most or None)
+            continue
         least = 1 if size and any(p.distinct_subjects == size for p in patterns) else None
         most = (
             1 if len(patterns) == 1 and patterns[0].count == patterns[0].distinct_subjects else None
@@ -228,10 +268,41 @@ def counted_cardinalities(
     return found
 
 
+def _value_namespaces(schema: MinedSchema) -> dict[tuple[str, str], tuple[str, bool]]:
+    """Return the sh:pattern of the IRI values without a type of each (class, property), and
+    whether every value is a registered identifier: the namespaces of the parts counted over
+    every value (schema.value_parts). A pair with values written without a scheme has none: a
+    reader resolves them against its own base IRI.
+    """
+    from rdfsolve.schema_models.class_parts import namespaces_pattern
+
+    found: dict[tuple[str, str], tuple[str, bool]] = {}
+    for measured in schema.value_parts or []:
+        namespaces = [n for part in measured.parts for n in part.namespaces]
+        if not measured.parts or any(
+            part.kind == "relative_iri" or not part.namespaces for part in measured.parts
+        ):
+            continue
+        identifiers = all(
+            part.kind in ("identifier", "invalid_identifier") for part in measured.parts
+        )
+        found[(measured.subject_class, measured.property_uri)] = (
+            namespaces_pattern(namespaces),
+            identifiers,
+        )
+    return found
+
+
 def _value_shape(
-    patterns: list[SchemaPattern], profiles: list[CollectionProfile]
+    patterns: list[SchemaPattern],
+    profiles: list[CollectionProfile],
+    namespaces: str | None = None,
 ) -> ShaclPropertyShape:
-    """Return the value constraint of the patterns of one property: one option, or sh:or."""
+    """Return the value constraint of the patterns of one property: one option, or sh:or.
+
+    *namespaces* (sh:pattern) restricts the IRI values without a type to the namespaces they
+    were counted in.
+    """
     options: dict[tuple[str, str | None], ShaclPropertyShape] = {}
     for pattern in patterns:
         option = ShaclPropertyShape(path="")
@@ -240,6 +311,7 @@ def _value_shape(
             option.datatype = None if pattern.datatype == ANY_LITERAL else pattern.datatype
         elif pattern.object_class == "Resource":
             option.node_kind = "IRI"
+            option.pattern = namespaces
         elif pattern.object_class == "BlankNode":
             option.node_kind = "BlankNode"
         else:

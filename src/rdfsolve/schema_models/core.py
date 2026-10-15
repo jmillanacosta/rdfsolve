@@ -22,6 +22,7 @@ from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.restrictions import RestrictionPatterns
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 from rdfsolve.schema_models.structural import StructuralPattern
+from rdfsolve.schema_models.value_measures import ValueCount, ValueParts
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -98,6 +99,16 @@ class MinedSchema(BaseModel):
         None,
         description="The parts of each class by how its members are identified (registered "
         "identifiers, other namespaces, blank nodes), counted in the data; None means not counted",
+    )
+    value_counts: list[ValueCount] | None = Field(
+        None,
+        description="Per (class, property): the members that have it and the most distinct "
+        "values of one member, measured in the data; None means not measured",
+    )
+    value_parts: list[ValueParts] | None = Field(
+        None,
+        description="Per (class, property): the parts of its IRI values without a type, "
+        "counted over every distinct value; pairs not measured are left out",
     )
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"

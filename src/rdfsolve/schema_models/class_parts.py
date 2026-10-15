@@ -21,7 +21,14 @@ if TYPE_CHECKING:
 
     from rdfsolve.schema_models.shacl_model import ShaclNodeShape
 
-__all__ = ["ClassPart", "ClassParts", "part_label", "part_shape_iri", "part_shape_iri_of_key"]
+__all__ = [
+    "ClassPart",
+    "ClassParts",
+    "namespaces_pattern",
+    "part_label",
+    "part_shape_iri",
+    "part_shape_iri_of_key",
+]
 
 PartKind = Literal[
     "identifier", "invalid_identifier", "namespace", "relative_iri", "invalid_scheme", "blank_node"
@@ -149,9 +156,9 @@ def _exclusions(parts: list[ClassPart]) -> dict[int, list[ClassPart]]:
     return found
 
 
-def _starts(namespaces: list[str]) -> str:
+def namespaces_pattern(namespaces: list[str]) -> str:
     """Return the regular expression of IRIs that start with one of *namespaces*."""
-    return "^(" + "|".join(_escape(n) for n in sorted(namespaces)) + ")"
+    return "^(" + "|".join(_escape(n) for n in sorted(set(namespaces))) + ")"
 
 
 def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> list[ShaclNodeShape]:
@@ -177,19 +184,23 @@ def part_shapes(class_shape: str, class_label: str, parts: list[ClassPart]) -> l
         elif part.kind == "relative_iri":
             # A parser resolves an IRI without a scheme against its base IRI, so the IRI a
             # validator reads is not the one written: the part is any IRI.
-            shape.description += (
-                ", written without a scheme in the source; read as IRIs resolved against the "
-                "base of the reader"
+            shape.description = (
+                f"{part.entities} members counted in the data, written without a scheme in the "
+                "source; read as IRIs resolved against the base of the reader"
             )
         elif part.kind == "identifier" and part.pattern:
             # XPath regular expressions (sh:pattern) have no non-capturing groups.
             local = part.pattern.removeprefix("^").removesuffix("$").replace("(?:", "(")
             peels = "|".join(_any_case(p) for p in sorted(set(part.peels)))
             shape.pattern = (
-                _starts(part.namespaces) + (f"({peels})?" if peels else "") + "(" + local + ")$"
+                namespaces_pattern(part.namespaces)
+                + (f"({peels})?" if peels else "")
+                + "("
+                + local
+                + ")$"
             )
         else:
-            shape.pattern = _starts(part.namespaces)
+            shape.pattern = namespaces_pattern(part.namespaces)
         if part.kind == "invalid_identifier" and part.prefix in valid:
             shape.not_shapes = [valid[part.prefix]]
         shape.not_shapes += [
@@ -223,4 +234,4 @@ def add_void_parts(
         elif part.kind != "blank_node" and len(part.namespaces) == 1:
             graph.add((node, void.uriSpace, Literal(part.namespaces[0])))
         elif part.kind != "blank_node":
-            graph.add((node, void.uriRegexPattern, Literal(_starts(part.namespaces))))
+            graph.add((node, void.uriRegexPattern, Literal(namespaces_pattern(part.namespaces))))

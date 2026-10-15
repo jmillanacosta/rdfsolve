@@ -111,6 +111,7 @@ class SchemaMiner:
         excluded_graph_prefixes: tuple[str, ...] = (),
         type_context_graph_uris: list[str] | None = None,
         vocabulary_graph_uris: list[str] | None = None,
+        value_measures: bool = True,
         local_backend: LocalBackend = "oxigraph",
         resume_checkpoint: str | Path | None = None,
         untyped_subjects: bool = True,
@@ -132,6 +133,9 @@ class SchemaMiner:
         *vocabulary_graph_uris* are graphs that hold a vocabulary rather than data: the
         enrichment reads the names and descriptions of the schema's classes and properties from
         them too; their triples are not mined.
+        With *value_measures* (and *counts*), each (class, property) is measured for its SHACL
+        constraints (rdfsolve.mining.value_measures): the members that have it, the most
+        values of one member, and the parts of its IRI values without a type.
         """
         self.endpoint_url = endpoint_url
         self.untyped_subjects = untyped_subjects
@@ -163,6 +167,7 @@ class SchemaMiner:
         )
         self.type_context_graph_uris = list(dict.fromkeys(type_context_graph_uris or []))
         self.vocabulary_graph_uris = list(dict.fromkeys(vocabulary_graph_uris or []))
+        self.value_measures = value_measures
         self.chunk_size = chunk_size
         self.class_chunk_size = class_chunk_size
         self.class_batch_size = max(1, class_batch_size)
@@ -1483,6 +1488,9 @@ class SchemaMiner:
             schema.class_extensions = self._measure_class_extensions(
                 sorted(classes - self._subsumed_classes), entity_counts
             )
+        # A scan run has every row: its exact profiles are mining.scan_shapes.
+        if self.counts and self.value_measures and not self._own_view and self._store is None:
+            self._measure_values(schema)
         # A (C, rdf:type, Resource) row says only that the class IRI has no type of its own: the
         # membership is already the subject class of every row and the member counts above. Such
         # rows are left out after the classes are counted, so that a class whose members have
@@ -1599,6 +1607,34 @@ class SchemaMiner:
                 len(found["terms"]),
             )
         return schema
+
+    def _measure_values(self, schema: MinedSchema) -> None:
+        """Measure the values of each (class, property) for SHACL (value_counts, value_parts),
+        recording the pairs not measured in the report.
+        """
+        from rdfsolve.mining.value_measures import measured_pairs, value_counts, value_parts
+
+        if self.membership_properties:
+            # The members of a class are then not its rdf:type subjects.
+            return
+        pairs = [
+            pair
+            for pair in measured_pairs(schema.patterns)
+            if pair[0] not in self._subsumed_classes
+        ]
+        phase = self._report.start_phase("value-counts")
+        schema.value_counts, failed = value_counts(
+            self._helper, pairs, self.graph_uris, self.type_context_graph_uris
+        )
+        self._report.report.config["value_counts_not_measured"] = failed
+        self._report.finish_phase(phase, items=len(schema.value_counts))
+        phase = self._report.start_phase("value-parts")
+        kept = [p for p in schema.patterns if p.subject_class not in self._subsumed_classes]
+        schema.value_parts, failed = value_parts(
+            self._helper, kept, self.graph_uris, self.type_context_graph_uris
+        )
+        self._report.report.config["value_parts_not_measured"] = failed
+        self._report.finish_phase(phase, items=len(schema.value_parts))
 
     def query_enrichment(
         self, schema: MinedSchema, *, annotation_iris: list[str] | None = None
