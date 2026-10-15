@@ -37,7 +37,8 @@ export back into RDF, allowing to generate RDF subsets.
 ## Installation
 
 ```bash
-pip install rdfsolve
+pip install rdfsolve          # the core: schemas, client, conversion rules
+pip install 'rdfsolve[all]'   # with mining at scale, exports, mappings, CLI, web, validation
 ```
 
 ## Quick Start

@@ -4074,18 +4074,11 @@ version = "0.2.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "bioregistry" },
-    { name = "click" },
-    { name = "deprecated" },
-    { name = "flask" },
     { name = "httpx" },
     { name = "ijson" },
-    { name = "linkml" },
-    { name = "linkml-runtime" },
-    { name = "more-click" },
     { name = "more-itertools" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "polars", extra = ["rt64"] },
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pyld" },
@@ -4093,7 +4086,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rdflib" },
     { name = "requests" },
-    { name = "sssom" },
     { name = "tqdm" },
     { name = "typing-extensions" },
     { name = "ujson" },
@@ -4103,6 +4095,22 @@ dependencies = [
 agents = [
     { name = "pydantic-ai-slim", extra = ["anthropic", "openai"] },
     { name = "python-dotenv" },
+]
+all = [
+    { name = "click" },
+    { name = "deprecated" },
+    { name = "flask" },
+    { name = "flask-cors" },
+    { name = "gunicorn" },
+    { name = "linkml" },
+    { name = "linkml-runtime" },
+    { name = "nanopub" },
+    { name = "polars", extra = ["rt64"] },
+    { name = "pyshacl" },
+    { name = "sssom" },
+]
+cli = [
+    { name = "click" },
 ]
 dev = [
     { name = "mypy" },
@@ -4119,8 +4127,19 @@ docs = [
     { name = "sphinx-click" },
     { name = "sphinx-rtd-theme" },
 ]
+exports = [
+    { name = "deprecated" },
+    { name = "linkml" },
+    { name = "linkml-runtime" },
+]
+mappings = [
+    { name = "sssom" },
+]
 mcp = [
     { name = "mcp" },
+]
+mining = [
+    { name = "polars", extra = ["rt64"] },
 ]
 notebooks = [
     { name = "ipywidgets" },
@@ -4138,15 +4157,24 @@ reconciliation = [
     { name = "nanopub" },
 ]
 tests = [
+    { name = "click" },
     { name = "coverage" },
+    { name = "deprecated" },
+    { name = "flask" },
+    { name = "flask-cors" },
+    { name = "gunicorn" },
     { name = "httpx" },
+    { name = "linkml" },
+    { name = "linkml-runtime" },
     { name = "mcp" },
     { name = "nanopub" },
     { name = "networkx" },
+    { name = "polars", extra = ["rt64"] },
     { name = "psutil" },
     { name = "pydantic-ai-slim", extra = ["openai"] },
     { name = "pyshacl" },
     { name = "pytest" },
+    { name = "sssom" },
 ]
 validation = [
     { name = "pyshacl" },
@@ -4160,10 +4188,9 @@ web = [
 [package.metadata]
 requires-dist = [
     { name = "bioregistry", specifier = ">=0.13.25" },
-    { name = "click" },
+    { name = "click", marker = "extra == 'cli'" },
     { name = "coverage", marker = "extra == 'tests'" },
-    { name = "deprecated", specifier = ">=1.2.13" },
-    { name = "flask" },
+    { name = "deprecated", marker = "extra == 'exports'", specifier = ">=1.2.13" },
     { name = "flask", marker = "extra == 'web'", specifier = ">=3.0" },
     { name = "flask-cors", marker = "extra == 'web'", specifier = ">=4.0" },
     { name = "gunicorn", marker = "extra == 'web'", specifier = ">=22.0" },
@@ -4173,12 +4200,11 @@ requires-dist = [
     { name = "ipywidgets", marker = "extra == 'notebooks'", specifier = ">=8.0.0" },
     { name = "jupyterlab", marker = "extra == 'notebooks'", specifier = ">=4.0.0" },
     { name = "kgx", marker = "extra == 'notebooks'", specifier = ">=2.7.0" },
-    { name = "linkml", specifier = ">=1.10.0" },
-    { name = "linkml-runtime", specifier = ">=1.10.0" },
+    { name = "linkml", marker = "extra == 'exports'", specifier = ">=1.10.0" },
+    { name = "linkml-runtime", marker = "extra == 'exports'", specifier = ">=1.10.0" },
     { name = "matplotlib", marker = "extra == 'notebooks'", specifier = ">=3.10.7" },
     { name = "mcp", marker = "extra == 'mcp'", specifier = "==2.2.0" },
     { name = "mcp", marker = "extra == 'tests'", specifier = "==2.2.0" },
-    { name = "more-click" },
     { name = "more-itertools" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "nanopub", marker = "extra == 'reconciliation'", specifier = ">=2.2,<3" },
@@ -4191,7 +4217,7 @@ requires-dist = [
     { name = "pandas-stubs", marker = "extra == 'dev'" },
     { name = "plotly", marker = "extra == 'notebooks'", specifier = "==6.4.0" },
     { name = "plotly", marker = "extra == 'notebooks'", specifier = ">=5.0.0" },
-    { name = "polars", extras = ["rt64"], specifier = ">=2.0" },
+    { name = "polars", extras = ["rt64"], marker = "extra == 'mining'", specifier = ">=2.0" },
     { name = "psutil", marker = "extra == 'notebooks'", specifier = ">=5.9" },
     { name = "psutil", marker = "extra == 'tests'", specifier = ">=5.9" },
     { name = "pyarrow", specifier = ">=23.0.1" },
@@ -4206,6 +4232,8 @@ requires-dist = [
     { name = "python-dotenv", marker = "extra == 'agents'", specifier = "==1.2.3" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "rdflib", specifier = ">=6.0.0" },
+    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web"], marker = "extra == 'tests'" },
+    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web", "validation", "reconciliation"], marker = "extra == 'all'" },
     { name = "requests", specifier = ">=2.0" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "scipy", marker = "extra == 'notebooks'", specifier = ">=1.15.3" },
@@ -4214,7 +4242,7 @@ requires-dist = [
     { name = "sphinx-automodapi", marker = "extra == 'docs'" },
     { name = "sphinx-click", marker = "extra == 'docs'" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.0" },
-    { name = "sssom", specifier = ">=0.4" },
+    { name = "sssom", marker = "extra == 'mappings'", specifier = ">=0.4" },
     { name = "tqdm" },
     { name = "types-networkx", marker = "extra == 'dev'" },
     { name = "types-pyyaml", marker = "extra == 'dev'" },
@@ -4223,7 +4251,7 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.0" },
     { name = "ujson", specifier = ">=5.0.0" },
 ]
-provides-extras = ["validation", "agents", "mcp", "reconciliation", "tests", "docs", "dev", "web", "notebooks"]
+provides-extras = ["mining", "exports", "mappings", "cli", "validation", "agents", "mcp", "reconciliation", "tests", "docs", "dev", "web", "all", "notebooks"]
 
 [[package]]
 name = "referencing"
