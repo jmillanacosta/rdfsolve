@@ -134,10 +134,13 @@ def test_void_and_shacl_exports_use_registered_terms(schema, caplog):
         ],
     )
     linkml = sample.to_linkml()
-    slots = SchemaView(linkml).all_slots()
+    view = SchemaView(linkml)
+    slots = view.all_slots()
     assert "date" not in slots
     assert (
-        len(slots) == 1 and next(iter(slots.values())).slot_uri == "http://purl.org/dc/terms/date"
+        len(slots) == 1
+        and view.expand_curie(next(iter(slots.values())).slot_uri)
+        == "http://purl.org/dc/terms/date"
     )
     sh = Namespace("http://www.w3.org/ns/shacl#")
     caplog.clear()

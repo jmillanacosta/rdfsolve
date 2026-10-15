@@ -765,12 +765,12 @@ class MinedSchema(BaseModel):
         """
         from typing import cast
 
-        from linkml.generators.yamlgen import YAMLGenerator
+        from linkml_runtime.dumpers import yaml_dumper
 
         linkml_schema = self.to_linkml(
             schema_name, schema_description, trim_descriptions=trim_descriptions
         )
-        return cast(str, YAMLGenerator(linkml_schema).serialize())
+        return cast(str, yaml_dumper.dumps(linkml_schema))
 
     def to_rdfconfig(
         self,

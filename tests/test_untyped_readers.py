@@ -175,7 +175,12 @@ def test_linkml_networkx_and_rdf_config_name_the_untyped_subjects_and_claim_no_c
     assert mixin.mixin and not mixin.class_uri
     assert set(mixin.slots) == {linkml.slots[s].name for s in linkml.slots}
     mixed = to_linkml(mined("mixed"))
-    assert RESOURCE in {c.class_uri for c in mixed.classes.values()}  # the typed e:r
+    from linkml_runtime.utils.schemaview import SchemaView
+
+    view = SchemaView(mixed)
+    assert RESOURCE in {
+        view.expand_curie(c.class_uri) for c in mixed.classes.values() if c.class_uri
+    }  # the typed e:r
     assert "UntypedSubject" in mixed.classes
     graph = to_networkx(mined("mixed"))
     assert graph.nodes[UNTYPED_SUBJECTS_LABEL]["untyped"] is True
