@@ -1548,6 +1548,54 @@ class Client(DatasetClient):
             raise RecordError(problems)
         return Results(self, records, coverage={"status": "complete", "basis": "Authored records"})
 
+    def tables(self, profile: str | Graph | None = None) -> dict[str, pd.DataFrame]:
+        """Return the client's local RDF as tables for SQL, one per class of a SHACL profile
+        (rdfsolve.client.sql_tables): text cells that DataFrame.to_sql writes as they are,
+        named from the profile's CURIEs. *profile* defaults to the schema's shape_profile.
+        """
+        from rdfsolve.client.sql_tables import tables
+
+        return tables(self._local_graph(), self._table_profile(profile))
+
+    def from_tables(
+        self, tables: Mapping[str, pd.DataFrame], profile: str | Graph | None = None
+    ) -> Graph:
+        """Return the RDF of tables made by tables() (also read back from SQL), every value as
+        its term says: values of a kind their field's shape does not allow are written, for
+        SHACL to report.
+        """
+        from rdfsolve.client.sql_tables import from_tables
+
+        return from_tables(tables, self._table_profile(profile))
+
+    def _table_profile(self, profile: str | Graph | None) -> str | Graph:
+        """Return the profile of the tables: the one given, else the schema's shape_profile."""
+        found = profile if profile is not None else self.schema.shape_profile
+        if found is None:
+            raise ValueError(
+                "Tables follow a SHACL profile: give profile= or open a schema with one"
+            )
+        return found
+
+    def _local_graph(self) -> Graph:
+        """Return the client's local RDF as one graph (the union of its graphs)."""
+        source = self.source
+        if isinstance(source, Dataset):
+            merged = Graph()
+            for s, p, o, _ in source.quads((None, None, None, None)):
+                merged.add((s, p, o))
+            return merged
+        if isinstance(source, Graph):
+            return source
+        if isinstance(source, (ox.Store, ox.Dataset)):
+            data = Dataset()
+            data.parse(data=ox.serialize(source, format=ox.RdfFormat.N_QUADS), format="nquads")
+            merged = Graph()
+            for s, p, o, _ in data.quads((None, None, None, None)):
+                merged.add((s, p, o))
+            return merged
+        raise ValueError("Tables are read from local RDF: open the client on a graph or a store")
+
     @property
     def kinds(self) -> Any:
         """The kinds of record of this source, as objects: client.kinds.<Name> (Tab completes).
