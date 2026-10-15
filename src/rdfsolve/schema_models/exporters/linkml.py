@@ -588,12 +588,7 @@ def to_linkml(
     annotations = (
         {"source_version_iri": about.source_version_iri} if about.source_version_iri else {}
     )
-    if schema.navigation is not None:
-        import json
-
-        annotations["rdfsolve_navigation"] = json.dumps(
-            schema.navigation.model_dump(mode="json"), sort_keys=True
-        )
+    # The navigation paths are not part of the model: they stay in the schema's own files.
     return SchemaDefinition(
         id=base,
         name=name,
