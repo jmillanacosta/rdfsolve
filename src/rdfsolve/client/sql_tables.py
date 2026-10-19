@@ -478,12 +478,22 @@ def _records(data: Graph) -> dict[Node, str]:
     return found
 
 
+def _row_order(row: list[str | None]) -> list[tuple[bool, str]]:
+    """Return the place of a row among others: by its cells in turn, a missing cell last."""
+    order = []
+    for cell in row:
+        order.append((cell is None, cell or ""))
+    return order
+
+
 def _frame(rows: list[list[str | None]], columns: list[str]) -> pd.DataFrame:
-    """Return a table of text cells (pandas' string dtype; missing cells are NA)."""
+    """Return a table of text cells (pandas' string dtype; missing cells are NA), its rows in
+    order (_row_order).
+    """
     import pandas as pd
 
-    frame = pd.DataFrame(rows, columns=columns, dtype="string")
-    return frame.sort_values(columns).reset_index(drop=True) if rows else frame
+    ordered = sorted(rows, key=_row_order)
+    return pd.DataFrame(ordered, columns=columns, dtype="string")
 
 
 def tables(data: Graph, profile: str | Graph, *, empty: bool = True) -> dict[str, pd.DataFrame]:

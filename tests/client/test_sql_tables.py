@@ -341,3 +341,10 @@ def test_without_empty_tables_only_the_tables_with_rows_are_given():
     with_rows = tables(data, PROFILE, empty=False)
     assert list(with_rows) == ["schema_person"]
     assert with_rows["schema_person"].equals(tables(data, PROFILE)["schema_person"])
+
+
+def test_the_rows_of_a_table_are_in_order_of_their_cells_a_missing_cell_last():
+    from rdfsolve.client.sql_tables import _frame
+
+    frame = _frame([["b", None], ["a", None], ["a", "x"], ["a", ""]], ["record", "value"])
+    assert frame.fillna("NA").values.tolist() == [["a", ""], ["a", "x"], ["a", "NA"], ["b", "NA"]]
