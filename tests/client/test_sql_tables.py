@@ -167,3 +167,22 @@ def test_a_client_gives_the_tables_of_its_local_rdf():
         # Oxigraph keeps "T1"^^xsd:string as "T1" (the same literal in RDF 1.1): the graph read
         # back is the one the client holds.
         assert isomorphic(client.from_tables(client.tables()), client._local_graph())
+
+
+def test_a_class_has_the_fields_of_the_shapes_its_shape_builds_on():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Thing a sh:NodeShape ; sh:property [ sh:path schema:name ; sh:maxCount 1 ] .
+ex:Page a sh:NodeShape ; sh:targetClass schema:WebPage ; sh:node ex:Thing ;
+    sh:property [ sh:path schema:hasPart ] .
+ex:AboutPage a sh:NodeShape ; sh:targetClass schema:AboutPage ; sh:node ex:Page ;
+    sh:property [ sh:path schema:about ; sh:maxCount 1 ] .
+"""
+    about = layout(profile).classes["https://schema.org/AboutPage"]
+    assert about.single == {
+        "https://schema.org/about": "schema_about",
+        "https://schema.org/name": "schema_name",
+    }
+    assert about.several == {"https://schema.org/hasPart": "schema_has_part"}

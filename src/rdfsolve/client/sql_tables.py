@@ -8,8 +8,10 @@ that stays the same from one version of a profile to the next keeps its table or
 - one table per class of the profile (a node shape with sh:targetClass), named from the class
   (``schema_software_application``), with the columns ``record``, ``iri`` and ``type`` (the
   class), and for each single field a column of values (``schema_name``) and one of their terms
-  (``schema_name__term``); its key is ``iri``. A field is single when the smallest sh:maxCount of
-  the property shapes of its class and path is 1: SHACL checks every shape on a path.
+  (``schema_name__term``); its key is ``iri``. The fields of a class are the property shapes of
+  its node shapes and of the node shapes they build on (sh:node, at any depth). A field is single
+  when the smallest sh:maxCount of the property shapes of its class and path is 1: SHACL checks
+  every shape on a path.
 - for each other field of a class, a table ``<class>__<field>`` (record, iri, value, term), keyed
   by (iri, value, term), whose ``iri`` refers to the class table;
 - one table ``statements`` (record, iri, property, value, term) of everything else: rdf:type
@@ -45,6 +47,8 @@ from rdflib.namespace import SH
 if TYPE_CHECKING:
     import pandas as pd
     from rdflib.term import Node
+
+    from rdfsolve.schema_models.shacl_model import ShaclPropertyShape
 
 __all__ = ["Layout", "from_tables", "layout", "tables"]
 
@@ -184,8 +188,9 @@ def _layout_of_text(text: str) -> Layout:
 
 def layout(profile: str | Graph) -> Layout:
     """Return the tables of a SHACL profile (Turtle text or a graph): one per class of a node
-    shape with sh:targetClass, its fields by property shape with an IRI path, single when the
-    smallest sh:maxCount of the shapes of the class and path is 1.
+    shape with sh:targetClass, its fields by property shape with an IRI path (also those of the
+    node shapes it builds on with sh:node), single when the smallest sh:maxCount of the shapes of
+    the class and path is 1.
     """
     return _layout_of_text(profile) if isinstance(profile, str) else _layout(profile)
 
@@ -201,7 +206,7 @@ def _layout(graph: Graph) -> Layout:
         if shape.target_class is None:
             continue
         maxima.setdefault(shape.target_class, defaultdict(set))
-        for prop in shape.property_shapes:
+        for prop in shape.property_shapes + _built_on(graph, node):
             if isinstance(prop.path, str) and prop.path:
                 maxima[shape.target_class][prop.path].add(prop.max_count)
     classes: dict[str, ClassLayout] = {}
@@ -227,6 +232,26 @@ def _layout(graph: Graph) -> Layout:
                     raise ValueError(f"{path} and {tables[table]} have the same table name {table}")
         classes[cls] = found
     return Layout(classes)
+
+
+def _built_on(graph: Graph, shape: Node) -> list[ShaclPropertyShape]:
+    """Return the property shapes of the node shapes that a node shape builds on: its sh:node
+    values, theirs, and so on. SHACL checks a focus node against them too.
+    """
+    from rdfsolve.schema_models.shacl_model import ShaclPropertyShape
+
+    found = []
+    seen = {shape}
+    todo = list(graph.objects(shape, SH.node))
+    while todo:
+        other = todo.pop()
+        if other in seen:
+            continue
+        seen.add(other)
+        for prop in graph.objects(other, SH.property):
+            found.append(ShaclPropertyShape.from_rdf(graph, prop))
+        todo.extend(graph.objects(other, SH.node))
+    return found
 
 
 def _cell(term: Node) -> tuple[str, str]:
