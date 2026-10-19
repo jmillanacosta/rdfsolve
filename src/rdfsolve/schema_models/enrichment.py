@@ -149,6 +149,18 @@ class TermAnnotation(BaseModel):
             raise ValueError("Definition text must be an RDF literal")
         return self
 
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        """Return the place of the text among others: by term, predicate, text, language and
+        datatype.
+        """
+        return (
+            self.term_iri,
+            self.predicate,
+            self.text.value,
+            self.text.language or "",
+            self.text.datatype or "",
+        )
+
 
 class PatternExample(BaseModel):
     """One observed triple and the class used to select its subject.
@@ -288,7 +300,8 @@ class SchemaEnrichment(BaseModel):
     ) -> SchemaEnrichment:
         """Read annotations and linked examples, not query completion claims.
 
-        Labels and definitions of the classes and properties are read. An rdfs:seeAlso
+        Labels and definitions of the classes and properties are read, in the order of
+        TermAnnotation.sort_key whatever order the dataset gives them in. An rdfs:seeAlso
         resource of a class, typed with that class, is an example of the class.
         """
         result = cls()
@@ -303,6 +316,8 @@ class SchemaEnrichment(BaseModel):
                     for q in statements
                     if q.predicate.value == predicate and isinstance(q.object, ox.Literal)
                 )
+        result.labels.sort(key=TermAnnotation.sort_key)
+        result.definitions.sort(key=TermAnnotation.sort_key)
         for iri in classes:
             for q in dataset.quads_for_subject(ox.NamedNode(iri)):
                 example = q.object

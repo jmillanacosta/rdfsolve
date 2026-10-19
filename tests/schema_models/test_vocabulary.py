@@ -385,3 +385,32 @@ def test_the_same_inputs_give_the_same_schema():
     assert first.about.schema_id and not first.about.generated_at
     timed = MinedSchema.from_vocabulary(VOCABULARY, classes=[S.Person], timestamps=True)
     assert timed.about.generated_at and timed.about.schema_id == first.about.schema_id
+
+
+def test_two_texts_of_one_term_come_in_one_order_in_every_process():
+    """Two vocabularies comment on one term: the schema is the same whatever the hash seed."""
+    import os
+    import subprocess
+    import sys
+
+    script = """
+from rdfsolve.schema_models import MinedSchema
+head = "@prefix schema: <https://schema.org/> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . "
+base = head + "schema:Person a rdfs:Class . schema:name schema:domainIncludes schema:Person ; schema:rangeIncludes schema:Text ."
+first = head + 'schema:name rdfs:comment "The name of the item, as the first vocabulary says." .'
+second = head + 'schema:name rdfs:comment "A name, as the second vocabulary says." .'
+schema = MinedSchema.from_vocabulary([base, first, second], classes=["https://schema.org/Person"])
+print([d.text.value[:5] for d in schema.enrichment.definitions], schema.about.schema_id)
+"""
+    printed = set()
+    for seed in ("1", "2"):
+        run = subprocess.run(
+            [sys.executable, "-c", script],
+            env={**os.environ, "PYTHONHASHSEED": seed},
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        printed.add(run.stdout)
+    assert len(printed) == 1, printed
+    assert printed.pop().startswith("['A nam', 'The n']")
