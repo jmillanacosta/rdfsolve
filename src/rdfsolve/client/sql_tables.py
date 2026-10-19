@@ -486,10 +486,11 @@ def _frame(rows: list[list[str | None]], columns: list[str]) -> pd.DataFrame:
     return frame.sort_values(columns).reset_index(drop=True) if rows else frame
 
 
-def tables(data: Graph, profile: str | Graph) -> dict[str, pd.DataFrame]:
+def tables(data: Graph, profile: str | Graph, *, empty: bool = True) -> dict[str, pd.DataFrame]:
     """Return the tables of the nodes of *data* that *profile* gives (see the module).
 
-    Without data, the tables are empty, with their columns.
+    Every table of the profile is given, a table without rows empty with its columns; with
+    *empty* False, only the tables with rows, as a writer of one record's rows needs them.
     """
     shapes = layout(profile)
     columns = shapes.columns()
@@ -531,7 +532,11 @@ def tables(data: Graph, profile: str | Graph) -> dict[str, pd.DataFrame]:
             continue
         statements.add((record(node), _iri_cell(node), str(predicate), *_cell(value)))
     rows[STATEMENTS] = [list(row) for row in statements]
-    return {name: _frame(rows[name], columns[name]) for name in columns}
+    frames = {}
+    for name in columns:
+        if empty or rows[name]:
+            frames[name] = _frame(rows[name], columns[name])
+    return frames
 
 
 def from_tables(given: Mapping[str, pd.DataFrame], profile: str | Graph) -> Graph:

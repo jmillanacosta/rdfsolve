@@ -332,3 +332,12 @@ def test_void_counts_the_partitions_of_some_records_in_sql():
     ]
     assert [p.class_uri for p in only_second] == ["https://schema.org/SoftwareApplication"]
     assert only_second[0].entities == 1
+
+
+def test_without_empty_tables_only_the_tables_with_rows_are_given():
+    person = """<https://example.org/person/1> a <https://schema.org/Person> ;
+        <https://schema.org/name> "Someone" ."""
+    data = Graph().parse(data=person, format="turtle")
+    with_rows = tables(data, PROFILE, empty=False)
+    assert list(with_rows) == ["schema_person"]
+    assert with_rows["schema_person"].equals(tables(data, PROFILE)["schema_person"])
