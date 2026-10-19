@@ -36,19 +36,21 @@ from __future__ import annotations
 import math
 import re
 from collections import defaultdict
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
-from rdflib import RDF, RDFS, BNode, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 from rdflib.namespace import SH
 
 if TYPE_CHECKING:
     import pandas as pd
     from rdflib.term import Node
+    from sqlalchemy import Connection, Select
 
     from rdfsolve.schema_models.shacl_model import ShaclPropertyShape
+    from rdfsolve.schema_models.void_model import VoidClassPartition, VoidPropertyPartition
 
 __all__ = ["Layout", "Merged", "context", "from_tables", "layout", "merge", "tables"]
 
@@ -112,6 +114,98 @@ class Layout:
                 found.append(cls)
         return found
 
+    def void(
+        self,
+        connection: Connection,
+        records: Select[Any],
+        *,
+        name: Callable[..., str],
+        left_out: Collection[str] = (),
+    ) -> list[VoidClassPartition]:
+        """Return the VoID class partitions of the rows of some records, counted in SQL.
+
+        A partition per class with rows, with its entities (its nodes with an IRI) and a
+        property partition per property of its nodes: its triples, the classes of the nodes its
+        values are (class partitions) and the datatypes of its literals (datatype partitions;
+        rdf:langString for a tagged literal, xsd:string for a plain one). rdf:type and the
+        properties in *left_out* are not counted. *records* is a SQLAlchemy select of the
+        records' IRIs (``record`` cells), and *connection* a SQLAlchemy connection to the
+        tables. *name* gives the IRI of a partition from the IRIs it partitions by: the class,
+        then the property, then the class or datatype of the values.
+        """
+        from sqlalchemy import column, func, select, table, union_all
+
+        from rdfsolve.schema_models.void_model import (
+            VoidClassPartition,
+            VoidDatatypePartition,
+            VoidPropertyPartition,
+        )
+
+        if not self.classes:
+            return []
+        tables = {}
+        for table_name, columns in self.columns().items():
+            tables[table_name] = table(table_name, *[column(c) for c in columns])
+        # The class of each node, to partition the values that are nodes by their class.
+        typed = [select(tables[c.name].c.iri, tables[c.name].c.type) for c in self.classes.values()]
+        classes: dict[str, str] = {}
+        for iri, cls_iri in connection.execute(union_all(*typed)):
+            classes[iri] = cls_iri
+        rest = tables[STATEMENTS]
+        found = []
+        for cls in sorted(self.classes.values(), key=lambda c: c.iri):
+            own = tables[cls.name]
+            total, entities = connection.execute(
+                select(func.count(), func.count().filter(~own.c.iri.startswith("_:"))).where(
+                    own.c.record.in_(records)
+                )
+            ).one()
+            if not total:
+                continue
+            counted: dict[str, list[tuple[str | None, str, int]]] = defaultdict(list)
+            for path, held in cls.single.items():
+                value, term = own.c[held], own.c[held + TERM_SUFFIX]
+                statement = (
+                    select(term, value, func.count())
+                    .where(own.c.record.in_(records), value.is_not(None))
+                    .group_by(term, value)
+                )
+                for row in connection.execute(statement):
+                    counted[path].append((row[0], row[1], row[2]))
+            for path, held in cls.several.items():
+                values = tables[cls.field_table(held)]
+                statement = (
+                    select(values.c.term, values.c.value, func.count())
+                    .where(values.c.record.in_(records))
+                    .group_by(values.c.term, values.c.value)
+                )
+                for row in connection.execute(statement):
+                    counted[path].append((row[0], row[1], row[2]))
+            # The statements of the class's nodes outside its fields, and the values of a single
+            # field of a node that has more than one.
+            statement = (
+                select(rest.c.property, rest.c.term, rest.c.value, func.count())
+                .select_from(rest.join(own, own.c.iri == rest.c.iri))
+                .where(rest.c.record.in_(records), rest.c.property != str(RDF.type))
+                .group_by(rest.c.property, rest.c.term, rest.c.value)
+            )
+            for row in connection.execute(statement):
+                counted[row[0]].append((row[1], row[2], row[3]))
+            properties = []
+            for path, rows in sorted(counted.items()):
+                if path in left_out or not rows:
+                    continue
+                properties.append(_property_partition(cls.iri, path, rows, classes, name))
+            found.append(
+                VoidClassPartition(
+                    uri=name(cls.iri),
+                    class_uri=cls.iri,
+                    entities=entities,
+                    property_partitions=properties,
+                )
+            )
+        return found
+
     def ddl(self) -> str:
         """Return the SQL of every table, in name order (SQLite and PostgreSQL): every column
         TEXT, the key of each table, the reference of each field table to its class table, and
@@ -139,6 +233,61 @@ class Layout:
                 f'ON {_quote(table)} ("record");'
             )
         return "\n".join(statements) + "\n"
+
+
+def _property_partition(
+    cls: str,
+    path: str,
+    rows: list[tuple[str | None, str, int]],
+    classes: Mapping[str, str],
+    name: Callable[..., str],
+) -> VoidPropertyPartition:
+    """Return the VoID property partition of a property of a class from its counted values
+    (term, value, count) and the class of each node (Layout.void).
+    """
+    from rdfsolve.schema_models.void_model import (
+        VoidClassPartition,
+        VoidDatatypePartition,
+        VoidPropertyPartition,
+    )
+
+    linked: dict[str, int] = defaultdict(int)
+    datatypes: dict[str, int] = defaultdict(int)
+    triples = 0
+    for term, value, count in rows:
+        triples += count
+        kind = term or ""
+        if kind == "@id":
+            of_value = classes.get(value)
+            if of_value:
+                linked[of_value] += count
+        elif kind == "@blank":
+            of_value = classes.get("_:" + value)
+            if of_value:
+                linked[of_value] += count
+        elif kind.startswith("@"):
+            datatypes[str(RDF.langString)] += count
+        else:
+            datatypes[kind or str(XSD.string)] += count
+    class_partitions = []
+    for of_value, count in sorted(linked.items()):
+        class_partitions.append(
+            VoidClassPartition(uri=name(cls, path, of_value), class_uri=of_value, triples=count)
+        )
+    datatype_partitions = []
+    for datatype, count in sorted(datatypes.items()):
+        datatype_partitions.append(
+            VoidDatatypePartition(
+                uri=name(cls, path, datatype), datatype_uri=datatype, triples=count
+            )
+        )
+    return VoidPropertyPartition(
+        uri=name(cls, path),
+        property_uri=path,
+        triples=triples,
+        class_partitions=class_partitions,
+        datatype_partitions=datatype_partitions,
+    )
 
 
 def _quote(name: str) -> str:

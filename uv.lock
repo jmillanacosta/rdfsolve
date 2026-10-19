@@ -4107,6 +4107,7 @@ all = [
     { name = "nanopub" },
     { name = "polars", extra = ["rt64"] },
     { name = "pyshacl" },
+    { name = "sqlalchemy" },
     { name = "sssom" },
 ]
 cli = [
@@ -4156,6 +4157,9 @@ notebooks = [
 reconciliation = [
     { name = "nanopub" },
 ]
+sql = [
+    { name = "sqlalchemy" },
+]
 tests = [
     { name = "click" },
     { name = "coverage" },
@@ -4174,6 +4178,7 @@ tests = [
     { name = "pydantic-ai-slim", extra = ["openai"] },
     { name = "pyshacl" },
     { name = "pytest" },
+    { name = "sqlalchemy" },
     { name = "sssom" },
 ]
 validation = [
@@ -4232,8 +4237,8 @@ requires-dist = [
     { name = "python-dotenv", marker = "extra == 'agents'", specifier = "==1.2.3" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "rdflib", specifier = ">=6.0.0" },
-    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web"], marker = "extra == 'tests'" },
-    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web", "validation", "reconciliation"], marker = "extra == 'all'" },
+    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web", "sql"], marker = "extra == 'tests'" },
+    { name = "rdfsolve", extras = ["mining", "exports", "mappings", "cli", "web", "validation", "reconciliation", "sql"], marker = "extra == 'all'" },
     { name = "requests", specifier = ">=2.0" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "scipy", marker = "extra == 'notebooks'", specifier = ">=1.15.3" },
@@ -4242,6 +4247,7 @@ requires-dist = [
     { name = "sphinx-automodapi", marker = "extra == 'docs'" },
     { name = "sphinx-click", marker = "extra == 'docs'" },
     { name = "sphinx-rtd-theme", marker = "extra == 'docs'", specifier = ">=3.0" },
+    { name = "sqlalchemy", marker = "extra == 'sql'", specifier = ">=2.0" },
     { name = "sssom", marker = "extra == 'mappings'", specifier = ">=0.4" },
     { name = "tqdm" },
     { name = "types-networkx", marker = "extra == 'dev'" },
@@ -4251,7 +4257,7 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.0" },
     { name = "ujson", specifier = ">=5.0.0" },
 ]
-provides-extras = ["mining", "exports", "mappings", "cli", "validation", "agents", "mcp", "reconciliation", "tests", "docs", "dev", "web", "all", "notebooks"]
+provides-extras = ["mining", "exports", "mappings", "cli", "validation", "sql", "agents", "mcp", "reconciliation", "tests", "docs", "dev", "web", "all", "notebooks"]
 
 [[package]]
 name = "referencing"

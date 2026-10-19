@@ -89,6 +89,8 @@ mappings = ["sssom>=0.4"]
 # The command line.
 cli = ["click"]
 validation = ["pyshacl>=0.27,<1"]
+# Counting the VoID partitions of a profile's SQL tables in the database (Layout.void).
+sql = ["sqlalchemy>=2.0"]
 agents = [
     "pydantic-ai-slim[openai,anthropic]==2.0.0",
     "python-dotenv==1.2.3",
@@ -96,7 +98,7 @@ agents = [
 mcp = ["mcp==2.2.0"]
 reconciliation = ["nanopub>=2.2,<3"]
 tests = [
-    "rdfsolve[mining,exports,mappings,cli,web]",
+    "rdfsolve[mining,exports,mappings,cli,web,sql]",
     "pyshacl>=0.27,<1",
     "nanopub>=2.2,<3",
     "psutil>=5.9",
@@ -131,7 +133,7 @@ web = [
     "gunicorn>=22.0",
 ]
 # Everything but the agents, the notebooks and the development tools.
-all = ["rdfsolve[mining,exports,mappings,cli,web,validation,reconciliation]"]
+all = ["rdfsolve[mining,exports,mappings,cli,web,validation,reconciliation,sql]"]
 notebooks = [
     "psutil>=5.9",
     # Additional packages for notebook development and analysis

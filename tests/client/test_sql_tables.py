@@ -289,3 +289,46 @@ def test_a_merge_keeps_single_values_adds_new_parts_once_and_notes_conflicts():
     assert (None, None, Literal("New Org")) in merged.graph
     assert len(merged.added) == 3, "the term, and the new organisation with its name"
     assert not merge(merged.graph, offered, PROFILE).added, "a second merge adds nothing"
+
+
+def test_void_counts_the_partitions_of_some_records_in_sql():
+    from sqlalchemy import column, create_engine, select, table
+
+    engine = create_engine("sqlite://")
+    shapes = layout(PROFILE)
+    with engine.begin() as connection:
+        connection.connection.executescript(shapes.ddl())
+        for name, frame in tables(Graph().parse(data=DATA, format="turtle"), PROFILE).items():
+            frame.to_sql(name, connection, index=False, if_exists="append")
+        tools = table("schema_software_application", column("iri"))
+        found = shapes.void(
+            connection,
+            select(tools.c.iri),
+            name=lambda *iris: " ".join(iris),
+            left_out={"https://schema.org/termCode"},
+        )
+        only_second = shapes.void(
+            connection,
+            select(tools.c.iri).where(tools.c.iri == "https://example.org/tool/2"),
+            name=lambda *iris: " ".join(iris),
+        )
+    by_class = {partition.class_uri: partition for partition in found}
+    tool = by_class["https://schema.org/SoftwareApplication"]
+    assert tool.entities == 2
+    assert by_class["https://schema.org/Organization"].entities == 0, "a blank node is no entity"
+    fields = {partition.property_uri: partition for partition in tool.property_partitions}
+    assert "https://schema.org/termCode" not in fields
+    assert [
+        (p.class_uri, p.triples) for p in fields["https://schema.org/provider"].class_partitions
+    ] == [("https://schema.org/Organization", 1)]
+    assert [
+        (p.class_uri, p.triples) for p in fields["https://schema.org/author"].class_partitions
+    ] == [("https://schema.org/Person", 1)]
+    name = fields["https://schema.org/name"]
+    assert name.triples == 3
+    assert [(p.datatype_uri, p.triples) for p in name.datatype_partitions] == [
+        ("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString", 1),
+        ("http://www.w3.org/2001/XMLSchema#string", 2),
+    ]
+    assert [p.class_uri for p in only_second] == ["https://schema.org/SoftwareApplication"]
+    assert only_second[0].entities == 1
