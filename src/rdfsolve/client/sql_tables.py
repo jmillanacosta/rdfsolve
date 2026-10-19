@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from rdfsolve.schema_models.shacl_model import ShaclPropertyShape
 
-__all__ = ["Layout", "context", "from_tables", "layout", "tables"]
+__all__ = ["Layout", "Merged", "context", "from_tables", "layout", "merge", "tables"]
 
 STATEMENTS = "statements"
 TERM_SUFFIX = "__term"
@@ -455,3 +455,88 @@ def context(profile: str | Graph, of_class: str, term: Callable[[str], str]) -> 
             definition["@container"] = "@set"
         terms[term(iri)] = definition
     return terms
+
+
+@dataclass
+class Merged:
+    """A record merged with another source's statements (merge): the merged graph, the
+    statements added to it, and the values a record kept where the other source offers another
+    (subject, property, kept, offered).
+    """
+
+    graph: Graph
+    added: list[tuple[Node, Node, Node]] = field(default_factory=list)
+    conflicts: list[tuple[str, str, str, str]] = field(default_factory=list)
+
+
+def _part_key(graph: Graph, node: Node, seen: frozenset[Node] = frozenset()) -> str:
+    """Return a value as merge compares it: a blank node by the values it holds, at any depth."""
+    if not isinstance(node, BNode):
+        return str(node)
+    if node in seen:
+        return "part"
+    held = []
+    for predicate, value in graph.predicate_objects(node):
+        held.append(str(predicate) + " " + _part_key(graph, value, seen | {node}))
+    held.sort()
+    return "part " + " ".join(held)
+
+
+def _described(graph: Graph, node: BNode) -> list[tuple[Node, Node, Node]]:
+    """Return the statements of a blank node, and of the blank nodes it holds, at any depth."""
+    found = []
+    todo: list[Node] = [node]
+    seen: set[Node] = set()
+    while todo:
+        current = todo.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for statement in graph.triples((current, None, None)):
+            found.append(statement)
+            if isinstance(statement[2], BNode):
+                todo.append(statement[2])
+    return found
+
+
+def merge(current: Graph, added: Graph, profile: str | Graph) -> Merged:
+    """Return *current* with the statements of *added* about IRI subjects, as the profile allows.
+
+    A field that takes one value (single, for any class of the subject: its classes in
+    *current*, else in *added*) keeps the value it has, and a different value offered is a
+    conflict. A blank node is added with its statements, unless the subject already holds one
+    with the same values on that property, so that merging twice adds nothing. The type of a
+    subject that *current* types is kept.
+    """
+    classes = layout(profile).classes
+    merged = Merged(Graph())
+    merged.graph += current
+    parts = set()
+    for subject, predicate, value in current:
+        if isinstance(value, BNode):
+            parts.add((subject, predicate, _part_key(current, value)))
+    for subject, predicate, value in sorted(added):
+        if not isinstance(subject, URIRef):
+            continue
+        if predicate == RDF.type and (subject, RDF.type, None) in current:
+            continue
+        if isinstance(value, BNode):
+            if (subject, predicate, _part_key(added, value)) not in parts:
+                for statement in [(subject, predicate, value), *_described(added, value)]:
+                    merged.graph.add(statement)
+                    merged.added.append(statement)
+            continue
+        kinds = set(current.objects(subject, RDF.type)) or set(added.objects(subject, RDF.type))
+        single = False
+        for kind in kinds:
+            if str(kind) in classes and str(predicate) in classes[str(kind)].single:
+                single = True
+        given = sorted(current.objects(subject, predicate), key=str)
+        if single and given:
+            if value not in given:
+                merged.conflicts.append((str(subject), str(predicate), str(given[0]), str(value)))
+            continue
+        if (subject, predicate, value) not in merged.graph:
+            merged.graph.add((subject, predicate, value))
+            merged.added.append((subject, predicate, value))
+    return merged

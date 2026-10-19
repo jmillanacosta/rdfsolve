@@ -254,3 +254,38 @@ ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization ;
         "knows": {"@id": "https://schema.org/knows", "@container": "@set"},
         "name": {"@id": "https://schema.org/name"},
     }, "The tool's own name is single, though an organization takes several"
+
+
+def test_a_merge_keeps_single_values_adds_new_parts_once_and_notes_conflicts():
+    from rdfsolve.client.sql_tables import merge
+
+    current = Graph().parse(
+        data="""
+@prefix schema: <https://schema.org/> .
+<https://example.org/tool/1> a schema:SoftwareApplication ; schema:name "Tool" ;
+    schema:about <https://example.org/term/1> ; schema:provider [ schema:name "Org" ] .
+""",
+        format="turtle",
+    )
+    offered = Graph().parse(
+        data="""
+@prefix schema: <https://schema.org/> .
+<https://example.org/tool/1> a schema:CreativeWork ; schema:name "Another name" ;
+    schema:about <https://example.org/term/2> ;
+    schema:provider [ schema:name "Org" ] , [ schema:name "New Org" ] .
+""",
+        format="turtle",
+    )
+    merged = merge(current, offered, PROFILE)
+    assert merged.conflicts == [
+        (TOOL, "https://schema.org/name", "Tool", "Another name"),
+    ]
+    assert (
+        URIRef(TOOL),
+        URIRef("https://schema.org/about"),
+        URIRef("https://example.org/term/2"),
+    ) in merged.graph
+    assert len(list(merged.graph.objects(URIRef(TOOL), URIRef("https://schema.org/provider")))) == 2
+    assert (None, None, Literal("New Org")) in merged.graph
+    assert len(merged.added) == 3, "the term, and the new organisation with its name"
+    assert not merge(merged.graph, offered, PROFILE).added, "a second merge adds nothing"
