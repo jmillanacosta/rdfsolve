@@ -36,7 +36,7 @@ from __future__ import annotations
 import math
 import re
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
     from rdfsolve.schema_models.shacl_model import ShaclPropertyShape
 
-__all__ = ["Layout", "from_tables", "layout", "tables"]
+__all__ = ["Layout", "context", "from_tables", "layout", "tables"]
 
 STATEMENTS = "statements"
 TERM_SUFFIX = "__term"
@@ -427,3 +427,31 @@ def from_tables(given: Mapping[str, pd.DataFrame], profile: str | Graph) -> Grap
         for row in rest.to_dict("records"):
             add(_subject(str(row["iri"])), URIRef(str(row["property"])), row)
     return graph
+
+
+def context(profile: str | Graph, of_class: str, term: Callable[[str], str]) -> dict[str, Any]:
+    """Return the JSON-LD term definitions of the records of a class: the keywords @id and @type
+    as ``id`` and ``type``, and each field of the profile named by *term* (a property IRI to its
+    name), with ``@container: @set`` when it takes several values. The class's own fields count
+    as the class takes them; a field of other classes only (of the records a record links to) is
+    a set unless every class takes one value. No value is coerced to an IRI, so a text where an
+    IRI is expected stays a text.
+    """
+    classes = layout(profile).classes
+    single: set[str] = set()
+    several: set[str] = set()
+    for cls in classes.values():
+        single.update(cls.single)
+        several.update(cls.several)
+    own = classes.get(of_class)
+    terms: dict[str, Any] = {"id": "@id", "type": "@type"}
+    for iri in sorted(single | several):
+        if own is not None and iri in own.fields():
+            listed = iri in own.several
+        else:
+            listed = iri in several
+        definition = {"@id": iri}
+        if listed:
+            definition["@container"] = "@set"
+        terms[term(iri)] = definition
+    return terms

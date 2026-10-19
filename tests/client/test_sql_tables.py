@@ -229,3 +229,28 @@ schema:WebPage rdfs:subClassOf schema:CreativeWork .
     assert shapes.within("https://schema.org/Organization", hierarchy) == [
         "https://schema.org/Organization"
     ]
+
+
+def test_the_context_of_a_class_lists_the_fields_it_takes_several_values_of():
+    from rdfsolve.client.sql_tables import context
+
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Tool a sh:NodeShape ; sh:targetClass schema:SoftwareApplication ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] , [ sh:path schema:about ] .
+ex:Person a sh:NodeShape ; sh:targetClass schema:Person ;
+    sh:property [ sh:path schema:knows ] , [ sh:path schema:email ; sh:maxCount 1 ] .
+ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization ;
+    sh:property [ sh:path schema:name ] .
+"""
+    found = context(profile, "https://schema.org/SoftwareApplication", lambda iri: iri[19:])
+    assert found == {
+        "id": "@id",
+        "type": "@type",
+        "about": {"@id": "https://schema.org/about", "@container": "@set"},
+        "email": {"@id": "https://schema.org/email"},
+        "knows": {"@id": "https://schema.org/knows", "@container": "@set"},
+        "name": {"@id": "https://schema.org/name"},
+    }, "The tool's own name is single, though an organization takes several"
