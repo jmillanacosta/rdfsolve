@@ -200,3 +200,32 @@ ex:Chemical a sh:NodeShape ; sh:targetClass schema:MolecularEntity, schema:Chemi
     assert columns["schema_molecular_entity"] == columns["schema_chemical_substance"]
     assert "schema_name" in columns["schema_chemical_substance"]
     assert "schema_chemical_substance__schema_identifier" in columns
+
+
+def test_the_classes_within_a_class_are_it_and_its_subclasses_in_the_profile():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Page a sh:NodeShape ; sh:targetClass schema:WebPage .
+ex:AboutPage a sh:NodeShape ; sh:targetClass schema:AboutPage .
+ex:ContactPage a sh:NodeShape ; sh:targetClass schema:ContactPage .
+ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization .
+"""
+    hierarchy = Graph().parse(
+        data="""
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix schema: <https://schema.org/> .
+schema:AboutPage rdfs:subClassOf schema:WebPage . schema:ContactPage rdfs:subClassOf schema:AboutPage .
+schema:WebPage rdfs:subClassOf schema:CreativeWork .
+""",
+        format="turtle",
+    )
+    shapes = layout(profile)
+    assert shapes.within("https://schema.org/WebPage", hierarchy) == [
+        "https://schema.org/WebPage",
+        "https://schema.org/AboutPage",
+        "https://schema.org/ContactPage",
+    ]
+    assert shapes.within("https://schema.org/Organization", hierarchy) == [
+        "https://schema.org/Organization"
+    ]

@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
-from rdflib import RDF, BNode, Graph, Literal, URIRef
+from rdflib import RDF, RDFS, BNode, Graph, Literal, URIRef
 from rdflib.namespace import SH
 
 if TYPE_CHECKING:
@@ -97,6 +97,19 @@ class Layout:
             for name in cls.several.values():
                 found[cls.field_table(name)] = list(FIELD_COLUMNS)
         found[STATEMENTS] = list(STATEMENT_COLUMNS)
+        return found
+
+    def within(self, of_class: str, hierarchy: Graph) -> list[str]:
+        """Return the classes of the layout whose records are of a class too: the class, and
+        those below it in *hierarchy* (rdfs:subClassOf statements, at any depth), in IRI order.
+        """
+        below = {str(c) for c in hierarchy.transitive_subjects(RDFS.subClassOf, URIRef(of_class))}
+        found = []
+        if of_class in self.classes:
+            found.append(of_class)
+        for cls in self.classes:
+            if cls != of_class and cls in below:
+                found.append(cls)
         return found
 
     def ddl(self) -> str:
