@@ -129,3 +129,52 @@ def test_a_term_ols_files_under_another_iri_is_found_by_its_obo_id(monkeypatch):
     monkeypatch.setattr(lookup, "_json", answer)
     found = lookup.lookup("http://purl.obolibrary.org/obo/SBO_0000027", hierarchy=False)
     assert found is not None and found["label"] == "Michaelis constant"
+
+
+def test_vocabularies_and_their_terms_are_found_at_each_provider(monkeypatch, tmp_path):
+    from rdfsolve.ontology.service import ENTITY, serving
+
+    cache = tmp_path / "ontology.json"
+    obi = "http://purl.obolibrary.org/obo/OBI_"
+    ols = Ontologies(cache=cache)
+    asked = []
+
+    def answer(path, **params):
+        asked.append((path, params.get("ontology")))
+        if path == "/ontologies":
+            ontologies = [
+                {
+                    "ontologyId": "obi",
+                    "config": {
+                        "preferredPrefix": "OBI",
+                        "title": "Ontology for Biomedical Investigations",
+                        "baseUris": [obi],
+                    },
+                },
+                {"ontologyId": "efo", "config": {"title": "Experimental Factor Ontology"}},
+            ]
+            return {"_embedded": {"ontologies": ontologies}}
+        docs = [
+            {"iri": obi + "0000070", "label": "assay", "description": ["A planned process."]},
+            {"iri": "http://www.ebi.ac.uk/efo/EFO_0000001", "label": "experimental factor"},
+        ]
+        return {"response": {"docs": docs}}
+
+    monkeypatch.setattr(ols, "_json", answer)
+    assert [v["id"] for v in ols.vocabularies("INVESTIGATIONS")] == ["obi"]
+    (efo,) = ols.vocabularies("factor")
+    assert (efo["namespace"], efo["prefix"]) == ("http://purl.obolibrary.org/obo/EFO_", "EFO")
+    found = ols.terms("assay", obi)
+    assert [(t["iri"], t["code"]) for t in found] == [(obi + "0000070", "OBI:0000070")]
+    assert asked[-1] == ("/search", "obi"), "OLS is asked within the namespace's ontology"
+    assert asked.count(("/ontologies", None)) == 1, "the list is kept"
+
+    wikidata = Ontologies("wikidata")
+    items = [{"id": "Q1", "label": "Test item", "match": {"text": "test item"}}]
+    monkeypatch.setattr(wikidata, "_wikidata", lambda **params: {"search": items})
+    (item,) = wikidata.terms("test", ENTITY)
+    assert (item["iri"], item["label"], item["code"]) == (ENTITY + "Q1", "Test item", "Q1")
+
+    assert serving(obi, cache=cache, offline=True) == "ols"
+    assert serving(ENTITY, cache=cache, offline=True) == "wikidata"
+    assert serving("https://example.org/unknown/", cache=cache, offline=True) is None

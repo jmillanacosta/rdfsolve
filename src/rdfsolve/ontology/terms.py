@@ -51,7 +51,8 @@ class Term(TypedDict, total=False):
     iri, label, description (definitions), synonyms and synonym_evidence (text, predicate,
     scope), ontology (the defining ontology), namespace (OBO namespace annotations), obsolete;
     parents (iri and label of direct named parents); provider, source, match, local_iri,
-    fetched_at: the provenance of the answer.
+    fetched_at: the provenance of the answer; code: the term's code in its vocabulary
+    (OBI:0000070, Q42), from Ontologies.terms.
     """
 
     iri: str
@@ -69,6 +70,7 @@ class Term(TypedDict, total=False):
     local_iri: str
     fetched_at: float
     name_match: dict[str, str]
+    code: str
 
 
 __all__ = ["Term", "namespace", "namespace_expression", "obo_prefix"]
