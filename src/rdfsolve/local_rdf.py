@@ -265,7 +265,14 @@ def refuse_service(query: str) -> None:
     names, an internal address included, so a query passed through to local data could reach
     other servers. Raise ValueError naming the reason; a query that does not parse is left to the
     engine's own error.
+
+    Only a query that may hold the keyword is parsed: SERVICE in its text in capitals, as the
+    parser compares keywords (servıce and ſervice are SERVICE too), or a codepoint escape, which
+    the parser expands first.
     """
+    capitals = query.upper()
+    if "SERVICE" not in capitals and "\\U" not in capitals:
+        return
     from rdflib.plugins.sparql.parser import parseQuery
     from rdflib.plugins.sparql.parserutils import CompValue
 

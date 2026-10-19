@@ -278,3 +278,14 @@ def test_a_file_with_relative_iris_loads_with_its_terms_as_written(tmp_path):
     (tmp_path / "relative.ttl").write_text("<urn:a> <urn:p> <event_0> .\n")
     store = load_store(tmp_path / "relative.ttl")
     assert [q.object.value for q in store] == ["event_0"]
+
+
+def test_a_service_pattern_is_refused_however_its_keyword_is_written():
+    from rdfsolve.local_rdf import refuse_service
+
+    pattern = " <https://example.org/sparql> { ?s ?p ?o } }"
+    for keyword in ("SERVICE", "service", "servıce", "ſervice", "\\u0053ERVICE"):
+        with pytest.raises(ValueError, match="SERVICE is not run"):
+            refuse_service("SELECT * WHERE { " + keyword + pattern)
+    assert refuse_service("SELECT * WHERE { ?s <https://example.org/service> ?o }") is None
+    assert refuse_service("SELECT * WHERE { ?s ?p ?o }") is None
