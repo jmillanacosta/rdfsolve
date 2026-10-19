@@ -500,9 +500,8 @@ class MinedSchema(BaseModel):
         """Return sorted unique subject/object class URIs."""
         classes: set[str] = set()
         if self.shapes is not None:
-            classes.update(
-                shape.target_class for shape in self.shapes.node_shapes if shape.target_class
-            )
+            for shape in self.shapes.node_shapes:
+                classes.update(shape.target_classes)
         for p in self.patterns:
             if not p.untyped_subject:
                 classes.add(p.subject_class)

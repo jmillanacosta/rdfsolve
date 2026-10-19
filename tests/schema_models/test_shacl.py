@@ -510,3 +510,25 @@ def test_mining_records_the_class_hierarchy_of_the_data():
         schema = miner.mine(dataset_name="fixture")
     assert schema.class_hierarchy.get("urn:B") == ["urn:A"]
     assert nearest_classes({"x": {"y"}, "y": {"z"}}, ["x", "z"]) == {"x": ["z"]}
+
+
+def test_a_shape_of_two_target_classes_gives_each_class_its_fields():
+    source = """
+@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix schema: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> . @prefix ex: <https://example.org/shapes/> .
+ex:Chemical a sh:NodeShape ; sh:targetClass schema:MolecularEntity, schema:ChemicalSubstance ;
+    sh:property [ sh:path schema:name ; sh:datatype xsd:string ; sh:maxCount 1 ] .
+"""
+    schema = MinedSchema.from_shacl(source)
+    s = Namespace("https://schema.org/")
+    assert {(p.subject_class, p.property_uri) for p in schema.patterns} == {
+        (str(s.MolecularEntity), str(s.name)),
+        (str(s.ChemicalSubstance), str(s.name)),
+    }
+    (shape,) = schema.shapes.node_shapes
+    assert shape.target_class is None
+    written = schema.shapes.to_rdf(Graph())
+    assert set(written.objects(URIRef(shape.uri), SH.targetClass)) == {
+        s.MolecularEntity,
+        s.ChemicalSubstance,
+    }

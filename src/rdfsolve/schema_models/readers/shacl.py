@@ -98,7 +98,7 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
     lists: list[CollectionProfile] = []
     for shape in shapes.node_shapes:
         if (
-            not shape.target_class
+            not shape.target_classes
             and shape.uri
             and not shape.uri.startswith("_:")
             and any(
@@ -107,13 +107,18 @@ def shacl_to_minedschema(shacl_ttl: str) -> MinedSchema:
             )
         ):
             shape.target_class = shape.uri
-        subject, binding, properties = shape.target_class, "type", shape.property_shapes
-        if not subject:
+            shape.target_classes = [shape.uri]
+        # Each class the shape targets has its fields.
+        fields: list[tuple[str, str, ShaclPropertyShape]] = []
+        for target in shape.target_classes:
+            for prop in shape.property_shapes:
+                fields.append((target, "type", prop))
+        if not shape.target_classes:
             values = _untyped_values(shape)
             if values is None:
                 continue
-            subject, binding, properties = UNTYPED_SUBJECT, "untyped", [values]
-        for prop in properties:
+            fields = [(UNTYPED_SUBJECT, "untyped", values)]
+        for subject, binding, prop in fields:
             if not prop.path:
                 continue
             if not isinstance(prop.path, str) or (

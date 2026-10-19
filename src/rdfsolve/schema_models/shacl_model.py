@@ -292,7 +292,12 @@ class ShaclNodeShape(BaseModel):
     """Represents sh:NodeShape."""
 
     uri: str
-    target_class: str | None = Field(None, description="sh:targetClass")
+    target_class: str | None = Field(
+        None, description="sh:targetClass, when the shape targets one class only"
+    )
+    target_classes: list[str] = Field(
+        default_factory=list, description="sh:targetClass: every class the shape targets"
+    )
     target_subjects_of: list[str] = Field(
         default_factory=list, description="sh:targetSubjectsOf: the subjects of these properties"
     )
@@ -321,6 +326,17 @@ class ShaclNodeShape(BaseModel):
     name_language: str | None = None
     description_language: str | None = None
 
+    @model_validator(mode="after")
+    def check_targets(self) -> Self:
+        """Give target_class among target_classes, and the only one of them as target_class."""
+        if self.target_class and not self.target_classes:
+            self.target_classes = [self.target_class]
+        if self.target_class is None and len(self.target_classes) == 1:
+            self.target_class = self.target_classes[0]
+        if self.target_class and self.target_classes != [self.target_class]:
+            raise ValueError("target_class is for a shape of one target class only")
+        return self
+
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
         from rdflib import Literal as RdfLiteral
@@ -335,7 +351,9 @@ class ShaclNodeShape(BaseModel):
         uri = BNode(self.uri[2:]) if self.uri.startswith("_:") else Ref(self.uri)
         graph.add((uri, RDF.type, sh.NodeShape))
 
-        if self.target_class:
+        for target in self.target_classes:
+            graph.add((uri, sh.targetClass, Ref(target)))
+        if self.target_class and self.target_class not in self.target_classes:
             graph.add((uri, sh.targetClass, Ref(self.target_class)))
         for prop in self.target_subjects_of:
             graph.add((uri, sh.targetSubjectsOf, Ref(prop)))
@@ -394,7 +412,7 @@ class ShaclNodeShape(BaseModel):
 
         from rdflib import BNode
 
-        target_class = graph.value(uri, sh.targetClass, any=False)
+        target_classes = sorted(str(c) for c in graph.objects(uri, sh.targetClass))
         target_subjects_of = sorted(str(p) for p in graph.objects(uri, sh.targetSubjectsOf))
         from rdflib.namespace import RDF
 
@@ -424,7 +442,7 @@ class ShaclNodeShape(BaseModel):
 
         return cls(
             uri=("_:" + str(uri)) if isinstance(uri, BNode) else str(uri),
-            target_class=str(target_class) if target_class else None,
+            target_classes=target_classes,
             target_subjects_of=target_subjects_of,
             alternatives=alternatives,
             closed=_boolean(graph, uri, sh.closed),

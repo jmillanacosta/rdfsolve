@@ -186,3 +186,17 @@ ex:AboutPage a sh:NodeShape ; sh:targetClass schema:AboutPage ; sh:node ex:Page 
         "https://schema.org/name": "schema_name",
     }
     assert about.several == {"https://schema.org/hasPart": "schema_has_part"}
+
+
+def test_each_class_of_a_shape_of_two_target_classes_has_a_table():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Chemical a sh:NodeShape ; sh:targetClass schema:MolecularEntity, schema:ChemicalSubstance ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] , [ sh:path schema:identifier ] .
+"""
+    columns = layout(profile).columns()
+    assert columns["schema_molecular_entity"] == columns["schema_chemical_substance"]
+    assert "schema_name" in columns["schema_chemical_substance"]
+    assert "schema_chemical_substance__schema_identifier" in columns

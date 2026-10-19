@@ -5,7 +5,7 @@ writes as they are); from_tables() writes the same graph from them; Layout.ddl()
 the tables. Names come from the CURIEs of the prefixes the profile declares, so a class or a field
 that stays the same from one version of a profile to the next keeps its table or column:
 
-- one table per class of the profile (a node shape with sh:targetClass), named from the class
+- one table per class of the profile (each sh:targetClass of a node shape), named from the class
   (``schema_software_application``), with the columns ``record``, ``iri`` and ``type`` (the
   class), and for each single field a column of values (``schema_name``) and one of their terms
   (``schema_name__term``); its key is ``iri``. The fields of a class are the property shapes of
@@ -187,10 +187,10 @@ def _layout_of_text(text: str) -> Layout:
 
 
 def layout(profile: str | Graph) -> Layout:
-    """Return the tables of a SHACL profile (Turtle text or a graph): one per class of a node
-    shape with sh:targetClass, its fields by property shape with an IRI path (also those of the
-    node shapes it builds on with sh:node), single when the smallest sh:maxCount of the shapes of
-    the class and path is 1.
+    """Return the tables of a SHACL profile (Turtle text or a graph): one per sh:targetClass of a
+    node shape, its fields by property shape with an IRI path (also those of the node shapes it
+    builds on with sh:node), single when the smallest sh:maxCount of the shapes of the class and
+    path is 1.
     """
     return _layout_of_text(profile) if isinstance(profile, str) else _layout(profile)
 
@@ -203,12 +203,12 @@ def _layout(graph: Graph) -> Layout:
     maxima: dict[str, dict[str, set[int | None]]] = defaultdict(lambda: defaultdict(set))
     for node in set(graph.subjects(SH.targetClass, None)):
         shape = ShaclNodeShape.from_rdf(graph, node)
-        if shape.target_class is None:
-            continue
-        maxima.setdefault(shape.target_class, defaultdict(set))
-        for prop in shape.property_shapes + _built_on(graph, node):
-            if isinstance(prop.path, str) and prop.path:
-                maxima[shape.target_class][prop.path].add(prop.max_count)
+        fields = shape.property_shapes + _built_on(graph, node)
+        for cls in shape.target_classes:
+            maxima.setdefault(cls, defaultdict(set))
+            for prop in fields:
+                if isinstance(prop.path, str) and prop.path:
+                    maxima[cls][prop.path].add(prop.max_count)
     classes: dict[str, ClassLayout] = {}
     columns: dict[str, str] = {}
     tables: dict[str, str] = {STATEMENTS: STATEMENTS}

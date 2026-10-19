@@ -210,8 +210,8 @@ def to_pydantic(
         import logging
 
         for shape in schema.shapes.node_shapes:
-            if shape.target_class:
-                profiles.setdefault(shape.target_class, []).append(shape.model_dump(mode="json"))
+            for target in shape.target_classes:
+                profiles.setdefault(target, []).append(shape.model_dump(mode="json"))
         logging.getLogger(__name__).info(
             "rdfsolve Pydantic generation retains SHACL profiles. Hydration can read "
             "their paths; it does not run SHACL validation."
