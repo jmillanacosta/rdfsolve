@@ -6,10 +6,10 @@ declares them.
 
 from __future__ import annotations
 
-from rdfsolve._uri import curie_from_prefixes, get_local_name, make_expander
+from rdfsolve._uri import curie_from_prefixes, get_local_name, make_expander, prefix_map
 from rdfsolve.ontology.terms import namespace
 
-__all__ = ["curie", "expand", "local_name", "namespace"]
+__all__ = ["curie", "expand", "local_name", "namespace", "prefix_map"]
 
 
 def curie(iri: str, prefixes: dict[str, str]) -> tuple[str, str, str] | None:
