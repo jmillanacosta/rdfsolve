@@ -91,25 +91,40 @@ V2_DATA = (
 
 
 @pytest.fixture(scope="module")
-def plan():
-    """A plan of every record of the first version into the second version's profile."""
+def client():
+    """A client of the first version's records, named by the first version's profile."""
     from rdfsolve import SchemaMiner
-    from rdfsolve.client.api import Client, Results
-    from rdfsolve.plan import Plan, Target
+    from rdfsolve.client.api import Client
 
     logging.getLogger("rdfsolve").setLevel(logging.WARNING)
     graph = rdflib.Graph().parse(data=V1_DATA, format="turtle")
     with SchemaMiner.from_graph(graph, delay=0) as miner:
         schema = miner.mine(dataset_name="v1")
     schema.shape_profile = V1_PROFILE
-    client = Client(schema, graph, graph_uris=[])
+    return Client(schema, graph, graph_uris=[])
+
+
+@pytest.fixture(scope="module")
+def target():
+    """The second version's profile as a target."""
+    from rdfsolve.plan import Target
+
+    return Target(rdflib.Graph().parse(data=V2_PROFILE, format="turtle"))
+
+
+@pytest.fixture(scope="module")
+def plan(client, target):
+    """A plan of every record of the first version into the second version's profile."""
+    from rdfsolve.client.api import Results
+    from rdfsolve.plan import Plan
+
+    graph = client._local_graph()
     records = []
     for kind in client.kinds:
         members = []
         for node in graph.subjects(rdflib.RDF.type, rdflib.URIRef(kind.iri)):
             members.append(f"_:{node}" if isinstance(node, rdflib.BNode) else str(node))
         records += list(client.from_table(kind.iri, sorted(members)).records)
-    target = Target(rdflib.Graph().parse(data=V2_PROFILE, format="turtle"))
     return Plan(Results(client, records), into=target)
 
 
@@ -119,3 +134,13 @@ def test_every_kind_is_decided_by_its_class_or_its_records_namespace(plan):
     assert plan.LabProtocol.chosen.why.startswith("ids: ex_methods 1")
     assert plan.PropertyValue.chosen.why == "the same class"
     assert plan.SoftwareApplication.target.name == "Tool"
+
+
+def test_a_link_of_a_property_the_target_has_is_proposed_that_property(client, target):
+    from rdfsolve.plan import Plan
+
+    tools = client.from_table("SoftwareApplication", ["https://example.org/tools/one"])
+    plan = Plan(tools, into=target, contents=client.kinds.SoftwareApplication.maintainer)
+    assert plan.maintainer.status == "proposed"
+    assert plan.maintainer.target.iri == "https://schema.org/maintainer"
+    assert plan.maintainer.chosen.why == "the same property"

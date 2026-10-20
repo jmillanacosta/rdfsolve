@@ -1492,15 +1492,26 @@ class Plan(_Shown):
         ]
 
     def _predicate_options(
-        self, label: str, definition: str, domain: str | None, range_: str | None
+        self,
+        label: str,
+        definition: str,
+        domain: str | None,
+        range_: str | None,
+        iri: str | None = None,
     ) -> list[Option]:
         """Return target relations for a source relation, best first.
 
+        A target relation of the same property IRI (*iri*, a link's property) comes first.
         Only relations that may go between the ends' target kinds count (Target.fits). They are
         ranked by the words of the source relation's name in the relation's name, then in its
         definition (when the target has definitions); when no word matches, the fitting
         relations are offered most general first (the most relations of the target descend from them).
         """
+        same = [
+            Option(t, 0, "the same property")
+            for t in self.target.relations
+            if iri and t.iri == iri and not t.deprecated
+        ][:1]
         words = _tokens(label) | {w for w in _tokens(definition) if len(w) > 3}
         fitting = [
             term
@@ -1523,7 +1534,8 @@ class Plan(_Shown):
                 scored.append((len(hits), -extra, len(loose), term, why))
         scored.sort(key=lambda s: s[:3], reverse=True)
         if scored:
-            return [Option(t, h, r) for h, _, _, t, r in scored[:8]]
+            named = [Option(t, h, r) for h, _, _, t, r in scored[:8]]
+            return same + [o for o in named if not same or o.term is not same[0].term]
         info = self.target._relations
         # With no word to go by, the most general relations are offered first: those that the most
         # relations of the target descend from (without a hierarchy, those with stated ends).
@@ -1536,7 +1548,8 @@ class Plan(_Shown):
             ranked = [
                 t for t in ranked if info[t.name].domain or info[t.name].range or info[t.name].pairs
             ]
-        return [Option(t, 0, "a general relation that fits the ends") for t in ranked[:8]]
+        general = [Option(t, 0, "a general relation that fits the ends") for t in ranked[:8]]
+        return same + [o for o in general if not same or o.term is not same[0].term]
 
     def _slot_ancestors(self, name: str) -> list[str]:
         """Return a predicate's ancestors (none without a hierarchy)."""
@@ -1773,7 +1786,7 @@ class Plan(_Shown):
         kind = getattr(self.kinds, _attribute(holder)) if holder else link.kind
         held = self.proposals.get(holder) if holder else None
         range_ = held.target.name if held is not None and held.target is not None else None
-        options = self._predicate_options(link.name, "", None, range_)
+        options = self._predicate_options(link.name, "", None, range_, link.iri)
         p = Proposal(
             self,
             kind,
@@ -1844,10 +1857,11 @@ class Plan(_Shown):
     def _settle(self, p: Proposal) -> None:
         """Propose the best option when the evidence decides it, else leave the choice open.
 
-        A node's kind is decided by its records' identifiers (when the target states identifier
-        namespaces), else by its name; a name alone does not decide where the target states
-        identifiers and the records have none. A relation is decided only by a word of its name.
-        Ties are left open, with the tied options first.
+        A node's kind is decided by its class, else by its records' identifiers (when the target
+        states identifier namespaces), else by its name; a name alone does not decide where the
+        target states identifiers and the records have none. A relation is decided by its
+        property, else only by a word of its name. Ties are left open, with the tied options
+        first.
         """
         if not p.options:
             p.status = "choose" if p.reading in ("edge", "process") else "left out"
@@ -1867,8 +1881,9 @@ class Plan(_Shown):
                 p.chosen, p.status = best, "proposed"
             else:
                 p.status = "choose"
-        elif best.why.startswith("name") and not (
-            second and second.why == best.why and not self._closer(best, second, p)
+        elif best.why == "the same property" or (
+            best.why.startswith("name")
+            and not (second and second.why == best.why and not self._closer(best, second, p))
         ):
             p.chosen, p.status = best, "proposed"
         else:
