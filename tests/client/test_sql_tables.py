@@ -363,3 +363,47 @@ def test_a_prefix_declared_with_sh_declare_names_tables_and_columns():
     item = layout(profile).classes["https://example.org/terms/Item"]
     assert item.name == "ex_item"
     assert item.single == {"https://example.org/terms/label": "ex_label"}
+
+
+def test_parts_get_addresses_under_their_record_and_keep_them():
+    schema = "https://schema.org/"
+    data = Graph().parse(data=DATA, format="turtle")
+    assert str(tables(data, PROFILE)["schema_organization"]["iri"][0]).startswith("_:")
+    found = tables(data, PROFILE, skolem=True)
+    assert list(found["schema_organization"]["iri"]) == [TOOL + "#provider-1"]
+    assert list(found["schema_organization"]["record"]) == [TOOL]
+    rest = found["statements"]
+    deep = rest[rest["value"] == "Deep Street 1"]
+    assert list(deep["iri"]) == [TOOL + "#address-1"], "a part of a part is under the record"
+    assert list(deep["record"]) == [TOOL]
+    back = from_tables(_read(_database(found)), PROFILE)
+    assert not [node for triple in back for node in triple if isinstance(node, BNode)]
+    again = tables(back, PROFILE, skolem=True)
+    assert all(frame.equals(again[name]) for name, frame in found.items()), "the same addresses"
+
+    second = BNode()
+    more = Graph() + back
+    more.add((URIRef(TOOL), URIRef(schema + "provider"), second))
+    more.add(
+        (
+            second,
+            URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+            URIRef(schema + "Organization"),
+        )
+    )
+    more.add((second, URIRef(schema + "name"), Literal("Second Org")))
+    assert sorted(tables(more, PROFILE, skolem=True)["schema_organization"]["iri"]) == [
+        TOOL + "#provider-1",
+        TOOL + "#provider-2",
+    ]
+    removed = {URIRef(TOOL + "#provider-1"), URIRef(TOOL + "#address-1")}
+    replaced = Graph()
+    for triple in more:
+        if triple[0] not in removed and triple[2] not in removed:
+            replaced.add(triple)
+    organization = tables(replaced, PROFILE, skolem=True)["schema_organization"]
+    assert list(organization["iri"]) == [TOOL + "#provider-1"], "the highest number left goes on"
+    organization = tables(replaced, PROFILE, skolem=True, before=back)["schema_organization"]
+    assert list(organization["iri"]) == [TOOL + "#provider-2"], (
+        "a number stored before is not given again"
+    )

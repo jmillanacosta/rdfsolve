@@ -24,6 +24,16 @@ to the IRI subject that reaches it through blank nodes only, at any depth (a bla
 from two IRI subjects, or from none, is refused). A record is read with ``WHERE record IN (...)``
 and deleted with ``WHERE record = ?``, its nested nodes included.
 
+With ``tables(..., skolem=True)`` the parts of a record (its blank nodes) are given addresses
+under it, so that a part keeps one address for its whole life. A part is written as
+``<record>#<name>-<n>``, where ``<name>`` is the local name of the property that holds it (only
+its letters, digits and underscores) and ``<n>`` is the next number of that name in the record.
+Parts of parts are numbered under the record too. A subject of that form whose record is in the
+data belongs to that record, so a part given again with its address keeps it. The numbers go on
+after the highest one in the data and in the record as stored before (*before*); the number of a
+removed part is given again only when no part of that name with a higher number is left. A record
+whose address has a fragment keeps blank nodes for its parts.
+
 A term says how its value is written back: ``@id`` an IRI, ``@blank`` a blank node, empty a
 literal without a datatype, ``@`` and the language tag a tagged literal, else the datatype IRI.
 Values are kept as the data has them, whatever kind their field's shape allows: SHACL checks
@@ -58,6 +68,8 @@ STATEMENTS = "statements"
 TERM_SUFFIX = "__term"
 FIELD_COLUMNS = ["record", "iri", "value", "term"]
 STATEMENT_COLUMNS = ["record", "iri", "property", "value", "term"]
+# The address of a part under its record, as tables(skolem=True) writes it.
+_PART = re.compile(r"^(?P<record>[^#]+)#(?P<name>[A-Za-z_][A-Za-z0-9_]*)-(?P<number>[0-9]+)$")
 
 
 @dataclass
@@ -465,9 +477,11 @@ def _iri_cell(node: Node) -> str:
     return f"_:{node}" if isinstance(node, BNode) else str(node)
 
 
-def _records(data: Graph) -> dict[Node, str]:
+def _records(data: Graph, parts: Mapping[str, str] | None = None) -> dict[Node, str]:
     """Return the record of each blank node subject: the IRI subject that reaches it through
     blank nodes only; a blank node reached from two IRI subjects, or from none, is refused.
+
+    A part address in *parts* stands for its record, so that a part keeps its record.
     """
     incoming: dict[Node, set[Node]] = defaultdict(set)
     for subject, _, value in data:
@@ -485,12 +499,82 @@ def _records(data: Graph) -> dict[Node, str]:
                         seen.add(parent)
                         todo.append(parent)
                 else:
-                    owners.add(parent)
+                    owners.add(URIRef((parts or {}).get(str(parent), str(parent))))
         if len(owners) != 1:
             reached = "no IRI subject" if not owners else f"{len(owners)} IRI subjects"
             raise ValueError(f"The blank node _:{node} is reached from {reached}: it has no record")
         found[node] = str(next(iter(owners)))
     return found
+
+
+def _part_records(data: Graph) -> dict[str, str]:
+    """Return the record of each part address among the subjects of *data*, so that a part given
+    with its address stays in its record.
+    """
+    subjects = {str(s) for s in data.subjects() if isinstance(s, URIRef)}
+    found = {}
+    for subject in subjects:
+        match = _PART.match(subject)
+        if match and match["record"] in subjects:
+            found[subject] = match["record"]
+    return found
+
+
+def _part_name(predicate: Node) -> str:
+    """Return the name of the parts a property holds, as their addresses show it."""
+    from rdfsolve.iris import local_name
+
+    name = re.sub(r"[^A-Za-z0-9_]", "", local_name(str(predicate)))
+    return name if re.match(r"[A-Za-z_]", name) else "part" + name
+
+
+def _skolemized(data: Graph, before: Graph | None) -> tuple[Graph, dict[str, str]]:
+    """Return *data* with each blank-node part given an address under its record, and the record
+    of each part address (see the module). The parts are numbered in order of their holder, the
+    property that holds them and their values, so that the same data gives the same addresses.
+    """
+    parts = _part_records(data)
+    owners = _records(data, parts)
+    highest: dict[tuple[str, str], int] = defaultdict(int)
+    for graph in (data, before or Graph()):
+        for node in set(graph.subjects()) | set(graph.objects()):
+            match = _PART.match(str(node)) if isinstance(node, URIRef) else None
+            if match:
+                key = (match["record"], match["name"])
+                highest[key] = max(highest[key], int(match["number"]))
+    holders: dict[Node, tuple[Node, Node]] = {}
+    for subject, predicate, value in sorted(data, key=lambda t: (str(t[0]), str(t[1]))):
+        if isinstance(value, BNode):
+            holders.setdefault(value, (subject, predicate))
+    addresses: dict[Node, URIRef] = {}
+
+    def order(node: Node) -> tuple[str, str, str]:
+        """Return the place of a part among the parts numbered together."""
+        holder, predicate = holders[node]
+        return (str(addresses.get(holder, holder)), str(predicate), _part_key(data, node))
+
+    # A part is numbered once its holder has its address, so parts of parts come after them.
+    todo = set(holders)
+    while todo:
+        ready = [
+            n for n in todo if not isinstance(holders[n][0], BNode) or holders[n][0] in addresses
+        ]
+        if not ready:
+            break
+        for node in sorted(ready, key=order):
+            holder, predicate = holders[node]
+            record = owners.get(node) or parts.get(str(holder), str(addresses.get(holder, holder)))
+            record = parts.get(record, record)
+            if "#" not in record:
+                name = _part_name(predicate)
+                highest[(record, name)] += 1
+                addresses[node] = URIRef(f"{record}#{name}-{highest[(record, name)]}")
+                parts[str(addresses[node])] = record
+        todo -= set(ready)
+    found = Graph(bind_namespaces="none")
+    for subject, predicate, value in data:
+        found.add((addresses.get(subject, subject), predicate, addresses.get(value, value)))
+    return found, parts
 
 
 def _row_order(row: list[str | None]) -> list[tuple[bool, str]]:
@@ -511,19 +595,33 @@ def _frame(rows: list[list[str | None]], columns: list[str]) -> pd.DataFrame:
     return pd.DataFrame(ordered, columns=columns, dtype="string")
 
 
-def tables(data: Graph, profile: str | Graph, *, empty: bool = True) -> dict[str, pd.DataFrame]:
+def tables(
+    data: Graph,
+    profile: str | Graph,
+    *,
+    empty: bool = True,
+    skolem: bool = False,
+    before: Graph | None = None,
+) -> dict[str, pd.DataFrame]:
     """Return the tables of the nodes of *data* that *profile* gives (see the module).
 
     Every table of the profile is given, a table without rows empty with its columns; with
     *empty* False, only the tables with rows, as a writer of one record's rows needs them.
+    With *skolem*, the parts of each record are given addresses under it; *before* is the
+    statements of the records as stored before, whose part numbers are not given again.
     """
     shapes = layout(profile)
     columns = shapes.columns()
-    owners = _records(data)
+    parts: dict[str, str] = {}
+    if skolem:
+        data, parts = _skolemized(data, before)
+    owners = _records(data, parts)
 
     def record(node: Node) -> str:
         """Return the record of a subject."""
-        return owners[node] if isinstance(node, BNode) else str(node)
+        if isinstance(node, BNode):
+            return owners[node]
+        return parts.get(str(node), str(node))
 
     rows: dict[str, list[list[str | None]]] = {name: [] for name in columns}
     statements: set[tuple[str, str, str, str, str]] = set()
