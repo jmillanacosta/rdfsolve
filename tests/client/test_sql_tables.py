@@ -7,6 +7,7 @@ import sqlite3
 
 import pandas as pd
 import pytest
+from rdflib.collection import Collection as RDFList
 from rdflib import BNode, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
 
@@ -426,6 +427,36 @@ def test_a_part_read_again_with_the_same_values_keeps_its_address():
     assert list(renamed["schema_organization"]["iri"]) == [TOOL + "#provider-2"], (
         "a part with other values is a new part"
     )
+
+
+def test_a_list_field_keeps_the_order_of_its_members():
+    profile = (
+        PROFILE
+        + """
+<https://example.org/shapes/Paper> a sh:NodeShape ;
+    sh:targetClass <https://schema.org/ScholarlyArticle> ;
+    sh:property [ sh:path <https://schema.org/author> ;
+        sh:node <http://datashapes.org/dash#ListShape> ] ;
+    sh:property [ sh:path <https://schema.org/name> ; sh:maxCount 1 ] .
+"""
+    )
+    data = Graph().parse(
+        data="""@prefix schema: <https://schema.org/> .
+<https://example.org/paper/1> a schema:ScholarlyArticle ; schema:name "Paper" ;
+    schema:author ( <https://example.org/b> <https://example.org/a> [ schema:name "Third" ] ) .""",
+        format="turtle",
+    )
+    found = tables(data, profile, skolem=True)
+    authors = found["schema_scholarly_article__schema_author"]
+    by_position = dict(zip(authors["position"], authors["value"], strict=True))
+    assert by_position["0"] == "https://example.org/b"
+    assert by_position["1"] == "https://example.org/a"
+    assert by_position["2"] == "https://example.org/paper/1#author-1", "a part in a list"
+    assert not len(found["statements"][found["statements"]["property"].str.contains("rdf-syntax")])
+    back = from_tables(found, profile)
+    head = back.value(URIRef("https://example.org/paper/1"), URIRef("https://schema.org/author"))
+    members = [str(member) for member in RDFList(back, head)]
+    assert members[:2] == ["https://example.org/b", "https://example.org/a"]
 
 
 def test_a_merge_does_not_add_again_a_part_that_has_an_address():

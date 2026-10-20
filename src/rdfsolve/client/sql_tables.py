@@ -14,6 +14,10 @@ that stays the same from one version of a profile to the next keeps its table or
   every shape on a path.
 - for each other field of a class, a table ``<class>__<field>`` (record, iri, value, term), keyed
   by (iri, value, term), whose ``iri`` refers to the class table;
+- for each list field (a property shape with ``sh:node dash:ListShape``, whose value is an
+  rdf:List), a table ``<class>__<field>`` (record, iri, value, term, position) of the members of
+  the list in order, keyed by (iri, position); the cells of the list are in no table, and
+  from_tables() makes them again;
 - one table ``statements`` (record, iri, property, value, term) of everything else: rdf:type
   values that are no class of the profile, properties that are no field of a class of the node,
   the statements of nodes of no class, and every value of a single field of a node that has more
@@ -34,7 +38,8 @@ after the highest one in the data and in the record as stored before (*before*);
 removed part is given again only when no part of that name with a higher number is left. A blank
 part with the same values as a part in *before*, under the same holder and property, takes its
 address, so that a part read again from a source keeps it. A record whose address has a fragment
-keeps blank nodes for its parts.
+keeps blank nodes for its parts. The cells of a list keep blank nodes; a part in a list is
+numbered by the property of the list.
 
 A term says how its value is written back: ``@id`` an IRI, ``@blank`` a blank node, empty a
 literal without a datatype, ``@`` and the language tag a tagged literal, else the datatype IRI.
@@ -54,6 +59,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
+from rdflib.collection import Collection as RDFList
 from rdflib.namespace import SH
 
 if TYPE_CHECKING:
@@ -69,6 +75,9 @@ __all__ = ["Layout", "Merged", "context", "from_tables", "layout", "merge", "tab
 STATEMENTS = "statements"
 TERM_SUFFIX = "__term"
 FIELD_COLUMNS = ["record", "iri", "value", "term"]
+LIST_COLUMNS = [*FIELD_COLUMNS, "position"]
+# A property shape with this sh:node takes an rdf:List (DASH, https://datashapes.org/dash).
+LIST_SHAPE = URIRef("http://datashapes.org/dash#ListShape")
 STATEMENT_COLUMNS = ["record", "iri", "property", "value", "term"]
 # The address of a part under its record, as tables(skolem=True) writes it.
 _PART = re.compile(r"^(?P<record>[^#]+)#(?P<name>[A-Za-z_][A-Za-z0-9_]*)-(?P<number>[0-9]+)$")
@@ -86,11 +95,12 @@ class ClassLayout:
     name: str
     single: dict[str, str] = field(default_factory=dict)
     several: dict[str, str] = field(default_factory=dict)
+    lists: dict[str, str] = field(default_factory=dict)
     labels: dict[str, str] = field(default_factory=dict)
 
     def fields(self) -> dict[str, str]:
         """Return every field of the class: path IRI -> column name."""
-        return {**self.single, **self.several}
+        return {**self.single, **self.several, **self.lists}
 
     def field_table(self, column: str) -> str:
         """Return the name of the table of a field that is not single."""
@@ -117,6 +127,8 @@ class Layout:
             ]
             for name in cls.several.values():
                 found[cls.field_table(name)] = list(FIELD_COLUMNS)
+            for name in cls.lists.values():
+                found[cls.field_table(name)] = list(LIST_COLUMNS)
         found[STATEMENTS] = list(STATEMENT_COLUMNS)
         return found
 
@@ -191,7 +203,7 @@ class Layout:
                 )
                 for row in connection.execute(statement):
                     counted[path].append((row[0], row[1], row[2]))
-            for path, held in cls.several.items():
+            for path, held in {**cls.several, **cls.lists}.items():
                 values = tables[cls.field_table(held)]
                 statement = (
                     select(values.c.term, values.c.value, func.count())
@@ -236,6 +248,9 @@ class Layout:
             keys[cls.name] = ["iri"]
             for name in cls.several.values():
                 keys[cls.field_table(name)] = ["iri", "value", "term"]
+                refers[cls.field_table(name)] = cls.name
+            for name in cls.lists.values():
+                keys[cls.field_table(name)] = ["iri", "position"]
                 refers[cls.field_table(name)] = cls.name
         statements = []
         for table, columns in sorted(self.columns().items()):
@@ -390,11 +405,14 @@ def _layout(graph: Graph) -> Layout:
     prefixes = _prefixes(graph)
     maxima: dict[str, dict[str, set[int | None]]] = defaultdict(lambda: defaultdict(set))
     labels: dict[str, dict[str, str]] = defaultdict(dict)
+    lists: dict[str, set[str]] = defaultdict(set)
     for node in sorted(set(graph.subjects(SH.targetClass, None)), key=str):
         shape = ShaclNodeShape.from_rdf(graph, node)
         fields = shape.property_shapes + _built_on(graph, node)
+        listed = _list_paths(graph, node)
         for cls in shape.target_classes:
             maxima.setdefault(cls, defaultdict(set))
+            lists[cls] |= listed
             for prop in fields:
                 if isinstance(prop.path, str) and prop.path:
                     maxima[cls][prop.path].add(prop.max_count)
@@ -414,7 +432,12 @@ def _layout(graph: Graph) -> Layout:
             if columns.setdefault(name, path) != path:
                 raise ValueError(f"{path} and {columns[name]} have the same column name {name}")
             bounds = [c for c in counts if c is not None]
-            if bounds and min(bounds) <= 1:
+            if path in lists[cls]:
+                found.lists[path] = name
+                table = found.field_table(name)
+                if tables.setdefault(table, path) != path:
+                    raise ValueError(f"{path} and {tables[table]} have the same table name {table}")
+            elif bounds and min(bounds) <= 1:
                 found.single[path] = name
             else:
                 found.several[path] = name
@@ -423,6 +446,40 @@ def _layout(graph: Graph) -> Layout:
                     raise ValueError(f"{path} and {tables[table]} have the same table name {table}")
         classes[cls] = found
     return Layout(classes)
+
+
+def _list_paths(graph: Graph, shape: Node) -> set[str]:
+    """Return the paths of the list fields of a node shape and of the node shapes it builds on:
+    the property shapes with ``sh:node dash:ListShape``.
+    """
+    found = set()
+    shapes = [shape]
+    seen = set()
+    while shapes:
+        current = shapes.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for prop in graph.objects(current, SH.property):
+            path = graph.value(prop, SH.path)
+            if isinstance(path, URIRef) and (prop, SH.node, LIST_SHAPE) in graph:
+                found.add(str(path))
+        shapes.extend(graph.objects(current, SH.node))
+    return found
+
+
+def _members(data: Graph, head: Node) -> list[tuple[Node, Node]]:
+    """Return the cells and the members of an rdf:List, in order; an empty list (rdf:nil) has
+    none.
+    """
+    found = []
+    seen = set()
+    node = head
+    while isinstance(node, BNode) and node not in seen and (node, RDF.first, None) in data:
+        seen.add(node)
+        found.append((node, data.value(node, RDF.first)))
+        node = data.value(node, RDF.rest)
+    return found
 
 
 def _built_on(graph: Graph, shape: Node) -> list[ShaclPropertyShape]:
@@ -552,9 +609,19 @@ def _skolemized(data: Graph, before: Graph | None) -> tuple[Graph, dict[str, str
     taken = {
         node for node in set(data.subjects()) | set(data.objects()) if isinstance(node, URIRef)
     }
+    # The cells of an rdf:List keep blank nodes; a member of a list is held by the holder of the
+    # list, with its property.
+    cells = {node for node in data.subjects(RDF.first, None) if isinstance(node, BNode)}
+    lists: dict[Node, tuple[Node, Node]] = {}
+    for subject, predicate, value in data:
+        if value in cells and predicate != RDF.rest:
+            for cell, _ in _members(data, value):
+                lists[cell] = (subject, predicate)
     holders: dict[Node, tuple[Node, Node]] = {}
     for subject, predicate, value in sorted(data, key=lambda t: (str(t[0]), str(t[1]))):
-        if isinstance(value, BNode):
+        if isinstance(value, BNode) and value not in cells:
+            if subject in lists and predicate == RDF.first:
+                subject, predicate = lists[subject]
             holders.setdefault(value, (subject, predicate))
     addresses: dict[Node, URIRef] = {}
 
@@ -664,6 +731,12 @@ def tables(
             for path, name in cls.several.items():
                 for value in values.get(path, []):
                     rows[cls.field_table(name)].append([owner, subject, *_cell(value)])
+            for path, name in cls.lists.items():
+                for head in values.get(path, []):
+                    for position, (cell, member) in enumerate(_members(data, head)):
+                        covered[cell] |= {str(RDF.first), str(RDF.rest)}
+                        row = [owner, subject, *_cell(member), str(position)]
+                        rows[cls.field_table(name)].append(row)
     classes = {URIRef(c) for c in shapes.classes}
     for node, predicate, value in data:
         done = covered.get(node, set())
@@ -715,6 +788,16 @@ def from_tables(given: Mapping[str, pd.DataFrame], profile: str | Graph) -> Grap
             if values is not None:
                 for row in values.to_dict("records"):
                     add(_subject(str(row["iri"])), URIRef(path), row)
+        for path, name in cls.lists.items():
+            values = given.get(cls.field_table(name))
+            members: dict[str, list[tuple[int, Node]]] = defaultdict(list)
+            for row in values.to_dict("records") if values is not None else []:
+                member = _term(str(row["value"]), text(row["term"]) or "")
+                members[str(row["iri"])].append((int(str(row["position"])), member))
+            for iri, held in members.items():
+                head = BNode()
+                RDFList(graph, head, [member for _, member in sorted(held)])
+                graph.add((_subject(iri), URIRef(path), head))
     rest = given.get(STATEMENTS)
     if rest is not None:
         for row in rest.to_dict("records"):
@@ -725,7 +808,7 @@ def from_tables(given: Mapping[str, pd.DataFrame], profile: str | Graph) -> Grap
 def context(profile: str | Graph, of_class: str, term: Callable[[str], str]) -> dict[str, Any]:
     """Return the JSON-LD term definitions of the records of a class: the keywords @id and @type
     as ``id`` and ``type``, and each field of the profile named by *term* (a property IRI to its
-    name), with ``@container: @set`` when it takes several values. The class's own fields count
+    name), with ``@container: @set`` when it takes several values and ``@list`` for a list field. The class's own fields count
     as the class takes them; a field of other classes only (of the records a record links to) is
     a set unless every class takes one value. No value is coerced to an IRI, so a text where an
     IRI is expected stays a text.
@@ -733,18 +816,24 @@ def context(profile: str | Graph, of_class: str, term: Callable[[str], str]) -> 
     classes = layout(profile).classes
     single: set[str] = set()
     several: set[str] = set()
+    lists: set[str] = set()
     for cls in classes.values():
         single.update(cls.single)
         several.update(cls.several)
+        lists.update(cls.lists)
     own = classes.get(of_class)
     terms: dict[str, Any] = {"id": "@id", "type": "@type"}
-    for iri in sorted(single | several):
+    for iri in sorted(single | several | lists):
         if own is not None and iri in own.fields():
             listed = iri in own.several
+            ordered = iri in own.lists
         else:
             listed = iri in several
+            ordered = iri in lists
         definition = {"@id": iri}
-        if listed:
+        if ordered:
+            definition["@container"] = "@list"
+        elif listed:
             definition["@container"] = "@set"
         terms[term(iri)] = definition
     return terms
