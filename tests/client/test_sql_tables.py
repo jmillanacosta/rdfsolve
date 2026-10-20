@@ -7,8 +7,8 @@ import sqlite3
 
 import pandas as pd
 import pytest
-from rdflib.collection import Collection as RDFList
 from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.collection import Collection as RDFList
 from rdflib.compare import isomorphic
 
 from rdfsolve.client.sql_tables import from_tables, layout, tables
