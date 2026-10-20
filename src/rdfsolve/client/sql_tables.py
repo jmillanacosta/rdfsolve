@@ -62,12 +62,17 @@ STATEMENT_COLUMNS = ["record", "iri", "property", "value", "term"]
 
 @dataclass
 class ClassLayout:
-    """The tables of one class: its name and fields (path IRI -> column name), single or not."""
+    """The tables of one class: its name and fields (path IRI -> column name), single or not.
+
+    Each field's sh:name is kept in labels, so that a client can name its links as the profile
+    names them.
+    """
 
     iri: str
     name: str
     single: dict[str, str] = field(default_factory=dict)
     several: dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
     def fields(self) -> dict[str, str]:
         """Return every field of the class: path IRI -> column name."""
@@ -370,7 +375,8 @@ def _layout(graph: Graph) -> Layout:
 
     prefixes = _prefixes(graph)
     maxima: dict[str, dict[str, set[int | None]]] = defaultdict(lambda: defaultdict(set))
-    for node in set(graph.subjects(SH.targetClass, None)):
+    labels: dict[str, dict[str, str]] = defaultdict(dict)
+    for node in sorted(set(graph.subjects(SH.targetClass, None)), key=str):
         shape = ShaclNodeShape.from_rdf(graph, node)
         fields = shape.property_shapes + _built_on(graph, node)
         for cls in shape.target_classes:
@@ -378,11 +384,13 @@ def _layout(graph: Graph) -> Layout:
             for prop in fields:
                 if isinstance(prop.path, str) and prop.path:
                     maxima[cls][prop.path].add(prop.max_count)
+                    if prop.name:
+                        labels[cls].setdefault(prop.path, prop.name)
     classes: dict[str, ClassLayout] = {}
     columns: dict[str, str] = {}
     tables: dict[str, str] = {STATEMENTS: STATEMENTS}
     for cls, paths in sorted(maxima.items()):
-        found = ClassLayout(iri=cls, name=_name(cls, prefixes))
+        found = ClassLayout(iri=cls, name=_name(cls, prefixes), labels=dict(labels[cls]))
         if tables.setdefault(found.name, cls) != cls:
             raise ValueError(
                 f"{cls} and {tables[found.name]} have the same table name {found.name}"

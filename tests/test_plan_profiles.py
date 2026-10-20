@@ -140,7 +140,13 @@ def test_a_link_of_a_property_the_target_has_is_proposed_that_property(client, t
     from rdfsolve.plan import Plan
 
     tools = client.from_table("SoftwareApplication", ["https://example.org/tools/one"])
-    plan = Plan(tools, into=target, contents=client.kinds.SoftwareApplication.maintainer)
-    assert plan.maintainer.status == "proposed"
-    assert plan.maintainer.target.iri == "https://schema.org/maintainer"
-    assert plan.maintainer.chosen.why == "the same property"
+    plan = Plan(tools, into=target, contents=client.kinds.SoftwareApplication.contact)
+    assert plan.contact.status == "proposed"
+    assert plan.contact.target.iri == "https://schema.org/maintainer"
+    assert plan.contact.chosen.why == "the same property"
+
+
+def test_a_client_names_its_links_as_the_profile_of_its_schema_names_them(client):
+    links = client.kinds.SoftwareApplication.links
+    assert links.version.iri == "https://schema.org/softwareVersion"
+    assert links.contact.iri == "https://schema.org/maintainer"

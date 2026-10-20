@@ -1272,11 +1272,16 @@ class Client(DatasetClient):
         return name
 
     def link_name(self, model: type[BaseModel] | str, field: str) -> str:
-        """Use a source label or readable predicate name for a link."""
+        """Use the field's sh:name in the schema's shape profile, else a source label, else a
+        readable predicate name for a link.
+        """
         model = self.model(model) if isinstance(model, str) else model
         extra = model.model_fields[field].json_schema_extra
         if isinstance(extra, dict):
             iri = str(extra.get("rdf_property_iri", ""))
+            named = self._profile_label(model, iri)
+            if named:
+                return named
             labels = [
                 item.text.value
                 for item in self._schema.enrichment.labels
@@ -1289,6 +1294,20 @@ class Client(DatasetClient):
             if iri:
                 return _name(re.split(r"[/#:]", iri)[-1])
         return _name(field)
+
+    def _profile_label(self, model: type[BaseModel], iri: str) -> str | None:
+        """Return a field's sh:name in the schema's shape profile, so that a link is named as the
+        profile names it.
+        """
+        from rdfsolve.client.sql_tables import layout
+
+        if not self._schema.shape_profile or not iri:
+            return None
+        try:
+            found = layout(self._schema.shape_profile).classes.get(class_iri(model))
+        except ValueError:  # No names are read from a profile that gives no tables.
+            return None
+        return found.labels.get(iri) if found is not None else None
 
     def fields(self, model: type[BaseModel] | str) -> pd.DataFrame:
         """List the fields of a model: property, value types, targets, links and lists.
