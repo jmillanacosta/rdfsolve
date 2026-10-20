@@ -1427,7 +1427,7 @@ class Plan(_Shown):
         return out
 
     def _prefix(self, iri: str) -> str | None:
-        """Return the identifier prefix of a record's IRI, so that its kind can be found.
+        """Return the identifier prefix of the IRI of a record, so that its kind can be found.
 
         A namespace the target declares is used first, then a registered one.
         """
@@ -1501,7 +1501,7 @@ class Plan(_Shown):
     ) -> list[Option]:
         """Return target relations for a source relation, best first.
 
-        A target relation of the same property IRI (*iri*, a link's property) comes first.
+        A target relation of the same property IRI (*iri*, the property of a link) comes first.
         Only relations that may go between the ends' target kinds count (Target.fits). They are
         ranked by the words of the source relation's name in the relation's name, then in its
         definition (when the target has definitions); when no word matches, the fitting
@@ -1857,10 +1857,10 @@ class Plan(_Shown):
     def _settle(self, p: Proposal) -> None:
         """Propose the best option when the evidence decides it, else leave the choice open.
 
-        A node's kind is decided by its class, else by its records' identifiers (when the target
-        states identifier namespaces), else by its name; a name alone does not decide where the
-        target states identifiers and the records have none. A relation is decided by its
-        property, else only by a word of its name. Ties are left open, with the tied options
+        The kind of a node is decided by its class, else by the identifiers of its records (when
+        the target states identifier namespaces), else by its name; a name alone does not decide
+        where the target states identifiers and the records have none. A relation is decided by
+        its property, else only by a word of its name. Ties are left open, with the tied options
         first.
         """
         if not p.options:

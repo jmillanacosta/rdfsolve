@@ -337,8 +337,8 @@ class Shacl(TargetModel):
         return dict(self._namespaces)
 
     def fields(self, kind: str) -> dict[str, str]:
-        """Return the fields of a kind's shapes, the shapes they build on and the part shapes
-        its nodes take, labelled by their sh:name, by path IRI.
+        """Return the fields of the shapes of a kind, of the shapes they build on and of the part
+        shapes that its nodes take, labelled by their sh:name, by path IRI.
         """
         classes = [c for c, name in self._names.items() if name == kind]
         found: dict[str, str] = {}
@@ -347,7 +347,7 @@ class Shacl(TargetModel):
         return found
 
     def part_fields(self, kind: str, path: str) -> dict[str, str]:
-        """Return the fields of the shape (sh:node) that a kind's field gives its values."""
+        """Return the fields of the shape (sh:node) that a field of a kind gives its values."""
         for c, name in self._names.items():
             if name == kind and (c, path) in self._parts:
                 return dict(self._parts[(c, path)])

@@ -1272,8 +1272,8 @@ class Client(DatasetClient):
         return name
 
     def link_name(self, model: type[BaseModel] | str, field: str) -> str:
-        """Use the field's sh:name in the schema's shape profile, else a source label, else a
-        readable predicate name for a link.
+        """Use the sh:name of the field in the shape profile of the schema, else a source label,
+        else a readable predicate name for a link.
         """
         model = self.model(model) if isinstance(model, str) else model
         extra = model.model_fields[field].json_schema_extra
@@ -1296,8 +1296,8 @@ class Client(DatasetClient):
         return _name(field)
 
     def _profile_label(self, model: type[BaseModel], iri: str) -> str | None:
-        """Return a field's sh:name in the schema's shape profile, so that a link is named as the
-        profile names it.
+        """Return the sh:name of a field in the shape profile of the schema, so that a link is
+        named as the profile names it.
         """
         from rdfsolve.client.sql_tables import layout
 

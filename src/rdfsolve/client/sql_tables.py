@@ -64,8 +64,8 @@ STATEMENT_COLUMNS = ["record", "iri", "property", "value", "term"]
 class ClassLayout:
     """The tables of one class: its name and fields (path IRI -> column name), single or not.
 
-    Each field's sh:name is kept in labels, so that a client can name its links as the profile
-    names them.
+    The sh:name of each field is kept in labels, so that a client can name its links as the
+    profile names them.
     """
 
     iri: str

@@ -147,9 +147,9 @@ class TargetModel:
         return {}
 
     def fields(self, kind: str) -> dict[str, str]:
-        """Return the properties a kind's nodes may have, with their labels, by property IRI.
+        """Return the properties that the nodes of a kind may have, with their labels, by IRI.
 
-        They are needed to convert a record's statements field by field.
+        They are needed to convert the statements of a record field by field.
         """
         found = {}
         for relation in self.relations():
@@ -159,7 +159,7 @@ class TargetModel:
         return found
 
     def part_fields(self, kind: str, path: str) -> dict[str, str]:
-        """Return the properties of the parts that a kind's field takes, with their labels.
+        """Return the properties of the parts that a field of a kind takes, with their labels.
 
         They are needed to convert parts that have no class of their own.
         """
