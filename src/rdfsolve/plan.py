@@ -2,9 +2,9 @@
 
 The plan is proposed from evidence, not written by hand:
 
-- a kind of record (a source class) is proposed a target class from the identifiers of its
-  records: the target classes that list each identifier namespace as theirs (the target's
-  preferred identifier prefixes); the name of the kind breaks ties;
+- a kind of record (a source class) is proposed the target class of the same IRI, else the
+  target class that lists the identifier namespace of its records as its own (a registered
+  namespace, or one the target declares); the name of the kind breaks ties;
 - a kind whose records have no identifiers of their own and link other records of the scope
   through two links is a relation: an edge from one end to the other, or a process node with
   inputs and outputs when other relations point at its records; its target predicate or class
@@ -1426,17 +1426,33 @@ class Plan(_Shown):
                     out[label[parent]].add(label[child])
         return out
 
-    def _class_options(self, iris: set[str], label: str) -> list[Option]:
-        """Return target kinds for records with these IRIs, best first.
+    def _prefix(self, iri: str) -> str | None:
+        """Return the identifier prefix of a record's IRI, so that its kind can be found.
 
-        With identifier namespaces in the target: by how many records' identifiers a kind takes,
-        then how many are in the namespace it prefers (listed first), then the name, then the
-        broadest kind. Without them: by the words of the name; when none match, every kind is an
-        option, for the user to choose.
+        A namespace the target declares is used first, then a registered one.
         """
         from rdfsolve.identifiers import parse
 
-        prefixes = Counter(found.prefix for i in iris if (found := parse(i)) is not None)
+        declared = [
+            (namespace, prefix)
+            for prefix, namespace in self.target.model.namespaces().items()
+            if iri.startswith(namespace)
+        ]
+        if declared:
+            return max(declared, key=lambda pair: len(pair[0]))[1]
+        found = parse(iri)
+        return found.prefix if found is not None else None
+
+    def _class_options(self, iris: set[str], label: str, iri: str = "") -> list[Option]:
+        """Return target kinds for records with these IRIs, best first.
+
+        The target kind of the same class IRI comes first. Then, with identifier namespaces in
+        the target, by how many records' identifiers a kind takes, then how many are in the
+        namespace it prefers (listed first), then the name, then the broadest kind. Without them,
+        by the words of the name; when none match, every kind is an option, for the user to
+        choose.
+        """
+        prefixes = Counter(prefix for i in iris if (prefix := self._prefix(i)) is not None)
         name_words = _tokens(label)
         with_ids = "identifiers" in self.target.model.capabilities
         scored = []
@@ -1447,11 +1463,13 @@ class Plan(_Shown):
             support = sum(n for p, n in prefixes.items() if p in listed) if with_ids else 0
             preferred = prefixes.get(listed[0], 0) if with_ids and listed else 0
             words = _tokens(term.name) & name_words
-            if not (support or words):
+            same = bool(iri) and term.iri == iri
+            if not (same or support or words):
                 continue
             reason = "; ".join(
                 x
                 for x in (
+                    "the same class" if same else "",
                     "ids: "
                     + ", ".join(f"{p} {n}" for p, n in prefixes.most_common() if p in listed)
                     if support
@@ -1462,11 +1480,11 @@ class Plan(_Shown):
                 if x
             )
             scored.append(
-                (support, preferred, len(words), -self.target.depth(term.name), term, reason)
+                (same, support, preferred, len(words), -self.target.depth(term.name), term, reason)
             )
-        scored.sort(key=lambda s: s[:4], reverse=True)
+        scored.sort(key=lambda s: s[:5], reverse=True)
         if scored:
-            return [Option(t, n, r) for n, _, _, _, t, r in scored]
+            return [Option(t, n, r) for _, n, _, _, _, t, r in scored]
         return [
             Option(t, 0, "a kind of the target")
             for t in self.target.kinds
@@ -1583,15 +1601,18 @@ class Plan(_Shown):
 
     def _propose(self) -> None:
         """Make a proposal for every kind of record in the plan."""
-        from rdfsolve.identifiers import parse
-
         iris = self._iris_by_kind()
         self._all_iris = set().union(*iris.values()) if iris else set()
         self._reach: dict[tuple[str, str], dict[str, set[str]]] = {}
         children = self._children()
         present = set(iris)
-        identified = {k: any(parse(i) is not None for i in v) for k, v in iris.items()}
-        candidates = [k for k in present if not identified[k]]
+        identified = {k: any(self._prefix(i) is not None for i in v) for k, v in iris.items()}
+        # A kind whose class the target has too is a kind of node there, not a relation.
+        same = {
+            k: any(t.iri == getattr(self.kinds, _attribute(k)).iri for t in self.target.kinds)
+            for k in present
+        }
+        candidates = [k for k in present if not identified[k] and not same[k]]
         ends = {k: self._ends(getattr(self.kinds, _attribute(k)), present) for k in candidates}
         relations = {k for k, (a, b) in ends.items() if a is not None and b is not None}
         # A relation is a process (a node with inputs and outputs) when another relation's
@@ -1643,9 +1664,9 @@ class Plan(_Shown):
                     self, kind, "process", count, options, ends=ends[label], only_this_kind=generic
                 )
             else:
-                options = self._class_options(own, label)
+                options = self._class_options(own, label, kind.iri)
                 p = Proposal(self, kind, "node", count, options, only_this_kind=generic)
-                if not identified[label]:
+                if not identified[label] and not same[label]:
                     p.note = "its records have no identifiers of a registered namespace: proposed by name only"
             p.iris = own
             self.proposals[label] = p
@@ -1835,7 +1856,7 @@ class Plan(_Shown):
         best = p.options[0]
         second = p.options[1] if len(p.options) > 1 else None
         if p.reading in ("node", "process"):
-            by_ids = best.support > 0
+            by_ids = best.support > 0 or best.why.startswith("the same class")
             by_name = "name" in best.why and "identifiers" not in self.target.model.capabilities
             if best.why.startswith("the broadest process kind"):
                 # A process with no other evidence is the broadest process kind: it claims least.
@@ -2043,7 +2064,6 @@ class Plan(_Shown):
         cross-references into that namespace as exact matches (an assumption, recorded with
         each decision); without it only declared identities join records.
         """
-        from rdfsolve.identifiers import parse
         from rdfsolve.mappings.claims import Claims
 
         by_kind = self._iris_by_kind()
@@ -2057,7 +2077,7 @@ class Plan(_Shown):
             ):
                 continue
             iris = sorted(by_kind.get(p.kind.name, ()))
-            used = {found.prefix for i in iris if (found := parse(i)) is not None}
+            used = {prefix for i in iris if (prefix := self._prefix(i)) is not None}
             namespace = next(
                 (n for n in p.target.id_prefixes if n in used), p.target.id_prefixes[0]
             )
