@@ -407,3 +407,15 @@ def test_parts_get_addresses_under_their_record_and_keep_them():
     assert list(organization["iri"]) == [TOOL + "#provider-2"], (
         "a number stored before is not given again"
     )
+
+
+def test_a_merge_does_not_add_again_a_part_that_has_an_address():
+    from rdfsolve.client.sql_tables import merge
+
+    data = Graph().parse(data=DATA, format="turtle")
+    stored = from_tables(tables(data, PROFILE, skolem=True), PROFILE)
+    tool = Graph()
+    for triple in data:
+        if triple[0] == URIRef(TOOL) or isinstance(triple[0], BNode):
+            tool.add(triple)
+    assert not merge(stored, tool, PROFILE).added, "the tool's parts are held with addresses"

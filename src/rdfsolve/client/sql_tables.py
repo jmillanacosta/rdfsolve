@@ -746,9 +746,18 @@ class Merged:
     conflicts: list[tuple[str, str, str, str]] = field(default_factory=list)
 
 
+def _is_part(graph: Graph, node: Node) -> bool:
+    """Return whether a value is a part of a record: a blank node, or a part address
+    (tables(skolem=True)) that has statements in *graph*.
+    """
+    if isinstance(node, BNode):
+        return True
+    return isinstance(node, URIRef) and bool(_PART.match(node)) and (node, None, None) in graph
+
+
 def _part_key(graph: Graph, node: Node, seen: frozenset[Node] = frozenset()) -> str:
-    """Return a value as merge compares it: a blank node by the values it holds, at any depth."""
-    if not isinstance(node, BNode):
+    """Return a value as merge compares it: a part by the values it holds, at any depth."""
+    if not _is_part(graph, node):
         return str(node)
     if node in seen:
         return "part"
@@ -781,16 +790,16 @@ def merge(current: Graph, added: Graph, profile: str | Graph) -> Merged:
 
     A field that takes one value (single, for any class of the subject: its classes in
     *current*, else in *added*) keeps the value it has, and a different value offered is a
-    conflict. A blank node is added with its statements, unless the subject already holds one
-    with the same values on that property, so that merging twice adds nothing. The type of a
-    subject that *current* types is kept.
+    conflict. A blank node is added with its statements, unless the subject already holds a part
+    (a blank node or a part address) with the same values on that property, so that merging twice
+    adds nothing. The type of a subject that *current* types is kept.
     """
     classes = layout(profile).classes
     merged = Merged(Graph())
     merged.graph += current
     parts = set()
     for subject, predicate, value in current:
-        if isinstance(value, BNode):
+        if _is_part(current, value):
             parts.add((subject, predicate, _part_key(current, value)))
     for subject, predicate, value in sorted(added):
         if not isinstance(subject, URIRef):
