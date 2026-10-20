@@ -313,7 +313,14 @@ def _prefixes(graph: Graph) -> dict[str, str]:
             by_namespace[str(namespace)].append(
                 ((str(prefix), str(namespace)) in defaults, str(prefix))
             )
-    return {ns: min(found)[1] for ns, found in by_namespace.items()}
+    found = {ns: min(names)[1] for ns, names in by_namespace.items()}
+    # A prefix declared with sh:declare names a namespace that no prefix line binds.
+    for declaration in graph.objects(None, SH.declare):
+        declared = graph.value(declaration, SH.prefix)
+        space = graph.value(declaration, SH.namespace)
+        if declared is not None and space is not None:
+            found.setdefault(str(space), str(declared))
+    return found
 
 
 def _name(iri: str, prefixes: Mapping[str, str]) -> str:

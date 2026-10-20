@@ -348,3 +348,18 @@ def test_the_rows_of_a_table_are_in_order_of_their_cells_a_missing_cell_last():
 
     frame = _frame([["b", None], ["a", None], ["a", "x"], ["a", ""]], ["record", "value"])
     assert frame.fillna("NA").values.tolist() == [["a", ""], ["a", "x"], ["a", "NA"], ["b", "NA"]]
+
+
+def test_a_prefix_declared_with_sh_declare_names_tables_and_columns():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<https://example.org/profile> sh:declare [ sh:prefix "ex" ;
+    sh:namespace "https://example.org/terms/"^^xsd:anyURI ] .
+<https://example.org/shapes/Item> a sh:NodeShape ;
+    sh:targetClass <https://example.org/terms/Item> ;
+    sh:property [ sh:path <https://example.org/terms/label> ; sh:maxCount 1 ] .
+"""
+    item = layout(profile).classes["https://example.org/terms/Item"]
+    assert item.name == "ex_item"
+    assert item.single == {"https://example.org/terms/label": "ex_label"}
