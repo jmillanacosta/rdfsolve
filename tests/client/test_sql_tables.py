@@ -409,6 +409,25 @@ def test_parts_get_addresses_under_their_record_and_keep_them():
     )
 
 
+def test_a_part_read_again_with_the_same_values_keeps_its_address():
+    schema = "https://schema.org/"
+    back = from_tables(
+        tables(Graph().parse(data=DATA, format="turtle"), PROFILE, skolem=True), PROFILE
+    )
+    again = tables(Graph().parse(data=DATA, format="turtle"), PROFILE, skolem=True, before=back)
+    assert list(again["schema_organization"]["iri"]) == [TOOL + "#provider-1"]
+    rest = again["statements"]
+    assert list(rest[rest["value"] == "Deep Street 1"]["iri"]) == [TOOL + "#address-1"]
+    changed = Graph().parse(data=DATA, format="turtle")
+    for organization in changed.subjects(URIRef(schema + "name"), None):
+        if isinstance(organization, BNode):
+            changed.set((organization, URIRef(schema + "name"), Literal("Renamed Org")))
+    renamed = tables(changed, PROFILE, skolem=True, before=back)
+    assert list(renamed["schema_organization"]["iri"]) == [TOOL + "#provider-2"], (
+        "a part with other values is a new part"
+    )
+
+
 def test_a_merge_does_not_add_again_a_part_that_has_an_address():
     from rdfsolve.client.sql_tables import merge
 

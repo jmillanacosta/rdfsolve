@@ -31,8 +31,10 @@ its letters, digits and underscores) and ``<n>`` is the next number of that name
 Parts of parts are numbered under the record too. A subject of that form whose record is in the
 data belongs to that record, so a part given again with its address keeps it. The numbers go on
 after the highest one in the data and in the record as stored before (*before*); the number of a
-removed part is given again only when no part of that name with a higher number is left. A record
-whose address has a fragment keeps blank nodes for its parts.
+removed part is given again only when no part of that name with a higher number is left. A blank
+part with the same values as a part in *before*, under the same holder and property, takes its
+address, so that a part read again from a source keeps it. A record whose address has a fragment
+keeps blank nodes for its parts.
 
 A term says how its value is written back: ``@id`` an IRI, ``@blank`` a blank node, empty a
 literal without a datatype, ``@`` and the language tag a tagged literal, else the datatype IRI.
@@ -542,6 +544,14 @@ def _skolemized(data: Graph, before: Graph | None) -> tuple[Graph, dict[str, str
             if match:
                 key = (match["record"], match["name"])
                 highest[key] = max(highest[key], int(match["number"]))
+    # The parts stored before, by holder, property and values, and the part addresses in use.
+    stored: dict[tuple[str, str, str], list[URIRef]] = defaultdict(list)
+    for holder, predicate, value in sorted(before or Graph(), key=lambda t: str(t[2])):
+        if isinstance(value, URIRef) and _is_part(before, value):
+            stored[(str(holder), str(predicate), _part_key(before, value))].append(value)
+    taken = {
+        node for node in set(data.subjects()) | set(data.objects()) if isinstance(node, URIRef)
+    }
     holders: dict[Node, tuple[Node, Node]] = {}
     for subject, predicate, value in sorted(data, key=lambda t: (str(t[0]), str(t[1]))):
         if isinstance(value, BNode):
@@ -566,9 +576,15 @@ def _skolemized(data: Graph, before: Graph | None) -> tuple[Graph, dict[str, str
             record = owners.get(node) or parts.get(str(holder), str(addresses.get(holder, holder)))
             record = parts.get(record, record)
             if "#" not in record:
-                name = _part_name(predicate)
-                highest[(record, name)] += 1
-                addresses[node] = URIRef(f"{record}#{name}-{highest[(record, name)]}")
+                key = (str(addresses.get(holder, holder)), str(predicate), _part_key(data, node))
+                kept = [address for address in stored.get(key, []) if address not in taken]
+                if kept:
+                    addresses[node] = kept[0]
+                else:
+                    name = _part_name(predicate)
+                    highest[(record, name)] += 1
+                    addresses[node] = URIRef(f"{record}#{name}-{highest[(record, name)]}")
+                taken.add(addresses[node])
                 parts[str(addresses[node])] = record
         todo -= set(ready)
     found = Graph(bind_namespaces="none")
