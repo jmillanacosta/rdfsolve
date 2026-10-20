@@ -150,3 +150,20 @@ def test_a_client_names_its_links_as_the_profile_of_its_schema_names_them(client
     links = client.kinds.SoftwareApplication.links
     assert links.version.iri == "https://schema.org/softwareVersion"
     assert links.contact.iri == "https://schema.org/maintainer"
+
+
+def test_the_records_are_written_as_the_next_profile_has_them(plan, tmp_path):
+    import pyoxigraph as ox
+    from rdflib.compare import isomorphic
+
+    from rdfsolve.client.sql_tables import from_tables, tables
+
+    network = plan.run(tmp_path / "queries")
+    nquads = ox.serialize(network.statements, format=ox.RdfFormat.N_QUADS)
+    result = rdflib.Graph().parse(data=nquads, format="nquads")
+    assert isomorphic(result, rdflib.Graph().parse(data=V2_DATA, format="turtle"))
+    assert [(f.kind, f.name, f.statements) for f in plan.not_converted] == [("Person", "Email", 2)]
+    assert "Not converted (1)" in repr(plan) and "https://schema.org/email" in repr(plan)
+    version = next(f for f in plan.SoftwareApplication.fields if f.name == "Version")
+    assert (version.target, version.why) == ("https://schema.org/version", "the same label")
+    assert isomorphic(from_tables(tables(result, V2_PROFILE), V2_PROFILE), result)

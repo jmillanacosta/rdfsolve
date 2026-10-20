@@ -10,7 +10,11 @@ The plan is proposed from evidence, not written by hand:
   inputs and outputs when other relations point at its records; its target predicate or class
   is proposed from the names and definitions of the target's terms;
 - the link that puts records in the scope (their container) is proposed a target predicate the
-  same way; a kind's naming property (a label or a title) is proposed the target's name slot.
+  same way; the naming property of a kind (a label or a title) is proposed the name slot of
+  the target;
+- the fields of a decided kind are carried to the target fields of the same property, else of
+  the same label; the fields that the target does not have are listed as not converted, with
+  their counts.
 
 What the evidence does not decide is an open choice. Each proposal lists its options with
 their consequences: how many records each would convert, an example statement from the data,
@@ -30,6 +34,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from rdfsolve.iris import local_name
+
 if TYPE_CHECKING:
     from rdfsolve.client.api import Client, Results
     from rdfsolve.target_model import Model
@@ -38,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "Choices",
+    "Field",
     "Identities",
     "Kind",
     "Link",
@@ -50,6 +57,7 @@ __all__ = [
     "kinds_of",
 ]
 
+_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 # Properties whose values name a record, in order of preference.
 NAMING_PROPERTIES = (
     "http://www.w3.org/2000/01/rdf-schema#label",
@@ -788,6 +796,31 @@ class Option:
         }
 
 
+@dataclass(frozen=True)
+class Field:
+    """A field of a node kind as the plan converts it, so that the run and the printout agree.
+
+    A field of parts without a class of their own has the link that reaches them (part_of).
+    """
+
+    kind: str
+    name: str
+    iri: str
+    target: str | None  # the target property, or None when the target does not have it
+    why: str
+    statements: int | None  # the statements of the field in the source, when counted
+    part_of: str | None = None
+
+    def row(self) -> dict[str, Any]:
+        """Return the field as a table row."""
+        return {
+            "kind": self.kind,
+            "field": self.name,
+            "property": self.iri,
+            "statements": self.statements if self.statements is not None else "?",
+        }
+
+
 @dataclass(eq=False, repr=False)
 class Proposal(_Shown):
     """What one source kind (or its container link) becomes in the target."""
@@ -983,6 +1016,11 @@ class Proposal(_Shown):
         logger.info("%s left out: its %d records are not converted.", self.name, self.records)
         self.plan._hint()
         return self
+
+    @property
+    def fields(self) -> list[Field]:
+        """Return how each field of a decided node kind is converted (Plan.run)."""
+        return self.plan._fields(self)
 
     @property
     def target(self) -> Term | None:
@@ -1975,6 +2013,7 @@ class Plan(_Shown):
             "records": len(self.records),
             "contents": self._contents_text() if self.contents is not None else None,
             "proposals": [p.to_dict() for p in self.proposals.values()],
+            "not_converted": [f.row() for f in self.not_converted],
             "open": [p.attribute for p in self.open],
             "next": self.next,
         }
@@ -2053,6 +2092,10 @@ class Plan(_Shown):
                     ]
                 )
             )
+        missing = self.not_converted
+        if missing:
+            parts.append(f"\nNot converted ({len(missing)}): fields the target lacks")
+            parts.append(pd.DataFrame([f.row() for f in missing]))
         left = [k for k, p in sorted(self.proposals.items()) if p.status == "left out"]
         if left:
             parts.append(f"\nLeft out ({len(left)}): " + ", ".join(left))
@@ -2111,6 +2154,103 @@ class Plan(_Shown):
         return self.identity
 
     # -- running the plan ----------------------------------------------------------------------
+
+    def _fields(self, p: Proposal) -> list[Field]:
+        """Return how each field of a decided node kind is converted, so that the run carries the
+        fields the target has and the printout lists the others.
+
+        A field goes to the target field of the same property, else to the one of the same label.
+        The fields of blank-node parts without a class follow the part shape of the target.
+        """
+        if p.reading != "node" or p.status not in ("proposed", "chosen") or p.target is None:
+            return []
+        model = self.target.model
+        held = model.fields(p.target.name)
+        by_label = {_words(label): iri for iri, label in held.items()}
+        own = {link.iri for link in p.kind.links}
+        counts: Counter[str] = Counter()
+        parts: dict[str, set[str]] = defaultdict(set)
+        for pattern in self.client.schema.patterns:
+            if pattern.subject_class == p.kind.iri:
+                counts[pattern.property_uri] += pattern.count or 0
+                predicates = set(pattern.blank_node_predicates or [])
+                # Parts with a class are converted as records of their own kind.
+                if pattern.object_class == "BlankNode" and _TYPE not in predicates:
+                    parts[pattern.property_uri].update(predicates)
+        found = []
+        for link in p.kind.links:
+            target, why = None, "not in the target"
+            renamed = by_label.get(_words(link.name))
+            if link.iri in held:
+                target, why = link.iri, "the same property"
+            elif renamed is not None and renamed not in own:
+                target, why = renamed, "the same label"
+            found.append(Field(p.kind.name, link.name, link.iri, target, why, counts.get(link.iri)))
+            if target is None:
+                continue
+            part_fields = model.part_fields(p.target.name, target)
+            for predicate in sorted(parts.get(link.iri, ())):
+                carried = predicate in part_fields
+                found.append(
+                    Field(
+                        p.kind.name,
+                        f"{link.name} / {local_name(predicate)}",
+                        predicate,
+                        predicate if carried else None,
+                        "a field of its parts" if carried else "not in the target",
+                        None,
+                        part_of=link.iri,
+                    )
+                )
+        return found
+
+    def _part_queries(self) -> list[tuple[str, str]]:
+        """Return the name and text of each query that carries the fields of blank-node parts
+        without a class. A rule needs a class, so these parts are carried by whole queries.
+        """
+        model = self.target.model
+        header = [
+            f"# source: {self.client.schema.about.dataset_name or ''}",
+            f"# target: {model.prefix} {model.version}".rstrip(),
+        ]
+        out = []
+        for label, p in sorted(self.proposals.items()):
+            by_link: dict[str, list[str]] = defaultdict(list)
+            for f in self._fields(p):
+                if f.part_of is not None and f.target is not None:
+                    by_link[f.part_of].append(f.target)
+            for link, predicates in sorted(by_link.items()):
+                name = f"{_attribute(label, snake=True)}_{_attribute(local_name(link), snake=True)}_parts"
+                values = " ".join(f"<{iri}>" for iri in predicates)
+                text = "\n".join(
+                    [
+                        f"# title: {local_name(link)} parts of {label} without a class",
+                        *header,
+                        "",
+                        "CONSTRUCT { ?part ?property ?value . }",
+                        "WHERE {",
+                        f"  ?record a <{p.kind.iri}> .",
+                        f"  ?record <{link}> ?part .",
+                        "  FILTER(isBlank(?part))",
+                        "  FILTER NOT EXISTS { ?part a ?type }",
+                        "  ?part ?property ?value .",
+                        f"  VALUES ?property {{ {values} }}",
+                        "}",
+                        "",
+                    ]
+                )
+                out.append((name, text))
+        return out
+
+    @property
+    def not_converted(self) -> list[Field]:
+        """Return the fields of decided kinds that the target lacks, so that none is lost unseen."""
+        found = []
+        for p in self.proposals.values():
+            for f in self._fields(p):
+                if f.target is None:
+                    found.append(f)
+        return found
 
     def _rules(self) -> list[tuple[str, str, list[Any], str]]:
         """Return the rules of every decided proposal: (name, title, rules, focus variable)."""
@@ -2184,6 +2324,17 @@ class Plan(_Shown):
                             exact_kind=exact,
                         )
                     )
+                for f in self._fields(p):
+                    if f.target is not None and f.part_of is None:
+                        rules.append(
+                            Rule.between(
+                                client,
+                                focus=p.kind.iri,
+                                predicate=f.target,
+                                object=f.iri,
+                                exact_kind=exact,
+                            )
+                        )
                 if p.reading == "process":
                     for relation, end, as_ in (
                         (to_input, p.ends[0], "input"),
@@ -2317,6 +2468,10 @@ class Plan(_Shown):
                     rules, title=title, source=self.client, target=self.target.model, focus_as=focus
                 )
             )
+            paths.append(path)
+        for name, text in self._part_queries():
+            path = folder / f"{name}.rq"
+            path.write_text(text)
             paths.append(path)
         profile = Profile.from_queries(paths, client=self.client)
         scope = (
