@@ -158,6 +158,39 @@ class Shacl(TargetModel):
                         str(v).rsplit("#", 1)[-1].rsplit("/", 1)[-1] for v in Collection(g, listed)
                     ]
         self._names = names
+
+        def node_fields(shape: Any, seen: frozenset[Any] = frozenset()) -> dict[str, str]:
+            """Return the fields of a node shape and of the shapes it builds on, by path IRI."""
+            found: dict[str, str] = {}
+            for prop in g.objects(shape, sh("property")):
+                path = g.value(prop, sh("path"))
+                if isinstance(path, URIRef):
+                    found.setdefault(str(path), word_name(str(path), prop, path))
+            for other in g.objects(shape, sh("node")):
+                if other not in seen:
+                    for iri, label in node_fields(other, seen | {shape}).items():
+                        found.setdefault(iri, label)
+            return found
+
+        self._fields: dict[str, dict[str, str]] = defaultdict(dict)
+        for shape, classes in shapes.items():
+            for c in classes:
+                for iri, label in node_fields(shape).items():
+                    self._fields[c].setdefault(iri, label)
+        # The values of a field with sh:node conform to that shape, so its fields are given to
+        # the classes the field allows, and kept as the parts of the field.
+        self._parts: dict[tuple[str, str], dict[str, str]] = {}
+        for prop in set(g.objects(None, sh("property"))):
+            path = g.value(prop, sh("path"))
+            for part in g.objects(prop, sh("node")):
+                part_fields = node_fields(part)
+                for c in allowed(prop)[0]:
+                    for iri, label in part_fields.items():
+                        self._fields[c].setdefault(iri, label)
+                if isinstance(path, URIRef):
+                    for owner in g.subjects(sh("property"), prop):
+                        for c in shapes.get(owner, []):
+                            self._parts[(c, str(path))] = part_fields
         # A shape's sh:pattern gives the namespaces of its class's IRIs; the prefixes declared
         # (sh:declare) for namespaces it matches are the identifiers the kind uses.
         declared = {
@@ -175,6 +208,7 @@ class Shacl(TargetModel):
                     continue
                 for c in classes:
                     identifiers[c].update(p for ns, p in declared.items() if match(ns))
+        self._namespaces = {p: ns for ns, p in declared.items()}
         parents = {
             c: tuple(
                 names[str(p)]
@@ -297,6 +331,27 @@ class Shacl(TargetModel):
     def implied(self) -> list[str]:
         """Return the CONSTRUCT queries of the shapes' SPARQL rules, in their sh:order."""
         return list(self._rules)
+
+    def namespaces(self) -> dict[str, str]:
+        """Return the namespaces declared with sh:declare, by prefix."""
+        return dict(self._namespaces)
+
+    def fields(self, kind: str) -> dict[str, str]:
+        """Return the fields of a kind's shapes, the shapes they build on and the part shapes
+        its nodes take, labelled by their sh:name, by path IRI.
+        """
+        classes = [c for c, name in self._names.items() if name == kind]
+        found: dict[str, str] = {}
+        for c in classes:
+            found.update(self._fields.get(c, {}))
+        return found
+
+    def part_fields(self, kind: str, path: str) -> dict[str, str]:
+        """Return the fields of the shape (sh:node) that a kind's field gives its values."""
+        for c, name in self._names.items():
+            if name == kind and (c, path) in self._parts:
+                return dict(self._parts[(c, path)])
+        return {}
 
 
 def _focused(query: str, classes: list[str]) -> str | None:

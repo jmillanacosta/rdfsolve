@@ -140,6 +140,31 @@ class TargetModel:
         """
         return []
 
+    def namespaces(self) -> dict[str, str]:
+        """Return the namespace of each identifier prefix of the model, so that records outside
+        registered namespaces are identified too.
+        """
+        return {}
+
+    def fields(self, kind: str) -> dict[str, str]:
+        """Return the properties a kind's nodes may have, with their labels, by property IRI.
+
+        They are needed to convert a record's statements field by field.
+        """
+        found = {}
+        for relation in self.relations():
+            starts = {a for a, _ in relation.pairs}
+            if relation.iri and (relation.domain == kind or kind in starts):
+                found[relation.iri] = relation.name
+        return found
+
+    def part_fields(self, kind: str, path: str) -> dict[str, str]:
+        """Return the properties of the parts that a kind's field takes, with their labels.
+
+        They are needed to convert parts that have no class of their own.
+        """
+        return {}
+
 
 # The prefix and namespace of the terms of each target model read in this session, as the model
 # declares them (its default prefix), so that rules written with its CURIEs name its terms.

@@ -159,3 +159,31 @@ def test_a_kind_is_found_by_its_printed_name_with_brackets_and_acronyms(tmp_path
     )
     kinds = Target(shapes).kinds
     assert kinds["Gene ID (NCBI)"] is kinds.GeneIDNCBI is kinds["gene id ncbi"]
+
+
+def test_a_kind_has_the_fields_of_its_shapes_and_parts_and_its_declared_namespaces():
+    from rdflib import Graph
+
+    text = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+ex:profile sh:declare [ sh:prefix "ex_items" ; sh:namespace "http://example.org/items/"^^xsd:anyURI ] .
+ex:Thing a sh:NodeShape ; sh:property [ sh:path ex:title ; sh:name "Title" ] .
+ex:ItemShape a sh:NodeShape ; sh:targetClass ex:Item ; sh:node ex:Thing ;
+    sh:pattern "^http://example\\\\.org/items/" ;
+    sh:property [ sh:path ex:part ; sh:class ex:Piece ; sh:node ex:PieceShape ] ,
+        [ sh:path ex:note ; sh:node ex:NoteShape ; sh:nodeKind sh:BlankNode ] .
+ex:PieceShape a sh:NodeShape ; sh:property [ sh:path ex:weight ; sh:name "Weight" ] .
+ex:NoteShape a sh:NodeShape ; sh:property [ sh:path ex:text ; sh:name "Text" ] .
+"""
+    model = Shacl(Graph().parse(data=text, format="turtle"))
+    item = next(k for k in model.kinds() if k.iri == "http://example.org/Item")
+    assert item.identifiers == ("ex_items",)
+    assert model.namespaces() == {"ex_items": "http://example.org/items/"}
+    assert model.fields(item.name)["http://example.org/title"] == "Title", "built on ex:Thing"
+    piece = next(k for k in model.kinds() if k.iri == "http://example.org/Piece")
+    assert model.fields(piece.name) == {"http://example.org/weight": "Weight"}
+    assert model.part_fields(item.name, "http://example.org/note") == {
+        "http://example.org/text": "Text"
+    }
