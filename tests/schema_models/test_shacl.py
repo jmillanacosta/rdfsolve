@@ -544,13 +544,16 @@ def test_a_profile_gives_its_paths_to_its_classes_and_their_subclasses_only():
         s:Organization a rdfs:Class . s:ResearchProject a rdfs:Class ; rdfs:subClassOf s:Organization .
         s:SoftwareApplication a rdfs:Class . s:Person a rdfs:Class .
         s:email a rdf:Property ; s:domainIncludes s:Organization, s:Person ; s:rangeIncludes s:Text .
+        s:funder a rdf:Property ; s:domainIncludes s:Organization ; s:rangeIncludes s:Organization .
         s:author a rdf:Property ; s:domainIncludes s:SoftwareApplication, s:Organization ;
             s:rangeIncludes s:Person .""",
         format="turtle",
     )
     profile = f"""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix s: <{s}> .
         <urn:organization> a sh:NodeShape ; sh:targetClass s:Organization ; sh:property [ sh:path s:email ] .
-        <urn:tool> a sh:NodeShape ; sh:targetClass s:SoftwareApplication ; sh:property [ sh:path s:author ] ."""
+        <urn:tool> a sh:NodeShape ; sh:targetClass s:SoftwareApplication ; sh:property [ sh:path s:author ] .
+        <urn:project> a sh:NodeShape ; sh:targetClass s:ResearchProject ; sh:node <urn:organization> ;
+            sh:property [ sh:path s:funder ] ."""
     classes = [s + name for name in ("Organization", "ResearchProject", "SoftwareApplication", "Person")]
     schema = vocabulary_to_minedschema(vocabulary, classes, profile=profile)
     shapes = Graph().parse(data=schema.to_shacl(void=False, properties="profile"), format="turtle")
@@ -559,6 +562,8 @@ def test_a_profile_gives_its_paths_to_its_classes_and_their_subclasses_only():
         for node, cls in shapes.subject_objects(SH.targetClass)
         for field in shapes.objects(node, SH.property)
     }
-    assert fields == {("Organization", "email"), ("ResearchProject", "email"), ("SoftwareApplication", "author")}
+    assert fields == {
+        ("Organization", "email"), ("ResearchProject", "email"), ("ResearchProject", "funder"), ("SoftwareApplication", "author")
+    }
     # The merged shape of a class keeps the IRI of its profile shape.
     assert set(shapes.subjects(SH.targetClass, URIRef(s + "Organization"))) == {URIRef("urn:organization")}

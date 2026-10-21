@@ -123,7 +123,11 @@ def minedschema_to_shacl(
         cls_hash = md5(subject_class.encode(), usedforsecurity=False).hexdigest()[:8]
         # The SHACL instances of a class include the members of its subclasses, whose values
         # the schema counts under the subclasses (minimal types): the shape allows them too.
-        members = [subject_class, *sorted(below.get(subject_class, ()))]
+        # Rows of a vocabulary are declarations, which give each class the properties that apply to
+        # it, so a class with only declared rows keeps its own.
+        declared = all(p.evidence_source == "vocabulary" for p in by_subject[subject_class])
+        below_class = () if declared else sorted(below.get(subject_class, ()))
+        members = [subject_class, *below_class]
         by_property: dict[str, list[SchemaPattern]] = defaultdict(list)
         for member in members:
             for pattern in by_subject.get(member, []):
