@@ -560,3 +560,5 @@ def test_a_profile_gives_its_paths_to_its_classes_and_their_subclasses_only():
         for field in shapes.objects(node, SH.property)
     }
     assert fields == {("Organization", "email"), ("ResearchProject", "email"), ("SoftwareApplication", "author")}
+    # The merged shape of a class keeps the IRI of its profile shape.
+    assert set(shapes.subjects(SH.targetClass, URIRef(s + "Organization"))) == {URIRef("urn:organization")}

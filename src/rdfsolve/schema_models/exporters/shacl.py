@@ -730,6 +730,9 @@ def merge_profile(graph: Graph, profile: str) -> None:
     predicate, the other generated values stay. A profile property shape without a generated one
     is added to the class's shape; a node shape of a class with no generated shape, and every other
     statement of the profile (property groups, declarations), are added as they are.
+
+    A generated node shape that a profile node shape with an IRI is merged into takes that IRI,
+    so that the profile's references to the shape (sh:node) and its name stay.
     """
     from rdflib import RDF, Namespace
 
@@ -775,6 +778,7 @@ def merge_profile(graph: Graph, profile: str) -> None:
                 graph.add((target, predicate, value))
 
     merged: set[Any] = set()
+    renamed: dict[Any, Any] = {}
     for node, cls in given.subject_objects(sh.targetClass):
         target = generated.get(str(cls))
         if target is None:
@@ -792,6 +796,8 @@ def merge_profile(graph: Graph, profile: str) -> None:
             merge_into(
                 target, node, {RDF.type, sh.targetClass, sh.property}, annotations_only=False
             )
+            if isinstance(node, URIRef):
+                renamed[target] = node
         for shape in given.objects(node, sh.property):
             path = given.value(shape, sh.path)
             existing = by_path.get((str(cls), str(path))) if isinstance(path, URIRef) else None
@@ -812,5 +818,12 @@ def merge_profile(graph: Graph, profile: str) -> None:
     for triple in given:
         if triple[0] not in merged:
             graph.add(triple)
+    for old, new in renamed.items():
+        for _, predicate, value in list(graph.triples((old, None, None))):
+            graph.remove((old, predicate, value))
+            graph.add((new, predicate, value))
+        for subject, predicate, _ in list(graph.triples((None, None, old))):
+            graph.remove((subject, predicate, old))
+            graph.add((subject, predicate, new))
     for prefix, namespace in given.namespaces():
         graph.bind(prefix, namespace, override=False)
