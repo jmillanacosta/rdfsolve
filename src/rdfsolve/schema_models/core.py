@@ -852,8 +852,9 @@ class MinedSchema(BaseModel):
         """Convert to SHACL shapes.
 
         *properties* limits the property shapes to these property IRIs, or with "profile" to
-        the paths of the schema's shape profile (shape_profile); by default every property of
-        the schema has its shapes.
+        the paths that the schema's shape profile (shape_profile) gives each class: the paths of
+        the node shapes that target the class or one of its superclasses, and of the node shapes
+        they build on with sh:node. By default every property of the schema has its shapes.
 
         *paths* selects the shapes of the paths over several steps: with the class shapes (the
         default), without them, or only them (the pipeline writes them to a file of their own).
@@ -877,8 +878,19 @@ class MinedSchema(BaseModel):
         from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
 
         schema = rdf_writable(trim_export_text(self, trim_descriptions))
-        if properties is not None:
-            kept = self._profile_paths() if properties == "profile" else set(properties)
+        if properties == "profile":
+            given = self._profile_paths()
+            schema = schema.model_copy(
+                update={
+                    "patterns": [
+                        p
+                        for p in schema.patterns
+                        if any((c, p.property_uri) in given for c in self._lineage(p.subject_class))
+                    ]
+                }
+            )
+        elif properties is not None:
+            kept = set(properties)
             schema = schema.model_copy(
                 update={"patterns": [p for p in schema.patterns if p.property_uri in kept]}
             )
@@ -904,15 +916,40 @@ class MinedSchema(BaseModel):
         result: str = rdf_terms_only(graph).serialize(format="turtle")
         return result
 
-    def _profile_paths(self) -> set[str]:
-        """Return the property IRIs that the shape profile's property shapes have as sh:path."""
+    def _profile_paths(self) -> set[tuple[str, str]]:
+        """Return the (class, property) pairs of the shape profile: the paths of each node shape,
+        and of the node shapes it builds on with sh:node, for each class that it targets.
+        """
         from rdflib import Graph, URIRef
         from rdflib.namespace import SH
 
         if not self.shape_profile:
             raise ValueError("properties='profile' requires a schema with a shape_profile")
         profile = Graph().parse(data=self.shape_profile, format="turtle")
-        return {str(p) for p in profile.objects(None, SH.path) if isinstance(p, URIRef)}
+        pairs: set[tuple[str, str]] = set()
+        for shape, cls in profile.subject_objects(SH.targetClass):
+            todo, seen = [shape], set()
+            while todo:
+                current = todo.pop()
+                if current in seen:
+                    continue
+                seen.add(current)
+                for field in profile.objects(current, SH.property):
+                    path = profile.value(field, SH.path)
+                    if isinstance(path, URIRef):
+                        pairs.add((str(cls), str(path)))
+                todo.extend(profile.objects(current, SH.node))
+        return pairs
+
+    def _lineage(self, cls: str) -> set[str]:
+        """Return a class and its superclasses in the schema's class hierarchy."""
+        found, todo = set(), [cls]
+        while todo:
+            current = todo.pop()
+            if current not in found:
+                found.add(current)
+                todo.extend(self.class_hierarchy.get(current, []))
+        return found
 
 
 # MiningResult
