@@ -549,8 +549,10 @@ def test_a_profile_gives_its_paths_to_its_classes_and_their_subclasses_only():
             s:rangeIncludes s:Person .""",
         format="turtle",
     )
+    # The class of the email field is the profile's own, so some rows of Organization come from the profile.
     profile = f"""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix s: <{s}> .
-        <urn:organization> a sh:NodeShape ; sh:targetClass s:Organization ; sh:property [ sh:path s:email ] .
+        <urn:organization> a sh:NodeShape ; sh:targetClass s:Organization ;
+            sh:property [ sh:path s:email ; sh:class s:ContactPoint ] .
         <urn:tool> a sh:NodeShape ; sh:targetClass s:SoftwareApplication ; sh:property [ sh:path s:author ] .
         <urn:project> a sh:NodeShape ; sh:targetClass s:ResearchProject ; sh:node <urn:organization> ;
             sh:property [ sh:path s:funder ] ."""
