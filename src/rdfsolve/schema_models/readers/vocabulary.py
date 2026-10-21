@@ -47,6 +47,8 @@ RANGES = (
     DCAM + "rangeIncludes",
 )
 DESCRIBED = (str(RDFS.label), str(RDFS.comment), str(RDFS.isDefinedBy))
+# A property shape with this sh:node takes an RDF list (DASH, https://datashapes.org/dash).
+LIST_SHAPE = "http://datashapes.org/dash#ListShape"
 # Types that define a term. A file that gives these types and descriptions to terms of a
 # namespace gives the prefix of that namespace first.
 DEFINES = {
@@ -213,9 +215,9 @@ def vocabulary_to_minedschema(
     value that its kind allows. Ranges that are classes become object rows. XSD datatypes and
     schema.org data types become literal rows. rdfs:Literal allows any literal. A top class
     (*top_classes*: owl:Thing, rdfs:Resource and schema:Thing by default) allows any IRI or blank
-    node, with no class check. URL becomes an IRI row. An rdf:List range
-    declares list values whose members have the other ranges. The rows are declarations, not
-    observations (evidence_source "vocabulary").
+    node, with no class check. URL becomes an IRI row. An rdf:List range, or a property shape of
+    the profile with sh:node dash:ListShape, declares list values whose members have the other
+    ranges. The rows are declarations, not observations (evidence_source "vocabulary").
     """
     vocab = Vocabulary(vocabulary)
     top = tuple(dict.fromkeys(str(c) for c in top_classes))
@@ -236,6 +238,7 @@ def vocabulary_to_minedschema(
     anywhere = {prop for prop in declared if not any(vocab.has(prop, d) for d in DOMAINS)}
     patterns: list[SchemaPattern] = []
     lists: list[CollectionProfile] = []
+    listed = _list_fields(_profile_text(profile)) if profile is not None else set()
     for cls in requested:
         lineage = {*vocab.applies(cls), *top}
         properties = {
@@ -261,7 +264,7 @@ def vocabulary_to_minedschema(
                 )
                 for object_class, datatype in rows
             )
-            if str(RDF.List) in ranges:
+            if str(RDF.List) in ranges or (cls, prop) in listed:
                 lists.append(_list_profile(cls, prop, rows))
     if profile is not None:
         extra = _profile(profile, requested)
@@ -332,6 +335,31 @@ def _profile(profile: str | Path, requested: list[str]) -> MinedSchema:
     if other:
         raise ValueError(f"The profile has shapes for classes that are not requested: {other}")
     return extra
+
+
+def _list_fields(profile: str) -> set[tuple[str, str]]:
+    """Return the (class, property) pairs of the profile whose property shape takes an RDF list:
+    sh:node dash:ListShape on a property shape of a node shape of the class, or of a node shape it
+    builds on with sh:node.
+    """
+    from rdflib import URIRef
+    from rdflib.namespace import SH
+
+    graph = Graph().parse(data=profile, format="turtle")
+    found: set[tuple[str, str]] = set()
+    for shape, cls in graph.subject_objects(SH.targetClass):
+        todo, seen = [shape], set()
+        while todo:
+            current = todo.pop()
+            if current in seen:
+                continue
+            seen.add(current)
+            for field in graph.objects(current, SH.property):
+                path = graph.value(field, SH.path)
+                if isinstance(path, URIRef) and (field, SH.node, URIRef(LIST_SHAPE)) in graph:
+                    found.add((str(cls), str(path)))
+            todo.extend(graph.objects(current, SH.node))
+    return found
 
 
 def _list_profile(cls: str, prop: str, rows: list[tuple[str, str | None]]) -> CollectionProfile:

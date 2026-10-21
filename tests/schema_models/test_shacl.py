@@ -596,3 +596,25 @@ def test_a_class_with_a_shape_of_its_own_takes_no_paths_of_the_shapes_of_its_sup
     }
     # A Recipe has no shape of its own and takes the paths of the HowTo shape.
     assert fields == {("HowTo", "step"), ("LabProtocol", "reagent"), ("Recipe", "step")}
+
+
+def test_a_list_field_of_the_profile_takes_lists_whose_members_have_the_ranges():
+    from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+
+    s = "https://schema.org/"
+    vocabulary = Graph().parse(
+        data=f"""@prefix s: <{s}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        s:Dataset a rdfs:Class . s:Person a rdfs:Class .
+        s:creator a rdf:Property ; s:domainIncludes s:Dataset ; s:rangeIncludes s:Person .""",
+        format="turtle",
+    )
+    profile = f"""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix s: <{s}> .
+        <urn:dataset> a sh:NodeShape ; sh:targetClass s:Dataset ;
+            sh:property [ sh:path s:creator ; sh:node <http://datashapes.org/dash#ListShape> ] ."""
+    schema = vocabulary_to_minedschema(vocabulary, [s + "Dataset", s + "Person"], profile=profile)
+    shapes = Graph().parse(data=schema.to_shacl(void=False, properties="profile"), format="turtle")
+    data = f"@prefix s: <{s}> . <urn:d> a s:Dataset ; s:creator ( <urn:p> ) . <urn:p> a s:Person ."
+    assert validate(Graph().parse(data=data, format="turtle"), shacl_graph=shapes)[0]
+    wrong = f'@prefix s: <{s}> . <urn:d> a s:Dataset ; s:creator ( "a name" ) .'
+    assert not validate(Graph().parse(data=wrong, format="turtle"), shacl_graph=shapes)[0]
