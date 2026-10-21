@@ -853,8 +853,9 @@ class MinedSchema(BaseModel):
 
         *properties* limits the property shapes to these property IRIs, or with "profile" to
         the paths that the schema's shape profile (shape_profile) gives each class: the paths of
-        the node shapes that target the class or one of its superclasses, and of the node shapes
-        they build on with sh:node. By default every property of the schema has its shapes.
+        the node shapes that target the class, and of the node shapes they build on with sh:node;
+        a class without a node shape of its own takes those of its superclasses. By default every
+        property of the schema has its shapes.
 
         *paths* selects the shapes of the paths over several steps: with the class shapes (the
         default), without them, or only them (the pipeline writes them to a file of their own).
@@ -880,12 +881,20 @@ class MinedSchema(BaseModel):
         schema = rdf_writable(trim_export_text(self, trim_descriptions))
         if properties == "profile":
             given = self._profile_paths()
+            shaped = {cls for cls, _ in given}
             schema = schema.model_copy(
                 update={
                     "patterns": [
                         p
                         for p in schema.patterns
-                        if any((c, p.property_uri) in given for c in self._lineage(p.subject_class))
+                        if any(
+                            (c, p.property_uri) in given
+                            for c in (
+                                {p.subject_class}
+                                if p.subject_class in shaped
+                                else self._lineage(p.subject_class)
+                            )
+                        )
                     ]
                 }
             )

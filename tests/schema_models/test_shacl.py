@@ -569,3 +569,30 @@ def test_a_profile_gives_its_paths_to_its_classes_and_their_subclasses_only():
     }
     # The merged shape of a class keeps the IRI of its profile shape.
     assert set(shapes.subjects(SH.targetClass, URIRef(s + "Organization"))) == {URIRef("urn:organization")}
+
+
+def test_a_class_with_a_shape_of_its_own_takes_no_paths_of_the_shapes_of_its_superclasses():
+    from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+
+    s = "https://schema.org/"
+    vocabulary = Graph().parse(
+        data=f"""@prefix s: <{s}> . @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        s:HowTo a rdfs:Class . s:LabProtocol a rdfs:Class ; rdfs:subClassOf s:HowTo . s:Recipe a rdfs:Class ;
+            rdfs:subClassOf s:HowTo .
+        s:step a rdf:Property ; s:domainIncludes s:HowTo ; s:rangeIncludes s:Text .
+        s:reagent a rdf:Property ; s:domainIncludes s:LabProtocol ; s:rangeIncludes s:Text .""",
+        format="turtle",
+    )
+    profile = f"""@prefix sh: <http://www.w3.org/ns/shacl#> . @prefix s: <{s}> .
+        <urn:howto> a sh:NodeShape ; sh:targetClass s:HowTo ; sh:property [ sh:path s:step ] .
+        <urn:protocol> a sh:NodeShape ; sh:targetClass s:LabProtocol ; sh:property [ sh:path s:reagent ] ."""
+    schema = vocabulary_to_minedschema(vocabulary, [s + c for c in ("HowTo", "LabProtocol", "Recipe")], profile=profile)
+    shapes = Graph().parse(data=schema.to_shacl(void=False, properties="profile"), format="turtle")
+    fields = {
+        (str(cls).removeprefix(s), str(shapes.value(field, SH.path)).removeprefix(s))
+        for node, cls in shapes.subject_objects(SH.targetClass)
+        for field in shapes.objects(node, SH.property)
+    }
+    # A Recipe has no shape of its own and takes the paths of the HowTo shape.
+    assert fields == {("HowTo", "step"), ("LabProtocol", "reagent"), ("Recipe", "step")}
