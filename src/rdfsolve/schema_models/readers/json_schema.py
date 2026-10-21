@@ -9,11 +9,14 @@ so are properties named by a JSON-LD keyword.
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import Any
 
-from rdflib import RDF, RDFS, Graph
+from rdflib import RDF
 from rdflib.namespace import XSD
 
+from rdfsolve.iris import local_name, namespace
+from rdfsolve.schema_models.readers.vocabulary import DEFINES, Vocabulary, VocabularySource
 from rdfsolve.schema_models.shacl_model import Severity, ShaclNodeShape, ShaclPropertyShape
 
 REFUSED = frozenset(
@@ -37,16 +40,17 @@ NUMBERS = {
 DEPTH = 2
 
 
-def vocabulary_context(vocabularies: list[Graph], namespaces: list[str]) -> dict[str, str]:
-    """Return the classes and properties of the namespaces by local name, the first namespace first."""
+def vocabulary_context(
+    sources: VocabularySource | Sequence[VocabularySource], namespaces: list[str]
+) -> dict[str, str]:
+    """Return the terms that the vocabularies define in the namespaces by local name, the first namespace first."""
+    vocabulary = Vocabulary(sources)
+    terms = sorted({term for kind in DEFINES for term in vocabulary.subjects(str(RDF.type), kind)})
     context: dict[str, str] = {}
-    for namespace in namespaces:
-        for vocabulary in vocabularies:
-            for kind in (RDF.Property, RDFS.Class):
-                for term in sorted(str(subject) for subject in vocabulary.subjects(RDF.type, kind)):
-                    name = term.removeprefix(namespace)
-                    if name != term and name and "/" not in name and "#" not in name:
-                        context.setdefault(name, term)
+    for space in namespaces:
+        for term in terms:
+            if namespace(term) == space:
+                context.setdefault(local_name(term), term)
     return context
 
 
