@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from typing import Any
 
 from rdflib import RDF
@@ -36,8 +37,6 @@ NUMBERS = {
     "number": [XSD.integer, XSD.decimal, XSD.double],
     "boolean": [XSD.boolean],
 }
-# The depth of the nested shapes made from definitions; deeper definitions are checked by class only.
-DEPTH = 2
 
 
 def vocabulary_context(
@@ -71,21 +70,32 @@ def _refuse(schema: dict[str, Any]) -> None:
         raise NotImplementedError(f"JSON Schema keywords not read: {', '.join(sorted(found))}")
 
 
-def _leaves(
-    schema: dict[str, Any], definitions: dict[str, Any]
-) -> tuple[list[dict[str, Any]], bool]:
+@dataclass
+class _Reading:
+    """The definitions and the JSON-LD context of a JSON Schema, and the definitions written."""
+
+    definitions: dict[str, Any]
+    context: dict[str, str]
+    values: Severity | None
+    root: str
+    written: set[str] = field(default_factory=set)
+
+
+def _leaves(schema: dict[str, Any], reading: _Reading) -> tuple[list[dict[str, Any]], bool]:
     """Return the value schemas of a schema without alternatives and arrays, and if several values fit."""
     _refuse(schema)
     if "anyOf" in schema or "oneOf" in schema:
         found: list[dict[str, Any]] = []
         several = False
         for alternative in [*schema.get("anyOf", []), *schema.get("oneOf", [])]:
-            given, many = _leaves(alternative, definitions)
+            given, many = _leaves(alternative, reading)
             found += given
             several = several or many
         return found, several
     if "$ref" in schema:
-        return _leaves(definitions[schema["$ref"].rsplit("/", 1)[-1]], definitions)
+        name = schema["$ref"].rsplit("/", 1)[-1]
+        given, several = _leaves(reading.definitions[name], reading)
+        return [{"$definition": name, **leaf} for leaf in given], several
     kinds = schema.get("type")
     if not kinds:
         return [], True
@@ -96,28 +106,27 @@ def _leaves(
     items = schema.get("items", {})
     # Positions of tuple items have no counterpart in RDF: each item schema is one more alternative.
     for item in items if isinstance(items, list) else [items]:
-        found += _leaves(item, definitions)[0]
+        found += _leaves(item, reading)[0]
     return found, True
 
 
-def _value(
-    leaf: dict[str, Any],
-    definitions: dict[str, Any],
-    context: dict[str, str],
-    values: Severity | None,
-    prefix: str,
-    depth: int,
-) -> ShaclPropertyShape:
+def _value(leaf: dict[str, Any], reading: _Reading, prefix: str) -> ShaclPropertyShape:
     """Return the constraint of the values of one value schema, with prefix for nested shape IRIs."""
     kind = leaf["type"]
     if kind == "object":
         shape = ShaclPropertyShape(path="", node_kind="BlankNodeOrIRI")
         if "@type" in leaf:
-            shape.class_constraint = address(str(leaf["@type"]), context)
-        if depth < DEPTH:
-            shape.properties = _fields(
-                leaf, definitions, context, {"required": values}, values, prefix, depth + 1
-            )
+            shape.class_constraint = address(str(leaf["@type"]), reading.context)
+        name = leaf.get("$definition")
+        if name is None:
+            shape.properties = _fields(leaf, reading, {"required": reading.values}, prefix)
+            return shape
+        # A definition is written once, at its own IRI. A later use, also in the definition itself,
+        # gives that IRI.
+        shape.uri = f"{reading.root}definitions/{name}"
+        if name not in reading.written:
+            reading.written.add(name)
+            shape.properties = _fields(leaf, reading, {"required": reading.values}, f"{shape.uri}/")
         return shape
     if kind == "string" and leaf.get("format") in ADDRESSES:
         return ShaclPropertyShape(path="", node_kind="IRI")
@@ -132,13 +141,7 @@ def _value(
 
 
 def _fields(
-    schema: dict[str, Any],
-    definitions: dict[str, Any],
-    context: dict[str, str],
-    levels: dict[str, Severity | None],
-    values: Severity | None,
-    prefix: str,
-    depth: int = 0,
+    schema: dict[str, Any], reading: _Reading, levels: dict[str, Severity | None], prefix: str
 ) -> list[ShaclPropertyShape]:
     """Return a shape for each listed property of an object schema, and one for the values of each property.
 
@@ -152,7 +155,7 @@ def _fields(
             found.append(
                 ShaclPropertyShape(
                     uri=f"{prefix}{name}-{level}",
-                    path=address(name, context),
+                    path=address(name, reading.context),
                     name=name,
                     min_count=1,
                     severity=severity,
@@ -162,22 +165,22 @@ def _fields(
         # A JSON-LD keyword, such as @id, is the node itself, not a property.
         if name.startswith("@"):
             continue
-        given_leaves, several = _leaves(given, definitions)
+        given_leaves, several = _leaves(given, reading)
         # The same value schema given as one value and as an array item is one alternative.
         unique = {json.dumps(leaf, sort_keys=True): leaf for leaf in given_leaves}
         alternatives = [
-            _value(leaf, definitions, context, values, f"{prefix}{name}-{number}/", depth)
+            _value(leaf, reading, f"{prefix}{name}-{number}/")
             for number, leaf in enumerate(unique.values(), start=1)
         ]
         description = " ".join(str(given.get("description", "")).split()) or None
         found.append(
             ShaclPropertyShape(
                 uri=f"{prefix}{name}",
-                path=address(name, context),
+                path=address(name, reading.context),
                 name=name,
                 description=description,
                 max_count=None if several else 1,
-                severity=values,
+                severity=reading.values,
                 alternatives=alternatives,
             )
         )
@@ -206,13 +209,13 @@ def json_schema_shape(
 
     Returns:
         The node shape, with one property shape for each listed property and one for the values
-        of each property in properties, at IRIs under the IRI of the node shape
+        of each property in properties, at IRIs under the IRI of the node shape. Each definition
+        is a shape of its own, at <shape>#definitions/<name>
     """
     definitions = {**schema.get("definitions", {}), **schema.get("$defs", {})}
+    reading = _Reading(definitions, context, values, f"{shape}#")
     return ShaclNodeShape(
         uri=shape,
         target_class=target_class,
-        property_shapes=_fields(
-            schema, definitions, context, levels or {"required": "Violation"}, values, f"{shape}#"
-        ),
+        property_shapes=_fields(schema, reading, levels or {"required": "Violation"}, f"{shape}#"),
     )
