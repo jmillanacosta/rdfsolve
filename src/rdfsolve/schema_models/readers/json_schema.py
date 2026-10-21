@@ -21,6 +21,7 @@ from rdflib import RDF, RDFS
 from rdflib.namespace import XSD
 
 from rdfsolve.iris import local_name, namespace
+from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.readers.vocabulary import (
     DATATYPES,
     DEFINES,
@@ -45,6 +46,9 @@ ADDRESSES = frozenset({"uri", "iri", "uri-reference", "iri-reference"})
 FORMATS = {"date": XSD.date, "date-time": XSD.dateTime, "time": XSD.time}
 # The schema.org data type of each format, whose forms are taken when it is a range of the property.
 FORMAT_TYPES = {"date": "Date", "date-time": "DateTime", "time": "Time"}
+# A JSON-LD context: the IRI of each JSON key and class name, or a term definition with @id and
+# @container, and @vocab.
+type Context = dict[str, str | dict[str, str]]
 NUMBERS = {
     "integer": [XSD.integer],
     "number": [XSD.integer, XSD.decimal, XSD.double],
@@ -66,14 +70,23 @@ def vocabulary_context(
     return context
 
 
-def address(name: str, context: dict[str, str]) -> str:
+def address(name: str, context: Context) -> str:
     """Return the IRI of a JSON key or of a compact class name in a JSON-LD context."""
     term = name.rpartition(":")[2]
-    if term in context:
-        return context[term]
+    given = context.get(term)
+    if isinstance(given, dict):
+        return given["@id"]
+    if given:
+        return given
     if "@vocab" in context:
-        return context["@vocab"] + term
+        return str(context["@vocab"]) + term
     raise KeyError(f"No address for {name} in the context")
+
+
+def _listed(name: str, context: Context) -> bool:
+    """Return True if the term definition of a JSON key makes its values the members of an RDF list."""
+    given = context.get(name.rpartition(":")[2])
+    return isinstance(given, dict) and given.get("@container") == "@list"
 
 
 def _refuse(schema: dict[str, Any]) -> None:
@@ -88,7 +101,7 @@ class _Reading:
     """The definitions and the JSON-LD context of a JSON Schema, and the definitions written."""
 
     definitions: dict[str, Any]
-    context: dict[str, str]
+    context: Context
     values: Severity | None
     root: str
     vocabulary: Vocabulary | None = None
@@ -206,10 +219,19 @@ def _fields(
             for shape in _value(leaf, reading, f"{prefix}{name}-{number}/", ranges):
                 alternatives.setdefault(shape.model_dump_json(), shape)
         description = " ".join(str(given.get("description", "")).split()) or None
+        path: str | PropertyPath = address(name, reading.context)
+        if _listed(name, reading.context):
+            # The values of a term with @container @list are the members of one RDF list.
+            step = [
+                PropertyPath(operator="predicate", iri=str(term)) for term in (RDF.rest, RDF.first)
+            ]
+            rest = PropertyPath(operator="zero_or_more", items=[step[0]])
+            items = [PropertyPath(operator="predicate", iri=str(path)), rest, step[1]]
+            path, several = PropertyPath(operator="sequence", items=items), True
         found.append(
             ShaclPropertyShape(
                 uri=f"{prefix}{name}",
-                path=address(name, reading.context),
+                path=path,
                 name=name,
                 description=description,
                 max_count=None if several else 1,
@@ -225,7 +247,7 @@ def json_schema_shape(
     *,
     shape: str,
     target_class: str,
-    context: dict[str, str],
+    context: Context,
     levels: dict[str, Severity | None] | None = None,
     values: Severity | None = "Warning",
     vocabulary: Vocabulary | None = None,
@@ -236,7 +258,9 @@ def json_schema_shape(
         schema: a JSON Schema of an object, with its definitions
         shape: the IRI of the node shape
         target_class: the class of the nodes the shape is for
-        context: a JSON-LD context, with the IRI of each JSON key and class name, and @vocab
+        context: a JSON-LD context, with the IRI of each JSON key and class name, or a term
+            definition with @id and @container (@list for the keys whose values are RDF lists),
+            and @vocab
         levels: the keys of lists of property names, with the severity of a missing property;
             by default the properties in required, as violations
         values: the severity of the values that do not fit, one more value than allowed included

@@ -27,14 +27,14 @@ RANGES = f"""@prefix schema: <https://schema.org/> . <{EX}name> schema:rangeIncl
 <{EX}published> schema:rangeIncludes schema:Date ."""
 
 
-def results(data: str, vocabulary: Vocabulary | None = None) -> set[tuple[str, str]]:
+def results(data: str, vocabulary: Vocabulary | None = None, context: dict | None = None) -> set[tuple[str, str]]:
     shapes = Graph()
-    json_schema_shape(SCHEMA, shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX},
+    json_schema_shape(SCHEMA, shape=EX + "Shape", target_class=EX + "Item", context=context or {"@vocab": EX},
                       levels={"required": "Violation", "recommended": "Warning"}, vocabulary=vocabulary).to_rdf(shapes)
     _, report, _ = validate(Graph().parse(data=f"@prefix ex: <{EX}> .\n" + data, format="turtle"), shacl_graph=shapes)
-    query = "SELECT ?path ?severity WHERE { ?r a sh:ValidationResult ; sh:resultPath ?path ; sh:resultSeverity ?severity }"
+    query = "SELECT ?shape ?severity WHERE { ?r a sh:ValidationResult ; sh:sourceShape ?shape ; sh:resultSeverity ?severity }"
     found = report.query(query, initNs={"sh": "http://www.w3.org/ns/shacl#"})
-    return {(str(path).removeprefix(EX), str(severity).rsplit("#", 1)[-1]) for path, severity in found}
+    return {(str(shape).removeprefix(EX + "Shape#").removesuffix("-required").removesuffix("-recommended"), str(severity).rsplit("#", 1)[-1]) for shape, severity in found}
 
 
 def test_json_schema_shape():
@@ -46,6 +46,9 @@ def test_json_schema_shape():
     linked = 'ex:i a ex:Item ; ex:name ex:page ; ex:published "2020"^^<http://www.w3.org/2001/XMLSchema#gYear> .'
     assert results(linked) == {("name", "Warning"), ("published", "Warning"), ("author", "Warning")}
     assert results(linked, Vocabulary(Graph().parse(data=RANGES, format="turtle"))) == {("author", "Warning")}
+    listed = {"@vocab": EX, "author": {"@id": EX + "author", "@container": "@list"}}
+    assert results('ex:i a ex:Item ; ex:name "I" ; ex:author ( ex:a ) . ex:a a ex:Person ; ex:name "A" .', context=listed) == set()
+    assert results('ex:i a ex:Item ; ex:name "I" ; ex:author ( "A" ) .', context=listed) == {("author", "Warning")}
     with pytest.raises(NotImplementedError):
         json_schema_shape({"type": "object", "properties": {"n": {"type": "string", "maxLength": 3}}},
                           shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX})
