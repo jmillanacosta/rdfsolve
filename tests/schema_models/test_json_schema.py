@@ -1,10 +1,11 @@
 """rdfsolve.schema_models JSON Schema reader: required and recommended properties, single values,
-alternatives, listed values and definitions become SHACL that pyshacl applies to data, and unread
-keywords raise."""
+alternatives, listed values and definitions become SHACL that pyshacl applies to data, with the
+labels, order and groups of a form, and unread keywords raise."""
 
 import pytest
 from pyshacl import validate
-from rdflib import Graph
+from rdflib import RDFS, Graph, URIRef
+from rdflib.namespace import SH
 
 from rdfsolve.schema_models.readers.json_schema import json_schema_shape
 from rdfsolve.schema_models.readers.vocabulary import Vocabulary
@@ -16,7 +17,7 @@ SCHEMA = {
     "recommended": ["author"],
     "properties": {
         "name": {"type": "string"},
-        "url": {"type": "string", "format": "uri"},
+        "url": {"title": "Web page", "type": "string", "format": "uri"},
         "published": {"anyOf": [{"type": "string", "format": "date"}]},
         "author": {"anyOf": [{"$ref": "#/definitions/person"}, {"type": "array", "items": {"$ref": "#/definitions/person"}}]},
         "status": {"enum": ["draft", "published"]},
@@ -54,6 +55,12 @@ def test_json_schema_shape():
     assert results('ex:i a ex:Item ; ex:name "I" ; ex:author ( "A" ) .', context=listed) == {("author", "Warning")}
     assert results('ex:i a ex:Item ; ex:name "I" ; ex:status "draft" ; ex:kind ex:a .') == {("author", "Warning")}
     assert results('ex:i a ex:Item ; ex:name "I" ; ex:status "done" ; ex:kind ex:c .') == {("status", "Warning"), ("kind", "Warning"), ("author", "Warning")}
+    shapes = Graph()
+    json_schema_shape(SCHEMA, shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX},
+                      levels={"required": "Violation", "recommended": "Warning"}).to_rdf(shapes)
+    fields = [URIRef(EX + "Shape#" + name) for name in ("name", "url", "author")]
+    assert [(str(shapes.value(f, SH.name)), int(shapes.value(f, SH.order)), str(shapes.value(shapes.value(f, SH.group), RDFS.label)))
+            for f in fields] == [("Name", 1, "Required"), ("Web page", 2, "Optional"), ("Author", 4, "Recommended")]
     with pytest.raises(NotImplementedError):
         json_schema_shape({"type": "object", "properties": {"n": {"type": "string", "maxLength": 3}}},
                           shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX})

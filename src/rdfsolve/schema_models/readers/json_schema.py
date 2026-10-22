@@ -13,6 +13,7 @@ property of schema.org's Date can be any form that Date allows, such as a year.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -31,7 +32,12 @@ from rdfsolve.schema_models.readers.vocabulary import (
     VocabularySource,
     _ranges,
 )
-from rdfsolve.schema_models.shacl_model import Severity, ShaclNodeShape, ShaclPropertyShape
+from rdfsolve.schema_models.shacl_model import (
+    Severity,
+    ShaclNodeShape,
+    ShaclPropertyGroup,
+    ShaclPropertyShape,
+)
 
 REFUSED = frozenset(
     {
@@ -212,16 +218,30 @@ def _value(
     raise NotImplementedError(f"JSON Schema type not read: {kind}")
 
 
+def _readable(name: str) -> str:
+    """Return a property name as words, such as Date published for datePublished."""
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", name) or [name]
+    words = [word if word.isupper() else word.lower() for word in words]
+    return " ".join(words)[:1].upper() + " ".join(words)[1:]
+
+
 def _fields(
-    schema: dict[str, Any], reading: _Reading, levels: dict[str, Severity | None], prefix: str
+    schema: dict[str, Any],
+    reading: _Reading,
+    levels: dict[str, Severity | None],
+    prefix: str,
+    grouped: bool = False,
 ) -> list[ShaclPropertyShape]:
     """Return a shape for each listed property of an object schema, and one for the values of each property.
 
     Each shape has an IRI made of prefix and the property name, so that the shapes are written in
-    the same order on each run.
+    the same order on each run. The shape of the values of a property has its title, or its name
+    as words, its place among the properties and, if grouped, the group of its level: one of the
+    levels, or optional.
     """
     _refuse(schema)
     found = []
+    groups = [*levels, "optional"]
     for level, severity in levels.items():
         for name in schema.get(level, []):
             found.append(
@@ -233,6 +253,7 @@ def _fields(
                     severity=severity,
                 )
             )
+    properties = [name for name in schema.get("properties", {}) if not name.startswith("@")]
     for name, given in schema.get("properties", {}).items():
         # A JSON-LD keyword, such as @id, is the node itself, not a property.
         if name.startswith("@"):
@@ -255,15 +276,25 @@ def _fields(
             rest = PropertyPath(operator="zero_or_more", items=[step[0]])
             items = [PropertyPath(operator="predicate", iri=str(path)), rest, step[1]]
             path, several = PropertyPath(operator="sequence", items=items), True
+        group = None
+        if grouped:
+            level = next((level for level in levels if name in schema.get(level, [])), "optional")
+            group = ShaclPropertyGroup(
+                uri=f"{prefix}group-{level}",
+                label=level.capitalize(),
+                order=groups.index(level) + 1,
+            )
         found.append(
             ShaclPropertyShape(
                 uri=f"{prefix}{name}",
                 path=path,
-                name=name,
+                name=str(given.get("title") or _readable(name)),
                 description=description,
                 max_count=None if several else 1,
                 severity=reading.values,
                 alternatives=list(alternatives.values()),
+                order=properties.index(name) + 1,
+                group=group,
             )
         )
     return found
@@ -295,13 +326,17 @@ def json_schema_shape(
 
     Returns:
         The node shape, with one property shape for each listed property and one for the values
-        of each property in properties, at IRIs under the IRI of the node shape. Each definition
-        is a shape of its own, at <shape>#definitions/<name>
+        of each property in properties, at IRIs under the IRI of the node shape. A shape of the
+        values has the title of the property or its name as words, its place in properties and
+        the group of its level, <shape>#group-<level>, or optional for a property of no level.
+        Each definition is a shape of its own, at <shape>#definitions/<name>
     """
     definitions = {**schema.get("definitions", {}), **schema.get("$defs", {})}
     reading = _Reading(definitions, context, values, f"{shape}#", vocabulary)
     return ShaclNodeShape(
         uri=shape,
         target_class=target_class,
-        property_shapes=_fields(schema, reading, levels or {"required": "Violation"}, f"{shape}#"),
+        property_shapes=_fields(
+            schema, reading, levels or {"required": "Violation"}, f"{shape}#", grouped=True
+        ),
     )

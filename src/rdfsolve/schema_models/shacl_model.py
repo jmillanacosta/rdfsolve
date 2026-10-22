@@ -92,6 +92,45 @@ def _text(graph: Graph, shape: Node, predicate: URIRef) -> tuple[str | None, str
     return str(texts[0]), texts[0].language
 
 
+class ShaclPropertyGroup(BaseModel):
+    """Represents sh:PropertyGroup: a group of property shapes, such as a section of a form."""
+
+    uri: str
+    label: str | None = Field(None, description="rdfs:label")
+    order: int | None = Field(None, description="sh:order of the group")
+
+    def to_rdf(self, graph: Graph) -> URIRef:
+        """Serialize to RDF graph."""
+        from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
+        from rdflib.namespace import RDF, RDFS
+
+        sh = Namespace("http://www.w3.org/ns/shacl#")
+        node = Ref(self.uri)
+        graph.add((node, RDF.type, sh.PropertyGroup))
+        if self.label is not None:
+            graph.add((node, RDFS.label, RdfLiteral(self.label)))
+        if self.order is not None:
+            graph.add((node, sh.order, RdfLiteral(self.order)))
+        return node
+
+    @classmethod
+    def from_rdf(cls, graph: Graph, uri: Node) -> ShaclPropertyGroup:
+        """Parse from RDF graph."""
+        from rdflib import Namespace
+        from rdflib.namespace import RDFS
+
+        sh = Namespace("http://www.w3.org/ns/shacl#")
+        label = graph.value(uri, RDFS.label)
+        order = graph.value(uri, sh.order)
+        return cls(
+            uri=str(uri),
+            label=str(label) if label is not None else None,
+            order=int(order) if order is not None else None,
+        )
+
+
 class ShaclPropertyShape(BaseModel):
     """Represents sh:PropertyShape."""
 
@@ -123,6 +162,8 @@ class ShaclPropertyShape(BaseModel):
     values: list[RdfTerm] = Field(
         default_factory=list, description="sh:in: the allowed values, in order"
     )
+    order: int | None = Field(None, description="sh:order: the place of the property in a form")
+    group: ShaclPropertyGroup | None = Field(None, description="sh:group")
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -196,6 +237,10 @@ class ShaclPropertyShape(BaseModel):
             head = BNode()
             Collection(graph, head, [value.to_rdf() for value in self.values])
             graph.add((node, sh["in"], head))
+        if self.order is not None:
+            graph.add((node, sh.order, RdfLiteral(self.order)))
+        if self.group is not None:
+            graph.add((node, sh.group, self.group.to_rdf(graph)))
 
         for child in self.properties:
             graph.add((node, sh.property, child.to_rdf(graph)))
@@ -299,6 +344,12 @@ class ShaclPropertyShape(BaseModel):
                 for head in graph.objects(uri, sh["in"])
                 for value in graph.items(head)
             ],
+            order=int(order)
+            if (order := graph.value(uri, sh.order, any=False)) is not None
+            else None,
+            group=ShaclPropertyGroup.from_rdf(graph, group)
+            if (group := graph.value(uri, sh.group, any=False)) is not None
+            else None,
         )
 
 
