@@ -1,5 +1,6 @@
 """rdfsolve.schema_models JSON Schema reader: required and recommended properties, single values,
-alternatives and definitions become SHACL that pyshacl applies to data, and unread keywords raise."""
+alternatives, listed values and definitions become SHACL that pyshacl applies to data, and unread
+keywords raise."""
 
 import pytest
 from pyshacl import validate
@@ -18,6 +19,8 @@ SCHEMA = {
         "url": {"type": "string", "format": "uri"},
         "published": {"anyOf": [{"type": "string", "format": "date"}]},
         "author": {"anyOf": [{"$ref": "#/definitions/person"}, {"type": "array", "items": {"$ref": "#/definitions/person"}}]},
+        "status": {"enum": ["draft", "published"]},
+        "kind": {"type": "string", "format": "uri", "enum": [EX + "a", EX + "b"]},
     },
     "definitions": {"person": {"@type": "Person", "type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}},
 }
@@ -49,6 +52,8 @@ def test_json_schema_shape():
     listed = {"@vocab": EX, "author": {"@id": EX + "author", "@container": "@list"}}
     assert results('ex:i a ex:Item ; ex:name "I" ; ex:author ( ex:a ) . ex:a a ex:Person ; ex:name "A" .', context=listed) == set()
     assert results('ex:i a ex:Item ; ex:name "I" ; ex:author ( "A" ) .', context=listed) == {("author", "Warning")}
+    assert results('ex:i a ex:Item ; ex:name "I" ; ex:status "draft" ; ex:kind ex:a .') == {("author", "Warning")}
+    assert results('ex:i a ex:Item ; ex:name "I" ; ex:status "done" ; ex:kind ex:c .') == {("status", "Warning"), ("kind", "Warning"), ("author", "Warning")}
     with pytest.raises(NotImplementedError):
         json_schema_shape({"type": "object", "properties": {"n": {"type": "string", "maxLength": 3}}},
                           shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX})

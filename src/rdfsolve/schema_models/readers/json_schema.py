@@ -1,9 +1,9 @@
 """Read a JSON Schema as a SHACL node shape, with the property addresses of a JSON-LD context.
 
-Only a subset of JSON Schema is read: type, format, pattern, properties, required, items, anyOf,
-oneOf, $ref and definitions. Every other keyword of JSON Schema is refused, so that no constraint
-is lost unseen. Keys that are not keywords of JSON Schema are read as annotations and left out, and
-so are properties named by a JSON-LD keyword.
+Only a subset of JSON Schema is read: type, format, pattern, enum, properties, required, items,
+anyOf, oneOf, $ref and definitions. Every other keyword of JSON Schema is refused, so that no
+constraint is lost unseen. Keys that are not keywords of JSON Schema are read as annotations and
+left out, and so are properties named by a JSON-LD keyword.
 
 The ranges of the properties in a vocabulary, when one is given, set what the JSON values are in
 RDF: a text of a property whose ranges are not only data types can be a link, and a date of a
@@ -21,6 +21,7 @@ from rdflib import RDF, RDFS
 from rdflib.namespace import XSD
 
 from rdfsolve.iris import local_name, namespace
+from rdfsolve.schema_models.enrichment import RdfTerm
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.readers.vocabulary import (
     DATATYPES,
@@ -34,7 +35,7 @@ from rdfsolve.schema_models.shacl_model import Severity, ShaclNodeShape, ShaclPr
 
 REFUSED = frozenset(
     {
-        "allOf", "not", "if", "then", "else", "enum", "const", "patternProperties",
+        "allOf", "not", "if", "then", "else", "const", "patternProperties",
         "additionalProperties", "dependentRequired", "dependentSchemas", "dependencies",
         "unevaluatedProperties", "unevaluatedItems", "prefixItems", "contains", "minContains",
         "maxContains", "propertyNames", "minProperties", "maxProperties", "minItems", "maxItems",
@@ -53,6 +54,13 @@ NUMBERS = {
     "integer": [XSD.integer],
     "number": [XSD.integer, XSD.decimal, XSD.double],
     "boolean": [XSD.boolean],
+}
+# The datatype of the values listed by enum, by JSON type; a text has none.
+ENUM_DATATYPES = {
+    "string": None,
+    "integer": XSD.integer,
+    "number": XSD.decimal,
+    "boolean": XSD.boolean,
 }
 
 
@@ -127,7 +135,8 @@ def _leaves(schema: dict[str, Any], reading: _Reading) -> tuple[list[dict[str, A
         name = schema["$ref"].rsplit("/", 1)[-1]
         given, several = _leaves(reading.definitions[name], reading)
         return [{"$definition": name, **leaf} for leaf in given], several
-    kinds = schema.get("type")
+    # A list of values without a type is a list of texts.
+    kinds = schema.get("type") or ("string" if "enum" in schema else None)
     if not kinds:
         return [], True
     kinds = kinds if isinstance(kinds, list) else [kinds]
@@ -146,6 +155,22 @@ def _data(term: str) -> bool:
     return term == str(RDFS.Literal) or (
         namespace(term) == SCHEMA and local_name(term) in DATATYPES
     )
+
+
+def _listed_values(leaf: dict[str, Any]) -> ShaclPropertyShape:
+    """Return the constraint of a value schema with enum: one of the listed values."""
+    kind = leaf["type"]
+    if kind == "string" and leaf.get("format") in ADDRESSES:
+        listed = [RdfTerm(kind="uri", value=str(value)) for value in leaf["enum"]]
+        return ShaclPropertyShape(path="", node_kind="IRI", values=listed)
+    if kind not in ENUM_DATATYPES:
+        raise NotImplementedError(f"JSON Schema enum not read for type: {kind}")
+    datatype = str(ENUM_DATATYPES[kind]) if ENUM_DATATYPES[kind] else None
+    listed = []
+    for value in leaf["enum"]:
+        lexical = json.dumps(value) if kind == "boolean" else str(value)
+        listed.append(RdfTerm(kind="literal", value=lexical, datatype=datatype))
+    return ShaclPropertyShape(path="", node_kind="Literal", values=listed)
 
 
 def _value(
@@ -168,6 +193,8 @@ def _value(
             reading.written.add(name)
             shape.properties = _fields(leaf, reading, {"required": reading.values}, f"{shape.uri}/")
         return [shape]
+    if "enum" in leaf:
+        return [_listed_values(leaf)]
     if kind == "string" and leaf.get("format") in ADDRESSES:
         return [ShaclPropertyShape(path="", node_kind="IRI")]
     if kind == "string" and leaf.get("format") in FORMATS:

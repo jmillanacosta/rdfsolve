@@ -120,6 +120,9 @@ class ShaclPropertyShape(BaseModel):
         default_factory=list,
         description="Value constraints combined with sh:or; paths are ignored in these alternatives",
     )
+    values: list[RdfTerm] = Field(
+        default_factory=list, description="sh:in: the allowed values, in order"
+    )
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -187,6 +190,12 @@ class ShaclPropertyShape(BaseModel):
             head = BNode()
             Collection(graph, head, alternatives)
             graph.add((node, sh["or"], head))
+        if self.values:
+            from rdflib.collection import Collection
+
+            head = BNode()
+            Collection(graph, head, [value.to_rdf() for value in self.values])
+            graph.add((node, sh["in"], head))
 
         for child in self.properties:
             graph.add((node, sh.property, child.to_rdf(graph)))
@@ -284,6 +293,11 @@ class ShaclPropertyShape(BaseModel):
                 cls.from_rdf(graph, branch, active)
                 for head in graph.objects(uri, sh["or"])
                 for branch in graph.items(head)
+            ],
+            values=[
+                RdfTerm.from_rdf(value)
+                for head in graph.objects(uri, sh["in"])
+                for value in graph.items(head)
             ],
         )
 
