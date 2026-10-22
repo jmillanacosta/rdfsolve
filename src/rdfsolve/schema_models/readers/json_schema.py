@@ -236,12 +236,21 @@ def _fields(
 
     Each shape has an IRI made of prefix and the property name, so that the shapes are written in
     the same order on each run. The shape of the values of a property has its title, or its name
-    as words, its place among the properties and, if grouped, the group of its level: one of the
-    levels, or optional.
+    as words, its place among the properties and, if grouped, the group that the property names
+    (an annotation "group" of the profile), else the group of its level: one of the levels, or
+    optional.
     """
     _refuse(schema)
     found = []
-    groups = [*levels, "optional"]
+    # The groups that the properties name, in the order of their first property, come first.
+    named = list(
+        dict.fromkeys(
+            str(given["group"])
+            for given in schema.get("properties", {}).values()
+            if "group" in given
+        )
+    )
+    groups = [*named, *levels, "optional"]
     for level, severity in levels.items():
         for name in schema.get(level, []):
             found.append(
@@ -277,7 +286,14 @@ def _fields(
             items = [PropertyPath(operator="predicate", iri=str(path)), rest, step[1]]
             path, several = PropertyPath(operator="sequence", items=items), True
         group = None
-        if grouped:
+        if grouped and "group" in given:
+            label = str(given["group"])
+            group = ShaclPropertyGroup(
+                uri=f"{prefix}group-{re.sub(r'[^a-z0-9]+', '-', label.lower()).strip('-')}",
+                label=label,
+                order=groups.index(label) + 1,
+            )
+        elif grouped:
             level = next((level for level in levels if name in schema.get(level, [])), "optional")
             group = ShaclPropertyGroup(
                 uri=f"{prefix}group-{level}",
@@ -328,7 +344,8 @@ def json_schema_shape(
         The node shape, with one property shape for each listed property and one for the values
         of each property in properties, at IRIs under the IRI of the node shape. A shape of the
         values has the title of the property or its name as words, its place in properties and
-        the group of its level, <shape>#group-<level>, or optional for a property of no level.
+        the group that the property names (an annotation "group"), else the group of its level,
+        <shape>#group-<level>, or optional for a property of no level.
         Each definition is a shape of its own, at <shape>#definitions/<name>
     """
     definitions = {**schema.get("definitions", {}), **schema.get("$defs", {})}

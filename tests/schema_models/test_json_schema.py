@@ -17,7 +17,7 @@ SCHEMA = {
     "recommended": ["author"],
     "properties": {
         "name": {"type": "string"},
-        "url": {"title": "Web page", "type": "string", "format": "uri"},
+        "url": {"title": "Web page", "group": "Links", "type": "string", "format": "uri"},
         "published": {"anyOf": [{"type": "string", "format": "date"}]},
         "author": {"anyOf": [{"$ref": "#/definitions/person"}, {"type": "array", "items": {"$ref": "#/definitions/person"}}]},
         "status": {"enum": ["draft", "published"]},
@@ -60,7 +60,8 @@ def test_json_schema_shape():
                       levels={"required": "Violation", "recommended": "Warning"}).to_rdf(shapes)
     fields = [URIRef(EX + "Shape#" + name) for name in ("name", "url", "author")]
     assert [(str(shapes.value(f, SH.name)), int(shapes.value(f, SH.order)), str(shapes.value(shapes.value(f, SH.group), RDFS.label)))
-            for f in fields] == [("Name", 1, "Required"), ("Web page", 2, "Optional"), ("Author", 4, "Recommended")]
+            for f in fields] == [("Name", 1, "Required"), ("Web page", 2, "Links"), ("Author", 4, "Recommended")]
+    assert int(shapes.value(URIRef(EX + "Shape#group-links"), SH.order)) == 1
     with pytest.raises(NotImplementedError):
         json_schema_shape({"type": "object", "properties": {"n": {"type": "string", "maxLength": 3}}},
                           shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX})
