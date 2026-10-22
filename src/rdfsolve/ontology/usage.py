@@ -40,7 +40,12 @@ def observed_terms_from_patterns(patterns: Iterable[Any]) -> ObservedOntologyTer
     classes: set[str] = set()
     properties: set[str] = set()
     for pattern in patterns:
-        subject = _field(pattern, "subject_class")
+        # Subjects without a type are no use of the class rdfs:Resource.
+        subject = (
+            None
+            if _field(pattern, "subject_binding") == "untyped"
+            else _field(pattern, "subject_class")
+        )
         obj = _field(pattern, "object_class")
         prop = _field(pattern, "property_uri")
         if isinstance(subject, str) and subject.startswith(("http://", "https://")):
@@ -194,7 +199,8 @@ def _observed_role_map(patterns: Iterable[Any]) -> dict[str, set[str]]:
             roles.setdefault(term, set()).add(role)
 
     for pattern in patterns:
-        add(_field(pattern, "subject_class"), "class")
+        if _field(pattern, "subject_binding") != "untyped":
+            add(_field(pattern, "subject_class"), "class")
         add(_field(pattern, "object_class"), "class")
         add(_field(pattern, "property_uri"), "predicate")
     return roles

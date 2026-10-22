@@ -9,7 +9,14 @@ from typing import TYPE_CHECKING, Any
 from rdflib import Literal
 
 from rdfsolve.client.exploration import SEARCH_PREDICATES, _path
-from rdfsolve.client.hydration import HydrationLimitError, _iri, _term, class_iri, field_metadata
+from rdfsolve.client.hydration import (
+    HydrationLimitError,
+    _iri,
+    _term,
+    class_iri,
+    field_metadata,
+    is_untyped,
+)
 from rdfsolve.schema_models.enrichment import DEFINITION_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.schema_models.exporters.paths import path_to_sparql
 from rdfsolve.schema_models.paths import PropertyPath
@@ -34,13 +41,37 @@ def search_records(
         raise ValueError("Use 1..12 nonempty search phrases of at most 200 characters")
     if len(fields) > 12:
         raise ValueError("Use at most twelve search fields")
-    models = [client.model(kind)] if kind else list(client.models.values())
+    from rdfsolve.mining.query_builders import UntypedSubjects
+    from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+
+    # The view of subjects without a type is searched too (a source may have no class).
+    untyped_model = getattr(client, "untyped_model", None)
+    models = (
+        [client.model(kind)]
+        if kind
+        else [*client.models.values(), *([untyped_model] if untyped_model is not None else [])]
+    )
     selected: dict[tuple[str, str], tuple[str | None, PropertyPath]] = {}
     direct: list[str] = []
     branches: list[str] = []
+    untyped_type = Literal(UNTYPED_SUBJECTS_LABEL).n3()
     for model in models:
-        cls = class_iri(model)
+        untyped = is_untyped(model)
+        cls = UNTYPED_SUBJECTS_LABEL if untyped else class_iri(model)
         names = {client.field_name(model, name) for name in fields}
+        if untyped and names_only and not fields:
+            # Bound through the name predicates, kept only without a type; ?type names the group.
+            for predicate in sorted(SEARCH_PREDICATES):
+                selected[(cls, predicate)] = (
+                    None,
+                    PropertyPath(operator="predicate", iri=predicate),
+                )
+                branches.append(
+                    f"{{ ?s {_iri(predicate)} ?text . "
+                    + client._type_pattern("?s", UntypedSubjects())
+                    + f" BIND({untyped_type} AS ?type) BIND({_iri(predicate)} AS ?p) }}"
+                )
+            continue
         if names_only and not fields:
             for predicate in sorted(SEARCH_PREDICATES):
                 selected[(cls, predicate)] = (
@@ -74,7 +105,13 @@ def search_records(
                 continue
             key = path.iri or name
             selected[(cls, key)] = (name, path)
-            if path.operator == "predicate" and path.iri:
+            if untyped:
+                branches.append(
+                    f"{{ ?s {path_to_sparql(path)} ?text . "
+                    + client._type_pattern("?s", UntypedSubjects())
+                    + f" BIND({untyped_type} AS ?type) BIND({Literal(key).n3()} AS ?p) }}"
+                )
+            elif path.operator == "predicate" and path.iri:
                 direct.append(f"({_iri(cls)} {_iri(path.iri)})")
             else:
                 branches.append(

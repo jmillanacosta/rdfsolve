@@ -7,9 +7,9 @@ the relation graphs X R Y means X SubClassOf (R some Y); rdfs:subClassOf is a na
 superclass.
 
 Biolink categories follow OBO class semantics: a category of a term says what an instance of
-the term is. Every NCBITaxon class is an AnatomicalEntity (an organism is a material anatomical
-entity in COB), and none is an OrganismTaxon; read a category as the kind of an ontology term,
-not as the kind of node an identifier names.
+the term is, which can differ from the kind of node an identifier names (a taxon class is
+categorized by what its instances, organisms, are). Read a category as the kind of an
+ontology term.
 """
 
 from __future__ import annotations
@@ -92,7 +92,7 @@ class UberGraph:
         """Return the terms that UberGraph holds as classes; it holds OBO PURL IRIs only.
 
         An answer about a term it does not hold is empty, which must not be read as a term
-        without ancestors (EFO, EDAM, SIO terms are asked of OLS instead).
+        without ancestors (terms outside UberGraph are asked of OLS instead).
         """
         held: set[str] = set()
         ordered = sorted(set(terms))
@@ -166,7 +166,7 @@ class UberGraph:
     ) -> dict[str, set[str]]:
         """Return the Biolink categories of each term.
 
-        UberGraph gives every category up to the root (GO_0006915 has nine); with
+        UberGraph gives every category up to the root; with
         *most_specific* only the categories that no other category of the term is under are
         kept, by the is_a and mixins links of the Biolink model in the same graph.
         """

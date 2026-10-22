@@ -1,8 +1,8 @@
 """Find the resources that the values of an answer show.
 
 A column of an answer can show a resource as its IRI, as a name (a label, a title or a
-synonym), as an identifier, as a web page, or as the value of a key field of its class (for
-example a CAS number or an HGNC identifier). These are views of one resource. A value is
+synonym), as an identifier, as a web page, or as the value of a key field of its class (an
+identifier written as a literal). These are views of one resource. A value is
 resolved to each resource that it is a view of, with the field of the view. Numbers, long
 texts and the values of other fields are kept as values.
 

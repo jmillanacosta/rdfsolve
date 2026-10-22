@@ -3,9 +3,14 @@
 The scope is a list of seed subjects, a sample of the members of chosen classes, and the
 resources that chosen predicates reach from them in one hop. Every statement of the scope is
 read. Resources are classified by rdf:type, by a membership property when the data uses one
-(P31, "instance of", on Wikidata), and by the class that an IRI prefix implies, for stores
+(as a Wikibase "instance of" property), and by the class that an IRI prefix implies, for stores
 that leave out these type statements. The schema is small and enough for a client that reads
 these resources; a new run shows when their statements change.
+
+The queries are plain patterns: which terms are IRIs, and which statements are type statements,
+is decided on the rows they return, not by a FILTER, so that every engine gives the same rows
+(an engine can drop every row of a FILTER on terms after VALUES). A seed that gives no statement
+keeps the run partial and is named.
 """
 
 from __future__ import annotations
@@ -49,8 +54,8 @@ class ScopeStrategy(MiningStrategy):
         """Mine *subjects*, up to *window* members of each class, and what *follow* reaches.
 
         *membership* classifies resources in addition to rdf:type. *prefix_classes* gives
-        the class of the IRIs that start with a prefix (the Wikidata Query Service leaves
-        out wikibase:Item and wikibase:Statement). Types that start with a prefix in
+        the class of the IRIs that start with a prefix (for a store that leaves out the type
+        statements of its items). Types that start with a prefix in
         *ignore_classes* are left out (Wikibase types an item that has no value for a
         property as wdno:P...). Labels are read in *language*.
         """
@@ -80,10 +85,11 @@ class ScopeStrategy(MiningStrategy):
         seeds, sampled = list(self.subjects), []
         for cls in self.classes:
             query = (
-                f"SELECT DISTINCT ?s {self._dataset(context)} WHERE {{ ?s {classify} <{cls}> "
-                f"FILTER(isIRI(?s)) }} LIMIT {self.window}"
+                f"SELECT DISTINCT ?s {self._dataset(context)} WHERE {{ ?s {classify} <{cls}> }} "
+                f"LIMIT {self.window}"
             )
-            members = [r["s"]["value"] for r in self._select(context, query, "scope/members")]
+            rows = self._select(context, query, "scope/members")
+            members = [r["s"]["value"] for r in rows if _is_iri(r["s"])]
             state = "sampled" if len(members) >= self.window else "complete"
             scope["classes"][cls] = {"members": len(members), "state": state}
             if state == "sampled":
@@ -95,9 +101,10 @@ class ScopeStrategy(MiningStrategy):
         for batch in _batches(seeds) if self.follow else []:
             query = (
                 f"SELECT DISTINCT ?o {self._dataset(context)} WHERE {{ VALUES ?s {{ {batch} }} "
-                f"VALUES ?p {{ {predicates} }} ?s ?p ?o FILTER(isIRI(?o)) }}"
+                f"VALUES ?p {{ {predicates} }} ?s ?p ?o }}"
             )
-            reached += [r["o"]["value"] for r in self._select(context, query, "scope/follow")]
+            rows = self._select(context, query, "scope/follow")
+            reached += [r["o"]["value"] for r in rows if _is_iri(r["o"])]
         followed = [iri for iri in dict.fromkeys(reached) if iri not in set(seeds)]
         scope["followed"] = len(followed)
         subjects = seeds + followed
@@ -106,16 +113,20 @@ class ScopeStrategy(MiningStrategy):
         for batch in _batches(subjects):
             query = (
                 f"SELECT ?s ?c {self._dataset(context)} WHERE {{ VALUES ?s {{ {batch} }} "
-                f"VALUES ?link {{ {values} }} ?s ?link ?c FILTER(isIRI(?c)) }}"
+                f"VALUES ?link {{ {values} }} ?s ?link ?c }}"
             )
             for row in self._select(context, query, "scope/classes"):
-                if not row["c"]["value"].startswith(self.ignore_classes):
+                if _is_iri(row["c"]) and not row["c"]["value"].startswith(self.ignore_classes):
                     classes[row["s"]["value"]].add(row["c"]["value"])
         patterns: dict[Key, SchemaPattern] = {}
         unclassified: set[str] = set()
+        stated: set[str] = set()
         for batch in _batches(subjects):
             for row in self._select(context, self._query(context, batch), "scope/statements"):
                 subject = row["s"]["value"]
+                stated.add(subject)
+                if row["p"]["value"] == RDF_TYPE:
+                    continue  # read by the classes query
                 if classes[subject]:
                     self._add(patterns, sorted(classes[subject]), row)
                 else:
@@ -132,6 +143,16 @@ class ScopeStrategy(MiningStrategy):
             )
             for iri, label in sorted(found.items())
         ]
+        silent = [seed for seed in self.subjects if seed not in stated]
+        if silent:
+            failure = QueryFailure(
+                "empty",
+                f"{len(silent)} seed resources gave no statement: the endpoint answered without "
+                "rows for them.",
+                "scope/statements",
+                silent,
+            )
+            context.report.record_outcome(QueryOutcome(state="partial", failures=[failure]))
         if sampled:
             failure = QueryFailure(
                 "sampled",
@@ -194,7 +215,7 @@ class ScopeStrategy(MiningStrategy):
             extra += f"BIND(IF(isIRI(?o), {chain}, ?none) AS ?on) "
         return (
             f"SELECT ?s ?p ?ot ?om ?on ?kind ?dt (SAMPLE(?o) AS ?value) {self._dataset(context)} "
-            f"WHERE {{ VALUES ?s {{ {batch} }} ?s ?p ?o FILTER(?p != <{RDF_TYPE}>) "
+            f"WHERE {{ VALUES ?s {{ {batch} }} ?s ?p ?o "
             f"OPTIONAL {{ ?o <{RDF_TYPE}> ?ot }} {extra}"
             'BIND(IF(isLiteral(?o), "literal", IF(isBlank(?o), "bnode", "uri")) AS ?kind) '
             "BIND(DATATYPE(?o) AS ?dt) } GROUP BY ?s ?p ?ot ?om ?on ?kind ?dt"
@@ -235,10 +256,15 @@ class ScopeStrategy(MiningStrategy):
         return outcome.rows
 
 
+def _is_iri(binding: Mapping[str, Any]) -> bool:
+    """Return whether a SPARQL JSON binding is an IRI."""
+    return binding.get("type") == "uri"
+
+
 def _batches(iris: list[str], size: int = BATCH) -> Iterator[str]:
     """Yield the IRIs as SPARQL terms, in groups that fit in one VALUES block."""
     for start in range(0, len(iris), size):
-        yield " ".join(URIRef(iri).n3() for iri in iris[start : start + size])
+        yield " ".join(f"<{iri}>" for iri in iris[start : start + size])
 
 
 def _term(binding: dict[str, Any]) -> dict[str, Any]:

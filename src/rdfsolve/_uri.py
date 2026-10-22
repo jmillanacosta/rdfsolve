@@ -80,7 +80,11 @@ def uri_to_curie(uri: str) -> tuple[str, str, str]:
 
 
 def prefix_map(iris: Iterable[str], retained: dict[str, str]) -> dict[str, str]:
-    """Keep retained names and assign distinct names to additional namespaces."""
+    """Return a name for each namespace of *iris*, after the names in *retained*.
+
+    A retained name is kept. A new namespace is named by Bioregistry, else by a word of the
+    namespace (glossary for https://example.org/glossary#), so that it is not written as ns1.
+    """
     result = dict(retained)
     for iri in sorted(set(iris)):
         if any(iri.startswith(namespace) for namespace in result.values()):

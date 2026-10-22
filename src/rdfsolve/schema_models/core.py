@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json as _json
-from collections.abc import Sequence
+from collections.abc import Collection, Iterator, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, SERVICE_NAMESPACE_PREFIXES
 from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.class_extensions import ClassExtensions
+from rdfsolve.schema_models.class_parts import ClassParts
 from rdfsolve.schema_models.collections import CollectionProfile
 from rdfsolve.schema_models.enrichment import SchemaEnrichment
 from rdfsolve.schema_models.exporters.text import trim_descriptions as trim_export_text
@@ -21,6 +22,7 @@ from rdfsolve.schema_models.pattern import SchemaPattern
 from rdfsolve.schema_models.restrictions import RestrictionPatterns
 from rdfsolve.schema_models.shacl_model import ShaclShapesGraph
 from rdfsolve.schema_models.structural import StructuralPattern
+from rdfsolve.schema_models.value_measures import ValueCount, ValueParts
 
 if TYPE_CHECKING:
     from rdflib import Graph
@@ -31,6 +33,19 @@ if TYPE_CHECKING:
     from rdfsolve.schema_models.metadata import MetadataDocument
     from rdfsolve.schema_models.selection import SchemaSelection
     from rdfsolve.sparql_helper import SparqlHelper
+
+
+# The sections of a schema that hold per-row detail: the structural census, the patterns before
+# grouping and of exact terms, and the tested navigation paths. Tasks that use only the class
+# patterns, the enrichment and the prefixes read a schema without them (from_json, leave_out).
+DETAIL_SECTIONS = ("structural_patterns", "raw_patterns", "term_patterns", "navigation")
+
+
+class DetailFile(BaseModel):
+    """A file beside the schema JSON that holds the rows of one of its sections."""
+
+    file: str = Field(description="File name, in the folder of the schema JSON")
+    rows: int = Field(ge=0, description="Rows of the section in the file")
 
 
 class MinedSchema(BaseModel):
@@ -80,6 +95,21 @@ class MinedSchema(BaseModel):
         description="Classes with the same members and the nearest classes that hold all members "
         "of another, measured in the data; None means not measured",
     )
+    class_parts: ClassParts | None = Field(
+        None,
+        description="The parts of each class by how its members are identified (registered "
+        "identifiers, other namespaces, blank nodes), counted in the data; None means not counted",
+    )
+    value_counts: list[ValueCount] | None = Field(
+        None,
+        description="Per (class, property): the members that have it and the most distinct "
+        "values of one member, measured in the data; None means not measured",
+    )
+    value_parts: list[ValueParts] | None = Field(
+        None,
+        description="Per (class, property): the parts of its IRI values without a type, "
+        "counted over every distinct value; pairs not measured are left out",
+    )
     shapes: ShaclShapesGraph | None = Field(
         None, description="Supported source SHACL profile, separate from observed triple patterns"
     )
@@ -98,6 +128,17 @@ class MinedSchema(BaseModel):
         "None means not mined",
     )
     prefixes: dict[str, str] = Field(default_factory=dict)
+    shape_profile: str | None = Field(
+        None,
+        description="Turtle of the SHACL application profile the schema was made with "
+        "(from_vocabulary profile=): its shapes are merged into the generated shapes by class "
+        "and path, with every constraint and annotation it states",
+    )
+    details: dict[str, DetailFile] | None = Field(
+        None,
+        description="Sections whose rows are written beside the JSON (rdfsolve.schema_models."
+        "layout): raw_patterns, term_patterns, navigation.paths. None when all are in the JSON",
+    )
 
     @field_validator("patterns", "raw_patterns")
     @classmethod
@@ -214,12 +255,24 @@ class MinedSchema(BaseModel):
         *,
         paths: Sequence[NavigationPath] = (),
         fields: Sequence[tuple[str, str]] = (),
+        classes: Sequence[str] = (),
     ) -> SchemaSelection:
-        """Select class-property fields and retained paths with a copy of source evidence."""
+        """Select class-property fields and retained paths with a copy of source evidence.
+
+        *classes* selects every field of those classes (each property of their patterns), in
+        addition to *fields*.
+        """
         from rdfsolve.schema_models.selection import SchemaSelection
 
+        wanted = set(classes)
+        unknown = sorted(wanted - {p.subject_class for p in self.patterns})
+        if unknown:
+            raise ValueError(f"Classes without patterns in the schema: {unknown}")
+        chosen = list(fields) + [
+            (p.subject_class, p.property_uri) for p in self.patterns if p.subject_class in wanted
+        ]
         return SchemaSelection(
-            source=self.model_copy(deep=True), fields=list(fields), paths=list(paths)
+            source=self.model_copy(deep=True), fields=list(dict.fromkeys(chosen)), paths=list(paths)
         )
 
     # Service-namespace filtering
@@ -447,11 +500,11 @@ class MinedSchema(BaseModel):
         """Return sorted unique subject/object class URIs."""
         classes: set[str] = set()
         if self.shapes is not None:
-            classes.update(
-                shape.target_class for shape in self.shapes.node_shapes if shape.target_class
-            )
+            for shape in self.shapes.node_shapes:
+                classes.update(shape.target_classes)
         for p in self.patterns:
-            classes.add(p.subject_class)
+            if not p.untyped_subject:
+                classes.add(p.subject_class)
             if p.object_class not in _SENTINEL_OBJECTS:
                 classes.add(p.object_class)
         for profile in self.collections or []:
@@ -488,9 +541,33 @@ class MinedSchema(BaseModel):
         }
 
     @classmethod
-    def from_json(cls, path: str | Path) -> MinedSchema:
-        """Read a saved schema through format detection and validation."""
-        return cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
+    def from_json(
+        cls, path: str | Path, *, leave_out: Collection[str] = (), details: bool = True
+    ) -> MinedSchema:
+        """Read a saved schema through format detection and validation.
+
+        *leave_out* names sections of a canonical schema (fields of this model) that are not
+        read: the file is streamed and those sections are skipped, so a schema whose large
+        sections a task does not need is read in little memory. The fields left out keep their
+        defaults; such a schema is for reading, not for writing back.
+
+        The rows of sections written beside the JSON (layout.write_schema) are read back from
+        their files, except those left out; with *details* False they are not read, and the
+        schema is the summary its JSON holds.
+        """
+        from rdfsolve.schema_models.layout import load_details
+
+        if not leave_out:
+            schema = cls.from_dict(_json.loads(Path(path).read_text(encoding="utf-8")))
+        else:
+            with Path(path).open("rb") as stream:
+                sections = _schema_sections(stream, frozenset(leave_out))
+            if not sections:
+                return cls.from_json(path, details=details)
+            schema = cls.from_dict(
+                {"format": "rdfsolve.mined-schema", "version": 1, "schema": sections}
+            )
+        return load_details(schema, path, leave_out) if details else schema
 
     @classmethod
     def from_jsonld(cls, path: str | Path) -> MinedSchema:
@@ -566,7 +643,13 @@ class MinedSchema(BaseModel):
 
     @classmethod
     def from_vocabulary(
-        cls, vocabulary: str | Any, classes: Any, *, profile: str | Path | None = None
+        cls,
+        vocabulary: str | Any,
+        classes: Any,
+        *,
+        profile: str | Path | None = None,
+        top_classes: Any = None,
+        timestamps: bool = False,
     ) -> MinedSchema:
         """Read declared rows for classes of published vocabularies.
 
@@ -578,11 +661,27 @@ class MinedSchema(BaseModel):
         profile is a SHACL application profile (Turtle text or a file) that the user owns.
         Its shapes add rows for properties that the vocabularies do not declare for a class,
         without axioms about the vocabularies' terms. The added rows have evidence_source
-        "shacl".
-        """
-        from rdfsolve.schema_models.readers.vocabulary import vocabulary_to_minedschema
+        "shacl". Its rules and form annotations are kept and merged into to_shacl.
 
-        return vocabulary_to_minedschema(vocabulary, classes, profile=profile)
+        top_classes are the classes every resource is one of: a range of one of them allows any
+        IRI or blank node, with no class check (owl:Thing, rdfs:Resource and schema:Thing by
+        default; give a vocabulary's own top class here).
+
+        The same inputs give the same schema: about.schema_id is a hash of its content, and the
+        times of the run are written only with *timestamps*.
+        """
+        from rdfsolve.schema_models.readers.vocabulary import (
+            UNIVERSAL,
+            vocabulary_to_minedschema,
+        )
+
+        return vocabulary_to_minedschema(
+            vocabulary,
+            classes,
+            profile=profile,
+            top_classes=UNIVERSAL if top_classes is None else top_classes,
+            timestamps=timestamps,
+        )
 
     # NetworkX export
 
@@ -627,8 +726,13 @@ class MinedSchema(BaseModel):
             logging.getLogger(__name__).warning(
                 "VoID does not encode SHACL profiles, collections or composed navigation. Keep canonical JSON."
             )
-        return to_void_graph(
-            trim_export_text(self, trim_descriptions), trim_descriptions=trim_descriptions
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
+
+        return rdf_terms_only(
+            to_void_graph(
+                rdf_writable(trim_export_text(self, trim_descriptions)),
+                trim_descriptions=trim_descriptions,
+            )
         )
 
     def to_linkml(
@@ -644,9 +748,10 @@ class MinedSchema(BaseModel):
         """
         from rdfsolve.schema_models.exporters.linkml import to_linkml
         from rdfsolve.schema_models.exporters.text import clip_description
+        from rdfsolve.schema_models.iri_quality import rdf_writable
 
         return to_linkml(
-            trim_export_text(self, trim_descriptions),
+            rdf_writable(trim_export_text(self, trim_descriptions)),
             schema_name=schema_name or self.about.dataset_name,
             schema_description=clip_description(schema_description, trim_descriptions),
         )
@@ -664,12 +769,12 @@ class MinedSchema(BaseModel):
         """
         from typing import cast
 
-        from linkml.generators.yamlgen import YAMLGenerator
+        from linkml_runtime.dumpers import yaml_dumper
 
         linkml_schema = self.to_linkml(
             schema_name, schema_description, trim_descriptions=trim_descriptions
         )
-        return cast(str, YAMLGenerator(linkml_schema).serialize())
+        return cast(str, yaml_dumper.dumps(linkml_schema))
 
     def to_rdfconfig(
         self,
@@ -738,12 +843,19 @@ class MinedSchema(BaseModel):
         self,
         base_uri: str | None = None,
         *,
-        activate_observed: bool = False,
+        activate_observed: bool = True,
         trim_descriptions: int | None = None,
         void: bool = True,
         paths: Literal["with", "without", "only"] = "with",
+        properties: Collection[str] | Literal["profile"] | None = None,
     ) -> str:
         """Convert to SHACL shapes.
+
+        *properties* limits the property shapes to these property IRIs, or with "profile" to
+        the paths that the schema's shape profile (shape_profile) gives each class: the paths of
+        the node shapes that target the class, and of the node shapes they build on with sh:node;
+        a class without a node shape of its own takes those of its superclasses. By default every
+        property of the schema has its shapes.
 
         *paths* selects the shapes of the paths over several steps: with the class shapes (the
         default), without them, or only them (the pipeline writes them to a file of their own).
@@ -752,7 +864,8 @@ class MinedSchema(BaseModel):
 
         Args:
             base_uri: Base IRI for shape IRIs; defaults to the dataset IRI
-            activate_observed: Enforce generated one-hop templates; source profiles stay unchanged.
+            activate_observed: Write the observed shapes active (the default), so that they
+                validate data; False writes them deactivated. Source profiles stay unchanged.
             void: Add the VoID description, so that from_shacl reads the patterns back. Leave it
                 out when the VoID is published on its own.
 
@@ -763,8 +876,33 @@ class MinedSchema(BaseModel):
             @prefix sh: <http://www.w3.org/ns/shacl#> .
         """
         from rdfsolve.schema_models.exporters.shacl import minedschema_to_shacl
+        from rdfsolve.schema_models.iri_quality import rdf_terms_only, rdf_writable
 
-        schema = trim_export_text(self, trim_descriptions)
+        schema = rdf_writable(trim_export_text(self, trim_descriptions))
+        if properties == "profile":
+            given = self._profile_paths()
+            shaped = {cls for cls, _ in given}
+            schema = schema.model_copy(
+                update={
+                    "patterns": [
+                        p
+                        for p in schema.patterns
+                        if any(
+                            (c, p.property_uri) in given
+                            for c in (
+                                {p.subject_class}
+                                if p.subject_class in shaped
+                                else self._lineage(p.subject_class)
+                            )
+                        )
+                    ]
+                }
+            )
+        elif properties is not None:
+            kept = set(properties)
+            schema = schema.model_copy(
+                update={"patterns": [p for p in schema.patterns if p.property_uri in kept]}
+            )
         if paths == "without":
             schema = schema.model_copy(update={"navigation": None})
         elif paths == "only":
@@ -774,14 +912,53 @@ class MinedSchema(BaseModel):
             schema, base_uri=base_uri, activate_observed=activate_observed
         )
         graph = trim_export_text(shapes, trim_descriptions).to_rdf()
+        if self.shape_profile and paths != "only":
+            from rdfsolve.schema_models.exporters.shacl import merge_profile
+
+            merge_profile(graph, self.shape_profile)
         # VoID statistics remain dataset metadata, not validation constraints.
         from rdfsolve.schema_models.exporters.void import to_void_graph
 
         if void:
             graph += to_void_graph(schema, trim_descriptions=trim_descriptions)
         schema.annotate_rdf(graph)
-        result: str = graph.serialize(format="turtle")
+        result: str = rdf_terms_only(graph).serialize(format="turtle")
         return result
+
+    def _profile_paths(self) -> set[tuple[str, str]]:
+        """Return the (class, property) pairs of the shape profile: the paths of each node shape,
+        and of the node shapes it builds on with sh:node, for each class that it targets.
+        """
+        from rdflib import Graph, URIRef
+        from rdflib.namespace import SH
+
+        if not self.shape_profile:
+            raise ValueError("properties='profile' requires a schema with a shape_profile")
+        profile = Graph().parse(data=self.shape_profile, format="turtle")
+        pairs: set[tuple[str, str]] = set()
+        for shape, cls in profile.subject_objects(SH.targetClass):
+            todo, seen = [shape], set()
+            while todo:
+                current = todo.pop()
+                if current in seen:
+                    continue
+                seen.add(current)
+                for field in profile.objects(current, SH.property):
+                    path = profile.value(field, SH.path)
+                    if isinstance(path, URIRef):
+                        pairs.add((str(cls), str(path)))
+                todo.extend(profile.objects(current, SH.node))
+        return pairs
+
+    def _lineage(self, cls: str) -> set[str]:
+        """Return a class and its superclasses in the schema's class hierarchy."""
+        found, todo = set(), [cls]
+        while todo:
+            current = todo.pop()
+            if current not in found:
+                found.add(current)
+                todo.extend(self.class_hierarchy.get(current, []))
+        return found
 
 
 # MiningResult
@@ -799,16 +976,125 @@ class MiningResult(BaseModel):
     metadata: Any | None = None
     """Infrastructure descriptions (DCAT/VoID)."""
 
-    def export(self, output_dir: Path) -> None:
-        """Export three separate files."""
+    def export(self, output_dir: Path) -> dict[str, Any]:
+        """Export three separate files and return what they leave out.
+
+        A triple of the ontology or metadata graph whose term is not an RDF IRI cannot be
+        written: it is left out, and the terms are returned per file ({"ontology": ...,
+        "metadata": ...}, the form of a report's iri_findings graphs) and written to
+        iri_findings.json beside the files. The schema's VoID already leaves such rows out.
+        """
+        import logging
+
+        from rdfsolve.schema_models.iri_quality import writable_graph
+
         output_dir.mkdir(parents=True, exist_ok=True)
 
         (output_dir / "schema.ttl").write_text(
             self.data_schema.to_void_graph().serialize(format="turtle")
         )
 
-        if self.ontology is not None:
-            (output_dir / "ontology.ttl").write_text(self.ontology.to_turtle())
+        left_out: dict[str, Any] = {}
+        for name, part in (("ontology", self.ontology), ("metadata", self.metadata)):
+            if part is None:
+                continue
+            graph, found = writable_graph(part.to_rdf_graph())
+            (output_dir / f"{name}.ttl").write_text(graph.serialize(format="turtle"))
+            if found:
+                logging.getLogger(__name__).warning(
+                    "%s: %d triples with %d terms that are not RDF IRIs left out "
+                    "(iri_findings.json)",
+                    name,
+                    found["triples_left_out"],
+                    len(found["terms"]),
+                )
+                left_out[name] = found
+        if left_out:
+            (output_dir / "iri_findings.json").write_text(_json.dumps(left_out, indent=2))
+        return left_out
 
-        if self.metadata is not None:
-            (output_dir / "metadata.ttl").write_text(self.metadata.to_turtle())
+
+def _schema_sections(stream: Any, leave_out: frozenset[str]) -> dict[str, Any]:
+    """Return the sections of a canonical schema file (the members of its "schema" object),
+    without those in *leave_out*: their parse events are passed over, never built.
+    """
+    import ijson
+    from ijson.common import ObjectBuilder
+
+    sections: dict[str, Any] = {}
+    events = ijson.parse(stream, use_float=True)
+    for prefix, event, value in events:
+        if prefix != "schema" or event != "map_key":
+            continue
+        builder = None if value in leave_out else ObjectBuilder()
+        depth = 0
+        for _, inner, item in events:
+            if builder is not None:
+                builder.event(inner, item)
+            if inner in ("start_map", "start_array"):
+                depth += 1
+            elif inner in ("end_map", "end_array"):
+                depth -= 1
+            if depth == 0:
+                break
+        if builder is not None:
+            sections[value] = builder.value
+    return sections
+
+
+def iter_section_rows(
+    path: str | Path, names: Collection[str]
+) -> Iterator[tuple[str, dict[str, Any] | None]]:
+    """Yield the rows of the named list sections of a canonical schema file, one at a time.
+
+    For each named section that is a list, (name, None) comes first, so that an empty section
+    is told from one that is absent or null; then (name, row) for each of its rows. Nothing else
+    of the file is built, so a section larger than memory can be read. The rows of a section
+    written beside the JSON (layout.write_schema) are read from its file, as they were written.
+    """
+    import ijson
+    from ijson.common import ObjectBuilder
+
+    from rdfsolve.schema_models.layout import iter_detail_rows
+
+    wanted = frozenset(names)
+    details: dict[str, Any] = {}
+    with Path(path).open("rb") as stream:
+        events = ijson.parse(stream, use_float=True)
+        for prefix, event, value in events:
+            if prefix != "schema" or event != "map_key":
+                continue
+            name = value
+            _, first, item = next(events)
+            if name == "details" and first == "start_map":
+                builder = ObjectBuilder()
+                builder.event(first, item)
+                depth = 1
+                while depth:
+                    _, nested, value_item = next(events)
+                    builder.event(nested, value_item)
+                    depth += nested in ("start_map", "start_array")
+                    depth -= nested in ("end_map", "end_array")
+                details = builder.value
+                continue
+            if name not in wanted or first != "start_array":
+                depth = 1 if first in ("start_map", "start_array") else 0
+                while depth:
+                    _, inner, _ = next(events)
+                    depth += inner in ("start_map", "start_array")
+                    depth -= inner in ("end_map", "end_array")
+                continue
+            yield name, None
+            for _, inner, item in events:
+                if inner == "end_array":
+                    break
+                builder = ObjectBuilder()
+                builder.event(inner, item)
+                depth = 1 if inner in ("start_map", "start_array") else 0
+                while depth:
+                    _, nested, value_item = next(events)
+                    builder.event(nested, value_item)
+                    depth += nested in ("start_map", "start_array")
+                    depth -= nested in ("end_map", "end_array")
+                yield name, builder.value
+    yield from iter_detail_rows(path, details, [n for n in names if n in details])

@@ -1,4 +1,4 @@
-"""Mine Wikibase endpoints (Wikidata and other instances) from declarations and windows."""
+"""Mine Wikibase endpoints from declarations and windows."""
 
 from __future__ import annotations
 
@@ -228,8 +228,7 @@ class WikibaseScopeStrategy(ScopeStrategy):
         """Mine a scope (see ScopeStrategy).
 
         *declarations* is the endpoint that declares the properties, when the mined endpoint
-        does not: the scholarly graph of the Wikidata Query Service has no declarations, and
-        the main graph has them.
+        does not (a split query service whose declarations are in another graph).
         """
         super().__init__(*args, **options)
         self.declarations = declarations

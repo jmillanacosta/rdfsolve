@@ -6,7 +6,7 @@ import re
 from collections import Counter, defaultdict
 from itertools import combinations
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from urllib.parse import urlsplit
 
 import yaml
@@ -43,6 +43,26 @@ _DOWNLOAD_ALIASES = {
     "download_rdfxml": "download_rdf",
     "download_tar_gz": "download_tgz",
 }
+
+
+def _borrowed_folders(row: dict[str, Any], names: set[str]) -> list[str]:
+    """Return the other sources whose names are folders of this entry's download URLs.
+
+    An entry of a provider's copy (provider.dataset) may download from a folder named after
+    the dataset; any other folder named after another source may hold that source's files.
+    """
+    own = str(row.get("name", "")).split(".")
+    urls = [
+        url
+        for key, value in row.items()
+        if str(key).startswith("download_")
+        for url in (value if isinstance(value, list) else [value])
+        if isinstance(url, str) and url.startswith(("http://", "https://", "ftp://"))
+    ]
+    folders = {part.lower() for url in urls for part in urlsplit(url).path.split("/")[:-1]}
+    return sorted(
+        name for name in names & folders if name not in own and own[0] not in name.split(".")
+    )
 
 
 def check_registry(
@@ -162,6 +182,17 @@ def check_registry(
             )
         if source.local_provider and source.mining_enabled:
             by_provider[source.local_provider].append(name)
+
+    for row in entries:
+        borrowed = _borrowed_folders(row, set(names))
+        if borrowed:
+            add(
+                "A7",
+                [str(row.get("name"))],
+                "Downloads from folders named after other sources ("
+                + ", ".join(borrowed)
+                + "); review that they are this source's files",
+            )
 
     enabled = {source.name for source in sources if source.mining_enabled}
     for endpoint, members in sorted(by_endpoint.items()):

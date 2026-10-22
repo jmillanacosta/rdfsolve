@@ -1,9 +1,7 @@
 """Measure the relations between the member sets of the classes of a schema (QLever).
 
-One grouped query for each class counts the members it shares with every class. Bgee: the 24
-classes other than genex:Expression and genex:AbsenceExpression share 155 pairs, counted in 5 s
-in one query; genex:Expression (709,482,280 members, one type each) takes 133 s. The classes are
-measured from the smallest; those left after the time budget are recorded as not checked.
+One grouped query for each class counts the members it shares with every class. The classes
+are measured from the smallest; those left after the time budget are recorded as not checked.
 """
 
 from __future__ import annotations

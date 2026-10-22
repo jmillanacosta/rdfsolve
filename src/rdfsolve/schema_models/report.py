@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from rdfsolve._outcomes import QueryFailure
+from rdfsolve._outcomes import QueryFailure, QuerySample
 
 
 class QueryStats(BaseModel):
@@ -198,6 +198,20 @@ class MiningReport(BaseModel):
     dropped_invalid_uri_samples: list[str] = Field(
         default_factory=list,
         description="First few examples of dropped invalid URIs.",
+    )
+
+    measurement_gaps: list[QueryFailure] = Field(
+        default_factory=list,
+        description="Measures the engine refused for rows that stand (the distinct subjects of an "
+        "object group whose edges and objects are counted), each with its reason.",
+    )
+
+    sampled_queries: list[QuerySample] = Field(
+        default_factory=list,
+        description="Queries the endpoint refused (time or cost limit, gateway cut, row cap) and "
+        "answered over a bounded sample, each with its size and the refusal. Not failures: the "
+        "rows of a sample stand, flagged sampled on each pattern, and their counts are lower "
+        "bounds (count_bound lower_bound).",
     )
 
     # Author provenance

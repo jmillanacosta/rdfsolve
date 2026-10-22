@@ -7,6 +7,17 @@ The most recent release can be installed from
 
     uv pip install rdfsolve
 
+This installs the core: opening and writing schemas, the client and conversion rules. The
+other parts are extras:
+
+- ``rdfsolve[mining]``: mining local indexes at scale (polars);
+- ``rdfsolve[exports]``: LinkML exports;
+- ``rdfsolve[mappings]``: SSSOM mapping sets;
+- ``rdfsolve[cli]``: the command line;
+- ``rdfsolve[web]``: the web service;
+- ``rdfsolve[validation]``: SHACL validation with pySHACL;
+- ``rdfsolve[all]``: all of these.
+
 The most recent code and data can be installed directly from GitHub with:
 
 .. code-block:: shell

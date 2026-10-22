@@ -1,8 +1,8 @@
 """Per-dataset schemas from one schema mined across several named graphs.
 
-Providers such as PubChem split one knowledge graph into many downloadable
-datasets whose entities point at each other: a substance links to a compound
-typed in the compound dataset. Mining each dataset graph alone loses those
+A provider can split one knowledge graph into many downloadable datasets whose
+entities point at each other: a record links to a record typed in another
+dataset. Mining each dataset graph alone loses those
 object types. The grouped pipeline therefore mines all graphs of a provider
 together, which resolves types over their RDF merge while the counts phase
 attributes every edge to the graph that holds it. This module cuts that group
@@ -17,10 +17,11 @@ from uuid import uuid4
 from rdfsolve._outcomes import QueryState
 from rdfsolve.config import mint
 from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS
+from rdfsolve.schema_models.about import AboutMetadata
 from rdfsolve.schema_models.core import MinedSchema
 from rdfsolve.schema_models.pattern import SchemaPattern
 
-__all__ = ["split_by_edge_graph", "unattributed_patterns"]
+__all__ = ["graph_part_about", "split_by_edge_graph", "unattributed_patterns"]
 
 
 def unattributed_patterns(schema: MinedSchema) -> list[SchemaPattern]:
@@ -54,13 +55,58 @@ def split_by_edge_graph(
     raw_patterns = (
         _select_graphs(schema.raw_patterns, graphs) if schema.raw_patterns is not None else None
     )
-    classes = {p.subject_class for p in patterns} | {
+    about = graph_part_about(
+        schema.about,
+        dataset_name,
+        graphs,
+        patterns,
+        declared_classes=declared_classes,
+        class_entity_counts=class_entity_counts,
+        class_entity_count_states=class_entity_count_states,
+    )
+    return schema.model_copy(
+        update={
+            "patterns": patterns,
+            "raw_patterns": raw_patterns,
+            "term_patterns": _select_graphs(schema.term_patterns, graphs)
+            if schema.term_patterns is not None
+            else None,
+            "about": about,
+            "structural_patterns": [p for p in schema.structural_patterns if p.graph_uri in graphs]
+            if schema.structural_patterns is not None
+            else None,
+            "collections": [p for p in schema.collections if p.graph_uri in graphs]
+            if schema.collections is not None
+            else None,
+            "navigation": None,
+            "source_metadata": None,
+            # Measured over the whole scope, not for one graph.
+            "class_extensions": None,
+        }
+    )
+
+
+def graph_part_about(
+    about: AboutMetadata,
+    dataset_name: str,
+    graphs: list[str],
+    patterns: list[SchemaPattern],
+    *,
+    declared_classes: frozenset[str] = frozenset(),
+    class_entity_counts: Mapping[str, int] | None = None,
+    class_entity_count_states: Mapping[str, QueryState] | None = None,
+) -> AboutMetadata:
+    """Return the metadata of a part of a schema: the selected graphs and their patterns.
+
+    The part gets its own snapshot identity and IRIs. Statistics measured over the whole scope
+    (triples, distinct terms, property partitions, the content hash of the input) are left out.
+    """
+    classes = {p.subject_class for p in patterns if not p.untyped_subject} | {
         p.object_class for p in patterns if p.object_class not in _SENTINEL_OBJECTS
     }
     properties = {p.property_uri for p in patterns}
-    about = schema.about
     retrieved = about.retrieved_at or about.started_at or about.generated_at
-    about = about.model_copy(
+    return about.model_copy(
         update={
             "schema_id": str(uuid4()),
             "dataset_name": dataset_name,
@@ -88,26 +134,6 @@ def split_by_edge_graph(
             "class_entity_count_states": dict(class_entity_count_states or {}),
         }
     )
-    return schema.model_copy(
-        update={
-            "patterns": patterns,
-            "raw_patterns": raw_patterns,
-            "term_patterns": _select_graphs(schema.term_patterns, graphs)
-            if schema.term_patterns is not None
-            else None,
-            "about": about,
-            "structural_patterns": [p for p in schema.structural_patterns if p.graph_uri in graphs]
-            if schema.structural_patterns is not None
-            else None,
-            "collections": [p for p in schema.collections if p.graph_uri in graphs]
-            if schema.collections is not None
-            else None,
-            "navigation": None,
-            "source_metadata": None,
-            # Measured over the whole scope, not for one graph.
-            "class_extensions": None,
-        }
-    )
 
 
 def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[SchemaPattern]:
@@ -119,6 +145,11 @@ def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[Schem
         if not count:
             continue
         only_here = len(graphs) == 1 and set(pattern.graphs or {}) == set(graphs)
+        # Distinct counts measured in the one selected graph (scan mining counts them per
+        # graph); otherwise those of the pattern, when its edges are all in that graph.
+        measured = len(graphs) == 1 and pattern.count_semantics != "upper_bound"
+        subjects = (pattern.graph_distinct_subjects or {}).get(graphs[0]) if measured else None
+        objects = (pattern.graph_distinct_objects or {}).get(graphs[0]) if measured else None
         patterns.append(
             pattern.model_copy(
                 update={
@@ -129,8 +160,28 @@ def _select_graphs(source: list[SchemaPattern], graphs: list[str]) -> list[Schem
                     if len(graphs) == 1
                     else "quad_occurrences",
                     "graphs": attributed,
-                    "distinct_subjects": pattern.distinct_subjects if only_here else None,
-                    "distinct_objects": pattern.distinct_objects if only_here else None,
+                    "distinct_subjects": subjects
+                    if subjects is not None
+                    else pattern.distinct_subjects
+                    if only_here
+                    else None,
+                    "distinct_objects": objects
+                    if objects is not None
+                    else pattern.distinct_objects
+                    if only_here
+                    else None,
+                    "graph_distinct_subjects": {
+                        g: n
+                        for g, n in (pattern.graph_distinct_subjects or {}).items()
+                        if g in graphs
+                    }
+                    or None,
+                    "graph_distinct_objects": {
+                        g: n
+                        for g, n in (pattern.graph_distinct_objects or {}).items()
+                        if g in graphs
+                    }
+                    or None,
                 }
             )
         )

@@ -1,0 +1,21 @@
+# title: A reaction's inputs derive into its outputs, with its catalysts
+# description: A molecular activity that has input C1, has output C2 and is catalyzed by P
+#   implies C1 derives_into C2, with P as its catalyst_qualifier (a chemical-to-chemical
+#   derivation association). A process of no more specific class implies only related_to, the
+#   root predicate, from each input to each output, so nothing is claimed that the source does
+#   not state. Each association is named by its process, input and output.
+# target: biolink 4.4.5
+PREFIX biolink: <https://w3id.org/biolink/vocab/>
+CONSTRUCT {
+  ?association a ?kind ; biolink:subject ?input ; biolink:predicate ?predicate ;
+    biolink:object ?output ; biolink:catalyst_qualifier ?catalyst .
+} WHERE {
+  ?process biolink:has_input ?input ; biolink:has_output ?output .
+  OPTIONAL { ?catalyst biolink:catalyzes ?process }
+  BIND(EXISTS { ?process a biolink:MolecularActivity } AS ?is_reaction)
+  FILTER(!?is_reaction || ?input != ?output)
+  BIND(IF(?is_reaction, biolink:ChemicalEntityToChemicalDerivationAssociation, biolink:Association) AS ?kind)
+  BIND(IF(?is_reaction, biolink:derives_into, biolink:related_to) AS ?predicate)
+  BIND(IRI(CONCAT("https://w3id.org/rdfsolve/association/",
+    MD5(CONCAT(STR(?process), " ", STR(?input), " ", STR(?output))))) AS ?association)
+}

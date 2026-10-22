@@ -4,18 +4,23 @@ from __future__ import annotations
 
 import itertools
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from itertools import combinations
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from rdfsolve.analysis.overlap import jaccard_similarity
 from rdfsolve.analysis.schema import extract_class_set, extract_predicate_set
+from rdfsolve.mappings.confidence import agent_type, edge_type, knowledge_level
+from rdfsolve.schema_models._constants import UNTYPED_SUBJECTS_LABEL
+from rdfsolve.schema_models.core import MinedSchema
+from rdfsolve.schema_models.navigation import NON_RELATION_PROPERTIES, NavigationPath
 
 if TYPE_CHECKING:
+    from rdfsolve.mappings.instances import DerivedClassMapping
     from rdfsolve.mappings.models.core import MappingEdge
     from rdfsolve.mappings.routes import RouteEvidence
     from rdfsolve.mappings.signatures import Link, LinkEvidence
-    from rdfsolve.schema_models.core import MinedSchema
 
 
 def compare_schemas(schemas: Mapping[str, MinedSchema]) -> list[dict[str, Any]]:
@@ -51,7 +56,10 @@ def build_connectivity(
     links: Sequence[LinkEvidence] = (),
     candidates: Sequence[Link] = (),
     routes: Sequence[RouteEvidence] = (),
+    derived: Sequence[DerivedClassMapping] = (),
     min_share: float = 0.5,
+    untyped_subjects: bool = False,
+    paths: Mapping[str, Sequence[NavigationPath]] | None = None,
 ) -> Any:
     """Build a directed multigraph with dataset-qualified class nodes.
 
@@ -59,7 +67,17 @@ def build_connectivity(
     verified links (rdfsolve.mappings.signatures.verify) and proposed links (*candidates*)
     remain distinct edges, each with its level of evidence (LEVELS). A link of which no value
     was found is left out. A route across two datasets that was tested on the data (*routes*,
-    rdfsolve.mappings.routes) is one edge. No transitive mapping inference is run.
+    rdfsolve.mappings.routes) is one edge. A class mapping derived from the instances of two
+    classes (*derived*, rdfsolve.mappings.instances) is an instance_derived edge, of edge type
+    INSTANCE_DERIVED, with the edge type of its predicate and the derivation recorded; a record
+    link derived so is an instance_derived edge of edge type INSTANCE_LINK, with its properties.
+    One whose classes are not both in the graph is left out. No transitive mapping inference is run.
+
+    The subjects without a type of a dataset (its untyped patterns) are not a class. With
+    *untyped_subjects* they are one node, (dataset, "untyped subjects") with untyped=True, with
+    their schema edges to classes; it shares no class with another dataset. Without it (the
+    class graph, as the release analysis counts it) the node is added only for a link or route
+    from or to those subjects.
     """
     import networkx as nx
 
@@ -69,8 +87,13 @@ def build_connectivity(
         for cls in sorted(extract_class_set(schema)):
             graph.add_node((dataset, cls), dataset=dataset, iri=cls)
             occurrences[cls].append(dataset)
+        if untyped_subjects and any(p.untyped_subject for p in schema.patterns):
+            graph.add_node(
+                (dataset, UNTYPED_SUBJECTS_LABEL), dataset=dataset, iri=None, untyped=True
+            )
         for pattern in schema.patterns:
-            left, right = (dataset, pattern.subject_class), (dataset, pattern.object_class)
+            subject = UNTYPED_SUBJECTS_LABEL if pattern.untyped_subject else pattern.subject_class
+            left, right = (dataset, subject), (dataset, pattern.object_class)
             if left in graph and right in graph:
                 graph.add_edge(
                     left,
@@ -80,7 +103,7 @@ def build_connectivity(
                     count=pattern.count,
                     evidence="confirmed",
                 )
-        _add_paths(graph, dataset, schema)
+        _add_paths(graph, dataset, schema, None if paths is None else paths.get(dataset, []))
     for cls, datasets in sorted(occurrences.items()):
         for first, second in combinations(datasets, 2):
             graph.add_edge(
@@ -99,7 +122,15 @@ def build_connectivity(
         predicate: str | None,
         evidence: dict[str, Any],
     ) -> None:
-        """Add one evidence edge between two schema class nodes."""
+        """Add one evidence edge between two schema class nodes (or untyped-subject nodes)."""
+        for end in (left, right):
+            if (
+                end[1] == UNTYPED_SUBJECTS_LABEL
+                and end[0] in schemas
+                and end not in graph
+                and any(p.untyped_subject for p in schemas[end[0]].patterns)
+            ):
+                graph.add_node(end, dataset=end[0], iri=None, untyped=True)
         if left not in graph or right not in graph:
             raise ValueError(
                 f"{kind} endpoints are absent from the supplied schemas: {left}, {right}"
@@ -117,6 +148,12 @@ def build_connectivity(
                 "justification": mapping.mapping_justification,
                 "mapping_source": mapping.mapping_source,
                 "evidence": "plausible",
+                # What kind of claim the mapping is, how it was made, and that it is taken
+                # from its set, not checked on the data (rdfsolve.mappings.confidence).
+                "edge_type": edge_type(mapping.predicate) or "RELATED",
+                "knowledge_level": knowledge_level(mapping.mapping_justification or ""),
+                "agent_type": agent_type(mapping.mapping_justification or ""),
+                "validation": "asserted",
             },
         )
     for evidence in links:
@@ -140,6 +177,12 @@ def build_connectivity(
                 "complete": evidence.complete,
                 "flags": evidence.flags,
                 "evidence": "confirmed" if evidence.complete and share >= min_share else "tested",
+                "edge_type": "INSTANCE_LINK",
+                "knowledge_level": "observation",
+                "agent_type": "data_analysis_pipeline",
+                # Checked on the data: validated when the sampled values resolve enough.
+                "validation": "validated" if evidence.complete and share >= min_share else "tested",
+                "confidence": share,
             },
         )
     for link in candidates:
@@ -153,8 +196,19 @@ def build_connectivity(
                 "identifier_type": link.identifier_type,
                 "target_property": link.target_property,
                 "evidence": "plausible",
+                "edge_type": "INSTANCE_LINK",
+                "knowledge_level": "prediction",
+                "agent_type": "automated_agent",
+                "validation": "candidate",
             },
         )
+    for found in derived:
+        left = (found.source_dataset, found.source_class)
+        right = (found.target_dataset, found.target_class)
+        if left in graph and right in graph:
+            graph.add_edge(
+                left, right, kind="instance_derived", predicate=found.predicate, **found.edge()
+            )
     for tested in routes:
         route = tested.route
         left, right = (route.link.source, route.start_class), (route.link.target, route.end_class)
@@ -178,15 +232,107 @@ def build_connectivity(
     return graph
 
 
-def _add_paths(graph: Any, dataset: str, schema: MinedSchema) -> None:
-    """Add the paths over several steps of a schema that end in a class, each as one edge.
+def _is_detour(steps: Sequence[Any]) -> bool:
+    """Return whether a path goes through a non-relation property (membership, annotation) or
+    comes back to a class it has passed (a round trip, which composing its halves gives).
+    """
+    if any(step.property_uri in NON_RELATION_PROPERTIES for step in steps):
+        return True
+    classes = [steps[0].subject_class, *(step.object_class for step in steps)]
+    return len(set(classes)) < len(classes)
+
+
+def network_paths(routes: Iterable[NavigationPath]) -> list[NavigationPath]:
+    """Return the paths a network keeps: per (start class, end class), the shortest path that
+    is no detour (_is_detour), the one with the most matched instances among equals.
+
+    Longer paths and detours stay in the schema; a route over them is found by composing the
+    network's edges.
+    """
+    best: dict[tuple[str, str], NavigationPath] = {}
+    for route in routes:
+        if _is_detour(route.steps):
+            continue
+        key = (route.steps[0].subject_class, route.steps[-1].object_class)
+        kept = best.get(key)
+        if kept is None or (len(route.steps), -(route.matched_sources or 0)) < (
+            len(kept.steps),
+            -(kept.matched_sources or 0),
+        ):
+            best[key] = route
+    return [best[key] for key in sorted(best)]
+
+
+def _packed_value(path: str | Path, key: str) -> Any:
+    """Return one member of the packed tested paths of a schema file ([] when absent)."""
+    import ijson
+
+    with Path(path).open("rb") as stream:
+        return next(iter(ijson.items(stream, f"schema.navigation.paths.{key}")), [])
+
+
+def read_network_paths(path: str | Path) -> list[NavigationPath]:
+    """Read the paths a network keeps (network_paths) from a schema file, streamed: the packed
+    tested paths are read row by row and only the kept ones are built.
+    """
+    import ijson
+
+    from rdfsolve.schema_models.pattern import SchemaPattern
+
+    with Path(path).open("rb") as stream:
+        heads = list(ijson.items(stream, "schema.navigation.paths.format"))
+    if not heads:  # paths written in full (not tested), or none: read them as they are
+        schema = MinedSchema.from_json(
+            path, leave_out=("structural_patterns", "raw_patterns", "term_patterns")
+        )
+        return network_paths(schema.navigation.paths) if schema.navigation else []
+    with Path(path).open("rb") as stream:
+        edges = [
+            SchemaPattern.model_validate(e)
+            for e in ijson.items(stream, "schema.navigation.paths.edges.item", use_float=True)
+        ]
+    graphs = _packed_value(path, "graph_uris")
+    context = _packed_value(path, "type_context_graph_uris")
+    best: dict[tuple[str, str], tuple[int, int, dict[str, Any]]] = {}
+    with Path(path).open("rb") as stream:
+        for row in ijson.items(stream, "schema.navigation.paths.rows.item", use_float=True):
+            steps = [edges[i] for i in row["edges"]]
+            if _is_detour(steps):
+                continue
+            key = (steps[0].subject_class, steps[-1].object_class)
+            rank = (len(steps), -(row.get("matched") or 0))
+            if key not in best or rank < best[key][:2]:
+                best[key] = (*rank, row)
+    return [
+        NavigationPath(
+            steps=[edges[i] for i in row["edges"]],
+            evidence="instance_tested",
+            instance_support="matched",
+            matched_sources=row.get("matched"),
+            source_count=row.get("sources"),
+            observed_at=row.get("at"),
+            graph_uris=graphs,
+            type_context_graph_uris=context,
+        )
+        for _, _, row in (best[key] for key in sorted(best))
+    ]
+
+
+def _add_paths(
+    graph: Any, dataset: str, schema: MinedSchema, routes: Sequence[NavigationPath] | None = None
+) -> None:
+    """Add the paths over several steps of a schema that end in a class, each as one edge:
+    the paths a network keeps (network_paths), from *routes* when given (read_network_paths),
+    else from the schema.
 
     A path that instances follow is confirmed; a path composed from the schema and not tested
     is plausible; a tested path that no instance follows is left out.
     """
-    if schema.navigation is None:
-        return
-    for route in schema.navigation.paths:
+    if routes is None:
+        if schema.navigation is None:
+            return
+        routes = network_paths(schema.navigation.paths)
+    for route in routes:
         start, end = (
             (dataset, route.steps[0].subject_class),
             (dataset, route.steps[-1].object_class),

@@ -9,11 +9,12 @@ from typing import Any
 from typing import Literal as Kind
 
 import pyoxigraph as ox
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_serializer, model_validator
 from rdflib import RDF, RDFS, XSD, BNode, Graph, Literal, URIRef
 from rdflib.term import Identifier, Node
 
 from rdfsolve._outcomes import QueryFailure
+from rdfsolve.schema_models.paths import is_rdf_iri
 
 _SAFE_BNODE = re.compile(r"^[A-Za-z_][A-Za-z0-9._-]*$")
 
@@ -148,21 +149,74 @@ class TermAnnotation(BaseModel):
             raise ValueError("Definition text must be an RDF literal")
         return self
 
+    def sort_key(self) -> tuple[str, str, str, str, str]:
+        """Return the place of the text among others: by term, predicate, text, language and
+        datatype.
+        """
+        return (
+            self.term_iri,
+            self.predicate,
+            self.text.value,
+            self.text.language or "",
+            self.text.datatype or "",
+        )
+
 
 class PatternExample(BaseModel):
-    """One observed triple and the class used to select its subject."""
+    """One observed triple and the class used to select its subject.
+
+    An example of an untyped pattern (subject_binding "untyped") has a subject without a type:
+    its subject_class is rdfs:Resource (UNTYPED_SUBJECT), which it is not a member of by
+    assertion. The binding is written only when it is "untyped", so the examples of typed
+    patterns keep their form.
+    """
 
     subject_class: str
     property_uri: str
     subject: RdfTerm
     value: RdfTerm
+    subject_binding: Kind["type", "untyped"] = "type"
 
     @model_validator(mode="after")
     def check_subject(self) -> PatternExample:
-        """Reject literal subjects, which RDF does not allow."""
+        """Reject literal subjects, which RDF does not allow; untyped ones keep rdfs:Resource."""
+        from rdfsolve.schema_models._constants import UNTYPED_SUBJECT
+
         if self.subject.kind == "literal":
             raise ValueError("An example subject must be an IRI or blank node")
+        if self.subject_binding == "untyped" and self.subject_class != UNTYPED_SUBJECT:
+            raise ValueError(f"An untyped example requires the class {UNTYPED_SUBJECT}")
         return self
+
+    @property
+    def untyped_subject(self) -> bool:
+        """Return whether the example's subject has no type (an untyped pattern's example)."""
+        return self.subject_binding == "untyped"
+
+    @model_serializer(mode="wrap")
+    def _write_binding_when_untyped(self, handler: Any) -> Any:
+        """Leave out the default binding, so typed examples are written as before."""
+        data = handler(self)
+        if isinstance(data, dict) and data.get("subject_binding") == "type":
+            data.pop("subject_binding")
+        return data
+
+
+def _preferred(
+    annotations: list[TermAnnotation], iri: str, predicates: tuple[str, ...]
+) -> str | None:
+    """Return the text of *iri* in English or untagged first, then by the order of *predicates*."""
+    candidates = [d for d in annotations if d.term_iri == iri]
+    if not candidates:
+        return None
+    candidates.sort(
+        key=lambda d: (
+            d.text.language not in ("en", None, ""),
+            predicates.index(d.predicate) if d.predicate in predicates else len(predicates),
+            d.text.value,
+        )
+    )
+    return candidates[0].text.value
 
 
 class SchemaEnrichment(BaseModel):
@@ -181,51 +235,64 @@ class SchemaEnrichment(BaseModel):
 
     def description(self, iri: str) -> str | None:
         """Choose an English or untagged source definition when available."""
-        candidates = [d for d in self.definitions if d.term_iri == iri]
-        if not candidates:
-            return None
-        candidates.sort(
-            key=lambda d: (
-                d.text.language not in ("en", None, ""),
-                DEFINITION_PREDICATES.index(d.predicate)
-                if d.predicate in DEFINITION_PREDICATES
-                else len(DEFINITION_PREDICATES),
-                d.text.value,
-            )
-        )
-        return candidates[0].text.value
+        return _preferred(self.definitions, iri, DEFINITION_PREDICATES)
+
+    def label(self, iri: str) -> str | None:
+        """Choose an English or untagged source label when available (a synonym when the term
+        has no label).
+        """
+        return _preferred(self.labels, iri, NAME_PREDICATES)
 
     def to_rdf_graph(self) -> Graph:
-        """Copy source definitions and observed triples; do not add constraints."""
+        """Copy source definitions and observed triples; do not add constraints.
+
+        A triple with a term that is not an RDF IRI is left out, as in every RDF output, before
+        rdflib builds the term; the JSON schema keeps it.
+        """
         graph = Graph()
-        for definition in self.definitions + self.labels:
-            graph.add(
-                (
-                    URIRef(definition.term_iri),
-                    URIRef(definition.predicate),
-                    definition.text.to_rdf(),
+
+        def add(*terms: str | RdfTerm) -> None:
+            """Add the triple of *terms*, an IRI string or an RDF term each, if RDF can write it."""
+            if all(
+                is_rdf_iri(t) if isinstance(t, str) else t.kind != "uri" or is_rdf_iri(t.value)
+                for t in terms
+            ):
+                graph.add(
+                    tuple(URIRef(t) if isinstance(t, str) else t.to_rdf() for t in terms)  # type: ignore[arg-type]
                 )
-            )
+
+        for definition in self.definitions + self.labels:
+            add(definition.term_iri, definition.predicate, definition.text)
         for iri, examples in self.class_examples.items():
             for term in examples:
-                graph.add((term.to_rdf(), RDF.type, URIRef(iri)))
-                graph.add((URIRef(iri), RDFS.seeAlso, term.to_rdf()))
+                add(term, str(RDF.type), iri)
+                add(iri, str(RDFS.seeAlso), term)
         for example in self.examples:
-            graph.add((URIRef(example.subject_class), RDFS.seeAlso, example.subject.to_rdf()))
-            graph.add((example.subject.to_rdf(), RDF.type, URIRef(example.subject_class)))
-            graph.add(
-                (example.subject.to_rdf(), URIRef(example.property_uri), example.value.to_rdf())
-            )
+            # The subject of an untyped example has no class: no class link, no type triple.
+            if not example.untyped_subject:
+                add(example.subject_class, str(RDFS.seeAlso), example.subject)
+                add(example.subject, str(RDF.type), example.subject_class)
+            add(example.subject, example.property_uri, example.value)
         return graph
 
     @classmethod
     def from_rdf_graph(
         cls, graph: Graph, classes: list[str], properties: list[str]
     ) -> SchemaEnrichment:
-        """Read annotations and linked examples from an RDFLib graph."""
-        from rdfsolve.local_rdf import to_oxigraph
+        """Read annotations and linked examples from an RDFLib graph.
 
-        return cls.from_oxigraph(to_oxigraph(graph), classes, properties)
+        Triples whose terms are not RDF IRIs are not read: Oxigraph refuses such terms
+        (rdfsolve.schema_models.iri_quality; the reader that retains the graph records them).
+        """
+        from rdflib import Dataset
+
+        from rdfsolve.local_rdf import to_oxigraph
+        from rdfsolve.schema_models.iri_quality import writable_dataset, writable_graph
+
+        readable = (
+            writable_dataset(graph)[0] if isinstance(graph, Dataset) else writable_graph(graph)[0]
+        )
+        return cls.from_oxigraph(to_oxigraph(readable), classes, properties)
 
     @classmethod
     def from_oxigraph(
@@ -233,7 +300,8 @@ class SchemaEnrichment(BaseModel):
     ) -> SchemaEnrichment:
         """Read annotations and linked examples, not query completion claims.
 
-        Labels and definitions of the classes and properties are read. An rdfs:seeAlso
+        Labels and definitions of the classes and properties are read, in the order of
+        TermAnnotation.sort_key whatever order the dataset gives them in. An rdfs:seeAlso
         resource of a class, typed with that class, is an example of the class.
         """
         result = cls()
@@ -248,6 +316,8 @@ class SchemaEnrichment(BaseModel):
                     for q in statements
                     if q.predicate.value == predicate and isinstance(q.object, ox.Literal)
                 )
+        result.labels.sort(key=TermAnnotation.sort_key)
+        result.definitions.sort(key=TermAnnotation.sort_key)
         for iri in classes:
             for q in dataset.quads_for_subject(ox.NamedNode(iri)):
                 example = q.object

@@ -1,0 +1,166 @@
+"""rdfsolve.mining.class_parts and rdfsolve.schema_models.class_parts: the members of a class
+counted by how they are identified, published as SHACL node shapes without targets and as VoID
+subsets of the class partition."""
+
+import pyshacl
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF
+
+from rdfsolve.mining.class_parts import class_parts
+from rdfsolve.mining.scan import store_from_graph
+from rdfsolve.schema_models.class_parts import add_void_parts, part_shapes
+
+SH = Namespace("http://www.w3.org/ns/shacl#")
+VOID = Namespace("http://rdfs.org/ns/void#")
+DATA = """
+@prefix ex: <http://example.org/> .
+<https://identifiers.org/ncbigene/7157> a ex:Node .
+<https://identifiers.org/ncbigene/672> a ex:Node .
+<https://identifiers.org/uniprot/P04637> a ex:Node .
+<https://identifiers.org/uniprot/043174> a ex:Node .
+<http://data.example.org/node/1> a ex:Node .
+<http://data.example.org/node/2> a ex:Node .
+<http://purl.obolibrary.org/obo/MI_MI:0914> a ex:Node .
+_:b1 a ex:Node .
+"""
+
+
+# A blank-node label written as an IRI: an IRI whose scheme is not valid.
+WRONG_SCHEME = URIRef("_:subspc_1")
+
+
+def graph_of_data():
+    graph = Graph().parse(data=DATA, format="turtle")
+    graph.add((WRONG_SCHEME, RDF.type, URIRef("http://example.org/Node")))
+    return graph
+
+
+def parts_of(tmp_path):
+    store = store_from_graph(graph_of_data(), tmp_path / "store")
+    return class_parts(store.members())
+
+
+def test_members_counted_by_how_they_are_identified(tmp_path):
+    parts = {
+        (p.kind, p.prefix or (p.namespaces[0] if p.namespaces else None)): p.entities
+        for p in parts_of(tmp_path).by_class["http://example.org/Node"]
+    }
+    assert parts == {
+        ("identifier", "ncbigene"): 2,
+        ("identifier", "uniprot"): 1,
+        ("invalid_identifier", "uniprot"): 1,
+        ("namespace", "http://data.example.org/node/"): 2,
+        ("identifier", "mi"): 1,
+        ("blank_node", None): 1,
+        ("invalid_scheme", "_:"): 1,
+    }, "A local identifier that is not valid for its prefix is a part of its own"
+
+
+def test_part_shapes_accept_exactly_the_counted_members(tmp_path):
+    found = parts_of(tmp_path).by_class["http://example.org/Node"]
+    shapes = part_shapes("http://example.org/shapes/Node", "Node", found)
+    graph = Graph()
+    for shape in shapes:
+        shape.to_rdf(graph)
+    data = graph_of_data()
+
+    def members_of(shape):
+        """Return the members of the class that conform to one part shape."""
+        conforming = set()
+        for node in data.subjects(RDF.type, URIRef("http://example.org/Node")):
+            focus = Graph()
+            focus.add((node, RDF.type, URIRef("http://example.org/Node")))
+            probe = Graph()
+            for triple in graph:
+                probe.add(triple)
+            probe.add((URIRef(shape.uri), SH.targetNode, node))
+            if pyshacl.validate(focus, shacl_graph=probe)[0]:
+                conforming.add(str(node))
+        return conforming
+
+    by_name = {shape.name: members_of(shape) for shape in shapes}
+    assert by_name["Node identified in uniprot"] == {"https://identifiers.org/uniprot/P04637"}
+    assert by_name["Node with an IRI of uniprot that is no valid uniprot identifier"] == {
+        "https://identifiers.org/uniprot/043174"
+    }
+    assert by_name["Node identified in mi"] == {"http://purl.obolibrary.org/obo/MI_MI:0914"}, (
+        "A local identifier written with its prefix is read"
+    )
+    iris = [m for shape in shapes if shape.node_kind != "BlankNode" for m in by_name[shape.name]]
+    assert by_name["Node with IRIs whose scheme is not valid (_:)"] == {"_:subspc_1"}
+    assert sorted(iris) == sorted({*iris}) and len(iris) == 8, (
+        "Each member with an IRI conforms to exactly one part"
+    )
+
+
+def test_void_subsets_state_the_entities_of_each_part(tmp_path):
+    found = parts_of(tmp_path).by_class["http://example.org/Node"]
+    graph = Graph()
+    partition = URIRef("http://example.org/partition/class-node")
+    add_void_parts(graph, partition, "http://example.org/shapes/Node", found)
+    subsets = list(graph.objects(partition, VOID.subset))
+    assert len(subsets) == len(found)
+    assert sorted(int(graph.value(s, VOID.entities)) for s in subsets) == sorted(
+        p.entities for p in found
+    )
+    assert (
+        None,
+        VOID.uriSpace,
+        Literal("https://identifiers.org/ncbigene/"),
+    ) in graph
+
+
+def test_a_prefix_that_is_no_prefix_name_is_not_declared():
+    from rdfsolve.schema_models.exporters.shacl import _PREFIX_NAME
+
+    assert _PREFIX_NAME.match("ncbigene") and _PREFIX_NAME.match("kegg.compound")
+    assert not _PREFIX_NAME.match("_3dmet"), "A SPARQL prefix name starts with a letter"
+    assert not _PREFIX_NAME.match("3dmet") and not _PREFIX_NAME.match("obo.")
+
+
+def test_parts_counted_in_parts_of_the_members_add_up(tmp_path, monkeypatch):
+    from rdfsolve.mining import class_parts as module
+
+    whole = parts_of(tmp_path / "whole")
+    monkeypatch.setattr(module, "PART_ROWS", 2)
+    assert parts_of(tmp_path / "parts") == whole
+
+
+def test_a_host_of_too_many_namespaces_is_one_part(tmp_path, monkeypatch):
+    """A first path segment that holds each record's id makes a namespace of every record: past
+    NAMESPACES_PER_HOST in a class, they are one part of kind host, with the exact total, and the
+    part keys of the nodes are that part's."""
+    import polars as pl
+
+    from rdfsolve.mining import class_parts as mining_parts
+    from rdfsolve.mining.class_parts import fold_part_keys
+    from rdfsolve.mining.value_measures import classify_iris
+
+    monkeypatch.setattr(mining_parts, "NAMESPACES_PER_HOST", 3)
+    graph = Graph()
+    iris = [f"http://data.example.org/record:{n}/position" for n in range(5)]
+    for iri in iris:
+        graph.add((URIRef(iri), RDF.type, URIRef("http://example.org/Position")))
+    graph.add(
+        (
+            URIRef("https://identifiers.org/ncbigene/7157"),
+            RDF.type,
+            URIRef("http://example.org/Position"),
+        )
+    )
+    parts = class_parts(store_from_graph(graph, tmp_path / "store").members())
+    found = {p.kind: p for p in parts.by_class["http://example.org/Position"]}
+    assert set(found) == {"host", "identifier"}
+    assert (found["host"].namespaces, found["host"].entities) == (["http://data.example.org/"], 5)
+    nodes = pl.DataFrame(
+        {
+            "cls": ["http://example.org/Position"] * 2,
+            "part": ["namespace|" + iris[0].rsplit("/", 1)[0] + "/", "identifier|ncbigene"],
+        }
+    )
+    assert fold_part_keys(nodes, parts)["part"].to_list() == [
+        "host|http://data.example.org/",
+        "identifier|ncbigene",
+    ]
+    monkeypatch.setattr("rdfsolve.mining.value_measures.NAMESPACES_PER_HOST", 3)
+    assert [(p.kind, p.entities) for p in classify_iris(iris)] == [("host", 5)]

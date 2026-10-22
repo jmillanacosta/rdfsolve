@@ -1,4 +1,7 @@
-# RDFSolve SSSOM source registry 
+# RDFSolve SSSOM source registry
+# confidence: the default confidence of the source's rows whose justification is unspecified;
+# ignore_confidence: the source's stated confidences carry no information and are not used.
+# Rows without either take the default of their justification (rdfsolve.mappings.confidence). 
 
 - name: ols_mappings
   provider: "EMBL-EBI (UK)"
@@ -11,8 +14,317 @@
     ontologies.
   license: "https://www.ebi.ac.uk/about/terms-of-use"
   homepage: "https://www.ebi.ac.uk/ols4"
+  # OxO identifies each ontology's set as https://w3id.org/commons/ols/mappings/<ontology>.ols.sssom.tsv
 
 
+
+
+### CLASS MAPPINGS: SeMRA processed (reasoned) mapping databases, CC0, pinned by Zenodo record
+
+- name: semra_disease
+  provider: "SeMRA (biopragmatics)"
+  mapping_type: instance
+  url: "https://zenodo.org/records/21935586/files/processed.sssom.tsv.gz"
+  version: "2026-08-14 (Zenodo record 21935586)"
+  description: >-
+    SeMRA Disease Mappings Database: mappings between Mondo, DOID, EFO, MeSH, NCIt, Orphanet, OMIM, ICD-9/10/11 and UMLS,
+    assembled from primary sources, Biomappings and OLS, then inferred (inversion,
+    transitivity) and deduplicated with confidence (the processed mapping set).
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://zenodo.org/records/21935586"
+
+- name: semra_cell
+  provider: "SeMRA (biopragmatics)"
+  mapping_type: instance
+  url: "https://zenodo.org/records/22764952/files/processed.sssom.tsv.gz"
+  version: "2026-09-15 (Zenodo record 22764952)"
+  description: >-
+    SeMRA Cell and Cell Line Mappings Database: mappings between CL, Cellosaurus, CLO, BTO, EFO, MeSH, NCIt, DepMap and CCLE,
+    assembled from primary sources, Biomappings and OLS, then inferred (inversion,
+    transitivity) and deduplicated with confidence (the processed mapping set).
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://zenodo.org/records/22764952"
+
+- name: semra_anatomy
+  provider: "SeMRA (biopragmatics)"
+  mapping_type: instance
+  url: "https://zenodo.org/records/20741899/files/processed.sssom.tsv.gz"
+  version: "2026-09-15 (Zenodo record 20741899)"
+  description: >-
+    SeMRA Anatomy Mappings Database: mappings between Uberon, MeSH, BTO, CARO, NCIt and UMLS,
+    assembled from primary sources, Biomappings and OLS, then inferred (inversion,
+    transitivity) and deduplicated with confidence (the processed mapping set).
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://zenodo.org/records/20741899"
+
+- name: semra_complex
+  provider: "SeMRA (biopragmatics)"
+  mapping_type: instance
+  url: "https://zenodo.org/records/22764924/files/processed.sssom.tsv.gz"
+  version: "2026-09-15 (Zenodo record 22764924)"
+  description: >-
+    SeMRA Protein Complex Mappings Database: mappings between Complex Portal, FamPlex, GO, ChEMBL target, Wikidata, SIGNOR and IntAct,
+    assembled from primary sources, Biomappings and OLS, then inferred (inversion,
+    transitivity) and deduplicated with confidence (the processed mapping set).
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://zenodo.org/records/22764924"
+
+- name: semra_gene
+  provider: "SeMRA (biopragmatics)"
+  mapping_type: instance
+  url: "https://zenodo.org/records/15826794/files/processed.sssom.tsv.gz"
+  ignore_confidence: true  # states 1.0 for every row
+  version: "2025-07-07 (Zenodo record 15826794)"
+  description: >-
+    SeMRA Gene Mappings Database: mappings between NCBI Gene, HGNC, MGI, RGD, CGNC, WormBase, FlyBase, SGD, OMIM, CIViC, NCIt, UMLS and Wikidata,
+    assembled from primary sources, Biomappings and OLS, then inferred (inversion,
+    transitivity) and deduplicated with confidence (the processed mapping set).
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://zenodo.org/records/15826794"
+
+### CLASS MAPPINGS: Monarch Initiative mapping sets, pinned by dated folder
+
+- name: mondo
+  provider: "Monarch Initiative"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/mondo.sssom.tsv"
+  confidence: 0.95  # curated cross-references, written as UnspecifiedMatching
+  oxo_mapping_set_id: "http://purl.obolibrary.org/obo/mondo/mappings/mondo.sssom.tsv"  # how OxO identifies this set
+  version: "2026-10-04"
+  license: "https://w3id.org/sssom/license/unspecified"  # as the file's header declares it
+  description: "Mondo disease ontology cross-references (database cross-references and exact matches)"
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+- name: monarch_gene
+  provider: "Monarch Initiative"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/gene_mappings.sssom.tsv"
+  confidence: 0.95  # curated gene identifier mappings, written as UnspecifiedMatching
+  oxo_mapping_set_id: "https://data.monarchinitiative.org/mappings/gene_mappings.sssom.tsv"  # how OxO identifies this set
+  version: "2026-10-04"
+  license: "https://creativecommons.org/licenses/by/4.0/"  # as the file's header declares it
+  description: "gene identifier mappings across species databases used by Monarch"
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+- name: upheno_cross_species
+  provider: "Monarch Initiative"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/upheno-cross-species.sssom.tsv"
+  oxo_mapping_set_id: "https://data.monarchinitiative.org/mappings/upheno-cross-species.sssom.tsv"  # how OxO identifies this set
+  version: "2026-10-04"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"  # as the file's header declares it
+  description: "uPheno phenotype mappings across species ontologies"
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+- name: upheno_species_independent
+  provider: "Monarch Initiative"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/upheno-species-independent.sssom.tsv"
+  version: "2026-10-04"
+  license: "https://w3id.org/sssom/license/unspecified"  # as the file's header declares it
+  description: "uPheno mappings of species phenotype terms to species-independent ones"
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+- name: mesh_chebi
+  provider: "Monarch Initiative"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/mesh_chebi_biomappings.sssom.tsv"
+  oxo_mapping_set_id: "https://data.monarchinitiative.org/mappings/mesh_chebi_biomappings.sssom.tsv"  # how OxO identifies this set
+  version: "2026-10-04"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"  # as the file's header declares it
+  description: "MeSH to ChEBI chemical mappings (Biomappings)"
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+### CLASS MAPPINGS: ontology releases, pinned by release tag
+
+- name: cl_release
+  provider: "OBO Foundry (obophenotype/cell-ontology)"
+  mapping_type: instance
+  url: "https://github.com/obophenotype/cell-ontology/releases/download/v2026-06-08/cl.sssom.tsv"
+  version: "v2026-06-08"
+  description: "Cell Ontology mappings to other cell type vocabularies"
+  license: "https://creativecommons.org/licenses/by/4.0/"
+  homepage: "https://github.com/obophenotype/cell-ontology"
+
+- name: uberon_release
+  provider: "OBO Foundry (obophenotype/uberon)"
+  mapping_type: instance
+  url: "https://github.com/obophenotype/uberon/releases/download/v2026-10-01/uberon.sssom.tsv"
+  version: "v2026-10-01"
+  description: "Uberon mappings to species anatomy ontologies and vocabularies"
+  license: "https://creativecommons.org/licenses/by/3.0/"
+  homepage: "https://github.com/obophenotype/uberon"
+
+
+### CLASS MAPPINGS: curated sets that OxO lists (not OLS), pinned; licenses as each file declares
+
+# Mouse-human mapping commons, pinned to mh_mapping_initiative commit e4fe7274 (2026-09-28)
+
+- name: mp_hp_mgi_all
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_mgi_all.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_mgi_all.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, all MGI mappings"
+  license: "https://creativecommons.org/licenses/by/4.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_pat_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_pat_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_pat_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, IMPC pathology"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_owt_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_owt_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_owt_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, IMPC organ weight"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_hwt_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_hwt_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_hwt_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, IMPC heart weight"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_eye_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_eye_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_eye_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, IMPC eye"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_xry_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_xry_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_xry_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, IMPC X-ray"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_hp_pistoia
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_hp_pistoia.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_hp_pistoia.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to HP, Pistoia Alliance"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: pato_hp_pat_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/pato_hp_pat_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/pato_hp_pat_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "PATO to HP, IMPC pathology"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: ma_uberon_pat_impc
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/ma_uberon_pat_impc.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/ma_uberon_pat_impc.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MA to Uberon, IMPC pathology"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mp_doid_pistoia
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/mp_doid_pistoia.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/mp_doid_pistoia.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "MP to DOID, Pistoia Alliance"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: hp_doid_pistoia
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/hp_doid_pistoia.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/hp_doid_pistoia.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "HP to DOID, Pistoia Alliance"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: ordo_doid_pistoia
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/ordo_doid_pistoia.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/ordo_doid_pistoia.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "Orphanet to DOID, Pistoia Alliance"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: ordo_mp_pistoia
+  provider: "Mouse-Human Mapping Initiative (mapping commons)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/e4fe727428661f0093f6ab9269f4fb80387e39fc/mappings/ordo_mp_pistoia.sssom.tsv"
+  oxo_mapping_set_id: "https://w3id.org/sssom/commons/mouse-human/mappings/ordo_mp_pistoia.sssom.tsv"
+  version: "e4fe7274 (2026-09-28)"
+  description: "Orphanet to MP, Pistoia Alliance"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://github.com/mapping-commons/mh_mapping_initiative"
+
+- name: mondo_hasdbxref_hp
+  provider: "Mondo (Monarch Initiative)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/monarch-initiative/mondo/v2026-10-06/src/ontology/mappings/mondo_hasdbxref_hp.sssom.tsv"
+  oxo_mapping_set_id: "http://purl.obolibrary.org/obo/mondo/mappings/mondo_hasdbxref_hp.sssom.tsv"
+  version: "2026-10-06"
+  description: "Mondo database cross-references to HP"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://mondo.monarchinitiative.org/"
+
+- name: mondo_hasdbxref_icd10cm
+  provider: "Mondo (Monarch Initiative)"
+  mapping_type: instance
+  url: "https://raw.githubusercontent.com/monarch-initiative/mondo/v2026-10-06/src/ontology/mappings/mondo_hasdbxref_icd10cm.sssom.tsv"
+  oxo_mapping_set_id: "http://purl.obolibrary.org/obo/mondo/mappings/mondo_hasdbxref_icd10cm.sssom.tsv"
+  version: "2026-10-06"
+  description: "Mondo database cross-references to ICD-10-CM"
+  license: "https://creativecommons.org/publicdomain/zero/1.0/"
+  homepage: "https://mondo.monarchinitiative.org/"
+
+- name: nbo_go
+  provider: "uPheno (Monarch Initiative)"
+  mapping_type: instance
+  url: "https://data.monarchinitiative.org/mappings/2026-10-04/nbo-go.sssom.tsv"
+  oxo_mapping_set_id: "https://data.monarchinitiative.org/mappings/upheno/nbo-go.sssom.tsv"  # does not resolve (404)
+  version: "2026-10-04"
+  description: "Neuro Behavior Ontology to GO mappings"
+  license: "https://w3id.org/sssom/license/unspecified"  # the file declares none
+  homepage: "https://data.monarchinitiative.org/mappings/"
+
+# OxO sets left out (2026-10-12): the EBI text mappings (subjects are free text, not classes); the LOINC
+# sets (no corpus source uses LOINC); sets whose OxO id does not resolve (404): SeMRA's four
+# w3id.org/biopragmatics/semra/<domain>/priority.sssom.tsv.gz (the processed sets above are used),
+# mondo_hp_lexical, uberon/core/mappings, monarch/hpo-snomed, five w3id.org/sssom/mappings/<uuid> ids
+# and oxo2/inferences; and the sets OxO names without a URL (cpath_obo_omop, its inverse, ictv_to_ncbitaxon).
 
 ### PROPERTY MAPPINGS (a few only, for now)
 

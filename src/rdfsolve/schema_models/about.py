@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
@@ -63,10 +63,11 @@ class AboutMetadata(BaseModel):
     type_context_graph_uris: list[str] | None = Field(
         None, description="Additional graphs used only for subject and object type lookups"
     )
-    membership_property: str | None = Field(
+    membership_property: str | list[str] | None = Field(
         None,
         description="Property that assigns subjects to classes instead of rdf:type "
-        "(for example Wikibase 'instance of'); classes in the patterns come from it",
+        "(for example Wikibase 'instance of'), or the properties that do so together (for "
+        "example rdf:type and a category); classes in the patterns come from it",
     )
     discovered_graphs: list[dict[str, Any]] | None = Field(
         None,
@@ -337,7 +338,7 @@ class AboutMetadata(BaseModel):
 
         from rdfsolve.config import mint
 
-        generated_at = finished_at or datetime.now(timezone.utc).isoformat()
+        generated_at = finished_at or datetime.now(UTC).isoformat()
         version = (
             source_version_iri
             or source_version

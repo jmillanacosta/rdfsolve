@@ -15,7 +15,7 @@ from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, Any
 
-from rdfsolve.client.hydration import class_iri
+from rdfsolve.client.hydration import class_iri, is_untyped
 from rdfsolve.client.query_fragments import identifier
 from rdfsolve.client.retrieval import validate_outputs
 from rdfsolve.mcp.sparql import (
@@ -28,7 +28,7 @@ from rdfsolve.mcp.sparql import (
     undeclared_prefixes,
     with_graphs,
 )
-from rdfsolve.mcp.view import SchemaView, registered_namespace
+from rdfsolve.mcp.view import UNTYPED, SchemaView, registered_namespace
 from rdfsolve.sparql_helper import EndpointError, QueryError, SparqlHelper
 
 if TYPE_CHECKING:
@@ -95,6 +95,9 @@ class Toolbox:
             return {"text": self.view.overview()}
         parts = []
         for name in classes:
+            if self.view.names_untyped(name):
+                parts.append(self.view.untyped_card())
+                continue
             found = self.view.match_classes(name)
             if len(found) == 1:
                 parts.append(self.view.card(found[0]))
@@ -130,7 +133,9 @@ class Toolbox:
     def find(self, text: str, in_class: str | None = None, limit: int = 10) -> dict[str, Any]:
         """Find resources by IRI, identifier, name, or words in their text."""
         kind = None
-        if in_class:
+        if in_class and self.view.names_untyped(in_class):
+            kind = UNTYPED
+        elif in_class:
             found = self.view.match_classes(in_class)
             if len(found) != 1:
                 raise ValueError(
@@ -141,15 +146,23 @@ class Toolbox:
         records = list(self.client.find(text, kind=kind, allow_partial=True))
         for record in records[:limit]:
             iri = str(vars(record)["uri"])
+            kind_text = (
+                f"({UNTYPED})" if is_untyped(record) else f"a {self.view.curie(class_iri(record))}"
+            )
             lines.append(
-                f"{self.view.curie(iri)} a {self.view.curie(class_iri(record))}: "
+                f"{self.view.curie(iri)} {kind_text}: "
                 + json.dumps(self.client.title(record), ensure_ascii=False)
             )
         if not records:
             evidence = self.client.search([text], kind=kind).evidence
             for item in evidence[:limit]:
+                kind_text = (
+                    f"({UNTYPED})"
+                    if item["type"] == UNTYPED
+                    else f"a {self.view.curie(item['type'])}"
+                )
                 lines.append(
-                    f"{self.view.curie(item['id'])} a {self.view.curie(item['type'])}: "
+                    f"{self.view.curie(item['id'])} {kind_text}: "
                     f"{self.view.curie(item['predicate'])} {_excerpt(item['text']['value'], text)}"
                 )
         if not lines:

@@ -4,6 +4,7 @@ import json
 
 import pytest
 from rdflib import RDF, RDFS, XSD, Graph, Literal, Namespace
+
 from rdfsolve.client.api import Client
 from rdfsolve.mcp.tools import Toolbox
 from rdfsolve.schema_models.core import MinedSchema
@@ -60,7 +61,9 @@ def make_schema():
         for s, p, o, n in PATTERNS
     ]
     labels = [
-        TermAnnotation(term_iri=str(i), predicate=str(RDFS.label), text=RdfTerm(kind="literal", value=v))
+        TermAnnotation(
+            term_iri=str(i), predicate=str(RDFS.label), text=RdfTerm(kind="literal", value=v)
+        )
         for i, v in LABELS.items()
     ]
     example = PatternExample(
@@ -72,7 +75,12 @@ def make_schema():
     return MinedSchema(
         about={
             "dataset_name": "mcp-test",
-            "class_entity_counts": {str(E.Pathway): 2, str(E.Event): 2, str(E.Gene): 1, str(E.Chemical): 1},
+            "class_entity_counts": {
+                str(E.Pathway): 2,
+                str(E.Event): 2,
+                str(E.Gene): 1,
+                str(E.Chemical): 1,
+            },
         },
         patterns=patterns,
         prefixes={"ex": str(E), "rdfs": str(RDFS)},

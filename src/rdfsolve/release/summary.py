@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 from collections import Counter
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +28,18 @@ def _artifact_paths(manifest: ReleaseManifest, role: str) -> list[str]:
     )
 
 
+def _census_rows(path: Path, schema: dict[str, Any]) -> Iterator[Any]:
+    """Yield the census rows of a schema: from its JSON, or from its census file (layout)."""
+    if "structural_patterns" in (schema.get("details") or {}):
+        from rdfsolve.schema_models.core import iter_section_rows
+
+        for _, row in iter_section_rows(path, ["structural_patterns"]):
+            if row is not None:
+                yield row
+    else:
+        yield from schema.get("structural_patterns") or []
+
+
 def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]:
     pattern_types: Counter[str] = Counter()
     evidence_sources: Counter[str] = Counter()
@@ -40,15 +53,22 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
     with_counts = 0
     with_distinct_subjects = 0
     with_distinct_objects = 0
+    sampled = 0
+    lower_bound = 0
     for rel in _artifact_paths(manifest, "canonical_schema"):
         raw = _load_json(root / rel)
         schema = raw.get("schema") if isinstance(raw.get("schema"), dict) else raw
         if isinstance(schema, dict):
+            # Sections written beside the JSON are counted from their details (layout).
+            details = schema.get("details") or {}
             for field in ("raw_patterns", "term_patterns", "structural_patterns"):
                 collection = schema.get(field)
                 if isinstance(collection, list):
                     retained[field] += 1
                     collections[field] += len(collection)
+                elif isinstance(details.get(field), dict):
+                    retained[field] += 1
+                    collections[field] += int(details[field].get("rows") or 0)
             subject_shapes += len(
                 {
                     (
@@ -56,7 +76,7 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
                         row.get("subject_kind"),
                         tuple(sorted(set(row.get("subject_properties") or []))),
                     )
-                    for row in schema.get("structural_patterns") or []
+                    for row in _census_rows(root / rel, schema)
                     if isinstance(row, dict)
                     and row.get("shape_semantics", "exact_property_sets") == "exact_property_sets"
                 }
@@ -78,6 +98,10 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
                 with_distinct_subjects += 1
             if row.get("distinct_objects") is not None:
                 with_distinct_objects += 1
+            if row.get("sampled"):
+                sampled += 1
+            if row.get("count_bound") == "lower_bound":
+                lower_bound += 1
     return {
         "datasets": len(datasets),
         "schema_artifacts": schema_artifacts,
@@ -95,6 +119,9 @@ def _summarize_observed(manifest: ReleaseManifest, root: Path) -> dict[str, Any]
         "patterns_with_counts": with_counts,
         "patterns_with_distinct_subjects": with_distinct_subjects,
         "patterns_with_distinct_objects": with_distinct_objects,
+        # Rows observed or counted in a sample of a refused query; their counts are lower bounds.
+        "sampled_patterns": sampled,
+        "patterns_with_lower_bound_counts": lower_bound,
     }
 
 
@@ -284,6 +311,10 @@ def summarize_release(manifest: ReleaseManifest, root: str | Path | None = None)
         "access_file_fields": dict(sorted(access_fields.items())),
         "completion": dict(sorted(completion.items())),
         "extraction_attempts_by_mode": dict(sorted(modes.items())),
+        # Datasets with a refused query answered over a sample (rows flagged sampled).
+        "datasets_with_sampled_queries": sum(
+            any(e.sampled_queries for e in item.extractions) for item in manifest.datasets
+        ),
         "artifacts": len(manifest.artifacts),
         "artifact_roles": dict(sorted(artifact_roles.items())),
         "ontology_usage_candidates": ontology_candidates,

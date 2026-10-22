@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdfsolve"
-version = "0.1.0"
+version = "0.2.0-dev"
 description = "Wraps several RDF schema solver tools"
 readme = "README.md"
 authors = [
@@ -30,8 +30,6 @@ classifiers = [
     "Framework :: Sphinx",
     "Natural Language :: English",
     "Programming Language :: Python",
-   "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
@@ -51,51 +49,58 @@ keywords = [
 # See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license
 license = { file = "LICENSE" }
 
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
+    # The core: opening and writing schemas (canonical JSON, VoID, SHACL, the Parquet detail
+    # files), the client (fetch, identify, routes, records) and conversion rules. Mining at
+    # scale, exports, mappings, the web service and the command line are extras.
     "pydantic>=2.0",
     "requests>=2.0",
     "httpx>=0.24",
-    "sssom>=0.4",
     "typing-extensions>=4.0",
-    # Core RDF processing
     "rdflib>=6.0.0", # RDF graph processing and parsing
     "pyoxigraph>=0.5.11,<0.6",
-
-    # JSON processing
     "ujson>=5.0.0",  # Fast JSON parser for large mapping files
-
-    # Other
+    "ijson>=3.3",  # Streaming JSON parser: reads sections of large schema files
     # pandas 3 turns a column of rdflib BNodes (a str subclass) into plain strings when the
     # DataFrame is built, so from_table cannot tell blank nodes from IRIs; pyobo held pandas<3
-    "pandas>=2.0.0,<3", # DataFrame operations for analysis results
+    "pandas>=2.0.0,<3",
     "numpy",
     "bioregistry>=0.13.25",
-    # Schema modeling
-    "linkml>=1.10.0",
-    "linkml-runtime>=1.10.0",  # Must match linkml major.minor — 1.9.x removed Format.JSON used by linkml<1.10
-    "deprecated>=1.2.13",  # Required by linkml-runtime
     "pyld",
-    # Utility libraries
     "more_itertools", # missing from itertools in stdlib
     "tqdm", # progress bars
     "pyyaml>=6.0", # YAML source registry
-    "pyarrow>=23.0.1", # Parquet support for DataFrames; 22.0.0 has a security advisory
-    # CLI and web framework
-    "click",
-    "more_click",
-    "flask", # web framework,
+    "pyarrow>=23.0.1", # the Parquet detail files of a saved schema; 22.0.0 has a security advisory
 ]
 
 [project.optional-dependencies]
+# Mining local indexes at scale: counts over the rows a local index streams (64-bit row
+# indexes, for tables past 2^32 rows).
+mining = ["polars[rt64]>=2.0"]
+# Schema exports to LinkML and its generators.
+exports = [
+    "linkml>=1.10.0",
+    "linkml-runtime>=1.10.0",  # Must match linkml major.minor — 1.9.x removed Format.JSON used by linkml<1.10
+    "deprecated>=1.2.13",  # Required by linkml-runtime
+]
+# Mapping sets read and written as SSSOM.
+mappings = ["sssom>=0.4"]
+# The command line.
+cli = ["click"]
 validation = ["pyshacl>=0.27,<1"]
+# Counting the VoID partitions of a profile's SQL tables in the database (Layout.void).
+sql = ["sqlalchemy>=2.0"]
 agents = [
     "pydantic-ai-slim[openai,anthropic]==2.0.0",
     "python-dotenv==1.2.3",
 ]
 mcp = ["mcp==2.2.0"]
+reconciliation = ["nanopub>=2.2,<3"]
 tests = [
+    "rdfsolve[mining,exports,mappings,cli,web,sql]",
     "pyshacl>=0.27,<1",
+    "nanopub>=2.2,<3",
     "psutil>=5.9",
     "pydantic-ai-slim[openai]==2.0.0",
     "mcp==2.2.0",
@@ -127,6 +132,8 @@ web = [
     "flask-cors>=4.0",
     "gunicorn>=22.0",
 ]
+# Everything but the agents, the notebooks and the development tools.
+all = ["rdfsolve[mining,exports,mappings,cli,web,validation,reconciliation,sql]"]
 notebooks = [
     "psutil>=5.9",
     # Additional packages for notebook development and analysis
@@ -179,7 +186,7 @@ plugins = [
 
 [[tool.mypy.overrides]]
 # These upstream packages do not publish type information.
-module = ["linkml.*", "linkml_runtime.*"]
+module = ["linkml.*", "linkml_runtime.*", "pyarrow.*", "IPython.*", "ijson", "ijson.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -320,7 +327,7 @@ known-first-party = [
 docstring-code-format = true
 
 [tool.bumpversion]
-current_version = "0.1.0"
+current_version = "0.2.0-dev"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+(?P<build>[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}+{build}",

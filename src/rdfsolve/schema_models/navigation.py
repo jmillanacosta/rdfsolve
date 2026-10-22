@@ -9,6 +9,26 @@ from pydantic import BaseModel, Field, model_serializer, model_validator
 from rdfsolve.schema_models.paths import PropertyPath
 from rdfsolve.schema_models.pattern import SchemaPattern
 
+# Properties that do not relate one record to another: membership and annotation. A path does
+# not go through them (navigation search and the paths of a network); their one-step patterns
+# stay in the schema. A property the data declares owl:AnnotationProperty is one as well.
+NON_RELATION_PROPERTIES = frozenset(
+    {
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+        "http://www.w3.org/2000/01/rdf-schema#label",
+        "http://www.w3.org/2000/01/rdf-schema#comment",
+        "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+        "http://www.w3.org/2004/02/skos/core#prefLabel",
+        "http://www.w3.org/2004/02/skos/core#altLabel",
+        "http://www.w3.org/2004/02/skos/core#hiddenLabel",
+        "http://www.w3.org/2004/02/skos/core#definition",
+        "http://purl.org/dc/elements/1.1/title",
+        "http://purl.org/dc/elements/1.1/description",
+        "http://purl.org/dc/terms/title",
+        "http://purl.org/dc/terms/description",
+    }
+)
+
 
 class NavigationPath(BaseModel):
     """A route. A schema-composed route is a candidate; an instance-tested route was followed by
@@ -74,11 +94,21 @@ class NavigationSummary(BaseModel):
     matched_by_length: dict[int, int] = Field(default_factory=dict)
     complete_lengths: list[int] = Field(default_factory=list)
     budget_s: float | None = Field(default=None, ge=0)
-    stop_reason: Literal["budget"] | None = None
+    # "budget": the time budget was spent; "endpoint_cuts": the endpoint cut the queries of a
+    # purpose at a fixed limit, and the search sent no more queries (cuts says which, why, and
+    # how many queries were cut and not sent; rdfsolve.sparql_helper.QueryCuts).
+    stop_reason: Literal["budget", "endpoint_cuts"] | None = None
     query_count: int = Field(default=0, ge=0)
     failed_queries: int = Field(default=0, ge=0)
+    cuts: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    # Paths tested on a sample of each start class's instances (at most this many a class): the
+    # matched_sources and source_count of a path are then those of the sample.
+    start_sample: int | None = Field(default=None, ge=1)
     # Member terms of the groups of ontology terms that kept paths go through (for their queries)
     member_terms: dict[str, list[str]] = Field(default_factory=dict)
+    # "network": paths holds the path the network keeps for each class pair; all tested paths
+    # are in the schema's paths file (rdfsolve.schema_models.layout), read back on a full read.
+    paths_scope: Literal["all", "network"] = "all"
 
     @model_validator(mode="before")
     @classmethod
@@ -145,3 +175,78 @@ class NavigationSummary(BaseModel):
             "type_context_graph_uris": list(first.type_context_graph_uris) if first else [],
         }
         return data
+
+
+def read_tested_paths(
+    path: Any, start_classes: Any = None, max_hops: int | None = None
+) -> list[NavigationPath]:
+    """Read the tested paths of a saved schema, only those that start at *start_classes*.
+
+    *path* is a schema JSON file whose navigation was tested on the data. The paths are kept
+    packed (each step once, each path as step numbers), in the schema's paths file or in its
+    JSON (layout.packed_paths); only the paths whose first step starts at one of
+    *start_classes* (class IRIs; all when None) and that have at most *max_hops* steps become
+    NavigationPath objects, so a few classes' paths can be read without building all of them.
+    """
+    from rdfsolve.schema_models.layout import packed_paths
+
+    packed = packed_paths(path)
+    if packed is None:
+        return []
+    edges = packed.edges
+    wanted = None if start_classes is None else set(start_classes)
+    found = []
+    for row in packed.rows():
+        ids = row["edges"]
+        if (max_hops is not None and len(ids) > max_hops) or (
+            wanted is not None and edges[ids[0]].get("subject_class") not in wanted
+        ):
+            continue
+        found.append(packed.path(row))
+    return found
+
+
+def tested_step_support(
+    path: Any, start_classes: Any = None
+) -> dict[tuple[str, str], tuple[int, int]]:
+    """Return, for each first step (class, property) of the tested paths of a saved schema, the
+    most matched records of the paths that start with it, and their start records.
+
+    Read from the packed paths without building them (read_tested_paths builds them); only
+    paths that start at *start_classes* (all when None) count.
+    """
+    from rdfsolve.schema_models.layout import packed_paths
+
+    packed = packed_paths(path)
+    if packed is None:
+        return {}
+    edges = packed.edges
+    wanted = None if start_classes is None else set(start_classes)
+    support: dict[tuple[str, str], tuple[int, int]] = {}
+    for row in packed.rows():
+        first = edges[row["edges"][0]]
+        key = (str(first.get("subject_class")), str(first.get("property_uri")))
+        if wanted is not None and key[0] not in wanted:
+            continue
+        matched, sources = row.get("matched") or 0, row.get("sources") or 0
+        seen = support.get(key, (0, 0))
+        if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
+            support[key] = (matched, sources)
+    return support
+
+
+def step_support(paths: Any) -> dict[tuple[str, str], tuple[int, int]]:
+    """Return, for each first step (class, property) of tested paths, the most matched records of
+    the paths that start with it, and their start records (as tested_step_support, from paths).
+    """
+    support: dict[tuple[str, str], tuple[int, int]] = {}
+    for route in paths:
+        if route.instance_support != "matched" or not route.steps:
+            continue
+        step = route.steps[0]
+        key = (step.subject_class, step.property_uri)
+        matched, sources = route.matched_sources or 0, route.source_count or 0
+        seen = support.get(key, (0, 0))
+        if sources and matched / sources > (seen[0] / seen[1] if seen[1] else -1.0):
+            support[key] = (matched, sources)
+    return support

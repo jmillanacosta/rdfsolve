@@ -1,9 +1,9 @@
 """Ontologies: answers about ontology terms from an ontology provider, cached, with provenance.
 
-OLS4 (default) or Ontobee: a term with its labels, definitions and scoped synonyms, a search
-by name, and the direct named parents. Each request is cached (one day, or always offline),
-bounded, and recorded as an event, so that ontology requests stay apart from the queries of a
-dataset.
+OLS4 (default), Ontobee or Wikidata: a term with its labels, definitions and scoped synonyms, a
+search by name, the direct named parents, the vocabularies the provider lists, and the terms of
+one of them found by name. Each request is cached (one day, or always offline), bounded, and
+recorded as an event, so that ontology requests stay apart from the queries of a dataset.
 """
 
 from __future__ import annotations
@@ -14,7 +14,8 @@ import time
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, cast
+from types import TracebackType
+from typing import Any, Self, TypedDict, cast
 from urllib.parse import quote
 
 import requests
@@ -23,14 +24,36 @@ from rdflib import Literal
 from rdfsolve.identifiers import canonical_iri, parse
 from rdfsolve.ontology.terms import Term
 from rdfsolve.ontology.ubergraph import UberGraph
-from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, SUBCLASS_OF
+from rdfsolve.ontology.vocabulary import DEFINITIONS, DEPRECATED, LABEL, OBO, SUBCLASS_OF
 from rdfsolve.schema_models.enrichment import LABEL_PREDICATES, NAME_PREDICATES, SYNONYM_PREDICATES
 from rdfsolve.sparql_helper import SparqlHelper, SparqlHelperError
 
 logger = logging.getLogger(__name__)
 OLS = "https://www.ebi.ac.uk/ols4/api"
 ONTOBEE = "https://sparql.hegroup.org/sparql/"
+WIKIDATA = "https://www.wikidata.org/w/api.php"
+# The namespace of Wikidata's items.
+ENTITY = "http://www.wikidata.org/entity/"
 PARENT = SUBCLASS_OF
+# The providers of Ontologies, by name, with their titles.
+PROVIDERS = {
+    "ols": "Ontology Lookup Service (EMBL-EBI)",
+    "ontobee": "Ontobee",
+    "wikidata": "Wikidata",
+}
+
+
+class Vocabulary(TypedDict):
+    """A vocabulary that a provider lists: its identifier there, title, the namespace its terms'
+    IRIs start with, description, and the prefix of its terms' codes (OBI of OBI:0000070; empty
+    for Wikidata, whose codes are bare: Q42).
+    """
+
+    id: str
+    title: str
+    namespace: str
+    description: str
+    prefix: str
 
 
 def synonym_evidence(value: dict[str, Any]) -> list[dict[str, str]]:
@@ -64,9 +87,9 @@ SEARCH_ROWS = 8
 class Ontologies:
     """Answers about ontology terms, with one bounded and cached request log.
 
-    Terms, names and direct parents come from the provider (OLS or Ontobee); ancestors,
-    descendants, relations and Biolink categories come from *ubergraph* (rdfsolve.ontology.
-    ubergraph.UberGraph; the public endpoint by default).
+    Terms, names and direct parents come from the provider (OLS, Ontobee or Wikidata; Wikidata
+    gives no parents); ancestors, descendants, relations and Biolink categories come from
+    *ubergraph* (rdfsolve.ontology.ubergraph.UberGraph; the public endpoint by default).
     """
 
     def __init__(
@@ -80,8 +103,8 @@ class Ontologies:
         ubergraph: UberGraph | None = None,
     ) -> None:
         """Configure a provider; defer requests until evidence is needed."""
-        if provider not in {"ols", "ontobee"}:
-            raise ValueError("Use ols or ontobee as the ontology provider")
+        if provider not in PROVIDERS:
+            raise ValueError("Use ols, ontobee or wikidata as the ontology provider")
         self.provider, self.offline = provider, offline
         self.timeout, self.max_requests = timeout, max_requests
         self.path = Path(cache).expanduser().resolve() if cache else None
@@ -104,6 +127,19 @@ class Ontologies:
         self.http.close()
         if self.helper:
             self.helper.close()
+
+    def __enter__(self) -> Self:
+        """Return the provider, closed when the block ends."""
+        return self
+
+    def __exit__(
+        self,
+        kind: type[BaseException] | None,
+        error: BaseException | None,
+        trace: TracebackType | None,
+    ) -> None:
+        """Release provider connections."""
+        self.close()
 
     def cached(self, iri: str) -> bool:
         """Check whether exact vocabulary evidence is already available locally."""
@@ -165,9 +201,13 @@ class Ontologies:
         return data
 
     def _json(self, path: str, **params: Any) -> Any:
-        with self.http.get(
-            OLS + path, params=params, timeout=self.timeout, stream=True
-        ) as response:
+        return self._read(OLS + path, params)
+
+    def _wikidata(self, **params: Any) -> Any:
+        return self._read(WIKIDATA, {**params, "format": "json"})
+
+    def _read(self, url: str, params: dict[str, Any]) -> Any:
+        with self.http.get(url, params=params, timeout=self.timeout, stream=True) as response:
             response.raise_for_status()
             content = bytearray()
             for chunk in response.iter_content(65536):
@@ -207,7 +247,7 @@ class Ontologies:
                 terms = [t for t in terms if t.get("iri") == canonical and not t.get("is_obsolete")]
                 if not terms and (found := parse(canonical)) is not None:
                     # OLS files some ontologies under IRIs other than the PURL that Bioregistry
-                    # gives (SBO under biomodels.net/SBO/): ask by the OBO identifier instead.
+                    # gives: ask by the OBO identifier instead.
                     import bioregistry
 
                     obo_id = (
@@ -225,6 +265,33 @@ class Ontologies:
                     key=lambda t: (not t.get("is_defining_ontology"), t.get("ontology_name", ""))
                 )
                 return self._term(terms[0]) if terms else None
+        elif self.provider == "wikidata":
+
+            def fetch() -> Term | None:
+                """Read the item from Wikidata: its English label, description and aliases."""
+                if not canonical.startswith(ENTITY):
+                    return None
+                item = canonical[len(ENTITY) :]
+                answer = self._wikidata(
+                    action="wbgetentities",
+                    ids=item,
+                    props="labels|descriptions|aliases",
+                    languages="en",
+                )
+                entity = answer.get("entities", {}).get(item) or {}
+                if not entity or "missing" in entity:
+                    return None
+                description = entity.get("descriptions", {}).get("en", {}).get("value")
+                return {
+                    "iri": canonical,
+                    "label": entity.get("labels", {}).get("en", {}).get("value", ""),
+                    "description": [description] if description else [],
+                    "synonyms": [a["value"] for a in entity.get("aliases", {}).get("en", [])],
+                    "synonym_evidence": [],
+                    "ontology": "",
+                    "namespace": [],
+                    "obsolete": False,
+                }
         else:
 
             def fetch() -> Term | None:
@@ -289,13 +356,19 @@ class Ontologies:
             **data,
             "local_iri": iri,
             "provider": self.provider,
-            "source": OLS + "/terms?iri=" + quote(canonical, safe="")
-            if self.provider == "ols"
-            else ONTOBEE,
+            "source": self._source(canonical),
             "match": "exact_iri" if canonical == iri else "registry_identifier",
             "parents": parents,
             "fetched_at": self.cache[json.dumps([self.provider, "term", canonical])]["fetched_at"],
         }  # type: ignore[return-value]
+
+    def _source(self, canonical: str) -> str:
+        """Return where the provider answers about a term."""
+        if self.provider == "ols":
+            return OLS + "/terms?iri=" + quote(canonical, safe="")
+        if self.provider == "wikidata":
+            return WIKIDATA
+        return ONTOBEE
 
     def search(self, text: str, *, ontology: str | None = None, exact: bool = True) -> list[Term]:
         """Return ontology candidates; membership in a dataset requires client verification.
@@ -309,6 +382,24 @@ class Ontologies:
 
         def fetch() -> list[Term]:
             """Search exact names at the configured provider."""
+            if self.provider == "wikidata":
+                answer = self._wikidata(
+                    action="wbsearchentities", search=text, language="en", limit=SEARCH_ROWS
+                )
+                items: list[Term] = []
+                for item in answer.get("search", []):
+                    matched = (item.get("match") or {}).get("text", "")
+                    if exact and matched.casefold() != text:
+                        continue
+                    description = item.get("description")
+                    items.append(
+                        {
+                            "iri": ENTITY + item["id"],
+                            "label": item.get("label") or item["id"],
+                            "description": [description] if description else [],
+                        }
+                    )
+                return items
             if self.provider == "ols":
                 params: dict[str, Any] = {
                     "q": text,
@@ -388,7 +479,7 @@ class Ontologies:
 
     def parents(self, term: Term) -> list[Term]:
         """Retrieve a bounded direct hierarchy for explanation; leave query paths unchanged."""
-        if self.provider == "ols" and not term.get("ontology"):
+        if self.provider == "wikidata" or (self.provider == "ols" and not term.get("ontology")):
             return []
 
         def fetch() -> list[Term]:
@@ -418,6 +509,96 @@ class Ontologies:
             named.setdefault(parent["iri"], parent)
         return list(named.values())
 
+    def vocabularies(self, text: str = "") -> list[Vocabulary]:
+        """Return the vocabularies the provider lists whose identifier or title has *text*, all
+        of them without it: OLS4's ontologies, Ontobee's ontology graphs, or Wikidata's items.
+        """
+        if self.provider == "wikidata":
+            listed = [
+                Vocabulary(
+                    id="wikidata",
+                    title="Wikidata",
+                    namespace=ENTITY,
+                    description="The items of Wikidata.",
+                    prefix="",
+                )
+            ]
+        elif self.provider == "ols":
+
+            def fetch() -> list[Vocabulary]:
+                """Read the ontologies of OLS: a term namespace from each one's base IRIs, else
+                its OBO PURL.
+                """
+                found = []
+                for ontology in self._json("/ontologies", size=1000)["_embedded"]["ontologies"]:
+                    config = ontology.get("config") or {}
+                    prefix = config.get("preferredPrefix") or ontology["ontologyId"].upper()
+                    bases = config.get("baseUris") or [OBO + prefix + "_"]
+                    found.append(
+                        Vocabulary(
+                            id=ontology["ontologyId"],
+                            title=config.get("title") or prefix,
+                            namespace=bases[0],
+                            description=config.get("description") or "",
+                            prefix=prefix,
+                        )
+                    )
+                return found
+
+            listed = self._request("vocabularies", "", fetch) or []
+        else:
+
+            def fetch() -> list[Vocabulary]:
+                """Read the ontology graphs of Ontobee, named by their OBO prefix."""
+                found = []
+                rows = self._sparql(
+                    "PREFIX owl: <http://www.w3.org/2002/07/owl#> "
+                    "PREFIX dc: <http://purl.org/dc/elements/1.1/> "
+                    "SELECT DISTINCT ?graph ?title WHERE { GRAPH ?graph { ?o a owl:Ontology . "
+                    "OPTIONAL { ?o dc:title ?title } } }"
+                )
+                for row in rows:
+                    prefix = row["graph"]["value"].rstrip("/").split("/")[-1]
+                    found.append(
+                        Vocabulary(
+                            id=prefix,
+                            title=row.get("title", {}).get("value") or prefix,
+                            namespace=OBO + prefix + "_",
+                            description="",
+                            prefix=prefix,
+                        )
+                    )
+                return found
+
+            listed = self._request("vocabularies", "", fetch) or []
+        wanted = text.casefold()
+        found = []
+        for vocabulary in listed:
+            if wanted in (vocabulary["id"] + " " + vocabulary["title"]).casefold():
+                found.append(vocabulary)
+        return found
+
+    def terms(self, text: str, namespace: str) -> list[Term]:
+        """Return the terms at a namespace whose names have *text* (search, not exact), each with
+        its code: the prefix of the provider's vocabulary at that namespace and the rest of its
+        IRI (OBI:0000070), or the rest of its IRI alone when the prefix is empty (Q42).
+        """
+        ontology = None
+        prefix = ""
+        for vocabulary in self.vocabularies():
+            if vocabulary["namespace"] == namespace:
+                ontology = vocabulary["id"]
+                prefix = vocabulary["prefix"] + ":" if vocabulary["prefix"] else ""
+        if self.provider != "ols":
+            ontology = None
+        found = []
+        for term in self.search(text, ontology=ontology, exact=False):
+            if term["iri"].startswith(namespace):
+                coded = Term(**term)
+                coded["code"] = prefix + term["iri"][len(namespace) :]
+                found.append(coded)
+        return found
+
     def _ubergraph(self) -> UberGraph:
         if self.ubergraph is None:
             self.ubergraph = UberGraph(timeout=max(self.timeout, 30))
@@ -429,7 +610,7 @@ class Ontologies:
     def _held(self, terms: list[str]) -> tuple[dict[str, str], set[str]]:
         """Return the canonical IRI of each term and the canonical IRIs that UberGraph holds.
 
-        Another IRI form of an OBO term (identifiers.org) is asked by its PURL.
+        Another IRI form of an OBO term is asked by its PURL.
         """
         canonical = {term: canonical_iri(term) for term in terms}
         held = self._closure(
@@ -442,7 +623,7 @@ class Ontologies:
     def ancestors(self, terms: list[str]) -> dict[str, list[str] | None]:
         """Return all named superclasses of each term, or None for a term that no source knows.
 
-        UberGraph's closure for the terms it holds; OLS for the others (EFO, EDAM, ...). An
+        UberGraph's closure for the terms it holds; OLS for the others. An
         empty list is a term without superclasses; None is not that.
         """
         canonical, held = self._held(terms)
@@ -517,8 +698,8 @@ class Ontologies:
         """Return the pairs of terms that name one compound in another form.
 
         Tautomers and conjugate acids and bases (rdfsolve.ontology.vocabulary.
-        CHEMICAL_VARIANT_PREDICATES), from UberGraph's closure: L-serine and L-serine
-        zwitterion are tautomers. Terms it does not hold have no variants here.
+        CHEMICAL_VARIANT_PREDICATES), from UberGraph's closure. Terms it does not hold have no
+        variants here.
         """
         from rdfsolve.ontology.vocabulary import CHEMICAL_VARIANT_PREDICATES
 
@@ -626,4 +807,18 @@ class Ontologies:
         }
 
 
-__all__ = ["Ontologies", "synonym_evidence"]
+def serving(
+    namespace: str, *, cache: str | Path | None = None, offline: bool = False
+) -> str | None:
+    """Return the provider that lists the vocabulary at a namespace: OLS, else Wikidata, else
+    Ontobee; None when none does.
+    """
+    for provider in ("ols", "wikidata", "ontobee"):
+        with Ontologies(provider, cache=cache, offline=offline) as lookup:
+            for vocabulary in lookup.vocabularies():
+                if vocabulary["namespace"] == namespace:
+                    return provider
+    return None
+
+
+__all__ = ["PROVIDERS", "Ontologies", "Vocabulary", "serving", "synonym_evidence"]

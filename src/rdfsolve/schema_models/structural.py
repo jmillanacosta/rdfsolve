@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from rdfsolve.schema_models.paths import PropertyPath
+from rdfsolve.schema_models.pattern import PatternSample
 
 
 class StructuralPattern(BaseModel):
@@ -35,6 +36,11 @@ class StructuralPattern(BaseModel):
     witness_query: str
     recount_query: str
     examples: list[dict[str, dict[str, str]]] = Field(default_factory=list)
+    # Set when the endpoint refused the discovery of the property and a bounded sample of its
+    # edges or subjects answered (rdfsolve.mining.sampling): covers "patterns" (other shapes of
+    # the property may exist) and, when the recount was refused too, "counts" (lower bounds).
+    count_bound: Literal["exact", "lower_bound"] | None = None
+    sampled: PatternSample | None = None
 
     @field_validator(
         "subject_properties", "object_properties", "type_graph_uris", "object_type_graph_uris"

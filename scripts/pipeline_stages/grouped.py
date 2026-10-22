@@ -250,7 +250,6 @@ class GroupedMiningStage(LocalMiningStage):
         cfg = QleverConfig(
             memory_for_queries="80G",
             timeout="1200s",
-            parallel_parsing=False,
             num_triples_per_batch=1_000_000,
         )
 

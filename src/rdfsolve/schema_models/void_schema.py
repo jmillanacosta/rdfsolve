@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from rdflib import Dataset, Graph, Namespace
 from rdflib.namespace import RDF
 
+from rdfsolve._datasets import default_graph
 from rdfsolve.schema_models.void_model import VoidClassPartition, VoidDataset
 
 if TYPE_CHECKING:
@@ -81,12 +82,12 @@ class VoidSchema:
         if graph_uri is not None and graph_uri not in self.graph_uris:
             raise ValueError(f"No VoID was retrieved from {graph_uri}")
         graph = (
-            self.rdf_dataset.default_context
+            default_graph(self.rdf_dataset)
             if graph_uri is None
             else self.rdf_dataset.graph(graph_uri)
         )
         dataset = Dataset()
-        target = dataset.default_context if graph_uri is None else dataset.graph(graph_uri)
+        target = default_graph(dataset) if graph_uri is None else dataset.graph(graph_uri)
         target += graph
         return VoidSchema(
             graph + Graph(),

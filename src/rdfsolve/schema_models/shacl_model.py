@@ -5,10 +5,9 @@ Specification: https://www.w3.org/TR/shacl/
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast, get_args
+from typing import TYPE_CHECKING, Literal, Self, cast, get_args
 
 from pydantic import BaseModel, Field, model_validator
-from typing_extensions import Self
 
 from rdfsolve.schema_models._rdf import optional_count
 from rdfsolve.schema_models.enrichment import RdfTerm
@@ -22,6 +21,23 @@ if TYPE_CHECKING:
 NodeKind = Literal[
     "IRI", "Literal", "BlankNode", "BlankNodeOrIRI", "BlankNodeOrLiteral", "IRIOrLiteral"
 ]
+
+
+Severity = Literal["Violation", "Warning", "Info"]
+
+
+def _severity(graph: Graph, shape: Node) -> Severity | None:
+    """Read sh:severity: one of the three SHACL severities, or None when it is not given."""
+    from rdflib import Namespace
+
+    sh = Namespace("http://www.w3.org/ns/shacl#")
+    value = graph.value(shape, sh.severity, any=False)
+    if value is None:
+        return None
+    name = str(value).removeprefix(str(sh))
+    if name not in get_args(Severity):
+        raise ValueError(f"Invalid sh:severity: {value}")
+    return cast(Severity, name)
 
 
 def _count(graph: Graph, shape: Node, predicate: URIRef) -> int | None:
@@ -76,6 +92,45 @@ def _text(graph: Graph, shape: Node, predicate: URIRef) -> tuple[str | None, str
     return str(texts[0]), texts[0].language
 
 
+class ShaclPropertyGroup(BaseModel):
+    """Represents sh:PropertyGroup: a group of property shapes, such as a section of a form."""
+
+    uri: str
+    label: str | None = Field(None, description="rdfs:label")
+    order: int | None = Field(None, description="sh:order of the group")
+
+    def to_rdf(self, graph: Graph) -> URIRef:
+        """Serialize to RDF graph."""
+        from rdflib import Literal as RdfLiteral
+        from rdflib import Namespace
+        from rdflib import URIRef as Ref
+        from rdflib.namespace import RDF, RDFS
+
+        sh = Namespace("http://www.w3.org/ns/shacl#")
+        node = Ref(self.uri)
+        graph.add((node, RDF.type, sh.PropertyGroup))
+        if self.label is not None:
+            graph.add((node, RDFS.label, RdfLiteral(self.label)))
+        if self.order is not None:
+            graph.add((node, sh.order, RdfLiteral(self.order)))
+        return node
+
+    @classmethod
+    def from_rdf(cls, graph: Graph, uri: Node) -> ShaclPropertyGroup:
+        """Parse from RDF graph."""
+        from rdflib import Namespace
+        from rdflib.namespace import RDFS
+
+        sh = Namespace("http://www.w3.org/ns/shacl#")
+        label = graph.value(uri, RDFS.label)
+        order = graph.value(uri, sh.order)
+        return cls(
+            uri=str(uri),
+            label=str(label) if label is not None else None,
+            order=int(order) if order is not None else None,
+        )
+
+
 class ShaclPropertyShape(BaseModel):
     """Represents sh:PropertyShape."""
 
@@ -84,7 +139,11 @@ class ShaclPropertyShape(BaseModel):
     datatype: str | None = Field(None, description="sh:datatype")
     class_constraint: str | None = Field(None, description="sh:class")
     node_kind: NodeKind | None = None
+    pattern: str | None = Field(None, description="sh:pattern of the values")
     deactivated: bool = False
+    severity: Severity | None = Field(
+        None, description="sh:severity of the results of this shape (None: Violation)"
+    )
     min_count: int | None = Field(None, description="sh:minCount")
     max_count: int | None = Field(None, description="sh:maxCount")
     properties: list[ShaclPropertyShape] = Field(default_factory=list)
@@ -100,6 +159,11 @@ class ShaclPropertyShape(BaseModel):
         default_factory=list,
         description="Value constraints combined with sh:or; paths are ignored in these alternatives",
     )
+    values: list[RdfTerm] = Field(
+        default_factory=list, description="sh:in: the allowed values, in order"
+    )
+    order: int | None = Field(None, description="sh:order: the place of the property in a form")
+    group: ShaclPropertyGroup | None = Field(None, description="sh:group")
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -142,8 +206,12 @@ class ShaclPropertyShape(BaseModel):
             }
             if self.node_kind in nk_map:
                 graph.add((node, sh.nodeKind, nk_map[self.node_kind]))
+        if self.pattern is not None:
+            graph.add((node, sh.pattern, RdfLiteral(self.pattern)))
         if self.deactivated:
             graph.add((node, sh.deactivated, RdfLiteral(True)))
+        if self.severity is not None:
+            graph.add((node, sh.severity, sh[self.severity]))
         if self.min_count is not None:
             graph.add((node, sh.minCount, RdfLiteral(self.min_count, datatype=XSD.integer)))
         if self.max_count is not None:
@@ -163,6 +231,16 @@ class ShaclPropertyShape(BaseModel):
             head = BNode()
             Collection(graph, head, alternatives)
             graph.add((node, sh["or"], head))
+        if self.values:
+            from rdflib.collection import Collection
+
+            head = BNode()
+            Collection(graph, head, [value.to_rdf() for value in self.values])
+            graph.add((node, sh["in"], head))
+        if self.order is not None:
+            graph.add((node, sh.order, RdfLiteral(self.order)))
+        if self.group is not None:
+            graph.add((node, sh.group, self.group.to_rdf(graph)))
 
         for child in self.properties:
             graph.add((node, sh.property, child.to_rdf(graph)))
@@ -238,6 +316,7 @@ class ShaclPropertyShape(BaseModel):
             datatype=str(datatype) if datatype else None,
             class_constraint=str(class_constraint) if class_constraint else None,
             node_kind=node_kind,
+            pattern=str(pattern) if (pattern := graph.value(uri, sh.pattern, any=False)) else None,
             min_count=_count(graph, uri, sh.minCount),
             max_count=_count(graph, uri, sh.maxCount),
             properties=[
@@ -250,6 +329,7 @@ class ShaclPropertyShape(BaseModel):
             qualified_max_count=_count(graph, uri, sh.qualifiedMaxCount),
             qualified_disjoint=_boolean(graph, uri, sh.qualifiedValueShapesDisjoint),
             deactivated=_boolean(graph, uri, sh.deactivated),
+            severity=_severity(graph, uri),
             name=name,
             description=description,
             name_language=name_language,
@@ -259,6 +339,17 @@ class ShaclPropertyShape(BaseModel):
                 for head in graph.objects(uri, sh["or"])
                 for branch in graph.items(head)
             ],
+            values=[
+                RdfTerm.from_rdf(value)
+                for head in graph.objects(uri, sh["in"])
+                for value in graph.items(head)
+            ],
+            order=int(order)
+            if (order := graph.value(uri, sh.order, any=False)) is not None
+            else None,
+            group=ShaclPropertyGroup.from_rdf(graph, group)
+            if (group := graph.value(uri, sh.group, any=False)) is not None
+            else None,
         )
 
 
@@ -266,15 +357,50 @@ class ShaclNodeShape(BaseModel):
     """Represents sh:NodeShape."""
 
     uri: str
-    target_class: str | None = Field(None, description="sh:targetClass")
+    target_class: str | None = Field(
+        None, description="sh:targetClass, when the shape targets one class only"
+    )
+    target_classes: list[str] = Field(
+        default_factory=list, description="sh:targetClass: every class the shape targets"
+    )
+    target_subjects_of: list[str] = Field(
+        default_factory=list, description="sh:targetSubjectsOf: the subjects of these properties"
+    )
+    alternatives: list[ShaclPropertyShape] = Field(
+        default_factory=list,
+        description="Shapes combined with sh:or on the node: it conforms to one of them",
+    )
     closed: bool = Field(False, description="sh:closed")
+    pattern: str | None = Field(None, description="sh:pattern: the IRIs of the focus nodes")
+    node_kind: str | None = Field(None, description="sh:nodeKind of the focus nodes (local name)")
+    parts: list[str] = Field(
+        default_factory=list,
+        description="Node shapes combined with sh:or: a focus node conforms to one of them",
+    )
+    not_shapes: list[str] = Field(
+        default_factory=list, description="sh:not: node shapes a focus node does not conform to"
+    )
     deactivated: bool = False
+    severity: Severity | None = Field(
+        None, description="sh:severity of the results of this shape (None: Violation)"
+    )
     ignored_properties: list[str] = Field(default_factory=list, description="sh:ignoredProperties")
     property_shapes: list[ShaclPropertyShape] = Field(default_factory=list)
     name: str | None = Field(None, description="rdfs:label")
     description: str | None = Field(None, description="rdfs:comment")
     name_language: str | None = None
     description_language: str | None = None
+
+    @model_validator(mode="after")
+    def check_targets(self) -> Self:
+        """Give target_class among target_classes, and the only one of them as target_class."""
+        if self.target_class and not self.target_classes:
+            self.target_classes = [self.target_class]
+        if self.target_class is None and len(self.target_classes) == 1:
+            self.target_class = self.target_classes[0]
+        if self.target_class and self.target_classes != [self.target_class]:
+            raise ValueError("target_class is for a shape of one target class only")
+        return self
 
     def to_rdf(self, graph: Graph) -> URIRef | BNode:
         """Serialize to RDF graph."""
@@ -290,10 +416,35 @@ class ShaclNodeShape(BaseModel):
         uri = BNode(self.uri[2:]) if self.uri.startswith("_:") else Ref(self.uri)
         graph.add((uri, RDF.type, sh.NodeShape))
 
-        if self.target_class:
+        for target in self.target_classes:
+            graph.add((uri, sh.targetClass, Ref(target)))
+        if self.target_class and self.target_class not in self.target_classes:
             graph.add((uri, sh.targetClass, Ref(self.target_class)))
+        for prop in self.target_subjects_of:
+            graph.add((uri, sh.targetSubjectsOf, Ref(prop)))
+        if self.alternatives:
+            from rdflib.collection import Collection
+
+            members: list[Node] = [shape.to_rdf(graph) for shape in self.alternatives]
+            head = BNode()
+            Collection(graph, head, members)
+            graph.add((uri, sh["or"], head))
+        if self.parts:
+            from rdflib.collection import Collection
+
+            head = BNode()
+            Collection(graph, head, [Ref(part) for part in self.parts])
+            graph.add((uri, sh["or"], head))
+        for other in self.not_shapes:
+            graph.add((uri, sh["not"], Ref(other)))
+        if self.node_kind is not None:
+            graph.add((uri, sh.nodeKind, sh[self.node_kind]))
         if self.deactivated:
             graph.add((uri, sh.deactivated, RdfLiteral(True)))
+        if self.severity is not None:
+            graph.add((uri, sh.severity, sh[self.severity]))
+        if self.pattern is not None:
+            graph.add((uri, sh.pattern, RdfLiteral(self.pattern)))
         if self.closed:
             graph.add((uri, sh.closed, RdfLiteral(True)))
         if self.name is not None:
@@ -326,13 +477,29 @@ class ShaclNodeShape(BaseModel):
 
         from rdflib import BNode
 
-        target_class = graph.value(uri, sh.targetClass, any=False)
+        target_classes = sorted(str(c) for c in graph.objects(uri, sh.targetClass))
+        target_subjects_of = sorted(str(p) for p in graph.objects(uri, sh.targetSubjectsOf))
+        from rdflib.namespace import RDF
+
+        # A branch of sh:or that is a named node shape is a part; any other, an alternative.
+        branches = [branch for head in graph.objects(uri, sh["or"]) for branch in graph.items(head)]
+        parts = [
+            str(b)
+            for b in branches
+            if not isinstance(b, BNode) and (b, RDF.type, sh.NodeShape) in graph
+        ]
+        alternatives = [
+            ShaclPropertyShape.from_rdf(graph, branch)
+            for branch in branches
+            if str(branch) not in parts
+        ]
         name, name_language = _text(graph, uri, RDFS.label)
         if name is None:
             name, name_language = _text(graph, uri, sh.name)
         description, description_language = _text(graph, uri, RDFS.comment)
         if description is None:
             description, description_language = _text(graph, uri, sh.description)
+        kind = graph.value(uri, sh.nodeKind, any=False)
 
         property_shapes = []
         for ps_uri in graph.objects(uri, sh.property):
@@ -340,9 +507,16 @@ class ShaclNodeShape(BaseModel):
 
         return cls(
             uri=("_:" + str(uri)) if isinstance(uri, BNode) else str(uri),
-            target_class=str(target_class) if target_class else None,
+            target_classes=target_classes,
+            target_subjects_of=target_subjects_of,
+            alternatives=alternatives,
             closed=_boolean(graph, uri, sh.closed),
+            pattern=str(pattern) if (pattern := graph.value(uri, sh.pattern, any=False)) else None,
+            node_kind=str(kind).rsplit("#", 1)[-1] if kind is not None else None,
+            parts=parts,
+            not_shapes=sorted(str(o) for o in graph.objects(uri, sh["not"])),
             deactivated=_boolean(graph, uri, sh.deactivated),
+            severity=_severity(graph, uri),
             ignored_properties=[
                 str(item)
                 for head in graph.objects(uri, sh.ignoredProperties)
@@ -650,6 +824,7 @@ class ShaclShapesGraph(BaseModel):
             "qualifiedMaxCount",
             "qualifiedValueShapesDisjoint",
             "targetClass",
+            "targetSubjectsOf",
             "closed",
             "ignoredProperties",
             "property",
@@ -675,6 +850,7 @@ class ShaclShapesGraph(BaseModel):
         node_shapes = []
         nodes = set(graph.subjects(RDF.type, sh.NodeShape))
         nodes.update(graph.subjects(sh.targetClass, None))
+        nodes.update(graph.subjects(sh.targetSubjectsOf, None))
         nodes.update(graph.subjects(sh.property, None))
         for ns_uri in sorted(nodes, key=str):
             if (ns_uri, sh.path, None) in graph:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from hashlib import sha256
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from rdflib import RDF, BNode, Graph, Literal, URIRef
@@ -11,10 +11,8 @@ from rdflib.term import Identifier
 
 from rdfsolve.schema_models.enrichment import RdfTerm
 
-Member = TypeVar("Member")
 
-
-class RDFList(BaseModel, Generic[Member]):
+class RDFList[Member](BaseModel):
     """An RDF collection whose members retain order and duplicates."""
 
     # A list of records can be a field of the same record class. The build is deferred, so

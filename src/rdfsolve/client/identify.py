@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
@@ -29,7 +30,8 @@ class Identification(BaseModel):
     method: str = Field(
         "any property",
         description="schema property: asked only properties whose examples carry this "
-        "identifier type; any property: every property was searched.",
+        "identifier type; any property: every property was searched; resource IRI: the resource "
+        "is named by a registered IRI of the identifier (predicate empty).",
     )
     intermediates: list[str] = Field(
         default_factory=list,
@@ -113,12 +115,44 @@ def identify(client: Client, identifiers: Iterable[str]) -> list[Identification]
     return _without_intermediates(client, found)
 
 
+def named(client: Client, keys: list[str]) -> list[Identification]:
+    """Return the resources whose own IRI is a registered IRI of an identifier: a source that names
+    its records by their identifiers carries them as the records themselves.
+    """
+    rows = " ".join(
+        f"({Literal(k).n3()} {t.n3()})" for k in keys for t in spellings(k) if isinstance(t, URIRef)
+    )
+    if not rows:
+        return []
+    body = client._scope(f"VALUES (?key ?s) {{ {rows} }} FILTER EXISTS {{ ?s ?p ?o }}")
+    with client.step("Identify resources by their IRIs"):
+        bindings = client._select(f"SELECT DISTINCT ?key ?s WHERE {{ {body} }}")
+    return [
+        Identification(
+            identifier=row["key"]["value"],
+            resource=row["s"]["value"],
+            predicate="",
+            value=row["s"]["value"],
+            kind="uri",
+            method="resource IRI",
+        )
+        for row in bindings
+    ]
+
+
 def _without_intermediates(client: Client, found: list[Identification]) -> list[Identification]:
     """Keep a matched resource that links to another match; report the other as intermediate."""
-    resources = sorted({m.resource for m in found})
-    if len(resources) < 2:
+    # A resource that is not an absolute IRI (a relative IRI kept as the source writes it) cannot
+    # be named in a query: it is kept as found, and takes no part in the links checked here.
+    written = {}
+    for resource in sorted({m.resource for m in found}):
+        try:
+            written[resource] = _iri(resource)
+        except ValueError:
+            continue
+    if len(written) < 2:
         return found
-    values = " ".join(_iri(r) for r in resources)
+    values = " ".join(written.values())
     body = client._scope(f"VALUES ?a {{ {values} }} VALUES ?b {{ {values} }} ?a ?link ?b .")
     with client.step("Link identified resources"):
         rows = client._select(f"SELECT DISTINCT ?a ?b WHERE {{ {body} }}")
@@ -139,38 +173,65 @@ def _without_intermediates(client: Client, found: list[Identification]) -> list[
 def statements(
     client: Client, iris: Iterable[str], languages: Iterable[str] = (), *, names: bool = True
 ) -> Graph:
-    """Read the resources' direct statements and the names of the resources they point to."""
-    langs = [lang.lower() for lang in languages]
-    keep = (
-        'FILTER(!isLiteral(?o) || LANG(?o) = "" || LCASE(LANG(?o)) IN ('
-        + ", ".join(Literal(lang).n3() for lang in langs)
-        + "))"
-        if langs
-        else ""
-    )
+    """Read the resources' direct statements and the names of the resources they point to.
+
+    The queries are plain patterns: literals in other *languages* are left out of the rows they
+    return, not by a FILTER (an engine can drop every row of a FILTER on terms after VALUES). A
+    value that is not an absolute IRI (a relative IRI of the source) keeps its statement; its
+    name is not read, and a warning names it.
+    """
+    langs = {lang.lower() for lang in languages}
+
+    def kept(binding: dict[str, Any]) -> bool:
+        """Return whether a value is kept: no literal of a language not asked for."""
+        language = (binding.get("xml:lang") or "").lower()
+        return (
+            not langs
+            or binding.get("type") not in ("literal", "typed-literal")
+            or (not language or language in langs)
+        )
+
     graph = Graph()
     subjects = list(dict.fromkeys(iris))
     predicates = " ".join(_iri(p) for p in NAME_PREDICATES)
     for start in range(0, len(subjects), BATCH):
         values = " ".join(_iri(s) for s in subjects[start : start + BATCH])
-        body = client._scope(f"VALUES ?s {{ {values} }} ?s ?p ?o . {keep}")
+        body = client._scope(f"VALUES ?s {{ {values} }} ?s ?p ?o .")
         with client.step("Read statements"):
             rows = client._select(f"SELECT ?s ?p ?o WHERE {{ {body} }}", exhaustive=True)
         for row in rows:
-            graph.add(
-                (URIRef(row["s"]["value"]), URIRef(row["p"]["value"]), _term(row["o"]).to_rdf())
-            )
-    objects = sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)}) if names else []
-    label_filter = keep.replace("?o", "?name")
-    for start in range(0, len(objects), BATCH * 5):
-        values = " ".join(_iri(o) for o in objects[start : start + BATCH * 5])
-        body = client._scope(
-            f"VALUES ?o {{ {values} }} VALUES ?p {{ {predicates} }} ?o ?p ?name . {label_filter}"
+            if kept(row["o"]):
+                graph.add(
+                    (URIRef(row["s"]["value"]), URIRef(row["p"]["value"]), _term(row["o"]).to_rdf())
+                )
+    objects: list[str] = []
+    skipped: list[str] = []
+    for value in (
+        sorted({str(o) for o in graph.objects() if isinstance(o, URIRef)}) if names else []
+    ):
+        try:
+            objects.append(_iri(value))
+        except ValueError:
+            skipped.append(value)
+    if skipped:
+        warnings.warn(
+            f"Names not read for {len(skipped)} values that are not absolute IRIs "
+            f"(their statements are kept): {', '.join(skipped[:10])}",
+            UserWarning,
+            stacklevel=3,
         )
+    for start in range(0, len(objects), BATCH * 5):
+        values = " ".join(objects[start : start + BATCH * 5])
+        body = client._scope(f"VALUES ?o {{ {values} }} VALUES ?p {{ {predicates} }} ?o ?p ?name .")
         with client.step("Read names"):
             rows = client._select(f"SELECT ?o ?p ?name WHERE {{ {body} }}", exhaustive=True)
         for row in rows:
-            graph.add(
-                (URIRef(row["o"]["value"]), URIRef(row["p"]["value"]), _term(row["name"]).to_rdf())
-            )
+            if kept(row["name"]):
+                graph.add(
+                    (
+                        URIRef(row["o"]["value"]),
+                        URIRef(row["p"]["value"]),
+                        _term(row["name"]).to_rdf(),
+                    )
+                )
     return graph

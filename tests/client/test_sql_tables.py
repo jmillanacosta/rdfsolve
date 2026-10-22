@@ -1,0 +1,471 @@
+"""rdfsolve.client.sql_tables: the records of a graph as tables for SQL, following a profile:
+the SQL of the tables, rows that know their record, and the same graph read back."""
+
+from __future__ import annotations
+
+import sqlite3
+
+import pandas as pd
+import pytest
+from rdflib import BNode, Graph, Literal, URIRef
+from rdflib.collection import Collection as RDFList
+from rdflib.compare import isomorphic
+
+from rdfsolve.client.sql_tables import from_tables, layout, tables
+
+PROFILE = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Tool a sh:NodeShape ; sh:targetClass schema:SoftwareApplication ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] ,
+        [ sh:path schema:identifier ; sh:maxCount 1 ] ,
+        [ sh:path dct:conformsTo ; sh:maxCount 1 ; sh:nodeKind sh:IRI ] ,
+        [ sh:path schema:about ; sh:nodeKind sh:IRI ] ,
+        [ sh:path schema:provider ] ,
+        [ sh:path schema:dateCreated ; sh:maxCount 1 ] .
+ex:ToolName a sh:NodeShape ; sh:targetClass schema:SoftwareApplication ;
+    sh:property [ sh:path schema:description ; sh:minCount 1 ] ,
+        [ sh:path schema:description ; sh:maxCount 1 ; sh:message "One description." ] .
+ex:Person a sh:NodeShape ; sh:targetClass schema:Person ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] .
+ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] , [ sh:path schema:address ] .
+"""
+
+DATA = """
+@prefix schema: <https://schema.org/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<https://example.org/tool/1> a schema:SoftwareApplication, <https://example.org/Extra> ;
+    schema:name "Tool"@en ; schema:identifier "T1"^^xsd:string ; schema:description "A tool." ;
+    dct:conformsTo <https://example.org/profile> ;
+    schema:about <https://example.org/term/1>, "Other" ;
+    schema:dateCreated "2026-10-15"^^xsd:date ;
+    schema:termCode "outside the profile" ;
+    schema:author _:someone ;
+    schema:provider [ a schema:Organization ; schema:name "Nested Org" ;
+                      schema:address [ schema:streetAddress "Deep Street 1" ] ] .
+<https://example.org/tool/2> a schema:SoftwareApplication ;
+    schema:name "One", "Two" ;
+    dct:conformsTo "a text where a link is expected" .
+_:someone a schema:Person ; schema:name "Someone" .
+<https://example.org/untyped> schema:name "No class" .
+"""
+TOOL = "https://example.org/tool/1"
+
+
+def _database(found: dict[str, pd.DataFrame]) -> sqlite3.Connection:
+    connection = sqlite3.connect(":memory:")
+    connection.executescript(layout(PROFILE).ddl())
+    for name, frame in sorted(found.items()):
+        frame.to_sql(name, connection, index=False, if_exists="append")
+    return connection
+
+
+def _read(connection: sqlite3.Connection, where: str = "", *args: str) -> dict[str, pd.DataFrame]:
+    names = [n for (n,) in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+    return {
+        # The table names are the database's own.
+        name: pd.read_sql(
+            f'SELECT * FROM "{name}" {where}', connection, params=args, dtype="string"
+        )  # noqa: S608
+        for name in names
+    }
+
+
+def test_names_come_from_the_profile_and_a_field_is_single_when_any_shape_says_so():
+    shapes = layout(PROFILE)
+    tool = shapes.classes["https://schema.org/SoftwareApplication"]
+    assert tool.name == "schema_software_application"
+    assert tool.single["http://purl.org/dc/terms/conformsTo"] == "dct_conforms_to"
+    assert "https://schema.org/description" in tool.single, "the stricter of two shapes counts"
+    assert tool.several["https://schema.org/about"] == "schema_about"
+    columns = shapes.columns()
+    assert columns["schema_software_application"][:3] == ["record", "iri", "type"]
+    assert columns["schema_software_application__schema_about"] == [
+        "record",
+        "iri",
+        "value",
+        "term",
+    ]
+
+
+def test_the_ddl_keys_the_tables_and_the_rows_come_back_as_the_same_graph():
+    data = Graph().parse(data=DATA, format="turtle")
+    found = tables(data, PROFILE)
+    connection = _database(found)
+    with pytest.raises(sqlite3.IntegrityError):
+        found["schema_software_application"].head(1).to_sql(
+            "schema_software_application", connection, index=False, if_exists="append"
+        )
+    assert isomorphic(from_tables(_read(connection), PROFILE), data)
+
+
+def test_a_record_holds_its_blank_nodes_at_any_depth():
+    data = Graph().parse(data=DATA, format="turtle")
+    found = tables(data, PROFILE)
+    organization = found["schema_organization"]
+    assert list(organization["record"]) == [TOOL]
+    nested = found["statements"]
+    assert set(nested[nested["value"] == "Deep Street 1"]["record"]) == {TOOL}
+    tool = from_tables(_read(_database(found), "WHERE record = ?", TOOL), PROFILE)
+    assert (None, None, Literal("Nested Org")) in tool
+    assert (None, None, Literal("Deep Street 1")) in tool
+    assert (None, None, Literal("Someone")) in tool
+    assert not list(tool.subjects(None, Literal("One"))), "only the rows of that record"
+
+
+def test_a_blank_node_of_two_records_is_refused():
+    data = Graph().parse(data=DATA, format="turtle")
+    shared = BNode("shared")
+    data.add((URIRef(TOOL), URIRef("https://schema.org/author"), shared))
+    data.add((URIRef("https://example.org/tool/2"), URIRef("https://schema.org/author"), shared))
+    data.add((shared, URIRef("https://schema.org/name"), Literal("Shared")))
+    with pytest.raises(ValueError, match="_:shared"):
+        tables(data, PROFILE)
+
+
+def test_a_single_field_with_two_values_goes_to_the_statements():
+    data = Graph().parse(data=DATA, format="turtle")
+    found = tables(data, PROFILE)
+    tool = found["schema_software_application"].set_index("iri")
+    assert pd.isna(tool.loc["https://example.org/tool/2", "schema_name"])
+    statements = found["statements"]
+    assert set(statements[statements["iri"] == "https://example.org/tool/2"]["value"]) >= {
+        "One",
+        "Two",
+    }
+    assert tool.loc["https://example.org/tool/2", "dct_conforms_to__term"] == ""
+
+
+def test_the_sql_does_not_depend_on_how_the_profile_was_parsed():
+    with_defaults = Graph().parse(data=PROFILE, format="turtle")
+    declared_only = Graph(bind_namespaces="none").parse(data=PROFILE, format="turtle")
+    assert layout(with_defaults).ddl() == layout(declared_only).ddl() == layout(PROFILE).ddl()
+    assert "dct_conforms_to" in layout(with_defaults).ddl()
+
+
+def test_without_data_the_tables_are_empty_with_their_columns():
+    empty = tables(Graph(), PROFILE)
+    assert set(empty) == set(layout(PROFILE).columns())
+    assert all(frame.empty for frame in empty.values())
+
+
+def test_a_client_gives_the_tables_of_its_local_rdf():
+    import pyoxigraph as ox
+
+    from rdfsolve.client.api import Client
+    from rdfsolve.schema_models import MinedSchema
+
+    data = Graph().parse(data=DATA, format="turtle")
+    store = ox.Store()
+    store.load(DATA.encode(), format=ox.RdfFormat.TURTLE)
+    schema = MinedSchema(about={"dataset_name": "fixture"}, patterns=[], shape_profile=PROFILE)
+    for source in (data, store):
+        client = Client(schema, source, graph_uris=[])
+        # Oxigraph keeps "T1"^^xsd:string as "T1" (the same literal in RDF 1.1): the graph read
+        # back is the one the client holds.
+        assert isomorphic(client.from_tables(client.tables()), client._local_graph())
+
+
+def test_a_class_has_the_fields_of_the_shapes_its_shape_builds_on():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Thing a sh:NodeShape ; sh:property [ sh:path schema:name ; sh:maxCount 1 ] .
+ex:Page a sh:NodeShape ; sh:targetClass schema:WebPage ; sh:node ex:Thing ;
+    sh:property [ sh:path schema:hasPart ] .
+ex:AboutPage a sh:NodeShape ; sh:targetClass schema:AboutPage ; sh:node ex:Page ;
+    sh:property [ sh:path schema:about ; sh:maxCount 1 ] .
+"""
+    about = layout(profile).classes["https://schema.org/AboutPage"]
+    assert about.single == {
+        "https://schema.org/about": "schema_about",
+        "https://schema.org/name": "schema_name",
+    }
+    assert about.several == {"https://schema.org/hasPart": "schema_has_part"}
+
+
+def test_each_class_of_a_shape_of_two_target_classes_has_a_table():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Chemical a sh:NodeShape ; sh:targetClass schema:MolecularEntity, schema:ChemicalSubstance ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] , [ sh:path schema:identifier ] .
+"""
+    columns = layout(profile).columns()
+    assert columns["schema_molecular_entity"] == columns["schema_chemical_substance"]
+    assert "schema_name" in columns["schema_chemical_substance"]
+    assert "schema_chemical_substance__schema_identifier" in columns
+
+
+def test_the_classes_within_a_class_are_it_and_its_subclasses_in_the_profile():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Page a sh:NodeShape ; sh:targetClass schema:WebPage .
+ex:AboutPage a sh:NodeShape ; sh:targetClass schema:AboutPage .
+ex:ContactPage a sh:NodeShape ; sh:targetClass schema:ContactPage .
+ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization .
+"""
+    hierarchy = Graph().parse(
+        data="""
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> . @prefix schema: <https://schema.org/> .
+schema:AboutPage rdfs:subClassOf schema:WebPage . schema:ContactPage rdfs:subClassOf schema:AboutPage .
+schema:WebPage rdfs:subClassOf schema:CreativeWork .
+""",
+        format="turtle",
+    )
+    shapes = layout(profile)
+    assert shapes.within("https://schema.org/WebPage", hierarchy) == [
+        "https://schema.org/WebPage",
+        "https://schema.org/AboutPage",
+        "https://schema.org/ContactPage",
+    ]
+    assert shapes.within("https://schema.org/Organization", hierarchy) == [
+        "https://schema.org/Organization"
+    ]
+
+
+def test_the_context_of_a_class_lists_the_fields_it_takes_several_values_of():
+    from rdfsolve.client.sql_tables import context
+
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <https://schema.org/> .
+@prefix ex: <https://example.org/shapes/> .
+ex:Tool a sh:NodeShape ; sh:targetClass schema:SoftwareApplication ;
+    sh:property [ sh:path schema:name ; sh:maxCount 1 ] , [ sh:path schema:about ] .
+ex:Person a sh:NodeShape ; sh:targetClass schema:Person ;
+    sh:property [ sh:path schema:knows ] , [ sh:path schema:email ; sh:maxCount 1 ] .
+ex:Organization a sh:NodeShape ; sh:targetClass schema:Organization ;
+    sh:property [ sh:path schema:name ] .
+"""
+    found = context(profile, "https://schema.org/SoftwareApplication", lambda iri: iri[19:])
+    assert found == {
+        "id": "@id",
+        "type": "@type",
+        "about": {"@id": "https://schema.org/about", "@container": "@set"},
+        "email": {"@id": "https://schema.org/email"},
+        "knows": {"@id": "https://schema.org/knows", "@container": "@set"},
+        "name": {"@id": "https://schema.org/name"},
+    }, "The tool's own name is single, though an organization takes several"
+
+
+def test_a_merge_keeps_single_values_adds_new_parts_once_and_notes_conflicts():
+    from rdfsolve.client.sql_tables import merge
+
+    current = Graph().parse(
+        data="""
+@prefix schema: <https://schema.org/> .
+<https://example.org/tool/1> a schema:SoftwareApplication ; schema:name "Tool" ;
+    schema:about <https://example.org/term/1> ; schema:provider [ schema:name "Org" ] .
+""",
+        format="turtle",
+    )
+    offered = Graph().parse(
+        data="""
+@prefix schema: <https://schema.org/> .
+<https://example.org/tool/1> a schema:CreativeWork ; schema:name "Another name" ;
+    schema:about <https://example.org/term/2> ;
+    schema:provider [ schema:name "Org" ] , [ schema:name "New Org" ] .
+""",
+        format="turtle",
+    )
+    merged = merge(current, offered, PROFILE)
+    assert merged.conflicts == [
+        (TOOL, "https://schema.org/name", "Tool", "Another name"),
+    ]
+    assert (
+        URIRef(TOOL),
+        URIRef("https://schema.org/about"),
+        URIRef("https://example.org/term/2"),
+    ) in merged.graph
+    assert len(list(merged.graph.objects(URIRef(TOOL), URIRef("https://schema.org/provider")))) == 2
+    assert (None, None, Literal("New Org")) in merged.graph
+    assert len(merged.added) == 3, "the term, and the new organisation with its name"
+    assert not merge(merged.graph, offered, PROFILE).added, "a second merge adds nothing"
+
+
+def test_void_counts_the_partitions_of_some_records_in_sql():
+    from sqlalchemy import column, create_engine, select, table
+
+    engine = create_engine("sqlite://")
+    shapes = layout(PROFILE)
+    with engine.begin() as connection:
+        connection.connection.executescript(shapes.ddl())
+        for name, frame in tables(Graph().parse(data=DATA, format="turtle"), PROFILE).items():
+            frame.to_sql(name, connection, index=False, if_exists="append")
+        tools = table("schema_software_application", column("iri"))
+        found = shapes.void(
+            connection,
+            select(tools.c.iri),
+            name=lambda *iris: " ".join(iris),
+            left_out={"https://schema.org/termCode"},
+        )
+        only_second = shapes.void(
+            connection,
+            select(tools.c.iri).where(tools.c.iri == "https://example.org/tool/2"),
+            name=lambda *iris: " ".join(iris),
+        )
+    by_class = {partition.class_uri: partition for partition in found}
+    tool = by_class["https://schema.org/SoftwareApplication"]
+    assert tool.entities == 2
+    assert by_class["https://schema.org/Organization"].entities == 0, "a blank node is no entity"
+    fields = {partition.property_uri: partition for partition in tool.property_partitions}
+    assert "https://schema.org/termCode" not in fields
+    assert [
+        (p.class_uri, p.triples) for p in fields["https://schema.org/provider"].class_partitions
+    ] == [("https://schema.org/Organization", 1)]
+    assert [
+        (p.class_uri, p.triples) for p in fields["https://schema.org/author"].class_partitions
+    ] == [("https://schema.org/Person", 1)]
+    name = fields["https://schema.org/name"]
+    assert name.triples == 3
+    assert [(p.datatype_uri, p.triples) for p in name.datatype_partitions] == [
+        ("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString", 1),
+        ("http://www.w3.org/2001/XMLSchema#string", 2),
+    ]
+    assert [p.class_uri for p in only_second] == ["https://schema.org/SoftwareApplication"]
+    assert only_second[0].entities == 1
+
+
+def test_without_empty_tables_only_the_tables_with_rows_are_given():
+    person = """<https://example.org/person/1> a <https://schema.org/Person> ;
+        <https://schema.org/name> "Someone" ."""
+    data = Graph().parse(data=person, format="turtle")
+    with_rows = tables(data, PROFILE, empty=False)
+    assert list(with_rows) == ["schema_person"]
+    assert with_rows["schema_person"].equals(tables(data, PROFILE)["schema_person"])
+
+
+def test_the_rows_of_a_table_are_in_order_of_their_cells_a_missing_cell_last():
+    from rdfsolve.client.sql_tables import _frame
+
+    frame = _frame([["b", None], ["a", None], ["a", "x"], ["a", ""]], ["record", "value"])
+    assert frame.fillna("NA").values.tolist() == [["a", ""], ["a", "x"], ["a", "NA"], ["b", "NA"]]
+
+
+def test_a_prefix_declared_with_sh_declare_names_tables_and_columns():
+    profile = """
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+<https://example.org/profile> sh:declare [ sh:prefix "ex" ;
+    sh:namespace "https://example.org/terms/"^^xsd:anyURI ] .
+<https://example.org/shapes/Item> a sh:NodeShape ;
+    sh:targetClass <https://example.org/terms/Item> ;
+    sh:property [ sh:path <https://example.org/terms/label> ; sh:maxCount 1 ] .
+"""
+    item = layout(profile).classes["https://example.org/terms/Item"]
+    assert item.name == "ex_item"
+    assert item.single == {"https://example.org/terms/label": "ex_label"}
+
+
+def test_parts_get_addresses_under_their_record_and_keep_them():
+    schema = "https://schema.org/"
+    data = Graph().parse(data=DATA, format="turtle")
+    assert str(tables(data, PROFILE)["schema_organization"]["iri"][0]).startswith("_:")
+    found = tables(data, PROFILE, skolem=True)
+    assert list(found["schema_organization"]["iri"]) == [TOOL + "#provider-1"]
+    assert list(found["schema_organization"]["record"]) == [TOOL]
+    rest = found["statements"]
+    deep = rest[rest["value"] == "Deep Street 1"]
+    assert list(deep["iri"]) == [TOOL + "#address-1"], "a part of a part is under the record"
+    assert list(deep["record"]) == [TOOL]
+    back = from_tables(_read(_database(found)), PROFILE)
+    assert not [node for triple in back for node in triple if isinstance(node, BNode)]
+    again = tables(back, PROFILE, skolem=True)
+    assert all(frame.equals(again[name]) for name, frame in found.items()), "the same addresses"
+
+    second = BNode()
+    more = Graph() + back
+    more.add((URIRef(TOOL), URIRef(schema + "provider"), second))
+    more.add(
+        (
+            second,
+            URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+            URIRef(schema + "Organization"),
+        )
+    )
+    more.add((second, URIRef(schema + "name"), Literal("Second Org")))
+    assert sorted(tables(more, PROFILE, skolem=True)["schema_organization"]["iri"]) == [
+        TOOL + "#provider-1",
+        TOOL + "#provider-2",
+    ]
+    removed = {URIRef(TOOL + "#provider-1"), URIRef(TOOL + "#address-1")}
+    replaced = Graph()
+    for triple in more:
+        if triple[0] not in removed and triple[2] not in removed:
+            replaced.add(triple)
+    organization = tables(replaced, PROFILE, skolem=True)["schema_organization"]
+    assert list(organization["iri"]) == [TOOL + "#provider-1"], "the highest number left goes on"
+    organization = tables(replaced, PROFILE, skolem=True, before=back)["schema_organization"]
+    assert list(organization["iri"]) == [TOOL + "#provider-2"], (
+        "a number stored before is not given again"
+    )
+
+
+def test_a_part_read_again_with_the_same_values_keeps_its_address():
+    schema = "https://schema.org/"
+    back = from_tables(
+        tables(Graph().parse(data=DATA, format="turtle"), PROFILE, skolem=True), PROFILE
+    )
+    again = tables(Graph().parse(data=DATA, format="turtle"), PROFILE, skolem=True, before=back)
+    assert list(again["schema_organization"]["iri"]) == [TOOL + "#provider-1"]
+    rest = again["statements"]
+    assert list(rest[rest["value"] == "Deep Street 1"]["iri"]) == [TOOL + "#address-1"]
+    changed = Graph().parse(data=DATA, format="turtle")
+    for organization in changed.subjects(URIRef(schema + "name"), None):
+        if isinstance(organization, BNode):
+            changed.set((organization, URIRef(schema + "name"), Literal("Renamed Org")))
+    renamed = tables(changed, PROFILE, skolem=True, before=back)
+    assert list(renamed["schema_organization"]["iri"]) == [TOOL + "#provider-2"], (
+        "a part with other values is a new part"
+    )
+
+
+def test_a_list_field_keeps_the_order_of_its_members():
+    profile = (
+        PROFILE
+        + """
+<https://example.org/shapes/Paper> a sh:NodeShape ;
+    sh:targetClass <https://schema.org/ScholarlyArticle> ;
+    sh:property [ sh:path <https://schema.org/author> ;
+        sh:node <http://datashapes.org/dash#ListShape> ] ;
+    sh:property [ sh:path <https://schema.org/name> ; sh:maxCount 1 ] .
+"""
+    )
+    data = Graph().parse(
+        data="""@prefix schema: <https://schema.org/> .
+<https://example.org/paper/1> a schema:ScholarlyArticle ; schema:name "Paper" ;
+    schema:author ( <https://example.org/b> <https://example.org/a> [ schema:name "Third" ] ) .""",
+        format="turtle",
+    )
+    found = tables(data, profile, skolem=True)
+    authors = found["schema_scholarly_article__schema_author"]
+    by_position = dict(zip(authors["position"], authors["value"], strict=True))
+    assert by_position["0"] == "https://example.org/b"
+    assert by_position["1"] == "https://example.org/a"
+    assert by_position["2"] == "https://example.org/paper/1#author-1", "a part in a list"
+    assert not len(found["statements"][found["statements"]["property"].str.contains("rdf-syntax")])
+    back = from_tables(found, profile)
+    head = back.value(URIRef("https://example.org/paper/1"), URIRef("https://schema.org/author"))
+    members = [str(member) for member in RDFList(back, head)]
+    assert members[:2] == ["https://example.org/b", "https://example.org/a"]
+
+
+def test_a_merge_does_not_add_again_a_part_that_has_an_address():
+    from rdfsolve.client.sql_tables import merge
+
+    data = Graph().parse(data=DATA, format="turtle")
+    stored = from_tables(tables(data, PROFILE, skolem=True), PROFILE)
+    tool = Graph()
+    for triple in data:
+        if triple[0] == URIRef(TOOL) or isinstance(triple[0], BNode):
+            tool.add(triple)
+    assert not merge(stored, tool, PROFILE).added, "the tool's parts are held with addresses"

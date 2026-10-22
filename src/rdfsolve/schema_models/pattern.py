@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES
+from rdfsolve.schema_models._constants import _SENTINEL_OBJECTS, _URI_SCHEMES, UNTYPED_SUBJECT
 
 
-class PatternType(str, Enum):
+class PatternType(StrEnum):
     """Semantic type of an RDF pattern.
 
     Distinguishes what kind of RDF construct a pattern represents,
@@ -34,6 +34,31 @@ class PatternType(str, Enum):
     """Could not determine the pattern type."""
 
 
+def _both() -> list[Literal["patterns", "counts"]]:
+    """Return what a sample decides by default: the rows and their counts."""
+    return ["patterns", "counts"]
+
+
+class PatternSample(BaseModel):
+    """Provenance of a pattern row observed in a bounded sample of a refused query.
+
+    The endpoint refused the whole query (time or cost limit, gateway cut, row cap) and
+    answered it over a sample of *size* *unit* (edges, members, subjects or terms). *covers*
+    says what the sample decided: "patterns" (the row exists, and other rows of its subject
+    class and property may be missing) and "counts" (its counts are lower bounds).
+    """
+
+    size: int = Field(..., ge=1, description="Size of the sample, in its unit")
+    unit: str = Field(..., description="What the sample holds: edges, members, subjects, terms")
+    reason: str = Field(..., description="The refusal of the whole query: category and text")
+    covers: list[Literal["patterns", "counts"]] = Field(
+        default_factory=_both,
+        description="patterns: the rows of the item may be incomplete; counts: lower bounds",
+    )
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class SchemaPattern(BaseModel):
     """A single schema pattern: subject_class -> property -> object.
 
@@ -47,6 +72,11 @@ class SchemaPattern(BaseModel):
       ``?s a ?sc . ?s ?p ?o . FILTER(isURI(?o) && NOT EXISTS { ?o a ?any })``
     - **blank-node**:
       ``?s a ?sc . ?s ?p ?o . FILTER(isBlank(?o))``
+
+    A pattern with subject_binding "untyped" describes the IRI subjects that have no type
+    (``?s ?p ?o . FILTER(isIRI(?s) && NOT EXISTS { ?s a ?any })``), with the same object
+    kinds and counts; its subject_class is rdfs:Resource (UNTYPED_SUBJECT). A typed subject is
+    never in such a pattern.
 
     This model is shared between SchemaMiner (direct SPARQL)
     and the VoID reader (published VoID partitions).
@@ -69,8 +99,12 @@ class SchemaPattern(BaseModel):
             "'BlankNode' for blank node objects."
         ),
     )
-    subject_binding: Literal["type", "term"] = Field(
-        "type", description="Match instances of subject_class, or the subject IRI itself"
+    subject_binding: Literal["type", "term", "untyped"] = Field(
+        "type",
+        description=(
+            "Match instances of subject_class, the subject IRI itself, or (untyped) the IRI "
+            "subjects that have no type at all; subject_class is then rdfs:Resource"
+        ),
     )
     object_binding: Literal["type", "term"] = Field(
         "type", description="For IRI objects, match a type or the object IRI itself"
@@ -81,7 +115,25 @@ class SchemaPattern(BaseModel):
         """Require an IRI for an exact object binding."""
         if self.object_binding == "term" and self.object_class in _SENTINEL_OBJECTS:
             raise ValueError("An exact term binding requires an object IRI")
+        if self.subject_binding == "untyped" and self.subject_class != UNTYPED_SUBJECT:
+            raise ValueError(f"An untyped subject binding requires the class {UNTYPED_SUBJECT}")
         return self
+
+    @model_validator(mode="after")
+    def check_sampled_counts(self) -> SchemaPattern:
+        """Mark the counts of a row counted in a sample as lower bounds."""
+        if (
+            self.sampled is not None
+            and "counts" in self.sampled.covers
+            and self.count_bound is None
+        ):
+            self.count_bound = "lower_bound"
+        return self
+
+    @property
+    def untyped_subject(self) -> bool:
+        """Return whether the pattern describes subjects without a type."""
+        return self.subject_binding == "untyped"
 
     count: int | None = Field(
         None,
@@ -91,6 +143,21 @@ class SchemaPattern(BaseModel):
     count_semantics: Literal[
         "triples_in_graph", "quad_occurrences", "endpoint_default", "upper_bound", "unknown"
     ] = "unknown"
+    count_bound: Literal["exact", "lower_bound"] | None = Field(
+        None,
+        description=(
+            "lower_bound when the counts of the row (count, graphs, distinct subjects and "
+            "objects) come from a sample of a refused query (see sampled), so that the true "
+            "values are at least these; None when the counts are as count_semantics says."
+        ),
+    )
+    sampled: PatternSample | None = Field(
+        None,
+        description=(
+            "Set when the row was observed, or counted, in a bounded sample because the "
+            "endpoint refused the whole query; the sample's size, unit and the refusal."
+        ),
+    )
     graphs: dict[str, int] | None = Field(
         None,
         description=(
@@ -98,6 +165,19 @@ class SchemaPattern(BaseModel):
             "None when mining was not graph-aware; the graph of the "
             "subject-predicate-object edge is the one recorded."
         ),
+    )
+    graph_distinct_subjects: dict[str, int] | None = Field(
+        None,
+        description=(
+            "Named graph URI to the distinct subjects of the pattern's edges in that graph, "
+            "when they were counted per graph (scan mining). A schema mined across several "
+            "graphs has no distinct counts of its own (count_semantics quad_occurrences); its "
+            "per-graph schemas take theirs from here."
+        ),
+    )
+    graph_distinct_objects: dict[str, int] | None = Field(
+        None,
+        description="Named graph URI to the distinct objects of the pattern's edges in that graph.",
     )
     datatype: str | None = Field(
         None,
