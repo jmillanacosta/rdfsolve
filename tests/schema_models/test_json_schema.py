@@ -7,7 +7,7 @@ from pyshacl import validate
 from rdflib import RDFS, Graph, URIRef
 from rdflib.namespace import SH
 
-from rdfsolve.schema_models.readers.json_schema import json_schema_shape
+from rdfsolve.schema_models.readers.json_schema import json_schema_shape, readable
 from rdfsolve.schema_models.readers.vocabulary import Vocabulary
 
 EX = "https://example.org/"
@@ -62,6 +62,7 @@ def test_json_schema_shape():
     assert [(str(shapes.value(f, SH.name)), int(shapes.value(f, SH.order)), str(shapes.value(shapes.value(f, SH.group), RDFS.label)))
             for f in fields] == [("Name", 1, "Required"), ("Web page", 2, "Links"), ("Author", 4, "Recommended")]
     assert int(shapes.value(URIRef(EX + "Shape#group-links"), SH.order)) == 1
+    assert [readable(name) for name in ("datePublished", "propertyID", "inChIKey")] == ["Date published", "Property ID", "InChIKey"]
     with pytest.raises(NotImplementedError):
         json_schema_shape({"type": "object", "properties": {"n": {"type": "string", "maxLength": 3}}},
                           shape=EX + "Shape", target_class=EX + "Item", context={"@vocab": EX})

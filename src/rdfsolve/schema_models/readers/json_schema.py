@@ -218,9 +218,12 @@ def _value(
     raise NotImplementedError(f"JSON Schema type not read: {kind}")
 
 
-def _readable(name: str) -> str:
+def readable(name: str) -> str:
     """Return a property name as words, such as Date published for datePublished."""
     words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", name) or [name]
+    # A name with a word of one capital letter, such as inChIKey, is an acronym, kept as written.
+    if any(len(word) == 1 and word.isupper() for word in words):
+        return name[:1].upper() + name[1:]
     words = [word if word.isupper() else word.lower() for word in words]
     return " ".join(words)[:1].upper() + " ".join(words)[1:]
 
@@ -304,7 +307,7 @@ def _fields(
             ShaclPropertyShape(
                 uri=f"{prefix}{name}",
                 path=path,
-                name=str(given.get("title") or _readable(name)),
+                name=str(given.get("title") or readable(name)),
                 description=description,
                 max_count=None if several else 1,
                 severity=reading.values,
